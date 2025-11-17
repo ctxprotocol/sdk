@@ -1,0 +1,31 @@
+{
+  "name": "@contextprotocol/sdk",
+  "version": "0.1.0",
+  "description": "Server-side helpers for publishing Context HTTP tools.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "lint": "biome check src",
+    "test": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_ORG/context-sdk.git"
+  },
+  "author": "Context Protocol",
+  "license": "MIT",
+  "dependencies": {
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4",
+    "@biomejs/biome": "^2.2.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
