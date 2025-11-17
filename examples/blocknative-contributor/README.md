@@ -28,7 +28,7 @@ curl http://localhost:4001/context/blocknative \
 
 ### How it works
 
-- `@contextprotocol/sdk` provides `defineHttpTool` + `executeHttpTool`.
+- `@ctxprotocol/sdk` provides `defineHttpTool` + `executeHttpTool`.
 - The contributor implements the Blocknative logic (URL building, parsing,
   API key management) entirely on their infra.
 - Context will call this endpoint via the generic HTTP skill once the tool is

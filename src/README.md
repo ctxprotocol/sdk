@@ -15,7 +15,7 @@ At a high level, you:
 
 ```ts
 import { z } from "zod";
-import { defineHttpTool, executeHttpTool } from "@contextprotocol/sdk";
+import { defineHttpTool, executeHttpTool } from "@ctxprotocol/sdk";
 
 const blocknativeTool = defineHttpTool({
   name: "blocknative_gas_base",

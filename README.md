@@ -12,13 +12,13 @@ consistent way.
 Using **pnpm**:
 
 ```bash
-pnpm add @contextprotocol/sdk zod
+pnpm add @ctxprotocol/sdk zod
 ```
 
 Using **npm**:
 
 ```bash
-npm install @contextprotocol/sdk zod
+npm install @ctxprotocol/sdk zod
 ```
 
 ---
@@ -30,7 +30,7 @@ single HTTP endpoint:
 
 ```ts
 import { z } from "zod";
-import { defineHttpTool, executeHttpTool } from "@contextprotocol/sdk";
+import { defineHttpTool, executeHttpTool } from "@ctxprotocol/sdk";
 
 const tool = defineHttpTool({
   name: "blocknative_gas_base",

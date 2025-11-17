@@ -1,6 +1,6 @@
 import express from "express";
 import { z } from "zod";
-import { defineHttpTool, executeHttpTool } from "@contextprotocol/sdk";
+import { defineHttpTool, executeHttpTool } from "@ctxprotocol/sdk";
 
 const BLOCKNATIVE_BASE_URL = "https://api.blocknative.com";
 
