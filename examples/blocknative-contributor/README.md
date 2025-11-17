@@ -1,7 +1,7 @@
-## Blocknative Contributor Example
+## Blocknative contributor example
 
 This folder shows how an independent developer can expose the Blocknative Gas
-Platform through the Context SDK. It runs a tiny Express server with one
+Platform through the Context SDK. It runs a tiny Express server with a single
 endpoint: `POST /context/blocknative`.
 
 ### Requirements

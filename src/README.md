@@ -1,7 +1,17 @@
-## Context SDK (Server-side)
+## Context SDK (server-side)
 
-This is a minimal developer-facing helper that contributors can use when exposing
-HTTP tools to the Context marketplace.
+This package provides a minimal, server-side helper that contributors can use
+to expose HTTP tools to the Context marketplace in a safe and consistent way.
+
+At a high level, you:
+
+- **Define** a tool with a `name`, version, Zod `inputSchema` and
+  `outputSchema`.
+- **Implement** your own handler that talks to your upstream service.
+- **Expose** a single HTTP endpoint that validates input, executes your logic,
+  and returns a typed `{ data, meta }` envelope.
+
+### Example
 
 ```ts
 import { z } from "zod";
@@ -31,11 +41,17 @@ export async function handler(request: Request) {
   const response = await executeHttpTool(blocknativeTool, body.input, {
     headers: Object.fromEntries(request.headers.entries()),
   });
+
   return Response.json(response);
 }
 ```
 
+### What the SDK handles for you
+
 The SDK intentionally stays tiny: it validates incoming payloads, executes the
 contributor's handler, validates the output, and wraps everything in a consistent
 `{ data, meta }` envelope that Context can consume safely.
+
+For a full Express server example, see `../examples/blocknative-contributor`.
+
 
