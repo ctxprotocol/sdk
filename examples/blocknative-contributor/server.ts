@@ -115,9 +115,9 @@ function buildBlocknativeUrl(params: z.infer<typeof blocknativeInputSchema>) {
   let path = "/gasprices/blockprices";
 
   if (params.endpoint === "chains") {
-    path = "/gasprices/chains";
+    path = "/chains";
   } else if (params.endpoint === "oracles") {
-    path = "/gasprices/oracles";
+    path = "/oracles";
   } else {
     const chainId = params.chainId ?? 8453;
     searchParams.set("chainid", String(chainId));
@@ -154,8 +154,8 @@ function parseBlocknativePayload(
       fetchedAt: new Date().toISOString(),
       data: {
         type: "chains",
-        chains: Array.isArray(payload?.chains)
-          ? payload.chains.map((chain: any) => ({
+        chains: Array.isArray(payload)
+          ? payload.map((chain: any) => ({
               chainId: Number(chain.chainId),
               system: chain.system,
               network: chain.network,
@@ -171,9 +171,9 @@ function parseBlocknativePayload(
       fetchedAt: new Date().toISOString(),
       data: {
         type: "oracles",
-        oracles: Array.isArray(payload?.oracles)
-          ? payload.oracles.map((oracle: any) => ({
-              name: oracle.name,
+        oracles: Array.isArray(payload)
+          ? payload.map((oracle: any) => ({
+              name: oracle.label ?? oracle.name ?? "Unknown",
               system: oracle.system,
               network: oracle.network,
             }))
