@@ -34,6 +34,7 @@ const blocknativeOutputSchema = z.object({
       chains: z.array(
         z.object({
           chainId: z.number(),
+          label: z.string(),
           system: z.string(),
           network: z.string(),
         })
@@ -44,6 +45,7 @@ const blocknativeOutputSchema = z.object({
       oracles: z.array(
         z.object({
           name: z.string(),
+          label: z.string(),
           system: z.string(),
           network: z.string(),
         })
@@ -157,6 +159,7 @@ function parseBlocknativePayload(
         chains: Array.isArray(payload)
           ? payload.map((chain: any) => ({
               chainId: Number(chain.chainId),
+              label: chain.label,
               system: chain.system,
               network: chain.network,
             }))
@@ -174,6 +177,7 @@ function parseBlocknativePayload(
         oracles: Array.isArray(payload)
           ? payload.map((oracle: any) => ({
               name: oracle.label ?? oracle.name ?? "Unknown",
+              label: oracle.label,
               system: oracle.system,
               network: oracle.network,
             }))
