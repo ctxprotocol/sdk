@@ -121,9 +121,6 @@ var Tools = class {
   }
 };
 
-// src/constants.ts
-var DEFAULT_BASE_URL = "https://ctxprotocol.com";
-
 // src/client.ts
 var ContextClient = class {
   apiKey;
@@ -148,7 +145,7 @@ var ContextClient = class {
       throw new ContextError("API key is required");
     }
     this.apiKey = options.apiKey;
-    this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
+    this.baseUrl = (options.baseUrl ?? "https://ctxprotocol.com").replace(/\/$/, "");
     this.discovery = new Discovery(this);
     this.tools = new Tools(this);
   }
@@ -187,6 +184,6 @@ var ContextClient = class {
   }
 };
 
-export { ContextClient, ContextError, DEFAULT_BASE_URL, Discovery, Tools };
+export { ContextClient, ContextError, Discovery, Tools };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

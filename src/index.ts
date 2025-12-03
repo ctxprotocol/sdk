@@ -1,7 +1,7 @@
 /**
- * @contextprotocol/client
+ * @ctxprotocol/sdk
  *
- * Official TypeScript Client for the Context Protocol.
+ * Official TypeScript SDK for the Context Protocol.
  * Discover and execute AI tools programmatically.
  *
  * @packageDocumentation

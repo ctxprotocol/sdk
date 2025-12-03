@@ -266,9 +266,4 @@ declare class ContextClient {
     fetch<T>(endpoint: string, options?: RequestInit): Promise<T>;
 }
 
-/**
- * Default API base URL for the Context Protocol
- */
-declare const DEFAULT_BASE_URL = "https://ctxprotocol.com";
-
-export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, DEFAULT_BASE_URL, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecutionResult, type McpTool, type SearchOptions, type SearchResponse, type Tool, Tools };
+export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecutionResult, type McpTool, type SearchOptions, type SearchResponse, type Tool, Tools };

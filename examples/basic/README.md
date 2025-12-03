@@ -1,15 +1,15 @@
-# Context Protocol SDK - Basic Example
+# Context Protocol SDK — Basic Example
 
-This example demonstrates how to use the `@contextprotocol/client` SDK to discover and execute AI tools on the Context Protocol marketplace.
+This example demonstrates how to use the `@ctxprotocol/sdk` to discover and execute AI tools on the Context Protocol marketplace.
 
 ## Prerequisites
 
 Before running this example, complete the setup at [ctxprotocol.com](https://ctxprotocol.com):
 
-1. **Sign in** - Creates your embedded wallet
-2. **Enable Auto Pay** - Approve USDC spending
-3. **Fund wallet** - Add USDC for tool payments
-4. **Generate API key** - In Settings page
+1. **Sign in** — Creates your embedded wallet
+2. **Enable Auto Pay** — Approve USDC spending
+3. **Fund wallet** — Add USDC for tool payments
+4. **Generate API key** — In Settings page
 
 ## Setup
 
@@ -43,10 +43,10 @@ pnpm start
 
 ## What This Example Does
 
-1. **Discovers tools** - Searches for tools related to "gas prices"
-2. **Lists results** - Displays found tools with their methods (`mcpTools`)
-3. **Executes a tool** - Calls the first method on the first matching tool
-4. **Handles errors** - Demonstrates proper error handling with guidance
+1. **Discovers tools** — Searches for tools related to "gas prices"
+2. **Lists results** — Displays found tools with their methods (`mcpTools`)
+3. **Executes a tool** — Calls the first method on the first matching tool
+4. **Handles errors** — Demonstrates proper error handling with guidance
 
 ## Expected Output
 
@@ -100,3 +100,9 @@ const client = new ContextClient({
   baseUrl: "http://localhost:3000",
 });
 ```
+
+## Links
+
+- [Context Protocol](https://ctxprotocol.com)
+- [SDK Documentation](https://github.com/ctxprotocol/sdk)
+- [NPM Package](https://www.npmjs.com/package/@ctxprotocol/sdk)

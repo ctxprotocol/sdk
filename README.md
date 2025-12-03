@@ -1,34 +1,37 @@
-# @contextprotocol/client
+# @ctxprotocol/sdk
 
-The official TypeScript client for the [Context Protocol](https://ctxprotocol.com) marketplace. Discover and execute AI tools programmatically.
+The official TypeScript SDK for the [Context Protocol](https://ctxprotocol.com) — the monetization layer for MCP. Discover and execute AI tools programmatically.
+
+[![npm version](https://img.shields.io/npm/v/@ctxprotocol/sdk.svg)](https://www.npmjs.com/package/@ctxprotocol/sdk)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Installation
 
 ```bash
-npm install @contextprotocol/client
+npm install @ctxprotocol/sdk
 ```
 
 ```bash
-pnpm add @contextprotocol/client
+pnpm add @ctxprotocol/sdk
 ```
 
 ```bash
-yarn add @contextprotocol/client
+yarn add @ctxprotocol/sdk
 ```
 
 ## Prerequisites
 
 Before using the API, you must complete setup via the web dashboard:
 
-1. **Sign in** at [ctxprotocol.com](https://ctxprotocol.com) - Creates your embedded wallet
-2. **Enable Auto Pay** - Approve USDC spending for tool payments
-3. **Fund wallet** - Add USDC for tool execution fees
-4. **Generate API key** - In Settings page
+1. **Sign in** at [ctxprotocol.com](https://ctxprotocol.com) — Creates your embedded wallet
+2. **Enable Auto Pay** — Approve USDC spending for tool payments
+3. **Fund wallet** — Add USDC for tool execution fees
+4. **Generate API key** — In Settings page
 
 ## Quick Start
 
 ```typescript
-import { ContextClient } from "@contextprotocol/client";
+import { ContextClient } from "@ctxprotocol/sdk";
 
 // Initialize the client with your API key
 const client = new ContextClient({
@@ -55,10 +58,10 @@ console.log(result.durationMs); // Execution time in ms
 
 ### Client Options
 
-| Option    | Type     | Required | Default               | Description                    |
-| --------- | -------- | -------- | --------------------- | ------------------------------ |
-| `apiKey`  | `string` | Yes      | -                     | Your Context Protocol API key  |
-| `baseUrl` | `string` | No       | `https://ctxprotocol.com` | API base URL (for development) |
+| Option    | Type     | Required | Default                  | Description                    |
+| --------- | -------- | -------- | ------------------------ | ------------------------------ |
+| `apiKey`  | `string` | Yes      | —                        | Your Context Protocol API key  |
+| `baseUrl` | `string` | No       | `https://ctxprotocol.com`| API base URL (for development) |
 
 ```typescript
 // Production usage
@@ -143,7 +146,7 @@ import type {
   ExecuteOptions,
   ExecutionResult,
   ContextErrorCode,
-} from "@contextprotocol/client";
+} from "@ctxprotocol/sdk";
 ```
 
 ### Tool
@@ -191,7 +194,7 @@ interface ExecutionResult<T = unknown> {
 The SDK throws `ContextError` for all API errors with specific error codes:
 
 ```typescript
-import { ContextClient, ContextError } from "@contextprotocol/client";
+import { ContextClient, ContextError } from "@ctxprotocol/sdk";
 
 try {
   const result = await client.tools.execute({
@@ -256,10 +259,17 @@ When you execute a tool:
 
 1. Your pre-approved USDC allowance is used for payment
 2. **90%** goes to the tool developer
-3. **10%** goes to the platform
+3. **10%** goes to the protocol
 4. Tool executes and returns results
 
 Ensure your wallet has sufficient USDC balance before executing paid tools.
+
+## Links
+
+- [Context Protocol](https://ctxprotocol.com) — Main website
+- [GitHub](https://github.com/ctxprotocol/context) — Main project repository
+- [SDK Repository](https://github.com/ctxprotocol/sdk) — This SDK
+- [NPM Package](https://www.npmjs.com/package/@ctxprotocol/sdk)
 
 ## Requirements
 

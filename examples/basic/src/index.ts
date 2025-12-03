@@ -1,4 +1,4 @@
-import { ContextClient, ContextError } from "@contextprotocol/client";
+import { ContextClient, ContextError } from "@ctxprotocol/sdk";
 
 // Initialize the client
 // In production, use: apiKey: process.env.CONTEXT_API_KEY!
