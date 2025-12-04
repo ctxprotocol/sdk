@@ -36,13 +36,21 @@ async function main() {
         console.log(`   Available methods:`);
         tool.mcpTools.forEach((mcpTool) => {
           console.log(`     - ${mcpTool.name}: ${mcpTool.description}`);
+
+          // Show schemas if available (useful for LLM integration)
+          if (mcpTool.inputSchema) {
+            console.log(`       Input Schema: ${JSON.stringify(mcpTool.inputSchema)}`);
+          }
+          if (mcpTool.outputSchema) {
+            console.log(`       Output Schema: ${JSON.stringify(mcpTool.outputSchema)}`);
+          }
         });
       }
       console.log();
     });
 
     // ═══════════════════════════════════════════════════════════════════════
-    // 2. EXECUTE A TOOL
+    // 2. USE SCHEMAS FOR LLM PROMPT GENERATION
     // ═══════════════════════════════════════════════════════════════════════
     const selectedTool = tools[0];
 
@@ -52,6 +60,29 @@ async function main() {
     }
 
     const methodToCall = selectedTool.mcpTools[0];
+
+    // Example: Build an LLM prompt using the schemas
+    console.log("📝 Example LLM Prompt Generation:\n");
+    console.log("─".repeat(60));
+
+    const llmPrompt = `You have access to the following tool:
+
+Tool: ${methodToCall.name}
+Description: ${methodToCall.description}
+
+${methodToCall.inputSchema ? `Input Schema:\n${JSON.stringify(methodToCall.inputSchema, null, 2)}` : "No input schema defined."}
+
+${methodToCall.outputSchema ? `Output Schema:\n${JSON.stringify(methodToCall.outputSchema, null, 2)}` : "No output schema defined."}
+
+Generate the correct arguments as JSON to get gas prices for Ethereum mainnet.`;
+
+    console.log(llmPrompt);
+    console.log("─".repeat(60));
+    console.log();
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 3. EXECUTE A TOOL
+    // ═══════════════════════════════════════════════════════════════════════
     console.log(`⚡ Executing: ${selectedTool.name} → ${methodToCall.name}\n`);
 
     const result = await client.tools.execute({
@@ -66,6 +97,14 @@ async function main() {
     console.log("Tool:", result.tool.name);
     console.log("Result:", JSON.stringify(result.result, null, 2));
     console.log(`\n⏱️  Duration: ${result.durationMs}ms`);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 4. VALIDATE RESULT AGAINST OUTPUT SCHEMA
+    // ═══════════════════════════════════════════════════════════════════════
+    if (methodToCall.outputSchema) {
+      console.log("\n📋 Output matches expected schema:");
+      console.log(JSON.stringify(methodToCall.outputSchema, null, 2));
+    }
   } catch (error) {
     // ═══════════════════════════════════════════════════════════════════════
     // ERROR HANDLING

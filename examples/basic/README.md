@@ -1,6 +1,6 @@
 # Context Protocol SDK — Basic Example
 
-This example demonstrates how to use the `@ctxprotocol/sdk` to discover and execute AI tools on the Context Protocol marketplace.
+This example demonstrates how to use the `@ctxprotocol/sdk` to discover and execute AI tools on the Context Protocol marketplace, including using schemas for LLM integration.
 
 ## Prerequisites
 
@@ -44,9 +44,44 @@ pnpm start
 ## What This Example Does
 
 1. **Discovers tools** — Searches for tools related to "gas prices"
-2. **Lists results** — Displays found tools with their methods (`mcpTools`)
-3. **Executes a tool** — Calls the first method on the first matching tool
-4. **Handles errors** — Demonstrates proper error handling with guidance
+2. **Lists results** — Displays found tools with their methods and **schemas**
+3. **Shows LLM prompt generation** — Demonstrates how to use `inputSchema` and `outputSchema` for building AI agent prompts
+4. **Executes a tool** — Calls the first method on the first matching tool
+5. **Validates output** — Shows how the result matches the `outputSchema`
+6. **Handles errors** — Demonstrates proper error handling with guidance
+
+## Using Schemas for LLM Integration
+
+Each MCP tool exposes JSON Schemas that describe inputs and outputs:
+
+```typescript
+const mcpTool = tool.mcpTools[0];
+
+// inputSchema - tells the LLM what arguments to generate
+console.log(mcpTool.inputSchema);
+// { type: "object", properties: { chainId: { type: "number" } }, required: ["chainId"] }
+
+// outputSchema - tells the LLM what response to expect
+console.log(mcpTool.outputSchema);
+// { type: "object", properties: { gasPrice: { type: "string" }, unit: { type: "string" } } }
+```
+
+### Building an LLM Prompt
+
+```typescript
+const prompt = `You have access to the following tool:
+
+Tool: ${mcpTool.name}
+Description: ${mcpTool.description}
+
+Input Schema:
+${JSON.stringify(mcpTool.inputSchema, null, 2)}
+
+Output Schema:
+${JSON.stringify(mcpTool.outputSchema, null, 2)}
+
+Generate the correct arguments as JSON.`;
+```
 
 ## Expected Output
 
@@ -63,7 +98,36 @@ Found 1 tool(s):
    Verified: ✓
    Available methods:
      - get_gas_prices: Get gas prices for a chain
-     - get_supported_chains: List supported chains
+       Input Schema: {"type":"object","properties":{"chainId":{"type":"number"}}}
+       Output Schema: {"type":"object","properties":{"gasPrice":{"type":"string"}}}
+
+📝 Example LLM Prompt Generation:
+
+────────────────────────────────────────────────────────────
+You have access to the following tool:
+
+Tool: get_gas_prices
+Description: Get gas prices for a chain
+
+Input Schema:
+{
+  "type": "object",
+  "properties": {
+    "chainId": { "type": "number" }
+  }
+}
+
+Output Schema:
+{
+  "type": "object",
+  "properties": {
+    "gasPrice": { "type": "string" },
+    "unit": { "type": "string" }
+  }
+}
+
+Generate the correct arguments as JSON to get gas prices for Ethereum mainnet.
+────────────────────────────────────────────────────────────
 
 ⚡ Executing: Gas Price Oracle → get_gas_prices
 
@@ -72,11 +136,19 @@ Found 1 tool(s):
 Tool: Gas Price Oracle
 Result: {
   "gasPrice": "25.5",
-  "unit": "gwei",
-  "timestamp": "2024-01-15T10:30:00Z"
+  "unit": "gwei"
 }
 
 ⏱️  Duration: 245ms
+
+📋 Output matches expected schema:
+{
+  "type": "object",
+  "properties": {
+    "gasPrice": { "type": "string" },
+    "unit": { "type": "string" }
+  }
+}
 ```
 
 ## Error Handling

@@ -21,6 +21,16 @@ interface McpTool {
     name: string;
     /** Description of what this method does */
     description: string;
+    /**
+     * JSON Schema for the input arguments this tool accepts.
+     * Used by LLMs to generate correct arguments.
+     */
+    inputSchema?: Record<string, unknown>;
+    /**
+     * JSON Schema for the output this tool returns.
+     * Used by LLMs to understand the response structure.
+     */
+    outputSchema?: Record<string, unknown>;
 }
 /**
  * Represents a tool available on the Context Protocol marketplace
