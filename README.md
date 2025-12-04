@@ -194,22 +194,6 @@ Please provide a helpful response to the user's original question: "${userQuery}
 
 ---
 
-## Supported Tool Types
-
-The SDK provides a unified interface for two distinct types of tools. You don't need to change your code to support them—`client.tools.execute()` handles the routing automatically.
-
-| Type | Description | Performance |
-| :--- | :--- | :--- |
-| **MCP Tools** | Standard Model Context Protocol servers hosted by third parties. | Network Dependent |
-| **Native Tools** | Verified TypeScript modules running directly on Context Protocol infrastructure. | **Zero Latency** (In-Process) |
-
-### Discovery Note
-
-- **MCP Tools:** Will populate the `mcpTools` array with structured method names and schemas.
-- **Native Tools:** May return an empty `mcpTools` array. The function names and usage instructions are found in the tool's `description`. Your LLM can infer the correct method name (e.g., `fetchBlocknativeData`) from this text.
-
----
-
 ## Configuration
 
 ### Client Options
@@ -289,7 +273,6 @@ interface Tool {
   price: string;
   category?: string;
   isVerified?: boolean;
-  kind?: string;
   mcpTools?: McpTool[];
 }
 ```

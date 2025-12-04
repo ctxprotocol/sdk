@@ -60,9 +60,6 @@ export interface Tool {
   /** Whether the tool is verified by Context Protocol */
   isVerified?: boolean;
 
-  /** Type of tool (e.g., "mcp") */
-  kind?: string;
-
   /**
    * Available MCP tool methods
    * Use items from this array as `toolName` when executing
