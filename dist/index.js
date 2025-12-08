@@ -1,4 +1,4 @@
-// src/types.ts
+// src/client/types.ts
 var ContextError = class extends Error {
   constructor(message, code, statusCode, helpUrl) {
     super(message);
@@ -9,7 +9,7 @@ var ContextError = class extends Error {
   }
 };
 
-// src/resources/discovery.ts
+// src/client/resources/discovery.ts
 var Discovery = class {
   constructor(client) {
     this.client = client;
@@ -57,7 +57,7 @@ var Discovery = class {
   }
 };
 
-// src/resources/tools.ts
+// src/client/resources/tools.ts
 var Tools = class {
   constructor(client) {
     this.client = client;
@@ -121,7 +121,7 @@ var Tools = class {
   }
 };
 
-// src/client.ts
+// src/client/client.ts
 var ContextClient = class {
   apiKey;
   baseUrl;

@@ -16,6 +16,17 @@ Context Protocol is **npm for AI capabilities**. Just as you install packages to
 - **⚡️ Agentic Discovery:** Your Agent can search the marketplace at runtime to find tools it didn't know it needed.
 - **💸 Micro-Billing:** Pay only for what you use (e.g., $0.001/query). No monthly subscriptions for tools you rarely use.
 
+## Who Is This SDK For?
+
+**This SDK is for AI Agent developers** who want to query the Context marketplace and execute tools.
+
+| Role | What You Use |
+|------|--------------|
+| **AI Agent Developer** | `@ctxprotocol/sdk` — Query marketplace, execute tools, handle payments |
+| **Tool Contributor (Data Broker)** | `@modelcontextprotocol/sdk` — Standard MCP server + Context extensions |
+
+If you're building an MCP server to contribute tools and earn money, you **don't need this SDK**. See [Building MCP Servers](#building-mcp-servers-tool-contributors) for the simple pattern.
+
 ## Installation
 
 ```bash
@@ -339,6 +350,90 @@ try {
 | `insufficient_allowance` | Auto Pay not enabled                     | Direct user to `helpUrl`            |
 | `payment_failed`         | USDC payment failed                      | Check balance                       |
 | `execution_failed`       | Tool error                               | Feed error to LLM for retry         |
+
+---
+
+## Building MCP Servers (Tool Contributors)
+
+Want to earn money by contributing tools to the Context marketplace? Build a standard MCP server with two Context Protocol extensions:
+
+1. **`outputSchema`** in tool definitions — JSON Schema describing your response
+2. **`structuredContent`** in responses — Machine-readable data matching the schema
+
+### Why These Matter
+
+| Requirement | Purpose |
+|------------|---------|
+| `outputSchema` | AI agents use this to generate type-safe code. Context uses it for dispute resolution. |
+| `structuredContent` | Agents parse this for programmatic access. Text `content` is for humans. |
+
+### Example: Standard MCP Server with Context Extensions
+
+Build your server with the standard `@modelcontextprotocol/sdk` — just add the Context Protocol extensions:
+
+```typescript
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+
+// Define tools with outputSchema (Context Protocol extension)
+const TOOLS = [{
+  name: "get_gas_price",
+  description: "Get current gas prices",
+  inputSchema: {
+    type: "object",
+    properties: {
+      chainId: { type: "number", description: "EVM chain ID" },
+    },
+  },
+  // 👇 Context Protocol extension: define your response structure
+  outputSchema: {
+    type: "object",
+    properties: {
+      gasPrice: { type: "number" },
+      unit: { type: "string" },
+    },
+    required: ["gasPrice", "unit"],
+  },
+}];
+
+// Standard MCP server setup
+const server = new Server(
+  { name: "my-gas-tool", version: "1.0.0" },
+  { capabilities: { tools: {} } }
+);
+
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: TOOLS,  // outputSchema is included automatically
+}));
+
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  const data = await fetchGasData(request.params.arguments.chainId);
+  
+  // 👇 Context Protocol extension: include structuredContent
+  return {
+    content: [{ type: "text", text: JSON.stringify(data) }],
+    structuredContent: data,  // Machine-readable, matches outputSchema
+  };
+});
+```
+
+### Example Servers
+
+See complete working examples in `/examples/server/`:
+
+- **[blocknative-contributor](./examples/server/blocknative-contributor)** — Gas price API (3 tools)
+- **[hyperliquid-contributor](./examples/server/hyperliquid-contributor)** — DeFi analytics (16 tools)
+
+### Schema Accuracy = Revenue
+
+⚠️ **Important**: Your `outputSchema` is a contract. Context's "Robot Judge" validates that your `structuredContent` matches your declared schema. Schema violations result in automatic refunds to users.
+
+### Server Dependencies
+
+```bash
+pnpm add @modelcontextprotocol/sdk express
+pnpm add -D @types/express
+```
 
 ## Payment Flow
 

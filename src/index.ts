@@ -2,19 +2,36 @@
  * @ctxprotocol/sdk
  *
  * Official TypeScript SDK for the Context Protocol.
- * Discover and execute AI tools programmatically.
+ *
+ * For AI Agents to discover and execute tools from the Context marketplace.
+ *
+ * @example
+ * ```typescript
+ * import { ContextClient } from "@ctxprotocol/sdk";
+ *
+ * const client = new ContextClient({ apiKey: "sk_live_..." });
+ *
+ * // Search for tools
+ * const tools = await client.discovery.search({ query: "gas price" });
+ *
+ * // Execute a tool
+ * const result = await client.tools.execute({
+ *   toolId: "blocknative/get_gas_price",
+ *   args: { chainId: 8453 },
+ * });
+ * ```
  *
  * @packageDocumentation
  */
 
-// Main client export
-export { ContextClient } from "./client.js";
+// Re-export everything from client module for backwards compatibility
+export {
+  ContextClient,
+  Discovery,
+  Tools,
+  ContextError,
+} from "./client/index.js";
 
-// Resource exports
-export { Discovery } from "./resources/discovery.js";
-export { Tools } from "./resources/tools.js";
-
-// Type exports for full autocomplete support
 export type {
   ContextClientOptions,
   Tool,
@@ -27,7 +44,5 @@ export type {
   ExecuteApiErrorResponse,
   ExecuteApiResponse,
   ContextErrorCode,
-} from "./types.js";
+} from "./client/index.js";
 
-// Error export
-export { ContextError } from "./types.js";
