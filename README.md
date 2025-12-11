@@ -355,10 +355,12 @@ try {
 
 ## Building MCP Servers (Tool Contributors)
 
-Want to earn money by contributing tools to the Context marketplace? Build a standard MCP server with two Context Protocol extensions:
+Want to earn money by contributing tools to the Context marketplace? Build a standard MCP server that uses the MCP 2025-06-18 Structured Output standard:
 
 1. **`outputSchema`** in tool definitions — JSON Schema describing your response
 2. **`structuredContent`** in responses — Machine-readable data matching the schema
+
+> **Note:** These are standard MCP features (optional in vanilla MCP). Context requires them for payment verification, dispute resolution, and AI code generation.
 
 ### Why These Matter
 
@@ -367,15 +369,15 @@ Want to earn money by contributing tools to the Context marketplace? Build a sta
 | `outputSchema` | AI agents use this to generate type-safe code. Context uses it for dispute resolution. |
 | `structuredContent` | Agents parse this for programmatic access. Text `content` is for humans. |
 
-### Example: Standard MCP Server with Context Extensions
+### Example: Standard MCP Server
 
-Build your server with the standard `@modelcontextprotocol/sdk` — just add the Context Protocol extensions:
+Build your server with the standard `@modelcontextprotocol/sdk`:
 
 ```typescript
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 
-// Define tools with outputSchema (Context Protocol extension)
+// Define tools with outputSchema (MCP 2025-06-18 standard, required by Context)
 const TOOLS = [{
   name: "get_gas_price",
   description: "Get current gas prices",
@@ -385,7 +387,7 @@ const TOOLS = [{
       chainId: { type: "number", description: "EVM chain ID" },
     },
   },
-  // 👇 Context Protocol extension: define your response structure
+  // 👇 MCP 2025-06-18 standard (required by Context)
   outputSchema: {
     type: "object",
     properties: {
@@ -409,9 +411,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const data = await fetchGasData(request.params.arguments.chainId);
   
-  // 👇 Context Protocol extension: include structuredContent
+  // 👇 MCP 2025-06-18 standard (required by Context)
   return {
-    content: [{ type: "text", text: JSON.stringify(data) }],
+    content: [{ type: "text", text: JSON.stringify(data) }],  // Backward compat
     structuredContent: data,  // Machine-readable, matches outputSchema
   };
 });

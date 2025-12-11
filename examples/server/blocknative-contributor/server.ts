@@ -3,8 +3,8 @@
  *
  * A standard MCP server built with @modelcontextprotocol/sdk.
  * Demonstrates how to build a Context Protocol compliant server with:
- * - outputSchema (Context Protocol extension for typed responses)
- * - structuredContent (machine-readable response data)
+ * - outputSchema (MCP 2025-06-18 standard, required by Context)
+ * - structuredContent (MCP 2025-06-18 standard, required by Context)
  */
 
 import "dotenv/config";
@@ -25,7 +25,7 @@ const BLOCKNATIVE_BASE_URL = "https://api.blocknative.com";
 //
 // Standard MCP tool definitions with:
 // - inputSchema: JSON Schema for tool arguments (MCP standard)
-// - outputSchema: JSON Schema for response data (Context Protocol extension)
+// - outputSchema: JSON Schema for response data (MCP 2025-06-18 standard, required by Context)
 //
 // The outputSchema is used by:
 // 1. AI agents to generate type-safe code
@@ -54,7 +54,7 @@ const TOOLS = [
         },
       },
     },
-    // Context Protocol extension: outputSchema defines the response structure
+    // MCP 2025-06-18 standard (required by Context for payment verification)
     outputSchema: {
       type: "object" as const,
       properties: {
@@ -308,8 +308,8 @@ server.setRequestHandler(
 
 function successResult(data: Record<string, unknown>): CallToolResult {
   return {
-    content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-    // Context Protocol extension: structuredContent for typed responses
+    content: [{ type: "text", text: JSON.stringify(data, null, 2) }],  // Backward compat
+    // MCP 2025-06-18 standard (required by Context for payment verification)
     structuredContent: data,
   };
 }

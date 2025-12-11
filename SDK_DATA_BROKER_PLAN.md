@@ -26,12 +26,12 @@ The original plan was to create helpers like `defineTool()` and `createContextSe
 
 They just need to:
 1. Use the standard `@modelcontextprotocol/sdk` to build their MCP server
-2. Add `outputSchema` to their tool definitions (Context Protocol extension)
-3. Add `structuredContent` to their responses (Context Protocol extension)
+2. Add `outputSchema` to their tool definitions (MCP 2025-06-18 standard, required by Context)
+3. Add `structuredContent` to their responses (MCP 2025-06-18 standard, required by Context)
 
 That's it. Two fields. No SDK dependency required.
 
-## Context Protocol Extensions
+## MCP 2025-06-18 Structured Output (Required by Context)
 
 ### 1. `outputSchema` (in tool definitions)
 
@@ -40,7 +40,7 @@ const TOOLS = [{
   name: "get_gas_price",
   description: "Get current gas prices",
   inputSchema: { /* standard MCP */ },
-  outputSchema: {  // 👈 Context Protocol extension
+  outputSchema: {  // 👈 MCP 2025-06-18 standard (required by Context)
     type: "object",
     properties: {
       gasPrice: { type: "number" },
@@ -60,7 +60,7 @@ const TOOLS = [{
 ```typescript
 return {
   content: [{ type: "text", text: JSON.stringify(data) }],
-  structuredContent: data,  // 👈 Context Protocol extension
+  structuredContent: data,  // 👈 MCP 2025-06-18 standard (required by Context)
 };
 ```
 

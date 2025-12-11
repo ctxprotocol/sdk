@@ -8,17 +8,17 @@ Enables AI agents to analyze orderbook depth, simulate price impact, track fundi
 
 ## Context Protocol Compliance
 
-This server is **Context Protocol compliant**, which means:
+This server is **Context Protocol compliant**. Context enforces the MCP 2025-06-18 Structured Output standard for all paid tools. While `outputSchema` and `structuredContent` are optional in vanilla MCP, Context requires them for payment verification and dispute resolution.
 
 1. **`outputSchema`** - Every tool defines its response structure (enables AI code generation)
 2. **`structuredContent`** - Every response includes machine-readable data (enables type-safe parsing)
 
 ```typescript
-// Tool definition with outputSchema (Context Protocol extension)
+// Tool definition with outputSchema (MCP 2025-06-18 standard, required by Context)
 const TOOLS = [{
   name: "get_orderbook",
   inputSchema: { /* ... */ },
-  outputSchema: {  // <-- Context Protocol extension
+  outputSchema: {  // MCP 2025-06-18 standard (required by Context)
     type: "object",
     properties: {
       coin: { type: "string" },
@@ -29,11 +29,11 @@ const TOOLS = [{
   },
 }];
 
-// Response with structuredContent (Context Protocol extension)
+// Response with structuredContent (MCP 2025-06-18 standard, required by Context)
 function successResult(data) {
   return {
-    content: [{ type: "text", text: JSON.stringify(data) }],
-    structuredContent: data,  // <-- Context Protocol extension
+    content: [{ type: "text", text: JSON.stringify(data) }],  // Backward compat
+    structuredContent: data,  // MCP 2025-06-18 standard (required by Context)
   };
 }
 ```
@@ -140,7 +140,7 @@ This server uses the standard MCP SDK (`@modelcontextprotocol/sdk`) with:
 - SSE transport for MCP communication
 - Hyperliquid API for market data
 
-The Context Protocol extensions (`outputSchema`, `structuredContent`) are simply additional fields - no special SDK required.
+The MCP 2025-06-18 Structured Output features (`outputSchema`, `structuredContent`) are simply additional fields - no special SDK required. Context requires these for payment verification and dispute resolution.
 
 ## 📚 API Reference
 

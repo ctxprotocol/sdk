@@ -4,17 +4,17 @@ A standard MCP server that exposes the Blocknative Gas Platform API. This exampl
 
 ## What Makes This Context Protocol Compliant?
 
-Context Protocol extends MCP with two key requirements:
+Context enforces the MCP 2025-06-18 Structured Output standard for all paid tools. While `outputSchema` and `structuredContent` are optional in vanilla MCP, Context requires them for payment verification and dispute resolution.
 
 1. **`outputSchema`** in tool definitions - Defines the structure of your response data
 2. **`structuredContent`** in responses - Machine-readable data matching the outputSchema
 
 ```typescript
-// Tool definition with outputSchema (Context Protocol extension)
+// Tool definition with outputSchema (MCP 2025-06-18 standard, required by Context)
 const TOOLS = [{
   name: "get_gas_price",
   inputSchema: { /* ... */ },
-  outputSchema: {  // <-- Context Protocol extension
+  outputSchema: {  // MCP 2025-06-18 standard (required by Context)
     type: "object",
     properties: {
       chainId: { type: "number" },
@@ -24,11 +24,11 @@ const TOOLS = [{
   },
 }];
 
-// Response with structuredContent (Context Protocol extension)
+// Response with structuredContent (MCP 2025-06-18 standard, required by Context)
 function successResult(data) {
   return {
-    content: [{ type: "text", text: JSON.stringify(data) }],
-    structuredContent: data,  // <-- Context Protocol extension
+    content: [{ type: "text", text: JSON.stringify(data) }],  // Backward compat
+    structuredContent: data,  // MCP 2025-06-18 standard (required by Context)
   };
 }
 ```
@@ -79,7 +79,7 @@ This server uses the standard MCP SDK (`@modelcontextprotocol/sdk`) with:
 - SSE transport for MCP communication
 - Blocknative API for gas data
 
-The Context Protocol extensions (`outputSchema`, `structuredContent`) are simply additional fields - no special SDK required.
+The MCP 2025-06-18 Structured Output features (`outputSchema`, `structuredContent`) are simply additional fields - no special SDK required. Context requires these for payment verification and dispute resolution.
 
 ## License
 
