@@ -27,7 +27,9 @@ const HYPERLIQUID_API_URL = "https://api.hyperliquid.xyz/info";
 //
 // Standard MCP tool definitions with:
 // - inputSchema: JSON Schema for tool arguments (MCP standard)
-// - outputSchema: JSON Schema for response data (MCP 2025-06-18 standard, required by Context)
+// - outputSchema: JSON Schema for response data (standard MCP feature, required by Context)
+//
+// See: https://modelcontextprotocol.io/specification/2025-11-25/server/tools#output-schema
 // ============================================================================
 
 const TOOLS = [
@@ -523,7 +525,7 @@ function errorResult(message: string): CallToolResult {
 function successResult(data: Record<string, unknown>): CallToolResult {
   return {
     content: [{ type: "text", text: JSON.stringify(data, null, 2) }],  // Backward compat
-    // MCP 2025-06-18 standard (required by Context for payment verification)
+    // Standard MCP feature (required by Context for payment verification)
     structuredContent: data,
   };
 }

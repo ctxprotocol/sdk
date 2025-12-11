@@ -355,12 +355,12 @@ try {
 
 ## Building MCP Servers (Tool Contributors)
 
-Want to earn money by contributing tools to the Context marketplace? Build a standard MCP server that uses the MCP 2025-06-18 Structured Output standard:
+Want to earn money by contributing tools to the Context marketplace? Build a standard MCP server that uses `outputSchema` and `structuredContent` from the [official MCP specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#output-schema):
 
 1. **`outputSchema`** in tool definitions — JSON Schema describing your response
 2. **`structuredContent`** in responses — Machine-readable data matching the schema
 
-> **Note:** These are standard MCP features (optional in vanilla MCP). Context requires them for payment verification, dispute resolution, and AI code generation.
+> **Note:** These are standard MCP features defined in the [MCP Tools specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#output-schema). While optional in vanilla MCP, Context requires them for payment verification, dispute resolution, and AI code generation.
 
 ### Why These Matter
 
@@ -377,7 +377,7 @@ Build your server with the standard `@modelcontextprotocol/sdk`:
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 
-// Define tools with outputSchema (MCP 2025-06-18 standard, required by Context)
+// Define tools with outputSchema (standard MCP feature, required by Context)
 const TOOLS = [{
   name: "get_gas_price",
   description: "Get current gas prices",
@@ -387,7 +387,7 @@ const TOOLS = [{
       chainId: { type: "number", description: "EVM chain ID" },
     },
   },
-  // 👇 MCP 2025-06-18 standard (required by Context)
+  // 👇 Standard MCP feature (see: modelcontextprotocol.io/specification)
   outputSchema: {
     type: "object",
     properties: {
@@ -411,7 +411,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const data = await fetchGasData(request.params.arguments.chainId);
   
-  // 👇 MCP 2025-06-18 standard (required by Context)
+  // 👇 Standard MCP feature (see: modelcontextprotocol.io/specification)
   return {
     content: [{ type: "text", text: JSON.stringify(data) }],  // Backward compat
     structuredContent: data,  // Machine-readable, matches outputSchema
