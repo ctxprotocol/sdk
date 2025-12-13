@@ -28,10 +28,12 @@ export * from "./wallet.js";
 
 // Protocol-specific context types
 export * from "./polymarket.js";
+export * from "./hyperliquid.js";
 
 // Re-import for composite type
 import type { WalletContext, ERC20Context } from "./wallet.js";
 import type { PolymarketContext } from "./polymarket.js";
+import type { HyperliquidContext } from "./hyperliquid.js";
 
 /**
  * Composite context for tools that need multiple data sources.
@@ -46,7 +48,8 @@ export interface UserContext {
   erc20?: ERC20Context;
   /** Polymarket positions and orders */
   polymarket?: PolymarketContext;
+  /** Hyperliquid perpetual positions and account data */
+  hyperliquid?: HyperliquidContext;
   // Future protocols:
-  // hyperliquid?: HyperliquidContext;
   // aave?: AaveContext;
 }

@@ -19,6 +19,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import express, { type Request, type Response } from "express";
+import type { HyperliquidContext } from "@ctxprotocol/sdk";
 
 const HYPERLIQUID_API_URL = "https://api.hyperliquid.xyz/info";
 
@@ -448,6 +449,92 @@ const TOOLS = [
       required: ["dailyVolumes", "summary"],
     },
   },
+
+  // ==================== PORTFOLIO ANALYSIS ====================
+  {
+    name: "analyze_my_positions",
+    description:
+      "Analyze your Hyperliquid perpetual positions with risk assessment, P&L breakdown, " +
+      "liquidation warnings, and personalized recommendations. Requires portfolio context.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        portfolio: {
+          type: "object",
+          description: "Your Hyperliquid portfolio context (injected by the Context app)",
+          properties: {
+            walletAddress: { type: "string" },
+            perpPositions: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  coin: { type: "string" },
+                  size: { type: "number" },
+                  entryPrice: { type: "number" },
+                  unrealizedPnl: { type: "number" },
+                  liquidationPrice: { type: "number" },
+                  positionValue: { type: "number" },
+                  leverage: { type: "object" },
+                  marginUsed: { type: "number" },
+                },
+              },
+            },
+            openOrders: { type: "array" },
+            spotBalances: { type: "array" },
+            accountSummary: { type: "object" },
+            fetchedAt: { type: "string" },
+          },
+          required: ["walletAddress", "perpPositions", "accountSummary"],
+        },
+        focus_coin: {
+          type: "string",
+          description: "Optional: specific coin to focus analysis on (e.g., 'ETH')",
+        },
+      },
+      required: ["portfolio"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        walletAddress: { type: "string" },
+        totalPositions: { type: "number" },
+        portfolioSummary: {
+          type: "object",
+          properties: {
+            accountValue: { type: "number" },
+            totalUnrealizedPnL: { type: "number" },
+            totalMarginUsed: { type: "number" },
+            marginUtilization: { type: "number", description: "Percentage of margin used" },
+            atRiskPositions: { type: "number", description: "Positions near liquidation" },
+          },
+        },
+        positionAnalyses: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              coin: { type: "string" },
+              direction: { type: "string", enum: ["LONG", "SHORT"] },
+              size: { type: "number" },
+              entryPrice: { type: "number" },
+              currentPrice: { type: "number" },
+              unrealizedPnL: { type: "number" },
+              unrealizedPnLPercent: { type: "number" },
+              leverage: { type: "number" },
+              liquidationPrice: { type: "number" },
+              distanceToLiquidation: { type: "number", description: "Percentage distance to liquidation" },
+              riskLevel: { type: "string", enum: ["low", "medium", "high", "critical"] },
+              recommendation: { type: "string" },
+            },
+          },
+        },
+        overallRecommendation: { type: "string" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["walletAddress", "totalPositions", "portfolioSummary", "positionAnalyses"],
+    },
+  },
 ];
 
 // ============================================================================
@@ -502,6 +589,8 @@ server.setRequestHandler(
           return await handleGetExchangeStats();
         case "get_volume_history":
           return await handleGetVolumeHistory(args);
+        case "analyze_my_positions":
+          return await handleAnalyzeMyPositions(args);
         default:
           return errorResult(`Unknown tool: ${name}`);
       }
@@ -1246,6 +1335,219 @@ async function handleGetVolumeHistory(args: Record<string, unknown> | undefined)
     },
     fetchedAt: new Date().toISOString(),
   });
+}
+
+async function handleAnalyzeMyPositions(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const portfolio = args?.portfolio as HyperliquidContext | undefined;
+  const focusCoin = args?.focus_coin as string | undefined;
+
+  if (!portfolio || !portfolio.perpPositions) {
+    return errorResult(
+      "Portfolio context is required. The Context app should inject this automatically."
+    );
+  }
+
+  const { perpPositions, accountSummary, walletAddress } = portfolio;
+
+  if (perpPositions.length === 0) {
+    return successResult({
+      walletAddress,
+      totalPositions: 0,
+      portfolioSummary: {
+        accountValue: accountSummary.accountValue,
+        totalUnrealizedPnL: 0,
+        totalMarginUsed: 0,
+        marginUtilization: 0,
+        atRiskPositions: 0,
+      },
+      positionAnalyses: [],
+      overallRecommendation: "You have no active Hyperliquid positions to analyze.",
+      fetchedAt: new Date().toISOString(),
+    });
+  }
+
+  // Filter to focus coin if specified
+  const positionsToAnalyze = focusCoin
+    ? perpPositions.filter((p) => p.coin.toUpperCase() === focusCoin.toUpperCase())
+    : perpPositions;
+
+  const positionAnalyses: Array<{
+    coin: string;
+    direction: "LONG" | "SHORT";
+    size: number;
+    entryPrice: number;
+    currentPrice: number;
+    unrealizedPnL: number;
+    unrealizedPnLPercent: number;
+    leverage: number;
+    liquidationPrice: number;
+    distanceToLiquidation: number;
+    riskLevel: "low" | "medium" | "high" | "critical";
+    recommendation: string;
+  }> = [];
+
+  let totalUnrealizedPnL = 0;
+  let atRiskPositions = 0;
+
+  for (const position of positionsToAnalyze) {
+    const direction: "LONG" | "SHORT" = position.size > 0 ? "LONG" : "SHORT";
+    const absSize = Math.abs(position.size);
+
+    // Calculate distance to liquidation
+    let distanceToLiquidation: number;
+    if (direction === "LONG") {
+      distanceToLiquidation = position.markPrice
+        ? ((position.markPrice - position.liquidationPrice) / position.markPrice) * 100
+        : 0;
+    } else {
+      distanceToLiquidation = position.markPrice
+        ? ((position.liquidationPrice - position.markPrice) / position.markPrice) * 100
+        : 0;
+    }
+
+    // Determine risk level
+    let riskLevel: "low" | "medium" | "high" | "critical";
+    if (distanceToLiquidation < 5) {
+      riskLevel = "critical";
+      atRiskPositions++;
+    } else if (distanceToLiquidation < 15) {
+      riskLevel = "high";
+      atRiskPositions++;
+    } else if (distanceToLiquidation < 30) {
+      riskLevel = "medium";
+    } else {
+      riskLevel = "low";
+    }
+
+    // Calculate PnL percentage
+    const unrealizedPnLPercent =
+      position.marginUsed > 0 ? (position.unrealizedPnl / position.marginUsed) * 100 : 0;
+
+    totalUnrealizedPnL += position.unrealizedPnl;
+
+    // Generate recommendation
+    const recommendation = generatePositionRecommendation({
+      direction,
+      unrealizedPnLPercent,
+      riskLevel,
+      distanceToLiquidation,
+      leverage: position.leverage.value,
+    });
+
+    positionAnalyses.push({
+      coin: position.coin,
+      direction,
+      size: absSize,
+      entryPrice: position.entryPrice,
+      currentPrice: position.markPrice || position.entryPrice,
+      unrealizedPnL: Number(position.unrealizedPnl.toFixed(2)),
+      unrealizedPnLPercent: Number(unrealizedPnLPercent.toFixed(2)),
+      leverage: position.leverage.value,
+      liquidationPrice: position.liquidationPrice,
+      distanceToLiquidation: Number(distanceToLiquidation.toFixed(2)),
+      riskLevel,
+      recommendation,
+    });
+  }
+
+  // Calculate margin utilization
+  const marginUtilization =
+    accountSummary.accountValue > 0
+      ? (accountSummary.totalMarginUsed / accountSummary.accountValue) * 100
+      : 0;
+
+  // Generate overall recommendation
+  const overallRecommendation = generateOverallRecommendation({
+    totalPositions: positionAnalyses.length,
+    totalUnrealizedPnL,
+    marginUtilization,
+    atRiskPositions,
+    accountValue: accountSummary.accountValue,
+  });
+
+  return successResult({
+    walletAddress,
+    totalPositions: positionAnalyses.length,
+    portfolioSummary: {
+      accountValue: Number(accountSummary.accountValue.toFixed(2)),
+      totalUnrealizedPnL: Number(totalUnrealizedPnL.toFixed(2)),
+      totalMarginUsed: Number(accountSummary.totalMarginUsed.toFixed(2)),
+      marginUtilization: Number(marginUtilization.toFixed(2)),
+      atRiskPositions,
+    },
+    positionAnalyses,
+    overallRecommendation,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+function generatePositionRecommendation(params: {
+  direction: "LONG" | "SHORT";
+  unrealizedPnLPercent: number;
+  riskLevel: string;
+  distanceToLiquidation: number;
+  leverage: number;
+}): string {
+  const { direction, unrealizedPnLPercent, riskLevel, distanceToLiquidation, leverage } = params;
+  const parts: string[] = [];
+
+  // Risk warnings
+  if (riskLevel === "critical") {
+    parts.push(
+      `🚨 CRITICAL: Only ${distanceToLiquidation.toFixed(1)}% from liquidation! Consider adding margin or reducing position.`
+    );
+  } else if (riskLevel === "high") {
+    parts.push(`⚠️ High risk: ${distanceToLiquidation.toFixed(1)}% from liquidation.`);
+  }
+
+  // PnL commentary
+  if (unrealizedPnLPercent > 50) {
+    parts.push(`📈 Strong gains (+${unrealizedPnLPercent.toFixed(1)}%). Consider taking partial profit.`);
+  } else if (unrealizedPnLPercent < -30) {
+    parts.push(`📉 Significant loss (${unrealizedPnLPercent.toFixed(1)}%). Evaluate if thesis still holds.`);
+  }
+
+  // Leverage warning
+  if (leverage > 20) {
+    parts.push(`High leverage (${leverage}x) increases liquidation risk.`);
+  }
+
+  return parts.length > 0 ? parts.join(" ") : `${direction} position within normal parameters.`;
+}
+
+function generateOverallRecommendation(params: {
+  totalPositions: number;
+  totalUnrealizedPnL: number;
+  marginUtilization: number;
+  atRiskPositions: number;
+  accountValue: number;
+}): string {
+  const { totalUnrealizedPnL, marginUtilization, atRiskPositions, accountValue } = params;
+  const parts: string[] = [];
+
+  // Account summary
+  const pnlPercent = accountValue > 0 ? (totalUnrealizedPnL / accountValue) * 100 : 0;
+  parts.push(
+    `Account value: $${accountValue.toFixed(2)}, PnL: ${pnlPercent >= 0 ? "+" : ""}${pnlPercent.toFixed(2)}%.`
+  );
+
+  // Risk warnings
+  if (atRiskPositions > 0) {
+    parts.push(`🚨 ${atRiskPositions} position(s) at elevated liquidation risk!`);
+  }
+
+  // Margin utilization
+  if (marginUtilization > 80) {
+    parts.push(
+      `⚠️ High margin utilization (${marginUtilization.toFixed(1)}%). Limited capacity for new positions.`
+    );
+  } else if (marginUtilization > 50) {
+    parts.push(`Margin utilization: ${marginUtilization.toFixed(1)}%.`);
+  }
+
+  return parts.join(" ");
 }
 
 // ============================================================================
