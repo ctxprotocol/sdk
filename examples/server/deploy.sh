@@ -41,11 +41,23 @@ for PROJECT in "${PROJECTS[@]}"; do
     echo "✅ ${PROJECT} synced."
 done
 
+# --- Upload setup script ---
+echo "--------------------------------------------------"
+echo "📜 Uploading setup-servers.sh..."
+rsync -avz \
+  "${SCRIPT_DIR}/setup-servers.sh" \
+  "${SERVER_USER_HOST}:${REMOTE_BASE_DIR}/setup-servers.sh"
+
+# Make it executable on the remote server
+ssh "${SERVER_USER_HOST}" "chmod +x ${REMOTE_BASE_DIR}/setup-servers.sh"
+echo "✅ setup-servers.sh uploaded and made executable."
+
 echo "--------------------------------------------------"
 echo "🎉 All files uploaded successfully!"
+echo ""
 echo "   Next steps:"
-echo "   1. SSH into server"
-echo "   2. Go to ~/mcp-servers/<project>"
-echo "   3. Run 'pnpm install'"
-echo "   4. Create .env files"
-echo "   5. Start with PM2"
+echo "   1. SSH into server: ssh ${SERVER_USER_HOST}"
+echo "   2. Run: cd ~/mcp-servers && ./setup-servers.sh"
+echo ""
+echo "   Or run directly:"
+echo "   ssh ${SERVER_USER_HOST} 'cd ~/mcp-servers && ./setup-servers.sh'"
