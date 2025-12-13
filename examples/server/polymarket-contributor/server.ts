@@ -20,6 +20,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import express, { type Request, type Response } from "express";
+import type { PolymarketContext, PolymarketPosition } from "@ctxprotocol/sdk";
 
 // ============================================================================
 // API ENDPOINTS
@@ -2299,36 +2300,7 @@ interface TradeResponse {
   timestamp?: string;
 }
 
-/**
- * A single Polymarket position (from user's portfolio context)
- */
-interface PolymarketPosition {
-  conditionId: string;
-  tokenId: string;
-  outcome: "YES" | "NO";
-  shares: number;
-  avgEntryPrice: number;
-  marketTitle?: string;
-}
-
-/**
- * Complete Polymarket portfolio context (injected by the app)
- */
-interface PolymarketContext {
-  walletAddress: string;
-  positions: PolymarketPosition[];
-  openOrders: Array<{
-    orderId: string;
-    conditionId: string;
-    side: "BUY" | "SELL";
-    outcome: "YES" | "NO";
-    price: number;
-    size: number;
-    filled: number;
-  }>;
-  totalValue?: number;
-  fetchedAt: string;
-}
+// PolymarketContext and PolymarketPosition are imported from @ctxprotocol/sdk
 
 // ============================================================================
 // EXPRESS SERVER
