@@ -4,6 +4,8 @@
 
 A "giga-brained" MCP server for Binance that provides **actionable trading intelligence**, not just data visualization.
 
+> **📖 Want to build portfolio analysis tools?** See the [Context Injection Guide](../../../docs/context-injection.md) for the architecture.
+
 ## 🎯 Philosophy
 
 Traditional trading tools show you *what happened*. This MCP tells you *what's about to happen*.

@@ -2,6 +2,8 @@
 
 The world's most comprehensive Hyperliquid MCP server. Built with the standard `@modelcontextprotocol/sdk`.
 
+> **📖 Building portfolio analysis tools?** See the [Context Injection Guide](../../../docs/context-injection.md) to learn how user portfolio data is automatically injected into your tools.
+
 Enables AI agents to analyze orderbook depth, simulate price impact, track funding rates, monitor staking flows, and answer complex questions like:
 
 > "The HyperLiquid team sent 609,108 HYPE ($20.9M) to Flowdesk. Can the market absorb this sell pressure? By how much would the price drop?"

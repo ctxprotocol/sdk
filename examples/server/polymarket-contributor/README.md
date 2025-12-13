@@ -2,6 +2,8 @@
 
 A "giga-brained" MCP server for Polymarket prediction market analysis. Provides whale cost analysis, market efficiency checks, smart money tracking, and arbitrage detection.
 
+> **📖 Building portfolio analysis tools?** See the [Context Injection Guide](../../../docs/context-injection.md) to learn how user portfolio data is automatically injected into your tools.
+
 ## Features
 
 ### Tier 1: Intelligence Tools (High Value)

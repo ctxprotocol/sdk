@@ -2,6 +2,8 @@
 
 A standard MCP server that exposes the Blocknative Gas Platform API. This example demonstrates how to build a **Context Protocol compliant** MCP server.
 
+> **📖 Want to build portfolio analysis tools?** See the [Context Injection Guide](../../../docs/context-injection.md) for the architecture.
+
 ## What Makes This Context Protocol Compliant?
 
 Context requires `outputSchema` and `structuredContent` from the [official MCP specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#output-schema) for all paid tools. While these are optional in vanilla MCP, Context requires them for payment verification and dispute resolution.

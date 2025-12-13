@@ -369,6 +369,17 @@ Want to earn money by contributing tools to the Context marketplace? Build a sta
 | `outputSchema` | AI agents use this to generate type-safe code. Context uses it for dispute resolution. |
 | `structuredContent` | Agents parse this for programmatic access. Text `content` is for humans. |
 
+### Context Injection (Portfolio Analysis Tools)
+
+Building tools that analyze user portfolios? Context automatically injects user portfolio data into your tools—no authentication required.
+
+**📖 Read the full guide: [Context Injection Architecture](./docs/context-injection.md)**
+
+Key benefits:
+- **No Auth Required** — User data is injected automatically from their linked wallets
+- **Type-Safe** — Use SDK types like `PolymarketContext`, `HyperliquidContext`
+- **Focus on Analysis** — You receive structured data, you provide insights
+
 ### Example: Standard MCP Server
 
 Build your server with the standard `@modelcontextprotocol/sdk`:
@@ -445,6 +456,15 @@ When you execute a tool:
 2. **90%** goes to the tool developer
 3. **10%** goes to the protocol
 4. Tool executes and returns results
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Context Injection Guide](./docs/context-injection.md) | Architecture guide for building portfolio analysis tools with automatic user data injection |
+| [Polymarket Example](./examples/server/polymarket-contributor) | Complete MCP server for Polymarket intelligence |
+| [Hyperliquid Example](./examples/server/hyperliquid-contributor) | Complete MCP server for Hyperliquid analytics |
+| [Blocknative Example](./examples/server/blocknative-contributor) | Simple gas price MCP server |
 
 ## Links
 
