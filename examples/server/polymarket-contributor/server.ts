@@ -1087,7 +1087,7 @@ async function handleCheckMarketEfficiency(
   }
 
   // Get market data
-  let market: GammaMarket;
+  let market: GammaMarket | undefined;
 
   if (slug) {
     const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
@@ -1096,11 +1096,32 @@ async function handleCheckMarketEfficiency(
     }
     market = event.markets[0];
   } else {
-    const markets = (await fetchGamma(`/markets?id=${conditionId}`)) as GammaMarket[];
-    if (!markets || markets.length === 0) {
-      return errorResult(`Market not found: ${conditionId}`);
+    // Query by conditionId - need to search through events since direct query is unreliable
+    // First try to find the market in active events
+    const events = (await fetchGamma(`/events?closed=false&limit=100`)) as GammaEvent[];
+    for (const event of events) {
+      const found = event.markets?.find(m => m.conditionId === conditionId);
+      if (found) {
+        market = found;
+        break;
+      }
     }
-    market = markets[0];
+    
+    // If not found in active events, try closed events
+    if (!market) {
+      const closedEvents = (await fetchGamma(`/events?closed=true&limit=50`)) as GammaEvent[];
+      for (const event of closedEvents) {
+        const found = event.markets?.find(m => m.conditionId === conditionId);
+        if (found) {
+          market = found;
+          break;
+        }
+      }
+    }
+    
+    if (!market) {
+      return errorResult(`Market not found for conditionId: ${conditionId}. Try using 'slug' parameter instead.`);
+    }
   }
 
   // Get prices for all outcome tokens
@@ -1118,30 +1139,47 @@ async function handleCheckMarketEfficiency(
   const noToken = tokenIds[1];
 
   if (yesToken && noToken) {
-    let yesPrice = 0.5;
-    let noPrice = 0.5;
+    let yesPrice = 0;
+    let noPrice = 0;
+    let usedClobPrices = false;
 
     // Try to get live prices from CLOB API (correct format: array of objects)
     try {
       const pricesResp = (await fetchClobPost("/prices", [
         { token_id: yesToken, side: "BUY" },
         { token_id: noToken, side: "BUY" },
-      ])) as Record<string, string>;
+      ])) as Record<string, { BUY?: string } | string>;
 
-      // Response format: { "tokenId": "0.95" }
-      if (pricesResp[yesToken]) yesPrice = Number(pricesResp[yesToken]);
-      if (pricesResp[noToken]) noPrice = Number(pricesResp[noToken]);
+      // CLOB API response format: { "tokenId": { "BUY": "0.95" } } or { "tokenId": "0.95" }
+      const yesData = pricesResp[yesToken];
+      const noData = pricesResp[noToken];
+      
+      if (yesData) {
+        yesPrice = typeof yesData === "object" && yesData.BUY 
+          ? Number(yesData.BUY) 
+          : Number(yesData);
+        usedClobPrices = !isNaN(yesPrice) && yesPrice > 0;
+      }
+      if (noData) {
+        noPrice = typeof noData === "object" && noData.BUY 
+          ? Number(noData.BUY) 
+          : Number(noData);
+      }
     } catch {
-      // CLOB prices unavailable (market may be settled), use Gamma API prices
-      if (gammaPrices[0]) yesPrice = parseFloat(gammaPrices[0]);
-      if (gammaPrices[1]) noPrice = parseFloat(gammaPrices[1]);
+      // CLOB API error - will fall back to Gamma prices
     }
 
-    // If prices are still 0 (empty response), fall back to Gamma prices
-    if (yesPrice === 0 && noPrice === 0 && gammaPrices.length >= 2) {
-      yesPrice = parseFloat(gammaPrices[0]) || 0.5;
-      noPrice = parseFloat(gammaPrices[1]) || 0.5;
+    // Fall back to Gamma API prices if CLOB failed or returned invalid data
+    if (!usedClobPrices || isNaN(yesPrice) || isNaN(noPrice) || (yesPrice === 0 && noPrice === 0)) {
+      if (gammaPrices.length >= 2) {
+        yesPrice = parseFloat(gammaPrices[0]) || 0;
+        noPrice = parseFloat(gammaPrices[1]) || 0;
+      }
     }
+
+    // Final fallback to 0.5 if still no valid prices
+    if (isNaN(yesPrice) || yesPrice === 0) yesPrice = 0.5;
+    if (isNaN(noPrice) || noPrice === 0) noPrice = 0.5;
 
     outcomes.push(
       { name: "YES", tokenId: yesToken, price: yesPrice, impliedProbability: yesPrice * 100 },
@@ -1377,8 +1415,17 @@ async function handleFindCorrelatedMarkets(
   if (slug) {
     sourceEvent = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
   } else {
-    const events = (await fetchGamma(`/events?id=${conditionId}`)) as GammaEvent[];
-    sourceEvent = events?.[0];
+    // Query market by conditionId first, then get its event
+    const markets = (await fetchGamma(`/markets?condition_id=${conditionId}`)) as Array<GammaMarket & { eventSlug?: string }>;
+    if (markets?.[0]?.eventSlug) {
+      sourceEvent = (await fetchGamma(`/events/slug/${markets[0].eventSlug}`)) as GammaEvent;
+    } else {
+      // Fallback: search in active events for a market with this conditionId
+      const events = (await fetchGamma(`/events?closed=false&limit=100`)) as GammaEvent[];
+      sourceEvent = events.find(e => 
+        e.markets?.some(m => m.conditionId === conditionId)
+      ) as GammaEvent;
+    }
   }
 
   if (!sourceEvent) {
@@ -1504,8 +1551,17 @@ async function handleCheckMarketRules(
   if (slug) {
     event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
   } else {
-    const events = (await fetchGamma(`/events?id=${conditionId}`)) as GammaEvent[];
-    event = events?.[0];
+    // Query market by conditionId first, then get its event
+    const markets = (await fetchGamma(`/markets?condition_id=${conditionId}`)) as Array<GammaMarket & { eventSlug?: string }>;
+    if (markets?.[0]?.eventSlug) {
+      event = (await fetchGamma(`/events/slug/${markets[0].eventSlug}`)) as GammaEvent;
+    } else {
+      // Fallback: search in active events
+      const events = (await fetchGamma(`/events?closed=false&limit=100`)) as GammaEvent[];
+      event = events.find(e => 
+        e.markets?.some(m => m.conditionId === conditionId)
+      ) as GammaEvent;
+    }
   }
 
   if (!event) {
@@ -1661,21 +1717,35 @@ async function handleFindArbitrageOpportunities(
           const pricesResp = (await fetchClobPost("/prices", [
             { token_id: yesToken, side: "BUY" },
             { token_id: noToken, side: "BUY" },
-          ])) as Record<string, string>;
+          ])) as Record<string, { BUY?: string } | string>;
 
-          if (pricesResp[yesToken]) yesPrice = Number(pricesResp[yesToken]);
-          if (pricesResp[noToken]) noPrice = Number(pricesResp[noToken]);
+          // CLOB API response format: { "tokenId": { "BUY": "0.95" } }
+          const yesData = pricesResp[yesToken];
+          const noData = pricesResp[noToken];
+          
+          if (yesData) {
+            yesPrice = typeof yesData === "object" && yesData.BUY 
+              ? Number(yesData.BUY) 
+              : Number(yesData);
+          }
+          if (noData) {
+            noPrice = typeof noData === "object" && noData.BUY 
+              ? Number(noData.BUY) 
+              : Number(noData);
+          }
         } catch {
           // CLOB unavailable, use Gamma prices
         }
 
-        // Fall back to Gamma API prices if CLOB returns empty
-        if (yesPrice === 0 && noPrice === 0 && gammaPrices.length >= 2) {
-          yesPrice = parseFloat(gammaPrices[0]) || 0;
-          noPrice = parseFloat(gammaPrices[1]) || 0;
+        // Fall back to Gamma API prices if CLOB returns invalid data
+        if (isNaN(yesPrice) || isNaN(noPrice) || (yesPrice === 0 && noPrice === 0)) {
+          if (gammaPrices.length >= 2) {
+            yesPrice = parseFloat(gammaPrices[0]) || 0;
+            noPrice = parseFloat(gammaPrices[1]) || 0;
+          }
         }
 
-        if (yesPrice === 0 && noPrice === 0) continue;
+        if (yesPrice === 0 && noPrice === 0 || isNaN(yesPrice) || isNaN(noPrice)) continue;
 
         const sumOfPrices = yesPrice + noPrice;
         const vig = sumOfPrices - 1;
