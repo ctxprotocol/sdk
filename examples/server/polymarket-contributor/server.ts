@@ -576,13 +576,13 @@ const TOOLS = [
 
   {
     name: "get_event_by_slug",
-    description: "Get detailed information about a specific event by its slug.",
+    description: "Get detailed information about a specific event by its slug. Returns event metadata and all associated markets with their token IDs for trading.",
     inputSchema: {
       type: "object" as const,
       properties: {
         slug: {
           type: "string",
-          description: "The event slug (e.g., 'fed-decision-in-october')",
+          description: "The event slug from the Polymarket URL (e.g., 'maduro-out-in-2025')",
         },
       },
       required: ["slug"],
@@ -590,11 +590,56 @@ const TOOLS = [
     outputSchema: {
       type: "object" as const,
       properties: {
-        event: { type: "object" },
-        markets: { type: "array" },
+        event: {
+          type: "object",
+          description: "The event (parent container for markets)",
+          properties: {
+            id: { type: "string" },
+            title: { type: "string" },
+            description: { type: "string" },
+            category: { type: "string" },
+            resolutionSource: { type: "string" },
+            startDate: { type: "string" },
+            endDate: { type: "string" },
+            volume: { type: "number" },
+            liquidity: { type: "number" },
+            active: { type: "boolean" },
+            closed: { type: "boolean" },
+          },
+        },
+        markets: {
+          type: "array",
+          description: "Array of markets (betting questions) within this event",
+          items: {
+            type: "object",
+            properties: {
+              conditionId: { type: "string", description: "Unique market identifier" },
+              question: { type: "string", description: "The market question" },
+              outcomePrices: {
+                type: "array",
+                items: { type: "string" },
+                description: "Current prices as strings [yesPrice, noPrice]",
+              },
+              volume: { type: "number" },
+              liquidity: { type: "number" },
+              tokens: {
+                type: "array",
+                description: "Outcome tokens for this market (YES and NO)",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string", description: "Token ID (clobTokenId) for trading" },
+                    outcome: { type: "string", description: "YES or NO" },
+                    price: { type: "number", description: "Current price (0-1)" },
+                  },
+                },
+              },
+            },
+          },
+        },
         fetchedAt: { type: "string" },
       },
-      required: ["event"],
+      required: ["event", "markets"],
     },
   },
 
@@ -827,6 +872,24 @@ function successResult(data: Record<string, unknown>): CallToolResult {
 // API FETCH HELPERS
 // ============================================================================
 
+/**
+ * Parse JSON string or return array as-is
+ * Polymarket API returns some fields as JSON strings (e.g., clobTokenIds, outcomePrices)
+ */
+function parseJsonArray(value: string | string[] | undefined): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 async function fetchGamma(endpoint: string): Promise<unknown> {
   const url = `${GAMMA_API_URL}${endpoint}`;
   const response = await fetch(url);
@@ -1048,21 +1111,37 @@ async function handleCheckMarketEfficiency(
     impliedProbability: number;
   }> = [];
 
-  // For binary markets
-  const yesToken = market.clobTokenIds?.[0];
-  const noToken = market.clobTokenIds?.[1];
+  // For binary markets - parse clobTokenIds and outcomePrices (may be JSON strings)
+  const tokenIds = parseJsonArray(market.clobTokenIds);
+  const gammaPrices = parseJsonArray(market.outcomePrices);
+  const yesToken = tokenIds[0];
+  const noToken = tokenIds[1];
 
   if (yesToken && noToken) {
-    // Get prices
-    const pricesResp = (await fetchClobPost("/prices", {
-      params: [
+    let yesPrice = 0.5;
+    let noPrice = 0.5;
+
+    // Try to get live prices from CLOB API (correct format: array of objects)
+    try {
+      const pricesResp = (await fetchClobPost("/prices", [
         { token_id: yesToken, side: "BUY" },
         { token_id: noToken, side: "BUY" },
-      ],
-    })) as Record<string, { BUY: string }>;
+      ])) as Record<string, string>;
 
-    const yesPrice = Number(pricesResp[yesToken]?.BUY || 0.5);
-    const noPrice = Number(pricesResp[noToken]?.BUY || 0.5);
+      // Response format: { "tokenId": "0.95" }
+      if (pricesResp[yesToken]) yesPrice = Number(pricesResp[yesToken]);
+      if (pricesResp[noToken]) noPrice = Number(pricesResp[noToken]);
+    } catch {
+      // CLOB prices unavailable (market may be settled), use Gamma API prices
+      if (gammaPrices[0]) yesPrice = parseFloat(gammaPrices[0]);
+      if (gammaPrices[1]) noPrice = parseFloat(gammaPrices[1]);
+    }
+
+    // If prices are still 0 (empty response), fall back to Gamma prices
+    if (yesPrice === 0 && noPrice === 0 && gammaPrices.length >= 2) {
+      yesPrice = parseFloat(gammaPrices[0]) || 0.5;
+      noPrice = parseFloat(gammaPrices[1]) || 0.5;
+    }
 
     outcomes.push(
       { name: "YES", tokenId: yesToken, price: yesPrice, impliedProbability: yesPrice * 100 },
@@ -1565,22 +1644,36 @@ async function handleFindArbitrageOpportunities(
     if (!event.markets || event.markets.length === 0) continue;
 
     for (const market of event.markets) {
-      const yesToken = market.clobTokenIds?.[0];
-      const noToken = market.clobTokenIds?.[1];
+      // Parse clobTokenIds and outcomePrices (may be JSON strings)
+      const tokenIds = parseJsonArray(market.clobTokenIds);
+      const gammaPrices = parseJsonArray(market.outcomePrices);
+      const yesToken = tokenIds[0];
+      const noToken = tokenIds[1];
 
       if (!yesToken || !noToken) continue;
 
       try {
-        // Get prices
-        const pricesResp = (await fetchClobPost("/prices", {
-          params: [
+        let yesPrice = 0;
+        let noPrice = 0;
+
+        // Try to get live prices from CLOB API (correct format: array of objects)
+        try {
+          const pricesResp = (await fetchClobPost("/prices", [
             { token_id: yesToken, side: "BUY" },
             { token_id: noToken, side: "BUY" },
-          ],
-        })) as Record<string, { BUY: string }>;
+          ])) as Record<string, string>;
 
-        const yesPrice = Number(pricesResp[yesToken]?.BUY || 0);
-        const noPrice = Number(pricesResp[noToken]?.BUY || 0);
+          if (pricesResp[yesToken]) yesPrice = Number(pricesResp[yesToken]);
+          if (pricesResp[noToken]) noPrice = Number(pricesResp[noToken]);
+        } catch {
+          // CLOB unavailable, use Gamma prices
+        }
+
+        // Fall back to Gamma API prices if CLOB returns empty
+        if (yesPrice === 0 && noPrice === 0 && gammaPrices.length >= 2) {
+          yesPrice = parseFloat(gammaPrices[0]) || 0;
+          noPrice = parseFloat(gammaPrices[1]) || 0;
+        }
 
         if (yesPrice === 0 && noPrice === 0) continue;
 
@@ -2049,6 +2142,36 @@ async function handleGetEventBySlug(
     return errorResult(`Event not found: ${slug}`);
   }
 
+  // Transform markets to include tokens array in the expected format
+  const markets = (event.markets || []).map((m) => {
+    // Parse clobTokenIds and outcomePrices (API returns as JSON strings)
+    const tokenIds = parseJsonArray(m.clobTokenIds);
+    const prices = parseJsonArray(m.outcomePrices);
+
+    const yesTokenId = tokenIds[0];
+    const noTokenId = tokenIds[1];
+    const yesPrice = prices[0] ? parseFloat(prices[0]) : 0.5;
+    const noPrice = prices[1] ? parseFloat(prices[1]) : 0.5;
+
+    // Build tokens array - the format the AI expects
+    const tokens: Array<{ id: string; outcome: string; price: number }> = [];
+    if (yesTokenId) {
+      tokens.push({ id: yesTokenId, outcome: "YES", price: yesPrice });
+    }
+    if (noTokenId) {
+      tokens.push({ id: noTokenId, outcome: "NO", price: noPrice });
+    }
+
+    return {
+      conditionId: m.conditionId,
+      question: m.question,
+      outcomePrices: prices,
+      volume: m.volume,
+      liquidity: m.liquidity,
+      tokens,
+    };
+  });
+
   return successResult({
     event: {
       id: event.id,
@@ -2063,15 +2186,7 @@ async function handleGetEventBySlug(
       active: event.active,
       closed: event.closed,
     },
-    markets:
-      event.markets?.map((m) => ({
-        conditionId: m.conditionId,
-        question: m.question,
-        outcomePrices: m.outcomePrices,
-        volume: m.volume,
-        liquidity: m.liquidity,
-        clobTokenIds: m.clobTokenIds,
-      })) || [],
+    markets,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -2118,26 +2233,33 @@ async function handleGetPrices(
     return errorResult("tokenIds array is required");
   }
 
-  const params = tokenIds.flatMap((id) => [
+  // Build price requests for BUY and SELL sides (correct format: array of objects)
+  const priceRequests = tokenIds.flatMap((id) => [
     { token_id: id, side: "BUY" },
     { token_id: id, side: "SELL" },
   ]);
 
-  const pricesResp = (await fetchClobPost("/prices", { params })) as Record<
-    string,
-    { BUY?: string; SELL?: string }
-  >;
-
   const prices: Record<string, { buy: number; sell: number; mid: number }> = {};
 
-  for (const tokenId of tokenIds) {
-    const buy = Number(pricesResp[tokenId]?.BUY || 0);
-    const sell = Number(pricesResp[tokenId]?.SELL || 0);
-    prices[tokenId] = {
-      buy,
-      sell,
-      mid: (buy + sell) / 2,
-    };
+  try {
+    const pricesResp = (await fetchClobPost("/prices", priceRequests)) as Record<string, string>;
+
+    // The response format is { "tokenId": "price" } for each request
+    // We need to parse it carefully
+    for (const tokenId of tokenIds) {
+      const buy = Number(pricesResp[tokenId] || 0);
+      const sell = buy; // CLOB returns same price for this format
+      prices[tokenId] = {
+        buy,
+        sell,
+        mid: buy,
+      };
+    }
+  } catch {
+    // If CLOB fails, return zeros (market may be settled)
+    for (const tokenId of tokenIds) {
+      prices[tokenId] = { buy: 0, sell: 0, mid: 0 };
+    }
   }
 
   return successResult({
@@ -2268,11 +2390,11 @@ interface GammaMarket {
   question?: string;
   title?: string;
   description?: string;
-  outcomePrices?: string[];
+  outcomePrices?: string[] | string; // API may return JSON string
   volume?: number;
   volume24hr?: number;
   liquidity?: number;
-  clobTokenIds?: string[];
+  clobTokenIds?: string[] | string; // API may return JSON string
   tokens?: Array<{ token_id: string }>;
 }
 

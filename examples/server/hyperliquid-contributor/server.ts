@@ -1600,7 +1600,7 @@ function fetchDelegations(user: string): Promise<Array<{ validator: string; amou
 }
 
 function fetchPerpsAtOiCap(): Promise<string[]> {
-  return hyperliquidPost({ type: "perpsAtOpenInterestCaps" }) as Promise<string[]>;
+  return hyperliquidPost({ type: "perpsAtOpenInterestCap" }) as Promise<string[]>;
 }
 
 function fetchCandleSnapshot(coin: string, interval: string, startTime: number, endTime: number): Promise<Array<{ t: number; o: string; h: string; l: string; c: string; v: string }>> {
