@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script uploads the Blocknative and Hyperliquid MCP servers
+# This script uploads the MCP server examples to the deployment server
 # Usage: ./deploy.sh
 
 echo "🚀 Starting deployment to Hostinger KVM2..."
@@ -13,8 +13,8 @@ REMOTE_BASE_DIR="~/mcp-servers"
 # Assumes this script is inside /examples/server/
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
-# Define the two project directories
-PROJECTS=("blocknative-contributor" "hyperliquid-contributor")
+# Define the project directories to deploy
+PROJECTS=("blocknative-contributor" "hyperliquid-contributor" "polymarket-contributor")
 
 for PROJECT in "${PROJECTS[@]}"; do
     SOURCE_DIR="${SCRIPT_DIR}/${PROJECT}"

@@ -448,6 +448,93 @@ const TOOLS = [
     },
   },
 
+  {
+    name: "analyze_my_positions",
+    description:
+      "Analyze your Polymarket positions with exit liquidity simulation, P&L calculation, " +
+      "and personalized recommendations. Requires portfolio context to be injected by the app.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        portfolio: {
+          type: "object",
+          description: "Your Polymarket portfolio context (injected by the Context app)",
+          properties: {
+            walletAddress: { type: "string" },
+            positions: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  conditionId: { type: "string" },
+                  tokenId: { type: "string" },
+                  outcome: { type: "string", enum: ["YES", "NO"] },
+                  shares: { type: "number" },
+                  avgEntryPrice: { type: "number" },
+                  marketTitle: { type: "string" },
+                },
+              },
+            },
+            openOrders: { type: "array" },
+            totalValue: { type: "number" },
+            fetchedAt: { type: "string" },
+          },
+          required: ["walletAddress", "positions"],
+        },
+        focus_market: {
+          type: "string",
+          description: "Optional: specific conditionId to focus analysis on",
+        },
+      },
+      required: ["portfolio"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        walletAddress: { type: "string" },
+        totalPositions: { type: "number" },
+        portfolioSummary: {
+          type: "object",
+          properties: {
+            totalValue: { type: "number" },
+            totalUnrealizedPnL: { type: "number" },
+            totalUnrealizedPnLPercent: { type: "number" },
+            riskyPositions: { type: "number", description: "Positions with poor exit liquidity" },
+          },
+        },
+        positionAnalyses: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              conditionId: { type: "string" },
+              marketTitle: { type: "string" },
+              outcome: { type: "string" },
+              shares: { type: "number" },
+              avgEntryPrice: { type: "number" },
+              currentPrice: { type: "number" },
+              unrealizedPnL: { type: "number" },
+              unrealizedPnLPercent: { type: "number" },
+              positionValue: { type: "number" },
+              exitLiquidity: {
+                type: "object",
+                properties: {
+                  estimatedSlippage: { type: "number" },
+                  canExitCleanly: { type: "boolean" },
+                  liquidityScore: { type: "string" },
+                },
+              },
+              recommendation: { type: "string" },
+            },
+          },
+        },
+        overallRecommendation: { type: "string" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["walletAddress", "totalPositions", "portfolioSummary", "positionAnalyses"],
+    },
+  },
+
   // ==================== TIER 2: RAW DATA TOOLS ====================
 
   {
@@ -691,6 +778,8 @@ server.setRequestHandler(
           return await handleFindArbitrageOpportunities(args);
         case "discover_trending_markets":
           return await handleDiscoverTrendingMarkets(args);
+        case "analyze_my_positions":
+          return await handleAnalyzeMyPositions(args);
 
         // Tier 2: Raw Data Tools
         case "get_events":
@@ -1623,6 +1712,291 @@ async function handleDiscoverTrendingMarkets(
   });
 }
 
+/**
+ * Analyze user's Polymarket positions with personalized recommendations
+ *
+ * This tool receives portfolio context from the Context app (client-side fetched)
+ * and combines it with live market data to provide actionable insights.
+ */
+async function handleAnalyzeMyPositions(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const portfolio = args?.portfolio as PolymarketContext | undefined;
+  const focusMarket = args?.focus_market as string | undefined;
+
+  if (!portfolio || !portfolio.positions) {
+    return errorResult(
+      "Portfolio context is required. The Context app should inject this automatically."
+    );
+  }
+
+  if (portfolio.positions.length === 0) {
+    return successResult({
+      walletAddress: portfolio.walletAddress,
+      totalPositions: 0,
+      portfolioSummary: {
+        totalValue: 0,
+        totalUnrealizedPnL: 0,
+        totalUnrealizedPnLPercent: 0,
+        riskyPositions: 0,
+      },
+      positionAnalyses: [],
+      overallRecommendation: "You have no active Polymarket positions to analyze.",
+      fetchedAt: new Date().toISOString(),
+    });
+  }
+
+  // Filter to focus market if specified
+  const positionsToAnalyze = focusMarket
+    ? portfolio.positions.filter((p) => p.conditionId === focusMarket)
+    : portfolio.positions;
+
+  const positionAnalyses: Array<{
+    conditionId: string;
+    marketTitle: string;
+    outcome: string;
+    shares: number;
+    avgEntryPrice: number;
+    currentPrice: number;
+    unrealizedPnL: number;
+    unrealizedPnLPercent: number;
+    positionValue: number;
+    exitLiquidity: {
+      estimatedSlippage: number;
+      canExitCleanly: boolean;
+      liquidityScore: string;
+    };
+    recommendation: string;
+  }> = [];
+
+  let totalValue = 0;
+  let totalUnrealizedPnL = 0;
+  let riskyPositions = 0;
+
+  for (const position of positionsToAnalyze) {
+    try {
+      // Fetch current market data using the existing liquidity handler
+      const liquidityResult = await handleAnalyzeMarketLiquidity({
+        tokenId: position.tokenId,
+      });
+
+      // Extract data from liquidity analysis
+      const liquidityData = JSON.parse(
+        (liquidityResult.content[0] as { text: string }).text
+      );
+
+      const currentPrice = liquidityData.currentPrice || position.avgEntryPrice;
+      const positionValue = position.shares * currentPrice;
+      const costBasis = position.shares * position.avgEntryPrice;
+      const unrealizedPnL = positionValue - costBasis;
+      const unrealizedPnLPercent =
+        costBasis > 0 ? (unrealizedPnL / costBasis) * 100 : 0;
+
+      // Simulate exit for this specific position size
+      const exitSimulation = simulatePositionExit(
+        liquidityData.whaleCost,
+        positionValue
+      );
+
+      const canExitCleanly = exitSimulation.slippage < 2;
+      if (!canExitCleanly) {
+        riskyPositions++;
+      }
+
+      // Generate position-specific recommendation
+      const recommendation = generatePositionRecommendation({
+        unrealizedPnLPercent,
+        currentPrice,
+        liquidityScore: liquidityData.liquidityScore,
+        canExitCleanly,
+        slippage: exitSimulation.slippage,
+      });
+
+      positionAnalyses.push({
+        conditionId: position.conditionId,
+        marketTitle: position.marketTitle || position.conditionId,
+        outcome: position.outcome,
+        shares: position.shares,
+        avgEntryPrice: position.avgEntryPrice,
+        currentPrice,
+        unrealizedPnL: Number(unrealizedPnL.toFixed(2)),
+        unrealizedPnLPercent: Number(unrealizedPnLPercent.toFixed(2)),
+        positionValue: Number(positionValue.toFixed(2)),
+        exitLiquidity: {
+          estimatedSlippage: exitSimulation.slippage,
+          canExitCleanly,
+          liquidityScore: liquidityData.liquidityScore,
+        },
+        recommendation,
+      });
+
+      totalValue += positionValue;
+      totalUnrealizedPnL += unrealizedPnL;
+    } catch (error) {
+      // If we can't fetch market data, include position with limited analysis
+      positionAnalyses.push({
+        conditionId: position.conditionId,
+        marketTitle: position.marketTitle || position.conditionId,
+        outcome: position.outcome,
+        shares: position.shares,
+        avgEntryPrice: position.avgEntryPrice,
+        currentPrice: position.avgEntryPrice,
+        unrealizedPnL: 0,
+        unrealizedPnLPercent: 0,
+        positionValue: position.shares * position.avgEntryPrice,
+        exitLiquidity: {
+          estimatedSlippage: 0,
+          canExitCleanly: true,
+          liquidityScore: "unknown",
+        },
+        recommendation: "Unable to fetch live market data for this position.",
+      });
+    }
+  }
+
+  const totalCostBasis = positionAnalyses.reduce(
+    (sum, p) => sum + p.shares * p.avgEntryPrice,
+    0
+  );
+  const totalUnrealizedPnLPercent =
+    totalCostBasis > 0 ? (totalUnrealizedPnL / totalCostBasis) * 100 : 0;
+
+  // Generate overall recommendation
+  const overallRecommendation = generateOverallRecommendation({
+    totalPositions: positionAnalyses.length,
+    totalUnrealizedPnLPercent,
+    riskyPositions,
+    positionAnalyses,
+  });
+
+  return successResult({
+    walletAddress: portfolio.walletAddress,
+    totalPositions: positionAnalyses.length,
+    portfolioSummary: {
+      totalValue: Number(totalValue.toFixed(2)),
+      totalUnrealizedPnL: Number(totalUnrealizedPnL.toFixed(2)),
+      totalUnrealizedPnLPercent: Number(totalUnrealizedPnLPercent.toFixed(2)),
+      riskyPositions,
+    },
+    positionAnalyses,
+    overallRecommendation,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Helper: Simulate exit based on whale cost data
+ */
+function simulatePositionExit(
+  whaleCost: {
+    sell1k?: { slippagePercent: number };
+    sell5k?: { slippagePercent: number };
+    sell10k?: { slippagePercent: number };
+  } | undefined,
+  positionValue: number
+): { slippage: number } {
+  if (!whaleCost) {
+    return { slippage: 0 };
+  }
+
+  // Interpolate slippage based on position size
+  if (positionValue <= 1000) {
+    return { slippage: Number(whaleCost.sell1k?.slippagePercent || 0) };
+  } else if (positionValue <= 5000) {
+    return { slippage: Number(whaleCost.sell5k?.slippagePercent || 0) };
+  } else {
+    return { slippage: Number(whaleCost.sell10k?.slippagePercent || 0) };
+  }
+}
+
+/**
+ * Helper: Generate recommendation for a single position
+ */
+function generatePositionRecommendation(params: {
+  unrealizedPnLPercent: number;
+  currentPrice: number;
+  liquidityScore: string;
+  canExitCleanly: boolean;
+  slippage: number;
+}): string {
+  const { unrealizedPnLPercent, currentPrice, liquidityScore, canExitCleanly, slippage } = params;
+
+  const parts: string[] = [];
+
+  // P&L commentary
+  if (unrealizedPnLPercent > 50) {
+    parts.push("🎉 Strong gains! Consider taking some profit.");
+  } else if (unrealizedPnLPercent > 20) {
+    parts.push("📈 Position is profitable.");
+  } else if (unrealizedPnLPercent < -20) {
+    parts.push("📉 Position underwater. Evaluate if thesis still holds.");
+  }
+
+  // Price commentary
+  if (currentPrice > 0.9) {
+    parts.push("Price near max - limited upside remaining.");
+  } else if (currentPrice < 0.1) {
+    parts.push("Price near floor - high risk/reward if thesis is correct.");
+  }
+
+  // Liquidity commentary
+  if (!canExitCleanly) {
+    parts.push(`⚠️ Exit liquidity is ${liquidityScore}. Expect ~${slippage.toFixed(1)}% slippage on exit.`);
+  } else if (liquidityScore === "excellent" || liquidityScore === "good") {
+    parts.push("✅ Good exit liquidity available.");
+  }
+
+  return parts.length > 0 ? parts.join(" ") : "No specific recommendations.";
+}
+
+/**
+ * Helper: Generate overall portfolio recommendation
+ */
+function generateOverallRecommendation(params: {
+  totalPositions: number;
+  totalUnrealizedPnLPercent: number;
+  riskyPositions: number;
+  positionAnalyses: Array<{ outcome: string; positionValue: number }>;
+}): string {
+  const { totalPositions, totalUnrealizedPnLPercent, riskyPositions, positionAnalyses } = params;
+
+  const parts: string[] = [];
+
+  // Overall P&L
+  if (totalUnrealizedPnLPercent > 30) {
+    parts.push(`Portfolio up ${totalUnrealizedPnLPercent.toFixed(1)}% overall. Strong performance!`);
+  } else if (totalUnrealizedPnLPercent < -20) {
+    parts.push(`Portfolio down ${Math.abs(totalUnrealizedPnLPercent).toFixed(1)}%. Review positions carefully.`);
+  } else {
+    parts.push(`Portfolio ${totalUnrealizedPnLPercent >= 0 ? "up" : "down"} ${Math.abs(totalUnrealizedPnLPercent).toFixed(1)}%.`);
+  }
+
+  // Liquidity warnings
+  if (riskyPositions > 0) {
+    parts.push(`⚠️ ${riskyPositions} of ${totalPositions} positions have poor exit liquidity.`);
+  }
+
+  // Concentration check
+  const yesValue = positionAnalyses
+    .filter((p) => p.outcome === "YES")
+    .reduce((sum, p) => sum + p.positionValue, 0);
+  const noValue = positionAnalyses
+    .filter((p) => p.outcome === "NO")
+    .reduce((sum, p) => sum + p.positionValue, 0);
+  const total = yesValue + noValue;
+
+  if (total > 0) {
+    const yesPercent = (yesValue / total) * 100;
+    if (yesPercent > 80) {
+      parts.push("Portfolio heavily weighted to YES outcomes. Consider hedging.");
+    } else if (yesPercent < 20) {
+      parts.push("Portfolio heavily weighted to NO outcomes.");
+    }
+  }
+
+  return parts.join(" ");
+}
+
 // ============================================================================
 // TIER 2: RAW DATA TOOL HANDLERS
 // ============================================================================
@@ -1925,6 +2299,37 @@ interface TradeResponse {
   timestamp?: string;
 }
 
+/**
+ * A single Polymarket position (from user's portfolio context)
+ */
+interface PolymarketPosition {
+  conditionId: string;
+  tokenId: string;
+  outcome: "YES" | "NO";
+  shares: number;
+  avgEntryPrice: number;
+  marketTitle?: string;
+}
+
+/**
+ * Complete Polymarket portfolio context (injected by the app)
+ */
+interface PolymarketContext {
+  walletAddress: string;
+  positions: PolymarketPosition[];
+  openOrders: Array<{
+    orderId: string;
+    conditionId: string;
+    side: "BUY" | "SELL";
+    outcome: "YES" | "NO";
+    price: number;
+    size: number;
+    filled: number;
+  }>;
+  totalValue?: number;
+  fetchedAt: string;
+}
+
 // ============================================================================
 // EXPRESS SERVER
 // ============================================================================
@@ -1976,11 +2381,11 @@ app.listen(port, () => {
   console.log(`💚 Health check: http://localhost:${port}/health\n`);
   console.log(`🛠️  Available tools (${TOOLS.length}):`);
   console.log("   INTELLIGENCE:");
-  for (const tool of TOOLS.slice(0, 7)) {
+  for (const tool of TOOLS.slice(0, 8)) {
     console.log(`   • ${tool.name}`);
   }
   console.log("   RAW DATA:");
-  for (const tool of TOOLS.slice(7)) {
+  for (const tool of TOOLS.slice(8)) {
     console.log(`   • ${tool.name}`);
   }
   console.log("");

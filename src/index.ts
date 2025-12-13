@@ -46,3 +46,6 @@ export type {
   ContextErrorCode,
 } from "./client/index.js";
 
+// Context types for portfolio injection
+export * from "./context/index.js";
+
