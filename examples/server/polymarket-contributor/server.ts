@@ -734,9 +734,8 @@ const TOOLS = [
                 items: {
                   type: "object",
                   properties: {
-                    id: { type: "string", description: "Token ID (clobTokenId) for trading" },
+                    token_id: { type: "string", description: "Token ID for trading and price lookups. Use this to look up prices via get_prices." },
                     outcome: { type: "string", description: "YES or NO" },
-                    price: { type: "number", description: "Current price (0-1)" },
                   },
                 },
               },
@@ -804,7 +803,16 @@ const TOOLS = [
       properties: {
         prices: {
           type: "object",
-          description: "Map of tokenId to price info",
+          description: "Map of token_id (string) to price info. Keys are the token_id strings from get_event_by_slug.",
+          additionalProperties: {
+            type: "object",
+            properties: {
+              buy: { type: "number", description: "Best buy price (what you pay to buy YES/NO)" },
+              sell: { type: "number", description: "Best sell price (what you receive when selling)" },
+              mid: { type: "number", description: "Mid price between buy and sell" },
+              spread: { type: "number", description: "Spread between buy and sell" },
+            },
+          },
         },
         fetchedAt: { type: "string" },
       },
@@ -2984,13 +2992,13 @@ async function handleGetEventBySlug(
     const yesPrice = prices[0] ? parseFloat(prices[0]) : 0.5;
     const noPrice = prices[1] ? parseFloat(prices[1]) : 0.5;
 
-    // Build tokens array - the format the AI expects
-    const tokens: Array<{ id: string; outcome: string; price: number }> = [];
+    // Build tokens array - use token_id (not id) to match schema
+    const tokens: Array<{ token_id: string; outcome: string }> = [];
     if (yesTokenId) {
-      tokens.push({ id: yesTokenId, outcome: "YES", price: yesPrice });
+      tokens.push({ token_id: yesTokenId, outcome: "Yes" });
     }
     if (noTokenId) {
-      tokens.push({ id: noTokenId, outcome: "NO", price: noPrice });
+      tokens.push({ token_id: noTokenId, outcome: "No" });
     }
 
     return {
