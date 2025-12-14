@@ -265,12 +265,20 @@ const result = await client.tools.execute({
 
 ```typescript
 import type {
+  // Client types
   ContextClientOptions,
   Tool,
   McpTool,
   ExecuteOptions,
   ExecutionResult,
   ContextErrorCode,
+  // Context types (for MCP server contributors)
+  ToolRequirements,
+  ContextRequirementType,
+  HyperliquidContext,
+  PolymarketContext,
+  WalletContext,
+  UserContext,
 } from "@ctxprotocol/sdk";
 ```
 
@@ -306,6 +314,18 @@ interface ExecutionResult<T = unknown> {
   result: T;
   tool: { id: string; name: string };
   durationMs: number;
+}
+```
+
+### ToolRequirements (MCP Server Contributors)
+
+```typescript
+/** Context types supported by the marketplace */
+type ContextRequirementType = "polymarket" | "hyperliquid" | "wallet";
+
+/** Declare what context your tool needs */
+interface ToolRequirements {
+  context?: ContextRequirementType[];
 }
 ```
 
@@ -379,6 +399,50 @@ Key benefits:
 - **No Auth Required** — User data is injected automatically from their linked wallets
 - **Type-Safe** — Use SDK types like `PolymarketContext`, `HyperliquidContext`
 - **Focus on Analysis** — You receive structured data, you provide insights
+
+### Context Requirements Declaration
+
+If your tool needs user portfolio data, you **MUST** declare this explicitly using `requirements.context`:
+
+```typescript
+import type { ToolRequirements } from "@ctxprotocol/sdk";
+
+const TOOLS = [{
+  name: "analyze_my_positions",
+  description: "Analyze your positions with personalized insights",
+
+  // ⭐ REQUIRED: Explicit context requirements for portfolio tools
+  requirements: {
+    context: ["hyperliquid"],  // or "polymarket", "wallet"
+  } satisfies ToolRequirements,
+
+  inputSchema: {
+    type: "object",
+    properties: {
+      portfolio: {
+        type: "object",
+        description: "Portfolio context (injected by platform)",
+      },
+    },
+    required: ["portfolio"],
+  },
+  outputSchema: { /* ... */ },
+}];
+```
+
+**Available context types:**
+
+| Type | Description | Injected Data |
+|------|-------------|---------------|
+| `"hyperliquid"` | Hyperliquid perpetuals & spot | `HyperliquidContext` |
+| `"polymarket"` | Polymarket prediction markets | `PolymarketContext` |
+| `"wallet"` | Generic EVM wallet | `WalletContext` |
+
+**How it works:**
+1. User links their wallet in Context app settings
+2. When your tool is selected, platform checks `requirements.context`
+3. Platform fetches user's portfolio data from protocol APIs
+4. Data is injected as the `portfolio` argument to your tool
 
 ### Example: Standard MCP Server
 

@@ -56,7 +56,7 @@ import {
   isInitializeRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import express, { type Request, type Response } from "express";
-import type { HyperliquidContext } from "@ctxprotocol/sdk";
+import type { HyperliquidContext, ToolRequirements } from "@ctxprotocol/sdk";
 
 const HYPERLIQUID_API_URL = "https://api.hyperliquid.xyz/info";
 
@@ -66,6 +66,9 @@ const HYPERLIQUID_API_URL = "https://api.hyperliquid.xyz/info";
 // Standard MCP tool definitions with:
 // - inputSchema: JSON Schema for tool arguments (MCP standard)
 // - outputSchema: JSON Schema for response data (standard MCP feature, required by Context)
+// - requirements.context: Context types needed for portfolio tools (Context Protocol extension)
+//
+// NOTE: ToolRequirements type is imported from @ctxprotocol/sdk
 //
 // All tools include:
 // - confidence: 0-1 score for analysis reliability (on Tier 1 tools)
@@ -564,6 +567,13 @@ const TOOLS = [
     description:
       "🧠 INTELLIGENCE: Analyze your Hyperliquid perpetual positions with risk assessment, P&L breakdown, " +
       "liquidation warnings, and personalized recommendations. Requires portfolio context.",
+
+    // ⭐ REQUIRED: Explicit context requirements for portfolio tools
+    // The Context marketplace checks this field to inject user's Hyperliquid portfolio data
+    requirements: {
+      context: ["hyperliquid"] as const,
+    } satisfies ToolRequirements,
+
     inputSchema: {
       type: "object" as const,
       properties: {

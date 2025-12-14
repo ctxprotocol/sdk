@@ -23,7 +23,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import express, { type Request, type Response } from "express";
-import type { PolymarketContext, PolymarketPosition } from "@ctxprotocol/sdk";
+import type { PolymarketContext, PolymarketPosition, ToolRequirements } from "@ctxprotocol/sdk";
 
 // ============================================================================
 // API ENDPOINTS
@@ -34,6 +34,13 @@ const CLOB_API_URL = "https://clob.polymarket.com";
 
 // ============================================================================
 // TOOL DEFINITIONS
+//
+// Standard MCP tool definitions with:
+// - inputSchema: JSON Schema for tool arguments (MCP standard)
+// - outputSchema: JSON Schema for response data (required by Context)
+// - requirements.context: Context types needed for portfolio tools (Context Protocol extension)
+//
+// NOTE: ToolRequirements type is imported from @ctxprotocol/sdk
 // ============================================================================
 
 const TOOLS = [
@@ -546,6 +553,13 @@ const TOOLS = [
     description:
       "Analyze your Polymarket positions with exit liquidity simulation, P&L calculation, " +
       "and personalized recommendations. Requires portfolio context to be injected by the app.",
+
+    // ⭐ REQUIRED: Explicit context requirements for portfolio tools
+    // The Context marketplace checks this field to inject user's Polymarket portfolio data
+    requirements: {
+      context: ["polymarket"] as const,
+    } satisfies ToolRequirements,
+
     inputSchema: {
       type: "object" as const,
       properties: {

@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import type { PolymarketContext, UserContext } from "@ctxprotocol/sdk";
+ * import type { PolymarketContext, UserContext, ToolRequirements } from "@ctxprotocol/sdk";
  *
  * // Build context for a user's portfolio
  * const context: UserContext = {
@@ -17,6 +17,11 @@
  *     openOrders: [],
  *     fetchedAt: new Date().toISOString(),
  *   },
+ * };
+ *
+ * // Declare context requirements for a tool
+ * const requirements: ToolRequirements = {
+ *   context: ["polymarket"],
  * };
  * ```
  *
@@ -34,6 +39,73 @@ export * from "./hyperliquid.js";
 import type { WalletContext, ERC20Context } from "./wallet.js";
 import type { PolymarketContext } from "./polymarket.js";
 import type { HyperliquidContext } from "./hyperliquid.js";
+
+// ============================================================================
+// CONTEXT REQUIREMENTS
+//
+// MCP tools that need user portfolio data MUST declare this explicitly.
+// The Context marketplace uses this to determine which context to inject.
+// ============================================================================
+
+/**
+ * Context requirement types supported by the Context marketplace.
+ * Maps to protocol-specific context builders on the platform.
+ *
+ * @example
+ * ```typescript
+ * // Tool that needs Hyperliquid positions
+ * requirements: {
+ *   context: ["hyperliquid"]
+ * }
+ *
+ * // Tool that needs multiple context types
+ * requirements: {
+ *   context: ["hyperliquid", "wallet"]
+ * }
+ * ```
+ */
+export type ContextRequirementType = "polymarket" | "hyperliquid" | "wallet";
+
+/**
+ * Tool-level requirements declaration.
+ *
+ * MCP tools that need user portfolio data MUST declare this explicitly
+ * in their tool definition. The Context marketplace checks this field
+ * to determine what context to inject.
+ *
+ * @example
+ * ```typescript
+ * const tool = {
+ *   name: "analyze_my_positions",
+ *   description: "Analyze your positions",
+ *
+ *   // ⭐ REQUIRED for portfolio tools
+ *   requirements: {
+ *     context: ["hyperliquid"],
+ *   } satisfies ToolRequirements,
+ *
+ *   inputSchema: {
+ *     type: "object",
+ *     properties: {
+ *       portfolio: {
+ *         type: "object",
+ *         description: "Portfolio context (injected by platform)",
+ *       },
+ *     },
+ *     required: ["portfolio"],
+ *   },
+ * };
+ * ```
+ */
+export interface ToolRequirements {
+  /**
+   * Context types required by this tool.
+   * - "polymarket": User's Polymarket positions (prediction markets)
+   * - "hyperliquid": User's Hyperliquid perp/spot positions
+   * - "wallet": Generic EVM wallet context (address, balances)
+   */
+  context?: ContextRequirementType[];
+}
 
 /**
  * Composite context for tools that need multiple data sources.
