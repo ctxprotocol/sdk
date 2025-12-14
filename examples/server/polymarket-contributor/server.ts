@@ -342,7 +342,7 @@ const TOOLS = [
   {
     name: "find_arbitrage_opportunities",
     description:
-      "Scan markets for pricing inefficiencies. Flags when sum of outcome prices < 1.0 (arbitrage) or significantly > 1.0 (liquidity warning).",
+      "Scan markets for REAL arbitrage by fetching actual CLOB orderbooks. Checks if buying both YES and NO costs less than $1 (guaranteed profit). Also identifies wide-spread markets. Limited to ~20 markets to avoid timeout.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -352,7 +352,7 @@ const TOOLS = [
         },
         limit: {
           type: "number",
-          description: "Number of markets to scan (default: 50)",
+          description: "Number of markets to scan (default: 20, max: 30 due to orderbook fetching)",
         },
       },
       required: [],
@@ -368,21 +368,26 @@ const TOOLS = [
             properties: {
               market: { type: "string" },
               conditionId: { type: "string" },
-              sumOfPrices: { type: "number" },
-              type: { type: "string", enum: ["arbitrage", "inefficient"] },
+              buyYesAt: { type: "number", description: "Best ask price for YES" },
+              buyNoAt: { type: "number", description: "Best ask price for NO" },
+              totalCost: { type: "number", description: "Total cost to buy both (should be < 1 for arbitrage)" },
               potentialEdge: { type: "number" },
+              edgePercent: { type: "string" },
+              liquidity: { type: "number" },
               note: { type: "string" },
             },
           },
         },
-        liquidityWarnings: {
+        wideSpreadMarkets: {
           type: "array",
+          description: "Markets with wide bid-ask spreads (potential for limit order profits)",
           items: {
             type: "object",
             properties: {
               market: { type: "string" },
-              sumOfPrices: { type: "number" },
-              vigPercent: { type: "number" },
+              spread: { type: "number" },
+              spreadPercent: { type: "string" },
+              midPrice: { type: "number" },
             },
           },
         },
@@ -390,26 +395,103 @@ const TOOLS = [
           type: "object",
           properties: {
             arbitrageCount: { type: "number" },
-            highVigCount: { type: "number" },
-            averageVig: { type: "number" },
+            wideSpreadCount: { type: "number" },
+            averageSpreadCents: { type: "number" },
+            summaryNote: { type: "string" },
           },
+        },
+        methodology: { type: "string" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["scannedMarkets", "arbitrageOpportunities", "summary", "methodology"],
+    },
+  },
+
+  {
+    name: "find_trading_opportunities",
+    description:
+      "🎯 THE GO-TO TOOL for finding genuine Polymarket trading opportunities. Scans for: (1) Asymmetric upside - cheap YES/NO positions with huge potential payoff, (2) Volume momentum - markets with surging activity, (3) Value plays - potential mispricings based on market characteristics, (4) Near resolution - markets about to resolve where conviction pays. Returns ACTIONABLE opportunities ranked by quality. If no good opportunities exist, says so honestly.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        strategy: {
+          type: "string",
+          enum: ["all", "asymmetric_upside", "momentum", "value", "near_resolution"],
+          description: "Which strategy to focus on. Default: 'all' scans everything",
+        },
+        category: {
+          type: "string",
+          description: "Filter by category (politics, crypto, sports, etc.)",
+        },
+        minLiquidity: {
+          type: "number",
+          description: "Minimum liquidity in USD (default: 1000). Higher = more reliable exits",
+        },
+        riskTolerance: {
+          type: "string",
+          enum: ["conservative", "moderate", "aggressive"],
+          description: "Risk tolerance affects which opportunities are shown. Default: moderate",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        summary: {
+          type: "object",
+          properties: {
+            marketsScanned: { type: "number" },
+            opportunitiesFound: { type: "number" },
+            bestOpportunityType: { type: "string" },
+            marketConditions: { type: "string" },
+          },
+        },
+        opportunities: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              rank: { type: "number" },
+              market: { type: "string" },
+              conditionId: { type: "string" },
+              slug: { type: "string" },
+              opportunityType: {
+                type: "string",
+                enum: ["asymmetric_upside", "momentum", "value", "near_resolution", "contrarian"],
+              },
+              signal: { type: "string" },
+              currentPrice: { type: "number" },
+              suggestedSide: { type: "string", enum: ["YES", "NO", "EITHER"] },
+              potentialReturn: { type: "string" },
+              confidence: { type: "string", enum: ["high", "medium", "low"] },
+              liquidity: { type: "number" },
+              volume24h: { type: "number" },
+              riskFactors: { type: "array", items: { type: "string" } },
+              whyThisOpportunity: { type: "string" },
+            },
+          },
+        },
+        noOpportunitiesReason: {
+          type: "string",
+          description: "If no good opportunities, explains why and what to do instead",
         },
         fetchedAt: { type: "string" },
       },
-      required: ["scannedMarkets", "arbitrageOpportunities", "summary"],
+      required: ["summary", "opportunities"],
     },
   },
 
   {
     name: "discover_trending_markets",
     description:
-      "Find markets with increasing activity - volume spikes, price momentum, or growing liquidity. Useful for discovering opportunities.",
+      "Find the hottest markets on Polymarket right now. Shows volume spikes, unusual activity, and which markets are seeing the most action. Great for finding what's happening NOW and where the smart money is looking.",
     inputSchema: {
       type: "object" as const,
       properties: {
         category: {
           type: "string",
-          description: "Filter by category",
+          description: "Filter by category (politics, crypto, sports, etc.)",
         },
         sortBy: {
           type: "string",
@@ -426,19 +508,25 @@ const TOOLS = [
     outputSchema: {
       type: "object" as const,
       properties: {
+        marketSummary: { type: "string", description: "Overall market conditions summary" },
         trendingMarkets: {
           type: "array",
           items: {
             type: "object",
             properties: {
+              rank: { type: "number" },
               title: { type: "string" },
+              slug: { type: "string" },
               conditionId: { type: "string" },
               currentPrice: { type: "number" },
+              priceDirection: { type: "string" },
               volume24h: { type: "number" },
-              volumeChange: { type: "number" },
+              volumeVsAverage: { type: "string" },
               liquidity: { type: "number" },
-              priceChange24h: { type: "number" },
               trendScore: { type: "number" },
+              category: { type: "string" },
+              signal: { type: "string" },
+              whyTrending: { type: "string" },
             },
           },
         },
@@ -446,9 +534,10 @@ const TOOLS = [
           type: "object",
           description: "Breakdown by category",
         },
+        totalActive: { type: "number" },
         fetchedAt: { type: "string" },
       },
-      required: ["trendingMarkets"],
+      required: ["marketSummary", "trendingMarkets"],
     },
   },
 
@@ -830,6 +919,8 @@ server.setRequestHandler(
           return await handleCheckMarketRules(args);
         case "find_arbitrage_opportunities":
           return await handleFindArbitrageOpportunities(args);
+        case "find_trading_opportunities":
+          return await handleFindTradingOpportunities(args);
         case "discover_trending_markets":
           return await handleDiscoverTrendingMarkets(args);
         case "analyze_my_positions":
@@ -1808,9 +1899,10 @@ async function handleFindArbitrageOpportunities(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
   const category = args?.category as string;
-  const limit = Math.min((args?.limit as number) || 50, 100);
+  // Limit to 20 markets to avoid timeout - we need to fetch orderbooks
+  const limit = Math.min((args?.limit as number) || 20, 30);
 
-  // Fetch active markets
+  // Step 1: Get top markets by liquidity from Gamma (fast)
   let endpoint = `/events?closed=false&limit=${limit}&order=liquidity&ascending=false`;
   if (category) {
     endpoint += `&category=${category}`;
@@ -1821,126 +1913,542 @@ async function handleFindArbitrageOpportunities(
   const arbitrageOpportunities: Array<{
     market: string;
     conditionId: string;
-    sumOfPrices: number;
-    type: string;
+    buyYesAt: number;
+    buyNoAt: number;
+    totalCost: number;
     potentialEdge: number;
+    edgePercent: string;
+    liquidity: number;
     note: string;
   }> = [];
 
-  const liquidityWarnings: Array<{
+  const wideSpreadMarkets: Array<{
     market: string;
-    sumOfPrices: number;
-    vigPercent: number;
+    conditionId: string;
+    spread: number;
+    spreadPercent: string;
+    midPrice: number;
   }> = [];
 
-  let totalVig = 0;
   let marketsAnalyzed = 0;
+  let totalSpread = 0;
+
+  // Step 2: For each market, fetch orderbooks and compute MERGED book
+  // Polymarket shows synthetic liquidity from complement token
+  const marketsToCheck: Array<{
+    event: GammaEvent;
+    market: GammaMarket;
+    yesTokenId: string;
+    noTokenId: string;
+  }> = [];
 
   for (const event of events) {
     if (!event.markets || event.markets.length === 0) continue;
 
     for (const market of event.markets) {
-      // Parse clobTokenIds and outcomePrices (may be JSON strings)
       const tokenIds = parseJsonArray(market.clobTokenIds);
       const gammaPrices = parseJsonArray(market.outcomePrices);
-      const yesToken = tokenIds[0];
-      const noToken = tokenIds[1];
+      
+      if (tokenIds.length < 2 || gammaPrices.length < 2) continue;
+      
+      const yesPrice = parseFloat(gammaPrices[0]) || 0;
+      // Skip settled markets
+      if (yesPrice <= 0 || yesPrice >= 1) continue;
 
-      if (!yesToken || !noToken) continue;
+      marketsToCheck.push({
+        event,
+        market,
+        yesTokenId: tokenIds[0],
+        noTokenId: tokenIds[1],
+      });
+    }
+  }
 
-      try {
-        let yesPrice = 0;
-        let noPrice = 0;
-
-        // Try to get live prices from CLOB API (correct format: array of objects)
+  // Fetch orderbooks in parallel (batches of 5 to respect rate limits)
+  const batchSize = 5;
+  for (let i = 0; i < marketsToCheck.length && i < limit * 2; i += batchSize) {
+    const batch = marketsToCheck.slice(i, i + batchSize);
+    
+    const results = await Promise.all(
+      batch.map(async ({ event, market, yesTokenId, noTokenId }) => {
         try {
-          const pricesResp = (await fetchClobPost("/prices", [
-            { token_id: yesToken, side: "BUY" },
-            { token_id: noToken, side: "BUY" },
-          ])) as Record<string, { BUY?: string } | string>;
+          // Fetch both orderbooks in parallel
+          const [yesBook, noBook] = await Promise.all([
+            fetchClob(`/book?token_id=${yesTokenId}`) as Promise<OrderbookResponse>,
+            fetchClob(`/book?token_id=${noTokenId}`) as Promise<OrderbookResponse>,
+          ]);
 
-          // CLOB API response format: { "tokenId": { "BUY": "0.95" } }
-          const yesData = pricesResp[yesToken];
-          const noData = pricesResp[noToken];
-          
-          if (yesData) {
-            yesPrice = typeof yesData === "object" && yesData.BUY 
-              ? Number(yesData.BUY) 
-              : Number(yesData);
+          // Build MERGED orderbook for YES token
+          // This is what Polymarket UI shows - includes synthetic liquidity
+          const mergedYesAsks: number[] = [];
+          const mergedYesBids: number[] = [];
+          const mergedNoAsks: number[] = [];
+
+          // Direct YES asks
+          for (const ask of yesBook.asks || []) {
+            mergedYesAsks.push(Number(ask.price));
           }
-          if (noData) {
-            noPrice = typeof noData === "object" && noData.BUY 
-              ? Number(noData.BUY) 
-              : Number(noData);
+          // Synthetic YES asks from NO bids: NO bid at X creates YES ask at (1-X)
+          for (const bid of noBook.bids || []) {
+            const syntheticAsk = 1 - Number(bid.price);
+            if (syntheticAsk > 0 && syntheticAsk < 1) {
+              mergedYesAsks.push(syntheticAsk);
+            }
           }
+
+          // Direct YES bids
+          for (const bid of yesBook.bids || []) {
+            mergedYesBids.push(Number(bid.price));
+          }
+          // Synthetic YES bids from NO asks: NO ask at X creates YES bid at (1-X)
+          for (const ask of noBook.asks || []) {
+            const syntheticBid = 1 - Number(ask.price);
+            if (syntheticBid > 0 && syntheticBid < 1) {
+              mergedYesBids.push(syntheticBid);
+            }
+          }
+
+          // Direct NO asks
+          for (const ask of noBook.asks || []) {
+            mergedNoAsks.push(Number(ask.price));
+          }
+          // Synthetic NO asks from YES bids
+          for (const bid of yesBook.bids || []) {
+            const syntheticAsk = 1 - Number(bid.price);
+            if (syntheticAsk > 0 && syntheticAsk < 1) {
+              mergedNoAsks.push(syntheticAsk);
+            }
+          }
+
+          // Sort: asks low-to-high, bids high-to-low
+          mergedYesAsks.sort((a, b) => a - b);
+          mergedYesBids.sort((a, b) => b - a);
+          mergedNoAsks.sort((a, b) => a - b);
+
+          const bestYesAsk = mergedYesAsks.length > 0 ? mergedYesAsks[0] : null;
+          const bestYesBid = mergedYesBids.length > 0 ? mergedYesBids[0] : null;
+          const bestNoAsk = mergedNoAsks.length > 0 ? mergedNoAsks[0] : null;
+
+          return {
+            event,
+            market,
+            bestYesAsk,
+            bestYesBid,
+            bestNoAsk,
+            liquidity: Number(market.liquidity || event.liquidity || 0),
+          };
         } catch {
-          // CLOB unavailable, use Gamma prices
+          return null;
         }
+      })
+    );
 
-        // Fall back to Gamma API prices if CLOB returns invalid data
-        if (isNaN(yesPrice) || isNaN(noPrice) || (yesPrice === 0 && noPrice === 0)) {
-          if (gammaPrices.length >= 2) {
-            yesPrice = parseFloat(gammaPrices[0]) || 0;
-            noPrice = parseFloat(gammaPrices[1]) || 0;
-          }
-        }
+    for (const result of results) {
+      if (!result || result.bestYesAsk === null || result.bestNoAsk === null) continue;
 
-        if (yesPrice === 0 && noPrice === 0 || isNaN(yesPrice) || isNaN(noPrice)) continue;
+      marketsAnalyzed++;
+      const { event, market, bestYesAsk, bestYesBid, bestNoAsk, liquidity } = result;
 
-        const sumOfPrices = yesPrice + noPrice;
-        const vig = sumOfPrices - 1;
-        const vigPercent = vig * 100;
+      // REAL arbitrage check using MERGED orderbook
+      // Can we buy BOTH sides for less than $1?
+      const totalCost = bestYesAsk + bestNoAsk;
+      
+      if (totalCost < 0.995) {
+        // Found actual arbitrage!
+        const edge = 1 - totalCost;
+        arbitrageOpportunities.push({
+          market: market.question || event.title || "Unknown",
+          conditionId: market.conditionId || "",
+          buyYesAt: Number(bestYesAsk.toFixed(4)),
+          buyNoAt: Number(bestNoAsk.toFixed(4)),
+          totalCost: Number(totalCost.toFixed(4)),
+          potentialEdge: Number(edge.toFixed(4)),
+          edgePercent: (edge * 100).toFixed(2) + "%",
+          liquidity,
+          note: `BUY YES @ ${(bestYesAsk * 100).toFixed(1)}¢ + BUY NO @ ${(bestNoAsk * 100).toFixed(1)}¢ = ${(totalCost * 100).toFixed(1)}¢. Guaranteed ${(edge * 100).toFixed(1)}¢ profit per $1.`,
+        });
+      }
 
-        marketsAnalyzed++;
-        totalVig += vig;
-
-        // Check for arbitrage (sum < 1.0)
-        if (sumOfPrices < 0.99) {
-          const edge = (1 - sumOfPrices) * 100;
-          arbitrageOpportunities.push({
+      // Track spread using MERGED orderbook
+      if (bestYesBid !== null) {
+        const spread = bestYesAsk - bestYesBid;
+        totalSpread += spread;
+        
+        // Wide spread = potential opportunity for limit orders
+        if (spread > 0.02) {
+          wideSpreadMarkets.push({
             market: market.question || event.title || "Unknown",
             conditionId: market.conditionId || "",
-            sumOfPrices: Number(sumOfPrices.toFixed(4)),
-            type: "arbitrage",
-            potentialEdge: Number(edge.toFixed(2)),
-            note: `Buy YES @ ${yesPrice.toFixed(3)} + NO @ ${noPrice.toFixed(3)} = ${sumOfPrices.toFixed(3)}. Free ${edge.toFixed(1)}% edge.`,
+            spread: Number(spread.toFixed(4)),
+            spreadPercent: (spread * 100).toFixed(1) + "¢",
+            midPrice: Number(((bestYesAsk + bestYesBid) / 2).toFixed(4)),
           });
         }
-
-        // Check for high vig (poor liquidity)
-        if (vig > 0.05) {
-          liquidityWarnings.push({
-            market: market.question || event.title || "Unknown",
-            sumOfPrices: Number(sumOfPrices.toFixed(4)),
-            vigPercent: Number(vigPercent.toFixed(2)),
-          });
-        }
-      } catch {
-        // Skip markets with price fetch errors
-        continue;
       }
     }
   }
 
-  // Sort arbitrage by edge
+  // Sort by edge
   arbitrageOpportunities.sort((a, b) => b.potentialEdge - a.potentialEdge);
-  liquidityWarnings.sort((a, b) => b.vigPercent - a.vigPercent);
+  wideSpreadMarkets.sort((a, b) => b.spread - a.spread);
 
-  const avgVig = marketsAnalyzed > 0 ? (totalVig / marketsAnalyzed) * 100 : 0;
+  const avgSpread = marketsAnalyzed > 0 ? (totalSpread / marketsAnalyzed) * 100 : 0;
+
+  // Generate summary
+  let summaryNote: string;
+  if (arbitrageOpportunities.length > 0) {
+    summaryNote = `🚨 Found ${arbitrageOpportunities.length} REAL arbitrage opportunities! Buy both YES and NO for guaranteed profit.`;
+  } else if (marketsAnalyzed === 0) {
+    summaryNote = "⚠️ Could not fetch orderbook data. Try again or reduce limit.";
+  } else {
+    summaryNote = `✅ No arbitrage found in ${marketsAnalyzed} markets. Polymarket is efficiently priced. Average spread: ${avgSpread.toFixed(1)}¢.`;
+  }
 
   return successResult({
     scannedMarkets: marketsAnalyzed,
     arbitrageOpportunities: arbitrageOpportunities.slice(0, 10),
-    liquidityWarnings: liquidityWarnings.slice(0, 10),
+    wideSpreadMarkets: wideSpreadMarkets.slice(0, 5),
     summary: {
       arbitrageCount: arbitrageOpportunities.length,
-      highVigCount: liquidityWarnings.length,
-      averageVig: Number(avgVig.toFixed(2)),
-      note:
-        arbitrageOpportunities.length > 0
-          ? `🚨 ${arbitrageOpportunities.length} arbitrage opportunities found!`
-          : "No arbitrage opportunities detected",
+      wideSpreadCount: wideSpreadMarkets.length,
+      averageSpreadCents: Number(avgSpread.toFixed(2)),
+      summaryNote,
     },
+    methodology: "Fetched real CLOB orderbooks and checked if BUY YES + BUY NO < $1.00. This is true arbitrage detection using executable prices, not midpoints.",
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Find genuine trading opportunities across multiple strategies
+ */
+async function handleFindTradingOpportunities(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const strategy = (args?.strategy as string) || "all";
+  const category = args?.category as string;
+  const minLiquidity = (args?.minLiquidity as number) || 1000;
+  const riskTolerance = (args?.riskTolerance as string) || "moderate";
+
+  // Fetch active markets sorted by different criteria
+  const [volumeEvents, liquidityEvents, newEvents] = await Promise.all([
+    fetchGamma(`/events?closed=false&limit=100&order=volume24hr&ascending=false${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
+    fetchGamma(`/events?closed=false&limit=100&order=liquidity&ascending=false${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
+    fetchGamma(`/events?closed=false&limit=50&order=startDate&ascending=false${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
+  ]);
+
+  // Combine and dedupe events
+  const eventMap = new Map<string, GammaEvent>();
+  [...volumeEvents, ...liquidityEvents, ...newEvents].forEach(e => {
+    if (e.id && !eventMap.has(e.id)) {
+      eventMap.set(e.id, e);
+    }
+  });
+  const allEvents = Array.from(eventMap.values());
+
+  const opportunities: Array<{
+    rank: number;
+    market: string;
+    conditionId: string;
+    slug: string;
+    opportunityType: string;
+    signal: string;
+    currentPrice: number;
+    suggestedSide: string;
+    potentialReturn: string;
+    confidence: string;
+    liquidity: number;
+    volume24h: number;
+    riskFactors: string[];
+    whyThisOpportunity: string;
+    score: number; // internal scoring
+  }> = [];
+
+  let marketsScanned = 0;
+
+  for (const event of allEvents) {
+    if (!event.markets || event.markets.length === 0) continue;
+
+    const eventLiquidity = Number(event.liquidity || 0);
+    const eventVolume24h = Number(event.volume24hr || 0);
+    const eventSlug = event.slug || "";
+    
+    for (const market of event.markets) {
+      const gammaPrices = parseJsonArray(market.outcomePrices);
+      if (gammaPrices.length < 2) continue;
+
+      const yesPrice = parseFloat(gammaPrices[0]) || 0;
+      const noPrice = parseFloat(gammaPrices[1]) || 0;
+      const marketLiquidity = Number(market.liquidity || eventLiquidity || 0);
+      const marketVolume24h = Number(market.volume24hr || eventVolume24h || 0);
+      const marketTitle = market.question || event.title || "Unknown";
+
+      if (marketLiquidity < minLiquidity) continue;
+      if (yesPrice <= 0 || noPrice <= 0) continue;
+
+      marketsScanned++;
+
+      // ============ STRATEGY 1: ASYMMETRIC UPSIDE ============
+      // Look for cheap positions (< 15¢) with potential 6x+ returns
+      if (strategy === "all" || strategy === "asymmetric_upside") {
+        const cheapThreshold = riskTolerance === "conservative" ? 0.10 : riskTolerance === "aggressive" ? 0.20 : 0.15;
+        
+        if (yesPrice < cheapThreshold && yesPrice > 0.01) {
+          const potentialMultiple = (1 / yesPrice).toFixed(1);
+          const riskFactors: string[] = [];
+          
+          if (marketLiquidity < 5000) riskFactors.push("Low liquidity - hard to exit");
+          if (yesPrice < 0.05) riskFactors.push("Very low probability - likely to lose");
+          
+          let confidence: "high" | "medium" | "low" = "medium";
+          if (marketLiquidity > 20000 && marketVolume24h > 5000) confidence = "high";
+          if (marketLiquidity < 5000 || yesPrice < 0.05) confidence = "low";
+
+          const score = (marketLiquidity / 1000) + (marketVolume24h / 500) + (yesPrice * 100);
+
+          opportunities.push({
+            rank: 0,
+            market: marketTitle,
+            conditionId: market.conditionId || "",
+            slug: eventSlug,
+            opportunityType: "asymmetric_upside",
+            signal: `YES at ${(yesPrice * 100).toFixed(1)}¢ - potential ${potentialMultiple}x return`,
+            currentPrice: yesPrice,
+            suggestedSide: "YES",
+            potentialReturn: `${potentialMultiple}x if YES wins`,
+            confidence,
+            liquidity: marketLiquidity,
+            volume24h: marketVolume24h,
+            riskFactors,
+            whyThisOpportunity: `Cheap YES position offers asymmetric payoff. Risk ${(yesPrice * 100).toFixed(0)}¢ to potentially win $1. Good for small speculative bets if you have an edge on this outcome.`,
+            score,
+          });
+        }
+
+        // Also check cheap NO positions
+        if (noPrice < cheapThreshold && noPrice > 0.01) {
+          const potentialMultiple = (1 / noPrice).toFixed(1);
+          const riskFactors: string[] = [];
+          
+          if (marketLiquidity < 5000) riskFactors.push("Low liquidity - hard to exit");
+          if (noPrice < 0.05) riskFactors.push("Very low probability - likely to lose");
+          
+          let confidence: "high" | "medium" | "low" = "medium";
+          if (marketLiquidity > 20000 && marketVolume24h > 5000) confidence = "high";
+          if (marketLiquidity < 5000 || noPrice < 0.05) confidence = "low";
+
+          const score = (marketLiquidity / 1000) + (marketVolume24h / 500) + (noPrice * 100);
+
+          opportunities.push({
+            rank: 0,
+            market: marketTitle,
+            conditionId: market.conditionId || "",
+            slug: eventSlug,
+            opportunityType: "asymmetric_upside",
+            signal: `NO at ${(noPrice * 100).toFixed(1)}¢ - potential ${potentialMultiple}x return`,
+            currentPrice: noPrice,
+            suggestedSide: "NO",
+            potentialReturn: `${potentialMultiple}x if NO wins`,
+            confidence,
+            liquidity: marketLiquidity,
+            volume24h: marketVolume24h,
+            riskFactors,
+            whyThisOpportunity: `Cheap NO position offers asymmetric payoff. Most people bet YES - this is a contrarian opportunity if you think the market is wrong.`,
+            score,
+          });
+        }
+      }
+
+      // ============ STRATEGY 2: MOMENTUM ============
+      // High volume relative to liquidity = active market with price discovery
+      if (strategy === "all" || strategy === "momentum") {
+        const volumeToLiquidityRatio = marketLiquidity > 0 ? marketVolume24h / marketLiquidity : 0;
+        
+        // High activity threshold
+        if (volumeToLiquidityRatio > 0.3 && marketVolume24h > 10000) {
+          const riskFactors: string[] = [];
+          if (volumeToLiquidityRatio > 1) riskFactors.push("Extremely high volume - news event likely");
+          
+          let confidence: "high" | "medium" | "low" = "medium";
+          if (marketLiquidity > 50000) confidence = "high";
+
+          const score = volumeToLiquidityRatio * 50 + (marketVolume24h / 1000);
+          
+          // Determine momentum direction based on price
+          const suggestedSide = yesPrice > 0.6 ? "YES" : yesPrice < 0.4 ? "NO" : "EITHER";
+          
+          opportunities.push({
+            rank: 0,
+            market: marketTitle,
+            conditionId: market.conditionId || "",
+            slug: eventSlug,
+            opportunityType: "momentum",
+            signal: `Volume ${(volumeToLiquidityRatio * 100).toFixed(0)}% of liquidity in 24h`,
+            currentPrice: yesPrice,
+            suggestedSide,
+            potentialReturn: suggestedSide === "YES" ? `${((1 - yesPrice) / yesPrice * 100).toFixed(0)}% if YES wins` : suggestedSide === "NO" ? `${((1 - noPrice) / noPrice * 100).toFixed(0)}% if NO wins` : "Depends on direction",
+            confidence,
+            liquidity: marketLiquidity,
+            volume24h: marketVolume24h,
+            riskFactors,
+            whyThisOpportunity: `High trading activity suggests active price discovery. This market is "hot" - prices may be moving. Good for traders who can source news/information faster than the market.`,
+            score,
+          });
+        }
+      }
+
+      // ============ STRATEGY 3: VALUE (Wide spread / inefficient) ============
+      // Look for markets where YES + NO doesn't sum to ~1
+      if (strategy === "all" || strategy === "value") {
+        const sumOfPrices = yesPrice + noPrice;
+        const inefficiency = Math.abs(sumOfPrices - 1);
+        
+        // Market is inefficient if prices don't sum close to 1
+        if (inefficiency > 0.03 && marketLiquidity > 5000) {
+          const riskFactors: string[] = [];
+          
+          let signal: string;
+          let suggestedSide: string;
+          let confidence: "high" | "medium" | "low" = "medium";
+          
+          if (sumOfPrices < 0.97) {
+            // Arbitrage-like opportunity
+            signal = `Prices sum to ${(sumOfPrices * 100).toFixed(1)}¢ - under 100¢`;
+            suggestedSide = "EITHER";
+            confidence = "high";
+            riskFactors.push("May be temporary - act quickly");
+          } else if (sumOfPrices > 1.05) {
+            // Wide spread - one side is probably mispriced
+            signal = `Wide spread - prices sum to ${(sumOfPrices * 100).toFixed(1)}¢`;
+            suggestedSide = yesPrice > noPrice ? "NO" : "YES"; // Bet on the cheaper side
+            confidence = "low";
+            riskFactors.push("Wide spread may indicate low liquidity on one side");
+          } else {
+            continue; // Not interesting enough
+          }
+
+          const score = inefficiency * 200 + (marketLiquidity / 1000);
+
+          opportunities.push({
+            rank: 0,
+            market: marketTitle,
+            conditionId: market.conditionId || "",
+            slug: eventSlug,
+            opportunityType: "value",
+            signal,
+            currentPrice: yesPrice,
+            suggestedSide,
+            potentialReturn: sumOfPrices < 0.97 ? `${((1 - sumOfPrices) * 100).toFixed(1)}% guaranteed edge` : "Depends on resolution",
+            confidence,
+            liquidity: marketLiquidity,
+            volume24h: marketVolume24h,
+            riskFactors,
+            whyThisOpportunity: sumOfPrices < 0.97 
+              ? `Market is underpriced! Buy both YES and NO for guaranteed profit when market resolves.`
+              : `Market has pricing inefficiency. One side may be overpriced due to sentiment.`,
+            score,
+          });
+        }
+      }
+
+      // ============ STRATEGY 4: NEAR RESOLUTION ============
+      // Markets ending soon with clear direction
+      if (strategy === "all" || strategy === "near_resolution") {
+        const endDate = event.endDate || event.endDateIso;
+        if (endDate) {
+          const end = new Date(endDate);
+          const now = new Date();
+          const daysRemaining = (end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+          
+          // Markets within 7 days of resolution with strong conviction (< 20% or > 80%)
+          if (daysRemaining > 0 && daysRemaining < 7) {
+            const strongConviction = yesPrice > 0.80 || yesPrice < 0.20;
+            
+            if (strongConviction && marketLiquidity > 5000) {
+              const riskFactors: string[] = [];
+              riskFactors.push(`Resolves in ${daysRemaining.toFixed(1)} days`);
+              
+              const isYesFavored = yesPrice > 0.5;
+              const favoredPrice = isYesFavored ? yesPrice : noPrice;
+              const underdogPrice = isYesFavored ? noPrice : yesPrice;
+              
+              let confidence: "high" | "medium" | "low" = "medium";
+              if (favoredPrice > 0.90) confidence = "high";
+              if (marketLiquidity < 10000) confidence = "low";
+
+              const score = (1 / daysRemaining) * 10 + (favoredPrice * 50) + (marketLiquidity / 1000);
+
+              // Opportunity: either lock in small profit on favorite, or take contrarian underdog bet
+              opportunities.push({
+                rank: 0,
+                market: marketTitle,
+                conditionId: market.conditionId || "",
+                slug: eventSlug,
+                opportunityType: "near_resolution",
+                signal: `Resolves in ${daysRemaining.toFixed(1)} days - ${isYesFavored ? "YES" : "NO"} at ${(favoredPrice * 100).toFixed(0)}%`,
+                currentPrice: yesPrice,
+                suggestedSide: isYesFavored ? "YES" : "NO",
+                potentialReturn: `${((1 - favoredPrice) / favoredPrice * 100).toFixed(0)}% in ${daysRemaining.toFixed(0)} days if market is right`,
+                confidence,
+                liquidity: marketLiquidity,
+                volume24h: marketVolume24h,
+                riskFactors,
+                whyThisOpportunity: `Market resolves soon with strong conviction. If you agree with the market, lock in ${((1 - favoredPrice) * 100).toFixed(0)}% return. If you think market is wrong, underdog pays ${((1 / underdogPrice) - 1).toFixed(1)}x.`,
+                score,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Sort by score and assign ranks
+  opportunities.sort((a, b) => b.score - a.score);
+  opportunities.forEach((opp, idx) => {
+    opp.rank = idx + 1;
+  });
+
+  // Remove internal score from output and limit results
+  const finalOpportunities = opportunities.slice(0, 15).map(({ score, ...rest }) => rest);
+
+  // Generate summary
+  const opportunityTypes = opportunities.map(o => o.opportunityType);
+  const typeCounts = opportunityTypes.reduce((acc, t) => {
+    acc[t] = (acc[t] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const bestType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "none";
+
+  let marketConditions: string;
+  if (opportunities.length === 0) {
+    marketConditions = "Markets are efficiently priced with no clear edges. Consider waiting for news events or checking less popular markets.";
+  } else if (opportunities.length < 3) {
+    marketConditions = "Few opportunities available. Markets are relatively efficient.";
+  } else if (opportunities.filter(o => o.confidence === "high").length > 3) {
+    marketConditions = "Active market with multiple high-confidence opportunities. Good time to trade.";
+  } else {
+    marketConditions = "Normal market conditions with some speculative opportunities.";
+  }
+
+  let noOpportunitiesReason: string | undefined;
+  if (opportunities.length === 0) {
+    noOpportunitiesReason = 
+      "No strong opportunities found. This means: (1) Markets are efficiently priced - prices reflect available information, " +
+      "(2) Spreads are tight - no easy arbitrage, (3) Most markets are priced between 20-80% - no cheap asymmetric bets. " +
+      "Suggestions: Wait for news events that create mispricings, look at niche/local markets, or focus on markets where you have genuine information edge.";
+  }
+
+  return successResult({
+    summary: {
+      marketsScanned,
+      opportunitiesFound: opportunities.length,
+      bestOpportunityType: bestType,
+      marketConditions,
+    },
+    opportunities: finalOpportunities,
+    ...(noOpportunitiesReason && { noOpportunitiesReason }),
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -1953,7 +2461,7 @@ async function handleDiscoverTrendingMarkets(
   const limit = Math.min((args?.limit as number) || 20, 50);
 
   // Fetch active events with volume sorting
-  let endpoint = `/events?closed=false&limit=${limit}&order=${sortBy}&ascending=false`;
+  let endpoint = `/events?closed=false&limit=${Math.max(limit * 2, 50)}&order=volume24hr&ascending=false`;
   if (category) {
     endpoint += `&category=${category}`;
   }
@@ -1961,14 +2469,19 @@ async function handleDiscoverTrendingMarkets(
   const events = (await fetchGamma(endpoint)) as GammaEvent[];
 
   const trendingMarkets: Array<{
+    rank: number;
     title: string;
+    slug: string;
     conditionId: string;
     currentPrice: number;
+    priceDirection: string;
     volume24h: number;
-    volumeChange: number;
+    volumeVsAverage: string;
     liquidity: number;
     trendScore: number;
     category: string;
+    signal: string;
+    whyTrending: string;
   }> = [];
 
   const categoryBreakdown: Record<string, number> = {};
@@ -1980,38 +2493,132 @@ async function handleDiscoverTrendingMarkets(
     const volume = Number(event.volume || market.volume || 0);
     const volume24h = Number(event.volume24hr || market.volume24hr || 0);
     const liquidity = Number(event.liquidity || market.liquidity || 0);
+    
+    // Skip low activity markets
+    if (volume24h < 1000 || liquidity < 1000) continue;
+    
+    const gammaPrices = parseJsonArray(market.outcomePrices);
+    const yesPrice = parseFloat(gammaPrices[0]) || 0.5;
 
     // Calculate trend score (weighted)
     let trendScore = 0;
-    trendScore += volume24h > 10000 ? 30 : volume24h > 1000 ? 20 : 10;
-    trendScore += liquidity > 50000 ? 30 : liquidity > 10000 ? 20 : 10;
+    
+    // Volume weight
+    if (volume24h > 100000) trendScore += 40;
+    else if (volume24h > 50000) trendScore += 30;
+    else if (volume24h > 10000) trendScore += 20;
+    else if (volume24h > 1000) trendScore += 10;
+    
+    // Liquidity weight
+    if (liquidity > 100000) trendScore += 30;
+    else if (liquidity > 50000) trendScore += 20;
+    else if (liquidity > 10000) trendScore += 10;
 
-    // Volume change estimate
-    const volumeChange = volume > 0 ? (volume24h / (volume / 30)) * 100 - 100 : 0;
-    if (volumeChange > 50) trendScore += 20;
-    else if (volumeChange > 20) trendScore += 10;
+    // Volume relative to liquidity (high turnover = active trading)
+    const volumeToLiquidity = liquidity > 0 ? volume24h / liquidity : 0;
+    if (volumeToLiquidity > 0.5) trendScore += 20;
+    else if (volumeToLiquidity > 0.2) trendScore += 10;
+
+    // Volume change estimate (comparing 24h to average daily)
+    const avgDailyVolume = volume > 0 ? volume / 30 : volume24h;
+    const volumeVsAvg = avgDailyVolume > 0 ? volume24h / avgDailyVolume : 1;
+    
+    let volumeVsAverage: string;
+    if (volumeVsAvg > 3) {
+      volumeVsAverage = `${volumeVsAvg.toFixed(1)}x above average - SURGING`;
+      trendScore += 25;
+    } else if (volumeVsAvg > 2) {
+      volumeVsAverage = `${volumeVsAvg.toFixed(1)}x above average - HIGH`;
+      trendScore += 15;
+    } else if (volumeVsAvg > 1.2) {
+      volumeVsAverage = `${volumeVsAvg.toFixed(1)}x above average`;
+      trendScore += 5;
+    } else {
+      volumeVsAverage = "Normal activity";
+    }
+
+    // Determine price direction signal
+    let priceDirection: string;
+    let signal: string;
+    if (yesPrice > 0.85) {
+      priceDirection = "Strong YES";
+      signal = `YES favored at ${(yesPrice * 100).toFixed(0)}%`;
+    } else if (yesPrice > 0.65) {
+      priceDirection = "Leaning YES";
+      signal = `Moderate YES at ${(yesPrice * 100).toFixed(0)}%`;
+    } else if (yesPrice < 0.15) {
+      priceDirection = "Strong NO";
+      signal = `NO favored at ${((1 - yesPrice) * 100).toFixed(0)}%`;
+    } else if (yesPrice < 0.35) {
+      priceDirection = "Leaning NO";
+      signal = `Moderate NO at ${((1 - yesPrice) * 100).toFixed(0)}%`;
+    } else {
+      priceDirection = "Contested";
+      signal = `Toss-up at ${(yesPrice * 100).toFixed(0)}% YES`;
+    }
+
+    // Generate why trending explanation
+    let whyTrending: string;
+    if (volumeVsAvg > 2) {
+      whyTrending = "Unusual volume spike - likely news event or price movement";
+    } else if (volumeToLiquidity > 0.3) {
+      whyTrending = "High turnover rate - active price discovery in progress";
+    } else if (liquidity > 50000 && volume24h > 20000) {
+      whyTrending = "Deep liquid market with sustained interest";
+    } else {
+      whyTrending = "Steady trading activity";
+    }
 
     const cat = event.category || "other";
     categoryBreakdown[cat] = (categoryBreakdown[cat] || 0) + 1;
 
     trendingMarkets.push({
+      rank: 0,
       title: event.title || market.question || "Unknown",
+      slug: event.slug || "",
       conditionId: market.conditionId || event.id || "",
-      currentPrice: Number(market.outcomePrices?.[0] || 0.5),
+      currentPrice: yesPrice,
+      priceDirection,
       volume24h,
-      volumeChange: Number(volumeChange.toFixed(1)),
+      volumeVsAverage,
       liquidity,
       trendScore,
       category: cat,
+      signal,
+      whyTrending,
     });
   }
 
   // Sort by trend score
   trendingMarkets.sort((a, b) => b.trendScore - a.trendScore);
+  
+  // Assign ranks
+  trendingMarkets.forEach((m, idx) => {
+    m.rank = idx + 1;
+  });
+
+  const finalMarkets = trendingMarkets.slice(0, limit);
+  
+  // Generate market summary
+  const surgingCount = finalMarkets.filter(m => m.volumeVsAverage.includes("SURGING")).length;
+  const contestedCount = finalMarkets.filter(m => m.priceDirection === "Contested").length;
+  
+  let marketSummary: string;
+  if (surgingCount > 3) {
+    marketSummary = `🔥 Active day! ${surgingCount} markets with surging volume. News events likely driving activity.`;
+  } else if (contestedCount > 5) {
+    marketSummary = `⚖️ Many contested markets. Good opportunities for traders with information edge.`;
+  } else if (finalMarkets.length > 0) {
+    marketSummary = `📊 Normal market conditions. ${finalMarkets.length} active markets identified.`;
+  } else {
+    marketSummary = "😴 Low market activity. Consider checking back during US market hours.";
+  }
 
   return successResult({
-    trendingMarkets: trendingMarkets.slice(0, limit),
+    marketSummary,
+    trendingMarkets: finalMarkets,
     categories: categoryBreakdown,
+    totalActive: events.length,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -2845,11 +3452,11 @@ app.listen(port, () => {
   console.log(`💚 Health check: http://localhost:${port}/health\n`);
   console.log(`🛠️  Available tools (${TOOLS.length}):`);
   console.log("   INTELLIGENCE:");
-  for (const tool of TOOLS.slice(0, 8)) {
+  for (const tool of TOOLS.slice(0, 9)) {
     console.log(`   • ${tool.name}`);
   }
   console.log("   RAW DATA:");
-  for (const tool of TOOLS.slice(8)) {
+  for (const tool of TOOLS.slice(9)) {
     console.log(`   • ${tool.name}`);
   }
   console.log("");
