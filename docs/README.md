@@ -29,3 +29,4 @@ If you're building tools for the Context marketplace:
 1. **Start here:** [Context Injection Guide](./context-injection.md) — Understand how user data flows to your tools
 2. **Examples:** See the [server examples](../examples/server/) for complete implementations
 3. **Requirements:** All tools must use `outputSchema` and `structuredContent` from the MCP specification
+

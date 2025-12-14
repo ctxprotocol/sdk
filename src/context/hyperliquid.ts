@@ -118,3 +118,4 @@ export interface HyperliquidContext {
   /** When this context was fetched (ISO 8601 string) */
   fetchedAt: string;
 }
+
