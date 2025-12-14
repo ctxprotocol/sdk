@@ -44,13 +44,19 @@ async function testHealthEndpoint(): Promise<TestResult> {
     const response = await fetch(`${SERVER_URL}/health`);
     const data = await response.json();
     
-    if (data.status === "ok" && data.tools && data.tools.length === 18) {
+    // Check for v2.1 features: tier1Tools, tier2Tools, protocol
+    const hasV21Features = data.tier1Tools && data.tier2Tools && data.protocol === "2025-11-25";
+    
+    if (data.status === "ok" && data.tools && data.tools.length >= 17) {
+      const tierInfo = hasV21Features 
+        ? `, Tier1: ${data.tier1Tools.length}, Tier2: ${data.tier2Tools.length}, Protocol: ${data.protocol}`
+        : "";
       return {
         tool: "health_check",
         status: "✅ PASS",
-        message: `Server healthy, ${data.tools.length} tools available`,
+        message: `Server healthy, ${data.tools.length} tools${tierInfo}`,
         duration: Date.now() - start,
-        responsePreview: JSON.stringify(data).slice(0, 150),
+        responsePreview: JSON.stringify(data).slice(0, 200),
       };
     }
     return {
@@ -58,7 +64,7 @@ async function testHealthEndpoint(): Promise<TestResult> {
       status: "⚠️ WARN",
       message: `Unexpected response structure`,
       duration: Date.now() - start,
-      responsePreview: JSON.stringify(data).slice(0, 150),
+      responsePreview: JSON.stringify(data).slice(0, 200),
     };
   } catch (error) {
     return {

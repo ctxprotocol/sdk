@@ -1,5 +1,5 @@
 /**
- * Hyperliquid Ultimate MCP Server v2.0
+ * Hyperliquid Ultimate MCP Server v2.1
  *
  * A standard MCP server built with @modelcontextprotocol/sdk.
  * The world's most comprehensive Hyperliquid MCP server.
@@ -7,16 +7,53 @@
  * Context Protocol compliant with:
  * - outputSchema (typed response definitions)
  * - structuredContent (machine-readable responses)
+ *
+ * ============================================================================
+ * TOOL ARCHITECTURE
+ * ============================================================================
+ *
+ * TIER 1: INTELLIGENCE LAYER (High-Value Composite Tools)
+ * --------------------------------------------------------
+ * These tools synthesize multiple data sources into actionable insights.
+ * They encode domain expertise and answer complex questions.
+ *
+ *   • analyze_large_order     - Comprehensive large order impact analysis
+ *   • calculate_price_impact  - Orderbook absorption simulation
+ *   • get_funding_analysis    - Cross-venue funding arbitrage detection
+ *   • get_open_interest_analysis - OI concentration and liquidation risk
+ *   • analyze_my_positions    - Portfolio risk assessment with recommendations
+ *
+ * TIER 2: RAW DATA LAYER (Building Blocks)
+ * ----------------------------------------
+ * Direct API access for custom analysis. Use when Tier 1 tools
+ * don't cover your specific use case.
+ *
+ *   • get_orderbook           - L2 orderbook depth
+ *   • get_market_info         - Price, volume, funding, OI for a coin
+ *   • list_markets            - All available perpetual markets
+ *   • get_candles             - OHLCV historical data
+ *   • get_recent_trades       - Trade tape with whale detection
+ *   • get_staking_summary     - HYPE staking mechanics
+ *   • get_user_delegations    - Wallet staking positions
+ *   • get_markets_at_oi_cap   - Markets at open interest limits
+ *   • get_hlp_vault_stats     - HLP vault APR and TVL
+ *   • get_funding_history     - Historical funding rates
+ *   • get_exchange_stats      - Exchange-wide volume and OI
+ *   • get_volume_history      - Historical volume trends
+ *
+ * ============================================================================
  */
 
 import "dotenv/config";
+import { randomUUID } from "node:crypto";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   type CallToolRequest,
   CallToolRequestSchema,
   type CallToolResult,
   ListToolsRequestSchema,
+  isInitializeRequest,
 } from "@modelcontextprotocol/sdk/types.js";
 import express, { type Request, type Response } from "express";
 import type { HyperliquidContext } from "@ctxprotocol/sdk";
@@ -30,11 +67,18 @@ const HYPERLIQUID_API_URL = "https://api.hyperliquid.xyz/info";
 // - inputSchema: JSON Schema for tool arguments (MCP standard)
 // - outputSchema: JSON Schema for response data (standard MCP feature, required by Context)
 //
+// All tools include:
+// - confidence: 0-1 score for analysis reliability (on Tier 1 tools)
+// - dataSources: Array of API endpoints used (transparency)
+// - dataFreshness: "real-time" | "near-real-time" | "cached" | "historical"
+//
 // See: https://modelcontextprotocol.io/specification/2025-11-25/server/tools#output-schema
 // ============================================================================
 
 const TOOLS = [
-  // ==================== ORDERBOOK & LIQUIDITY ====================
+  // ============================================================================
+  // TIER 2: RAW DATA LAYER - Orderbook & Liquidity
+  // ============================================================================
   {
     name: "get_orderbook",
     description:
@@ -71,16 +115,22 @@ const TOOLS = [
           description: "Context comparing orderbook to daily volume",
         },
         note: { type: "string" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["coin", "midPrice", "bids", "asks", "totalBidLiquidity", "totalAskLiquidity"],
+      required: ["coin", "midPrice", "bids", "asks", "totalBidLiquidity", "totalAskLiquidity", "dataSources", "dataFreshness"],
     },
   },
+
+  // ============================================================================
+  // TIER 1: INTELLIGENCE LAYER - Price Impact Analysis
+  // ============================================================================
 
   {
     name: "calculate_price_impact",
     description:
-      "Calculate the price impact of selling or buying a specific amount. Simulates execution through the orderbook, estimates TWAP duration for minimal impact, and provides absorption analysis. CRITICAL for analyzing large order flows.",
+      "🧠 INTELLIGENCE: Calculate the price impact of selling or buying a specific amount. Simulates execution through the orderbook, estimates TWAP duration for minimal impact, and provides absorption analysis. CRITICAL for analyzing large order flows.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -111,11 +161,18 @@ const TOOLS = [
         absorption: { type: "string" },
         volumeContext: { type: "object" },
         hiddenLiquidityNote: { type: "string" },
+        confidence: { type: "number", minimum: 0, maximum: 1, description: "Confidence in estimate (limited by visible book depth)" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["coin", "side", "orderSize", "canAbsorb", "absorption", "volumeContext"],
+      required: ["coin", "side", "orderSize", "canAbsorb", "absorption", "volumeContext", "confidence", "dataSources", "dataFreshness"],
     },
   },
+
+  // ============================================================================
+  // TIER 2: RAW DATA LAYER - Market Data
+  // ============================================================================
 
   // ==================== MARKET DATA ====================
   {
@@ -146,9 +203,11 @@ const TOOLS = [
         priceChange24h: { type: "number" },
         maxLeverage: { type: "number" },
         impactPrices: { type: "object" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["coin", "markPrice", "fundingRate", "openInterest", "volume24h"],
+      required: ["coin", "markPrice", "fundingRate", "openInterest", "volume24h", "dataSources", "dataFreshness"],
     },
   },
 
@@ -161,17 +220,22 @@ const TOOLS = [
       properties: {
         markets: { type: "array" },
         count: { type: "number" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["markets", "count"],
+      required: ["markets", "count", "dataSources", "dataFreshness"],
     },
   },
 
-  // ==================== FUNDING ANALYSIS ====================
+  // ============================================================================
+  // TIER 1: INTELLIGENCE LAYER - Funding Analysis
+  // ============================================================================
+
   {
     name: "get_funding_analysis",
     description:
-      "Get comprehensive funding rate analysis including current rates, predicted rates across venues (Binance, Bybit, Hyperliquid), and arbitrage opportunities.",
+      "🧠 INTELLIGENCE: Get comprehensive funding rate analysis including current rates, predicted rates across venues (Binance, Bybit, Hyperliquid), and arbitrage opportunities.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -186,13 +250,18 @@ const TOOLS = [
         currentFunding: { type: "object" },
         predictedFundings: { type: "array" },
         fundingArbitrage: { type: "object" },
+        confidence: { type: "number", minimum: 0, maximum: 1, description: "Confidence in arbitrage opportunity" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["coin", "currentFunding"],
+      required: ["coin", "currentFunding", "confidence", "dataSources", "dataFreshness"],
     },
   },
 
-  // ==================== STAKING & DELEGATION ====================
+  // ============================================================================
+  // TIER 2: RAW DATA LAYER - Staking & Delegation
+  // ============================================================================
   {
     name: "get_staking_summary",
     description:
@@ -211,9 +280,11 @@ const TOOLS = [
         currentHypePrice: { type: "number" },
         note: { type: "string" },
         validators: { type: "string" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["stakingMechanics", "note"],
+      required: ["stakingMechanics", "note", "dataSources", "dataFreshness"],
     },
   },
 
@@ -233,17 +304,22 @@ const TOOLS = [
         address: { type: "string" },
         delegations: { type: "array" },
         totalDelegated: { type: "number" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["address", "delegations", "totalDelegated"],
+      required: ["address", "delegations", "totalDelegated", "dataSources", "dataFreshness"],
     },
   },
 
-  // ==================== OPEN INTEREST ANALYSIS ====================
+  // ============================================================================
+  // TIER 1: INTELLIGENCE LAYER - Open Interest Analysis
+  // ============================================================================
+
   {
     name: "get_open_interest_analysis",
     description:
-      "Analyze open interest for a coin: current OI, OI changes, long/short ratio estimation, and OI caps.",
+      "🧠 INTELLIGENCE: Analyze open interest for a coin: current OI, OI changes, long/short ratio estimation, and OI caps. Identifies liquidation cascade risk.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -260,14 +336,19 @@ const TOOLS = [
         oiToVolumeRatio: { type: "number" },
         fundingImpliedBias: { type: "string" },
         atOpenInterestCap: { type: "boolean" },
-        liquidationRisk: { type: "string" },
+        liquidationRisk: { type: "string", enum: ["low", "moderate", "high"] },
+        confidence: { type: "number", minimum: 0, maximum: 1, description: "Confidence in risk assessment" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["coin", "openInterest", "openInterestUsd"],
+      required: ["coin", "openInterest", "openInterestUsd", "confidence", "dataSources", "dataFreshness"],
     },
   },
 
-  // ==================== HISTORICAL DATA ====================
+  // ============================================================================
+  // TIER 2: RAW DATA LAYER - Historical Data
+  // ============================================================================
   {
     name: "get_candles",
     description: "Get historical OHLCV candle data for technical analysis.",
@@ -287,13 +368,17 @@ const TOOLS = [
         interval: { type: "string" },
         candles: { type: "array" },
         summary: { type: "object" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["coin", "interval", "candles"],
+      required: ["coin", "interval", "candles", "dataSources", "dataFreshness"],
     },
   },
 
-  // ==================== RECENT TRADES ====================
+  // ============================================================================
+  // TIER 2: RAW DATA LAYER - Recent Trades
+  // ============================================================================
   {
     name: "get_recent_trades",
     description: "Get recent trades with whale detection. Identifies large trades and calculates buy/sell pressure.",
@@ -312,17 +397,22 @@ const TOOLS = [
         trades: { type: "array" },
         whaleTrades: { type: "array" },
         summary: { type: "object" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["coin", "trades", "summary"],
+      required: ["coin", "trades", "summary", "dataSources", "dataFreshness"],
     },
   },
 
-  // ==================== COMPREHENSIVE ANALYSIS ====================
+  // ============================================================================
+  // TIER 1: INTELLIGENCE LAYER - Comprehensive Analysis
+  // ============================================================================
+
   {
     name: "analyze_large_order",
     description:
-      "COMPREHENSIVE analysis for large order scenarios (like team unlocks, whale sells). Combines orderbook depth, volume context, funding sentiment, and OI analysis.",
+      "🧠 INTELLIGENCE: COMPREHENSIVE analysis for large order scenarios (like team unlocks, whale sells). Combines orderbook depth, volume context, funding sentiment, and OI analysis. Provides execution recommendations.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -344,13 +434,18 @@ const TOOLS = [
         marketContext: { type: "object" },
         reflexivityRisk: { type: "object" },
         conclusion: { type: "string" },
+        confidence: { type: "number", minimum: 0, maximum: 1, description: "Confidence in analysis (based on data quality)" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["coin", "orderSummary", "marketImpact", "executionRecommendation", "conclusion"],
+      required: ["coin", "orderSummary", "marketImpact", "executionRecommendation", "conclusion", "confidence", "dataSources", "dataFreshness"],
     },
   },
 
-  // ==================== ADDITIONAL TOOLS ====================
+  // ============================================================================
+  // TIER 2: RAW DATA LAYER - Additional Tools
+  // ============================================================================
   {
     name: "get_markets_at_oi_cap",
     description: "Get list of perpetual markets currently at their open interest caps.",
@@ -361,9 +456,11 @@ const TOOLS = [
         marketsAtCap: { type: "array", items: { type: "string" } },
         count: { type: "number" },
         note: { type: "string" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["marketsAtCap", "count"],
+      required: ["marketsAtCap", "count", "dataSources", "dataFreshness"],
     },
   },
 
@@ -381,9 +478,11 @@ const TOOLS = [
         followerCount: { type: "number" },
         performance: { type: "object" },
         lockupPeriod: { type: "string" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["apr", "tvl"],
+      required: ["apr", "tvl", "dataSources", "dataFreshness"],
     },
   },
 
@@ -404,9 +503,11 @@ const TOOLS = [
         coin: { type: "string" },
         fundingHistory: { type: "array" },
         summary: { type: "object" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["coin", "fundingHistory", "summary"],
+      required: ["coin", "fundingHistory", "summary", "dataSources", "dataFreshness"],
     },
   },
 
@@ -421,9 +522,11 @@ const TOOLS = [
         totalOpenInterest: { type: "number" },
         marketCount: { type: "number" },
         topMarketsByVolume: { type: "array" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["totalVolume24h", "totalOpenInterest", "marketCount"],
+      required: ["totalVolume24h", "totalOpenInterest", "marketCount", "dataSources", "dataFreshness"],
     },
   },
 
@@ -444,17 +547,22 @@ const TOOLS = [
         coin: { type: "string" },
         dailyVolumes: { type: "array" },
         summary: { type: "object" },
+        dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["dailyVolumes", "summary"],
+      required: ["dailyVolumes", "summary", "dataSources", "dataFreshness"],
     },
   },
 
-  // ==================== PORTFOLIO ANALYSIS ====================
+  // ============================================================================
+  // TIER 1: INTELLIGENCE LAYER - Portfolio Analysis
+  // ============================================================================
+
   {
     name: "analyze_my_positions",
     description:
-      "Analyze your Hyperliquid perpetual positions with risk assessment, P&L breakdown, " +
+      "🧠 INTELLIGENCE: Analyze your Hyperliquid perpetual positions with risk assessment, P&L breakdown, " +
       "liquidation warnings, and personalized recommendations. Requires portfolio context.",
     inputSchema: {
       type: "object" as const,
@@ -530,9 +638,12 @@ const TOOLS = [
           },
         },
         overallRecommendation: { type: "string" },
+        confidence: { type: "number", minimum: 0, maximum: 1, description: "Confidence in risk assessment" },
+        dataSources: { type: "array", items: { type: "string" }, description: "Data sources used" },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["walletAddress", "totalPositions", "portfolioSummary", "positionAnalyses"],
+      required: ["walletAddress", "totalPositions", "portfolioSummary", "positionAnalyses", "confidence", "dataSources", "dataFreshness"],
     },
   },
 ];
@@ -654,6 +765,8 @@ async function handleGetOrderbook(args: Record<string, unknown> | undefined): Pr
       liquidityScore,
     },
     note: "Visible orderbook only shows ~20 levels. Hidden liquidity, market makers, and OTC desks provide additional absorption capacity not reflected here.",
+    dataSources: ["l2Book", "metaAndAssetCtxs"],
+    dataFreshness: "real-time" as const,
   });
 }
 
@@ -683,6 +796,9 @@ async function handleCalculatePriceImpact(args: Record<string, unknown> | undefi
   else if (orderAsPercentOfVolume < 15) { twapDuration = "12-24 hours"; twapImpact = "moderate (0.5-2%)"; }
   else { twapDuration = "2-5 days or OTC recommended"; twapImpact = "significant (2%+) even with TWAP"; }
 
+  // Calculate confidence based on how much of the order can be absorbed
+  const confidence = impact.canAbsorb ? (impact.slippageBps < 50 ? 0.85 : 0.7) : 0.5;
+
   return successResult({
     ...impact,
     volumeContext: {
@@ -692,6 +808,9 @@ async function handleCalculatePriceImpact(args: Record<string, unknown> | undefi
       twapImpactEstimate: twapImpact,
     },
     hiddenLiquidityNote: "Visible book capacity is limited. Professional market makers use TWAP/algorithmic execution to minimize impact.",
+    confidence,
+    dataSources: ["l2Book", "metaAndAssetCtxs"],
+    dataFreshness: "real-time" as const,
   });
 }
 
@@ -738,6 +857,8 @@ async function handleGetMarketInfo(args: Record<string, unknown> | undefined): P
     priceChange24h: prevDayPx > 0 ? Number((((markPrice - prevDayPx) / prevDayPx) * 100).toFixed(2)) : 0,
     maxLeverage: asset.maxLeverage,
     impactPrices: impactPxs ? { impactBid: Number(impactPxs[0]), impactAsk: Number(impactPxs[1]) } : null,
+    dataSources: ["metaAndAssetCtxs", "l2Book", "allMids"],
+    dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -752,7 +873,13 @@ async function handleListMarkets(): Promise<CallToolResult> {
     szDecimals: asset.szDecimals,
   }));
 
-  return successResult({ markets, count: markets.length, fetchedAt: new Date().toISOString() });
+  return successResult({
+    markets,
+    count: markets.length,
+    dataSources: ["meta", "allMids"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
 }
 
 async function handleGetFundingAnalysis(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -802,6 +929,9 @@ async function handleGetFundingAnalysis(args: Record<string, unknown> | undefine
     }
   }
 
+  // Calculate confidence based on arbitrage opportunity clarity
+  const confidence = arbitrageOpportunity ? 0.8 : (predictions.length > 0 ? 0.7 : 0.5);
+
   return successResult({
     coin,
     currentFunding: {
@@ -811,6 +941,9 @@ async function handleGetFundingAnalysis(args: Record<string, unknown> | undefine
     },
     predictedFundings: predictions,
     fundingArbitrage: arbitrageOpportunity,
+    confidence,
+    dataSources: ["metaAndAssetCtxs", "predictedFundings"],
+    dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -831,6 +964,8 @@ async function handleGetStakingSummary(args: Record<string, unknown> | undefined
     currentHypePrice: hypePrice,
     note: "Staking stats are not directly available via public API. Use app.hyperliquid.xyz/staking for current totals.",
     validators: includeValidators ? "Use https://stake.nansen.ai/stake/hyperliquid for validator list" : null,
+    dataSources: ["allMids"],
+    dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -847,7 +982,14 @@ async function handleGetUserDelegations(args: Record<string, unknown> | undefine
   }));
   const totalDelegated = parsed.reduce((sum, d) => sum + d.amount, 0);
 
-  return successResult({ address, delegations: parsed, totalDelegated, fetchedAt: new Date().toISOString() });
+  return successResult({
+    address,
+    delegations: parsed,
+    totalDelegated,
+    dataSources: ["delegations"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
 }
 
 async function handleGetOpenInterestAnalysis(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -885,6 +1027,9 @@ async function handleGetOpenInterestAnalysis(args: Record<string, unknown> | und
   else if (oiToVolumeRatio > 1.5) liquidationRisk = "moderate - significant OI concentration";
   else liquidationRisk = "low - healthy OI/volume ratio";
 
+  // Calculate confidence based on data quality
+  const confidence = volume24h > 0 ? 0.85 : 0.6;
+
   return successResult({
     coin,
     openInterest,
@@ -893,6 +1038,9 @@ async function handleGetOpenInterestAnalysis(args: Record<string, unknown> | und
     fundingImpliedBias: fundingBias,
     atOpenInterestCap: atCap,
     liquidationRisk,
+    confidence,
+    dataSources: ["metaAndAssetCtxs", "perpsAtOpenInterestCap"],
+    dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -935,6 +1083,8 @@ async function handleGetCandles(args: Record<string, unknown> | undefined): Prom
       priceChange: firstClose > 0 ? Number((((lastClose - firstClose) / firstClose) * 100).toFixed(2)) : 0,
       totalVolume: volumes.reduce((a, b) => a + b, 0),
     },
+    dataSources: ["candleSnapshot"],
+    dataFreshness: "historical" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -996,6 +1146,8 @@ async function handleGetRecentTrades(args: Record<string, unknown> | undefined):
       whaleSellVolume,
       whaleNetFlow: whaleBuyVolume - whaleSellVolume,
     },
+    dataSources: ["recentTrades"],
+    dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -1091,6 +1243,9 @@ async function handleAnalyzeLargeOrder(args: Record<string, unknown> | undefined
     conclusion = `Very large ${sideWord} order at ${asPercentOfVolume.toFixed(1)}% of daily volume. OTC execution strongly recommended.`;
   }
 
+  // Calculate confidence based on volume data quality
+  const confidence = volume24h > 0 ? (asPercentOfVolume < 10 ? 0.85 : 0.7) : 0.5;
+
   return successResult({
     coin,
     orderSummary: {
@@ -1123,6 +1278,9 @@ async function handleAnalyzeLargeOrder(args: Record<string, unknown> | undefined
     },
     reflexivityRisk: { riskLevel: reflexivityRisk, potentialCascade: cascadePotential, worstCaseImpact: worstCase },
     conclusion,
+    confidence,
+    dataSources: ["l2Book", "metaAndAssetCtxs"],
+    dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -1133,6 +1291,8 @@ async function handleGetMarketsAtOiCap(): Promise<CallToolResult> {
     marketsAtCap: markets,
     count: markets.length,
     note: "Markets at OI cap have limited capacity for new positions.",
+    dataSources: ["perpsAtOpenInterestCap"],
+    dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -1173,6 +1333,8 @@ async function handleGetHlpVaultStats(): Promise<CallToolResult> {
     isClosed: vaultData.isClosed ?? false,
     allowDeposits: vaultData.allowDeposits ?? true,
     note: "HLP is the protocol vault that provides liquidity. APR reflects recent performance.",
+    dataSources: ["vaultDetails"],
+    dataFreshness: "near-real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -1228,6 +1390,8 @@ async function handleGetFundingHistory(args: Record<string, unknown> | undefined
         ? `Longs have paid shorts on average (${(avgRate * 24 * 365 * 100).toFixed(2)}% annualized).`
         : `Shorts have paid longs on average.`,
     },
+    dataSources: ["fundingHistory"],
+    dataFreshness: "historical" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -1272,6 +1436,8 @@ async function handleGetExchangeStats(): Promise<CallToolResult> {
       top10Percent: topMarkets.reduce((s, m) => s + m.percentOfTotal, 0),
     },
     note: "Volume is 24h notional volume.",
+    dataSources: ["metaAndAssetCtxs"],
+    dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -1333,6 +1499,8 @@ async function handleGetVolumeHistory(args: Record<string, unknown> | undefined)
           ? "Recent volume is significantly above average - increased activity"
           : "Recent volume is within normal range",
     },
+    dataSources: ["candleSnapshot"],
+    dataFreshness: "historical" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -1364,6 +1532,9 @@ async function handleAnalyzeMyPositions(
       },
       positionAnalyses: [],
       overallRecommendation: "You have no active Hyperliquid positions to analyze.",
+      confidence: 1.0,
+      dataSources: ["portfolio context (injected)"],
+      dataFreshness: "real-time" as const,
       fetchedAt: new Date().toISOString(),
     });
   }
@@ -1467,6 +1638,9 @@ async function handleAnalyzeMyPositions(
     accountValue: accountSummary.accountValue,
   });
 
+  // Calculate confidence based on position data quality
+  const confidence = positionAnalyses.length > 0 ? 0.9 : 0.5;
+
   return successResult({
     walletAddress,
     totalPositions: positionAnalyses.length,
@@ -1479,6 +1653,9 @@ async function handleAnalyzeMyPositions(
     },
     positionAnalyses,
     overallRecommendation,
+    confidence,
+    dataSources: ["portfolio context (injected)"],
+    dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -1710,57 +1887,122 @@ function getIntervalMs(interval: string): number {
 }
 
 // ============================================================================
-// EXPRESS SERVER (Standard MCP pattern)
+// EXPRESS SERVER (Streamable HTTP Transport - Protocol 2025-11-25)
 // ============================================================================
 
 const app = express();
 app.use(express.json());
 
-const transports: Record<string, SSEServerTransport> = {};
+// Session management for Streamable HTTP transport
+const transports: Record<string, StreamableHTTPServerTransport> = {};
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     server: "hyperliquid-ultimate",
-    version: "2.0.0",
+    version: "2.1.0",
+    protocol: "2025-11-25",
+    transport: "streamable-http",
     tools: TOOLS.map((t) => t.name),
+    tier1Tools: TOOLS.filter((t) => t.description.includes("🧠 INTELLIGENCE")).map((t) => t.name),
+    tier2Tools: TOOLS.filter((t) => !t.description.includes("🧠 INTELLIGENCE")).map((t) => t.name),
     description: "The world's most comprehensive Hyperliquid MCP server",
   });
 });
 
-app.get("/sse", async (_req: Request, res: Response) => {
-  console.log("New SSE connection established");
-  const transport = new SSEServerTransport("/messages", res);
-  transports[transport.sessionId] = transport;
+// Streamable HTTP endpoint - handles all MCP communication
+app.post("/mcp", async (req: Request, res: Response) => {
+  const sessionId = req.headers["mcp-session-id"] as string | undefined;
+  let transport: StreamableHTTPServerTransport;
 
-  res.on("close", () => {
-    console.log(`SSE connection closed: ${transport.sessionId}`);
-    delete transports[transport.sessionId];
-  });
+  if (sessionId && transports[sessionId]) {
+    // Reuse existing session
+    transport = transports[sessionId];
+  } else if (!sessionId && isInitializeRequest(req.body)) {
+    // New session initialization
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+      onsessioninitialized: (id) => {
+        transports[id] = transport;
+        console.log(`Session initialized: ${id}`);
+      },
+    });
 
-  await server.connect(transport);
+    // Clean up on transport close
+    transport.onclose = () => {
+      if (transport.sessionId) {
+        delete transports[transport.sessionId];
+        console.log(`Session closed: ${transport.sessionId}`);
+      }
+    };
+
+    // Connect the MCP server to this transport
+    await server.connect(transport);
+  } else {
+    // Invalid request - no session and not an initialize request
+    res.status(400).json({
+      jsonrpc: "2.0",
+      error: { code: -32000, message: "Invalid session. Send initialize request first." },
+      id: null,
+    });
+    return;
+  }
+
+  // Handle the request
+  await transport.handleRequest(req, res, req.body);
 });
 
-app.post("/messages", async (req: Request, res: Response) => {
-  const sessionId = req.query.sessionId as string;
+// Handle GET requests for SSE streaming (optional, for notifications)
+app.get("/mcp", async (req: Request, res: Response) => {
+  const sessionId = req.headers["mcp-session-id"] as string;
   const transport = transports[sessionId];
 
   if (transport) {
-    await transport.handlePostMessage(req, res, req.body);
+    await transport.handleRequest(req, res);
   } else {
-    res.status(400).json({ error: "No transport found for sessionId" });
+    res.status(400).json({ error: "Invalid session" });
   }
+});
+
+// Handle DELETE requests for session cleanup
+app.delete("/mcp", async (req: Request, res: Response) => {
+  const sessionId = req.headers["mcp-session-id"] as string;
+  const transport = transports[sessionId];
+
+  if (transport) {
+    await transport.handleRequest(req, res);
+  } else {
+    res.status(400).json({ error: "Invalid session" });
+  }
+});
+
+// Backwards compatibility: SSE endpoint (deprecated, redirects to /mcp)
+app.get("/sse", (_req: Request, res: Response) => {
+  res.status(410).json({
+    error: "SSE transport deprecated",
+    message: "Please use the Streamable HTTP transport at /mcp instead",
+    migration: {
+      oldEndpoint: "GET /sse + POST /messages?sessionId=xxx",
+      newEndpoint: "POST /mcp with mcp-session-id header",
+      protocol: "2025-11-25",
+    },
+  });
 });
 
 const port = Number(process.env.PORT || 4002);
 app.listen(port, () => {
-  console.log("\n🚀 Hyperliquid Ultimate MCP Server v2.0.0");
+  console.log("\n🚀 Hyperliquid Ultimate MCP Server v2.1.0");
   console.log(`   The world's most comprehensive Hyperliquid MCP\n`);
-  console.log(`📡 SSE endpoint: http://localhost:${port}/sse`);
-  console.log(`💚 Health check: http://localhost:${port}/health\n`);
-  console.log(`🛠️  Available tools (${TOOLS.length}):`);
-  for (const tool of TOOLS) {
+  console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
+  console.log(`💚 Health check: http://localhost:${port}/health`);
+  console.log(`🔄 Protocol: Streamable HTTP (2025-11-25)\n`);
+  console.log(`🧠 TIER 1 - INTELLIGENCE TOOLS:`);
+  TOOLS.filter((t) => t.description.includes("🧠 INTELLIGENCE")).forEach((tool) => {
     console.log(`   • ${tool.name}`);
-  }
+  });
+  console.log(`\n📊 TIER 2 - RAW DATA TOOLS:`);
+  TOOLS.filter((t) => !t.description.includes("🧠 INTELLIGENCE")).forEach((tool) => {
+    console.log(`   • ${tool.name}`);
+  });
   console.log("");
 });

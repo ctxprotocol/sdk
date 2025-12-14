@@ -13,6 +13,9 @@
 import "dotenv/config";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
+import { randomUUID } from "node:crypto";
 import {
   type CallToolRequest,
   CallToolRequestSchema,
@@ -645,13 +648,17 @@ const TOOLS = [
 
   {
     name: "get_orderbook",
-    description: "Get the Level 2 orderbook for a specific token.",
+    description: "Get the Level 2 orderbook for a specific token. Use merged=true to see the full orderbook including synthetic liquidity (matches Polymarket UI). Raw orderbook only shows direct orders and may appear to have very wide spreads.",
     inputSchema: {
       type: "object" as const,
       properties: {
         tokenId: {
           type: "string",
           description: "The token ID to get orderbook for",
+        },
+        merged: {
+          type: "boolean",
+          description: "If true, returns merged orderbook combining direct + synthetic liquidity from complement token. This matches what Polymarket UI shows. Default: false (raw orderbook)",
         },
       },
       required: ["tokenId"],
@@ -661,13 +668,14 @@ const TOOLS = [
       properties: {
         market: { type: "string" },
         assetId: { type: "string" },
-        timestamp: { type: "string" },
-        bids: { type: "array" },
-        asks: { type: "array" },
+        view: { type: "string", description: "'raw' or 'merged'" },
+        bids: { type: "array", description: "Bid orders sorted by price descending" },
+        asks: { type: "array", description: "Ask orders sorted by price ascending" },
         bestBid: { type: "number" },
         bestAsk: { type: "number" },
         midPrice: { type: "number" },
         spread: { type: "number" },
+        spreadCents: { type: "number", description: "Spread in cents (only for merged view)" },
         fetchedAt: { type: "string" },
       },
       required: ["assetId", "bids", "asks"],
@@ -941,69 +949,145 @@ async function handleAnalyzeMarketLiquidity(
     return errorResult("Either tokenId or conditionId is required");
   }
 
-  let resolvedTokenId = tokenId;
+  let yesTokenId = tokenId;
+  let noTokenId = "";
 
-  // If conditionId provided, get the token IDs from the market
-  if (!resolvedTokenId && conditionId) {
+  // Get both token IDs - we need both to calculate synthetic liquidity
+  if (conditionId) {
     const market = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
-    resolvedTokenId = market.tokens?.[0]?.token_id || "";
-    if (!resolvedTokenId) {
-      return errorResult("Could not resolve token ID from condition ID");
+    yesTokenId = market.tokens?.[0]?.token_id || tokenId;
+    noTokenId = market.tokens?.[1]?.token_id || "";
+  }
+
+  if (!yesTokenId) {
+    return errorResult("Could not resolve token ID");
+  }
+
+  // Fetch orderbook for this token first
+  const yesOrderbook = (await fetchClob(`/book?token_id=${yesTokenId}`)) as OrderbookResponse;
+  
+  // If we don't have the complement token yet, try to get it from the market
+  if (!noTokenId && yesOrderbook.market) {
+    try {
+      const market = (await fetchClob(`/markets/${yesOrderbook.market}`)) as ClobMarket;
+      if (market?.tokens) {
+        const otherToken = market.tokens.find((t: { token_id: string }) => t.token_id !== yesTokenId);
+        if (otherToken) {
+          noTokenId = otherToken.token_id;
+        }
+      }
+    } catch {
+      // Continue without complement token
+    }
+  }
+  let noOrderbook: OrderbookResponse | null = null;
+  
+  if (noTokenId) {
+    try {
+      noOrderbook = (await fetchClob(`/book?token_id=${noTokenId}`)) as OrderbookResponse;
+    } catch {
+      // Continue without NO orderbook
     }
   }
 
-  // Fetch orderbook
-  const orderbook = (await fetchClob(`/book?token_id=${resolvedTokenId}`)) as OrderbookResponse;
+  // Build MERGED orderbook combining direct + synthetic liquidity
+  // Polymarket UI shows this merged view
+  const mergedBids: Array<{ price: number; size: number; source: string }> = [];
+  const mergedAsks: Array<{ price: number; size: number; source: string }> = [];
 
-  const bids = orderbook.bids || [];
-  const asks = orderbook.asks || [];
+  // Direct YES bids
+  for (const bid of yesOrderbook.bids || []) {
+    mergedBids.push({ price: Number(bid.price), size: Number(bid.size), source: "direct" });
+  }
 
-  const bestBid = bids.length > 0 ? Number(bids[0].price) : 0;
-  const bestAsk = asks.length > 0 ? Number(asks[0].price) : 1;
-  const midPrice = (bestBid + bestAsk) / 2;
+  // Direct YES asks
+  for (const ask of yesOrderbook.asks || []) {
+    mergedAsks.push({ price: Number(ask.price), size: Number(ask.size), source: "direct" });
+  }
 
-  // Calculate spread
-  const spreadAbsolute = bestAsk - bestBid;
-  const spreadPercentage = midPrice > 0 ? (spreadAbsolute / midPrice) * 100 : 0;
-  const spreadBps = spreadPercentage * 100;
+  // Synthetic liquidity from NO orderbook
+  if (noOrderbook) {
+    // NO asks create synthetic YES bids: sell NO at X% → buy YES at (1-X)%
+    // e.g., NO ask at 93¢ → YES bid at 7¢
+    for (const ask of noOrderbook.asks || []) {
+      const syntheticYesBid = 1 - Number(ask.price);
+      if (syntheticYesBid > 0 && syntheticYesBid < 1) {
+        mergedBids.push({ price: syntheticYesBid, size: Number(ask.size), source: "synthetic" });
+      }
+    }
 
-  // Calculate depth within 2% of mid price
-  const depthThreshold = midPrice * 0.02;
-  let bidDepthUsd = 0;
-  let askDepthUsd = 0;
-
-  for (const bid of bids) {
-    const price = Number(bid.price);
-    if (midPrice - price <= depthThreshold) {
-      bidDepthUsd += Number(bid.size) * price;
+    // NO bids create synthetic YES asks: buy NO at X% → sell YES at (1-X)%
+    // e.g., NO bid at 92¢ → YES ask at 8¢
+    for (const bid of noOrderbook.bids || []) {
+      const syntheticYesAsk = 1 - Number(bid.price);
+      if (syntheticYesAsk > 0 && syntheticYesAsk < 1) {
+        mergedAsks.push({ price: syntheticYesAsk, size: Number(bid.size), source: "synthetic" });
+      }
     }
   }
 
-  for (const ask of asks) {
-    const price = Number(ask.price);
-    if (price - midPrice <= depthThreshold) {
-      askDepthUsd += Number(ask.size) * price;
+  // Sort merged orderbooks: bids high-to-low, asks low-to-high
+  mergedBids.sort((a, b) => b.price - a.price);
+  mergedAsks.sort((a, b) => a.price - b.price);
+
+  // Get current price from /prices endpoint
+  let currentPrice = 0.5;
+  try {
+    const pricesResp = (await fetchClobPost("/prices", [
+      { token_id: yesTokenId, side: "BUY" },
+    ])) as Record<string, { BUY?: string } | string>;
+    
+    const priceData = pricesResp[yesTokenId];
+    if (priceData) {
+      currentPrice = typeof priceData === "object" && priceData.BUY 
+        ? Number(priceData.BUY) 
+        : Number(priceData);
     }
+  } catch {
+    // Fall back to merged orderbook mid
+    const bestBid = mergedBids.length > 0 ? mergedBids[0].price : 0;
+    const bestAsk = mergedAsks.length > 0 ? mergedAsks[0].price : 1;
+    currentPrice = (bestBid + bestAsk) / 2;
   }
 
-  // Whale cost simulation - simulate selling different amounts
+  // Calculate spread from MERGED orderbook (this is what users see)
+  const bestBid = mergedBids.length > 0 ? mergedBids[0].price : 0;
+  const bestAsk = mergedAsks.length > 0 ? mergedAsks[0].price : 1;
+  const spread = bestAsk - bestBid;
+  const spreadBps = currentPrice > 0 ? (spread / currentPrice) * 10000 : 0;
+
+  // Calculate depth from merged orderbook
+  let totalBidDepthUsd = 0;
+  let totalAskDepthUsd = 0;
+
+  for (const bid of mergedBids) {
+    totalBidDepthUsd += bid.size * bid.price;
+  }
+
+  for (const ask of mergedAsks) {
+    totalAskDepthUsd += ask.size * ask.price;
+  }
+
+  // Whale cost simulation using MERGED bids
   const whaleCost = {
-    sell1k: simulateSell(bids, 1000, midPrice),
-    sell5k: simulateSell(bids, 5000, midPrice),
-    sell10k: simulateSell(bids, 10000, midPrice),
+    sell1k: simulateSellMerged(mergedBids, 1000, currentPrice),
+    sell5k: simulateSellMerged(mergedBids, 5000, currentPrice),
+    sell10k: simulateSellMerged(mergedBids, 10000, currentPrice),
   };
 
   // Determine liquidity score
   let liquidityScore: string;
-  const avgSlippage = (whaleCost.sell1k.slippagePercent + whaleCost.sell5k.slippagePercent) / 2;
+  const totalDepth = totalBidDepthUsd + totalAskDepthUsd;
+  const slippage5k = whaleCost.sell5k.slippagePercent;
+  const slippage1k = whaleCost.sell1k.slippagePercent;
 
-  if (avgSlippage < 0.5 && spreadBps < 50) {
+  if (slippage5k < 2 && spread < 0.02) {
     liquidityScore = "excellent";
-  } else if (avgSlippage < 1 && spreadBps < 100) {
+  } else if (slippage5k < 5 && spread < 0.03) {
     liquidityScore = "good";
-  } else if (avgSlippage < 2 && spreadBps < 200) {
+  } else if (slippage5k < 10 && spread < 0.05) {
     liquidityScore = "moderate";
-  } else if (avgSlippage < 5) {
+  } else if (slippage1k < 20) {
     liquidityScore = "poor";
   } else {
     liquidityScore = "illiquid";
@@ -1011,26 +1095,31 @@ async function handleAnalyzeMarketLiquidity(
 
   // Generate recommendation
   let recommendation: string;
-  if (liquidityScore === "excellent" || liquidityScore === "good") {
-    recommendation = "Market has sufficient liquidity. Position sizing up to $5k should have minimal impact.";
+  if (liquidityScore === "excellent") {
+    recommendation = `Excellent liquidity. Spread: ${(spread * 100).toFixed(0)}¢. Exit $5k with ~${slippage5k.toFixed(1)}% slippage.`;
+  } else if (liquidityScore === "good") {
+    recommendation = `Good liquidity. Spread: ${(spread * 100).toFixed(0)}¢. Exit $1k: ~${slippage1k.toFixed(1)}% slippage, $5k: ~${slippage5k.toFixed(1)}%.`;
   } else if (liquidityScore === "moderate") {
-    recommendation = "Consider scaling into position over time. Larger orders may experience 1-2% slippage.";
+    recommendation = `Moderate liquidity. Consider limit orders. $1k exit: ~${slippage1k.toFixed(1)}% slippage.`;
   } else {
-    recommendation = `Caution: Illiquid market. A $5k position would experience ${whaleCost.sell5k.slippagePercent.toFixed(1)}% slippage on exit.`;
+    recommendation = `Low liquidity. Exit $1k would cost ~${slippage1k.toFixed(1)}% in slippage. Use limit orders.`;
   }
 
   return successResult({
-    market: orderbook.market || conditionId,
-    tokenId: resolvedTokenId,
-    currentPrice: midPrice,
+    market: yesOrderbook.market || conditionId,
+    tokenId: yesTokenId,
+    currentPrice: Number(currentPrice.toFixed(4)),
     spread: {
-      absolute: Number(spreadAbsolute.toFixed(4)),
-      percentage: Number(spreadPercentage.toFixed(2)),
-      bps: Number(spreadBps.toFixed(1)),
+      bestBid: Number(bestBid.toFixed(4)),
+      bestAsk: Number(bestAsk.toFixed(4)),
+      spreadCents: Number((spread * 100).toFixed(1)),
+      spreadBps: Number(spreadBps.toFixed(1)),
     },
-    depthWithin2Percent: {
-      bidDepthUsd: Number(bidDepthUsd.toFixed(2)),
-      askDepthUsd: Number(askDepthUsd.toFixed(2)),
+    depth: {
+      bidDepthUsd: Number(totalBidDepthUsd.toFixed(2)),
+      askDepthUsd: Number(totalAskDepthUsd.toFixed(2)),
+      totalDepthUsd: Number((totalBidDepthUsd + totalAskDepthUsd).toFixed(2)),
+      note: "Includes synthetic liquidity from complement token",
     },
     whaleCost,
     liquidityScore,
@@ -1039,40 +1128,52 @@ async function handleAnalyzeMarketLiquidity(
   });
 }
 
-function simulateSell(
-  bids: Array<{ price: string; size: string }>,
+/**
+ * Simulate selling on the MERGED orderbook (direct + synthetic liquidity)
+ */
+function simulateSellMerged(
+  mergedBids: Array<{ price: number; size: number; source: string }>,
   usdAmount: number,
-  midPrice: number
+  currentPrice: number
 ): { amountFilled: number; avgPrice: number; worstPrice: number; slippagePercent: number; canFill: boolean } {
-  let remaining = usdAmount;
-  let totalShares = 0;
-  let worstPrice = midPrice;
-
-  for (const bid of bids) {
-    if (remaining <= 0) break;
-
-    const price = Number(bid.price);
-    const size = Number(bid.size);
-    const levelValue = size * price;
-
-    const fillValue = Math.min(remaining, levelValue);
-    const fillShares = fillValue / price;
-
-    totalShares += fillShares;
-    remaining -= fillValue;
-    worstPrice = price;
+  if (mergedBids.length === 0 || currentPrice <= 0) {
+    return {
+      amountFilled: 0,
+      avgPrice: 0,
+      worstPrice: 0,
+      slippagePercent: 100,
+      canFill: false,
+    };
   }
 
-  const filledAmount = usdAmount - remaining;
-  const avgPrice = totalShares > 0 ? filledAmount / totalShares : midPrice;
-  const slippagePercent = midPrice > 0 ? ((midPrice - avgPrice) / midPrice) * 100 : 0;
+  let remainingUsd = usdAmount;
+  let totalShares = 0;
+  let worstPrice = currentPrice;
+
+  for (const bid of mergedBids) {
+    if (remainingUsd <= 0) break;
+
+    const levelValueUsd = bid.size * bid.price;
+    const fillValueUsd = Math.min(remainingUsd, levelValueUsd);
+    const fillShares = fillValueUsd / bid.price;
+
+    totalShares += fillShares;
+    remainingUsd -= fillValueUsd;
+    worstPrice = bid.price;
+  }
+
+  const filledAmount = usdAmount - remainingUsd;
+  const avgPrice = totalShares > 0 ? filledAmount / totalShares : 0;
+  
+  // Slippage from current price (what you expect to get)
+  const slippagePercent = currentPrice > 0 ? ((currentPrice - avgPrice) / currentPrice) * 100 : 0;
 
   return {
     amountFilled: Number(filledAmount.toFixed(2)),
     avgPrice: Number(avgPrice.toFixed(4)),
     worstPrice: Number(worstPrice.toFixed(4)),
-    slippagePercent: Number(Math.max(0, slippagePercent).toFixed(2)),
-    canFill: remaining <= 0,
+    slippagePercent: Number(Math.max(0, slippagePercent).toFixed(1)),
+    canFill: remainingUsd <= 0,
   };
 }
 
@@ -1225,6 +1326,44 @@ async function handleCheckMarketEfficiency(
     recommendation = "Market is efficiently priced. Edge must come from superior information.";
   }
 
+  // Try to get spread info from merged orderbook
+  let spreadInfo: { bidAskSpread: number; spreadCents: number } | null = null;
+  try {
+    const tokenIds = parseJsonArray(market.clobTokenIds);
+    if (tokenIds[0] && tokenIds[1]) {
+      const yesBook = (await fetchClob(`/book?token_id=${tokenIds[0]}`)) as OrderbookResponse;
+      const noBook = (await fetchClob(`/book?token_id=${tokenIds[1]}`)) as OrderbookResponse;
+      
+      // Build merged orderbook for YES token
+      const mergedBids: number[] = [];
+      const mergedAsks: number[] = [];
+      
+      // Synthetic YES bids from NO asks
+      for (const ask of noBook.asks || []) {
+        const synthetic = 1 - Number(ask.price);
+        if (synthetic > 0 && synthetic < 1) mergedBids.push(synthetic);
+      }
+      // Synthetic YES asks from NO bids  
+      for (const bid of noBook.bids || []) {
+        const synthetic = 1 - Number(bid.price);
+        if (synthetic > 0 && synthetic < 1) mergedAsks.push(synthetic);
+      }
+      
+      mergedBids.sort((a, b) => b - a);
+      mergedAsks.sort((a, b) => a - b);
+      
+      if (mergedBids.length > 0 && mergedAsks.length > 0) {
+        const spread = mergedAsks[0] - mergedBids[0];
+        spreadInfo = {
+          bidAskSpread: Number(spread.toFixed(4)),
+          spreadCents: Number((spread * 100).toFixed(1)),
+        };
+      }
+    }
+  } catch {
+    // Spread info unavailable
+  }
+
   return successResult({
     market: market.question || market.title || "Unknown",
     conditionId: market.conditionId || conditionId,
@@ -1236,6 +1375,7 @@ async function handleCheckMarketEfficiency(
       isEfficient: Math.abs(vig) < 0.02,
       efficiency,
     },
+    spreadInfo,
     trueProbabilities,
     recommendation,
     fetchedAt: new Date().toISOString(),
@@ -2265,27 +2405,107 @@ async function handleGetOrderbook(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
   const tokenId = args?.tokenId as string;
+  const merged = args?.merged as boolean;
 
   if (!tokenId) {
     return errorResult("tokenId is required");
   }
 
+  // Fetch direct orderbook for this token
   const orderbook = (await fetchClob(`/book?token_id=${tokenId}`)) as OrderbookResponse;
 
-  const bids = orderbook.bids || [];
-  const asks = orderbook.asks || [];
+  const directBids = orderbook.bids || [];
+  const directAsks = orderbook.asks || [];
 
-  const bestBid = bids.length > 0 ? Number(bids[0].price) : 0;
-  const bestAsk = asks.length > 0 ? Number(asks[0].price) : 1;
+  // If merged=true, try to get complement token and merge orderbooks
+  // This matches what Polymarket UI shows
+  if (merged) {
+    try {
+      // Use the market's condition_id to look up the complement token
+      const conditionId = orderbook.market;
+      let complementTokenId = "";
+      
+      if (conditionId) {
+        const market = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
+        if (market?.tokens) {
+          const otherToken = market.tokens.find((t: { token_id: string }) => t.token_id !== tokenId);
+          if (otherToken) {
+            complementTokenId = otherToken.token_id;
+          }
+        }
+      }
+
+      if (complementTokenId) {
+        const complementBook = (await fetchClob(`/book?token_id=${complementTokenId}`)) as OrderbookResponse;
+        
+        // Build merged orderbook
+        const mergedBids: Array<{ price: number; size: number; source: string }> = [];
+        const mergedAsks: Array<{ price: number; size: number; source: string }> = [];
+
+        // Direct bids/asks
+        for (const b of directBids) {
+          mergedBids.push({ price: Number(b.price), size: Number(b.size), source: "direct" });
+        }
+        for (const a of directAsks) {
+          mergedAsks.push({ price: Number(a.price), size: Number(a.size), source: "direct" });
+        }
+
+        // Synthetic: complement asks → this token's bids (sell complement = buy this)
+        for (const a of complementBook.asks || []) {
+          const syntheticPrice = 1 - Number(a.price);
+          if (syntheticPrice > 0 && syntheticPrice < 1) {
+            mergedBids.push({ price: syntheticPrice, size: Number(a.size), source: "synthetic" });
+          }
+        }
+
+        // Synthetic: complement bids → this token's asks (buy complement = sell this)
+        for (const b of complementBook.bids || []) {
+          const syntheticPrice = 1 - Number(b.price);
+          if (syntheticPrice > 0 && syntheticPrice < 1) {
+            mergedAsks.push({ price: syntheticPrice, size: Number(b.size), source: "synthetic" });
+          }
+        }
+
+        // Sort
+        mergedBids.sort((a, b) => b.price - a.price);
+        mergedAsks.sort((a, b) => a.price - b.price);
+
+        const bestBid = mergedBids.length > 0 ? mergedBids[0].price : 0;
+        const bestAsk = mergedAsks.length > 0 ? mergedAsks[0].price : 1;
+
+        return successResult({
+          market: orderbook.market || "",
+          assetId: orderbook.asset_id || tokenId,
+          view: "merged",
+          note: "Merged orderbook combines direct orders + synthetic liquidity from complement token (matches Polymarket UI)",
+          bids: mergedBids.slice(0, 20),
+          asks: mergedAsks.slice(0, 20),
+          bestBid: Number(bestBid.toFixed(4)),
+          bestAsk: Number(bestAsk.toFixed(4)),
+          midPrice: Number(((bestBid + bestAsk) / 2).toFixed(4)),
+          spread: Number((bestAsk - bestBid).toFixed(4)),
+          spreadCents: Number(((bestAsk - bestBid) * 100).toFixed(1)),
+          fetchedAt: new Date().toISOString(),
+        });
+      }
+    } catch {
+      // Fall through to raw orderbook
+    }
+  }
+
+  // Return raw/direct orderbook
+  const bestBid = directBids.length > 0 ? Number(directBids[0].price) : 0;
+  const bestAsk = directAsks.length > 0 ? Number(directAsks[0].price) : 1;
   const midPrice = (bestBid + bestAsk) / 2;
   const spread = bestAsk - bestBid;
 
   return successResult({
     market: orderbook.market || "",
     assetId: orderbook.asset_id || tokenId,
-    timestamp: orderbook.timestamp || new Date().toISOString(),
-    bids: bids.slice(0, 20).map((b) => ({ price: Number(b.price), size: Number(b.size) })),
-    asks: asks.slice(0, 20).map((a) => ({ price: Number(a.price), size: Number(a.size) })),
+    view: "raw",
+    warning: "⚠️ This shows DIRECT orders only. Polymarket UI shows merged orderbook including synthetic liquidity. Use merged=true to see UI-equivalent view.",
+    bids: directBids.slice(0, 20).map((b) => ({ price: Number(b.price), size: Number(b.size) })),
+    asks: directAsks.slice(0, 20).map((a) => ({ price: Number(a.price), size: Number(a.size) })),
     bestBid,
     bestAsk,
     midPrice: Number(midPrice.toFixed(4)),
@@ -2303,37 +2523,51 @@ async function handleGetPrices(
     return errorResult("tokenIds array is required");
   }
 
-  // Build price requests for BUY and SELL sides (correct format: array of objects)
-  const priceRequests = tokenIds.flatMap((id) => [
-    { token_id: id, side: "BUY" },
-    { token_id: id, side: "SELL" },
-  ]);
-
-  const prices: Record<string, { buy: number; sell: number; mid: number }> = {};
+  const prices: Record<string, { buy: number; sell: number; mid: number; spread: number }> = {};
 
   try {
-    const pricesResp = (await fetchClobPost("/prices", priceRequests)) as Record<string, string>;
+    // Get BUY prices (what you pay to buy)
+    const buyResp = (await fetchClobPost("/prices", 
+      tokenIds.map(id => ({ token_id: id, side: "BUY" }))
+    )) as Record<string, { BUY?: string } | string>;
 
-    // The response format is { "tokenId": "price" } for each request
-    // We need to parse it carefully
+    // Get SELL prices (what you receive when selling)
+    const sellResp = (await fetchClobPost("/prices",
+      tokenIds.map(id => ({ token_id: id, side: "SELL" }))
+    )) as Record<string, { SELL?: string } | string>;
+
     for (const tokenId of tokenIds) {
-      const buy = Number(pricesResp[tokenId] || 0);
-      const sell = buy; // CLOB returns same price for this format
+      // CLOB response format: { "tokenId": { "BUY": "0.91" } } or { "tokenId": "0.91" }
+      const buyData = buyResp[tokenId];
+      const sellData = sellResp[tokenId];
+      
+      const buy = buyData 
+        ? (typeof buyData === "object" && buyData.BUY ? Number(buyData.BUY) : Number(buyData))
+        : 0;
+      const sell = sellData
+        ? (typeof sellData === "object" && sellData.SELL ? Number(sellData.SELL) : Number(sellData))
+        : 0;
+      
+      const mid = (buy + sell) / 2 || buy || sell;
+      const spread = buy - sell;
+
       prices[tokenId] = {
-        buy,
-        sell,
-        mid: buy,
+        buy: Number(buy.toFixed(4)),
+        sell: Number(sell.toFixed(4)),
+        mid: Number(mid.toFixed(4)),
+        spread: Number(spread.toFixed(4)),
       };
     }
   } catch {
     // If CLOB fails, return zeros (market may be settled)
     for (const tokenId of tokenIds) {
-      prices[tokenId] = { buy: 0, sell: 0, mid: 0 };
+      prices[tokenId] = { buy: 0, sell: 0, mid: 0, spread: 0 };
     }
   }
 
   return successResult({
     prices,
+    note: "buy = price to purchase shares, sell = price received when selling, spread = buy - sell",
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -2501,7 +2735,9 @@ interface TradeResponse {
 const app = express();
 app.use(express.json());
 
-const transports: Record<string, SSEServerTransport> = {};
+// Store transports for both SSE (legacy) and Streamable HTTP (modern)
+const sseTransports: Record<string, SSEServerTransport> = {};
+const httpTransports: Record<string, StreamableHTTPServerTransport> = {};
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({
@@ -2513,14 +2749,77 @@ app.get("/health", (_req: Request, res: Response) => {
   });
 });
 
+// ============================================================================
+// MODERN: Streamable HTTP Transport (/mcp) - Recommended
+// ============================================================================
+
+app.post("/mcp", async (req: Request, res: Response) => {
+  const sessionId = req.headers["mcp-session-id"] as string | undefined;
+  let transport: StreamableHTTPServerTransport;
+
+  if (sessionId && httpTransports[sessionId]) {
+    // Reuse existing session
+    transport = httpTransports[sessionId];
+  } else if (!sessionId && isInitializeRequest(req.body)) {
+    // New session initialization
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+      onsessioninitialized: (id) => {
+        httpTransports[id] = transport;
+      },
+    });
+
+    transport.onclose = () => {
+      if (transport.sessionId) {
+        delete httpTransports[transport.sessionId];
+      }
+    };
+
+    await server.connect(transport);
+  } else {
+    res.status(400).json({
+      jsonrpc: "2.0",
+      error: { code: -32000, message: "Invalid session - send initialize request first" },
+      id: null,
+    });
+    return;
+  }
+
+  await transport.handleRequest(req, res, req.body);
+});
+
+app.get("/mcp", async (req: Request, res: Response) => {
+  const sessionId = req.headers["mcp-session-id"] as string;
+  const transport = httpTransports[sessionId];
+  if (transport) {
+    await transport.handleRequest(req, res);
+  } else {
+    res.status(400).json({ error: "Invalid session" });
+  }
+});
+
+app.delete("/mcp", async (req: Request, res: Response) => {
+  const sessionId = req.headers["mcp-session-id"] as string;
+  const transport = httpTransports[sessionId];
+  if (transport) {
+    await transport.handleRequest(req, res);
+  } else {
+    res.status(400).json({ error: "Invalid session" });
+  }
+});
+
+// ============================================================================
+// LEGACY: SSE Transport (/sse) - For backwards compatibility
+// ============================================================================
+
 app.get("/sse", async (_req: Request, res: Response) => {
-  console.log("New SSE connection established");
+  console.log("New SSE connection established (legacy transport)");
   const transport = new SSEServerTransport("/messages", res);
-  transports[transport.sessionId] = transport;
+  sseTransports[transport.sessionId] = transport;
 
   res.on("close", () => {
     console.log(`SSE connection closed: ${transport.sessionId}`);
-    delete transports[transport.sessionId];
+    delete sseTransports[transport.sessionId];
   });
 
   await server.connect(transport);
@@ -2528,7 +2827,7 @@ app.get("/sse", async (_req: Request, res: Response) => {
 
 app.post("/messages", async (req: Request, res: Response) => {
   const sessionId = req.query.sessionId as string;
-  const transport = transports[sessionId];
+  const transport = sseTransports[sessionId];
 
   if (transport) {
     await transport.handlePostMessage(req, res, req.body);
@@ -2541,7 +2840,8 @@ const port = Number(process.env.PORT || 4003);
 app.listen(port, () => {
   console.log("\n🎯 Polymarket Intelligence MCP Server v1.0.0");
   console.log("   Whale cost analysis • Market efficiency • Smart money tracking\n");
-  console.log(`📡 SSE endpoint: http://localhost:${port}/sse`);
+  console.log(`📡 MCP endpoint: http://localhost:${port}/mcp (recommended)`);
+  console.log(`📡 SSE endpoint: http://localhost:${port}/sse (legacy)`);
   console.log(`💚 Health check: http://localhost:${port}/health\n`);
   console.log(`🛠️  Available tools (${TOOLS.length}):`);
   console.log("   INTELLIGENCE:");
