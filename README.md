@@ -264,6 +264,11 @@ const result = await client.tools.execute({
 ## Types
 
 ```typescript
+import {
+  // Constant for declaring context requirements
+  CONTEXT_REQUIREMENTS_KEY,
+} from "@ctxprotocol/sdk";
+
 import type {
   // Client types
   ContextClientOptions,
@@ -319,16 +324,21 @@ interface ExecutionResult<T = unknown> {
 ### Context Requirement Types (MCP Server Contributors)
 
 ```typescript
+import { CONTEXT_REQUIREMENTS_KEY, type ContextRequirementType } from "@ctxprotocol/sdk";
+
 /** Context types supported by the marketplace */
 type ContextRequirementType = "polymarket" | "hyperliquid" | "wallet";
 
-// Declare requirements via x-context-requirements in inputSchema:
-// inputSchema: {
-//   type: "object",
-//   "x-context-requirements": ["hyperliquid"],  // ← Array of ContextRequirementType
-//   properties: { portfolio: { type: "object" } },
-//   required: ["portfolio"]
-// }
+/** JSON Schema extension key for declaring context requirements */
+const CONTEXT_REQUIREMENTS_KEY = "x-context-requirements";
+
+// Usage in inputSchema:
+inputSchema: {
+  type: "object",
+  [CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"] as ContextRequirementType[],
+  properties: { portfolio: { type: "object" } },
+  required: ["portfolio"]
+}
 ```
 
 ## Error Handling
@@ -407,6 +417,8 @@ Key benefits:
 If your tool needs user portfolio data, you **MUST** declare this using the `x-context-requirements` JSON Schema extension inside `inputSchema`:
 
 ```typescript
+import { CONTEXT_REQUIREMENTS_KEY, type ContextRequirementType } from "@ctxprotocol/sdk";
+
 const TOOLS = [{
   name: "analyze_my_positions",
   description: "Analyze your positions with personalized insights",
@@ -414,7 +426,8 @@ const TOOLS = [{
   inputSchema: {
     type: "object",
     // ⭐ REQUIRED: Context requirements embedded in inputSchema
-    "x-context-requirements": ["hyperliquid"],  // or "polymarket", "wallet"
+    [CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"] as ContextRequirementType[],
+    // Or use the string directly: "x-context-requirements": ["hyperliquid"]
     properties: {
       portfolio: {
         type: "object",
