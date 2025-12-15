@@ -23,7 +23,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import express, { type Request, type Response } from "express";
-import type { PolymarketContext, PolymarketPosition, ToolRequirements } from "@ctxprotocol/sdk";
+import type { PolymarketContext, PolymarketPosition } from "@ctxprotocol/sdk";
 
 // ============================================================================
 // API ENDPOINTS
@@ -554,14 +554,12 @@ const TOOLS = [
       "Analyze your Polymarket positions with exit liquidity simulation, P&L calculation, " +
       "and personalized recommendations. Requires portfolio context to be injected by the app.",
 
-    // ⭐ REQUIRED: Explicit context requirements for portfolio tools
-    // The Context marketplace checks this field to inject user's Polymarket portfolio data
-    requirements: {
-      context: ["polymarket"] as const,
-    } satisfies ToolRequirements,
-
     inputSchema: {
       type: "object" as const,
+      // ⭐ Context requirements embedded in inputSchema (JSON Schema extension)
+      // The MCP protocol strips custom top-level fields, but inputSchema is preserved.
+      // The Context platform reads this to inject user's Polymarket portfolio data.
+      "x-context-requirements": ["polymarket"] as const,
       properties: {
         portfolio: {
           type: "object",

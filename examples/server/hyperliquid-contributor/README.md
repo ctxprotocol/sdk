@@ -4,6 +4,73 @@ The world's most comprehensive Hyperliquid MCP server. Built with the standard `
 
 > **📖 Building portfolio analysis tools?** See the [Context Injection Guide](../../../docs/context-injection.md) to learn how user portfolio data is automatically injected into your tools.
 
+## Context Requirements
+
+This server includes tools that require user portfolio data. These tools declare their requirements using the `x-context-requirements` JSON Schema extension in `inputSchema`:
+
+### Tools Requiring Portfolio Context
+
+| Tool | Context Required | Description |
+|------|-----------------|-------------|
+| `analyze_my_positions` | `["hyperliquid"]` | Analyzes user's perp positions with P&L and risk assessment |
+
+### Tools NOT Requiring Context (Public Data)
+
+All other tools in this server use public Hyperliquid API data and don't require user context:
+- `get_orderbook`, `calculate_price_impact`, `analyze_large_order`
+- `get_market_info`, `list_markets`, `get_candles`, `get_recent_trades`
+- `get_funding_analysis`, `get_funding_history`, `get_open_interest_analysis`
+- `get_staking_summary`, `get_user_delegations`, `get_hlp_vault_stats`
+- `get_exchange_stats`, `get_volume_history`, `get_markets_at_oi_cap`
+
+### How Context Requirements Work
+
+```typescript
+// Tools that need portfolio data include x-context-requirements in inputSchema:
+{
+  name: "analyze_my_positions",
+  inputSchema: {
+    type: "object",
+    "x-context-requirements": ["hyperliquid"],  // ← Platform reads this
+    properties: {
+      portfolio: { type: "object" }  // ← Platform injects HyperliquidContext here
+    },
+    required: ["portfolio"]
+  }
+}
+```
+
+**Why `x-context-requirements` in inputSchema?**
+- The MCP protocol only transmits standard fields (`name`, `description`, `inputSchema`, `outputSchema`)
+- Custom top-level fields like `requirements` get stripped by the MCP SDK during transport
+- JSON Schema allows custom `x-` prefixed extension properties
+- `inputSchema` is preserved through MCP transport
+
+### What Gets Injected
+
+When the Context platform detects `"x-context-requirements": ["hyperliquid"]`, it:
+
+1. Checks if the user has linked a wallet
+2. If not → shows an in-chat prompt to link wallet
+3. If yes → fetches user's Hyperliquid data via their public API
+4. Injects `HyperliquidContext` as the `portfolio` argument
+
+```typescript
+// What your tool receives:
+interface HyperliquidContext {
+  walletAddress: string;
+  perpPositions: HyperliquidPerpPosition[];
+  spotBalances: HyperliquidSpotBalance[];
+  openOrders: HyperliquidOrder[];
+  accountSummary: HyperliquidAccountSummary;
+  fetchedAt: string;
+}
+```
+
+---
+
+## Features
+
 Enables AI agents to analyze orderbook depth, simulate price impact, track funding rates, monitor staking flows, and answer complex questions like:
 
 > "The HyperLiquid team sent 609,108 HYPE ($20.9M) to Flowdesk. Can the market absorb this sell pressure? By how much would the price drop?"

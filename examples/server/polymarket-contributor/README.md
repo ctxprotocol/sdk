@@ -4,6 +4,64 @@ A "giga-brained" MCP server for Polymarket prediction market analysis. Provides 
 
 > **📖 Building portfolio analysis tools?** See the [Context Injection Guide](../../../docs/context-injection.md) to learn how user portfolio data is automatically injected into your tools.
 
+## Context Requirements
+
+This server includes tools that require user portfolio data. These tools declare their requirements using the `x-context-requirements` JSON Schema extension in `inputSchema`:
+
+### Tools Requiring Portfolio Context
+
+| Tool | Context Required | Description |
+|------|-----------------|-------------|
+| `analyze_my_positions` | `["polymarket"]` | Analyzes user's prediction market positions with P&L and exit liquidity |
+
+### Tools NOT Requiring Context (Public Data)
+
+All other tools use public Polymarket API data:
+- `get_events`, `get_event_by_slug`, `search_markets`
+- `get_orderbook`, `get_prices`, `get_price_history`
+- `analyze_market_liquidity`, `check_market_efficiency`
+- `analyze_whale_flow`, `find_correlated_markets`
+- `find_arbitrage_opportunities`, `discover_trending_markets`
+
+### How Context Requirements Work
+
+```typescript
+// Tools that need portfolio data include x-context-requirements in inputSchema:
+{
+  name: "analyze_my_positions",
+  inputSchema: {
+    type: "object",
+    "x-context-requirements": ["polymarket"],  // ← Platform reads this
+    properties: {
+      portfolio: { type: "object" }  // ← Platform injects PolymarketContext here
+    },
+    required: ["portfolio"]
+  }
+}
+```
+
+**Why `x-context-requirements` in inputSchema?**
+- The MCP protocol only transmits standard fields (`name`, `description`, `inputSchema`, `outputSchema`)
+- Custom top-level fields like `requirements` get stripped by the MCP SDK during transport
+- JSON Schema allows custom `x-` prefixed extension properties
+- `inputSchema` is preserved through MCP transport
+
+### What Gets Injected
+
+When the Context platform detects `"x-context-requirements": ["polymarket"]`, it injects:
+
+```typescript
+interface PolymarketContext {
+  walletAddress: string;
+  positions: PolymarketPosition[];
+  openOrders: PolymarketOrder[];
+  totalValue?: number;
+  fetchedAt: string;
+}
+```
+
+---
+
 ## Features
 
 ### Tier 1: Intelligence Tools (High Value)

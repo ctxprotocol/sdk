@@ -272,8 +272,7 @@ import type {
   ExecuteOptions,
   ExecutionResult,
   ContextErrorCode,
-  // Context types (for MCP server contributors)
-  ToolRequirements,
+  // Context types (for MCP server contributors receiving injected data)
   ContextRequirementType,
   HyperliquidContext,
   PolymarketContext,
@@ -317,16 +316,19 @@ interface ExecutionResult<T = unknown> {
 }
 ```
 
-### ToolRequirements (MCP Server Contributors)
+### Context Requirement Types (MCP Server Contributors)
 
 ```typescript
 /** Context types supported by the marketplace */
 type ContextRequirementType = "polymarket" | "hyperliquid" | "wallet";
 
-/** Declare what context your tool needs */
-interface ToolRequirements {
-  context?: ContextRequirementType[];
-}
+// Declare requirements via x-context-requirements in inputSchema:
+// inputSchema: {
+//   type: "object",
+//   "x-context-requirements": ["hyperliquid"],  // ← Array of ContextRequirementType
+//   properties: { portfolio: { type: "object" } },
+//   required: ["portfolio"]
+// }
 ```
 
 ## Error Handling
@@ -402,22 +404,17 @@ Key benefits:
 
 ### Context Requirements Declaration
 
-If your tool needs user portfolio data, you **MUST** declare this explicitly using `requirements.context`:
+If your tool needs user portfolio data, you **MUST** declare this using the `x-context-requirements` JSON Schema extension inside `inputSchema`:
 
 ```typescript
-import type { ToolRequirements } from "@ctxprotocol/sdk";
-
 const TOOLS = [{
   name: "analyze_my_positions",
   description: "Analyze your positions with personalized insights",
 
-  // ⭐ REQUIRED: Explicit context requirements for portfolio tools
-  requirements: {
-    context: ["hyperliquid"],  // or "polymarket", "wallet"
-  } satisfies ToolRequirements,
-
   inputSchema: {
     type: "object",
+    // ⭐ REQUIRED: Context requirements embedded in inputSchema
+    "x-context-requirements": ["hyperliquid"],  // or "polymarket", "wallet"
     properties: {
       portfolio: {
         type: "object",
@@ -430,6 +427,10 @@ const TOOLS = [{
 }];
 ```
 
+**Why `x-context-requirements` in inputSchema (not a top-level field)?**
+
+The MCP protocol only transmits standard fields (`name`, `description`, `inputSchema`, `outputSchema`). Custom top-level fields like `requirements` get **stripped** by the MCP SDK during `listTools()` transport. JSON Schema allows `x-` prefixed extension properties, and `inputSchema` is preserved through transport.
+
 **Available context types:**
 
 | Type | Description | Injected Data |
@@ -440,7 +441,7 @@ const TOOLS = [{
 
 **How it works:**
 1. User links their wallet in Context app settings
-2. When your tool is selected, platform checks `requirements.context`
+2. When your tool is selected, platform reads `inputSchema["x-context-requirements"]`
 3. Platform fetches user's portfolio data from protocol APIs
 4. Data is injected as the `portfolio` argument to your tool
 

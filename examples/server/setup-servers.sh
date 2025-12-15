@@ -36,7 +36,7 @@ for SERVER in "${SERVERS[@]}"; do
   # Stop existing process if running
   if pm2 describe "$NAME" > /dev/null 2>&1; then
     echo "🔄 Restarting $NAME..."
-    pm2 restart "$NAME"
+    pm2 delete "$NAME" && pm2 start "npx tsx server.ts" --name "$NAME"
   else
     echo "🆕 Starting $NAME..."
     pm2 start "npx tsx server.ts" --name "$NAME"
