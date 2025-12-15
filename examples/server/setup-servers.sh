@@ -55,3 +55,23 @@ echo ""
 echo "🎉 All servers setup complete!"
 echo ""
 pm2 status
+
+# Health check all servers
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🏥 Running health checks..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+sleep 5  # Give servers time to start
+
+for SERVER in "${SERVERS[@]}"; do
+  IFS=':' read -r NAME DIR PORT <<< "$SERVER"
+  
+  if curl -sf "http://localhost:$PORT/health" > /dev/null; then
+    echo "✅ $NAME (port $PORT) - healthy"
+  else
+    echo "❌ $NAME (port $PORT) - NOT responding"
+  fi
+done
+
+echo ""

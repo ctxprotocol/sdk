@@ -66,11 +66,10 @@ const HYPERLIQUID_API_URL = "https://api.hyperliquid.xyz/info";
 // Standard MCP tool definitions with:
 // - inputSchema: JSON Schema for tool arguments (MCP standard)
 // - outputSchema: JSON Schema for response data (standard MCP feature, required by Context)
-// - x-context-requirements: Context types needed for portfolio tools (JSON Schema extension)
+// - _meta.contextRequirements: Context types needed for portfolio tools (MCP spec)
 //
-// NOTE: The MCP protocol only transmits standard fields (name, description, inputSchema, outputSchema).
-// Custom top-level fields like `requirements` get stripped by the MCP SDK during transport.
-// We use "x-context-requirements" inside inputSchema as JSON Schema allows x- prefixed extensions.
+// NOTE: _meta is part of the MCP spec for arbitrary tool metadata.
+// The Context platform reads _meta.contextRequirements to inject user portfolio data.
 //
 // All tools include:
 // - confidence: 0-1 score for analysis reliability (on Tier 1 tools)
@@ -570,12 +569,14 @@ const TOOLS = [
       "🧠 INTELLIGENCE: Analyze your Hyperliquid perpetual positions with risk assessment, P&L breakdown, " +
       "liquidation warnings, and personalized recommendations. Requires portfolio context.",
 
+    // ✅ Context requirements in _meta (preserved by MCP SDK)
+    // The Context platform reads this to inject user's Hyperliquid portfolio data.
+    _meta: {
+      contextRequirements: ["hyperliquid"],
+    },
+
     inputSchema: {
       type: "object" as const,
-      // ⭐ Context requirements embedded in inputSchema (JSON Schema extension)
-      // The MCP protocol strips custom top-level fields, but inputSchema is preserved.
-      // The Context platform reads this to inject user's Hyperliquid portfolio data.
-      "x-context-requirements": ["hyperliquid"] as const,
       properties: {
         portfolio: {
           type: "object",

@@ -38,9 +38,10 @@ const CLOB_API_URL = "https://clob.polymarket.com";
 // Standard MCP tool definitions with:
 // - inputSchema: JSON Schema for tool arguments (MCP standard)
 // - outputSchema: JSON Schema for response data (required by Context)
-// - requirements.context: Context types needed for portfolio tools (Context Protocol extension)
+// - _meta.contextRequirements: Context types needed for portfolio tools (MCP spec)
 //
-// NOTE: ToolRequirements type is imported from @ctxprotocol/sdk
+// NOTE: _meta is part of the MCP spec for arbitrary tool metadata.
+// The Context platform reads _meta.contextRequirements to inject user portfolio data.
 // ============================================================================
 
 const TOOLS = [
@@ -554,12 +555,14 @@ const TOOLS = [
       "Analyze your Polymarket positions with exit liquidity simulation, P&L calculation, " +
       "and personalized recommendations. Requires portfolio context to be injected by the app.",
 
+    // ✅ Context requirements in _meta (preserved by MCP SDK)
+    // The Context platform reads this to inject user's Polymarket portfolio data.
+    _meta: {
+      contextRequirements: ["polymarket"],
+    },
+
     inputSchema: {
       type: "object" as const,
-      // ⭐ Context requirements embedded in inputSchema (JSON Schema extension)
-      // The MCP protocol strips custom top-level fields, but inputSchema is preserved.
-      // The Context platform reads this to inject user's Polymarket portfolio data.
-      "x-context-requirements": ["polymarket"] as const,
       properties: {
         portfolio: {
           type: "object",
@@ -3461,6 +3464,25 @@ app.post("/messages", async (req: Request, res: Response) => {
   } else {
     res.status(400).json({ error: "No transport found for sessionId" });
   }
+});
+
+app.get("/debug-tools", (_req: Request, res: Response) => {
+  const analyzePos = TOOLS.find(t => t.name === "analyze_my_positions");
+  res.json({
+    name: analyzePos?.name,
+    _meta: analyzePos?._meta,
+    contextRequirements: analyzePos?._meta?.contextRequirements,
+    inputSchemaKeys: Object.keys(analyzePos?.inputSchema || {}),
+  });
+});
+
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+  // Debug: log what we're sending
+  const analyzePos = TOOLS.find(t => t.name === "analyze_my_positions");
+  console.log("[DEBUG] analyze_my_positions _meta:", analyzePos?._meta);
+  console.log("[DEBUG] contextRequirements:", analyzePos?._meta?.contextRequirements);
+  
+  return { tools: TOOLS };
 });
 
 const port = Number(process.env.PORT || 4003);

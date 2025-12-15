@@ -6,7 +6,7 @@ The world's most comprehensive Hyperliquid MCP server. Built with the standard `
 
 ## Context Requirements
 
-This server includes tools that require user portfolio data. These tools declare their requirements using the `x-context-requirements` JSON Schema extension in `inputSchema`:
+This server includes tools that require user portfolio data. These tools declare their requirements using `_meta.contextRequirements` (part of the MCP spec for arbitrary tool metadata):
 
 ### Tools Requiring Portfolio Context
 
@@ -26,12 +26,17 @@ All other tools in this server use public Hyperliquid API data and don't require
 ### How Context Requirements Work
 
 ```typescript
-// Tools that need portfolio data include x-context-requirements in inputSchema:
+// Tools that need portfolio data declare requirements in _meta:
 {
   name: "analyze_my_positions",
+  
+  // ✅ _meta is preserved by MCP SDK (part of MCP spec)
+  _meta: {
+    contextRequirements: ["hyperliquid"]  // ← Platform reads this
+  },
+  
   inputSchema: {
     type: "object",
-    "x-context-requirements": ["hyperliquid"],  // ← Platform reads this
     properties: {
       portfolio: { type: "object" }  // ← Platform injects HyperliquidContext here
     },
@@ -40,15 +45,14 @@ All other tools in this server use public Hyperliquid API data and don't require
 }
 ```
 
-**Why `x-context-requirements` in inputSchema?**
-- The MCP protocol only transmits standard fields (`name`, `description`, `inputSchema`, `outputSchema`)
-- Custom top-level fields like `requirements` get stripped by the MCP SDK during transport
-- JSON Schema allows custom `x-` prefixed extension properties
-- `inputSchema` is preserved through MCP transport
+**Why `_meta.contextRequirements`?**
+- `_meta` is part of the MCP specification for arbitrary tool metadata
+- It is preserved through MCP transport (unlike custom top-level fields)
+- The Context platform reads `_meta.contextRequirements` to determine what user data to inject
 
 ### What Gets Injected
 
-When the Context platform detects `"x-context-requirements": ["hyperliquid"]`, it:
+When the Context platform detects `_meta.contextRequirements: ["hyperliquid"]`, it:
 
 1. Checks if the user has linked a wallet
 2. If not → shows an in-chat prompt to link wallet
