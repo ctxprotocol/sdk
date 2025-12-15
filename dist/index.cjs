@@ -186,6 +186,10 @@ var ContextClient = class {
   }
 };
 
+// src/context/index.ts
+var CONTEXT_REQUIREMENTS_KEY = "x-context-requirements";
+
+exports.CONTEXT_REQUIREMENTS_KEY = CONTEXT_REQUIREMENTS_KEY;
 exports.ContextClient = ContextClient;
 exports.ContextError = ContextError;
 exports.Discovery = Discovery;

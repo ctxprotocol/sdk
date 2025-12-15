@@ -223,85 +223,97 @@ interface HyperliquidContext {
  * These types allow MCP tools to receive personalized user context
  * (wallet addresses, positions, balances) for analysis.
  *
+ * =============================================================================
+ * DECLARING CONTEXT REQUIREMENTS
+ * =============================================================================
+ *
+ * Since the MCP protocol only transmits standard fields (name, description,
+ * inputSchema, outputSchema), context requirements MUST be embedded in the
+ * inputSchema using the "x-context-requirements" JSON Schema extension.
+ *
  * @example
  * ```typescript
- * import type { PolymarketContext, UserContext, ToolRequirements } from "@ctxprotocol/sdk";
+ * import { CONTEXT_REQUIREMENTS_KEY, type ContextRequirementType } from "@ctxprotocol/sdk";
+ * import type { HyperliquidContext } from "@ctxprotocol/sdk";
  *
- * // Build context for a user's portfolio
- * const context: UserContext = {
- *   wallet: { address: "0x...", chainId: 137 },
- *   polymarket: {
- *     walletAddress: "0x...",
- *     positions: [...],
- *     openOrders: [],
- *     fetchedAt: new Date().toISOString(),
- *   },
+ * const tool = {
+ *   name: "analyze_my_positions",
+ *   inputSchema: {
+ *     type: "object",
+ *     [CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"] as ContextRequirementType[],
+ *     properties: {
+ *       portfolio: { type: "object" }
+ *     },
+ *     required: ["portfolio"]
+ *   }
  * };
  *
- * // Declare context requirements for a tool
- * const requirements: ToolRequirements = {
- *   context: ["polymarket"],
- * };
+ * // Your handler receives the injected context:
+ * function handleAnalyzeMyPositions(args: { portfolio: HyperliquidContext }) {
+ *   const { perpPositions, accountSummary } = args.portfolio;
+ *   // ... analyze and return insights
+ * }
  * ```
  *
  * @packageDocumentation
  */
 
 /**
+ * JSON Schema extension key for declaring context requirements.
+ *
+ * WHY THIS APPROACH?
+ * - MCP protocol only transmits: name, description, inputSchema, outputSchema
+ * - Custom fields like `requirements` get stripped by MCP SDK during transport
+ * - JSON Schema allows custom "x-" prefixed extension properties
+ * - inputSchema is preserved end-to-end through MCP transport
+ *
+ * @example
+ * ```typescript
+ * import { CONTEXT_REQUIREMENTS_KEY } from "@ctxprotocol/sdk";
+ *
+ * const tool = {
+ *   name: "analyze_my_positions",
+ *   inputSchema: {
+ *     type: "object",
+ *     [CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"],
+ *     properties: { portfolio: { type: "object" } },
+ *     required: ["portfolio"]
+ *   }
+ * };
+ * ```
+ */
+declare const CONTEXT_REQUIREMENTS_KEY: "x-context-requirements";
+/**
  * Context requirement types supported by the Context marketplace.
  * Maps to protocol-specific context builders on the platform.
  *
  * @example
  * ```typescript
- * // Tool that needs Hyperliquid positions
- * requirements: {
- *   context: ["hyperliquid"]
- * }
- *
- * // Tool that needs multiple context types
- * requirements: {
- *   context: ["hyperliquid", "wallet"]
+ * inputSchema: {
+ *   type: "object",
+ *   "x-context-requirements": ["hyperliquid"] as ContextRequirementType[],
+ *   properties: { portfolio: { type: "object" } },
+ *   required: ["portfolio"]
  * }
  * ```
  */
 type ContextRequirementType = "polymarket" | "hyperliquid" | "wallet";
 /**
- * Tool-level requirements declaration.
- *
- * MCP tools that need user portfolio data MUST declare this explicitly
- * in their tool definition. The Context marketplace checks this field
- * to determine what context to inject.
+ * @deprecated The `requirements` field at tool level gets stripped by MCP SDK.
+ * Use `x-context-requirements` inside `inputSchema` instead.
  *
  * @example
  * ```typescript
- * const tool = {
- *   name: "analyze_my_positions",
- *   description: "Analyze your positions",
+ * // ❌ OLD (doesn't work - stripped by MCP SDK)
+ * { requirements: { context: ["hyperliquid"] } }
  *
- *   // ⭐ REQUIRED for portfolio tools
- *   requirements: {
- *     context: ["hyperliquid"],
- *   } satisfies ToolRequirements,
- *
- *   inputSchema: {
- *     type: "object",
- *     properties: {
- *       portfolio: {
- *         type: "object",
- *         description: "Portfolio context (injected by platform)",
- *       },
- *     },
- *     required: ["portfolio"],
- *   },
- * };
+ * // ✅ NEW (works - preserved through MCP transport)
+ * { inputSchema: { "x-context-requirements": ["hyperliquid"], ... } }
  * ```
  */
 interface ToolRequirements {
     /**
-     * Context types required by this tool.
-     * - "polymarket": User's Polymarket positions (prediction markets)
-     * - "hyperliquid": User's Hyperliquid perp/spot positions
-     * - "wallet": Generic EVM wallet context (address, balances)
+     * @deprecated Use `x-context-requirements` in inputSchema instead.
      */
     context?: ContextRequirementType[];
 }
@@ -322,4 +334,4 @@ interface UserContext {
     hyperliquid?: HyperliquidContext;
 }
 
-export type { ContextRequirementType, ERC20Context, ERC20TokenBalance, HyperliquidAccountSummary, HyperliquidContext, HyperliquidOrder, HyperliquidPerpPosition, HyperliquidSpotBalance, PolymarketContext, PolymarketOrder, PolymarketPosition, ToolRequirements, UserContext, WalletContext };
+export { CONTEXT_REQUIREMENTS_KEY, type ContextRequirementType, type ERC20Context, type ERC20TokenBalance, type HyperliquidAccountSummary, type HyperliquidContext, type HyperliquidOrder, type HyperliquidPerpPosition, type HyperliquidSpotBalance, type PolymarketContext, type PolymarketOrder, type PolymarketPosition, type ToolRequirements, type UserContext, type WalletContext };

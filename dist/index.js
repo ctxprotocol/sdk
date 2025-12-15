@@ -184,6 +184,9 @@ var ContextClient = class {
   }
 };
 
-export { ContextClient, ContextError, Discovery, Tools };
+// src/context/index.ts
+var CONTEXT_REQUIREMENTS_KEY = "x-context-requirements";
+
+export { CONTEXT_REQUIREMENTS_KEY, ContextClient, ContextError, Discovery, Tools };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

@@ -29,9 +29,10 @@ for SERVER in "${SERVERS[@]}"; do
   
   cd "$BASE_DIR/$DIR"
   
-  # Install dependencies
-  echo "📥 Installing dependencies..."
+  # Install/update dependencies
+  echo "📥 Installing and updating dependencies..."
   pnpm install
+  pnpm update @ctxprotocol/sdk
   
   # Stop existing process if running
   if pm2 describe "$NAME" > /dev/null 2>&1; then
