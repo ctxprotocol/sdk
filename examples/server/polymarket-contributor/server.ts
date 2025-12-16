@@ -418,14 +418,34 @@ const TOOLS = [
   {
     name: "find_trading_opportunities",
     description:
-      "🎯 THE GO-TO TOOL for finding genuine Polymarket trading opportunities. Scans for: (1) Asymmetric upside - cheap YES/NO positions with huge potential payoff, (2) Volume momentum - markets with surging activity, (3) Value plays - potential mispricings based on market characteristics, (4) Near resolution - markets about to resolve where conviction pays. Returns ACTIONABLE opportunities ranked by quality. If no good opportunities exist, says so honestly.",
+      "🎯 THE GO-TO TOOL for finding genuine Polymarket trading opportunities. Scans for: (1) Lottery tickets - cheap YES/NO positions with huge potential payoff (1-15¢), (2) Moderate conviction - balanced risk/reward bets (35-65¢), (3) High confidence - likely outcomes with safer returns (70-90¢), (4) Volume momentum - markets with surging activity, (5) Mispriced/value - potential mispricings, (6) Near resolution - markets about to resolve. Use priceRange or targetProbability to filter by how likely bets are to win. Returns ACTIONABLE opportunities ranked by quality.",
     inputSchema: {
       type: "object" as const,
       properties: {
         strategy: {
           type: "string",
-          enum: ["all", "asymmetric_upside", "momentum", "value", "near_resolution"],
-          description: "Which strategy to focus on. Default: 'all' scans everything",
+          enum: ["all", "lottery_tickets", "moderate_conviction", "high_confidence", "mispriced", "momentum", "near_resolution"],
+          description: `Trading strategy to use:
+            - all: Scan all strategies (default)
+            - lottery_tickets: 1-15¢ bets with 7-100x potential (very unlikely to win, but huge payoff if right)
+            - moderate_conviction: 35-65¢ bets with 1.5-2.8x potential (coin-flip probability, balanced risk/reward)
+            - high_confidence: 70-90¢ bets with 1.1-1.4x potential (likely outcomes, lower but safer returns)
+            - mispriced: Markets where price differs significantly from estimated true probability
+            - momentum: Markets with strong recent price movement in one direction
+            - near_resolution: Markets closing soon where you can lock in returns`,
+        },
+        priceRange: {
+          type: "object",
+          description: "Filter for YES token price range (0.0 to 1.0). E.g., { min: 0.50, max: 0.75 } for moderate probability bets",
+          properties: {
+            min: { type: "number", description: "Minimum price (0.0-1.0)" },
+            max: { type: "number", description: "Maximum price (0.0-1.0)" },
+          },
+        },
+        targetProbability: {
+          type: "string",
+          enum: ["longshot", "moderate", "likely", "near_certain"],
+          description: "Filter by implied probability range: longshot (1-20%), moderate (35-65%), likely (65-85%), near_certain (85-98%)",
         },
         category: {
           type: "string",
@@ -466,10 +486,11 @@ const TOOLS = [
               slug: { type: "string" },
               opportunityType: {
                 type: "string",
-                enum: ["asymmetric_upside", "momentum", "value", "near_resolution", "contrarian"],
+                enum: ["lottery_tickets", "moderate_conviction", "high_confidence", "mispriced", "momentum", "near_resolution"],
               },
               signal: { type: "string" },
               currentPrice: { type: "number" },
+              impliedProbability: { type: "string" },
               suggestedSide: { type: "string", enum: ["YES", "NO", "EITHER"] },
               potentialReturn: { type: "string" },
               confidence: { type: "string", enum: ["high", "medium", "low"] },
@@ -484,9 +505,165 @@ const TOOLS = [
           type: "string",
           description: "If no good opportunities, explains why and what to do instead",
         },
+        suggestions: {
+          type: "array",
+          description: "Alternative actions to try when no opportunities match the criteria",
+          items: {
+            type: "object",
+            properties: {
+              action: { type: "string" },
+              reason: { type: "string" },
+              availableCount: { type: "number" },
+            },
+          },
+        },
+        nearestMatches: {
+          type: "array",
+          description: "Markets that almost matched the criteria",
+          items: {
+            type: "object",
+            properties: {
+              market: { type: "string" },
+              currentPrice: { type: "number" },
+              whyNotMatched: { type: "string" },
+            },
+          },
+        },
         fetchedAt: { type: "string" },
       },
       required: ["summary", "opportunities"],
+    },
+  },
+
+  {
+    name: "find_moderate_probability_bets",
+    description:
+      "Find prediction market bets priced 40-75¢ (40-75% implied probability) with decent liquidity. These are 'more likely' outcomes that still offer 1.3-2.5x returns. Use this when users want bets that are 'likely to happen' or 'safer bets' rather than lottery tickets.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        minPrice: {
+          type: "number",
+          description: "Minimum YES price (default 0.40 = 40% probability)",
+        },
+        maxPrice: {
+          type: "number",
+          description: "Maximum YES price (default 0.75 = 75% probability)",
+        },
+        minLiquidity: {
+          type: "number",
+          description: "Minimum liquidity in USD (default: 10000)",
+        },
+        category: {
+          type: "string",
+          enum: ["politics", "crypto", "sports", "entertainment", "science", "all"],
+          description: "Filter by category (default: all)",
+        },
+        sortBy: {
+          type: "string",
+          enum: ["return_potential", "liquidity", "volume", "closing_soon"],
+          description: "How to rank results (default: return_potential)",
+        },
+        limit: {
+          type: "number",
+          description: "Maximum number of results (default: 10)",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        opportunities: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              market: { type: "string" },
+              slug: { type: "string" },
+              conditionId: { type: "string" },
+              currentPrice: { type: "number" },
+              impliedProbability: { type: "string" },
+              potentialReturn: { type: "string" },
+              liquidity: { type: "number" },
+              volume24h: { type: "number" },
+              endDate: { type: "string" },
+              category: { type: "string" },
+              whyThisBet: { type: "string" },
+            },
+          },
+        },
+        summary: {
+          type: "object",
+          properties: {
+            marketsScanned: { type: "number" },
+            matchingBets: { type: "number" },
+            priceRange: { type: "string" },
+            avgReturn: { type: "string" },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["opportunities", "summary"],
+    },
+  },
+
+  {
+    name: "get_bets_by_probability",
+    description:
+      "Simple tool to get bets filtered by how likely they are to happen. Use 'likely' for safer bets, 'unlikely' for lottery tickets, 'coinflip' for balanced risk/reward.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        likelihood: {
+          type: "string",
+          enum: ["very_unlikely", "unlikely", "coinflip", "likely", "very_likely"],
+          description: "How likely the bet is to win: very_unlikely (1-15%), unlikely (15-35%), coinflip (35-65%), likely (65-85%), very_likely (85-95%)",
+        },
+        category: {
+          type: "string",
+          enum: ["politics", "crypto", "sports", "all"],
+          description: "Filter by category (default: all)",
+        },
+        limit: {
+          type: "number",
+          description: "Maximum number of results (default: 5)",
+        },
+      },
+      required: ["likelihood"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        bets: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              market: { type: "string" },
+              slug: { type: "string" },
+              conditionId: { type: "string" },
+              currentPrice: { type: "number" },
+              impliedProbability: { type: "string" },
+              potentialReturn: { type: "string" },
+              liquidity: { type: "number" },
+              volume24h: { type: "number" },
+              category: { type: "string" },
+            },
+          },
+        },
+        summary: {
+          type: "object",
+          properties: {
+            likelihood: { type: "string" },
+            probabilityRange: { type: "string" },
+            betsFound: { type: "number" },
+            returnRange: { type: "string" },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["bets", "summary"],
     },
   },
 
@@ -944,6 +1121,10 @@ server.setRequestHandler(
           return await handleFindArbitrageOpportunities(args);
         case "find_trading_opportunities":
           return await handleFindTradingOpportunities(args);
+        case "find_moderate_probability_bets":
+          return await handleFindModerateProbabilityBets(args);
+        case "get_bets_by_probability":
+          return await handleGetBetsByProbability(args);
         case "discover_trending_markets":
           return await handleDiscoverTrendingMarkets(args);
         case "analyze_my_positions":
@@ -2143,15 +2324,50 @@ async function handleFindArbitrageOpportunities(
 }
 
 /**
+ * Probability range presets for targetProbability parameter
+ */
+const PROBABILITY_RANGES: Record<string, { min: number; max: number }> = {
+  longshot: { min: 0.01, max: 0.20 },      // 1-20%
+  moderate: { min: 0.35, max: 0.65 },      // 35-65%
+  likely: { min: 0.65, max: 0.85 },        // 65-85%
+  near_certain: { min: 0.85, max: 0.98 },  // 85-98%
+};
+
+/**
  * Find genuine trading opportunities across multiple strategies
  */
 async function handleFindTradingOpportunities(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
-  const strategy = (args?.strategy as string) || "all";
+  // Parse arguments
+  let strategy = (args?.strategy as string) || "all";
   const category = args?.category as string;
   const minLiquidity = (args?.minLiquidity as number) || 1000;
   const riskTolerance = (args?.riskTolerance as string) || "moderate";
+  const priceRange = args?.priceRange as { min?: number; max?: number } | undefined;
+  const targetProbability = args?.targetProbability as string | undefined;
+
+  // Map old strategy name for backward compatibility
+  if (strategy === "asymmetric_upside") {
+    strategy = "lottery_tickets";
+  }
+  if (strategy === "value") {
+    strategy = "mispriced";
+  }
+
+  // Calculate effective price range from targetProbability or priceRange
+  let effectivePriceMin = 0;
+  let effectivePriceMax = 1;
+  
+  if (targetProbability && PROBABILITY_RANGES[targetProbability]) {
+    effectivePriceMin = PROBABILITY_RANGES[targetProbability].min;
+    effectivePriceMax = PROBABILITY_RANGES[targetProbability].max;
+  } else if (priceRange) {
+    effectivePriceMin = priceRange.min ?? 0;
+    effectivePriceMax = priceRange.max ?? 1;
+  }
+
+  const hasPriceFilter = effectivePriceMin > 0 || effectivePriceMax < 1;
 
   // Fetch active markets sorted by different criteria
   const [volumeEvents, liquidityEvents, newEvents] = await Promise.all([
@@ -2177,6 +2393,7 @@ async function handleFindTradingOpportunities(
     opportunityType: string;
     signal: string;
     currentPrice: number;
+    impliedProbability: string;
     suggestedSide: string;
     potentialReturn: string;
     confidence: string;
@@ -2187,7 +2404,23 @@ async function handleFindTradingOpportunities(
     score: number; // internal scoring
   }> = [];
 
+  // Track all markets for suggestions when empty
+  const allMarketsData: Array<{
+    market: string;
+    conditionId: string;
+    slug: string;
+    yesPrice: number;
+    noPrice: number;
+    liquidity: number;
+    volume24h: number;
+  }> = [];
+
   let marketsScanned = 0;
+
+  // Count markets by price range for suggestions
+  let lotteryTicketCount = 0;
+  let moderateCount = 0;
+  let likelyCount = 0;
 
   for (const event of allEvents) {
     if (!event.markets || event.markets.length === 0) continue;
@@ -2211,12 +2444,37 @@ async function handleFindTradingOpportunities(
 
       marketsScanned++;
 
-      // ============ STRATEGY 1: ASYMMETRIC UPSIDE ============
+      // Track all markets for suggestions
+      allMarketsData.push({
+        market: marketTitle,
+        conditionId: market.conditionId || "",
+        slug: eventSlug,
+        yesPrice,
+        noPrice,
+        liquidity: marketLiquidity,
+        volume24h: marketVolume24h,
+      });
+
+      // Count by price range
+      if (yesPrice < 0.15 || noPrice < 0.15) lotteryTicketCount++;
+      if (yesPrice >= 0.35 && yesPrice <= 0.65) moderateCount++;
+      if (yesPrice >= 0.65 && yesPrice <= 0.85) likelyCount++;
+
+      // Apply price filter if specified
+      const matchesPriceFilter = !hasPriceFilter || 
+        (yesPrice >= effectivePriceMin && yesPrice <= effectivePriceMax) ||
+        (noPrice >= effectivePriceMin && noPrice <= effectivePriceMax);
+
+      // ============ STRATEGY 1: LOTTERY TICKETS (formerly asymmetric_upside) ============
       // Look for cheap positions (< 15¢) with potential 6x+ returns
-      if (strategy === "all" || strategy === "asymmetric_upside") {
+      if (strategy === "all" || strategy === "lottery_tickets") {
         const cheapThreshold = riskTolerance === "conservative" ? 0.10 : riskTolerance === "aggressive" ? 0.20 : 0.15;
         
-        if (yesPrice < cheapThreshold && yesPrice > 0.01) {
+        // Apply strategy-specific or user-specified price filter
+        const strategyMin = hasPriceFilter ? effectivePriceMin : 0.01;
+        const strategyMax = hasPriceFilter ? effectivePriceMax : cheapThreshold;
+        
+        if (yesPrice >= strategyMin && yesPrice <= strategyMax && yesPrice > 0.01) {
           const potentialMultiple = (1 / yesPrice).toFixed(1);
           const riskFactors: string[] = [];
           
@@ -2234,9 +2492,10 @@ async function handleFindTradingOpportunities(
             market: marketTitle,
             conditionId: market.conditionId || "",
             slug: eventSlug,
-            opportunityType: "asymmetric_upside",
+            opportunityType: "lottery_tickets",
             signal: `YES at ${(yesPrice * 100).toFixed(1)}¢ - potential ${potentialMultiple}x return`,
             currentPrice: yesPrice,
+            impliedProbability: `${(yesPrice * 100).toFixed(0)}%`,
             suggestedSide: "YES",
             potentialReturn: `${potentialMultiple}x if YES wins`,
             confidence,
@@ -2249,7 +2508,7 @@ async function handleFindTradingOpportunities(
         }
 
         // Also check cheap NO positions
-        if (noPrice < cheapThreshold && noPrice > 0.01) {
+        if (noPrice >= strategyMin && noPrice <= strategyMax && noPrice > 0.01) {
           const potentialMultiple = (1 / noPrice).toFixed(1);
           const riskFactors: string[] = [];
           
@@ -2267,9 +2526,10 @@ async function handleFindTradingOpportunities(
             market: marketTitle,
             conditionId: market.conditionId || "",
             slug: eventSlug,
-            opportunityType: "asymmetric_upside",
+            opportunityType: "lottery_tickets",
             signal: `NO at ${(noPrice * 100).toFixed(1)}¢ - potential ${potentialMultiple}x return`,
             currentPrice: noPrice,
+            impliedProbability: `${(noPrice * 100).toFixed(0)}%`,
             suggestedSide: "NO",
             potentialReturn: `${potentialMultiple}x if NO wins`,
             confidence,
@@ -2282,9 +2542,118 @@ async function handleFindTradingOpportunities(
         }
       }
 
-      // ============ STRATEGY 2: MOMENTUM ============
+      // ============ STRATEGY 2: MODERATE CONVICTION (35-65% bets) ============
+      // Balanced risk/reward with 1.5-2.8x returns
+      if (strategy === "all" || strategy === "moderate_conviction") {
+        const strategyMin = hasPriceFilter ? effectivePriceMin : 0.35;
+        const strategyMax = hasPriceFilter ? effectivePriceMax : 0.65;
+        
+        if (yesPrice >= strategyMin && yesPrice <= strategyMax) {
+          const potentialReturn = ((1 - yesPrice) / yesPrice * 100).toFixed(0);
+          const riskFactors: string[] = [];
+          
+          if (marketLiquidity < 10000) riskFactors.push("Moderate liquidity");
+          
+          let confidence: "high" | "medium" | "low" = "medium";
+          if (marketLiquidity > 50000 && marketVolume24h > 10000) confidence = "high";
+          if (marketLiquidity < 10000) confidence = "low";
+
+          const score = (marketLiquidity / 1000) + (marketVolume24h / 500) + (50 - Math.abs(yesPrice - 0.5) * 100);
+
+          opportunities.push({
+            rank: 0,
+            market: marketTitle,
+            conditionId: market.conditionId || "",
+            slug: eventSlug,
+            opportunityType: "moderate_conviction",
+            signal: `YES at ${(yesPrice * 100).toFixed(0)}¢ - ${potentialReturn}% potential return`,
+            currentPrice: yesPrice,
+            impliedProbability: `${(yesPrice * 100).toFixed(0)}%`,
+            suggestedSide: "YES",
+            potentialReturn: `${potentialReturn}% if YES wins`,
+            confidence,
+            liquidity: marketLiquidity,
+            volume24h: marketVolume24h,
+            riskFactors,
+            whyThisOpportunity: `Balanced risk/reward bet. Market implies ~${(yesPrice * 100).toFixed(0)}% chance of YES. If you think it's more likely, good expected value.`,
+            score,
+          });
+        }
+      }
+
+      // ============ STRATEGY 3: HIGH CONFIDENCE (70-90% likely outcomes) ============
+      // Safer bets with lower but more reliable returns
+      if (strategy === "all" || strategy === "high_confidence") {
+        const strategyMin = hasPriceFilter ? effectivePriceMin : 0.70;
+        const strategyMax = hasPriceFilter ? effectivePriceMax : 0.90;
+        
+        if (yesPrice >= strategyMin && yesPrice <= strategyMax) {
+          const potentialReturn = ((1 - yesPrice) / yesPrice * 100).toFixed(0);
+          const riskFactors: string[] = [];
+          
+          if (marketLiquidity < 20000) riskFactors.push("Check liquidity before large bets");
+          
+          let confidence: "high" | "medium" | "low" = "high";
+          if (marketLiquidity < 20000) confidence = "medium";
+
+          const score = (marketLiquidity / 1000) + (marketVolume24h / 500) + (yesPrice * 50);
+
+          opportunities.push({
+            rank: 0,
+            market: marketTitle,
+            conditionId: market.conditionId || "",
+            slug: eventSlug,
+            opportunityType: "high_confidence",
+            signal: `YES at ${(yesPrice * 100).toFixed(0)}¢ - ${potentialReturn}% if correct`,
+            currentPrice: yesPrice,
+            impliedProbability: `${(yesPrice * 100).toFixed(0)}%`,
+            suggestedSide: "YES",
+            potentialReturn: `${potentialReturn}% if YES wins`,
+            confidence,
+            liquidity: marketLiquidity,
+            volume24h: marketVolume24h,
+            riskFactors,
+            whyThisOpportunity: `High probability bet. Market strongly favors YES at ${(yesPrice * 100).toFixed(0)}%. Lower return but higher win rate. Good for building consistent profits.`,
+            score,
+          });
+        }
+        
+        // Check NO side for high confidence (when YES is very unlikely)
+        if (noPrice >= strategyMin && noPrice <= strategyMax) {
+          const potentialReturn = ((1 - noPrice) / noPrice * 100).toFixed(0);
+          const riskFactors: string[] = [];
+          
+          if (marketLiquidity < 20000) riskFactors.push("Check liquidity before large bets");
+          
+          let confidence: "high" | "medium" | "low" = "high";
+          if (marketLiquidity < 20000) confidence = "medium";
+
+          const score = (marketLiquidity / 1000) + (marketVolume24h / 500) + (noPrice * 50);
+
+          opportunities.push({
+            rank: 0,
+            market: marketTitle,
+            conditionId: market.conditionId || "",
+            slug: eventSlug,
+            opportunityType: "high_confidence",
+            signal: `NO at ${(noPrice * 100).toFixed(0)}¢ - ${potentialReturn}% if correct`,
+            currentPrice: noPrice,
+            impliedProbability: `${(noPrice * 100).toFixed(0)}% NO wins`,
+            suggestedSide: "NO",
+            potentialReturn: `${potentialReturn}% if NO wins`,
+            confidence,
+            liquidity: marketLiquidity,
+            volume24h: marketVolume24h,
+            riskFactors,
+            whyThisOpportunity: `High probability NO bet. Market strongly favors NO at ${(noPrice * 100).toFixed(0)}%. Good for consistent profits if you agree with market sentiment.`,
+            score,
+          });
+        }
+      }
+
+      // ============ STRATEGY 4: MOMENTUM ============
       // High volume relative to liquidity = active market with price discovery
-      if (strategy === "all" || strategy === "momentum") {
+      if ((strategy === "all" || strategy === "momentum") && matchesPriceFilter) {
         const volumeToLiquidityRatio = marketLiquidity > 0 ? marketVolume24h / marketLiquidity : 0;
         
         // High activity threshold
@@ -2308,6 +2677,7 @@ async function handleFindTradingOpportunities(
             opportunityType: "momentum",
             signal: `Volume ${(volumeToLiquidityRatio * 100).toFixed(0)}% of liquidity in 24h`,
             currentPrice: yesPrice,
+            impliedProbability: `${(yesPrice * 100).toFixed(0)}%`,
             suggestedSide,
             potentialReturn: suggestedSide === "YES" ? `${((1 - yesPrice) / yesPrice * 100).toFixed(0)}% if YES wins` : suggestedSide === "NO" ? `${((1 - noPrice) / noPrice * 100).toFixed(0)}% if NO wins` : "Depends on direction",
             confidence,
@@ -2320,9 +2690,9 @@ async function handleFindTradingOpportunities(
         }
       }
 
-      // ============ STRATEGY 3: VALUE (Wide spread / inefficient) ============
+      // ============ STRATEGY 5: MISPRICED (formerly value) ============
       // Look for markets where YES + NO doesn't sum to ~1
-      if (strategy === "all" || strategy === "value") {
+      if ((strategy === "all" || strategy === "mispriced") && matchesPriceFilter) {
         const sumOfPrices = yesPrice + noPrice;
         const inefficiency = Math.abs(sumOfPrices - 1);
         
@@ -2357,9 +2727,10 @@ async function handleFindTradingOpportunities(
             market: marketTitle,
             conditionId: market.conditionId || "",
             slug: eventSlug,
-            opportunityType: "value",
+            opportunityType: "mispriced",
             signal,
             currentPrice: yesPrice,
+            impliedProbability: `${(yesPrice * 100).toFixed(0)}%`,
             suggestedSide,
             potentialReturn: sumOfPrices < 0.97 ? `${((1 - sumOfPrices) * 100).toFixed(1)}% guaranteed edge` : "Depends on resolution",
             confidence,
@@ -2374,9 +2745,9 @@ async function handleFindTradingOpportunities(
         }
       }
 
-      // ============ STRATEGY 4: NEAR RESOLUTION ============
+      // ============ STRATEGY 6: NEAR RESOLUTION ============
       // Markets ending soon with clear direction
-      if (strategy === "all" || strategy === "near_resolution") {
+      if ((strategy === "all" || strategy === "near_resolution") && matchesPriceFilter) {
         const endDate = event.endDate || event.endDateIso;
         if (endDate) {
           const end = new Date(endDate);
@@ -2410,6 +2781,7 @@ async function handleFindTradingOpportunities(
                 opportunityType: "near_resolution",
                 signal: `Resolves in ${daysRemaining.toFixed(1)} days - ${isYesFavored ? "YES" : "NO"} at ${(favoredPrice * 100).toFixed(0)}%`,
                 currentPrice: yesPrice,
+                impliedProbability: `${(yesPrice * 100).toFixed(0)}%`,
                 suggestedSide: isYesFavored ? "YES" : "NO",
                 potentialReturn: `${((1 - favoredPrice) / favoredPrice * 100).toFixed(0)}% in ${daysRemaining.toFixed(0)} days if market is right`,
                 confidence,
@@ -2446,21 +2818,83 @@ async function handleFindTradingOpportunities(
 
   let marketConditions: string;
   if (opportunities.length === 0) {
-    marketConditions = "Markets are efficiently priced with no clear edges. Consider waiting for news events or checking less popular markets.";
+    marketConditions = "No markets match your specific criteria.";
   } else if (opportunities.length < 3) {
-    marketConditions = "Few opportunities available. Markets are relatively efficient.";
+    marketConditions = "Few opportunities available matching your criteria.";
   } else if (opportunities.filter(o => o.confidence === "high").length > 3) {
     marketConditions = "Active market with multiple high-confidence opportunities. Good time to trade.";
   } else {
     marketConditions = "Normal market conditions with some speculative opportunities.";
   }
 
+  // Build suggestions and nearestMatches when no opportunities found
   let noOpportunitiesReason: string | undefined;
+  let suggestions: Array<{ action: string; reason: string; availableCount?: number }> | undefined;
+  let nearestMatches: Array<{ market: string; currentPrice: number; whyNotMatched: string }> | undefined;
+
   if (opportunities.length === 0) {
-    noOpportunitiesReason = 
-      "No strong opportunities found. This means: (1) Markets are efficiently priced - prices reflect available information, " +
-      "(2) Spreads are tight - no easy arbitrage, (3) Most markets are priced between 20-80% - no cheap asymmetric bets. " +
-      "Suggestions: Wait for news events that create mispricings, look at niche/local markets, or focus on markets where you have genuine information edge.";
+    const priceFilterStr = hasPriceFilter 
+      ? `price ${(effectivePriceMin * 100).toFixed(0)}-${(effectivePriceMax * 100).toFixed(0)}¢` 
+      : "any price";
+    
+    noOpportunitiesReason = `No bets found matching: ${priceFilterStr}, liquidity >$${minLiquidity}, strategy: ${strategy}`;
+
+    suggestions = [];
+    
+    if (lotteryTicketCount > 0 && strategy !== "lottery_tickets") {
+      suggestions.push({
+        action: "Try 'lottery_tickets' strategy",
+        availableCount: lotteryTicketCount,
+        reason: "Many low-probability high-return bets available (1-15¢ range)",
+      });
+    }
+    
+    if (moderateCount > 0 && strategy !== "moderate_conviction") {
+      suggestions.push({
+        action: "Try 'moderate_conviction' strategy",
+        availableCount: moderateCount,
+        reason: "Balanced risk/reward bets available (35-65¢ range)",
+      });
+    }
+    
+    if (likelyCount > 0 && strategy !== "high_confidence") {
+      suggestions.push({
+        action: "Try 'high_confidence' strategy",
+        availableCount: likelyCount,
+        reason: "Safer bets with likely outcomes available (65-85¢ range)",
+      });
+    }
+
+    if (minLiquidity > 5000) {
+      suggestions.push({
+        action: `Lower minLiquidity to ${Math.floor(minLiquidity / 2)}`,
+        reason: "More markets available with lower liquidity requirement",
+      });
+    }
+
+    if (hasPriceFilter) {
+      suggestions.push({
+        action: "Expand price range or remove targetProbability filter",
+        reason: "Wider range captures more opportunities",
+      });
+    }
+
+    // Find nearest matches (markets that almost qualified)
+    nearestMatches = allMarketsData
+      .filter(m => {
+        if (!hasPriceFilter) return false;
+        const nearMin = m.yesPrice >= effectivePriceMin - 0.10 && m.yesPrice < effectivePriceMin;
+        const nearMax = m.yesPrice > effectivePriceMax && m.yesPrice <= effectivePriceMax + 0.10;
+        return nearMin || nearMax;
+      })
+      .slice(0, 3)
+      .map(m => ({
+        market: m.market,
+        currentPrice: m.yesPrice,
+        whyNotMatched: m.yesPrice < effectivePriceMin 
+          ? `Price ${(m.yesPrice * 100).toFixed(0)}¢ is below your ${(effectivePriceMin * 100).toFixed(0)}¢ minimum`
+          : `Price ${(m.yesPrice * 100).toFixed(0)}¢ is above your ${(effectivePriceMax * 100).toFixed(0)}¢ maximum`,
+      }));
   }
 
   return successResult({
@@ -2472,6 +2906,259 @@ async function handleFindTradingOpportunities(
     },
     opportunities: finalOpportunities,
     ...(noOpportunitiesReason && { noOpportunitiesReason }),
+    ...(suggestions && suggestions.length > 0 && { suggestions }),
+    ...(nearestMatches && nearestMatches.length > 0 && { nearestMatches }),
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Find moderate probability bets (40-75%) with decent liquidity
+ * Dedicated tool for "more likely" outcomes with 1.3-2.5x returns
+ */
+async function handleFindModerateProbabilityBets(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const minPrice = (args?.minPrice as number) ?? 0.40;
+  const maxPrice = (args?.maxPrice as number) ?? 0.75;
+  const minLiquidity = (args?.minLiquidity as number) ?? 10000;
+  const category = args?.category as string;
+  const sortBy = (args?.sortBy as string) ?? "return_potential";
+  const limit = (args?.limit as number) ?? 10;
+
+  // Fetch active markets
+  let endpoint = `/events?closed=false&limit=150&order=liquidity&ascending=false`;
+  if (category && category !== "all") {
+    endpoint += `&category=${category}`;
+  }
+
+  const events = (await fetchGamma(endpoint)) as GammaEvent[];
+
+  const opportunities: Array<{
+    market: string;
+    slug: string;
+    conditionId: string;
+    currentPrice: number;
+    impliedProbability: string;
+    potentialReturn: string;
+    liquidity: number;
+    volume24h: number;
+    endDate: string;
+    category: string;
+    whyThisBet: string;
+    sortScore: number;
+  }> = [];
+
+  let marketsScanned = 0;
+
+  for (const event of events) {
+    if (!event.markets || event.markets.length === 0) continue;
+
+    const eventLiquidity = Number(event.liquidity || 0);
+    const eventVolume24h = Number(event.volume24hr || 0);
+    const eventSlug = event.slug || "";
+    const eventCategory = (event as GammaEvent & { category?: string }).category || "other";
+    const eventEndDate = event.endDate || event.endDateIso || "";
+
+    for (const market of event.markets) {
+      const gammaPrices = parseJsonArray(market.outcomePrices);
+      if (gammaPrices.length < 2) continue;
+
+      const yesPrice = parseFloat(gammaPrices[0]) || 0;
+      const marketLiquidity = Number(market.liquidity || eventLiquidity || 0);
+      const marketVolume24h = Number(market.volume24hr || eventVolume24h || 0);
+      const marketTitle = market.question || event.title || "Unknown";
+
+      if (marketLiquidity < minLiquidity) continue;
+      if (yesPrice <= 0) continue;
+
+      marketsScanned++;
+
+      // Check if price is in desired range
+      if (yesPrice >= minPrice && yesPrice <= maxPrice) {
+        const returnPercent = ((1 - yesPrice) / yesPrice * 100);
+        const returnMultiple = (1 / yesPrice);
+
+        // Calculate sort score based on sortBy
+        let sortScore = 0;
+        switch (sortBy) {
+          case "return_potential":
+            sortScore = returnPercent;
+            break;
+          case "liquidity":
+            sortScore = marketLiquidity;
+            break;
+          case "volume":
+            sortScore = marketVolume24h;
+            break;
+          case "closing_soon":
+            if (eventEndDate) {
+              const daysRemaining = (new Date(eventEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+              sortScore = daysRemaining > 0 ? 1 / daysRemaining : 0;
+            }
+            break;
+        }
+
+        opportunities.push({
+          market: marketTitle,
+          slug: eventSlug,
+          conditionId: market.conditionId || "",
+          currentPrice: yesPrice,
+          impliedProbability: `${(yesPrice * 100).toFixed(0)}%`,
+          potentialReturn: `${returnPercent.toFixed(0)}% (${returnMultiple.toFixed(2)}x)`,
+          liquidity: marketLiquidity,
+          volume24h: marketVolume24h,
+          endDate: eventEndDate,
+          category: eventCategory,
+          whyThisBet: `Market implies ${(yesPrice * 100).toFixed(0)}% chance. If YES wins, you get ${returnPercent.toFixed(0)}% return. More likely to win than lottery tickets, with solid upside.`,
+          sortScore,
+        });
+      }
+    }
+  }
+
+  // Sort and limit
+  opportunities.sort((a, b) => b.sortScore - a.sortScore);
+  const finalOpportunities = opportunities.slice(0, limit).map(({ sortScore, ...rest }) => rest);
+
+  // Calculate average return
+  const avgReturn = opportunities.length > 0
+    ? opportunities.reduce((sum, o) => sum + ((1 - o.currentPrice) / o.currentPrice * 100), 0) / opportunities.length
+    : 0;
+
+  return successResult({
+    opportunities: finalOpportunities,
+    summary: {
+      marketsScanned,
+      matchingBets: opportunities.length,
+      priceRange: `${(minPrice * 100).toFixed(0)}-${(maxPrice * 100).toFixed(0)}¢`,
+      avgReturn: `${avgReturn.toFixed(0)}%`,
+    },
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Simple tool to get bets by likelihood category
+ */
+async function handleGetBetsByProbability(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const likelihood = args?.likelihood as string;
+  const category = args?.category as string;
+  const limit = (args?.limit as number) ?? 5;
+
+  if (!likelihood) {
+    return errorResult("likelihood parameter is required");
+  }
+
+  // Define probability ranges for each likelihood
+  const likelihoodRanges: Record<string, { min: number; max: number; description: string }> = {
+    very_unlikely: { min: 0.01, max: 0.15, description: "1-15%" },
+    unlikely: { min: 0.15, max: 0.35, description: "15-35%" },
+    coinflip: { min: 0.35, max: 0.65, description: "35-65%" },
+    likely: { min: 0.65, max: 0.85, description: "65-85%" },
+    very_likely: { min: 0.85, max: 0.95, description: "85-95%" },
+  };
+
+  const range = likelihoodRanges[likelihood];
+  if (!range) {
+    return errorResult(`Invalid likelihood: ${likelihood}. Must be one of: ${Object.keys(likelihoodRanges).join(", ")}`);
+  }
+
+  // Fetch active markets
+  let endpoint = `/events?closed=false&limit=100&order=liquidity&ascending=false`;
+  if (category && category !== "all") {
+    endpoint += `&category=${category}`;
+  }
+
+  const events = (await fetchGamma(endpoint)) as GammaEvent[];
+
+  const bets: Array<{
+    market: string;
+    slug: string;
+    conditionId: string;
+    currentPrice: number;
+    impliedProbability: string;
+    potentialReturn: string;
+    liquidity: number;
+    volume24h: number;
+    category: string;
+  }> = [];
+
+  for (const event of events) {
+    if (!event.markets || event.markets.length === 0) continue;
+
+    const eventLiquidity = Number(event.liquidity || 0);
+    const eventVolume24h = Number(event.volume24hr || 0);
+    const eventSlug = event.slug || "";
+    const eventCategory = (event as GammaEvent & { category?: string }).category || "other";
+
+    for (const market of event.markets) {
+      const gammaPrices = parseJsonArray(market.outcomePrices);
+      if (gammaPrices.length < 2) continue;
+
+      const yesPrice = parseFloat(gammaPrices[0]) || 0;
+      const noPrice = parseFloat(gammaPrices[1]) || 0;
+      const marketLiquidity = Number(market.liquidity || eventLiquidity || 0);
+      const marketVolume24h = Number(market.volume24hr || eventVolume24h || 0);
+      const marketTitle = market.question || event.title || "Unknown";
+
+      // Minimum liquidity check
+      if (marketLiquidity < 5000) continue;
+      if (yesPrice <= 0) continue;
+
+      // Check YES side
+      if (yesPrice >= range.min && yesPrice <= range.max) {
+        const returnPercent = ((1 - yesPrice) / yesPrice * 100);
+        bets.push({
+          market: marketTitle,
+          slug: eventSlug,
+          conditionId: market.conditionId || "",
+          currentPrice: yesPrice,
+          impliedProbability: `${(yesPrice * 100).toFixed(0)}% YES`,
+          potentialReturn: `${returnPercent.toFixed(0)}%`,
+          liquidity: marketLiquidity,
+          volume24h: marketVolume24h,
+          category: eventCategory,
+        });
+      }
+      
+      // Check NO side
+      if (noPrice >= range.min && noPrice <= range.max) {
+        const returnPercent = ((1 - noPrice) / noPrice * 100);
+        bets.push({
+          market: marketTitle,
+          slug: eventSlug,
+          conditionId: market.conditionId || "",
+          currentPrice: noPrice,
+          impliedProbability: `${(noPrice * 100).toFixed(0)}% NO`,
+          potentialReturn: `${returnPercent.toFixed(0)}%`,
+          liquidity: marketLiquidity,
+          volume24h: marketVolume24h,
+          category: eventCategory,
+        });
+      }
+    }
+  }
+
+  // Sort by liquidity and limit
+  bets.sort((a, b) => b.liquidity - a.liquidity);
+  const finalBets = bets.slice(0, limit);
+
+  // Calculate return range
+  const returns = finalBets.map(b => ((1 - b.currentPrice) / b.currentPrice * 100));
+  const minReturn = returns.length > 0 ? Math.min(...returns) : 0;
+  const maxReturn = returns.length > 0 ? Math.max(...returns) : 0;
+
+  return successResult({
+    bets: finalBets,
+    summary: {
+      likelihood,
+      probabilityRange: range.description,
+      betsFound: bets.length,
+      returnRange: returns.length > 0 ? `${minReturn.toFixed(0)}-${maxReturn.toFixed(0)}%` : "N/A",
+    },
     fetchedAt: new Date().toISOString(),
   });
 }
