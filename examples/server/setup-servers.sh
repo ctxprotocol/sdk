@@ -15,6 +15,7 @@ SERVERS=(
   "mcp-blocknative:blocknative-contributor:4001"
   "mcp-hyperliquid:hyperliquid-contributor:4002"
   "mcp-polymarket:polymarket-contributor:4003"
+  "mcp-exa:exa-contributor:4004"
 )
 
 for SERVER in "${SERVERS[@]}"; do

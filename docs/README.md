@@ -30,3 +30,4 @@ If you're building tools for the Context marketplace:
 2. **Examples:** See the [server examples](../examples/server/) for complete implementations
 3. **Requirements:** All tools must use `outputSchema` and `structuredContent` from the MCP specification
 
+

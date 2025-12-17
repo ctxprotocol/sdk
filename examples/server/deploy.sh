@@ -14,7 +14,7 @@ REMOTE_BASE_DIR="~/mcp-servers"
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 # Define the project directories to deploy
-PROJECTS=("blocknative-contributor" "hyperliquid-contributor" "polymarket-contributor")
+PROJECTS=("blocknative-contributor" "hyperliquid-contributor" "polymarket-contributor" "exa-contributor")
 
 for PROJECT in "${PROJECTS[@]}"; do
     SOURCE_DIR="${SCRIPT_DIR}/${PROJECT}"
@@ -41,23 +41,30 @@ for PROJECT in "${PROJECTS[@]}"; do
     echo "✅ ${PROJECT} synced."
 done
 
-# --- Upload setup script ---
+# --- Upload setup scripts ---
 echo "--------------------------------------------------"
 echo "📜 Uploading setup-servers.sh..."
 rsync -avz \
   "${SCRIPT_DIR}/setup-servers.sh" \
   "${SERVER_USER_HOST}:${REMOTE_BASE_DIR}/setup-servers.sh"
 
-# Make it executable on the remote server
-ssh "${SERVER_USER_HOST}" "chmod +x ${REMOTE_BASE_DIR}/setup-servers.sh"
-echo "✅ setup-servers.sh uploaded and made executable."
+echo "📜 Uploading setup-caddy-https.sh..."
+rsync -avz \
+  "${SCRIPT_DIR}/setup-caddy-https.sh" \
+  "${SERVER_USER_HOST}:${REMOTE_BASE_DIR}/setup-caddy-https.sh"
+
+# Make them executable on the remote server
+ssh "${SERVER_USER_HOST}" "chmod +x ${REMOTE_BASE_DIR}/setup-servers.sh ${REMOTE_BASE_DIR}/setup-caddy-https.sh"
+echo "✅ Setup scripts uploaded and made executable."
 
 echo "--------------------------------------------------"
 echo "🎉 All files uploaded successfully!"
 echo ""
 echo "   Next steps:"
 echo "   1. SSH into server: ssh ${SERVER_USER_HOST}"
-echo "   2. Run: cd ~/mcp-servers && ./setup-servers.sh"
+echo "   2. Create .env files for each contributor (with API keys)"
+echo "   3. Run: cd ~/mcp-servers && ./setup-servers.sh"
+echo "   4. Run: sudo ./setup-caddy-https.sh  (for HTTPS)"
 echo ""
-echo "   Or run directly:"
+echo "   Or run setup-servers directly:"
 echo "   ssh ${SERVER_USER_HOST} 'cd ~/mcp-servers && ./setup-servers.sh'"

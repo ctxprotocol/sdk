@@ -418,7 +418,11 @@ const TOOLS = [
   {
     name: "find_trading_opportunities",
     description:
-      "🎯 THE GO-TO TOOL for finding genuine Polymarket trading opportunities. Scans for: (1) Lottery tickets - cheap YES/NO positions with huge potential payoff (1-15¢), (2) Moderate conviction - balanced risk/reward bets (35-65¢), (3) High confidence - likely outcomes with safer returns (70-90¢), (4) Volume momentum - markets with surging activity, (5) Mispriced/value - potential mispricings, (6) Near resolution - markets about to resolve. Use priceRange or targetProbability to filter by how likely bets are to win. Returns ACTIONABLE opportunities ranked by quality.",
+      `Advanced tool for finding Polymarket opportunities with complex filtering. Supports strategies: lottery_tickets (1-15¢), moderate_conviction (35-65¢), high_confidence (70-90¢), momentum, mispriced, near_resolution.
+
+⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent markets or construct URLs. If no results match the criteria, say "No matching markets found" - do NOT make up markets that might exist.
+
+⚠️ FOR SIMPLER QUERIES: If user wants 'likely bets', 'safer bets', or 'bets that will probably win' → use find_moderate_probability_bets instead. For filtering by probability like 'coinflip bets' or 'unlikely bets' → use get_bets_by_probability instead.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -482,6 +486,7 @@ const TOOLS = [
             properties: {
               rank: { type: "number" },
               market: { type: "string" },
+              url: { type: "string", format: "uri", description: "Direct Polymarket URL - always use this, never construct URLs" },
               conditionId: { type: "string" },
               slug: { type: "string" },
               opportunityType: {
@@ -499,6 +504,7 @@ const TOOLS = [
               riskFactors: { type: "array", items: { type: "string" } },
               whyThisOpportunity: { type: "string" },
             },
+            required: ["market", "url", "currentPrice"],
           },
         },
         noOpportunitiesReason: {
@@ -538,7 +544,9 @@ const TOOLS = [
   {
     name: "find_moderate_probability_bets",
     description:
-      "Find prediction market bets priced 40-75¢ (40-75% implied probability) with decent liquidity. These are 'more likely' outcomes that still offer 1.3-2.5x returns. Use this when users want bets that are 'likely to happen' or 'safer bets' rather than lottery tickets.",
+      `🎯 BEST TOOL for 'likely bets', 'safer bets', or 'bets that will probably win'. Finds prediction market bets priced 40-75¢ (40-75% implied probability) with good liquidity. Returns 1.3-2.5x if correct. USE THIS instead of find_trading_opportunities when user wants higher probability outcomes.
+
+⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent additional markets or URLs. Each result includes a real 'url' field - use ONLY those URLs.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -580,6 +588,7 @@ const TOOLS = [
             type: "object",
             properties: {
               market: { type: "string" },
+              url: { type: "string", format: "uri", description: "Direct Polymarket URL - always use this, never construct URLs" },
               slug: { type: "string" },
               conditionId: { type: "string" },
               currentPrice: { type: "number" },
@@ -591,6 +600,7 @@ const TOOLS = [
               category: { type: "string" },
               whyThisBet: { type: "string" },
             },
+            required: ["market", "url", "currentPrice"],
           },
         },
         summary: {
@@ -611,7 +621,9 @@ const TOOLS = [
   {
     name: "get_bets_by_probability",
     description:
-      "Simple tool to get bets filtered by how likely they are to happen. Use 'likely' for safer bets, 'unlikely' for lottery tickets, 'coinflip' for balanced risk/reward.",
+      `🎯 SIMPLEST tool for filtering bets by win probability. Use when user asks for: 'coinflip bets' → likelihood='coinflip', 'unlikely bets'/'longshots' → likelihood='very_unlikely', 'likely bets' → likelihood='likely'. Options: very_unlikely (1-15%), unlikely (15-35%), coinflip (35-65%), likely (65-85%), very_likely (85-95%).
+
+⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent additional markets or construct URLs from titles. Use ONLY the 'url' field provided in each result.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -641,6 +653,7 @@ const TOOLS = [
             type: "object",
             properties: {
               market: { type: "string" },
+              url: { type: "string", format: "uri", description: "Direct Polymarket URL - always use this, never construct URLs" },
               slug: { type: "string" },
               conditionId: { type: "string" },
               currentPrice: { type: "number" },
@@ -650,6 +663,7 @@ const TOOLS = [
               volume24h: { type: "number" },
               category: { type: "string" },
             },
+            required: ["market", "url", "currentPrice"],
           },
         },
         summary: {
@@ -701,6 +715,7 @@ const TOOLS = [
             properties: {
               rank: { type: "number" },
               title: { type: "string" },
+              url: { type: "string", format: "uri", description: "Direct Polymarket URL - always use this, never construct URLs" },
               slug: { type: "string" },
               conditionId: { type: "string" },
               currentPrice: { type: "number" },
@@ -713,6 +728,7 @@ const TOOLS = [
               signal: { type: "string" },
               whyTrending: { type: "string" },
             },
+            required: ["title", "url", "currentPrice"],
           },
         },
         categories: {
@@ -824,7 +840,7 @@ const TOOLS = [
 
   {
     name: "get_events",
-    description: "Get list of events (markets) from Polymarket with optional filters.",
+    description: "Get list of events (markets) from Polymarket with optional filters. By default returns LIVE (active) markets. Use closed=true for resolved/finished markets.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -834,7 +850,7 @@ const TOOLS = [
         },
         closed: {
           type: "boolean",
-          description: "Include closed events (default: false)",
+          description: "Include closed/resolved events (default: false)",
         },
         limit: {
           type: "number",
@@ -850,7 +866,25 @@ const TOOLS = [
     outputSchema: {
       type: "object" as const,
       properties: {
-        events: { type: "array" },
+        events: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              title: { type: "string" },
+              url: { type: "string", format: "uri", description: "Direct Polymarket URL - always use this" },
+              slug: { type: "string" },
+              category: { type: "string" },
+              volume: { type: "number" },
+              liquidity: { type: "number" },
+              endDate: { type: "string" },
+              active: { type: "boolean" },
+              marketsCount: { type: "number" },
+            },
+            required: ["title", "url"],
+          },
+        },
         count: { type: "number" },
         fetchedAt: { type: "string" },
       },
@@ -1051,25 +1085,37 @@ const TOOLS = [
 
   {
     name: "search_markets",
-    description: "Search for markets by keyword or category.",
+    description: `Search for Polymarket prediction markets by keyword or category.
+
+⚠️ IMPORTANT FOR LLMs: This tool distinguishes between LIVE and RESOLVED markets:
+- LIVE markets: Still trading, outcome not yet determined. Users can place bets on these.
+- RESOLVED markets: Already finished, outcome determined. For historical reference only - cannot trade.
+
+By default, only LIVE (tradeable) markets are returned. Use status='resolved' for finished markets or status='all' for both.
+
+Each result includes:
+- url: Direct link to the market on Polymarket (always use this, never construct URLs)
+- status: Either "live" (tradeable) or "resolved" (finished)
+- endDate: When the market resolves/resolved`,
     inputSchema: {
       type: "object" as const,
       properties: {
         query: {
           type: "string",
-          description: "Search query",
+          description: "Search query (searches title and description)",
         },
         category: {
           type: "string",
-          description: "Filter by category",
+          description: "Filter by category (e.g., 'politics', 'crypto', 'sports')",
         },
-        active: {
-          type: "boolean",
-          description: "Filter to active markets only",
+        status: {
+          type: "string",
+          enum: ["live", "resolved", "all"],
+          description: "Filter by market status: 'live' (default) = still trading/open for bets, 'resolved' = already finished/closed, 'all' = both",
         },
         limit: {
           type: "number",
-          description: "Number of results",
+          description: "Number of results (default: 20, max: 50)",
         },
       },
       required: [],
@@ -1077,8 +1123,32 @@ const TOOLS = [
     outputSchema: {
       type: "object" as const,
       properties: {
-        results: { type: "array" },
+        results: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              url: { type: "string", format: "uri", description: "Direct Polymarket URL - always use this" },
+              slug: { type: "string" },
+              status: { type: "string", enum: ["live", "resolved"], description: "live=tradeable, resolved=finished" },
+              category: { type: "string" },
+              conditionId: { type: "string" },
+              volume: { type: "number" },
+              liquidity: { type: "number" },
+              endDate: { type: "string", description: "When market resolves/resolved" },
+            },
+            required: ["title", "url", "status"],
+          },
+        },
         count: { type: "number" },
+        statusBreakdown: {
+          type: "object",
+          properties: {
+            live: { type: "number", description: "Count of live/tradeable markets" },
+            resolved: { type: "number", description: "Count of resolved/finished markets" },
+          },
+        },
         fetchedAt: { type: "string" },
       },
       required: ["results", "count"],
@@ -2347,13 +2417,6 @@ async function handleFindTradingOpportunities(
   const priceRange = args?.priceRange as { min?: number; max?: number } | undefined;
   const targetProbability = args?.targetProbability as string | undefined;
 
-  // Map old strategy name for backward compatibility
-  if (strategy === "asymmetric_upside") {
-    strategy = "lottery_tickets";
-  }
-  if (strategy === "value") {
-    strategy = "mispriced";
-  }
 
   // Calculate effective price range from targetProbability or priceRange
   let effectivePriceMin = 0;
@@ -2388,6 +2451,7 @@ async function handleFindTradingOpportunities(
   const opportunities: Array<{
     rank: number;
     market: string;
+    url: string;
     conditionId: string;
     slug: string;
     opportunityType: string;
@@ -2490,6 +2554,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
+            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "lottery_tickets",
@@ -2524,6 +2589,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
+            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "lottery_tickets",
@@ -2563,6 +2629,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
+            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "moderate_conviction",
@@ -2601,6 +2668,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
+            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "high_confidence",
@@ -2633,6 +2701,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
+            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "high_confidence",
@@ -2672,6 +2741,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
+            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "momentum",
@@ -2725,6 +2795,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
+            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "mispriced",
@@ -2776,6 +2847,7 @@ async function handleFindTradingOpportunities(
               opportunities.push({
                 rank: 0,
                 market: marketTitle,
+                url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
                 conditionId: market.conditionId || "",
                 slug: eventSlug,
                 opportunityType: "near_resolution",
@@ -2936,6 +3008,7 @@ async function handleFindModerateProbabilityBets(
 
   const opportunities: Array<{
     market: string;
+    url: string;
     slug: string;
     conditionId: string;
     currentPrice: number;
@@ -3001,6 +3074,7 @@ async function handleFindModerateProbabilityBets(
 
         opportunities.push({
           market: marketTitle,
+          url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
           slug: eventSlug,
           conditionId: market.conditionId || "",
           currentPrice: yesPrice,
@@ -3076,6 +3150,7 @@ async function handleGetBetsByProbability(
 
   const bets: Array<{
     market: string;
+    url: string;
     slug: string;
     conditionId: string;
     currentPrice: number;
@@ -3113,6 +3188,7 @@ async function handleGetBetsByProbability(
         const returnPercent = ((1 - yesPrice) / yesPrice * 100);
         bets.push({
           market: marketTitle,
+          url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
           slug: eventSlug,
           conditionId: market.conditionId || "",
           currentPrice: yesPrice,
@@ -3129,6 +3205,7 @@ async function handleGetBetsByProbability(
         const returnPercent = ((1 - noPrice) / noPrice * 100);
         bets.push({
           market: marketTitle,
+          url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
           slug: eventSlug,
           conditionId: market.conditionId || "",
           currentPrice: noPrice,
@@ -3181,6 +3258,7 @@ async function handleDiscoverTrendingMarkets(
   const trendingMarkets: Array<{
     rank: number;
     title: string;
+    url: string;
     slug: string;
     conditionId: string;
     currentPrice: number;
@@ -3282,10 +3360,12 @@ async function handleDiscoverTrendingMarkets(
     const cat = event.category || "other";
     categoryBreakdown[cat] = (categoryBreakdown[cat] || 0) + 1;
 
+    const eventSlug = event.slug || "";
     trendingMarkets.push({
       rank: 0,
       title: event.title || market.question || "Unknown",
-      slug: event.slug || "",
+      url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+      slug: eventSlug,
       conditionId: market.conditionId || event.id || "",
       currentPrice: yesPrice,
       priceDirection,
@@ -3635,17 +3715,20 @@ async function handleGetEvents(
 
   const filteredEvents = active ? events.filter((e) => e.active !== false) : events;
 
-  const simplified = filteredEvents.map((e) => ({
-    id: e.id,
-    title: e.title,
-    slug: e.slug,
-    category: e.category,
-    volume: e.volume,
-    liquidity: e.liquidity,
-    endDate: e.endDate,
-    active: e.active,
-    marketsCount: e.markets?.length || 0,
-  }));
+  const simplified = filteredEvents
+    .filter((e) => e.slug) // Only include events with valid slugs (for URL generation)
+    .map((e) => ({
+      id: e.id,
+      title: e.title,
+      url: `https://polymarket.com/event/${e.slug}`, // Always include URL
+      slug: e.slug,
+      category: e.category,
+      volume: e.volume,
+      liquidity: e.liquidity,
+      endDate: e.endDate,
+      active: e.active,
+      marketsCount: e.markets?.length || 0,
+    }));
 
   return successResult({
     events: simplified,
@@ -3938,45 +4021,85 @@ async function handleSearchMarkets(
 ): Promise<CallToolResult> {
   const query = args?.query as string;
   const category = args?.category as string;
-  const active = args?.active !== false;
+  const status = (args?.status as string) || "live"; // Default to live (tradeable) markets
   const limit = Math.min((args?.limit as number) || 20, 50);
 
-  let endpoint = `/events?closed=false&limit=${limit}`;
-  if (category) {
-    endpoint += `&category=${category}`;
+  // Determine which markets to fetch based on status filter
+  // closed=false means live/active markets, closed=true means resolved/finished markets
+  let fetchLimit = limit * 3; // Fetch more to account for filtering
+  
+  let allEvents: GammaEvent[] = [];
+  
+  if (status === "all") {
+    // Fetch both live and resolved markets
+    const [liveEvents, resolvedEvents] = await Promise.all([
+      fetchGamma(`/events?closed=false&limit=${fetchLimit}${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
+      fetchGamma(`/events?closed=true&limit=${fetchLimit}${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
+    ]);
+    allEvents = [...(liveEvents || []), ...(resolvedEvents || [])];
+  } else if (status === "resolved") {
+    // Only resolved/finished markets
+    allEvents = (await fetchGamma(`/events?closed=true&limit=${fetchLimit}${category ? `&category=${category}` : ""}`)) as GammaEvent[];
+  } else {
+    // Default: only live/tradeable markets
+    allEvents = (await fetchGamma(`/events?closed=false&limit=${fetchLimit}${category ? `&category=${category}` : ""}`)) as GammaEvent[];
   }
 
-  const events = (await fetchGamma(endpoint)) as GammaEvent[];
-
-  let filtered = events;
+  let filtered = allEvents || [];
 
   // Filter by query if provided
   if (query) {
     const queryLower = query.toLowerCase();
-    filtered = events.filter(
+    filtered = filtered.filter(
       (e) =>
         e.title?.toLowerCase().includes(queryLower) ||
         e.description?.toLowerCase().includes(queryLower)
     );
   }
 
-  if (active) {
-    filtered = filtered.filter((e) => e.active !== false);
-  }
+  // Count by status for breakdown
+  let liveCount = 0;
+  let resolvedCount = 0;
 
-  const results = filtered.map((e) => ({
-    title: e.title,
-    slug: e.slug,
-    category: e.category,
-    conditionId: e.markets?.[0]?.conditionId,
-    volume: e.volume,
-    liquidity: e.liquidity,
-    active: e.active,
-  }));
+  const results = filtered
+    .filter((e) => e.slug) // Only include markets with valid slugs (for URL generation)
+    .slice(0, limit)
+    .map((e) => {
+      // Determine market status: closed=true means resolved, active=false means not trading
+      const isResolved = e.closed === true;
+      const marketStatus = isResolved ? "resolved" : "live";
+      
+      if (isResolved) {
+        resolvedCount++;
+      } else {
+        liveCount++;
+      }
+
+      return {
+        title: e.title,
+        url: `https://polymarket.com/event/${e.slug}`, // Always include URL from slug
+        slug: e.slug,
+        status: marketStatus,
+        category: e.category,
+        conditionId: e.markets?.[0]?.conditionId,
+        volume: e.volume,
+        liquidity: e.liquidity,
+        endDate: e.endDate || e.endDateIso,
+      };
+    });
 
   return successResult({
     results,
     count: results.length,
+    statusBreakdown: {
+      live: liveCount,
+      resolved: resolvedCount,
+    },
+    hint: status === "live"
+      ? "Showing LIVE markets only (open for trading). Use status='resolved' to see finished markets."
+      : status === "resolved"
+        ? "Showing RESOLVED markets only (already finished). Use status='live' to see tradeable markets."
+        : "Showing ALL markets (both live and resolved).",
     fetchedAt: new Date().toISOString(),
   });
 }
