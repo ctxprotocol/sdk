@@ -2,6 +2,8 @@
 
 A proxy server that exposes Exa's official hosted MCP server via your own endpoint.
 
+> 🔒 **Security**: This server is secured with Context Protocol Request Signing. Requests must come from the Context Platform or a client with a valid signing key.
+
 ## What is Exa?
 
 Exa is an AI-powered search engine that provides:

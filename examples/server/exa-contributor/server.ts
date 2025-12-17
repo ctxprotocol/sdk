@@ -8,7 +8,8 @@
  */
 
 import "dotenv/config";
-import express, { type Request, type Response } from "express";
+import express, { type Request, type Response, type NextFunction } from "express";
+import { verifyContextRequest, isProtectedMcpMethod, ContextError } from "@ctxprotocol/sdk";
 
 const PORT = Number(process.env.PORT || 4004);
 const EXA_API_KEY = process.env.EXA_API_KEY;
@@ -33,6 +34,33 @@ const app = express();
 // Parse JSON bodies
 app.use(express.json());
 
+// ============================================================================
+// AUTH MIDDLEWARE - Verify Context Protocol Request Signature
+// Only requires auth for protected methods (tools/call), not discovery (tools/list)
+// ============================================================================
+
+async function verifyContextAuth(req: Request, res: Response, next: NextFunction) {
+  // Get the MCP method from the request body
+  const method = req.body?.method as string | undefined;
+
+  // Only require auth for protected methods (tools/call)
+  // Discovery methods (tools/list, initialize, etc.) are open
+  if (!method || !isProtectedMcpMethod(method)) {
+    return next();
+  }
+
+  try {
+    await verifyContextRequest({
+      authorizationHeader: req.headers.authorization,
+    });
+    next();
+  } catch (error) {
+    console.error("Auth failed:", error instanceof Error ? error.message : error);
+    const statusCode = error instanceof ContextError ? error.statusCode || 401 : 401;
+    res.status(statusCode).json({ error: "Unauthorized: Invalid Context Protocol Signature" });
+  }
+}
+
 // Health check endpoint
 app.get("/health", (_req: Request, res: Response) => {
   res.json({
@@ -45,7 +73,7 @@ app.get("/health", (_req: Request, res: Response) => {
 });
 
 // Proxy all MCP requests to Exa's hosted server
-app.all("/mcp", async (req: Request, res: Response) => {
+app.all("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   if (!EXA_API_KEY) {
     res.status(500).json({ error: "EXA_API_KEY not configured" });
     return;
@@ -119,6 +147,7 @@ app.all("/mcp", async (req: Request, res: Response) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`\n🚀 Exa AI MCP Proxy Server v1.0.0`);
+  console.log(`🔒 Context Protocol Security Enabled`);
   console.log(`📡 MCP endpoint: http://localhost:${PORT}/mcp`);
   console.log(`💚 Health check: http://localhost:${PORT}/health`);
   console.log(`🔗 Upstream: https://mcp.exa.ai/mcp`);

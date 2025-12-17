@@ -2,6 +2,8 @@
 
 The world's most comprehensive Hyperliquid MCP server. Built with the standard `@modelcontextprotocol/sdk`.
 
+> 🔒 **Security**: This server is secured with Context Protocol Request Signing. Requests must come from the Context Platform or a client with a valid signing key.
+
 > **📖 Building portfolio analysis tools?** See the [Context Injection Guide](../../../docs/context-injection.md) to learn how user portfolio data is automatically injected into your tools.
 
 ## Context Requirements
@@ -155,7 +157,7 @@ Server runs on `http://localhost:4002`.
 
 ## 🔌 Endpoints
 
-- **SSE**: `http://localhost:4002/sse` - MCP connection
+- **MCP**: `http://localhost:4002/mcp` - MCP Streamable HTTP endpoint
 - **Health**: `http://localhost:4002/health` - Status check
 
 ## 💡 Example Questions This MCP Can Answer

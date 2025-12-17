@@ -2,6 +2,8 @@
 
 > **Beyond Dashboards: True Alpha Detection**
 
+> 🔒 **Security**: This server is secured with Context Protocol Request Signing. Requests must come from the Context Platform or a client with a valid signing key.
+
 A "giga-brained" MCP server for Binance that provides **actionable trading intelligence**, not just data visualization.
 
 > **📖 Want to build portfolio analysis tools?** See the [Context Injection Guide](../../../docs/context-injection.md) for the architecture.
@@ -156,8 +158,9 @@ Note: Most endpoints use public Binance data and don't require API keys.
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /sse` | SSE connection for MCP |
-| `POST /messages` | MCP message handler |
+| `POST /mcp` | MCP Streamable HTTP endpoint |
+| `GET /mcp` | MCP SSE streaming (notifications) |
+| `DELETE /mcp` | Session cleanup |
 | `GET /health` | Health check |
 
 ## 🧪 Example Usage

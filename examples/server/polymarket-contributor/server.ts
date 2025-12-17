@@ -12,7 +12,6 @@
 
 import "dotenv/config";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { randomUUID } from "node:crypto";
@@ -22,8 +21,8 @@ import {
   type CallToolResult,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import express, { type Request, type Response } from "express";
-import type { PolymarketContext, PolymarketPosition } from "@ctxprotocol/sdk";
+import express, { type Request, type Response, type NextFunction } from "express";
+import { verifyContextRequest, isProtectedMcpMethod, ContextError, type PolymarketContext, type PolymarketPosition } from "@ctxprotocol/sdk";
 
 // ============================================================================
 // API ENDPOINTS
@@ -4175,9 +4174,35 @@ interface TradeResponse {
 const app = express();
 app.use(express.json());
 
-// Store transports for both SSE (legacy) and Streamable HTTP (modern)
-const sseTransports: Record<string, SSEServerTransport> = {};
-const httpTransports: Record<string, StreamableHTTPServerTransport> = {};
+// Store transports for Streamable HTTP
+const transports: Record<string, StreamableHTTPServerTransport> = {};
+
+// ============================================================================
+// AUTH MIDDLEWARE - Verify Context Protocol Request Signature
+// Only requires auth for protected methods (tools/call), not discovery (tools/list)
+// ============================================================================
+
+async function verifyContextAuth(req: Request, res: Response, next: NextFunction) {
+  // Get the MCP method from the request body
+  const method = req.body?.method as string | undefined;
+
+  // Only require auth for protected methods (tools/call)
+  // Discovery methods (tools/list, initialize, etc.) are open
+  if (!method || !isProtectedMcpMethod(method)) {
+    return next();
+  }
+
+  try {
+    await verifyContextRequest({
+      authorizationHeader: req.headers.authorization,
+    });
+    next();
+  } catch (error) {
+    console.error("Auth failed:", error instanceof Error ? error.message : error);
+    const statusCode = error instanceof ContextError ? error.statusCode || 401 : 401;
+    res.status(statusCode).json({ error: "Unauthorized: Invalid Context Protocol Signature" });
+  }
+}
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({
@@ -4190,28 +4215,28 @@ app.get("/health", (_req: Request, res: Response) => {
 });
 
 // ============================================================================
-// MODERN: Streamable HTTP Transport (/mcp) - Recommended
+// STREAMABLE HTTP TRANSPORT (/mcp)
 // ============================================================================
 
-app.post("/mcp", async (req: Request, res: Response) => {
+app.post("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
   let transport: StreamableHTTPServerTransport;
 
-  if (sessionId && httpTransports[sessionId]) {
-    // Reuse existing session
-    transport = httpTransports[sessionId];
+  if (sessionId && transports[sessionId]) {
+    transport = transports[sessionId];
   } else if (!sessionId && isInitializeRequest(req.body)) {
-    // New session initialization
     transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
       onsessioninitialized: (id) => {
-        httpTransports[id] = transport;
+        transports[id] = transport;
+        console.log(`Session initialized: ${id}`);
       },
     });
 
     transport.onclose = () => {
       if (transport.sessionId) {
-        delete httpTransports[transport.sessionId];
+        delete transports[transport.sessionId];
+        console.log(`Session closed: ${transport.sessionId}`);
       }
     };
 
@@ -4219,7 +4244,7 @@ app.post("/mcp", async (req: Request, res: Response) => {
   } else {
     res.status(400).json({
       jsonrpc: "2.0",
-      error: { code: -32000, message: "Invalid session - send initialize request first" },
+      error: { code: -32000, message: "Invalid session. Send initialize request first." },
       id: null,
     });
     return;
@@ -4228,9 +4253,9 @@ app.post("/mcp", async (req: Request, res: Response) => {
   await transport.handleRequest(req, res, req.body);
 });
 
-app.get("/mcp", async (req: Request, res: Response) => {
+app.get("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
-  const transport = httpTransports[sessionId];
+  const transport = transports[sessionId];
   if (transport) {
     await transport.handleRequest(req, res);
   } else {
@@ -4238,41 +4263,13 @@ app.get("/mcp", async (req: Request, res: Response) => {
   }
 });
 
-app.delete("/mcp", async (req: Request, res: Response) => {
+app.delete("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
-  const transport = httpTransports[sessionId];
+  const transport = transports[sessionId];
   if (transport) {
     await transport.handleRequest(req, res);
   } else {
     res.status(400).json({ error: "Invalid session" });
-  }
-});
-
-// ============================================================================
-// LEGACY: SSE Transport (/sse) - For backwards compatibility
-// ============================================================================
-
-app.get("/sse", async (_req: Request, res: Response) => {
-  console.log("New SSE connection established (legacy transport)");
-  const transport = new SSEServerTransport("/messages", res);
-  sseTransports[transport.sessionId] = transport;
-
-  res.on("close", () => {
-    console.log(`SSE connection closed: ${transport.sessionId}`);
-    delete sseTransports[transport.sessionId];
-  });
-
-  await server.connect(transport);
-});
-
-app.post("/messages", async (req: Request, res: Response) => {
-  const sessionId = req.query.sessionId as string;
-  const transport = sseTransports[sessionId];
-
-  if (transport) {
-    await transport.handlePostMessage(req, res, req.body);
-  } else {
-    res.status(400).json({ error: "No transport found for sessionId" });
   }
 });
 
@@ -4299,8 +4296,8 @@ const port = Number(process.env.PORT || 4003);
 app.listen(port, () => {
   console.log("\n🎯 Polymarket Intelligence MCP Server v1.0.0");
   console.log("   Whale cost analysis • Market efficiency • Smart money tracking\n");
-  console.log(`📡 MCP endpoint: http://localhost:${port}/mcp (recommended)`);
-  console.log(`📡 SSE endpoint: http://localhost:${port}/sse (legacy)`);
+  console.log(`🔒 Context Protocol Security Enabled`);
+  console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health\n`);
   console.log(`🛠️  Available tools (${TOOLS.length}):`);
   console.log("   INTELLIGENCE:");

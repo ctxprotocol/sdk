@@ -1,4 +1,5 @@
 export { ContextClient, ContextClientOptions, ContextError, ContextErrorCode, Discovery, ExecuteApiErrorResponse, ExecuteApiResponse, ExecuteApiSuccessResponse, ExecuteOptions, ExecutionResult, McpTool, SearchOptions, SearchResponse, Tool, Tools } from './client/index.cjs';
+import * as jose from 'jose';
 
 /**
  * Wallet context types for portfolio tracking.
@@ -334,4 +335,43 @@ interface UserContext {
     hyperliquid?: HyperliquidContext;
 }
 
-export { CONTEXT_REQUIREMENTS_KEY, type ContextRequirementType, type ERC20Context, type ERC20TokenBalance, type HyperliquidAccountSummary, type HyperliquidContext, type HyperliquidOrder, type HyperliquidPerpPosition, type HyperliquidSpotBalance, type PolymarketContext, type PolymarketOrder, type PolymarketPosition, type ToolRequirements, type UserContext, type WalletContext };
+/**
+ * Determines if a given MCP method requires authentication.
+ *
+ * Discovery methods (tools/list, resources/list, etc.) are open.
+ * Execution methods (tools/call) require authentication.
+ *
+ * @param method The MCP JSON-RPC method (e.g., "tools/list", "tools/call")
+ * @returns true if the method requires authentication
+ *
+ * @example
+ * ```typescript
+ * if (isProtectedMcpMethod(body.method)) {
+ *   await verifyContextRequest({ authorizationHeader: req.headers.authorization });
+ * }
+ * ```
+ */
+declare function isProtectedMcpMethod(method: string): boolean;
+/**
+ * Determines if a given MCP method is explicitly open (no auth).
+ *
+ * @param method The MCP JSON-RPC method
+ * @returns true if the method is known to be open
+ */
+declare function isOpenMcpMethod(method: string): boolean;
+interface VerifyRequestOptions {
+    /** The full Authorization header string (e.g. "Bearer eyJ...") */
+    authorizationHeader?: string;
+    /** Expected Audience (your tool URL) for stricter validation */
+    audience?: string;
+}
+/**
+ * Verifies that an incoming request originated from the Context Protocol Platform.
+ *
+ * @param options Contains the Authorization header
+ * @returns The decoded payload if valid
+ * @throws ContextError if invalid
+ */
+declare function verifyContextRequest(options: VerifyRequestOptions): Promise<jose.JWTPayload>;
+
+export { CONTEXT_REQUIREMENTS_KEY, type ContextRequirementType, type ERC20Context, type ERC20TokenBalance, type HyperliquidAccountSummary, type HyperliquidContext, type HyperliquidOrder, type HyperliquidPerpPosition, type HyperliquidSpotBalance, type PolymarketContext, type PolymarketOrder, type PolymarketPosition, type ToolRequirements, type UserContext, type VerifyRequestOptions, type WalletContext, isOpenMcpMethod, isProtectedMcpMethod, verifyContextRequest };

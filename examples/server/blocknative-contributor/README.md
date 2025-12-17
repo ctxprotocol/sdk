@@ -2,6 +2,8 @@
 
 A standard MCP server that exposes the Blocknative Gas Platform API. This example demonstrates how to build a **Context Protocol compliant** MCP server.
 
+> 🔒 **Security**: This server is secured with Context Protocol Request Signing. Requests must come from the Context Platform or a client with a valid signing key.
+
 > **📖 Want to build portfolio analysis tools?** See the [Context Injection Guide](../../../docs/context-injection.md) for the architecture.
 
 ## What Makes This Context Protocol Compliant?
@@ -54,7 +56,7 @@ Server runs on `http://localhost:4001`.
 
 ## Endpoints
 
-- **SSE**: `http://localhost:4001/sse` - MCP connection
+- **MCP**: `http://localhost:4001/mcp` - MCP Streamable HTTP endpoint
 - **Health**: `http://localhost:4001/health` - Status check
 
 ## Available Tools
@@ -72,7 +74,7 @@ Server runs on `http://localhost:4001`.
 curl http://localhost:4001/health
 ```
 
-Connect via MCP client to `/sse` endpoint to use the tools.
+Connect via MCP client to `/mcp` endpoint to use the tools.
 
 ## Architecture
 

@@ -267,6 +267,10 @@ const result = await client.tools.execute({
 import {
   // Constant for declaring context requirements
   CONTEXT_REQUIREMENTS_KEY,
+  // Auth utilities for tool contributors
+  verifyContextRequest,
+  isProtectedMcpMethod,
+  isOpenMcpMethod,
 } from "@ctxprotocol/sdk";
 
 import type {
@@ -277,6 +281,8 @@ import type {
   ExecuteOptions,
   ExecutionResult,
   ContextErrorCode,
+  // Auth types (for MCP server contributors)
+  VerifyRequestOptions,
   // Context types (for MCP server contributors receiving injected data)
   ContextRequirementType,
   HyperliquidContext,
@@ -382,6 +388,94 @@ try {
 | `insufficient_allowance` | Auto Pay not enabled                     | Direct user to `helpUrl`            |
 | `payment_failed`         | USDC payment failed                      | Check balance                       |
 | `execution_failed`       | Tool error                               | Feed error to LLM for retry         |
+
+---
+
+## 🔒 Securing Your Tool
+
+If you're building an MCP server (tool contributor), you should verify that incoming requests are legitimate and originate from the Context Protocol Platform.
+
+### Security Model
+
+The SDK implements a **selective authentication** model:
+
+| MCP Method | Auth Required | Reason |
+|------------|---------------|--------|
+| `tools/list` | ❌ No | Discovery - just returns tool schemas |
+| `tools/call` | ✅ Yes | Execution - runs code, may cost money |
+| `initialize` | ❌ No | Session setup |
+| `resources/list` | ❌ No | Discovery |
+| `prompts/list` | ❌ No | Discovery |
+
+This matches standard API patterns (OpenAPI schemas are public, GraphQL introspection is open).
+
+### How It Works
+
+The Context Platform signs **execution requests** (`tools/call`) using **RS256** (RSA-SHA256) asymmetric cryptography. Each request includes an `Authorization: Bearer <jwt>` header containing a signed JWT.
+
+### Using `isProtectedMcpMethod` and `verifyContextRequest`
+
+The SDK provides utilities to implement this security model:
+
+```typescript
+import { 
+  verifyContextRequest, 
+  isProtectedMcpMethod, 
+  ContextError 
+} from "@ctxprotocol/sdk";
+```
+
+#### Express.js MCP Server Example
+
+```typescript
+import express from "express";
+import { verifyContextRequest, isProtectedMcpMethod, ContextError } from "@ctxprotocol/sdk";
+
+const app = express();
+app.use(express.json());
+
+// Auth middleware - only protects tools/call, not tools/list
+async function verifyContextAuth(req, res, next) {
+  const method = req.body?.method;
+
+  // Only require auth for protected methods (tools/call)
+  // Discovery methods (tools/list, initialize) are open
+  if (!method || !isProtectedMcpMethod(method)) {
+    return next();
+  }
+
+  try {
+    await verifyContextRequest({
+      authorizationHeader: req.headers.authorization,
+    });
+    next();
+  } catch (err) {
+    const statusCode = err instanceof ContextError ? err.statusCode || 401 : 401;
+    res.status(statusCode).json({ error: "Unauthorized" });
+  }
+}
+
+app.post("/mcp", verifyContextAuth, async (req, res) => {
+  // Handle MCP request...
+});
+```
+
+### Options
+
+| Option                | Type     | Required | Description                                           |
+| --------------------- | -------- | -------- | ----------------------------------------------------- |
+| `authorizationHeader` | `string` | Yes      | The full Authorization header (e.g., `"Bearer eyJ..."`) |
+| `audience`            | `string` | No       | Expected audience claim for stricter validation       |
+
+### JWT Claims
+
+The verified JWT payload includes standard claims:
+
+- `iss` - Issuer (`https://ctxprotocol.com`)
+- `sub` - Subject (user or request identifier)
+- `aud` - Audience (your tool URL, if specified)
+- `exp` - Expiration time
+- `iat` - Issued at time
 
 ---
 

@@ -2,6 +2,8 @@
 
 A "giga-brained" MCP server for Polymarket prediction market analysis. Provides whale cost analysis, market efficiency checks, smart money tracking, and arbitrage detection.
 
+> 🔒 **Security**: This server is secured with Context Protocol Request Signing. Requests must come from the Context Platform or a client with a valid signing key.
+
 > **📖 Building portfolio analysis tools?** See the [Context Injection Guide](../../../docs/context-injection.md) to learn how user portfolio data is automatically injected into your tools.
 
 ## Context Requirements
@@ -110,9 +112,8 @@ pnpm start
 
 ## API Endpoints
 
-- **SSE**: `http://localhost:4003/sse`
-- **Health**: `http://localhost:4003/health`
-- **Messages**: `http://localhost:4003/messages`
+- **MCP**: `http://localhost:4003/mcp` - MCP Streamable HTTP endpoint
+- **Health**: `http://localhost:4003/health` - Status check
 
 ## Tool Examples
 

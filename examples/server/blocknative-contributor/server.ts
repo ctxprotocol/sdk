@@ -10,15 +10,18 @@
  */
 
 import "dotenv/config";
-import express, { type Request, type Response } from "express";
+import { randomUUID } from "node:crypto";
+import express, { type Request, type Response, type NextFunction } from "express";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   ListToolsRequestSchema,
   CallToolRequestSchema,
   type CallToolResult,
   type CallToolRequest,
+  isInitializeRequest,
 } from "@modelcontextprotocol/sdk/types.js";
+import { verifyContextRequest, isProtectedMcpMethod, ContextError } from "@ctxprotocol/sdk";
 
 const BLOCKNATIVE_BASE_URL = "https://api.blocknative.com";
 
@@ -326,46 +329,108 @@ function errorResult(message: string): CallToolResult {
 }
 
 // ============================================================================
-// EXPRESS + SSE TRANSPORT (Standard MCP pattern)
+// EXPRESS + STREAMABLE HTTP TRANSPORT
 // ============================================================================
 
 const app = express();
 app.use(express.json());
 
-const transports: Record<string, SSEServerTransport> = {};
+const transports: Record<string, StreamableHTTPServerTransport> = {};
+
+// ============================================================================
+// AUTH MIDDLEWARE - Verify Context Protocol Request Signature
+// Only requires auth for protected methods (tools/call), not discovery (tools/list)
+// ============================================================================
+
+async function verifyContextAuth(req: Request, res: Response, next: NextFunction) {
+  // Get the MCP method from the request body
+  const method = req.body?.method as string | undefined;
+
+  // Only require auth for protected methods (tools/call)
+  // Discovery methods (tools/list, initialize, etc.) are open
+  if (!method || !isProtectedMcpMethod(method)) {
+    return next();
+  }
+
+  try {
+    await verifyContextRequest({
+      authorizationHeader: req.headers.authorization,
+    });
+    next();
+  } catch (error) {
+    console.error("Auth failed:", error instanceof Error ? error.message : error);
+    const statusCode = error instanceof ContextError ? error.statusCode || 401 : 401;
+    res.status(statusCode).json({ error: "Unauthorized: Invalid Context Protocol Signature" });
+  }
+}
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", server: "blocknative-gas", version: "1.0.0" });
 });
 
-app.get("/sse", async (_req: Request, res: Response) => {
-  console.log("New SSE connection established");
-  const transport = new SSEServerTransport("/messages", res);
-  transports[transport.sessionId] = transport;
+// Streamable HTTP endpoint - handles all MCP communication
+app.post("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+  const sessionId = req.headers["mcp-session-id"] as string | undefined;
+  let transport: StreamableHTTPServerTransport;
 
-  res.on("close", () => {
-    console.log(`SSE connection closed: ${transport.sessionId}`);
-    delete transports[transport.sessionId];
-  });
+  if (sessionId && transports[sessionId]) {
+    transport = transports[sessionId];
+  } else if (!sessionId && isInitializeRequest(req.body)) {
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+      onsessioninitialized: (id) => {
+        transports[id] = transport;
+        console.log(`Session initialized: ${id}`);
+      },
+    });
 
-  await server.connect(transport);
+    transport.onclose = () => {
+      if (transport.sessionId) {
+        delete transports[transport.sessionId];
+        console.log(`Session closed: ${transport.sessionId}`);
+      }
+    };
+
+    await server.connect(transport);
+  } else {
+    res.status(400).json({
+      jsonrpc: "2.0",
+      error: { code: -32000, message: "Invalid session. Send initialize request first." },
+      id: null,
+    });
+    return;
+  }
+
+  await transport.handleRequest(req, res, req.body);
 });
 
-app.post("/messages", async (req: Request, res: Response) => {
-  const sessionId = req.query.sessionId as string;
+app.get("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+  const sessionId = req.headers["mcp-session-id"] as string;
   const transport = transports[sessionId];
 
   if (transport) {
-    await transport.handlePostMessage(req, res, req.body);
+    await transport.handleRequest(req, res);
   } else {
-    res.status(400).json({ error: "No transport found for sessionId" });
+    res.status(400).json({ error: "Invalid session" });
+  }
+});
+
+app.delete("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+  const sessionId = req.headers["mcp-session-id"] as string;
+  const transport = transports[sessionId];
+
+  if (transport) {
+    await transport.handleRequest(req, res);
+  } else {
+    res.status(400).json({ error: "Invalid session" });
   }
 });
 
 const port = Number(process.env.PORT || 4001);
 app.listen(port, () => {
   console.log(`\n🚀 Blocknative Gas MCP Server v1.0.0`);
-  console.log(`📡 SSE endpoint: http://localhost:${port}/sse`);
+  console.log(`🔒 Context Protocol Security Enabled`);
+  console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health`);
   console.log(`\n🛠️  Available tools: ${TOOLS.map((t) => t.name).join(", ")}\n`);
 });

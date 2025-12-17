@@ -55,8 +55,8 @@ import {
   ListToolsRequestSchema,
   isInitializeRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import express, { type Request, type Response } from "express";
-import type { HyperliquidContext } from "@ctxprotocol/sdk";
+import express, { type Request, type Response, type NextFunction } from "express";
+import { verifyContextRequest, isProtectedMcpMethod, ContextError, type HyperliquidContext } from "@ctxprotocol/sdk";
 
 const HYPERLIQUID_API_URL = "https://api.hyperliquid.xyz/info";
 
@@ -1907,6 +1907,33 @@ app.use(express.json());
 // Session management for Streamable HTTP transport
 const transports: Record<string, StreamableHTTPServerTransport> = {};
 
+// ============================================================================
+// AUTH MIDDLEWARE - Verify Context Protocol Request Signature
+// Only requires auth for protected methods (tools/call), not discovery (tools/list)
+// ============================================================================
+
+async function verifyContextAuth(req: Request, res: Response, next: NextFunction) {
+  // Get the MCP method from the request body
+  const method = req.body?.method as string | undefined;
+
+  // Only require auth for protected methods (tools/call)
+  // Discovery methods (tools/list, initialize, etc.) are open
+  if (!method || !isProtectedMcpMethod(method)) {
+    return next();
+  }
+
+  try {
+    await verifyContextRequest({
+      authorizationHeader: req.headers.authorization,
+    });
+    next();
+  } catch (error) {
+    console.error("Auth failed:", error instanceof Error ? error.message : error);
+    const statusCode = error instanceof ContextError ? error.statusCode || 401 : 401;
+    res.status(statusCode).json({ error: "Unauthorized: Invalid Context Protocol Signature" });
+  }
+}
+
 app.get("/health", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
@@ -1922,7 +1949,7 @@ app.get("/health", (_req: Request, res: Response) => {
 });
 
 // Streamable HTTP endpoint - handles all MCP communication
-app.post("/mcp", async (req: Request, res: Response) => {
+app.post("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
   let transport: StreamableHTTPServerTransport;
 
@@ -1964,7 +1991,7 @@ app.post("/mcp", async (req: Request, res: Response) => {
 });
 
 // Handle GET requests for SSE streaming (optional, for notifications)
-app.get("/mcp", async (req: Request, res: Response) => {
+app.get("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const transport = transports[sessionId];
 
@@ -1976,7 +2003,7 @@ app.get("/mcp", async (req: Request, res: Response) => {
 });
 
 // Handle DELETE requests for session cleanup
-app.delete("/mcp", async (req: Request, res: Response) => {
+app.delete("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const transport = transports[sessionId];
 
@@ -2004,6 +2031,7 @@ const port = Number(process.env.PORT || 4002);
 app.listen(port, () => {
   console.log("\n🚀 Hyperliquid Ultimate MCP Server v2.1.0");
   console.log(`   The world's most comprehensive Hyperliquid MCP\n`);
+  console.log(`🔒 Context Protocol Security Enabled`);
   console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health`);
   console.log(`🔄 Protocol: Streamable HTTP (2025-11-25)\n`);

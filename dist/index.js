@@ -1,3 +1,5 @@
+import { importSPKI, jwtVerify } from 'jose';
+
 // src/client/types.ts
 var ContextError = class extends Error {
   constructor(message, code, statusCode, helpUrl) {
@@ -186,7 +188,55 @@ var ContextClient = class {
 
 // src/context/index.ts
 var CONTEXT_REQUIREMENTS_KEY = "x-context-requirements";
+var CONTEXT_PLATFORM_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
+-----END PUBLIC KEY-----`;
+var PROTECTED_MCP_METHODS = /* @__PURE__ */ new Set([
+  "tools/call"
+  // Uncomment these if you want to protect resource/prompt access:
+  // "resources/read",
+  // "prompts/get",
+]);
+var OPEN_MCP_METHODS = /* @__PURE__ */ new Set([
+  "initialize",
+  "tools/list",
+  "resources/list",
+  "prompts/list",
+  "ping",
+  "notifications/initialized"
+]);
+function isProtectedMcpMethod(method) {
+  return PROTECTED_MCP_METHODS.has(method);
+}
+function isOpenMcpMethod(method) {
+  return OPEN_MCP_METHODS.has(method);
+}
+async function verifyContextRequest(options) {
+  const { authorizationHeader, audience } = options;
+  if (!authorizationHeader || !authorizationHeader.startsWith("Bearer ")) {
+    throw new ContextError(
+      "Missing or invalid Authorization header",
+      "unauthorized",
+      401
+    );
+  }
+  const token = authorizationHeader.split(" ")[1];
+  try {
+    const publicKey = await importSPKI(CONTEXT_PLATFORM_PUBLIC_KEY_PEM, "RS256");
+    const { payload } = await jwtVerify(token, publicKey, {
+      issuer: "https://ctxprotocol.com",
+      audience
+    });
+    return payload;
+  } catch (error) {
+    throw new ContextError(
+      "Invalid Context Protocol signature",
+      "unauthorized",
+      401
+    );
+  }
+}
 
-export { CONTEXT_REQUIREMENTS_KEY, ContextClient, ContextError, Discovery, Tools };
+export { CONTEXT_REQUIREMENTS_KEY, ContextClient, ContextError, Discovery, Tools, isOpenMcpMethod, isProtectedMcpMethod, verifyContextRequest };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

@@ -49,3 +49,11 @@ export type {
 // Context types for portfolio injection
 export * from "./context/index.js";
 
+// Auth utilities for verifying platform requests
+export {
+  verifyContextRequest,
+  isProtectedMcpMethod,
+  isOpenMcpMethod,
+} from "./auth/index.js";
+export type { VerifyRequestOptions } from "./auth/index.js";
+
