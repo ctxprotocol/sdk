@@ -42,9 +42,15 @@ export interface ContextMiddlewareRequest extends ContextRequest {
 // The Context Protocol Public Key
 // In a real scenario, this might be fetched from a well-known URL or passed in config.
 // For now, we hardcode the Official Platform Public Key.
-// TODO: REPLACE THIS WITH THE ACTUAL GENERATED PUBLIC KEY FROM THE PLATFORM SETUP
+// Official Context Protocol Platform Public Key (RS256)
 const CONTEXT_PLATFORM_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs9YOgdpkmVQ5aoNovjsu
+chJdV54OT7dUdbVXz914a7Px8EwnpDqhsvG7WO8xL8sj2Rn6ueAJBk+04Hy/P/UN
+RJyp23XL5TsGmb4rbfg0ii0MiL2nbVXuqvAe3JSM2BOFZR5bpwIVIaa8aonfamUy
+VXGc7OosF90ThdKjm9cXlVM+kV6IgSWc1502X7M3abQqRcTU/rluVXnky0eiWDQa
+lfOKbr7w0u72dZjiZPwnNDsX6PEEgvfmoautTFYTQgnZjDzq8UimTcv3KF+hJ5Ep
+weipe6amt9lzQzi8WXaFKpOXHQs//WDlUytz/Hl8pvd5craZKzo6Kyrg1Vfan7H3
+TQIDAQAB
 -----END PUBLIC KEY-----`;
 
 /**
@@ -224,3 +230,4 @@ export function createContextMiddleware(options: CreateContextMiddlewareOptions 
     }
   };
 }
+

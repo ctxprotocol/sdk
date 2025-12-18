@@ -129,3 +129,4 @@ app.listen(PORT, () => {
   console.log(`🔗 Upstream: https://mcp.exa.ai/mcp`);
   console.log(`\n🛠️  Configured tools: ${TOOLS_CONFIG}\n`);
 });
+
