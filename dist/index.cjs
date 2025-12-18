@@ -238,12 +238,32 @@ async function verifyContextRequest(options) {
     );
   }
 }
+function createContextMiddleware(options = {}) {
+  return async function contextMiddleware(req, res, next) {
+    const method = req.body?.method;
+    if (!method || !isProtectedMcpMethod(method)) {
+      return next();
+    }
+    try {
+      const payload = await verifyContextRequest({
+        authorizationHeader: req.headers.authorization,
+        audience: options.audience
+      });
+      req.context = payload;
+      next();
+    } catch (error) {
+      const statusCode = error instanceof ContextError ? error.statusCode || 401 : 401;
+      res.status(statusCode).json({ error: "Unauthorized" });
+    }
+  };
+}
 
 exports.CONTEXT_REQUIREMENTS_KEY = CONTEXT_REQUIREMENTS_KEY;
 exports.ContextClient = ContextClient;
 exports.ContextError = ContextError;
 exports.Discovery = Discovery;
 exports.Tools = Tools;
+exports.createContextMiddleware = createContextMiddleware;
 exports.isOpenMcpMethod = isOpenMcpMethod;
 exports.isProtectedMcpMethod = isProtectedMcpMethod;
 exports.verifyContextRequest = verifyContextRequest;

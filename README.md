@@ -395,6 +395,42 @@ try {
 
 If you're building an MCP server (tool contributor), you should verify that incoming requests are legitimate and originate from the Context Protocol Platform.
 
+### The "Business in a Box" Promise
+
+By adding 1 line of code to verify a JWT, Context saves you from building:
+- A Stripe integration
+- A User Management system
+- API key management
+- Refund and dispute logic
+
+**The "Stripe Webhook" Analogy:**
+Developers are used to verifying signatures for Stripe Webhooks or GitHub Apps. Context works the same way. When we send a request saying "Execute Tool (Payment Confirmed)", you verify the signature. Without this, anyone could curl your endpoint and drain your resources.
+
+### Quick Implementation (1 Line)
+
+```typescript
+import express from "express";
+import { createContextMiddleware } from "@ctxprotocol/sdk";
+
+const app = express();
+app.use(express.json());
+
+// 1 line of code to secure your endpoint & handle payments
+app.use("/mcp", createContextMiddleware());
+
+app.post("/mcp", (req, res) => {
+  // req.context contains verified JWT payload (on protected methods)
+  // Handle MCP request...
+});
+```
+
+### Free vs. Paid Strategy
+
+| Tool Type | Security | Rationale |
+|-----------|----------|-----------|
+| **Free Tools ($0.00)** | Optional | Perfect for distribution and adoption |
+| **Paid Tools ($0.01+)** | **Mandatory** | We cannot route payments to insecure endpoints |
+
 ### Security Model
 
 The SDK implements a **selective authentication** model:
@@ -413,9 +449,9 @@ This matches standard API patterns (OpenAPI schemas are public, GraphQL introspe
 
 The Context Platform signs **execution requests** (`tools/call`) using **RS256** (RSA-SHA256) asymmetric cryptography. Each request includes an `Authorization: Bearer <jwt>` header containing a signed JWT.
 
-### Using `isProtectedMcpMethod` and `verifyContextRequest`
+### Advanced: Manual Verification
 
-The SDK provides utilities to implement this security model:
+For more control, you can use the lower-level utilities:
 
 ```typescript
 import { 
@@ -423,41 +459,15 @@ import {
   isProtectedMcpMethod, 
   ContextError 
 } from "@ctxprotocol/sdk";
-```
 
-#### Express.js MCP Server Example
-
-```typescript
-import express from "express";
-import { verifyContextRequest, isProtectedMcpMethod, ContextError } from "@ctxprotocol/sdk";
-
-const app = express();
-app.use(express.json());
-
-// Auth middleware - only protects tools/call, not tools/list
-async function verifyContextAuth(req, res, next) {
-  const method = req.body?.method;
-
-  // Only require auth for protected methods (tools/call)
-  // Discovery methods (tools/list, initialize) are open
-  if (!method || !isProtectedMcpMethod(method)) {
-    return next();
-  }
-
-  try {
-    await verifyContextRequest({
-      authorizationHeader: req.headers.authorization,
-    });
-    next();
-  } catch (err) {
-    const statusCode = err instanceof ContextError ? err.statusCode || 401 : 401;
-    res.status(statusCode).json({ error: "Unauthorized" });
-  }
+// Check if a method requires auth
+if (isProtectedMcpMethod(body.method)) {
+  const payload = await verifyContextRequest({
+    authorizationHeader: req.headers.authorization,
+    audience: "https://your-tool.com/mcp", // optional
+  });
+  // payload contains verified JWT claims
 }
-
-app.post("/mcp", verifyContextAuth, async (req, res) => {
-  // Handle MCP request...
-});
 ```
 
 ### Options

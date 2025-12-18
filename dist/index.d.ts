@@ -1,5 +1,5 @@
 export { ContextClient, ContextClientOptions, ContextError, ContextErrorCode, Discovery, ExecuteApiErrorResponse, ExecuteApiResponse, ExecuteApiSuccessResponse, ExecuteOptions, ExecutionResult, McpTool, SearchOptions, SearchResponse, Tool, Tools } from './client/index.js';
-import * as jose from 'jose';
+import { JWTPayload } from 'jose';
 
 /**
  * Wallet context types for portfolio tracking.
@@ -335,6 +335,32 @@ interface UserContext {
     hyperliquid?: HyperliquidContext;
 }
 
+interface ContextRequest {
+    headers: {
+        authorization?: string;
+        [key: string]: string | string[] | undefined;
+    };
+    body?: {
+        method?: string;
+        [key: string]: unknown;
+    };
+    context?: JWTPayload;
+}
+interface ContextResponse {
+    status(code: number): ContextResponse;
+    json(data: unknown): void;
+}
+type NextFunction = (error?: unknown) => void;
+/**
+ * Extended Request object with verified Context Protocol JWT payload.
+ *
+ * After `createContextMiddleware()` runs successfully on a protected method,
+ * the `context` property contains the decoded JWT claims.
+ */
+interface ContextMiddlewareRequest extends ContextRequest {
+    /** The verified JWT payload from Context Protocol (available after auth) */
+    context?: JWTPayload;
+}
 /**
  * Determines if a given MCP method requires authentication.
  *
@@ -372,6 +398,40 @@ interface VerifyRequestOptions {
  * @returns The decoded payload if valid
  * @throws ContextError if invalid
  */
-declare function verifyContextRequest(options: VerifyRequestOptions): Promise<jose.JWTPayload>;
+declare function verifyContextRequest(options: VerifyRequestOptions): Promise<JWTPayload>;
+interface CreateContextMiddlewareOptions {
+    /** Expected Audience (your tool URL) for stricter validation */
+    audience?: string;
+}
+/**
+ * Creates an Express/Connect-compatible middleware that secures your MCP endpoint.
+ *
+ * This is the "1 line of code" solution to secure your MCP server.
+ * It automatically:
+ * - Allows discovery methods (tools/list, initialize) without authentication
+ * - Requires and verifies JWT for execution methods (tools/call)
+ * - Attaches the verified payload to `req.context` for downstream use
+ *
+ * @param options Optional configuration
+ * @returns Express-compatible middleware function
+ *
+ * @example
+ * ```typescript
+ * import express from "express";
+ * import { createContextMiddleware } from "@ctxprotocol/sdk";
+ *
+ * const app = express();
+ * app.use(express.json());
+ *
+ * // 1 line to secure your endpoint
+ * app.use("/mcp", createContextMiddleware());
+ *
+ * app.post("/mcp", (req, res) => {
+ *   // req.context contains verified JWT payload (on protected methods)
+ *   // Handle MCP request...
+ * });
+ * ```
+ */
+declare function createContextMiddleware(options?: CreateContextMiddlewareOptions): (req: ContextRequest, res: ContextResponse, next: NextFunction) => Promise<void>;
 
-export { CONTEXT_REQUIREMENTS_KEY, type ContextRequirementType, type ERC20Context, type ERC20TokenBalance, type HyperliquidAccountSummary, type HyperliquidContext, type HyperliquidOrder, type HyperliquidPerpPosition, type HyperliquidSpotBalance, type PolymarketContext, type PolymarketOrder, type PolymarketPosition, type ToolRequirements, type UserContext, type VerifyRequestOptions, type WalletContext, isOpenMcpMethod, isProtectedMcpMethod, verifyContextRequest };
+export { CONTEXT_REQUIREMENTS_KEY, type ContextMiddlewareRequest, type ContextRequirementType, type CreateContextMiddlewareOptions, type ERC20Context, type ERC20TokenBalance, type HyperliquidAccountSummary, type HyperliquidContext, type HyperliquidOrder, type HyperliquidPerpPosition, type HyperliquidSpotBalance, type PolymarketContext, type PolymarketOrder, type PolymarketPosition, type ToolRequirements, type UserContext, type VerifyRequestOptions, type WalletContext, createContextMiddleware, isOpenMcpMethod, isProtectedMcpMethod, verifyContextRequest };

@@ -54,6 +54,10 @@ export {
   verifyContextRequest,
   isProtectedMcpMethod,
   isOpenMcpMethod,
+  createContextMiddleware,
 } from "./auth/index.js";
-export type { VerifyRequestOptions } from "./auth/index.js";
-
+export type {
+  VerifyRequestOptions,
+  CreateContextMiddlewareOptions,
+  ContextMiddlewareRequest,
+} from "./auth/index.js";

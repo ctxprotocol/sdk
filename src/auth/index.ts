@@ -1,5 +1,43 @@
-import { jwtVerify, importSPKI } from "jose";
+import { jwtVerify, importSPKI, type JWTPayload } from "jose";
 import { ContextError } from "../client/types.js";
+
+// ============================================================================
+// Express-compatible types (avoid requiring express as a dependency)
+// ============================================================================
+
+interface ContextRequest {
+  headers: {
+    authorization?: string;
+    [key: string]: string | string[] | undefined;
+  };
+  body?: {
+    method?: string;
+    [key: string]: unknown;
+  };
+  context?: JWTPayload;
+}
+
+interface ContextResponse {
+  status(code: number): ContextResponse;
+  json(data: unknown): void;
+}
+
+type NextFunction = (error?: unknown) => void;
+
+/**
+ * Extended Request object with verified Context Protocol JWT payload.
+ *
+ * After `createContextMiddleware()` runs successfully on a protected method,
+ * the `context` property contains the decoded JWT claims.
+ */
+export interface ContextMiddlewareRequest extends ContextRequest {
+  /** The verified JWT payload from Context Protocol (available after auth) */
+  context?: JWTPayload;
+}
+
+// ============================================================================
+// Configuration
+// ============================================================================
 
 // The Context Protocol Public Key
 // In a real scenario, this might be fetched from a well-known URL or passed in config.
@@ -35,6 +73,10 @@ const OPEN_MCP_METHODS = new Set([
   "notifications/initialized",
 ]);
 
+// ============================================================================
+// Method Classification
+// ============================================================================
+
 /**
  * Determines if a given MCP method requires authentication.
  *
@@ -64,6 +106,10 @@ export function isProtectedMcpMethod(method: string): boolean {
 export function isOpenMcpMethod(method: string): boolean {
   return OPEN_MCP_METHODS.has(method);
 }
+
+// ============================================================================
+// Request Verification
+// ============================================================================
 
 export interface VerifyRequestOptions {
   /** The full Authorization header string (e.g. "Bearer eyJ...") */
@@ -108,4 +154,73 @@ export async function verifyContextRequest(options: VerifyRequestOptions) {
       401
     );
   }
+}
+
+// ============================================================================
+// Easy-Mode Middleware
+// ============================================================================
+
+export interface CreateContextMiddlewareOptions {
+  /** Expected Audience (your tool URL) for stricter validation */
+  audience?: string;
+}
+
+/**
+ * Creates an Express/Connect-compatible middleware that secures your MCP endpoint.
+ *
+ * This is the "1 line of code" solution to secure your MCP server.
+ * It automatically:
+ * - Allows discovery methods (tools/list, initialize) without authentication
+ * - Requires and verifies JWT for execution methods (tools/call)
+ * - Attaches the verified payload to `req.context` for downstream use
+ *
+ * @param options Optional configuration
+ * @returns Express-compatible middleware function
+ *
+ * @example
+ * ```typescript
+ * import express from "express";
+ * import { createContextMiddleware } from "@ctxprotocol/sdk";
+ *
+ * const app = express();
+ * app.use(express.json());
+ *
+ * // 1 line to secure your endpoint
+ * app.use("/mcp", createContextMiddleware());
+ *
+ * app.post("/mcp", (req, res) => {
+ *   // req.context contains verified JWT payload (on protected methods)
+ *   // Handle MCP request...
+ * });
+ * ```
+ */
+export function createContextMiddleware(options: CreateContextMiddlewareOptions = {}) {
+  return async function contextMiddleware(
+    req: ContextRequest,
+    res: ContextResponse,
+    next: NextFunction
+  ): Promise<void> {
+    const method = req.body?.method as string | undefined;
+
+    // Allow discovery methods without authentication
+    // Discovery methods (tools/list, initialize, etc.) are open by design
+    if (!method || !isProtectedMcpMethod(method)) {
+      return next();
+    }
+
+    // Protected method - require authentication
+    try {
+      const payload = await verifyContextRequest({
+        authorizationHeader: req.headers.authorization,
+        audience: options.audience,
+      });
+
+      // Attach verified payload to request for downstream handlers
+      req.context = payload;
+      next();
+    } catch (error) {
+      const statusCode = error instanceof ContextError ? error.statusCode || 401 : 401;
+      res.status(statusCode).json({ error: "Unauthorized" });
+    }
+  };
 }

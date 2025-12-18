@@ -22,7 +22,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import express, { type Request, type Response, type NextFunction } from "express";
-import { verifyContextRequest, isProtectedMcpMethod, ContextError, type PolymarketContext, type PolymarketPosition } from "@ctxprotocol/sdk";
+import { createContextMiddleware, type PolymarketContext, type PolymarketPosition } from "@ctxprotocol/sdk";
 
 // ============================================================================
 // API ENDPOINTS
@@ -4177,32 +4177,8 @@ app.use(express.json());
 // Store transports for Streamable HTTP
 const transports: Record<string, StreamableHTTPServerTransport> = {};
 
-// ============================================================================
-// AUTH MIDDLEWARE - Verify Context Protocol Request Signature
-// Only requires auth for protected methods (tools/call), not discovery (tools/list)
-// ============================================================================
-
-async function verifyContextAuth(req: Request, res: Response, next: NextFunction) {
-  // Get the MCP method from the request body
-  const method = req.body?.method as string | undefined;
-
-  // Only require auth for protected methods (tools/call)
-  // Discovery methods (tools/list, initialize, etc.) are open
-  if (!method || !isProtectedMcpMethod(method)) {
-    return next();
-  }
-
-  try {
-    await verifyContextRequest({
-      authorizationHeader: req.headers.authorization,
-    });
-    next();
-  } catch (error) {
-    console.error("Auth failed:", error instanceof Error ? error.message : error);
-    const statusCode = error instanceof ContextError ? error.statusCode || 401 : 401;
-    res.status(statusCode).json({ error: "Unauthorized: Invalid Context Protocol Signature" });
-  }
-}
+// Auth middleware using @ctxprotocol/sdk - 1 line!
+const verifyContextAuth = createContextMiddleware();
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({
