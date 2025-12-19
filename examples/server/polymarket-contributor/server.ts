@@ -1262,34 +1262,59 @@ function parseJsonArray(value: string | string[] | undefined): string[] {
   return [];
 }
 
-async function fetchGamma(endpoint: string): Promise<unknown> {
+async function fetchGamma(endpoint: string, timeoutMs = 15000): Promise<unknown> {
   const url = `${GAMMA_API_URL}${endpoint}`;
-  const response = await fetch(url);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, { signal: controller.signal });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Gamma API error (${response.status}): ${text.slice(0, 200)}`);
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Gamma API error (${response.status}): ${text.slice(0, 200)}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Gamma API timeout after ${timeoutMs}ms for ${endpoint}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return response.json();
 }
 
-async function fetchClob(endpoint: string, options?: RequestInit): Promise<unknown> {
+async function fetchClob(endpoint: string, options?: RequestInit, timeoutMs = 15000): Promise<unknown> {
   const url = `${CLOB_API_URL}${endpoint}`;
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+      },
+    });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`CLOB API error (${response.status}): ${text.slice(0, 200)}`);
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`CLOB API error (${response.status}): ${text.slice(0, 200)}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`CLOB API timeout after ${timeoutMs}ms for ${endpoint}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return response.json();
 }
 
 async function fetchClobPost(endpoint: string, body: unknown): Promise<unknown> {
