@@ -16,6 +16,7 @@ SERVERS=(
   "mcp-hyperliquid:hyperliquid-contributor:4002"
   "mcp-polymarket:polymarket-contributor:4003"
   "mcp-exa:exa-contributor:4004"
+  "mcp-coinglass:coinglass-contributor:4005"
 )
 
 for SERVER in "${SERVERS[@]}"; do

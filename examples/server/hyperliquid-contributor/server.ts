@@ -1,5 +1,5 @@
 /**
- * Hyperliquid Ultimate MCP Server v2.1
+ * Hyperliquid Ultimate MCP Server v2.2
  *
  * A standard MCP server built with @modelcontextprotocol/sdk.
  * The world's most comprehensive Hyperliquid MCP server.
@@ -17,11 +17,14 @@
  * These tools synthesize multiple data sources into actionable insights.
  * They encode domain expertise and answer complex questions.
  *
- *   • analyze_large_order     - Comprehensive large order impact analysis
- *   • calculate_price_impact  - Orderbook absorption simulation
- *   • get_funding_analysis    - Cross-venue funding arbitrage detection
+ *   • analyze_large_order       - Comprehensive large order impact analysis
+ *   • calculate_price_impact    - Orderbook absorption simulation
+ *   • get_funding_analysis      - Cross-venue funding arbitrage detection
  *   • get_open_interest_analysis - OI concentration and liquidation risk
- *   • analyze_my_positions    - Portfolio risk assessment with recommendations
+ *   • analyze_my_positions      - Portfolio risk assessment with recommendations
+ *   • analyze_trader_performance - P&L analysis, win rate, fee optimization (NEW)
+ *   • analyze_spot_markets      - Spot market depth and opportunity detection (NEW)
+ *   • analyze_whale_wallet      - Comprehensive whale position analysis (NEW)
  *
  * TIER 2: RAW DATA LAYER (Building Blocks)
  * ----------------------------------------
@@ -40,6 +43,17 @@
  *   • get_funding_history     - Historical funding rates
  *   • get_exchange_stats      - Exchange-wide volume and OI
  *   • get_volume_history      - Historical volume trends
+ *   • get_spot_meta           - Spot market metadata (NEW)
+ *   • get_user_fills          - User trade history (NEW)
+ *   • get_user_fees           - Fee schedule and VIP tiers (NEW)
+ *   • get_user_state          - User perp positions for any address (NEW)
+ *   • get_spot_balances       - User spot token balances (NEW)
+ *   • get_open_orders         - User's active orders (NEW)
+ *   • get_order_status        - Single order status (NEW)
+ *   • get_user_portfolio      - Historical P&L data (NEW)
+ *   • get_user_vault_equities - User's vault positions (NEW)
+ *   • get_referral_state      - Referral stats and rewards (NEW)
+ *   • get_sub_accounts        - Sub-account details (NEW)
  *
  * ============================================================================
  */
@@ -560,6 +574,461 @@ const TOOLS = [
   },
 
   // ============================================================================
+  // TIER 2: RAW DATA LAYER - Spot Markets
+  // ============================================================================
+
+  {
+    name: "get_spot_meta",
+    description: "Get spot market metadata including all tokens and trading pairs available on Hyperliquid spot.",
+    inputSchema: { type: "object" as const, properties: {}, required: [] },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        tokens: { type: "array", description: "List of all spot tokens with decimals and metadata" },
+        universe: { type: "array", description: "List of all spot trading pairs" },
+        assetContexts: { type: "array", description: "Current prices and volumes for spot pairs" },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["tokens", "universe", "dataSources", "dataFreshness"],
+    },
+  },
+
+  {
+    name: "get_spot_balances",
+    description: "Get spot token balances for any wallet address. Shows all tokens held and their values.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string", description: "Wallet address (0x...)" },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        balances: { type: "array", description: "Token balances with holds and entry notional" },
+        totalValue: { type: "number" },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "balances", "dataSources", "dataFreshness"],
+    },
+  },
+
+  // ============================================================================
+  // TIER 2: RAW DATA LAYER - User State & Positions
+  // ============================================================================
+
+  {
+    name: "get_user_state",
+    description: "Get perpetual positions and margin state for any wallet address. Includes positions, margin usage, and withdrawable balance.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string", description: "Wallet address (0x...)" },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        assetPositions: { type: "array", description: "All open perp positions with P&L" },
+        marginSummary: { type: "object", description: "Account value and margin usage" },
+        crossMarginSummary: { type: "object" },
+        withdrawable: { type: "number" },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "assetPositions", "marginSummary", "dataSources", "dataFreshness"],
+    },
+  },
+
+  {
+    name: "get_open_orders",
+    description: "Get all open orders for a wallet address. Includes limit orders, trigger orders, and TP/SL orders.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string", description: "Wallet address (0x...)" },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        orders: { type: "array", description: "All open orders with prices, sizes, and types" },
+        orderCount: { type: "number" },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "orders", "orderCount", "dataSources", "dataFreshness"],
+    },
+  },
+
+  {
+    name: "get_order_status",
+    description: "Get the status of a specific order by order ID. Shows if filled, canceled, or open.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string", description: "Wallet address (0x...)" },
+        oid: { type: "string", description: "Order ID (number or hex string)" },
+      },
+      required: ["address", "oid"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", description: "Order status (open, filled, canceled, etc.)" },
+        order: { type: "object", description: "Full order details if available" },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["status", "dataSources", "dataFreshness"],
+    },
+  },
+
+  // ============================================================================
+  // TIER 2: RAW DATA LAYER - Trade History & Fills
+  // ============================================================================
+
+  {
+    name: "get_user_fills",
+    description: "Get trade fill history for a wallet. Returns up to 2000 most recent fills with P&L and fees.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string", description: "Wallet address (0x...)" },
+        startTime: { type: "number", description: "Start time in ms (optional)" },
+        endTime: { type: "number", description: "End time in ms (optional)" },
+        aggregateByTime: { type: "boolean", description: "Aggregate partial fills (default: false)" },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        fills: { type: "array", description: "Trade fills with price, size, P&L, and fees" },
+        fillCount: { type: "number" },
+        summary: { type: "object", description: "Volume and P&L summary" },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "fills", "fillCount", "dataSources", "dataFreshness"],
+    },
+  },
+
+  // ============================================================================
+  // TIER 2: RAW DATA LAYER - Fees & Referrals
+  // ============================================================================
+
+  {
+    name: "get_user_fees",
+    description: "Get fee schedule and VIP tier info for a wallet. Includes maker/taker rates, discounts, and staking benefits.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string", description: "Wallet address (0x...)" },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        feeSchedule: { type: "object", description: "Full fee schedule with tiers" },
+        userRates: { type: "object", description: "User's current maker/taker rates" },
+        dailyVolume: { type: "array", description: "Recent daily trading volume" },
+        activeDiscounts: { type: "object", description: "Referral and staking discounts" },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "feeSchedule", "userRates", "dataSources", "dataFreshness"],
+    },
+  },
+
+  {
+    name: "get_referral_state",
+    description: "Get referral program state for a wallet including referred volume, rewards, and builder fees.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string", description: "Wallet address (0x...)" },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        referralState: { type: "object", description: "Referral stats and earnings" },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "referralState", "dataSources", "dataFreshness"],
+    },
+  },
+
+  // ============================================================================
+  // TIER 2: RAW DATA LAYER - Portfolio & Vaults
+  // ============================================================================
+
+  {
+    name: "get_user_portfolio",
+    description: "Get historical portfolio data including account value and P&L history over different timeframes.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string", description: "Wallet address (0x...)" },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        portfolio: { type: "object", description: "Portfolio data by timeframe (day, week, month, allTime)" },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "portfolio", "dataSources", "dataFreshness"],
+    },
+  },
+
+  {
+    name: "get_user_vault_equities",
+    description: "Get all vault positions for a wallet including equity in each vault.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string", description: "Wallet address (0x...)" },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        vaultEquities: { type: "array", description: "List of vault positions with equity" },
+        totalEquity: { type: "number" },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "vaultEquities", "dataSources", "dataFreshness"],
+    },
+  },
+
+  // ============================================================================
+  // TIER 2: RAW DATA LAYER - Sub-Accounts
+  // ============================================================================
+
+  {
+    name: "get_sub_accounts",
+    description: "Get all sub-accounts for a master wallet including their positions and balances.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string", description: "Master wallet address (0x...)" },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        subAccounts: { type: "array", description: "Sub-account details with positions" },
+        subAccountCount: { type: "number" },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "subAccounts", "dataSources", "dataFreshness"],
+    },
+  },
+
+  // ============================================================================
+  // TIER 1: INTELLIGENCE LAYER - Trader Performance Analysis
+  // ============================================================================
+
+  {
+    name: "analyze_trader_performance",
+    description:
+      "🧠 INTELLIGENCE: Comprehensive trading performance analysis for any wallet. Combines fills, fees, and portfolio data to calculate win rate, P&L, fee efficiency, and trading patterns. Identifies optimization opportunities.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string", description: "Wallet address to analyze (0x...)" },
+        days: { type: "number", description: "Days of history to analyze (default: 30, max: 90)" },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        tradingStats: {
+          type: "object",
+          properties: {
+            totalTrades: { type: "number" },
+            winRate: { type: "number" },
+            profitFactor: { type: "number" },
+            totalPnL: { type: "number" },
+            totalVolume: { type: "number" },
+            averageTradeSize: { type: "number" },
+          },
+        },
+        feeAnalysis: {
+          type: "object",
+          properties: {
+            totalFeesPaid: { type: "number" },
+            effectiveFeeRate: { type: "number" },
+            currentTier: { type: "string" },
+            potentialSavings: { type: "number" },
+            nextTierVolume: { type: "number" },
+          },
+        },
+        tradingPatterns: {
+          type: "object",
+          properties: {
+            mostTradedCoins: { type: "array" },
+            preferredSide: { type: "string" },
+            averageHoldTime: { type: "string" },
+          },
+        },
+        recommendations: { type: "array", items: { type: "string" } },
+        confidence: { type: "number", minimum: 0, maximum: 1 },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "tradingStats", "feeAnalysis", "confidence", "dataSources", "dataFreshness"],
+    },
+  },
+
+  // ============================================================================
+  // TIER 1: INTELLIGENCE LAYER - Spot Market Analysis
+  // ============================================================================
+
+  {
+    name: "analyze_spot_markets",
+    description:
+      "🧠 INTELLIGENCE: Comprehensive spot market analysis. Identifies high-volume pairs, liquidity depth, price divergences between spot and perp, and arbitrage opportunities.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        minVolume: { type: "number", description: "Minimum 24h volume filter in USD (default: 10000)" },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        marketOverview: {
+          type: "object",
+          properties: {
+            totalSpotPairs: { type: "number" },
+            totalVolume24h: { type: "number" },
+            activeTokens: { type: "number" },
+          },
+        },
+        topMarketsByVolume: { type: "array" },
+        spotPerpDivergences: {
+          type: "array",
+          description: "Pairs with significant spot-perp price differences",
+        },
+        liquidityAnalysis: { type: "array" },
+        opportunities: { type: "array", items: { type: "string" } },
+        confidence: { type: "number", minimum: 0, maximum: 1 },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["marketOverview", "topMarketsByVolume", "confidence", "dataSources", "dataFreshness"],
+    },
+  },
+
+  // ============================================================================
+  // TIER 1: INTELLIGENCE LAYER - Whale Wallet Analysis
+  // ============================================================================
+
+  {
+    name: "analyze_whale_wallet",
+    description:
+      "🧠 INTELLIGENCE: Deep analysis of any wallet's positions, orders, and trading activity. Identifies position sizing, leverage usage, directional bias, and recent activity patterns. Essential for tracking notable traders.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string", description: "Wallet address to analyze (0x...)" },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        accountSummary: {
+          type: "object",
+          properties: {
+            totalAccountValue: { type: "number" },
+            totalPositionValue: { type: "number" },
+            marginUtilization: { type: "number" },
+            unrealizedPnL: { type: "number" },
+          },
+        },
+        positions: {
+          type: "array",
+          description: "All positions with size, leverage, and P&L",
+        },
+        directionalBias: {
+          type: "object",
+          properties: {
+            netLongExposure: { type: "number" },
+            netShortExposure: { type: "number" },
+            bias: { type: "string", enum: ["strongly_long", "long", "neutral", "short", "strongly_short"] },
+          },
+        },
+        openOrders: {
+          type: "object",
+          properties: {
+            orderCount: { type: "number" },
+            pendingBuyNotional: { type: "number" },
+            pendingSellNotional: { type: "number" },
+          },
+        },
+        riskAssessment: {
+          type: "object",
+          properties: {
+            leverageRisk: { type: "string", enum: ["low", "medium", "high", "extreme"] },
+            concentrationRisk: { type: "string" },
+            liquidationRisk: { type: "string" },
+          },
+        },
+        insights: { type: "array", items: { type: "string" } },
+        confidence: { type: "number", minimum: 0, maximum: 1 },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "accountSummary", "positions", "directionalBias", "confidence", "dataSources", "dataFreshness"],
+    },
+  },
+
+  // ============================================================================
   // TIER 1: INTELLIGENCE LAYER - Portfolio Analysis
   // ============================================================================
 
@@ -664,7 +1133,7 @@ const TOOLS = [
 // ============================================================================
 
 const server = new Server(
-  { name: "hyperliquid-ultimate", version: "2.0.0" },
+  { name: "hyperliquid-ultimate", version: "2.2.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -711,6 +1180,34 @@ server.setRequestHandler(
           return await handleGetExchangeStats();
         case "get_volume_history":
           return await handleGetVolumeHistory(args);
+        case "get_spot_meta":
+          return await handleGetSpotMeta();
+        case "get_spot_balances":
+          return await handleGetSpotBalances(args);
+        case "get_user_state":
+          return await handleGetUserState(args);
+        case "get_open_orders":
+          return await handleGetOpenOrders(args);
+        case "get_order_status":
+          return await handleGetOrderStatus(args);
+        case "get_user_fills":
+          return await handleGetUserFills(args);
+        case "get_user_fees":
+          return await handleGetUserFees(args);
+        case "get_referral_state":
+          return await handleGetReferralState(args);
+        case "get_user_portfolio":
+          return await handleGetUserPortfolio(args);
+        case "get_user_vault_equities":
+          return await handleGetUserVaultEquities(args);
+        case "get_sub_accounts":
+          return await handleGetSubAccounts(args);
+        case "analyze_trader_performance":
+          return await handleAnalyzeTraderPerformance(args);
+        case "analyze_spot_markets":
+          return await handleAnalyzeSpotMarkets(args);
+        case "analyze_whale_wallet":
+          return await handleAnalyzeWhaleWallet(args);
         case "analyze_my_positions":
           return await handleAnalyzeMyPositions(args);
         default:
@@ -1516,6 +2013,757 @@ async function handleGetVolumeHistory(args: Record<string, unknown> | undefined)
   });
 }
 
+// ============================================================================
+// NEW TIER 2 HANDLERS - Spot Markets
+// ============================================================================
+
+async function handleGetSpotMeta(): Promise<CallToolResult> {
+  const data = await fetchSpotMetaAndAssetCtxs();
+  const [meta, assetCtxs] = data;
+
+  return successResult({
+    tokens: meta.tokens.map(t => ({
+      name: t.name,
+      szDecimals: t.szDecimals,
+      weiDecimals: t.weiDecimals,
+      index: t.index,
+      tokenId: t.tokenId,
+      isCanonical: t.isCanonical,
+      fullName: t.fullName,
+    })),
+    universe: meta.universe.map((u, idx) => ({
+      name: u.name,
+      tokens: u.tokens,
+      index: u.index,
+      isCanonical: u.isCanonical,
+      volume24h: assetCtxs[idx] ? Number(assetCtxs[idx].dayNtlVlm) : 0,
+      markPx: assetCtxs[idx] ? Number(assetCtxs[idx].markPx) : 0,
+      midPx: assetCtxs[idx] ? Number(assetCtxs[idx].midPx) : 0,
+    })),
+    assetContexts: assetCtxs,
+    dataSources: ["spotMetaAndAssetCtxs"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleGetSpotBalances(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const address = args?.address as string;
+  if (!address) return errorResult("address parameter is required");
+
+  const data = await fetchSpotClearinghouseState(address);
+  const balances = data.balances || [];
+
+  const parsedBalances = balances.map(b => ({
+    coin: b.coin,
+    token: b.token,
+    total: Number(b.total),
+    hold: Number(b.hold),
+    available: Number(b.total) - Number(b.hold),
+    entryNtl: Number(b.entryNtl),
+  }));
+
+  const totalValue = parsedBalances.reduce((sum, b) => sum + b.entryNtl, 0);
+
+  return successResult({
+    address,
+    balances: parsedBalances,
+    totalValue,
+    dataSources: ["spotClearinghouseState"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+// ============================================================================
+// NEW TIER 2 HANDLERS - User State & Positions
+// ============================================================================
+
+async function handleGetUserState(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const address = args?.address as string;
+  if (!address) return errorResult("address parameter is required");
+
+  const data = await fetchClearinghouseState(address);
+
+  const positions = data.assetPositions.map(ap => ({
+    coin: ap.position.coin,
+    size: Number(ap.position.szi),
+    entryPrice: Number(ap.position.entryPx),
+    markPrice: Number(ap.position.positionValue) / Math.abs(Number(ap.position.szi)) || 0,
+    unrealizedPnl: Number(ap.position.unrealizedPnl),
+    liquidationPrice: Number(ap.position.liquidationPx),
+    leverage: ap.position.leverage,
+    marginUsed: Number(ap.position.marginUsed),
+    positionValue: Number(ap.position.positionValue),
+    returnOnEquity: Number(ap.position.returnOnEquity),
+    cumFunding: ap.position.cumFunding,
+  }));
+
+  return successResult({
+    address,
+    assetPositions: positions,
+    marginSummary: {
+      accountValue: Number(data.marginSummary.accountValue),
+      totalMarginUsed: Number(data.marginSummary.totalMarginUsed),
+      totalNtlPos: Number(data.marginSummary.totalNtlPos),
+      totalRawUsd: Number(data.marginSummary.totalRawUsd),
+    },
+    crossMarginSummary: {
+      accountValue: Number(data.crossMarginSummary.accountValue),
+      totalMarginUsed: Number(data.crossMarginSummary.totalMarginUsed),
+      totalNtlPos: Number(data.crossMarginSummary.totalNtlPos),
+      totalRawUsd: Number(data.crossMarginSummary.totalRawUsd),
+    },
+    withdrawable: Number(data.withdrawable),
+    crossMaintenanceMarginUsed: Number(data.crossMaintenanceMarginUsed),
+    dataSources: ["clearinghouseState"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleGetOpenOrders(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const address = args?.address as string;
+  if (!address) return errorResult("address parameter is required");
+
+  const orders = await fetchOpenOrders(address);
+
+  const parsedOrders = orders.map(o => ({
+    coin: o.coin,
+    side: o.side === "B" ? "buy" : "sell",
+    size: Number(o.sz),
+    origSize: Number(o.origSz),
+    limitPrice: Number(o.limitPx),
+    orderType: o.orderType,
+    orderId: o.oid,
+    timestamp: o.timestamp,
+    isTrigger: o.isTrigger,
+    triggerPrice: o.isTrigger ? Number(o.triggerPx) : null,
+    triggerCondition: o.triggerCondition,
+    reduceOnly: o.reduceOnly,
+    isPositionTpsl: o.isPositionTpsl,
+  }));
+
+  return successResult({
+    address,
+    orders: parsedOrders,
+    orderCount: parsedOrders.length,
+    dataSources: ["frontendOpenOrders"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleGetOrderStatus(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const address = args?.address as string;
+  const oid = args?.oid as string;
+  if (!address) return errorResult("address parameter is required");
+  if (!oid) return errorResult("oid parameter is required");
+
+  const data = await fetchOrderStatus(address, oid);
+
+  return successResult({
+    status: data.status,
+    order: data.order || null,
+    dataSources: ["orderStatus"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+// ============================================================================
+// NEW TIER 2 HANDLERS - Trade History & Fills
+// ============================================================================
+
+async function handleGetUserFills(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const address = args?.address as string;
+  const startTime = args?.startTime as number | undefined;
+  const endTime = args?.endTime as number | undefined;
+  const aggregateByTime = args?.aggregateByTime as boolean | undefined;
+
+  if (!address) return errorResult("address parameter is required");
+
+  const fills = await fetchUserFills(address, aggregateByTime, startTime, endTime);
+
+  const parsedFills = fills.map(f => ({
+    coin: f.coin,
+    side: f.side === "B" ? "buy" : "sell",
+    direction: f.dir,
+    price: Number(f.px),
+    size: Number(f.sz),
+    notional: Number(f.px) * Number(f.sz),
+    closedPnl: Number(f.closedPnl),
+    fee: Number(f.fee),
+    feeToken: f.feeToken,
+    builderFee: f.builderFee ? Number(f.builderFee) : null,
+    time: f.time,
+    hash: f.hash,
+    orderId: f.oid,
+    tradeId: f.tid,
+    crossed: f.crossed,
+    startPosition: Number(f.startPosition),
+  }));
+
+  // Calculate summary stats
+  const totalVolume = parsedFills.reduce((sum, f) => sum + f.notional, 0);
+  const totalPnl = parsedFills.reduce((sum, f) => sum + f.closedPnl, 0);
+  const totalFees = parsedFills.reduce((sum, f) => sum + f.fee, 0);
+
+  return successResult({
+    address,
+    fills: parsedFills,
+    fillCount: parsedFills.length,
+    summary: {
+      totalVolume,
+      totalPnl,
+      totalFees,
+      avgTradeSize: parsedFills.length > 0 ? totalVolume / parsedFills.length : 0,
+    },
+    dataSources: ["userFills"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+// ============================================================================
+// NEW TIER 2 HANDLERS - Fees & Referrals
+// ============================================================================
+
+async function handleGetUserFees(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const address = args?.address as string;
+  if (!address) return errorResult("address parameter is required");
+
+  const data = await fetchUserFees(address);
+
+  return successResult({
+    address,
+    feeSchedule: data.feeSchedule,
+    userRates: {
+      perpMaker: Number(data.userAddRate),
+      perpTaker: Number(data.userCrossRate),
+      spotMaker: Number(data.userSpotAddRate),
+      spotTaker: Number(data.userSpotCrossRate),
+      perpMakerPercent: Number(data.userAddRate) * 100,
+      perpTakerPercent: Number(data.userCrossRate) * 100,
+      spotMakerPercent: Number(data.userSpotAddRate) * 100,
+      spotTakerPercent: Number(data.userSpotCrossRate) * 100,
+    },
+    dailyVolume: data.dailyUserVlm,
+    activeDiscounts: {
+      referralDiscount: Number(data.activeReferralDiscount),
+      stakingDiscount: data.activeStakingDiscount ? Number(data.activeStakingDiscount.discount) : 0,
+    },
+    stakingLink: data.stakingLink,
+    trial: data.trial,
+    feeTrialReward: Number(data.feeTrialReward),
+    dataSources: ["userFees"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleGetReferralState(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const address = args?.address as string;
+  if (!address) return errorResult("address parameter is required");
+
+  const data = await fetchReferralState(address);
+
+  return successResult({
+    address,
+    referralState: data,
+    dataSources: ["referral"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+// ============================================================================
+// NEW TIER 2 HANDLERS - Portfolio & Vaults
+// ============================================================================
+
+async function handleGetUserPortfolio(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const address = args?.address as string;
+  if (!address) return errorResult("address parameter is required");
+
+  const data = await fetchUserPortfolio(address);
+
+  const portfolio: Record<string, { accountValueHistory: Array<{ time: string; value: number }>; pnlHistory: Array<{ time: string; pnl: number }>; volume: number }> = {};
+
+  for (const [period, periodData] of data) {
+    portfolio[period] = {
+      accountValueHistory: periodData.accountValueHistory.map(([ts, val]) => ({
+        time: new Date(ts).toISOString(),
+        value: Number(val),
+      })),
+      pnlHistory: periodData.pnlHistory.map(([ts, pnl]) => ({
+        time: new Date(ts).toISOString(),
+        pnl: Number(pnl),
+      })),
+      volume: Number(periodData.vlm),
+    };
+  }
+
+  return successResult({
+    address,
+    portfolio,
+    dataSources: ["portfolio"],
+    dataFreshness: "near-real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleGetUserVaultEquities(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const address = args?.address as string;
+  if (!address) return errorResult("address parameter is required");
+
+  const data = await fetchUserVaultEquities(address);
+
+  const vaultEquities = data.map(v => ({
+    vaultAddress: v.vaultAddress,
+    equity: Number(v.equity),
+  }));
+
+  const totalEquity = vaultEquities.reduce((sum, v) => sum + v.equity, 0);
+
+  return successResult({
+    address,
+    vaultEquities,
+    totalEquity,
+    dataSources: ["userVaultEquities"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+// ============================================================================
+// NEW TIER 2 HANDLERS - Sub-Accounts
+// ============================================================================
+
+async function handleGetSubAccounts(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const address = args?.address as string;
+  if (!address) return errorResult("address parameter is required");
+
+  const data = await fetchSubAccounts(address);
+
+  // API returns null if no sub-accounts
+  if (!data) {
+    return successResult({
+      address,
+      subAccounts: [],
+      subAccountCount: 0,
+      dataSources: ["subAccounts"],
+      dataFreshness: "real-time" as const,
+      fetchedAt: new Date().toISOString(),
+    });
+  }
+
+  const subAccounts = data.map(sa => ({
+    name: sa.name,
+    subAccountUser: sa.subAccountUser,
+    master: sa.master,
+    accountValue: Number(sa.clearinghouseState.marginSummary.accountValue),
+    totalMarginUsed: Number(sa.clearinghouseState.marginSummary.totalMarginUsed),
+    withdrawable: Number(sa.clearinghouseState.withdrawable),
+    positionCount: sa.clearinghouseState.assetPositions.length,
+    spotBalances: sa.spotState.balances.map(b => ({
+      coin: b.coin,
+      total: Number(b.total),
+      hold: Number(b.hold),
+    })),
+  }));
+
+  return successResult({
+    address,
+    subAccounts,
+    subAccountCount: subAccounts.length,
+    dataSources: ["subAccounts"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+// ============================================================================
+// NEW TIER 1 HANDLERS - Intelligence Layer
+// ============================================================================
+
+async function handleAnalyzeTraderPerformance(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const address = args?.address as string;
+  const days = Math.min((args?.days as number) || 30, 90);
+  if (!address) return errorResult("address parameter is required");
+
+  const now = Date.now();
+  const startTime = now - days * 24 * 60 * 60 * 1000;
+
+  // Fetch all required data in parallel
+  const [fills, fees, portfolio] = await Promise.all([
+    fetchUserFills(address, false, startTime, now),
+    fetchUserFees(address),
+    fetchUserPortfolio(address),
+  ]);
+
+  // Calculate trading stats
+  const trades = fills.filter(f => Number(f.closedPnl) !== 0);
+  const wins = trades.filter(f => Number(f.closedPnl) > 0);
+  const losses = trades.filter(f => Number(f.closedPnl) < 0);
+
+  const totalPnl = trades.reduce((sum, f) => sum + Number(f.closedPnl), 0);
+  const totalVolume = fills.reduce((sum, f) => sum + Number(f.px) * Number(f.sz), 0);
+  const totalFees = fills.reduce((sum, f) => sum + Number(f.fee), 0);
+  const grossProfit = wins.reduce((sum, f) => sum + Number(f.closedPnl), 0);
+  const grossLoss = Math.abs(losses.reduce((sum, f) => sum + Number(f.closedPnl), 0));
+
+  const winRate = trades.length > 0 ? (wins.length / trades.length) * 100 : 0;
+  const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? Infinity : 0;
+
+  // Analyze trading patterns
+  const coinVolumes: Record<string, number> = {};
+  let buyVolume = 0, sellVolume = 0;
+  for (const fill of fills) {
+    const notional = Number(fill.px) * Number(fill.sz);
+    coinVolumes[fill.coin] = (coinVolumes[fill.coin] || 0) + notional;
+    if (fill.side === "B") buyVolume += notional;
+    else sellVolume += notional;
+  }
+
+  const sortedCoins = Object.entries(coinVolumes)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([coin, vol]) => ({ coin, volume: vol, percent: (vol / totalVolume) * 100 }));
+
+  // Fee analysis
+  const effectiveFeeRate = totalVolume > 0 ? (totalFees / totalVolume) * 100 : 0;
+  const currentTaker = Number(fees.userCrossRate) * 100;
+  const baseTaker = Number(fees.feeSchedule.cross) * 100;
+
+  // Determine VIP tier and next tier
+  let currentTier = "Standard";
+  let nextTierVolume = 0;
+  const vipTiers = fees.feeSchedule.tiers.vip;
+  for (let i = 0; i < vipTiers.length; i++) {
+    const tierCutoff = Number(vipTiers[i].ntlCutoff);
+    if (totalVolume >= tierCutoff) {
+      currentTier = `VIP ${i + 1}`;
+      if (i < vipTiers.length - 1) {
+        nextTierVolume = Number(vipTiers[i + 1].ntlCutoff) - totalVolume;
+      }
+    }
+  }
+
+  const potentialSavings = (baseTaker - currentTaker) * totalVolume / 100;
+
+  // Generate recommendations
+  const recommendations: string[] = [];
+  if (winRate < 40) recommendations.push("Win rate is below 40%. Consider tightening stop losses or improving entry criteria.");
+  if (profitFactor < 1) recommendations.push("Profit factor is below 1 (losing money). Review your risk/reward ratio.");
+  if (effectiveFeeRate > currentTaker) recommendations.push("Effective fee rate suggests mostly taker orders. Consider using limit orders for lower fees.");
+  if (nextTierVolume > 0 && nextTierVolume < totalVolume * 0.5) recommendations.push(`Trade $${nextTierVolume.toFixed(0)} more to reach the next VIP tier and reduce fees.`);
+  if (sortedCoins[0] && sortedCoins[0].percent > 80) recommendations.push(`High concentration (${sortedCoins[0].percent.toFixed(0)}%) in ${sortedCoins[0].coin}. Consider diversifying.`);
+
+  const confidence = fills.length > 10 ? 0.85 : fills.length > 0 ? 0.6 : 0.3;
+
+  return successResult({
+    address,
+    period: `${days} days`,
+    tradingStats: {
+      totalTrades: trades.length,
+      totalFills: fills.length,
+      winRate: Number(winRate.toFixed(2)),
+      wins: wins.length,
+      losses: losses.length,
+      profitFactor: profitFactor === Infinity ? "∞" : Number(profitFactor.toFixed(2)),
+      totalPnL: Number(totalPnl.toFixed(2)),
+      totalVolume: Number(totalVolume.toFixed(2)),
+      averageTradeSize: fills.length > 0 ? Number((totalVolume / fills.length).toFixed(2)) : 0,
+    },
+    feeAnalysis: {
+      totalFeesPaid: Number(totalFees.toFixed(2)),
+      effectiveFeeRate: `${effectiveFeeRate.toFixed(4)}%`,
+      currentTier,
+      currentTakerRate: `${currentTaker.toFixed(3)}%`,
+      currentMakerRate: `${(Number(fees.userAddRate) * 100).toFixed(3)}%`,
+      potentialSavings: Number(potentialSavings.toFixed(2)),
+      nextTierVolume: nextTierVolume > 0 ? Number(nextTierVolume.toFixed(0)) : null,
+      stakingDiscount: fees.activeStakingDiscount ? `${(Number(fees.activeStakingDiscount.discount) * 100).toFixed(0)}%` : "0%",
+    },
+    tradingPatterns: {
+      mostTradedCoins: sortedCoins,
+      preferredSide: buyVolume > sellVolume * 1.2 ? "buyer" : sellVolume > buyVolume * 1.2 ? "seller" : "balanced",
+      buyVsSellRatio: totalVolume > 0 ? Number((buyVolume / totalVolume * 100).toFixed(1)) : 50,
+    },
+    recommendations,
+    confidence,
+    dataSources: ["userFills", "userFees", "portfolio"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleAnalyzeSpotMarkets(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const minVolume = (args?.minVolume as number) || 10000;
+
+  // Fetch spot and perp data in parallel
+  const [spotData, perpData] = await Promise.all([
+    fetchSpotMetaAndAssetCtxs(),
+    fetchMetaAndAssetCtxs(),
+  ]);
+
+  const [spotMeta, spotCtxs] = spotData;
+  const perpMeta = perpData[0];
+  const perpCtxs = perpData[1];
+
+  // Build perp price lookup
+  const perpPrices: Record<string, number> = {};
+  for (let i = 0; i < perpMeta.universe.length; i++) {
+    perpPrices[perpMeta.universe[i].name] = Number(perpCtxs[i].markPx || 0);
+  }
+
+  // Analyze spot markets
+  const markets: Array<{
+    pair: string;
+    baseToken: string;
+    volume24h: number;
+    markPx: number;
+    midPx: number;
+    prevDayPx: number;
+    priceChange24h: number;
+    perpPrice: number | null;
+    spotPerpDiff: number | null;
+  }> = [];
+
+  for (let i = 0; i < spotMeta.universe.length; i++) {
+    const pair = spotMeta.universe[i];
+    const ctx = spotCtxs[i];
+    if (!ctx) continue;
+
+    const volume24h = Number(ctx.dayNtlVlm);
+    if (volume24h < minVolume) continue;
+
+    const baseTokenIdx = pair.tokens[0];
+    const baseToken = spotMeta.tokens.find(t => t.index === baseTokenIdx)?.name || "UNKNOWN";
+    const markPx = Number(ctx.markPx);
+    const prevDayPx = Number(ctx.prevDayPx);
+    const priceChange24h = prevDayPx > 0 ? ((markPx - prevDayPx) / prevDayPx) * 100 : 0;
+
+    const perpPrice = perpPrices[baseToken] || null;
+    const spotPerpDiff = perpPrice ? ((markPx - perpPrice) / perpPrice) * 100 : null;
+
+    markets.push({
+      pair: pair.name,
+      baseToken,
+      volume24h,
+      markPx,
+      midPx: Number(ctx.midPx),
+      prevDayPx,
+      priceChange24h: Number(priceChange24h.toFixed(2)),
+      perpPrice,
+      spotPerpDiff: spotPerpDiff !== null ? Number(spotPerpDiff.toFixed(4)) : null,
+    });
+  }
+
+  // Sort by volume
+  markets.sort((a, b) => b.volume24h - a.volume24h);
+
+  // Find spot-perp divergences (potential arbitrage)
+  const divergences = markets
+    .filter(m => m.spotPerpDiff !== null && Math.abs(m.spotPerpDiff) > 0.1)
+    .sort((a, b) => Math.abs(b.spotPerpDiff || 0) - Math.abs(a.spotPerpDiff || 0))
+    .slice(0, 10)
+    .map(m => ({
+      pair: m.pair,
+      spotPrice: m.markPx,
+      perpPrice: m.perpPrice,
+      divergencePercent: m.spotPerpDiff,
+      direction: m.spotPerpDiff! > 0 ? "spot premium" : "spot discount",
+    }));
+
+  const totalVolume = markets.reduce((sum, m) => sum + m.volume24h, 0);
+
+  // Generate opportunities
+  const opportunities: string[] = [];
+  if (divergences.length > 0) {
+    const topDiv = divergences[0];
+    opportunities.push(`${topDiv.pair} has ${Math.abs(topDiv.divergencePercent!).toFixed(2)}% spot-perp divergence (${topDiv.direction})`);
+  }
+  const topGainers = markets.filter(m => m.priceChange24h > 5).slice(0, 3);
+  for (const gainer of topGainers) {
+    opportunities.push(`${gainer.pair} up ${gainer.priceChange24h}% with $${(gainer.volume24h / 1000).toFixed(0)}K volume`);
+  }
+
+  return successResult({
+    marketOverview: {
+      totalSpotPairs: spotMeta.universe.length,
+      activePairs: markets.length,
+      totalVolume24h: totalVolume,
+      totalVolume24hFormatted: `$${(totalVolume / 1_000_000).toFixed(2)}M`,
+      activeTokens: spotMeta.tokens.length,
+    },
+    topMarketsByVolume: markets.slice(0, 15),
+    spotPerpDivergences: divergences,
+    liquidityAnalysis: markets.slice(0, 10).map(m => ({
+      pair: m.pair,
+      volume24h: m.volume24h,
+      volumeCategory: m.volume24h > 1_000_000 ? "high" : m.volume24h > 100_000 ? "medium" : "low",
+    })),
+    opportunities,
+    confidence: markets.length > 0 ? 0.85 : 0.5,
+    dataSources: ["spotMetaAndAssetCtxs", "metaAndAssetCtxs"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleAnalyzeWhaleWallet(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const address = args?.address as string;
+  if (!address) return errorResult("address parameter is required");
+
+  // Fetch all wallet data in parallel
+  const [state, orders, spotBalances] = await Promise.all([
+    fetchClearinghouseState(address),
+    fetchOpenOrders(address),
+    fetchSpotClearinghouseState(address).catch(() => ({ balances: [] })),
+  ]);
+
+  // Parse positions
+  const positions = state.assetPositions.map(ap => {
+    const size = Number(ap.position.szi);
+    const entryPx = Number(ap.position.entryPx);
+    const posValue = Number(ap.position.positionValue);
+    const markPx = size !== 0 ? posValue / Math.abs(size) : 0;
+
+    return {
+      coin: ap.position.coin,
+      direction: size > 0 ? "LONG" : "SHORT",
+      size: Math.abs(size),
+      entryPrice: entryPx,
+      markPrice: markPx,
+      positionValue: posValue,
+      unrealizedPnl: Number(ap.position.unrealizedPnl),
+      unrealizedPnlPercent: Number(ap.position.marginUsed) > 0
+        ? (Number(ap.position.unrealizedPnl) / Number(ap.position.marginUsed)) * 100
+        : 0,
+      leverage: ap.position.leverage.value,
+      leverageType: ap.position.leverage.type,
+      marginUsed: Number(ap.position.marginUsed),
+      liquidationPrice: Number(ap.position.liquidationPx),
+      maxLeverage: ap.position.maxLeverage,
+    };
+  });
+
+  // Calculate directional bias
+  let longExposure = 0, shortExposure = 0;
+  for (const pos of positions) {
+    if (pos.direction === "LONG") longExposure += pos.positionValue;
+    else shortExposure += pos.positionValue;
+  }
+  const netExposure = longExposure - shortExposure;
+  const totalExposure = longExposure + shortExposure;
+
+  let bias: "strongly_long" | "long" | "neutral" | "short" | "strongly_short";
+  const biasRatio = totalExposure > 0 ? netExposure / totalExposure : 0;
+  if (biasRatio > 0.7) bias = "strongly_long";
+  else if (biasRatio > 0.3) bias = "long";
+  else if (biasRatio < -0.7) bias = "strongly_short";
+  else if (biasRatio < -0.3) bias = "short";
+  else bias = "neutral";
+
+  // Parse orders
+  let pendingBuyNotional = 0, pendingSellNotional = 0;
+  for (const order of orders) {
+    const notional = Number(order.sz) * Number(order.limitPx);
+    if (order.side === "B") pendingBuyNotional += notional;
+    else pendingSellNotional += notional;
+  }
+
+  // Risk assessment
+  const accountValue = Number(state.marginSummary.accountValue);
+  const totalMarginUsed = Number(state.marginSummary.totalMarginUsed);
+  const marginUtilization = accountValue > 0 ? (totalMarginUsed / accountValue) * 100 : 0;
+  const totalUnrealizedPnl = positions.reduce((sum, p) => sum + p.unrealizedPnl, 0);
+
+  // Determine leverage risk
+  const maxLeverage = Math.max(...positions.map(p => p.leverage), 0);
+  let leverageRisk: "low" | "medium" | "high" | "extreme";
+  if (maxLeverage > 25) leverageRisk = "extreme";
+  else if (maxLeverage > 15) leverageRisk = "high";
+  else if (maxLeverage > 5) leverageRisk = "medium";
+  else leverageRisk = "low";
+
+  // Concentration risk
+  const topPosition = positions.sort((a, b) => b.positionValue - a.positionValue)[0];
+  const concentrationPercent = topPosition && totalExposure > 0
+    ? (topPosition.positionValue / totalExposure) * 100
+    : 0;
+  const concentrationRisk = concentrationPercent > 80
+    ? `High - ${concentrationPercent.toFixed(0)}% in ${topPosition?.coin}`
+    : concentrationPercent > 50
+      ? `Medium - ${concentrationPercent.toFixed(0)}% in ${topPosition?.coin}`
+      : "Low - well diversified";
+
+  // Liquidation risk assessment
+  let liquidationRisk = "Low";
+  const nearLiquidation = positions.filter(p => {
+    const distToLiq = p.direction === "LONG"
+      ? ((p.markPrice - p.liquidationPrice) / p.markPrice) * 100
+      : ((p.liquidationPrice - p.markPrice) / p.markPrice) * 100;
+    return distToLiq < 10;
+  });
+  if (nearLiquidation.length > 0) liquidationRisk = `High - ${nearLiquidation.length} position(s) within 10% of liquidation`;
+  else if (marginUtilization > 80) liquidationRisk = "Medium - high margin utilization";
+
+  // Generate insights
+  const insights: string[] = [];
+  if (totalExposure > 1_000_000) insights.push(`Large trader with $${(totalExposure / 1_000_000).toFixed(2)}M total exposure`);
+  if (bias !== "neutral") insights.push(`Directional bias: ${bias.replace("_", " ")}`);
+  if (maxLeverage > 10) insights.push(`Using up to ${maxLeverage}x leverage`);
+  if (orders.length > 0) insights.push(`${orders.length} open orders worth $${((pendingBuyNotional + pendingSellNotional) / 1000).toFixed(0)}K pending`);
+  if (spotBalances.balances.length > 0) {
+    const spotTotal = spotBalances.balances.reduce((sum, b) => sum + Number(b.entryNtl), 0);
+    if (spotTotal > 10000) insights.push(`Also holds $${(spotTotal / 1000).toFixed(0)}K in spot tokens`);
+  }
+
+  return successResult({
+    address,
+    accountSummary: {
+      totalAccountValue: accountValue,
+      totalPositionValue: totalExposure,
+      marginUtilization: Number(marginUtilization.toFixed(2)),
+      unrealizedPnL: Number(totalUnrealizedPnl.toFixed(2)),
+      withdrawable: Number(state.withdrawable),
+    },
+    positions: positions.sort((a, b) => b.positionValue - a.positionValue),
+    directionalBias: {
+      netLongExposure: longExposure,
+      netShortExposure: shortExposure,
+      netExposure,
+      bias,
+      biasRatio: Number(biasRatio.toFixed(2)),
+    },
+    openOrders: {
+      orderCount: orders.length,
+      pendingBuyNotional,
+      pendingSellNotional,
+      netPendingNotional: pendingBuyNotional - pendingSellNotional,
+    },
+    spotHoldings: spotBalances.balances.map(b => ({
+      token: b.coin,
+      total: Number(b.total),
+      hold: Number(b.hold),
+    })),
+    riskAssessment: {
+      leverageRisk,
+      maxLeverageUsed: maxLeverage,
+      concentrationRisk,
+      liquidationRisk,
+      marginUtilization: `${marginUtilization.toFixed(1)}%`,
+    },
+    insights,
+    confidence: positions.length > 0 ? 0.9 : 0.7,
+    dataSources: ["clearinghouseState", "frontendOpenOrders", "spotClearinghouseState"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
 async function handleAnalyzeMyPositions(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
@@ -1803,6 +3051,54 @@ function fetchFundingHistory(coin: string, startTime: number, endTime: number): 
   return hyperliquidPost({ type: "fundingHistory", coin, startTime, endTime }) as Promise<FundingHistoryResponse[]>;
 }
 
+function fetchSpotMetaAndAssetCtxs(): Promise<SpotMetaAndAssetCtxsResponse> {
+  return hyperliquidPost({ type: "spotMetaAndAssetCtxs" }) as Promise<SpotMetaAndAssetCtxsResponse>;
+}
+
+function fetchSpotClearinghouseState(user: string): Promise<SpotClearinghouseStateResponse> {
+  return hyperliquidPost({ type: "spotClearinghouseState", user }) as Promise<SpotClearinghouseStateResponse>;
+}
+
+function fetchClearinghouseState(user: string): Promise<ClearinghouseStateResponse> {
+  return hyperliquidPost({ type: "clearinghouseState", user }) as Promise<ClearinghouseStateResponse>;
+}
+
+function fetchOpenOrders(user: string): Promise<OpenOrderResponse[]> {
+  return hyperliquidPost({ type: "frontendOpenOrders", user }) as Promise<OpenOrderResponse[]>;
+}
+
+function fetchOrderStatus(user: string, oid: string | number): Promise<OrderStatusResponse> {
+  return hyperliquidPost({ type: "orderStatus", user, oid }) as Promise<OrderStatusResponse>;
+}
+
+function fetchUserFills(user: string, aggregateByTime?: boolean, startTime?: number, endTime?: number): Promise<UserFillResponse[]> {
+  const body: Record<string, unknown> = { type: "userFills", user };
+  if (aggregateByTime !== undefined) body.aggregateByTime = aggregateByTime;
+  if (startTime !== undefined) body.startTime = startTime;
+  if (endTime !== undefined) body.endTime = endTime;
+  return hyperliquidPost(body) as Promise<UserFillResponse[]>;
+}
+
+function fetchUserFees(user: string): Promise<UserFeesResponse> {
+  return hyperliquidPost({ type: "userFees", user }) as Promise<UserFeesResponse>;
+}
+
+function fetchReferralState(user: string): Promise<ReferralStateResponse> {
+  return hyperliquidPost({ type: "referral", user }) as Promise<ReferralStateResponse>;
+}
+
+function fetchUserPortfolio(user: string): Promise<UserPortfolioResponse> {
+  return hyperliquidPost({ type: "portfolio", user }) as Promise<UserPortfolioResponse>;
+}
+
+function fetchUserVaultEquities(user: string): Promise<UserVaultEquityResponse[]> {
+  return hyperliquidPost({ type: "userVaultEquities", user }) as Promise<UserVaultEquityResponse[]>;
+}
+
+function fetchSubAccounts(user: string): Promise<SubAccountResponse[] | null> {
+  return hyperliquidPost({ type: "subAccounts", user }) as Promise<SubAccountResponse[] | null>;
+}
+
 // ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
@@ -1818,6 +3114,113 @@ type OrderbookLevel = { price: number; size: number; numOrders: number; cumulati
 type ParsedOrderbook = { coin: string; midPrice: number; spread: number; bids: OrderbookLevel[]; asks: OrderbookLevel[]; totalBidLiquidity: number; totalAskLiquidity: number; fetchedAt: string };
 type VaultDetailsResponse = { name: string; vaultAddress: string; leader: string; description: string; portfolio: Array<[string, { accountValueHistory: Array<[number, string]>; pnlHistory: Array<[number, string]>; vlm: string }]>; apr: number; followerState: unknown; leaderFraction: number; leaderCommission: number; followers: Array<{ user: string; vaultEquity: string; pnl: string; allTimePnl: string; daysFollowing: number; vaultEntryTime: number; lockupUntil: number }>; maxDistributable: number; maxWithdrawable: number; isClosed: boolean; allowDeposits: boolean };
 type FundingHistoryResponse = { coin: string; fundingRate: string; premium: string; time: number };
+
+// New types for additional endpoints
+type SpotToken = { name: string; szDecimals: number; weiDecimals: number; index: number; tokenId: string; isCanonical: boolean; evmContract: string | null; fullName: string | null };
+type SpotUniverse = { name: string; tokens: [number, number]; index: number; isCanonical: boolean };
+type SpotAssetCtx = { dayNtlVlm: string; markPx: string; midPx: string; prevDayPx: string };
+type SpotMetaAndAssetCtxsResponse = [{ tokens: SpotToken[]; universe: SpotUniverse[] }, SpotAssetCtx[]];
+
+type SpotBalance = { coin: string; token: number; total: string; hold: string; entryNtl: string };
+type SpotClearinghouseStateResponse = { balances: SpotBalance[] };
+
+type AssetPosition = {
+  position: {
+    coin: string;
+    cumFunding: { allTime: string; sinceChange: string; sinceOpen: string };
+    entryPx: string;
+    leverage: { rawUsd: string; type: string; value: number };
+    liquidationPx: string;
+    marginUsed: string;
+    maxLeverage: number;
+    positionValue: string;
+    returnOnEquity: string;
+    szi: string;
+    unrealizedPnl: string;
+  };
+  type: string;
+};
+type ClearinghouseStateResponse = {
+  assetPositions: AssetPosition[];
+  crossMaintenanceMarginUsed: string;
+  crossMarginSummary: { accountValue: string; totalMarginUsed: string; totalNtlPos: string; totalRawUsd: string };
+  marginSummary: { accountValue: string; totalMarginUsed: string; totalNtlPos: string; totalRawUsd: string };
+  time: number;
+  withdrawable: string;
+};
+
+type OpenOrderResponse = {
+  coin: string;
+  isPositionTpsl: boolean;
+  isTrigger: boolean;
+  limitPx: string;
+  oid: number;
+  orderType: string;
+  origSz: string;
+  reduceOnly: boolean;
+  side: string;
+  sz: string;
+  timestamp: number;
+  triggerCondition: string;
+  triggerPx: string;
+};
+
+type OrderStatusResponse = { status: string; order?: Record<string, unknown> };
+
+type UserFillResponse = {
+  closedPnl: string;
+  coin: string;
+  crossed: boolean;
+  dir: string;
+  hash: string;
+  oid: number;
+  px: string;
+  side: string;
+  startPosition: string;
+  sz: string;
+  time: number;
+  fee: string;
+  feeToken: string;
+  builderFee?: string;
+  tid: number;
+};
+
+type UserFeesResponse = {
+  dailyUserVlm: Array<{ date: string; userCross: string; userAdd: string; exchange: string }>;
+  feeSchedule: {
+    cross: string;
+    add: string;
+    spotCross: string;
+    spotAdd: string;
+    tiers: { vip: Array<{ ntlCutoff: string; cross: string; add: string; spotCross: string; spotAdd: string }>; mm: Array<{ makerFractionCutoff: string; add: string }> };
+    referralDiscount: string;
+    stakingDiscountTiers: Array<{ bpsOfMaxSupply: string; discount: string }>;
+  };
+  userCrossRate: string;
+  userAddRate: string;
+  userSpotCrossRate: string;
+  userSpotAddRate: string;
+  activeReferralDiscount: string;
+  trial: unknown;
+  feeTrialReward: string;
+  nextTrialAvailableTimestamp: number | null;
+  stakingLink: { type: string; stakingUser?: string } | null;
+  activeStakingDiscount: { bpsOfMaxSupply: string; discount: string } | null;
+};
+
+type ReferralStateResponse = Record<string, unknown>;
+
+type UserPortfolioResponse = Array<[string, { accountValueHistory: Array<[number, string]>; pnlHistory: Array<[number, string]>; vlm: string }]>;
+
+type UserVaultEquityResponse = { vaultAddress: string; equity: string };
+
+type SubAccountResponse = {
+  name: string;
+  subAccountUser: string;
+  master: string;
+  clearinghouseState: ClearinghouseStateResponse;
+  spotState: SpotClearinghouseStateResponse;
+};
 
 // ============================================================================
 // PARSING FUNCTIONS
@@ -1914,9 +3317,10 @@ app.get("/health", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     server: "hyperliquid-ultimate",
-    version: "2.1.0",
+    version: "2.2.0",
     protocol: "2025-11-25",
     transport: "streamable-http",
+    toolCount: TOOLS.length,
     tools: TOOLS.map((t) => t.name),
     tier1Tools: TOOLS.filter((t) => t.description.includes("🧠 INTELLIGENCE")).map((t) => t.name),
     tier2Tools: TOOLS.filter((t) => !t.description.includes("🧠 INTELLIGENCE")).map((t) => t.name),
@@ -2005,18 +3409,22 @@ app.get("/sse", (_req: Request, res: Response) => {
 
 const port = Number(process.env.PORT || 4002);
 app.listen(port, () => {
-  console.log("\n🚀 Hyperliquid Ultimate MCP Server v2.1.0");
-  console.log(`   The world's most comprehensive Hyperliquid MCP\n`);
+  const tier1 = TOOLS.filter((t) => t.description.includes("🧠 INTELLIGENCE"));
+  const tier2 = TOOLS.filter((t) => !t.description.includes("🧠 INTELLIGENCE"));
+  
+  console.log("\n🚀 Hyperliquid Ultimate MCP Server v2.2.0");
+  console.log(`   The world's most comprehensive Hyperliquid MCP`);
+  console.log(`   ${TOOLS.length} tools (${tier1.length} intelligence + ${tier2.length} raw data)\n`);
   console.log(`🔒 Context Protocol Security Enabled`);
   console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health`);
   console.log(`🔄 Protocol: Streamable HTTP (2025-11-25)\n`);
-  console.log(`🧠 TIER 1 - INTELLIGENCE TOOLS:`);
-  TOOLS.filter((t) => t.description.includes("🧠 INTELLIGENCE")).forEach((tool) => {
+  console.log(`🧠 TIER 1 - INTELLIGENCE TOOLS (${tier1.length}):`);
+  tier1.forEach((tool) => {
     console.log(`   • ${tool.name}`);
   });
-  console.log(`\n📊 TIER 2 - RAW DATA TOOLS:`);
-  TOOLS.filter((t) => !t.description.includes("🧠 INTELLIGENCE")).forEach((tool) => {
+  console.log(`\n📊 TIER 2 - RAW DATA TOOLS (${tier2.length}):`);
+  tier2.forEach((tool) => {
     console.log(`   • ${tool.name}`);
   });
   console.log("");

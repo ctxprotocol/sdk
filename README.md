@@ -678,6 +678,7 @@ When you execute a tool:
 
 | Document | Description |
 |----------|-------------|
+| [MCP Builder Template](./docs/mcp-builder-template.md) | **Start here!** AI-powered template for designing MCP servers with Cursor. Generates discovery questions and tool schemas automatically. |
 | [Context Injection Guide](./docs/context-injection.md) | Architecture guide for building portfolio analysis tools with automatic user data injection |
 | [Polymarket Example](./examples/server/polymarket-contributor) | Complete MCP server for Polymarket intelligence |
 | [Hyperliquid Example](./examples/server/hyperliquid-contributor) | Complete MCP server for Hyperliquid analytics |

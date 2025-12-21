@@ -14,7 +14,7 @@ REMOTE_BASE_DIR="~/mcp-servers"
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 # Define the project directories to deploy
-PROJECTS=("blocknative-contributor" "hyperliquid-contributor" "polymarket-contributor" "exa-contributor")
+PROJECTS=("blocknative-contributor" "hyperliquid-contributor" "polymarket-contributor" "exa-contributor" "coinglass-contributor")
 
 for PROJECT in "${PROJECTS[@]}"; do
     SOURCE_DIR="${SCRIPT_DIR}/${PROJECT}"

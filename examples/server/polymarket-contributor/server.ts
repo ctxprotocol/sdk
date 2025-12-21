@@ -30,6 +30,7 @@ import { createContextMiddleware, type PolymarketContext, type PolymarketPositio
 
 const GAMMA_API_URL = "https://gamma-api.polymarket.com";
 const CLOB_API_URL = "https://clob.polymarket.com";
+const DATA_API_URL = "https://data-api.polymarket.com";
 
 // ============================================================================
 // TOOL DEFINITIONS
@@ -238,6 +239,89 @@ const TOOLS = [
         fetchedAt: { type: "string" },
       },
       required: ["totalTrades", "flowBySize", "whaleActivity"],
+    },
+  },
+
+  {
+    name: "analyze_top_holders",
+    description:
+      'Deep analysis of who the whales are in a market. Shows top holders, their conviction level (position size), whether they\'re in profit/loss, and concentration risk. Answers: "Who are the smart money players and what are they betting on?"',
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        conditionId: {
+          type: "string",
+          description: "The market condition ID (hex string starting with 0x)",
+        },
+        slug: {
+          type: "string",
+          description: "The event slug. Alternative to conditionId.",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        market: { type: "string" },
+        conditionId: { type: "string" },
+        currentPrice: { type: "number" },
+        whaleAnalysis: {
+          type: "object",
+          properties: {
+            yesWhales: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  rank: { type: "number" },
+                  address: { type: "string" },
+                  shares: { type: "number" },
+                  positionValue: { type: "number" },
+                  estimatedEntry: { type: "number", description: "Estimated avg entry price" },
+                  unrealizedPnL: { type: "number" },
+                  convictionScore: { type: "string", enum: ["extreme", "high", "moderate", "low"] },
+                },
+              },
+            },
+            noWhales: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  rank: { type: "number" },
+                  address: { type: "string" },
+                  shares: { type: "number" },
+                  positionValue: { type: "number" },
+                  estimatedEntry: { type: "number" },
+                  unrealizedPnL: { type: "number" },
+                  convictionScore: { type: "string", enum: ["extreme", "high", "moderate", "low"] },
+                },
+              },
+            },
+          },
+        },
+        marketConcentration: {
+          type: "object",
+          properties: {
+            top5YesPercent: { type: "number" },
+            top5NoPercent: { type: "number" },
+            whaleCount: { type: "number" },
+            concentrationRisk: { type: "string", enum: ["high", "moderate", "low"] },
+          },
+        },
+        smartMoneySignal: {
+          type: "object",
+          properties: {
+            direction: { type: "string", enum: ["YES", "NO", "NEUTRAL"] },
+            confidence: { type: "string", enum: ["high", "medium", "low"] },
+            reasoning: { type: "string" },
+          },
+        },
+        recommendation: { type: "string" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["market", "conditionId", "whaleAnalysis", "smartMoneySignal"],
     },
   },
 
@@ -1153,6 +1237,232 @@ Each result includes:
       required: ["results", "count"],
     },
   },
+
+  {
+    name: "get_market_trades",
+    description: "Get recent trades for a specific market. Shows who's buying/selling, at what prices, and trade sizes. Essential for understanding order flow and market activity.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        conditionId: {
+          type: "string",
+          description: "The market condition ID",
+        },
+        limit: {
+          type: "number",
+          description: "Number of trades to return (default: 50, max: 100)",
+        },
+      },
+      required: ["conditionId"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        market: { type: "string" },
+        trades: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              timestamp: { type: "string" },
+              side: { type: "string", enum: ["BUY", "SELL"] },
+              outcome: { type: "string", enum: ["YES", "NO"] },
+              price: { type: "number" },
+              size: { type: "number" },
+              notional: { type: "number", description: "USD value of trade" },
+              trader: { type: "string", description: "Wallet address (may be proxy)" },
+            },
+          },
+        },
+        summary: {
+          type: "object",
+          properties: {
+            totalTrades: { type: "number" },
+            totalVolume: { type: "number" },
+            buyVolume: { type: "number" },
+            sellVolume: { type: "number" },
+            avgPrice: { type: "number" },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["market", "trades", "summary"],
+    },
+  },
+
+  {
+    name: "get_user_positions",
+    description: "Get all current positions for any Polymarket wallet address. Shows their open bets, entry prices, P&L, and position sizes. Great for tracking smart money or analyzing trader behavior.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: {
+          type: "string",
+          description: "The wallet address to look up (can be proxy wallet or main wallet)",
+        },
+        sizeThreshold: {
+          type: "number",
+          description: "Minimum position size in shares to include (default: 0)",
+        },
+        limit: {
+          type: "number",
+          description: "Maximum positions to return (default: 50)",
+        },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        positions: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              conditionId: { type: "string" },
+              marketTitle: { type: "string" },
+              outcome: { type: "string", enum: ["YES", "NO"] },
+              size: { type: "number", description: "Number of shares" },
+              avgPrice: { type: "number", description: "Average entry price" },
+              currentPrice: { type: "number" },
+              initialValue: { type: "number" },
+              currentValue: { type: "number" },
+              unrealizedPnL: { type: "number" },
+              unrealizedPnLPercent: { type: "number" },
+            },
+          },
+        },
+        summary: {
+          type: "object",
+          properties: {
+            totalPositions: { type: "number" },
+            totalValue: { type: "number" },
+            totalUnrealizedPnL: { type: "number" },
+            winningPositions: { type: "number" },
+            losingPositions: { type: "number" },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "positions", "summary"],
+    },
+  },
+
+  {
+    name: "get_top_holders",
+    description: "Get the top holders (biggest positions) for a specific market. Shows who the whales are, their position sizes, and implied conviction. Essential for smart money analysis.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        conditionId: {
+          type: "string",
+          description: "The market condition ID",
+        },
+        outcome: {
+          type: "string",
+          enum: ["YES", "NO", "BOTH"],
+          description: "Which outcome to show holders for (default: BOTH)",
+        },
+        limit: {
+          type: "number",
+          description: "Number of top holders to return per outcome (default: 20)",
+        },
+      },
+      required: ["conditionId"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        market: { type: "string" },
+        conditionId: { type: "string" },
+        topHolders: {
+          type: "object",
+          properties: {
+            yes: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  rank: { type: "number" },
+                  address: { type: "string" },
+                  size: { type: "number", description: "Number of shares" },
+                  value: { type: "number", description: "Current position value in USD" },
+                  percentOfSupply: { type: "number", description: "% of total YES shares" },
+                },
+              },
+            },
+            no: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  rank: { type: "number" },
+                  address: { type: "string" },
+                  size: { type: "number" },
+                  value: { type: "number" },
+                  percentOfSupply: { type: "number" },
+                },
+              },
+            },
+          },
+        },
+        concentration: {
+          type: "object",
+          description: "How concentrated the market is",
+          properties: {
+            top10YesPercent: { type: "number", description: "% of YES held by top 10" },
+            top10NoPercent: { type: "number", description: "% of NO held by top 10" },
+            whaleCount: { type: "number", description: "Holders with > $1000 position" },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["market", "conditionId", "topHolders"],
+    },
+  },
+
+  {
+    name: "get_market_comments",
+    description: "Get comments and discussion for a market or event. Useful for understanding market sentiment, identifying controversies, and seeing what traders are saying.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        slug: {
+          type: "string",
+          description: "The event slug (e.g., 'will-trump-win')",
+        },
+        limit: {
+          type: "number",
+          description: "Number of comments to return (default: 50)",
+        },
+      },
+      required: ["slug"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        event: { type: "string" },
+        comments: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string" },
+              author: { type: "string" },
+              content: { type: "string" },
+              createdAt: { type: "string" },
+              likes: { type: "number" },
+            },
+          },
+        },
+        totalComments: { type: "number" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["comments"],
+    },
+  },
 ];
 
 // ============================================================================
@@ -1182,6 +1492,8 @@ server.setRequestHandler(
           return await handleCheckMarketEfficiency(args);
         case "analyze_whale_flow":
           return await handleAnalyzeWhaleFlow(args);
+        case "analyze_top_holders":
+          return await handleAnalyzeTopHolders(args);
         case "find_correlated_markets":
           return await handleFindCorrelatedMarkets(args);
         case "check_market_rules":
@@ -1212,6 +1524,14 @@ server.setRequestHandler(
           return await handleGetPriceHistory(args);
         case "search_markets":
           return await handleSearchMarkets(args);
+        case "get_market_trades":
+          return await handleGetMarketTrades(args);
+        case "get_user_positions":
+          return await handleGetUserPositions(args);
+        case "get_top_holders":
+          return await handleGetTopHolders(args);
+        case "get_market_comments":
+          return await handleGetMarketComments(args);
 
         default:
           return errorResult(`Unknown tool: ${name}`);
@@ -1322,6 +1642,30 @@ async function fetchClobPost(endpoint: string, body: unknown): Promise<unknown> 
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+async function fetchDataApi(endpoint: string, timeoutMs = 15000): Promise<unknown> {
+  const url = `${DATA_API_URL}${endpoint}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Data API error (${response.status}): ${text.slice(0, 200)}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Data API timeout after ${timeoutMs}ms for ${endpoint}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 // ============================================================================
@@ -4177,8 +4521,581 @@ async function handleSearchMarkets(
 }
 
 // ============================================================================
+// NEW TIER 2 RAW DATA HANDLERS
+// ============================================================================
+
+async function handleGetMarketTrades(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const conditionId = args?.conditionId as string;
+  const limit = Math.min((args?.limit as number) || 50, 100);
+
+  if (!conditionId) {
+    return errorResult("conditionId is required");
+  }
+
+  try {
+    const trades = (await fetchDataApi(`/trades?market=${conditionId}&limit=${limit}`)) as DataApiTrade[];
+
+    if (!trades || !Array.isArray(trades)) {
+      return successResult({
+        market: conditionId,
+        trades: [],
+        summary: { totalTrades: 0, totalVolume: 0, buyVolume: 0, sellVolume: 0, avgPrice: 0 },
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+
+    let totalVolume = 0;
+    let buyVolume = 0;
+    let sellVolume = 0;
+    let priceSum = 0;
+
+    const formattedTrades = trades.map((t) => {
+      const price = Number(t.price || 0);
+      const size = Number(t.size || 0);
+      const notional = price * size;
+      const side = t.side?.toUpperCase() || "BUY";
+
+      totalVolume += notional;
+      priceSum += price;
+      if (side === "BUY") buyVolume += notional;
+      else sellVolume += notional;
+
+      return {
+        id: t.id || "",
+        timestamp: t.timestamp || t.matchTime || "",
+        side,
+        outcome: t.outcome || "YES",
+        price,
+        size,
+        notional: Number(notional.toFixed(2)),
+        trader: t.trader || t.proxyWallet || "",
+      };
+    });
+
+    return successResult({
+      market: conditionId,
+      trades: formattedTrades,
+      summary: {
+        totalTrades: trades.length,
+        totalVolume: Number(totalVolume.toFixed(2)),
+        buyVolume: Number(buyVolume.toFixed(2)),
+        sellVolume: Number(sellVolume.toFixed(2)),
+        avgPrice: trades.length > 0 ? Number((priceSum / trades.length).toFixed(4)) : 0,
+      },
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Failed to fetch trades: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+async function handleGetUserPositions(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const address = args?.address as string;
+  const sizeThreshold = (args?.sizeThreshold as number) || 0;
+  const limit = Math.min((args?.limit as number) || 50, 100);
+
+  if (!address) {
+    return errorResult("address is required");
+  }
+
+  try {
+    const positions = (await fetchDataApi(
+      `/positions?user=${address}&limit=${limit}${sizeThreshold > 0 ? `&sizeThreshold=${sizeThreshold}` : ""}`
+    )) as DataApiPosition[];
+
+    if (!positions || !Array.isArray(positions)) {
+      return successResult({
+        address,
+        positions: [],
+        summary: { totalPositions: 0, totalValue: 0, totalUnrealizedPnL: 0, winningPositions: 0, losingPositions: 0 },
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+
+    let totalValue = 0;
+    let totalPnL = 0;
+    let winningCount = 0;
+    let losingCount = 0;
+
+    const formattedPositions = positions.map((p) => {
+      const size = Number(p.size || 0);
+      const avgPrice = Number(p.avgPrice || 0);
+      const curPrice = Number(p.curPrice || avgPrice);
+      const initialValue = Number(p.initialValue || size * avgPrice);
+      const currentValue = Number(p.currentValue || size * curPrice);
+      const pnl = Number(p.cashPnl || currentValue - initialValue);
+      const pnlPercent = initialValue > 0 ? (pnl / initialValue) * 100 : 0;
+
+      totalValue += currentValue;
+      totalPnL += pnl;
+      if (pnl > 0) winningCount++;
+      else if (pnl < 0) losingCount++;
+
+      return {
+        conditionId: p.conditionId || "",
+        marketTitle: p.title || p.question || "Unknown",
+        outcome: p.outcome || "YES",
+        size,
+        avgPrice,
+        currentPrice: curPrice,
+        initialValue: Number(initialValue.toFixed(2)),
+        currentValue: Number(currentValue.toFixed(2)),
+        unrealizedPnL: Number(pnl.toFixed(2)),
+        unrealizedPnLPercent: Number(pnlPercent.toFixed(2)),
+      };
+    });
+
+    return successResult({
+      address,
+      positions: formattedPositions,
+      summary: {
+        totalPositions: positions.length,
+        totalValue: Number(totalValue.toFixed(2)),
+        totalUnrealizedPnL: Number(totalPnL.toFixed(2)),
+        winningPositions: winningCount,
+        losingPositions: losingCount,
+      },
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Failed to fetch positions: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+async function handleGetTopHolders(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const conditionId = args?.conditionId as string;
+  const outcome = (args?.outcome as string) || "BOTH";
+  const limit = Math.min((args?.limit as number) || 20, 50);
+
+  if (!conditionId) {
+    return errorResult("conditionId is required");
+  }
+
+  try {
+    // Data API /positions endpoint requires user address, so we aggregate from trades
+    // This gives us active traders and their net positions
+    const trades = (await fetchDataApi(
+      `/trades?market=${conditionId}&limit=500`
+    )) as DataApiTrade[];
+
+    if (!trades || !Array.isArray(trades)) {
+      return successResult({
+        market: conditionId,
+        conditionId,
+        topHolders: { yes: [], no: [] },
+        concentration: { top10YesPercent: 0, top10NoPercent: 0, whaleCount: 0 },
+        note: "No trade data available for this market",
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+
+    // Aggregate trades by wallet to estimate positions
+    // Net position = sum of buys - sum of sells
+    const walletPositions: Record<string, { yes: number; no: number; address: string }> = {};
+
+    for (const t of trades) {
+      const wallet = t.proxyWallet || t.trader || "";
+      if (!wallet) continue;
+
+      if (!walletPositions[wallet]) {
+        walletPositions[wallet] = { yes: 0, no: 0, address: wallet };
+      }
+
+      const size = Number(t.size || 0);
+      const side = t.side?.toUpperCase();
+      const outcomeType = t.outcome?.toLowerCase() || "yes";
+
+      if (outcomeType === "yes" || outcomeType === "0") {
+        if (side === "BUY" || side === "B") {
+          walletPositions[wallet].yes += size;
+        } else {
+          walletPositions[wallet].yes -= size;
+        }
+      } else {
+        if (side === "BUY" || side === "B") {
+          walletPositions[wallet].no += size;
+        } else {
+          walletPositions[wallet].no -= size;
+        }
+      }
+    }
+
+    // Convert to arrays and filter positive positions
+    const yesHolders = Object.values(walletPositions)
+      .filter(w => w.yes > 0)
+      .map(w => ({ address: w.address, size: w.yes }))
+      .sort((a, b) => b.size - a.size);
+
+    const noHolders = Object.values(walletPositions)
+      .filter(w => w.no > 0)
+      .map(w => ({ address: w.address, size: w.no }))
+      .sort((a, b) => b.size - a.size);
+
+    // Calculate totals for percentages
+    const totalYes = yesHolders.reduce((sum, p) => sum + p.size, 0);
+    const totalNo = noHolders.reduce((sum, p) => sum + p.size, 0);
+
+    // Get current prices for value calculation
+    let yesPrice = 0.5;
+    let noPrice = 0.5;
+    try {
+      const market = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
+      const tokens = market?.tokens;
+      if (tokens && tokens.length >= 2) {
+        const pricesResp = (await fetchClobPost("/prices", [
+          { token_id: tokens[0].token_id, side: "BUY" },
+          { token_id: tokens[1].token_id, side: "BUY" },
+        ])) as Record<string, { BUY?: string } | string>;
+
+        const yesData = pricesResp[tokens[0].token_id];
+        const noData = pricesResp[tokens[1].token_id];
+        if (yesData) yesPrice = typeof yesData === "object" && yesData.BUY ? Number(yesData.BUY) : Number(yesData);
+        if (noData) noPrice = typeof noData === "object" && noData.BUY ? Number(noData.BUY) : Number(noData);
+      }
+    } catch {
+      // Use defaults
+    }
+
+    const formatHolders = (holders: Array<{ address: string; size: number }>, total: number, price: number) => {
+      return holders
+        .slice(0, limit)
+        .map((p, idx) => {
+          const value = p.size * price;
+          return {
+            rank: idx + 1,
+            address: p.address,
+            size: Number(p.size.toFixed(2)),
+            value: Number(value.toFixed(2)),
+            percentOfSupply: total > 0 ? Number(((p.size / total) * 100).toFixed(2)) : 0,
+          };
+        });
+    };
+
+    const topYes = outcome === "NO" ? [] : formatHolders(yesHolders, totalYes, yesPrice);
+    const topNo = outcome === "YES" ? [] : formatHolders(noHolders, totalNo, noPrice);
+
+    // Calculate concentration
+    const top10YesPercent = topYes.slice(0, 10).reduce((sum, h) => sum + h.percentOfSupply, 0);
+    const top10NoPercent = topNo.slice(0, 10).reduce((sum, h) => sum + h.percentOfSupply, 0);
+    const whaleCount = [...topYes, ...topNo].filter(h => h.value > 1000).length;
+
+    // Get market title
+    let marketTitle = conditionId;
+    try {
+      const events = (await fetchGamma(`/events?closed=false&limit=50`)) as GammaEvent[];
+      for (const e of events) {
+        const m = e.markets?.find(m => m.conditionId === conditionId);
+        if (m) {
+          marketTitle = m.question || e.title || conditionId;
+          break;
+        }
+      }
+    } catch {
+      // Use conditionId as title
+    }
+
+    return successResult({
+      market: marketTitle,
+      conditionId,
+      topHolders: { yes: topYes, no: topNo },
+      concentration: {
+        top10YesPercent: Number(top10YesPercent.toFixed(2)),
+        top10NoPercent: Number(top10NoPercent.toFixed(2)),
+        whaleCount,
+      },
+      note: "Positions estimated from recent trade activity (last 500 trades)",
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Failed to fetch top holders: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+async function handleGetMarketComments(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const slug = args?.slug as string;
+  const limit = Math.min((args?.limit as number) || 50, 100);
+
+  if (!slug) {
+    return errorResult("slug is required");
+  }
+
+  try {
+    // Gamma API has a comments endpoint for events
+    const comments = (await fetchGamma(`/comments?slug=${slug}&limit=${limit}`)) as GammaComment[];
+
+    if (!comments || !Array.isArray(comments)) {
+      // Try alternative endpoint
+      const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+      return successResult({
+        event: event?.title || slug,
+        comments: [],
+        totalComments: 0,
+        note: "No comments found for this market",
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+
+    const formattedComments = comments.map((c) => ({
+      id: c.id || "",
+      author: c.userAddress || c.author || "anonymous",
+      content: c.content || c.text || "",
+      createdAt: c.createdAt || c.timestamp || "",
+      likes: Number(c.likes || c.upvotes || 0),
+    }));
+
+    return successResult({
+      event: slug,
+      comments: formattedComments,
+      totalComments: comments.length,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    // Comments endpoint may not be available - return gracefully
+    return successResult({
+      event: slug,
+      comments: [],
+      totalComments: 0,
+      note: "Comments not available for this market",
+      fetchedAt: new Date().toISOString(),
+    });
+  }
+}
+
+// ============================================================================
+// NEW TIER 1 INTELLIGENCE HANDLER: analyze_top_holders
+// ============================================================================
+
+async function handleAnalyzeTopHolders(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const conditionId = args?.conditionId as string;
+  const slug = args?.slug as string;
+
+  if (!conditionId && !slug) {
+    return errorResult("Either conditionId or slug is required");
+  }
+
+  // Resolve conditionId from slug if needed
+  let resolvedConditionId = conditionId;
+  let marketTitle = "";
+
+  if (slug) {
+    const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+    if (!event?.markets?.[0]) {
+      return errorResult(`Event not found: ${slug}`);
+    }
+    resolvedConditionId = event.markets[0].conditionId || "";
+    marketTitle = event.markets[0].question || event.title || slug;
+  }
+
+  if (!resolvedConditionId) {
+    return errorResult("Could not resolve conditionId");
+  }
+
+  // Get top holders using the raw data handler
+  const holdersResult = await handleGetTopHolders({ conditionId: resolvedConditionId, outcome: "BOTH", limit: 20 });
+  if (holdersResult.isError) {
+    return holdersResult;
+  }
+
+  const holdersData = JSON.parse((holdersResult.content[0] as { text: string }).text);
+
+  // Get current market price
+  let currentPrice = 0.5;
+  let noPrice = 0.5;
+  try {
+    const market = (await fetchClob(`/markets/${resolvedConditionId}`)) as ClobMarket;
+    const tokens = market?.tokens;
+    if (tokens && tokens.length >= 2) {
+      const pricesResp = (await fetchClobPost("/prices", [
+        { token_id: tokens[0].token_id, side: "BUY" },
+        { token_id: tokens[1].token_id, side: "BUY" },
+      ])) as Record<string, { BUY?: string } | string>;
+
+      const yesData = pricesResp[tokens[0].token_id];
+      const noData = pricesResp[tokens[1].token_id];
+      if (yesData) currentPrice = typeof yesData === "object" && yesData.BUY ? Number(yesData.BUY) : Number(yesData);
+      if (noData) noPrice = typeof noData === "object" && noData.BUY ? Number(noData.BUY) : Number(noData);
+    }
+  } catch {
+    // Use defaults
+  }
+
+  // Analyze YES whales
+  const yesWhales = (holdersData.topHolders?.yes || []).slice(0, 10).map((h: { rank: number; address: string; size: number; value: number; percentOfSupply: number }) => {
+    // Estimate if they're in profit based on current price vs typical entry
+    // If price is high, assume early holders are in profit
+    const estimatedEntry = currentPrice * 0.7; // Rough estimate
+    const currentValue = h.size * currentPrice;
+    const estimatedInitial = h.size * estimatedEntry;
+    const unrealizedPnL = currentValue - estimatedInitial;
+
+    let convictionScore: "extreme" | "high" | "moderate" | "low";
+    if (h.value > 10000) convictionScore = "extreme";
+    else if (h.value > 5000) convictionScore = "high";
+    else if (h.value > 1000) convictionScore = "moderate";
+    else convictionScore = "low";
+
+    return {
+      rank: h.rank,
+      address: h.address,
+      shares: h.size,
+      positionValue: h.value,
+      estimatedEntry: Number(estimatedEntry.toFixed(4)),
+      unrealizedPnL: Number(unrealizedPnL.toFixed(2)),
+      convictionScore,
+    };
+  });
+
+  // Analyze NO whales
+  const noWhales = (holdersData.topHolders?.no || []).slice(0, 10).map((h: { rank: number; address: string; size: number; value: number; percentOfSupply: number }) => {
+    const estimatedEntry = noPrice * 0.7;
+    const currentValue = h.size * noPrice;
+    const estimatedInitial = h.size * estimatedEntry;
+    const unrealizedPnL = currentValue - estimatedInitial;
+
+    let convictionScore: "extreme" | "high" | "moderate" | "low";
+    if (h.value > 10000) convictionScore = "extreme";
+    else if (h.value > 5000) convictionScore = "high";
+    else if (h.value > 1000) convictionScore = "moderate";
+    else convictionScore = "low";
+
+    return {
+      rank: h.rank,
+      address: h.address,
+      shares: h.size,
+      positionValue: h.value,
+      estimatedEntry: Number(estimatedEntry.toFixed(4)),
+      unrealizedPnL: Number(unrealizedPnL.toFixed(2)),
+      convictionScore,
+    };
+  });
+
+  // Calculate concentration metrics
+  const top5YesPercent = holdersData.topHolders?.yes?.slice(0, 5).reduce((sum: number, h: { percentOfSupply: number }) => sum + h.percentOfSupply, 0) || 0;
+  const top5NoPercent = holdersData.topHolders?.no?.slice(0, 5).reduce((sum: number, h: { percentOfSupply: number }) => sum + h.percentOfSupply, 0) || 0;
+  
+  let concentrationRisk: "high" | "moderate" | "low";
+  if (top5YesPercent > 50 || top5NoPercent > 50) concentrationRisk = "high";
+  else if (top5YesPercent > 30 || top5NoPercent > 30) concentrationRisk = "moderate";
+  else concentrationRisk = "low";
+
+  // Determine smart money signal
+  const totalYesValue = yesWhales.reduce((sum: number, w: { positionValue: number }) => sum + w.positionValue, 0);
+  const totalNoValue = noWhales.reduce((sum: number, w: { positionValue: number }) => sum + w.positionValue, 0);
+  const yesExtreme = yesWhales.filter((w: { convictionScore: string }) => w.convictionScore === "extreme" || w.convictionScore === "high").length;
+  const noExtreme = noWhales.filter((w: { convictionScore: string }) => w.convictionScore === "extreme" || w.convictionScore === "high").length;
+
+  let direction: "YES" | "NO" | "NEUTRAL";
+  let confidence: "high" | "medium" | "low";
+  let reasoning: string;
+
+  if (totalYesValue > totalNoValue * 1.5 && yesExtreme > noExtreme) {
+    direction = "YES";
+    confidence = yesExtreme >= 3 ? "high" : "medium";
+    reasoning = `${yesWhales.length} whales with $${totalYesValue.toFixed(0)} in YES positions vs $${totalNoValue.toFixed(0)} in NO. ${yesExtreme} high-conviction YES holders.`;
+  } else if (totalNoValue > totalYesValue * 1.5 && noExtreme > yesExtreme) {
+    direction = "NO";
+    confidence = noExtreme >= 3 ? "high" : "medium";
+    reasoning = `${noWhales.length} whales with $${totalNoValue.toFixed(0)} in NO positions vs $${totalYesValue.toFixed(0)} in YES. ${noExtreme} high-conviction NO holders.`;
+  } else {
+    direction = "NEUTRAL";
+    confidence = "low";
+    reasoning = `Whale positions roughly balanced. YES: $${totalYesValue.toFixed(0)}, NO: $${totalNoValue.toFixed(0)}. No clear smart money consensus.`;
+  }
+
+  // Generate recommendation
+  let recommendation: string;
+  if (direction !== "NEUTRAL" && confidence !== "low") {
+    recommendation = `Smart money appears to favor ${direction}. Consider aligning with whale positions, but verify with your own research.`;
+  } else if (concentrationRisk === "high") {
+    recommendation = `⚠️ High concentration risk - top 5 holders control ${Math.max(top5YesPercent, top5NoPercent).toFixed(0)}% of supply. Large exits could move price significantly.`;
+  } else {
+    recommendation = "No strong whale consensus. Market may be more efficient or whales may be waiting for more information.";
+  }
+
+  // Get market title if we don't have it
+  if (!marketTitle) {
+    marketTitle = holdersData.market || resolvedConditionId;
+  }
+
+  return successResult({
+    market: marketTitle,
+    conditionId: resolvedConditionId,
+    currentPrice,
+    whaleAnalysis: {
+      yesWhales,
+      noWhales,
+    },
+    marketConcentration: {
+      top5YesPercent: Number(top5YesPercent.toFixed(2)),
+      top5NoPercent: Number(top5NoPercent.toFixed(2)),
+      whaleCount: holdersData.concentration?.whaleCount || 0,
+      concentrationRisk,
+    },
+    smartMoneySignal: {
+      direction,
+      confidence,
+      reasoning,
+    },
+    recommendation,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+// ============================================================================
 // TYPE DEFINITIONS
 // ============================================================================
+
+interface DataApiTrade {
+  id?: string;
+  timestamp?: string;
+  matchTime?: string;
+  side?: string;
+  outcome?: string;
+  price?: string | number;
+  size?: string | number;
+  trader?: string;
+  proxyWallet?: string;
+}
+
+interface DataApiPosition {
+  conditionId?: string;
+  market?: string;
+  title?: string;
+  question?: string;
+  outcome?: string;
+  outcomeIndex?: number;
+  size?: string | number;
+  avgPrice?: string | number;
+  curPrice?: string | number;
+  initialValue?: string | number;
+  currentValue?: string | number;
+  cashPnl?: string | number;
+  percentPnl?: string | number;
+  proxyWallet?: string;
+  user?: string;
+}
+
+interface GammaComment {
+  id?: string;
+  userAddress?: string;
+  author?: string;
+  content?: string;
+  text?: string;
+  createdAt?: string;
+  timestamp?: string;
+  likes?: number;
+  upvotes?: number;
+}
 
 interface GammaEvent {
   id?: string;
@@ -4349,12 +5266,12 @@ app.listen(port, () => {
   console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health\n`);
   console.log(`🛠️  Available tools (${TOOLS.length}):`);
-  console.log("   INTELLIGENCE:");
-  for (const tool of TOOLS.slice(0, 9)) {
+  console.log("   INTELLIGENCE (12 tools):");
+  for (const tool of TOOLS.slice(0, 12)) {
     console.log(`   • ${tool.name}`);
   }
-  console.log("   RAW DATA:");
-  for (const tool of TOOLS.slice(9)) {
+  console.log("   RAW DATA (10 tools):");
+  for (const tool of TOOLS.slice(12)) {
     console.log(`   • ${tool.name}`);
   }
   console.log("");
