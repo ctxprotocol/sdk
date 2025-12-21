@@ -18,14 +18,18 @@ Context Protocol is **npm for AI capabilities**. Just as you install packages to
 
 ## Who Is This SDK For?
 
-**This SDK is for AI Agent developers** who want to query the Context marketplace and execute tools.
-
 | Role | What You Use |
 |------|--------------|
 | **AI Agent Developer** | `@ctxprotocol/sdk` — Query marketplace, execute tools, handle payments |
-| **Tool Contributor (Data Broker)** | `@modelcontextprotocol/sdk` — Standard MCP server + Context extensions |
+| **Tool Contributor (Data Broker)** | `@modelcontextprotocol/sdk` + `@ctxprotocol/sdk` — Standard MCP server + security middleware |
 
-If you're building an MCP server to contribute tools and earn money, you **don't need this SDK**. See [Building MCP Servers](#building-mcp-servers-tool-contributors) for the simple pattern.
+**For AI Agent Developers:** Use this SDK to search the marketplace, execute tools, and handle micro-payments.
+
+**For Tool Contributors:** You need **both** SDKs:
+- `@modelcontextprotocol/sdk` — Build your MCP server (tools, schemas, handlers)
+- `@ctxprotocol/sdk` — Secure your endpoint with `createContextMiddleware()` and receive injected user portfolio data
+
+See [Building MCP Servers](#building-mcp-servers-tool-contributors) and [Securing Your Tool](#-securing-your-tool) for the complete pattern.
 
 ## Installation
 
@@ -507,14 +511,51 @@ Want to earn money by contributing tools to the Context marketplace? Build a sta
 
 ### Context Injection (Portfolio Analysis Tools)
 
-Building tools that analyze user portfolios? Context automatically injects user portfolio data into your tools—no authentication required.
+Building tools that analyze user portfolios? Context automatically injects user portfolio data into your tools—no authentication required from the user.
 
 **📖 Read the full guide: [Context Injection Architecture](./docs/context-injection.md)**
 
-Key benefits:
+**How it works:**
+1. User links their wallet in Context app settings
+2. When your tool is selected, the platform reads `inputSchema["x-context-requirements"]`
+3. Platform fetches the user's portfolio data from protocol APIs
+4. Data is injected as the `portfolio` argument to your tool
+
+**Key benefits:**
 - **No Auth Required** — User data is injected automatically from their linked wallets
 - **Type-Safe** — Use SDK types like `PolymarketContext`, `HyperliquidContext`
 - **Focus on Analysis** — You receive structured data, you provide insights
+
+**What gets injected:**
+
+```typescript
+// For hyperliquid context requirement
+interface HyperliquidContext {
+  walletAddress: string;
+  perpPositions: HyperliquidPerpPosition[];
+  spotBalances: HyperliquidSpotBalance[];
+  openOrders: HyperliquidOrder[];
+  accountSummary: HyperliquidAccountSummary;
+  fetchedAt: string;
+}
+
+// For polymarket context requirement
+interface PolymarketContext {
+  walletAddress: string;
+  positions: PolymarketPosition[];
+  openOrders: PolymarketOrder[];
+  totalValue?: number;
+  fetchedAt: string;
+}
+
+// For wallet context requirement
+interface WalletContext {
+  address: string;
+  chainId: number;
+  balances: TokenBalance[];
+  fetchedAt: string;
+}
+```
 
 ### Context Requirements Declaration
 
@@ -555,12 +596,6 @@ The MCP protocol only transmits standard fields (`name`, `description`, `inputSc
 | `"hyperliquid"` | Hyperliquid perpetuals & spot | `HyperliquidContext` |
 | `"polymarket"` | Polymarket prediction markets | `PolymarketContext` |
 | `"wallet"` | Generic EVM wallet | `WalletContext` |
-
-**How it works:**
-1. User links their wallet in Context app settings
-2. When your tool is selected, platform reads `inputSchema["x-context-requirements"]`
-3. Platform fetches user's portfolio data from protocol APIs
-4. Data is injected as the `portfolio` argument to your tool
 
 ### Example: Standard MCP Server
 

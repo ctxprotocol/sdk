@@ -108,17 +108,17 @@ const TOOLS = [
   {
     name: "check_market_efficiency",
     description:
-      'Check if a market is efficiently priced. Calculates the "vig" (sum of YES + NO prices), identifies if fees/spread are eating potential edge, and reports true implied probabilities.',
+      'Check if a market is efficiently priced. Calculates the "vig" (sum of YES + NO prices), identifies if fees/spread are eating potential edge, and reports true implied probabilities. Accepts either conditionId OR slug - both work equally well.',
     inputSchema: {
       type: "object" as const,
       properties: {
         conditionId: {
           type: "string",
-          description: "The market condition ID",
+          description: "The market condition ID (hex string starting with 0x). Works with IDs from discover_trending_markets or other tools.",
         },
         slug: {
           type: "string",
-          description: "The event slug (alternative to conditionId)",
+          description: "The event slug (e.g., 'will-trump-release-epstein-files-by'). Alternative to conditionId.",
         },
       },
       required: [],
@@ -244,17 +244,17 @@ const TOOLS = [
   {
     name: "find_correlated_markets",
     description:
-      'Find markets that might be correlated for hedging purposes. If betting on "Bitcoin > $100k", shows related crypto markets.',
+      'Find markets that might be correlated for hedging purposes. If betting on "Bitcoin > $100k", shows related crypto markets. Accepts either conditionId OR slug - both work equally well.',
     inputSchema: {
       type: "object" as const,
       properties: {
         conditionId: {
           type: "string",
-          description: "The market condition ID to find correlations for",
+          description: "The market condition ID (hex string starting with 0x). Works with IDs from discover_trending_markets or other tools.",
         },
         slug: {
           type: "string",
-          description: "The event slug (alternative to conditionId)",
+          description: "The event slug (e.g., 'bitcoin-100k'). Alternative to conditionId.",
         },
       },
       required: [],
@@ -297,17 +297,17 @@ const TOOLS = [
   {
     name: "check_market_rules",
     description:
-      'Parse market resolution rules and highlight potential "gotchas". Extracts the description, resolution source, and edge cases that could cause unexpected resolution.',
+      'Parse market resolution rules and highlight potential "gotchas". Extracts the description, resolution source, and edge cases that could cause unexpected resolution. Accepts either conditionId OR slug - both work equally well.',
     inputSchema: {
       type: "object" as const,
       properties: {
         slug: {
           type: "string",
-          description: "The event slug",
+          description: "The event slug (e.g., 'will-trump-release-epstein-files-by'). Alternative to conditionId.",
         },
         conditionId: {
           type: "string",
-          description: "The market condition ID",
+          description: "The market condition ID (hex string starting with 0x). Works with IDs from discover_trending_markets or other tools.",
         },
       },
       required: [],
@@ -1586,8 +1586,20 @@ async function handleCheckMarketEfficiency(
     }
     market = event.markets[0];
   } else {
-    // Query by conditionId - need to search through events since direct query is unreliable
-    // First try to find the market in active events
+    // Query by conditionId - use CLOB API for fast validation, then search Gamma for full data
+    // Note: Gamma API /markets?condition_id= does NOT filter (tested via Context7 docs)
+    
+    // Step 1: Validate conditionId exists via CLOB API (fast)
+    try {
+      const clobMarket = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
+      if (!clobMarket || !clobMarket.condition_id) {
+        return errorResult(`Market not found for conditionId: ${conditionId}`);
+      }
+    } catch {
+      return errorResult(`Market not found for conditionId: ${conditionId}`);
+    }
+
+    // Step 2: Search through Gamma events to get full market data (needed for prices, question, etc.)
     const events = (await fetchGamma(`/events?closed=false&limit=100`)) as GammaEvent[];
     for (const event of events) {
       const found = event.markets?.find(m => m.conditionId === conditionId);
@@ -1597,7 +1609,7 @@ async function handleCheckMarketEfficiency(
       }
     }
     
-    // If not found in active events, try closed events
+    // Fallback: search through closed events
     if (!market) {
       const closedEvents = (await fetchGamma(`/events?closed=true&limit=50`)) as GammaEvent[];
       for (const event of closedEvents) {
@@ -1609,8 +1621,16 @@ async function handleCheckMarketEfficiency(
       }
     }
     
+    // If CLOB found it but Gamma didn't, create minimal market object from CLOB data
     if (!market) {
-      return errorResult(`Market not found for conditionId: ${conditionId}. Try using 'slug' parameter instead.`);
+      // Re-fetch CLOB data to build minimal market
+      const clobMarket = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
+      const tokenIds = clobMarket.tokens?.map(t => t.token_id) || [];
+      market = {
+        conditionId: conditionId,
+        question: `Market ${conditionId.slice(0, 10)}...`,
+        clobTokenIds: tokenIds,
+      };
     }
   }
 
@@ -1939,21 +1959,35 @@ async function handleFindCorrelatedMarkets(
   }
 
   // Get the source market
-  let sourceEvent: GammaEvent;
+  let sourceEvent: GammaEvent | undefined;
 
   if (slug) {
     sourceEvent = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
   } else {
-    // Query market by conditionId first, then get its event
-    const markets = (await fetchGamma(`/markets?condition_id=${conditionId}`)) as Array<GammaMarket & { eventSlug?: string }>;
-    if (markets?.[0]?.eventSlug) {
-      sourceEvent = (await fetchGamma(`/events/slug/${markets[0].eventSlug}`)) as GammaEvent;
-    } else {
-      // Fallback: search in active events for a market with this conditionId
-      const events = (await fetchGamma(`/events?closed=false&limit=100`)) as GammaEvent[];
-      sourceEvent = events.find(e => 
+    // Query by conditionId - validate via CLOB API first, then search Gamma events
+    // Note: Gamma API /markets?condition_id= does NOT filter (per Context7 docs)
+    
+    try {
+      const clobMarket = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
+      if (!clobMarket || !clobMarket.condition_id) {
+        return errorResult(`Market not found for conditionId: ${conditionId}`);
+      }
+    } catch {
+      return errorResult(`Market not found for conditionId: ${conditionId}`);
+    }
+
+    // Search in active events for a market with this conditionId
+    const events = (await fetchGamma(`/events?closed=false&limit=100`)) as GammaEvent[];
+    sourceEvent = events.find(e => 
+      e.markets?.some(m => m.conditionId === conditionId)
+    );
+    
+    // Fallback: search closed events
+    if (!sourceEvent) {
+      const closedEvents = (await fetchGamma(`/events?closed=true&limit=50`)) as GammaEvent[];
+      sourceEvent = closedEvents.find(e => 
         e.markets?.some(m => m.conditionId === conditionId)
-      ) as GammaEvent;
+      );
     }
   }
 
@@ -2075,21 +2109,35 @@ async function handleCheckMarketRules(
   }
 
   // Get the event
-  let event: GammaEvent;
+  let event: GammaEvent | undefined;
 
   if (slug) {
     event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
   } else {
-    // Query market by conditionId first, then get its event
-    const markets = (await fetchGamma(`/markets?condition_id=${conditionId}`)) as Array<GammaMarket & { eventSlug?: string }>;
-    if (markets?.[0]?.eventSlug) {
-      event = (await fetchGamma(`/events/slug/${markets[0].eventSlug}`)) as GammaEvent;
-    } else {
-      // Fallback: search in active events
-      const events = (await fetchGamma(`/events?closed=false&limit=100`)) as GammaEvent[];
-      event = events.find(e => 
+    // Query by conditionId - validate via CLOB API first, then search Gamma events
+    // Note: Gamma API /markets?condition_id= does NOT filter (per Context7 docs)
+    
+    try {
+      const clobMarket = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
+      if (!clobMarket || !clobMarket.condition_id) {
+        return errorResult(`Market not found for conditionId: ${conditionId}`);
+      }
+    } catch {
+      return errorResult(`Market not found for conditionId: ${conditionId}`);
+    }
+
+    // Search in active events
+    const events = (await fetchGamma(`/events?closed=false&limit=100`)) as GammaEvent[];
+    event = events.find(e => 
+      e.markets?.some(m => m.conditionId === conditionId)
+    );
+    
+    // Fallback: search closed events
+    if (!event) {
+      const closedEvents = (await fetchGamma(`/events?closed=true&limit=50`)) as GammaEvent[];
+      event = closedEvents.find(e => 
         e.markets?.some(m => m.conditionId === conditionId)
-      ) as GammaEvent;
+      );
     }
   }
 
