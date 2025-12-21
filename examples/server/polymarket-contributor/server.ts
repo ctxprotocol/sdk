@@ -4442,35 +4442,48 @@ async function handleSearchMarkets(
 
   // Determine which markets to fetch based on status filter
   // closed=false means live/active markets, closed=true means resolved/finished markets
-  let fetchLimit = limit * 3; // Fetch more to account for filtering
+  // Use order=id&ascending=false to get NEWEST markets first (critical for finding recent crypto markets)
+  let fetchLimit = limit * 5; // Fetch more to account for filtering
   
   let allEvents: GammaEvent[] = [];
+  
+  // Build query string with ordering to get newest markets first
+  const orderParams = "&order=id&ascending=false";
   
   if (status === "all") {
     // Fetch both live and resolved markets
     const [liveEvents, resolvedEvents] = await Promise.all([
-      fetchGamma(`/events?closed=false&limit=${fetchLimit}${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
-      fetchGamma(`/events?closed=true&limit=${fetchLimit}${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
+      fetchGamma(`/events?closed=false&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
+      fetchGamma(`/events?closed=true&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
     ]);
     allEvents = [...(liveEvents || []), ...(resolvedEvents || [])];
   } else if (status === "resolved") {
     // Only resolved/finished markets
-    allEvents = (await fetchGamma(`/events?closed=true&limit=${fetchLimit}${category ? `&category=${category}` : ""}`)) as GammaEvent[];
+    allEvents = (await fetchGamma(`/events?closed=true&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`)) as GammaEvent[];
   } else {
     // Default: only live/tradeable markets
-    allEvents = (await fetchGamma(`/events?closed=false&limit=${fetchLimit}${category ? `&category=${category}` : ""}`)) as GammaEvent[];
+    allEvents = (await fetchGamma(`/events?closed=false&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`)) as GammaEvent[];
   }
 
   let filtered = allEvents || [];
 
-  // Filter by query if provided
+  // Filter by query if provided - use WORD-BASED matching (all words must be present)
+  // This fixes the bug where "Bitcoin price" didn't match "What price will Bitcoin hit in 2025?"
   if (query) {
-    const queryLower = query.toLowerCase();
-    filtered = filtered.filter(
-      (e) =>
-        e.title?.toLowerCase().includes(queryLower) ||
-        e.description?.toLowerCase().includes(queryLower)
-    );
+    // Split query into words and filter out common stop words
+    const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by']);
+    const queryWords = query.toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length > 1 && !stopWords.has(word));
+    
+    filtered = filtered.filter((e) => {
+      const titleLower = (e.title || '').toLowerCase();
+      const descLower = (e.description || '').toLowerCase();
+      const searchText = titleLower + ' ' + descLower;
+      
+      // ALL query words must be present in either title or description
+      return queryWords.every(word => searchText.includes(word));
+    });
   }
 
   // Count by status for breakdown

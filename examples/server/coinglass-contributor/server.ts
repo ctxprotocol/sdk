@@ -285,13 +285,13 @@ const TOOLS = [
   },
   {
     name: "get_funding_rates",
-    description: "📊 RAW: Get current funding rates for a coin across all exchanges",
+    description: "📊 RAW: Get current funding rates for a coin across all exchanges. ⚠️ NOTE: Requires Professional tier or above - Hobbyist tier will return an upgrade notice.",
     inputSchema: { type: "object" as const, properties: { symbol: { type: "string" } }, required: ["symbol"] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
     name: "get_funding_rate_history",
-    description: "📊 RAW: Get historical funding rate OHLC data",
+    description: "📊 RAW: Get historical funding rate OHLC data. ⚠️ NOTE: Requires Professional tier or above - Hobbyist tier will return an upgrade notice.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -312,13 +312,13 @@ const TOOLS = [
   },
   {
     name: "get_oi_by_exchange",
-    description: "📊 RAW: Get open interest breakdown by exchange for a coin",
+    description: "📊 RAW: Get open interest breakdown by exchange for a coin. ⚠️ NOTE: Requires Professional tier - Hobbyist will return upgrade notice.",
     inputSchema: { type: "object" as const, properties: { symbol: { type: "string" } }, required: ["symbol"] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
     name: "get_oi_history",
-    description: "📊 RAW: Get aggregated open interest history (stablecoin margin)",
+    description: "📊 RAW: Get aggregated open interest history (stablecoin margin). ⚠️ NOTE: Requires Professional tier.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -348,7 +348,7 @@ const TOOLS = [
   },
   {
     name: "get_liquidation_history",
-    description: "📊 RAW: Get liquidation history for a trading pair",
+    description: "📊 RAW: Get liquidation history for a trading pair. ⚠️ NOTE: Requires Professional tier.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -363,7 +363,7 @@ const TOOLS = [
   },
   {
     name: "get_aggregated_liquidations",
-    description: "📊 RAW: Get aggregated liquidation history across exchanges",
+    description: "📊 RAW: Get aggregated liquidation history across exchanges. ⚠️ NOTE: Requires Professional tier.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -378,7 +378,7 @@ const TOOLS = [
   },
   {
     name: "get_global_long_short_ratio",
-    description: "📊 RAW: Get global long/short account ratio history",
+    description: "📊 RAW: Get global long/short account ratio history. ⚠️ NOTE: Requires Professional tier.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -1313,8 +1313,22 @@ async function handleGetPriceHistory(args: Record<string, unknown> | undefined):
 
 async function handleGetFundingRates(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
   const symbol = (args?.symbol as string)?.toUpperCase() || "BTC";
-  const data = await coinglassGet("/api/futures/fundingRate/exchange-list", { symbol });
-  return successResult({ data, fetchedAt: new Date().toISOString() });
+  try {
+    const data = await coinglassGet("/api/futures/fundingRate/exchange-list", { symbol });
+    return successResult({ data, fetchedAt: new Date().toISOString() });
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.includes("404") || errMsg.includes("Not Found")) {
+      return successResult({
+        error: "PLAN_UPGRADE_REQUIRED",
+        message: "Funding rate data requires Coinglass Professional tier or above. Current plan: Hobbyist",
+        suggestion: "For funding rate analysis, use the 'get_btc_valuation_score' or 'analyze_market_sentiment' tools which use available indices, or upgrade at https://coinglass.com/pricing",
+        symbol,
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+    throw error;
+  }
 }
 
 async function handleGetFundingRateHistory(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -1323,19 +1337,61 @@ async function handleGetFundingRateHistory(args: Record<string, unknown> | undef
   const interval = (args?.interval as string) || "1h";
   const limit = (args?.limit as number) || 100;
   if (!symbol) return errorResult("symbol is required");
-  const data = await coinglassGet("/api/futures/fundingRate/ohlc-history", { exchange, symbol, interval, limit });
-  return successResult({ data, fetchedAt: new Date().toISOString() });
+  try {
+    const data = await coinglassGet("/api/futures/fundingRate/ohlc-history", { exchange, symbol, interval, limit });
+    return successResult({ data, fetchedAt: new Date().toISOString() });
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.includes("404") || errMsg.includes("Not Found")) {
+      return successResult({
+        error: "PLAN_UPGRADE_REQUIRED",
+        message: "Funding rate history requires Coinglass Professional tier or above. Current plan: Hobbyist",
+        suggestion: "Use 'get_fear_greed_index' or 'get_bull_market_indicators' for available market timing data",
+        symbol,
+        exchange,
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+    throw error;
+  }
 }
 
 async function handleGetFundingArbitrageList(): Promise<CallToolResult> {
-  const data = await coinglassGet("/api/futures/fundingRate/arbitrage");
-  return successResult({ data, fetchedAt: new Date().toISOString() });
+  try {
+    const data = await coinglassGet("/api/futures/fundingRate/arbitrage");
+    return successResult({ data, fetchedAt: new Date().toISOString() });
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.includes("404") || errMsg.includes("Not Found")) {
+      return successResult({
+        error: "PLAN_UPGRADE_REQUIRED",
+        message: "Funding arbitrage data requires Coinglass Professional tier or above. Current plan: Hobbyist",
+        suggestion: "For market opportunities, use 'get_bull_market_indicators' to see market cycle positioning",
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+    throw error;
+  }
 }
 
 async function handleGetOiByExchange(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
   const symbol = (args?.symbol as string)?.toUpperCase() || "BTC";
-  const data = await coinglassGet("/api/futures/openInterest/exchange-list", { symbol });
-  return successResult({ data, fetchedAt: new Date().toISOString() });
+  try {
+    const data = await coinglassGet("/api/futures/openInterest/exchange-list", { symbol });
+    return successResult({ data, fetchedAt: new Date().toISOString() });
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.includes("404") || errMsg.includes("Not Found")) {
+      return successResult({
+        error: "PLAN_UPGRADE_REQUIRED",
+        message: "Open Interest by exchange requires Coinglass Professional tier or above. Current plan: Hobbyist",
+        suggestion: "Use 'get_exchange_balance' to see exchange BTC holdings as a proxy for market positioning",
+        symbol,
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+    throw error;
+  }
 }
 
 async function handleGetOiHistory(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -1343,8 +1399,22 @@ async function handleGetOiHistory(args: Record<string, unknown> | undefined): Pr
   const exchange_list = (args?.exchange_list as string) || "Binance,OKX,Bybit";
   const interval = (args?.interval as string) || "1h";
   const limit = (args?.limit as number) || 100;
-  const data = await coinglassGet("/api/futures/open-interest/aggregated-stablecoin-history", { symbol, exchange_list, interval, limit });
-  return successResult({ data, fetchedAt: new Date().toISOString() });
+  try {
+    const data = await coinglassGet("/api/futures/open-interest/aggregated-stablecoin-history", { symbol, exchange_list, interval, limit });
+    return successResult({ data, fetchedAt: new Date().toISOString() });
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.includes("404") || errMsg.includes("Not Found") || errMsg.includes("400")) {
+      return successResult({
+        error: "PLAN_UPGRADE_REQUIRED",
+        message: "Open Interest history requires Coinglass Professional tier or above. Current plan: Hobbyist",
+        suggestion: "Use 'get_exchange_balance_chart' for historical exchange holdings data",
+        symbol,
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+    throw error;
+  }
 }
 
 async function handleGetOiCoinMarginHistory(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -1362,8 +1432,23 @@ async function handleGetLiquidationHistory(args: Record<string, unknown> | undef
   const interval = (args?.interval as string) || "1h";
   const limit = (args?.limit as number) || 100;
   if (!symbol) return errorResult("symbol is required");
-  const data = await coinglassGet("/api/futures/liquidation/history", { exchange, symbol, interval, limit });
-  return successResult({ data, fetchedAt: new Date().toISOString() });
+  try {
+    const data = await coinglassGet("/api/futures/liquidation/history", { exchange, symbol, interval, limit });
+    return successResult({ data, fetchedAt: new Date().toISOString() });
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.includes("404") || errMsg.includes("Not Found") || errMsg.includes("500")) {
+      return successResult({
+        error: "PLAN_UPGRADE_REQUIRED",
+        message: "Liquidation history requires Coinglass Professional tier or above. Current plan: Hobbyist",
+        suggestion: "Use 'get_fear_greed_index' (fear indicates recent liquidations) or 'get_bull_market_indicators' for market stress signals",
+        symbol,
+        exchange,
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+    throw error;
+  }
 }
 
 async function handleGetAggregatedLiquidations(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -1371,8 +1456,22 @@ async function handleGetAggregatedLiquidations(args: Record<string, unknown> | u
   const exchange_list = (args?.exchange_list as string) || "Binance,OKX,Bybit";
   const interval = (args?.interval as string) || "1h";
   const limit = (args?.limit as number) || 100;
-  const data = await coinglassGet("/api/futures/liquidation/aggregated-history", { exchange_list, symbol, interval, limit });
-  return successResult({ data, fetchedAt: new Date().toISOString() });
+  try {
+    const data = await coinglassGet("/api/futures/liquidation/aggregated-history", { exchange_list, symbol, interval, limit });
+    return successResult({ data, fetchedAt: new Date().toISOString() });
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.includes("404") || errMsg.includes("Not Found") || errMsg.includes("500")) {
+      return successResult({
+        error: "PLAN_UPGRADE_REQUIRED",
+        message: "Aggregated liquidation data requires Coinglass Professional tier or above. Current plan: Hobbyist",
+        suggestion: "Monitor 'get_fear_greed_index' - Extreme Fear often follows mass liquidation events",
+        symbol,
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+    throw error;
+  }
 }
 
 async function handleGetGlobalLongShortRatio(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -1381,8 +1480,23 @@ async function handleGetGlobalLongShortRatio(args: Record<string, unknown> | und
   const interval = (args?.interval as string) || "1h";
   const limit = (args?.limit as number) || 100;
   if (!symbol) return errorResult("symbol is required");
-  const data = await coinglassGet("/api/futures/globalLongShortAccountRatio/history", { exchange, symbol, interval, limit });
-  return successResult({ data, fetchedAt: new Date().toISOString() });
+  try {
+    const data = await coinglassGet("/api/futures/globalLongShortAccountRatio/history", { exchange, symbol, interval, limit });
+    return successResult({ data, fetchedAt: new Date().toISOString() });
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.includes("404") || errMsg.includes("Not Found")) {
+      return successResult({
+        error: "PLAN_UPGRADE_REQUIRED",
+        message: "Long/Short ratio data requires Coinglass Professional tier or above. Current plan: Hobbyist",
+        suggestion: "Use 'get_exchange_balance' to see if institutions are accumulating (outflows) or distributing (inflows)",
+        symbol,
+        exchange,
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+    throw error;
+  }
 }
 
 async function handleGetTopTraderPositionRatio(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
