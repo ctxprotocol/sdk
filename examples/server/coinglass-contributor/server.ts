@@ -749,75 +749,84 @@ async function coinglassGet(endpoint: string, params: Record<string, string | nu
 
 async function handleCalculateSqueezeProbability(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
   const symbol = (args?.symbol as string)?.toUpperCase() || "BTC";
-  const pair = `${symbol}USDT`;
 
-  const [fundingData, oiData, lsData] = await Promise.all([
-    coinglassGet("/api/futures/fundingRate/exchange-list", { symbol }).catch(() => []),
-    coinglassGet("/api/futures/openInterest/exchange-list", { symbol }).catch(() => []),
-    coinglassGet("/api/futures/globalLongShortAccountRatio/history", { exchange: "Binance", symbol: pair, interval: "1h", limit: 24 }).catch(() => []),
+  // Note: Funding rates, OI, and L/S ratio endpoints require higher tier subscription
+  // Use available indicators for squeeze analysis
+  const [fearGreedData, bullIndicators, exchangeBalance] = await Promise.all([
+    coinglassGet("/api/index/fear-greed-history").catch(() => null),
+    coinglassGet("/api/bull-market-peak-indicator").catch(() => []),
+    coinglassGet("/api/exchange/balance/list", { symbol }).catch(() => []),
   ]);
 
-  const fundings = Array.isArray(fundingData) ? fundingData : [];
-  const ois = Array.isArray(oiData) ? oiData : [];
-  const lsRatios = Array.isArray(lsData) ? lsData : [];
-
-  // Calculate average funding rate
-  let avgFunding = 0;
-  let fundingCount = 0;
-  for (const f of fundings) {
-    const fd = f as { usdtOrUsdMarginList?: Array<{ fundingRate: number }> };
-    if (fd.usdtOrUsdMarginList) {
-      for (const ex of fd.usdtOrUsdMarginList) {
-        avgFunding += ex.fundingRate;
-        fundingCount++;
-      }
-    }
+  // Parse Fear & Greed for sentiment
+  let fgValue = 50;
+  const fgData = fearGreedData as { data_list?: number[] } | null;
+  if (fgData && fgData.data_list && fgData.data_list.length > 0) {
+    fgValue = fgData.data_list[fgData.data_list.length - 1] || 50;
   }
-  avgFunding = fundingCount > 0 ? avgFunding / fundingCount : 0;
 
-  // Get OI change
-  const allOi = ois.find((o: { exchange?: string }) => o.exchange === "All") as { openInterestChangePercent24h?: number } | undefined;
-  const oiChange24h = allOi?.openInterestChangePercent24h || 0;
+  // Parse exchange balance for flow signals
+  const balances = Array.isArray(exchangeBalance) ? exchangeBalance : [];
+  let totalFlowIn = 0, totalFlowOut = 0;
+  for (const b of balances) {
+    const bal = b as { balance_change_24h?: number; balance_change_1d?: number };
+    const change = bal.balance_change_24h || bal.balance_change_1d || 0;
+    if (change > 0) totalFlowIn += change;
+    else totalFlowOut += Math.abs(change);
+  }
+  const netFlow = totalFlowIn - totalFlowOut;
 
-  // Get latest long/short ratio
-  const latestLs = lsRatios[lsRatios.length - 1] as { longShortRatio?: number } | undefined;
-  const lsRatio = latestLs?.longShortRatio || 1;
-
-  // Calculate squeeze probabilities
+  // Calculate squeeze probabilities based on available data
   const signals: string[] = [];
   let shortSqueeze = 0, longSqueeze = 0;
 
-  // Funding rate factor
-  if (avgFunding < -0.0003) { shortSqueeze += 35; signals.push(`Extreme negative funding (${(avgFunding * 100).toFixed(4)}%)`); }
-  else if (avgFunding < -0.0001) { shortSqueeze += 20; signals.push("Negative funding - shorts paying"); }
-  else if (avgFunding > 0.0003) { longSqueeze += 35; signals.push(`Extreme positive funding (${(avgFunding * 100).toFixed(4)}%)`); }
-  else if (avgFunding > 0.0001) { longSqueeze += 20; signals.push("Positive funding - longs paying"); }
+  // Fear & Greed extremes often precede squeezes
+  if (fgValue <= 20) {
+    shortSqueeze += 30;
+    signals.push(`Extreme Fear (${fgValue}) - shorts may be overextended`);
+  } else if (fgValue <= 35) {
+    shortSqueeze += 15;
+    signals.push(`Fear zone (${fgValue}) - potential short squeeze setup`);
+  } else if (fgValue >= 80) {
+    longSqueeze += 30;
+    signals.push(`Extreme Greed (${fgValue}) - longs may be overextended`);
+  } else if (fgValue >= 65) {
+    longSqueeze += 15;
+    signals.push(`Greed zone (${fgValue}) - potential long squeeze setup`);
+  }
 
-  // OI buildup factor
-  if (oiChange24h > 5) { shortSqueeze += 15; longSqueeze += 15; signals.push(`OI up ${oiChange24h.toFixed(1)}% - positions building`); }
+  // Exchange flows (outflow = bullish, inflow = bearish)
+  if (netFlow < -1000) {
+    shortSqueeze += 20;
+    signals.push(`Strong exchange outflow (${netFlow.toFixed(0)} ${symbol}) - accumulation`);
+  } else if (netFlow > 1000) {
+    longSqueeze += 20;
+    signals.push(`Strong exchange inflow (+${netFlow.toFixed(0)} ${symbol}) - distribution`);
+  }
 
-  // Long/Short ratio factor
-  if (lsRatio < 0.7) { shortSqueeze += 25; signals.push(`Heavy short bias (L/S: ${lsRatio.toFixed(2)})`); }
-  else if (lsRatio > 1.5) { longSqueeze += 25; signals.push(`Heavy long bias (L/S: ${lsRatio.toFixed(2)})`); }
+  shortSqueeze = Math.min(75, shortSqueeze);
+  longSqueeze = Math.min(75, longSqueeze);
 
-  shortSqueeze = Math.min(95, shortSqueeze);
-  longSqueeze = Math.min(95, longSqueeze);
-
-  const dominant = shortSqueeze > longSqueeze + 15 ? "short_squeeze" : longSqueeze > shortSqueeze + 15 ? "long_squeeze" : "neutral";
+  const dominant = shortSqueeze > longSqueeze + 10 ? "short_squeeze" : longSqueeze > shortSqueeze + 10 ? "long_squeeze" : "neutral";
   const recommendation = dominant === "short_squeeze"
-    ? `High short squeeze probability (${shortSqueeze}%). Consider long positions.`
+    ? `Elevated short squeeze probability (${shortSqueeze}%). Fear levels and exchange outflows suggest potential upside.`
     : dominant === "long_squeeze"
-      ? `High long squeeze probability (${longSqueeze}%). Consider short positions.`
-      : "No clear squeeze setup. Both sides relatively balanced.";
+      ? `Elevated long squeeze probability (${longSqueeze}%). Greed levels and exchange inflows suggest potential downside.`
+      : "No clear squeeze setup based on available data. Market relatively balanced.";
 
   return successResult({
     symbol,
     squeezeProbability: { shortSqueeze, longSqueeze, dominant },
-    factors: { avgFundingRate: avgFunding, oiChange24h, longShortRatio: lsRatio },
+    factors: {
+      fearGreedIndex: fgValue,
+      exchangeNetFlow: netFlow,
+      flowDirection: netFlow > 0 ? "inflow" : "outflow",
+    },
     signals,
     recommendation,
-    confidence: Math.max(shortSqueeze, longSqueeze) > 50 ? 0.8 : 0.6,
-    dataSources: ["fundingRate/exchange-list", "openInterest/exchange-list", "globalLongShortAccountRatio/history"],
+    confidence: Math.max(shortSqueeze, longSqueeze) > 40 ? 0.65 : 0.5,
+    limitations: "⚠️ Hobbyist tier: Funding rates, OI, and L/S ratio data not available. Analysis based on Fear & Greed + Exchange flows.",
+    dataSources: ["fear-greed-history", "exchange/balance/list", "bull-market-peak-indicator"],
     dataFreshness: "real-time",
     fetchedAt: new Date().toISOString(),
   });
@@ -826,53 +835,58 @@ async function handleCalculateSqueezeProbability(args: Record<string, unknown> |
 async function handleAnalyzeMarketSentiment(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
   const coins = (args?.coins as string[]) || TOP_COINS;
 
-  const [fearGreed, fundingArb] = await Promise.all([
+  const [fearGreed, bullIndicators] = await Promise.all([
     coinglassGet("/api/index/fear-greed-history").catch(() => null),
-    coinglassGet("/api/futures/fundingRate/arbitrage").catch(() => []),
+    coinglassGet("/api/bull-market-peak-indicator").catch(() => []),
   ]);
 
-  // Parse fear & greed
+  // Parse fear & greed - API returns object with data_list, not array
   let fgValue = 50, fgSentiment = "Neutral";
-  if (fearGreed && Array.isArray(fearGreed) && fearGreed[0]) {
-    const fg = fearGreed[0] as { data_list?: number[]; values?: number[] };
-    const values = fg.data_list || fg.values || [];
-    fgValue = values[values.length - 1] || 50;
+  const fgData = fearGreed as { data_list?: number[]; price_list?: number[]; time_list?: number[] } | null;
+  if (fgData && fgData.data_list && fgData.data_list.length > 0) {
+    fgValue = fgData.data_list[fgData.data_list.length - 1] || 50;
     fgSentiment = fgValue >= 75 ? "Extreme Greed" : fgValue >= 55 ? "Greed" : fgValue >= 45 ? "Neutral" : fgValue >= 25 ? "Fear" : "Extreme Fear";
   }
 
-  // Analyze funding rates
-  const arbData = Array.isArray(fundingArb) ? fundingArb : [];
-  let positiveFunding = 0, negativeFunding = 0;
-  for (const arb of arbData) {
-    const a = arb as { buy?: { funding_rate: number }; sell?: { funding_rate: number } };
-    if (a.buy?.funding_rate && a.buy.funding_rate < 0) negativeFunding++;
-    if (a.sell?.funding_rate && a.sell.funding_rate > 0) positiveFunding++;
+  // Parse bull market indicators
+  const bullData = Array.isArray(bullIndicators) ? bullIndicators : [];
+  const ahr999 = bullData.find((b: { indicator_name?: string }) => b.indicator_name?.includes("Ahr999")) as { current_value?: string } | undefined;
+  const piCycle = bullData.find((b: { indicator_name?: string }) => b.indicator_name?.includes("Pi Cycle")) as { current_value?: string; target_value?: string } | undefined;
+
+  // Calculate sentiment based on available indicators
+  let sentimentScore = fgValue; // Start with Fear & Greed as base
+
+  // Adjust based on AHR999 if available
+  const ahr999Value = ahr999?.current_value ? parseFloat(ahr999.current_value) : null;
+  if (ahr999Value !== null) {
+    if (ahr999Value < 0.45) sentimentScore -= 10; // Strong buy zone = bearish sentiment currently
+    else if (ahr999Value > 4) sentimentScore += 15; // Bubble zone
   }
-  const fundingBias = positiveFunding > negativeFunding * 1.5 ? "bullish" : negativeFunding > positiveFunding * 1.5 ? "bearish" : "neutral";
 
-  // Overall sentiment calculation
-  let sentimentScore = 50;
-  sentimentScore += (fgValue - 50) * 0.4;
-  if (fundingBias === "bullish") sentimentScore += 10;
-  if (fundingBias === "bearish") sentimentScore -= 10;
-
-  const overallSentiment = sentimentScore >= 65 ? "Bullish" : sentimentScore >= 55 ? "Slightly Bullish" : sentimentScore >= 45 ? "Neutral" : sentimentScore >= 35 ? "Slightly Bearish" : "Bearish";
+  const overallSentiment = sentimentScore >= 75 ? "Extreme Greed" : sentimentScore >= 55 ? "Greed" : sentimentScore >= 45 ? "Neutral" : sentimentScore >= 25 ? "Fear" : "Extreme Fear";
 
   const recommendation = sentimentScore >= 65
-    ? "Market sentiment is bullish. Consider trend-following strategies but watch for overextension."
+    ? "Market sentiment is greedy. Consider taking profits or tightening stops."
     : sentimentScore <= 35
-      ? "Market sentiment is bearish. Look for short opportunities or wait for capitulation signals."
-      : "Mixed signals. Use range-bound strategies and wait for clearer direction.";
+      ? "Market sentiment is fearful. Historical buying opportunity - consider DCA."
+      : sentimentScore <= 25
+        ? "Extreme fear - historically the best time to accumulate."
+        : "Neutral sentiment. Market in wait-and-see mode.";
 
   return successResult({
     overallSentiment,
     sentimentScore: Math.round(sentimentScore),
     fearGreedIndex: { value: fgValue, sentiment: fgSentiment },
-    fundingBias: { bias: fundingBias, positiveFundingCount: positiveFunding, negativeFundingCount: negativeFunding },
+    bullMarketIndicators: {
+      ahr999: ahr999Value,
+      piCyclePrice: piCycle?.current_value,
+      piCycleTarget: piCycle?.target_value,
+    },
     analyzedCoins: coins,
     recommendation,
-    confidence: 0.75,
-    dataSources: ["fear-greed-history", "fundingRate/arbitrage"],
+    confidence: 0.8,
+    dataSources: ["fear-greed-history", "bull-market-peak-indicator"],
+    limitations: "Hobbyist tier: Funding rate data not available. Sentiment based on Fear & Greed + Bull indicators.",
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -926,34 +940,33 @@ async function handleFindFundingArbitrage(args: Record<string, unknown> | undefi
 
 async function handleGetBtcValuationScore(): Promise<CallToolResult> {
   const [ahr999Data, rainbowData, bubbleData, fearGreedData, puellData] = await Promise.all([
-    coinglassGet("/api/index/ahr999").catch(() => []),
-    coinglassGet("/api/index/bitcoin/rainbow-chart").catch(() => []),
-    coinglassGet("/api/index/bitcoin/bubble-index").catch(() => []),
+    coinglassGet("/api/index/ahr999").catch(() => null),
+    coinglassGet("/api/index/bitcoin/rainbow-chart").catch(() => null),
+    coinglassGet("/api/index/bitcoin/bubble-index").catch(() => null),
     coinglassGet("/api/index/fear-greed-history").catch(() => null),
-    coinglassGet("/api/index/puell-multiple").catch(() => []),
+    coinglassGet("/api/index/puell-multiple").catch(() => null),
   ]);
 
-  // Parse AHR999
+  // Parse AHR999 - returns array of objects
   const ahr999Arr = Array.isArray(ahr999Data) ? ahr999Data : [];
-  const latestAhr = ahr999Arr[ahr999Arr.length - 1] as { ahr999_value?: number } | undefined;
-  const ahr999Value = latestAhr?.ahr999_value || 1;
+  const latestAhr = ahr999Arr[ahr999Arr.length - 1] as { ahr999_value?: number; ahr999?: number; value?: number } | undefined;
+  const ahr999Value = latestAhr?.ahr999_value || latestAhr?.ahr999 || latestAhr?.value || 1;
   const ahr999Signal = ahr999Value < 0.45 ? "strong_buy" : ahr999Value < 1.2 ? "buy" : ahr999Value < 4 ? "hold" : "sell";
 
-  // Parse Fear & Greed
+  // Parse Fear & Greed - API returns object with data_list, NOT array
   let fgValue = 50;
-  if (fearGreedData && Array.isArray(fearGreedData) && fearGreedData[0]) {
-    const fg = fearGreedData[0] as { data_list?: number[]; values?: number[] };
-    const vals = fg.data_list || fg.values || [];
-    fgValue = vals[vals.length - 1] || 50;
+  const fgData = fearGreedData as { data_list?: number[] } | null;
+  if (fgData && fgData.data_list && fgData.data_list.length > 0) {
+    fgValue = fgData.data_list[fgData.data_list.length - 1] || 50;
   }
 
-  // Parse Puell Multiple
+  // Parse Puell Multiple - returns array
   const puellArr = Array.isArray(puellData) ? puellData : [];
-  const latestPuell = puellArr[puellArr.length - 1] as { puell_multiple?: number } | undefined;
-  const puellValue = latestPuell?.puell_multiple || 1;
+  const latestPuell = puellArr[puellArr.length - 1] as { puell_multiple?: number; value?: number } | undefined;
+  const puellValue = latestPuell?.puell_multiple || latestPuell?.value || 1;
   const puellSignal = puellValue < 0.5 ? "strong_buy" : puellValue < 1 ? "buy" : puellValue < 4 ? "hold" : "sell";
 
-  // Parse Bubble Index
+  // Parse Bubble Index - returns array
   const bubbleArr = Array.isArray(bubbleData) ? bubbleData : [];
   const latestBubble = bubbleArr[bubbleArr.length - 1] as { bubble_index?: number; index?: number } | undefined;
   const bubbleValue = latestBubble?.bubble_index || latestBubble?.index || 0;
@@ -988,12 +1001,13 @@ async function handleGetBtcValuationScore(): Promise<CallToolResult> {
     valuationZone,
     indicators: {
       ahr999: { value: ahr999Value, signal: ahr999Signal },
-      fearGreed: { value: fgValue },
+      fearGreed: { value: fgValue, sentiment: fgValue >= 75 ? "Extreme Greed" : fgValue >= 55 ? "Greed" : fgValue >= 45 ? "Neutral" : fgValue >= 25 ? "Fear" : "Extreme Fear" },
       puellMultiple: { value: puellValue, signal: puellSignal },
       bubbleIndex: { value: bubbleValue },
     },
+    currentPrice: fgData && (fgData as { price_list?: number[] }).price_list ? (fgData as { price_list: number[] }).price_list[(fgData as { price_list: number[] }).price_list.length - 1] : null,
     recommendation,
-    confidence: 0.8,
+    confidence: 0.85,
     dataSources: ["ahr999", "fear-greed-history", "puell-multiple", "bubble-index"],
     fetchedAt: new Date().toISOString(),
   });
@@ -1185,64 +1199,69 @@ async function handleScanVolumeAnomalies(args: Record<string, unknown> | undefin
 }
 
 async function handleGetMarketOverview(): Promise<CallToolResult> {
-  const [coinsMarkets, fearGreed] = await Promise.all([
-    coinglassGet("/api/futures/coins-markets").catch(() => []),
+  const [fearGreed, bullIndicators, etfData, exchangeBalance] = await Promise.all([
     coinglassGet("/api/index/fear-greed-history").catch(() => null),
+    coinglassGet("/api/bull-market-peak-indicator").catch(() => []),
+    coinglassGet("/api/etf/bitcoin/net-assets/history").catch(() => []),
+    coinglassGet("/api/exchange/balance/list", { symbol: "BTC" }).catch(() => []),
   ]);
 
-  const markets = Array.isArray(coinsMarkets) ? coinsMarkets : [];
-
-  let totalOi = 0, totalVolume = 0, totalLongLiq = 0, totalShortLiq = 0;
-  const sorted = [...markets].sort((a: { volume_usd?: number }, b: { volume_usd?: number }) => (b.volume_usd || 0) - (a.volume_usd || 0));
-
-  for (const m of markets) {
-    const market = m as { open_interest_usd?: number; volume_usd?: number; long_liquidation_usd_24h?: number; short_liquidation_usd_24h?: number };
-    totalOi += market.open_interest_usd || 0;
-    totalVolume += market.volume_usd || 0;
-    totalLongLiq += market.long_liquidation_usd_24h || 0;
-    totalShortLiq += market.short_liquidation_usd_24h || 0;
-  }
-
-  // Fear & Greed
+  // Fear & Greed - API returns object with data_list, NOT array
   let fgValue = 50, fgSentiment = "Neutral";
-  if (fearGreed && Array.isArray(fearGreed) && fearGreed[0]) {
-    const fg = fearGreed[0] as { data_list?: number[]; values?: number[] };
-    const vals = fg.data_list || fg.values || [];
-    fgValue = vals[vals.length - 1] || 50;
+  let btcPrice = 0;
+  const fgData = fearGreed as { data_list?: number[]; price_list?: number[] } | null;
+  if (fgData && fgData.data_list && fgData.data_list.length > 0) {
+    fgValue = fgData.data_list[fgData.data_list.length - 1] || 50;
     fgSentiment = fgValue >= 75 ? "Extreme Greed" : fgValue >= 55 ? "Greed" : fgValue >= 45 ? "Neutral" : fgValue >= 25 ? "Fear" : "Extreme Fear";
+    if (fgData.price_list && fgData.price_list.length > 0) {
+      btcPrice = fgData.price_list[fgData.price_list.length - 1];
+    }
   }
 
-  const topGainers = sorted
-    .filter((m: { price_change_percent_24h?: number }) => (m.price_change_percent_24h || 0) > 0)
-    .slice(0, 5)
-    .map((m: { symbol?: string; price_change_percent_24h?: number; current_price?: number }) => ({
-      symbol: m.symbol,
-      change24h: m.price_change_percent_24h,
-      price: m.current_price,
-    }));
+  // Bull market indicators
+  const bullData = Array.isArray(bullIndicators) ? bullIndicators : [];
+  const indicatorHits = bullData.filter((b: { hit_status?: boolean }) => b.hit_status).length;
+  const totalIndicators = bullData.length;
 
-  const topLosers = sorted
-    .filter((m: { price_change_percent_24h?: number }) => (m.price_change_percent_24h || 0) < 0)
-    .sort((a: { price_change_percent_24h?: number }, b: { price_change_percent_24h?: number }) => (a.price_change_percent_24h || 0) - (b.price_change_percent_24h || 0))
-    .slice(0, 5)
-    .map((m: { symbol?: string; price_change_percent_24h?: number; current_price?: number }) => ({
-      symbol: m.symbol,
-      change24h: m.price_change_percent_24h,
-      price: m.current_price,
-    }));
+  // ETF data
+  const etfArr = Array.isArray(etfData) ? etfData : [];
+  const latestEtf = etfArr[etfArr.length - 1] as { net_assets_usd?: number; change_usd?: number } | undefined;
+  const etfNetAssets = latestEtf?.net_assets_usd || 0;
+  const etfDailyChange = latestEtf?.change_usd || 0;
+
+  // Exchange balances
+  const balances = Array.isArray(exchangeBalance) ? exchangeBalance : [];
+  let totalExchangeBtc = 0;
+  let btcChange24h = 0;
+  for (const b of balances) {
+    const bal = b as { total_balance?: number; balance_change_1d?: number };
+    totalExchangeBtc += bal.total_balance || 0;
+    btcChange24h += bal.balance_change_1d || 0;
+  }
 
   return successResult({
-    totalOpenInterest: totalOi,
-    totalOpenInterestFormatted: `$${(totalOi / 1e9).toFixed(2)}B`,
-    totalVolume24h: totalVolume,
-    totalVolume24hFormatted: `$${(totalVolume / 1e9).toFixed(2)}B`,
-    totalLiquidations24h: { long: totalLongLiq, short: totalShortLiq, total: totalLongLiq + totalShortLiq },
+    btcPrice,
+    btcPriceFormatted: `$${btcPrice.toLocaleString()}`,
     fearGreedIndex: { value: fgValue, sentiment: fgSentiment },
     marketSentiment: fgSentiment,
-    topGainers,
-    topLosers,
-    totalCoins: markets.length,
-    dataSources: ["futures/coins-markets", "fear-greed-history"],
+    bullMarketIndicators: {
+      indicatorsTriggered: indicatorHits,
+      totalIndicators,
+      summary: indicatorHits === 0 ? "No bull market peak signals" : `${indicatorHits}/${totalIndicators} peak indicators triggered`,
+    },
+    etfData: {
+      totalNetAssets: etfNetAssets,
+      totalNetAssetsFormatted: `$${(etfNetAssets / 1e9).toFixed(2)}B`,
+      dailyChange: etfDailyChange,
+      dailyChangeFormatted: `$${(etfDailyChange / 1e6).toFixed(1)}M`,
+    },
+    exchangeData: {
+      totalBtcOnExchanges: totalExchangeBtc,
+      btcChange24h,
+      flowDirection: btcChange24h > 0 ? "inflow (bearish)" : "outflow (bullish)",
+    },
+    limitations: "⚠️ Hobbyist tier: OI, volume, and liquidation data require plan upgrade.",
+    dataSources: ["fear-greed-history", "bull-market-peak-indicator", "etf/bitcoin/net-assets/history", "exchange/balance/list"],
     fetchedAt: new Date().toISOString(),
   });
 }
