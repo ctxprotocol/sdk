@@ -1293,7 +1293,7 @@ Each result includes:
 
   {
     name: "get_user_positions",
-    description: "Get all current positions for any Polymarket wallet address. Shows their open bets, entry prices, P&L, and position sizes. Great for tracking smart money or analyzing trader behavior.",
+    description: "Get positions AND trading history for any Polymarket wallet. Shows BOTH open positions (unrealized P&L) AND closed positions (realized P&L with true win rate). Essential for whale tracking - the 'tradingHistory' section shows actual win rate based on completed trades, not just current position values.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -1316,8 +1316,9 @@ Each result includes:
       type: "object" as const,
       properties: {
         address: { type: "string" },
-        positions: {
+        openPositions: {
           type: "array",
+          description: "Currently open positions (unrealized P&L)",
           items: {
             type: "object",
             properties: {
@@ -1334,19 +1335,43 @@ Each result includes:
             },
           },
         },
-        summary: {
+        tradingHistory: {
           type: "object",
+          description: "Historical trading performance from closed positions - THIS is the TRUE win rate",
           properties: {
-            totalPositions: { type: "number" },
+            totalClosedTrades: { type: "number" },
+            wins: { type: "number", description: "Trades with positive realized P&L" },
+            losses: { type: "number", description: "Trades with negative realized P&L" },
+            winRate: { type: "number", description: "Win percentage based on REALIZED trades (0-100)" },
+            totalRealizedPnL: { type: "number", description: "Total profit/loss from closed positions" },
+            recentTrades: {
+              type: "array",
+              description: "Most recent closed trades",
+              items: {
+                type: "object",
+                properties: {
+                  marketTitle: { type: "string" },
+                  outcome: { type: "string" },
+                  realizedPnL: { type: "number" },
+                },
+              },
+            },
+          },
+        },
+        openPositionsSummary: {
+          type: "object",
+          description: "Summary of currently OPEN positions (unrealized, may change)",
+          properties: {
+            totalOpenPositions: { type: "number" },
             totalValue: { type: "number" },
             totalUnrealizedPnL: { type: "number" },
-            winningPositions: { type: "number" },
-            losingPositions: { type: "number" },
+            profitablePositions: { type: "number" },
+            underwaterPositions: { type: "number" },
           },
         },
         fetchedAt: { type: "string" },
       },
-      required: ["address", "positions", "summary"],
+      required: ["address", "openPositions", "tradingHistory", "openPositionsSummary"],
     },
   },
 
@@ -4616,25 +4641,21 @@ async function handleGetUserPositions(
   }
 
   try {
-    const positions = (await fetchDataApi(
-      `/positions?user=${address}&limit=${limit}${sizeThreshold > 0 ? `&sizeThreshold=${sizeThreshold}` : ""}`
-    )) as DataApiPosition[];
+    // Fetch BOTH open positions AND closed positions in parallel
+    const [openPositions, closedPositions] = await Promise.all([
+      fetchDataApi(`/positions?user=${address}&limit=${limit}${sizeThreshold > 0 ? `&sizeThreshold=${sizeThreshold}` : ""}`)
+        .catch(() => []) as Promise<DataApiPosition[]>,
+      fetchDataApi(`/closed-positions?user=${address}&limit=${limit}`)
+        .catch(() => []) as Promise<DataApiClosedPosition[]>,
+    ]);
 
-    if (!positions || !Array.isArray(positions)) {
-      return successResult({
-        address,
-        positions: [],
-        summary: { totalPositions: 0, totalValue: 0, totalUnrealizedPnL: 0, winningPositions: 0, losingPositions: 0 },
-        fetchedAt: new Date().toISOString(),
-      });
-    }
+    // Process OPEN positions (unrealized P&L)
+    let totalOpenValue = 0;
+    let totalUnrealizedPnL = 0;
+    let profitableCount = 0;
+    let underwaterCount = 0;
 
-    let totalValue = 0;
-    let totalPnL = 0;
-    let winningCount = 0;
-    let losingCount = 0;
-
-    const formattedPositions = positions.map((p) => {
+    const formattedOpenPositions = (Array.isArray(openPositions) ? openPositions : []).map((p) => {
       const size = Number(p.size || 0);
       const avgPrice = Number(p.avgPrice || 0);
       const curPrice = Number(p.curPrice || avgPrice);
@@ -4643,10 +4664,10 @@ async function handleGetUserPositions(
       const pnl = Number(p.cashPnl || currentValue - initialValue);
       const pnlPercent = initialValue > 0 ? (pnl / initialValue) * 100 : 0;
 
-      totalValue += currentValue;
-      totalPnL += pnl;
-      if (pnl > 0) winningCount++;
-      else if (pnl < 0) losingCount++;
+      totalOpenValue += currentValue;
+      totalUnrealizedPnL += pnl;
+      if (pnl > 0.01) profitableCount++;
+      else if (pnl < -0.01) underwaterCount++;
 
       return {
         conditionId: p.conditionId || "",
@@ -4662,15 +4683,53 @@ async function handleGetUserPositions(
       };
     });
 
+    // Process CLOSED positions (realized P&L) - THIS IS THE TRUE WIN RATE
+    let wins = 0;
+    let losses = 0;
+    let totalRealizedPnL = 0;
+
+    const closedArray = Array.isArray(closedPositions) ? closedPositions : [];
+    const recentTrades: Array<{ marketTitle: string; outcome: string; realizedPnL: number }> = [];
+
+    for (const p of closedArray) {
+      const realizedPnL = Number(p.realizedPnl || 0);
+      totalRealizedPnL += realizedPnL;
+      
+      if (realizedPnL > 0.01) wins++;
+      else if (realizedPnL < -0.01) losses++;
+
+      // Keep most recent 10 trades for display
+      if (recentTrades.length < 10) {
+        recentTrades.push({
+          marketTitle: p.title || "Unknown",
+          outcome: p.outcome || "YES",
+          realizedPnL: Number(realizedPnL.toFixed(2)),
+        });
+      }
+    }
+
+    const totalClosedTrades = wins + losses;
+    const winRate = totalClosedTrades > 0 ? (wins / totalClosedTrades) * 100 : 0;
+
     return successResult({
       address,
-      positions: formattedPositions,
-      summary: {
-        totalPositions: positions.length,
-        totalValue: Number(totalValue.toFixed(2)),
-        totalUnrealizedPnL: Number(totalPnL.toFixed(2)),
-        winningPositions: winningCount,
-        losingPositions: losingCount,
+      openPositions: formattedOpenPositions,
+      tradingHistory: {
+        totalClosedTrades,
+        wins,
+        losses,
+        winRate: Number(winRate.toFixed(1)),
+        totalRealizedPnL: Number(totalRealizedPnL.toFixed(2)),
+        recentTrades,
+        note: "Win rate is calculated from CLOSED positions (realized P&L), not open positions",
+      },
+      openPositionsSummary: {
+        totalOpenPositions: formattedOpenPositions.length,
+        totalValue: Number(totalOpenValue.toFixed(2)),
+        totalUnrealizedPnL: Number(totalUnrealizedPnL.toFixed(2)),
+        profitablePositions: profitableCount,
+        underwaterPositions: underwaterCount,
+        note: "Open positions show UNREALIZED P&L - these may change before resolution",
       },
       fetchedAt: new Date().toISOString(),
     });
@@ -5096,6 +5155,22 @@ interface DataApiPosition {
   percentPnl?: string | number;
   proxyWallet?: string;
   user?: string;
+}
+
+interface DataApiClosedPosition {
+  conditionId?: string;
+  title?: string;
+  slug?: string;
+  outcome?: string;
+  outcomeIndex?: number;
+  avgPrice?: string | number;
+  totalBought?: string | number;
+  realizedPnl?: string | number;
+  curPrice?: string | number;
+  timestamp?: string | number;
+  proxyWallet?: string;
+  eventSlug?: string;
+  endDate?: string;
 }
 
 interface GammaComment {

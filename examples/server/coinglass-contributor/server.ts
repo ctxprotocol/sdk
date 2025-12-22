@@ -1,20 +1,25 @@
 /**
- * Coinglass MCP Server v1.0.0
+ * Coinglass MCP Server v1.1.0
  * 
  * Comprehensive crypto derivatives intelligence from Coinglass API.
  * 
- * TIER 1: INTELLIGENCE LAYER (8 tools)
- * - calculate_squeeze_probability - Predict short/long squeezes
- * - analyze_market_sentiment - Cross-market sentiment analysis
- * - find_funding_arbitrage - Best funding rate opportunities
- * - get_btc_valuation_score - Multi-indicator BTC valuation
- * - detect_liquidation_risk - Liquidation cascade prediction
- * - analyze_smart_money - Top trader vs retail positioning
- * - scan_volume_anomalies - Unusual volume detection
- * - get_market_overview - Complete derivatives dashboard
+ * ⚠️ API TIER: Hobbyist
+ * Many endpoints require Professional tier or above and have been disabled.
+ * See: https://coinglass.com/pricing
  * 
- * TIER 2: RAW DATA LAYER (35+ tools)
- * Full access to Coinglass API endpoints
+ * TIER 1: INTELLIGENCE LAYER (4 tools - Hobbyist compatible)
+ * - analyze_market_sentiment - Cross-market sentiment analysis  
+ * - get_btc_valuation_score - Multi-indicator BTC valuation
+ * - get_market_overview - Market overview with available data
+ * - get_funding_rates - Current funding rates across exchanges
+ * 
+ * TIER 2: RAW DATA LAYER (15 tools - Hobbyist compatible)
+ * Access to Coinglass API endpoints available on Hobbyist tier
+ * 
+ * DISABLED (Require Professional+):
+ * - find_funding_arbitrage, detect_liquidation_risk, analyze_smart_money
+ * - scan_volume_anomalies, calculate_squeeze_probability
+ * - Most historical/aggregated data endpoints
  */
 
 import "dotenv/config";
@@ -43,34 +48,41 @@ const TOP_COINS = ["BTC", "ETH", "SOL", "XRP", "BNB", "DOGE", "ADA", "AVAX", "LI
 
 const TOOLS = [
   // ============================================================================
-  // TIER 1: INTELLIGENCE LAYER
+  // TIER 1: INTELLIGENCE LAYER (Hobbyist-compatible tools only)
   // ============================================================================
-  {
-    name: "calculate_squeeze_probability",
-    description: "🧠 INTELLIGENCE: Calculate short/long squeeze probability by analyzing funding rates, OI, liquidations, and long/short ratios. Identifies coins PRIMED for explosive moves.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string", description: "Coin symbol (e.g., BTC, ETH)" },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string" },
-        squeezeProbability: { type: "object" },
-        factors: { type: "object" },
-        signals: { type: "array", items: { type: "string" } },
-        recommendation: { type: "string" },
-        confidence: { type: "number" },
-        dataSources: { type: "array", items: { type: "string" } },
-        dataFreshness: { type: "string" },
-        fetchedAt: { type: "string" },
-      },
-      required: ["symbol", "squeezeProbability", "confidence"],
-    },
-  },
+
+  // ============================================================================
+  // DISABLED - REQUIRES PROFESSIONAL TIER OR ABOVE
+  // TODO: Uncomment when API key upgraded to Professional
+  // ============================================================================
+  // {
+  //   name: "calculate_squeeze_probability",
+  //   description: "🧠 INTELLIGENCE: Calculate short/long squeeze probability by analyzing funding rates, OI, liquidations, and long/short ratios. Identifies coins PRIMED for explosive moves.",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string", description: "Coin symbol (e.g., BTC, ETH)" },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string" },
+  //       squeezeProbability: { type: "object" },
+  //       factors: { type: "object" },
+  //       signals: { type: "array", items: { type: "string" } },
+  //       recommendation: { type: "string" },
+  //       confidence: { type: "number" },
+  //       dataSources: { type: "array", items: { type: "string" } },
+  //       dataFreshness: { type: "string" },
+  //       fetchedAt: { type: "string" },
+  //     },
+  //     required: ["symbol", "squeezeProbability", "confidence"],
+  //   },
+  // },
+  // ============================================================================
+
   {
     name: "analyze_market_sentiment",
     description: "🧠 INTELLIGENCE: Analyze overall market sentiment using Fear & Greed Index, funding rates, long/short ratios, and liquidation data across top coins.",
@@ -97,29 +109,35 @@ const TOOLS = [
       required: ["overallSentiment", "sentimentScore", "confidence"],
     },
   },
-  {
-    name: "find_funding_arbitrage",
-    description: "🧠 INTELLIGENCE: Find the best funding rate arbitrage opportunities across all perpetual contracts with risk assessment.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        minApr: { type: "number", description: "Minimum annualized yield % (default: 20)" },
-        limit: { type: "number", description: "Max results (default: 15)" },
-      },
-      required: [],
-    },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        opportunities: { type: "array" },
-        marketStats: { type: "object" },
-        confidence: { type: "number" },
-        dataSources: { type: "array", items: { type: "string" } },
-        fetchedAt: { type: "string" },
-      },
-      required: ["opportunities"],
-    },
-  },
+  // ============================================================================
+  // DISABLED - find_funding_arbitrage - REQUIRES PROFESSIONAL TIER
+  // TODO: Uncomment when API key upgraded to Professional
+  // ============================================================================
+  // {
+  //   name: "find_funding_arbitrage",
+  //   description: "🧠 INTELLIGENCE: Find the best funding rate arbitrage opportunities across all perpetual contracts with risk assessment.",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       minApr: { type: "number", description: "Minimum annualized yield % (default: 20)" },
+  //       limit: { type: "number", description: "Max results (default: 15)" },
+  //     },
+  //     required: [],
+  //   },
+  //   outputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       opportunities: { type: "array" },
+  //       marketStats: { type: "object" },
+  //       confidence: { type: "number" },
+  //       dataSources: { type: "array", items: { type: "string" } },
+  //       fetchedAt: { type: "string" },
+  //     },
+  //     required: ["opportunities"],
+  //   },
+  // },
+  // ============================================================================
+
   {
     name: "get_btc_valuation_score",
     description: "🧠 INTELLIGENCE: Get BTC valuation score using AHR999, Rainbow Chart, Bubble Index, Puell Multiple, and Fear & Greed combined analysis.",
@@ -138,82 +156,103 @@ const TOOLS = [
       required: ["valuationScore", "valuationZone", "confidence"],
     },
   },
-  {
-    name: "detect_liquidation_risk",
-    description: "🧠 INTELLIGENCE: Detect liquidation cascade risk by analyzing OI concentration, recent liquidations, and leverage levels.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string", description: "Coin symbol (e.g., BTC)" },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string" },
-        riskLevel: { type: "string" },
-        riskScore: { type: "number" },
-        liquidationData: { type: "object" },
-        oiData: { type: "object" },
-        recommendation: { type: "string" },
-        confidence: { type: "number" },
-        dataSources: { type: "array", items: { type: "string" } },
-        fetchedAt: { type: "string" },
-      },
-      required: ["symbol", "riskLevel", "riskScore", "confidence"],
-    },
-  },
-  {
-    name: "analyze_smart_money",
-    description: "🧠 INTELLIGENCE: Analyze top trader positioning vs retail using top trader position/account ratios and taker buy/sell volume.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string", description: "Trading pair (e.g., BTCUSDT)" },
-        exchange: { type: "string", description: "Exchange (default: Binance)" },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string" },
-        topTraderPosition: { type: "object" },
-        topTraderAccount: { type: "object" },
-        takerFlow: { type: "object" },
-        interpretation: { type: "string" },
-        recommendation: { type: "string" },
-        confidence: { type: "number" },
-        dataSources: { type: "array", items: { type: "string" } },
-        fetchedAt: { type: "string" },
-      },
-      required: ["symbol", "interpretation", "confidence"],
-    },
-  },
-  {
-    name: "scan_volume_anomalies",
-    description: "🧠 INTELLIGENCE: Scan for unusual volume activity across coins comparing current vs historical averages.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        threshold: { type: "number", description: "Volume multiplier threshold (default: 2x)" },
-      },
-      required: [],
-    },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        anomalies: { type: "array" },
-        scannedCoins: { type: "number" },
-        anomaliesFound: { type: "number" },
-        marketContext: { type: "string" },
-        dataSources: { type: "array", items: { type: "string" } },
-        fetchedAt: { type: "string" },
-      },
-      required: ["anomalies", "scannedCoins"],
-    },
-  },
+  // ============================================================================
+  // DISABLED - detect_liquidation_risk - REQUIRES PROFESSIONAL TIER
+  // Uses: liquidation/aggregated-history, openInterest/exchange-list (OI works but liquidation doesn't)
+  // TODO: Uncomment when API key upgraded to Professional
+  // ============================================================================
+  // {
+  //   name: "detect_liquidation_risk",
+  //   description: "🧠 INTELLIGENCE: Detect liquidation cascade risk by analyzing OI concentration, recent liquidations, and leverage levels.",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string", description: "Coin symbol (e.g., BTC)" },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string" },
+  //       riskLevel: { type: "string" },
+  //       riskScore: { type: "number" },
+  //       liquidationData: { type: "object" },
+  //       oiData: { type: "object" },
+  //       recommendation: { type: "string" },
+  //       confidence: { type: "number" },
+  //       dataSources: { type: "array", items: { type: "string" } },
+  //       fetchedAt: { type: "string" },
+  //     },
+  //     required: ["symbol", "riskLevel", "riskScore", "confidence"],
+  //   },
+  // },
+  // ============================================================================
+
+  // ============================================================================
+  // DISABLED - analyze_smart_money - REQUIRES PROFESSIONAL TIER
+  // Uses: top-long-short-position-ratio/history, top-long-short-account-ratio/history, taker-buy-sell-volume/history
+  // TODO: Uncomment when API key upgraded to Professional
+  // ============================================================================
+  // {
+  //   name: "analyze_smart_money",
+  //   description: "🧠 INTELLIGENCE: Analyze top trader positioning vs retail using top trader position/account ratios and taker buy/sell volume.",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string", description: "Trading pair (e.g., BTCUSDT)" },
+  //       exchange: { type: "string", description: "Exchange (default: Binance)" },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string" },
+  //       topTraderPosition: { type: "object" },
+  //       topTraderAccount: { type: "object" },
+  //       takerFlow: { type: "object" },
+  //       interpretation: { type: "string" },
+  //       recommendation: { type: "string" },
+  //       confidence: { type: "number" },
+  //       dataSources: { type: "array", items: { type: "string" } },
+  //       fetchedAt: { type: "string" },
+  //     },
+  //     required: ["symbol", "interpretation", "confidence"],
+  //   },
+  // },
+  // ============================================================================
+
+  // ============================================================================
+  // DISABLED - scan_volume_anomalies - REQUIRES PROFESSIONAL TIER
+  // Uses: spot/coins-markets
+  // TODO: Uncomment when API key upgraded to Professional
+  // ============================================================================
+  // {
+  //   name: "scan_volume_anomalies",
+  //   description: "🧠 INTELLIGENCE: Scan for unusual volume activity across coins comparing current vs historical averages.",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       threshold: { type: "number", description: "Volume multiplier threshold (default: 2x)" },
+  //     },
+  //     required: [],
+  //   },
+  //   outputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       anomalies: { type: "array" },
+  //       scannedCoins: { type: "number" },
+  //       anomaliesFound: { type: "number" },
+  //       marketContext: { type: "string" },
+  //       dataSources: { type: "array", items: { type: "string" } },
+  //       fetchedAt: { type: "string" },
+  //     },
+  //     required: ["anomalies", "scannedCoins"],
+  //   },
+  // },
+  // ============================================================================
+
   {
     name: "get_market_overview",
     description: "🧠 INTELLIGENCE: Get complete derivatives market overview - total OI, volume, liquidations, funding, and sentiment across all exchanges.",
@@ -236,7 +275,7 @@ const TOOLS = [
   },
 
   // ============================================================================
-  // TIER 2: RAW DATA LAYER - Futures
+  // TIER 2: RAW DATA LAYER - Futures (Hobbyist-compatible)
   // ============================================================================
   {
     name: "get_supported_coins",
@@ -257,272 +296,278 @@ const TOOLS = [
     outputSchema: { type: "object" as const, properties: { data: { type: "object" } }, required: ["data"] },
   },
   {
-    name: "get_futures_coins_markets",
-    description: "📊 RAW: Get futures market data for all coins (OI, volume, funding, liquidations)",
-    inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: { type: "object" as const, properties: { markets: { type: "array" } }, required: ["markets"] },
-  },
-  {
     name: "get_futures_pairs_markets",
     description: "📊 RAW: Get detailed market data for a specific coin's trading pairs",
     inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Coin (e.g., BTC)" } }, required: ["symbol"] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
-    name: "get_price_history",
-    description: "📊 RAW: Get OHLCV price history for a futures pair",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        exchange: { type: "string", default: "Binance" },
-        symbol: { type: "string", description: "Trading pair (e.g., BTCUSDT)" },
-        interval: { type: "string", enum: ["1h", "4h", "12h", "1d", "1w"], default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
     name: "get_funding_rates",
-    description: "📊 RAW: Get current funding rates for a coin across all exchanges. ⚠️ NOTE: Requires Professional tier or above - Hobbyist tier will return an upgrade notice.",
-    inputSchema: { type: "object" as const, properties: { symbol: { type: "string" } }, required: ["symbol"] },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_funding_rate_history",
-    description: "📊 RAW: Get historical funding rate OHLC data. ⚠️ NOTE: Requires Professional tier or above - Hobbyist tier will return an upgrade notice.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        exchange: { type: "string", default: "Binance" },
-        symbol: { type: "string" },
-        interval: { type: "string", default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_funding_arbitrage_list",
-    description: "📊 RAW: Get funding rate arbitrage opportunities list",
-    inputSchema: { type: "object" as const, properties: {}, required: [] },
+    description: "📊 RAW: Get current funding rates for a coin across all exchanges",
+    inputSchema: { type: "object" as const, properties: { symbol: { type: "string" } }, required: [] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
     name: "get_oi_by_exchange",
-    description: "📊 RAW: Get open interest breakdown by exchange for a coin. ⚠️ NOTE: Requires Professional tier - Hobbyist will return upgrade notice.",
+    description: "📊 RAW: Get open interest breakdown by exchange for a coin",
     inputSchema: { type: "object" as const, properties: { symbol: { type: "string" } }, required: ["symbol"] },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_oi_history",
-    description: "📊 RAW: Get aggregated open interest history (stablecoin margin). ⚠️ NOTE: Requires Professional tier.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string" },
-        exchange_list: { type: "string", default: "Binance,OKX,Bybit" },
-        interval: { type: "string", default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_oi_coin_margin_history",
-    description: "📊 RAW: Get aggregated open interest history (coin margin)",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string" },
-        exchanges: { type: "string", default: "Binance,OKX,Bybit" },
-        interval: { type: "string", default: "1d" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_liquidation_history",
-    description: "📊 RAW: Get liquidation history for a trading pair. ⚠️ NOTE: Requires Professional tier.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        exchange: { type: "string", default: "Binance" },
-        symbol: { type: "string" },
-        interval: { type: "string", default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_aggregated_liquidations",
-    description: "📊 RAW: Get aggregated liquidation history across exchanges. ⚠️ NOTE: Requires Professional tier.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string" },
-        exchange_list: { type: "string", default: "Binance,OKX,Bybit" },
-        interval: { type: "string", default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_global_long_short_ratio",
-    description: "📊 RAW: Get global long/short account ratio history. ⚠️ NOTE: Requires Professional tier.",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        exchange: { type: "string", default: "Binance" },
-        symbol: { type: "string" },
-        interval: { type: "string", default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_top_trader_position_ratio",
-    description: "📊 RAW: Get top trader long/short position ratio history",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        exchange: { type: "string", default: "Binance" },
-        symbol: { type: "string" },
-        interval: { type: "string", default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_top_trader_account_ratio",
-    description: "📊 RAW: Get top trader long/short account ratio history",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        exchange: { type: "string", default: "Binance" },
-        symbol: { type: "string" },
-        interval: { type: "string", default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_taker_buy_sell_volume",
-    description: "📊 RAW: Get taker buy/sell volume history for a pair",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        exchange: { type: "string", default: "Binance" },
-        symbol: { type: "string" },
-        interval: { type: "string", default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_aggregated_taker_volume",
-    description: "📊 RAW: Get aggregated taker buy/sell volume across exchanges",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string" },
-        exchange_list: { type: "string", default: "Binance,OKX,Bybit" },
-        interval: { type: "string", default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_cvd_history",
-    description: "📊 RAW: Get Cumulative Volume Delta (CVD) history",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        exchange: { type: "string", default: "Binance" },
-        symbol: { type: "string" },
-        interval: { type: "string", default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_volume_footprint",
-    description: "📊 RAW: Get volume footprint chart data (buy/sell at price levels)",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        exchange: { type: "string", default: "Binance" },
-        symbol: { type: "string" },
-        interval: { type: "string", default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_rsi_list",
-    description: "📊 RAW: Get RSI values for all coins across timeframes",
-    inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_indicator_ma",
-    description: "📊 RAW: Get Moving Average indicator data",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        exchange: { type: "string", default: "Binance" },
-        symbol: { type: "string" },
-        interval: { type: "string", default: "1h" },
-        window: { type: "number", default: 20 },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_indicator_boll",
-    description: "📊 RAW: Get Bollinger Bands indicator data",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        exchange: { type: "string", default: "Binance" },
-        symbol: { type: "string" },
-        interval: { type: "string", default: "1h" },
-        window: { type: "number", default: 20 },
-        mult: { type: "number", default: 2 },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
 
   // ============================================================================
-  // TIER 2: RAW DATA LAYER - Indices
+  // DISABLED - REQUIRES PROFESSIONAL TIER OR ABOVE
+  // TODO: Uncomment when API key upgraded to Professional
+  // ============================================================================
+  // {
+  //   name: "get_futures_coins_markets",
+  //   description: "📊 RAW: Get futures market data for all coins (OI, volume, funding, liquidations)",
+  //   inputSchema: { type: "object" as const, properties: {}, required: [] },
+  //   outputSchema: { type: "object" as const, properties: { markets: { type: "array" } }, required: ["markets"] },
+  // },
+  // {
+  //   name: "get_price_history",
+  //   description: "📊 RAW: Get OHLCV price history for a futures pair",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string", description: "Trading pair (e.g., BTCUSDT)" },
+  //       interval: { type: "string", enum: ["1h", "4h", "12h", "1d", "1w"], default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_funding_rate_history",
+  //   description: "📊 RAW: Get historical funding rate OHLC data",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_funding_arbitrage_list",
+  //   description: "📊 RAW: Get funding rate arbitrage opportunities list",
+  //   inputSchema: { type: "object" as const, properties: {}, required: [] },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_oi_history",
+  //   description: "📊 RAW: Get aggregated open interest history (stablecoin margin)",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string" },
+  //       exchange_list: { type: "string", default: "Binance,OKX,Bybit" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_oi_coin_margin_history",
+  //   description: "📊 RAW: Get aggregated open interest history (coin margin)",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string" },
+  //       exchanges: { type: "string", default: "Binance,OKX,Bybit" },
+  //       interval: { type: "string", default: "1d" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_liquidation_history",
+  //   description: "📊 RAW: Get liquidation history for a trading pair",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_aggregated_liquidations",
+  //   description: "📊 RAW: Get aggregated liquidation history across exchanges",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string" },
+  //       exchange_list: { type: "string", default: "Binance,OKX,Bybit" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_global_long_short_ratio",
+  //   description: "📊 RAW: Get global long/short account ratio history",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_top_trader_position_ratio",
+  //   description: "📊 RAW: Get top trader long/short position ratio history",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_top_trader_account_ratio",
+  //   description: "📊 RAW: Get top trader long/short account ratio history",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_taker_buy_sell_volume",
+  //   description: "📊 RAW: Get taker buy/sell volume history for a pair",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_aggregated_taker_volume",
+  //   description: "📊 RAW: Get aggregated taker buy/sell volume across exchanges",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string" },
+  //       exchange_list: { type: "string", default: "Binance,OKX,Bybit" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_cvd_history",
+  //   description: "📊 RAW: Get Cumulative Volume Delta (CVD) history",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_volume_footprint",
+  //   description: "📊 RAW: Get volume footprint chart data (buy/sell at price levels)",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_rsi_list",
+  //   description: "📊 RAW: Get RSI values for all coins across timeframes",
+  //   inputSchema: { type: "object" as const, properties: {}, required: [] },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_indicator_ma",
+  //   description: "📊 RAW: Get Moving Average indicator data",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       window: { type: "number", default: 20 },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_indicator_boll",
+  //   description: "📊 RAW: Get Bollinger Bands indicator data",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       window: { type: "number", default: 20 },
+  //       mult: { type: "number", default: 2 },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // ============================================================================
+
+  // ============================================================================
+  // TIER 2: RAW DATA LAYER - Indices (Hobbyist-compatible)
   // ============================================================================
   {
     name: "get_ahr999_index",
@@ -554,18 +599,23 @@ const TOOLS = [
     inputSchema: { type: "object" as const, properties: {}, required: [] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
-  {
-    name: "get_btc_vs_m2",
-    description: "📊 RAW: Get Bitcoin vs Global M2 Supply growth data",
-    inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_pi_cycle_indicator",
-    description: "📊 RAW: Get Pi Cycle Top Indicator data",
-    inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
+  // ============================================================================
+  // DISABLED - REQUIRES PROFESSIONAL TIER
+  // ============================================================================
+  // {
+  //   name: "get_btc_vs_m2",
+  //   description: "📊 RAW: Get Bitcoin vs Global M2 Supply growth data",
+  //   inputSchema: { type: "object" as const, properties: {}, required: [] },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_pi_cycle_indicator",
+  //   description: "📊 RAW: Get Pi Cycle Top Indicator data",
+  //   inputSchema: { type: "object" as const, properties: {}, required: [] },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // ============================================================================
+
   {
     name: "get_bull_market_indicators",
     description: "📊 RAW: Get Bull Market Peak Indicators",
@@ -601,46 +651,50 @@ const TOOLS = [
 
   // ============================================================================
   // TIER 2: RAW DATA LAYER - Spot
+  // DISABLED - REQUIRES PROFESSIONAL TIER
   // ============================================================================
-  {
-    name: "get_spot_coins_markets",
-    description: "📊 RAW: Get spot market data for all coins",
-    inputSchema: { type: "object" as const, properties: { page: { type: "number", default: 1 }, per_page: { type: "number", default: 50 } }, required: [] },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
-  {
-    name: "get_spot_price_history",
-    description: "📊 RAW: Get spot price OHLCV history",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        exchange: { type: "string", default: "Binance" },
-        symbol: { type: "string" },
-        interval: { type: "string", default: "1h" },
-        limit: { type: "number", default: 100 },
-      },
-      required: ["symbol"],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
+  // {
+  //   name: "get_spot_coins_markets",
+  //   description: "📊 RAW: Get spot market data for all coins",
+  //   inputSchema: { type: "object" as const, properties: { page: { type: "number", default: 1 }, per_page: { type: "number", default: 50 } }, required: [] },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // {
+  //   name: "get_spot_price_history",
+  //   description: "📊 RAW: Get spot price OHLCV history",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // ============================================================================
 
   // ============================================================================
   // TIER 2: RAW DATA LAYER - Options
+  // DISABLED - REQUIRES PROFESSIONAL TIER
   // ============================================================================
-  {
-    name: "get_options_oi_history",
-    description: "📊 RAW: Get options open interest history by exchange",
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string", default: "BTC" },
-        unit: { type: "string", default: "USD" },
-        range: { type: "string", default: "1h" },
-      },
-      required: [],
-    },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  },
+  // {
+  //   name: "get_options_oi_history",
+  //   description: "📊 RAW: Get options open interest history by exchange",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string", default: "BTC" },
+  //       unit: { type: "string", default: "USD" },
+  //       range: { type: "string", default: "1h" },
+  //     },
+  //     required: [],
+  //   },
+  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  // },
+  // ============================================================================
 ];
 
 // ============================================================================
@@ -658,54 +712,60 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
   const { name, arguments: args } = request.params;
   try {
     switch (name) {
-      // Tier 1 Intelligence Tools
-      case "calculate_squeeze_probability": return await handleCalculateSqueezeProbability(args);
+      // Tier 1 Intelligence Tools (Hobbyist-compatible)
       case "analyze_market_sentiment": return await handleAnalyzeMarketSentiment(args);
-      case "find_funding_arbitrage": return await handleFindFundingArbitrage(args);
       case "get_btc_valuation_score": return await handleGetBtcValuationScore();
-      case "detect_liquidation_risk": return await handleDetectLiquidationRisk(args);
-      case "analyze_smart_money": return await handleAnalyzeSmartMoney(args);
-      case "scan_volume_anomalies": return await handleScanVolumeAnomalies(args);
       case "get_market_overview": return await handleGetMarketOverview();
-      // Tier 2 Raw Tools
+
+      // Tier 2 Raw Tools (Hobbyist-compatible)
       case "get_supported_coins": return await handleGetSupportedCoins();
       case "get_supported_exchanges": return await handleGetSupportedExchanges();
       case "get_exchange_pairs": return await handleGetExchangePairs(args);
-      case "get_futures_coins_markets": return await handleGetFuturesCoinsMarkets();
       case "get_futures_pairs_markets": return await handleGetFuturesPairsMarkets(args);
-      case "get_price_history": return await handleGetPriceHistory(args);
       case "get_funding_rates": return await handleGetFundingRates(args);
-      case "get_funding_rate_history": return await handleGetFundingRateHistory(args);
-      case "get_funding_arbitrage_list": return await handleGetFundingArbitrageList();
       case "get_oi_by_exchange": return await handleGetOiByExchange(args);
-      case "get_oi_history": return await handleGetOiHistory(args);
-      case "get_oi_coin_margin_history": return await handleGetOiCoinMarginHistory(args);
-      case "get_liquidation_history": return await handleGetLiquidationHistory(args);
-      case "get_aggregated_liquidations": return await handleGetAggregatedLiquidations(args);
-      case "get_global_long_short_ratio": return await handleGetGlobalLongShortRatio(args);
-      case "get_top_trader_position_ratio": return await handleGetTopTraderPositionRatio(args);
-      case "get_top_trader_account_ratio": return await handleGetTopTraderAccountRatio(args);
-      case "get_taker_buy_sell_volume": return await handleGetTakerBuySellVolume(args);
-      case "get_aggregated_taker_volume": return await handleGetAggregatedTakerVolume(args);
-      case "get_cvd_history": return await handleGetCvdHistory(args);
-      case "get_volume_footprint": return await handleGetVolumeFootprint(args);
-      case "get_rsi_list": return await handleGetRsiList();
-      case "get_indicator_ma": return await handleGetIndicatorMa(args);
-      case "get_indicator_boll": return await handleGetIndicatorBoll(args);
       case "get_ahr999_index": return await handleGetAhr999Index();
       case "get_rainbow_chart": return await handleGetRainbowChart();
       case "get_fear_greed_index": return await handleGetFearGreedIndex();
       case "get_bubble_index": return await handleGetBubbleIndex();
       case "get_puell_multiple": return await handleGetPuellMultiple();
-      case "get_btc_vs_m2": return await handleGetBtcVsM2();
-      case "get_pi_cycle_indicator": return await handleGetPiCycleIndicator();
       case "get_bull_market_indicators": return await handleGetBullMarketIndicators();
       case "get_btc_etf_netflow": return await handleGetBtcEtfNetflow(args);
       case "get_exchange_balance": return await handleGetExchangeBalance(args);
       case "get_exchange_balance_chart": return await handleGetExchangeBalanceChart(args);
-      case "get_spot_coins_markets": return await handleGetSpotCoinsMarkets(args);
-      case "get_spot_price_history": return await handleGetSpotPriceHistory(args);
-      case "get_options_oi_history": return await handleGetOptionsOiHistory(args);
+
+      // ============================================================================
+      // DISABLED HANDLERS - Require Professional tier
+      // case "calculate_squeeze_probability": return await handleCalculateSqueezeProbability(args);
+      // case "find_funding_arbitrage": return await handleFindFundingArbitrage(args);
+      // case "detect_liquidation_risk": return await handleDetectLiquidationRisk(args);
+      // case "analyze_smart_money": return await handleAnalyzeSmartMoney(args);
+      // case "scan_volume_anomalies": return await handleScanVolumeAnomalies(args);
+      // case "get_futures_coins_markets": return await handleGetFuturesCoinsMarkets();
+      // case "get_price_history": return await handleGetPriceHistory(args);
+      // case "get_funding_rate_history": return await handleGetFundingRateHistory(args);
+      // case "get_funding_arbitrage_list": return await handleGetFundingArbitrageList();
+      // case "get_oi_history": return await handleGetOiHistory(args);
+      // case "get_oi_coin_margin_history": return await handleGetOiCoinMarginHistory(args);
+      // case "get_liquidation_history": return await handleGetLiquidationHistory(args);
+      // case "get_aggregated_liquidations": return await handleGetAggregatedLiquidations(args);
+      // case "get_global_long_short_ratio": return await handleGetGlobalLongShortRatio(args);
+      // case "get_top_trader_position_ratio": return await handleGetTopTraderPositionRatio(args);
+      // case "get_top_trader_account_ratio": return await handleGetTopTraderAccountRatio(args);
+      // case "get_taker_buy_sell_volume": return await handleGetTakerBuySellVolume(args);
+      // case "get_aggregated_taker_volume": return await handleGetAggregatedTakerVolume(args);
+      // case "get_cvd_history": return await handleGetCvdHistory(args);
+      // case "get_volume_footprint": return await handleGetVolumeFootprint(args);
+      // case "get_rsi_list": return await handleGetRsiList();
+      // case "get_indicator_ma": return await handleGetIndicatorMa(args);
+      // case "get_indicator_boll": return await handleGetIndicatorBoll(args);
+      // case "get_btc_vs_m2": return await handleGetBtcVsM2();
+      // case "get_pi_cycle_indicator": return await handleGetPiCycleIndicator();
+      // case "get_spot_coins_markets": return await handleGetSpotCoinsMarkets(args);
+      // case "get_spot_price_history": return await handleGetSpotPriceHistory(args);
+      // case "get_options_oi_history": return await handleGetOptionsOiHistory(args);
+      // ============================================================================
+
       default: return errorResult(`Unknown tool: ${name}`);
     }
   } catch (error) {
@@ -1313,22 +1373,19 @@ async function handleGetPriceHistory(args: Record<string, unknown> | undefined):
 
 async function handleGetFundingRates(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
   const symbol = (args?.symbol as string)?.toUpperCase() || "BTC";
-  try {
-    const data = await coinglassGet("/api/futures/fundingRate/exchange-list", { symbol });
-    return successResult({ data, fetchedAt: new Date().toISOString() });
-  } catch (error) {
-    const errMsg = error instanceof Error ? error.message : String(error);
-    if (errMsg.includes("404") || errMsg.includes("Not Found")) {
-      return successResult({
-        error: "PLAN_UPGRADE_REQUIRED",
-        message: "Funding rate data requires Coinglass Professional tier or above. Current plan: Hobbyist",
-        suggestion: "For funding rate analysis, use the 'get_btc_valuation_score' or 'analyze_market_sentiment' tools which use available indices, or upgrade at https://coinglass.com/pricing",
-        symbol,
-        fetchedAt: new Date().toISOString(),
-      });
-    }
-    throw error;
-  }
+  // NOTE: Use v4 kebab-case endpoint path - works on Hobbyist tier
+  const data = await coinglassGet("/api/futures/funding-rate/exchange-list");
+  
+  // Filter by symbol if provided
+  const allData = Array.isArray(data) ? data : [];
+  const filtered = symbol ? allData.filter((d: { symbol?: string }) => d.symbol === symbol) : allData;
+  
+  return successResult({ 
+    symbol: symbol || "ALL",
+    data: filtered.length > 0 ? filtered : allData,
+    count: filtered.length > 0 ? filtered.length : allData.length,
+    fetchedAt: new Date().toISOString() 
+  });
 }
 
 async function handleGetFundingRateHistory(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -1376,22 +1433,9 @@ async function handleGetFundingArbitrageList(): Promise<CallToolResult> {
 
 async function handleGetOiByExchange(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
   const symbol = (args?.symbol as string)?.toUpperCase() || "BTC";
-  try {
-    const data = await coinglassGet("/api/futures/openInterest/exchange-list", { symbol });
-    return successResult({ data, fetchedAt: new Date().toISOString() });
-  } catch (error) {
-    const errMsg = error instanceof Error ? error.message : String(error);
-    if (errMsg.includes("404") || errMsg.includes("Not Found")) {
-      return successResult({
-        error: "PLAN_UPGRADE_REQUIRED",
-        message: "Open Interest by exchange requires Coinglass Professional tier or above. Current plan: Hobbyist",
-        suggestion: "Use 'get_exchange_balance' to see exchange BTC holdings as a proxy for market positioning",
-        symbol,
-        fetchedAt: new Date().toISOString(),
-      });
-    }
-    throw error;
-  }
+  // NOTE: Use v4 kebab-case endpoint path - works on Hobbyist tier
+  const data = await coinglassGet("/api/futures/open-interest/exchange-list", { symbol });
+  return successResult({ symbol, data, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetOiHistory(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -1728,11 +1772,13 @@ app.delete("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
 
 const port = Number(process.env.PORT || 4005);
 app.listen(port, () => {
-  console.log("\n🚀 Coinglass Intelligence MCP Server v1.0.0");
-  console.log(`   Comprehensive crypto derivatives intelligence\n`);
+  console.log("\n🚀 Coinglass Intelligence MCP Server v1.1.0");
+  console.log(`   Crypto derivatives intelligence (Hobbyist tier)\n`);
   console.log(`🔒 Context Protocol Security Enabled`);
   console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health\n`);
+  console.log(`⚠️  API TIER: Hobbyist - Some tools disabled (require Professional+)`);
+  console.log(`   Upgrade at: https://coinglass.com/pricing\n`);
   console.log(`🧠 TIER 1 - INTELLIGENCE TOOLS (${TOOLS.filter(t => t.description.startsWith("🧠")).length}):`);
   TOOLS.filter(t => t.description.startsWith("🧠")).forEach(t => console.log(`   • ${t.name}`));
   console.log(`\n📊 TIER 2 - RAW DATA TOOLS (${TOOLS.filter(t => t.description.startsWith("📊")).length}):`);
