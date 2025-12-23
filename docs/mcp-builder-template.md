@@ -110,6 +110,31 @@ From the fetched documentation, extract and present:
 4. Authentication requirements
 5. Rate limits
 
+### STEP 2.5: 🔍 DISCOVERY LAYER AUDIT (CRITICAL)
+**DO NOT SKIP THIS STEP** - This is the most common gap in MCP servers.
+
+Check if the API provides ways to list/enumerate ALL available:
+- Categories/Types (e.g., `GET /categories`, `GET /types`)
+- Tags/Labels (e.g., `GET /tags`, `GET /labels`)
+- Groups/Collections (e.g., `GET /groups`, `GET /sports`)
+- Regions/Markets (e.g., `GET /regions`, `GET /markets`)
+
+For EACH discovered listing endpoint, note:
+1. What identifiers does it return? (id, slug, key, etc.)
+2. Can those IDs be used to filter other endpoints? (e.g., `GET /items?category_id=X`)
+3. What is the hierarchy? (e.g., Category → Tags → Events → Markets)
+
+⚠️ **Common Failure Pattern**: 
+Only exposing "trending" or "popular" endpoints without the ability 
+to list ALL available categories/types. This breaks cross-platform 
+composability because agents can't discover what data exists.
+
+Document the full data hierarchy:
+```
+[Top Level] → [Mid Level] → [Leaf Level] → [Identifiers for Analysis]
+Example: Categories → Tags → Events → conditionId (for orderbook, trades, etc.)
+```
+
 ### STEP 3: Generate Discovery Questions
 Based on the API capabilities, propose:
 1. 5-10 questions users would ask that REQUIRE MULTIPLE ENDPOINTS
@@ -316,7 +341,80 @@ npm install -D @types/express typescript
 | | | |
 | | | |
 
-### 2.4 Competitive Analysis
+### 2.4 Discovery Layer Analysis
+
+> **Instructions**: 🔍 **CRITICAL** - Map the API's enumeration/listing capabilities.
+
+This analysis ensures your MCP exposes the FULL surface area of the API, not just "popular" or "trending" data.
+
+#### 2.4.1 What Can Be Listed/Enumerated?
+
+| Entity Type | List Endpoint | Returns | Used For Filtering |
+|-------------|---------------|---------|-------------------|
+| Example: Categories | `GET /categories` | id, label, slug | `GET /items?category=X` |
+| Example: Tags | `GET /tags` | tag_id, name | `GET /events?tag_id=X` |
+| Example: Sports | `GET /sports` | key, group, has_outrights | `GET /odds?sport=X` |
+| | | | |
+| | | | |
+| | | | |
+
+#### 2.4.2 Data Hierarchy Map
+
+Draw the hierarchy from broadest to most specific:
+
+```
+[FILL IN YOUR API'S HIERARCHY]
+
+Example (Prediction Markets):
+┌─────────────────┐
+│   Categories    │  GET /categories → returns id, slug
+└────────┬────────┘
+         │ filters
+         ▼
+┌─────────────────┐
+│      Tags       │  GET /tags → returns tag_id, name
+└────────┬────────┘
+         │ filters
+         ▼
+┌─────────────────┐
+│     Events      │  GET /events?tag_id=X → returns events with markets
+└────────┬────────┘
+         │ contains
+         ▼
+┌─────────────────┐
+│     Markets     │  Each has conditionId, tokenId
+└────────┬────────┘
+         │
+         ▼
+    Used by: orderbook, trades, analysis tools
+```
+
+#### 2.4.3 Cross-Platform Composability Check
+
+If your MCP might be used alongside OTHER data sources, answer:
+
+| Question | Answer |
+|----------|--------|
+| What other platforms have overlapping data? | [e.g., "Polymarket sports ↔ Odds API futures"] |
+| What entity types can be compared? | [e.g., "Championship predictions vs betting odds"] |
+| What identifier is shared or correlatable? | [e.g., "Team names, event dates"] |
+| Does your MCP expose the listing tools needed? | [ ] Yes / [ ] No - ADD THEM |
+
+#### 2.4.4 Discovery Gap Analysis
+
+For each listing endpoint in the API, check if your MCP exposes it:
+
+| API Endpoint | Purpose | Exposed in MCP? | Tool Name |
+|--------------|---------|-----------------|-----------|
+| `GET /categories` | List all categories | ☐ Yes ☐ No | `get_all_categories` |
+| `GET /tags` | List all tags | ☐ Yes ☐ No | `get_all_tags` |
+| `GET /types` | List all types | ☐ Yes ☐ No | `get_all_types` |
+| `GET /groups` | List all groups | ☐ Yes ☐ No | `get_all_groups` |
+| | | | |
+
+**⚠️ WARNING**: If any listing endpoint exists in the API but is NOT exposed in your MCP, you are creating a composability gap. Agents won't be able to discover all available data.
+
+### 2.5 Competitive Analysis
 
 **Can users get this from Claude/ChatGPT/Cursor directly?**
 
@@ -354,6 +452,27 @@ Before approving, verify each question passes these tests:
 - [ ] **Valuable**: You would personally pay $0.01-0.05 for this answer
 - [ ] **Actionable**: The answer helps users make decisions, not just see data
 - [ ] **Algorithmic**: Requires domain expertise/logic, not just data aggregation
+
+### 🔍 Discovery Layer Checklist (MANDATORY)
+
+Before proceeding, verify your MCP has complete enumeration coverage:
+
+- [ ] **Categories exposed**: If API has `GET /categories` (or similar), MCP has `get_all_categories`
+- [ ] **Tags/Labels exposed**: If API has `GET /tags`, MCP has `get_all_tags`
+- [ ] **Types/Groups exposed**: If API has `GET /types` or `GET /groups`, MCP exposes them
+- [ ] **Filter-by-ID tools exist**: For each listing tool, there's a `browse_by_X` tool that uses the IDs
+- [ ] **Data hierarchy documented**: Tool descriptions explain the hierarchy (Category → Tag → Event → Market)
+- [ ] **Cross-platform hints**: Tool descriptions mention what OTHER MCPs/data sources can be combined
+- [ ] **No "trending only" gaps**: Every entity type is accessible, not just popular/trending items
+
+**⚠️ FAILURE PATTERN TO AVOID**: 
+An agent asks "find all NBA markets" but your MCP only has `discover_trending_markets` 
+which returns political events because they're trending. The agent CANNOT find NBA 
+markets because there's no way to list all tags/categories.
+
+**✅ SUCCESS PATTERN**:
+Agent calls `get_all_tags` → finds "NBA" tag with tag_id → calls `browse_by_tag({ tag_id })` 
+→ gets all NBA markets with conditionIds → can analyze any of them
 
 ### Iteration Log
 
@@ -850,6 +969,206 @@ If your tool needs user portfolio data (e.g., positions, balances), declare it u
 
 ---
 
+## Section 3.6: Discovery Layer Tools (REQUIRED)
+
+> **Instructions**: These tools enable agents to discover ALL available data, not just trending/popular items.
+
+### Why Discovery Tools Matter
+
+```
+WITHOUT DISCOVERY TOOLS:
+─────────────────────────────────────────────────────────────────────
+User: "Find NBA prediction markets"
+Agent: Calls discover_trending_markets({ category: "sports" })
+API: Returns political events (they're trending by volume)
+Agent: ❌ Cannot find NBA markets - no way to enumerate sports tags
+
+WITH DISCOVERY TOOLS:
+─────────────────────────────────────────────────────────────────────
+User: "Find NBA prediction markets"
+Agent: Calls get_all_tags()
+API: Returns [{id: "nba", label: "NBA"}, {id: "nfl", label: "NFL"}, ...]
+Agent: Calls browse_by_tag({ tag_id: "nba" })
+API: Returns all NBA markets with conditionIds
+Agent: ✅ Can now analyze any NBA market
+```
+
+### Discovery Tool Pattern
+
+For EACH listing endpoint in your API, create a tool pair:
+
+```
+┌─────────────────────┐          ┌─────────────────────┐
+│   List All Tool     │────ID───▶│   Browse by Tool    │
+│   get_all_[type]s   │          │   browse_by_[type]  │
+└─────────────────────┘          └─────────────────────┘
+      Returns IDs                  Uses IDs to filter
+```
+
+### Template: List All Tool
+
+```typescript
+{
+  name: "get_all_[types]",
+  description: `📂 DISCOVERY: List ALL available [types] on [Platform].
+
+Returns [type] IDs that can be used with browse_by_[type] to filter data.
+
+DATA FLOW:
+  get_all_[types] → [type]_id → browse_by_[type] → items with identifiers → analysis tools
+
+COMPOSABILITY WITH OTHER MCPs:
+  [Describe which other data sources share similar data and how to correlate]
+
+EXAMPLE:
+  "Find all [X] markets" → Call this, then browse_by_[type]({ [type]_id: "..." })`,
+  
+  inputSchema: {
+    type: "object" as const,
+    properties: {
+      limit: { type: "number", default: 50 },
+    },
+    required: [],
+  },
+  outputSchema: {
+    type: "object" as const,
+    properties: {
+      [types]: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            id: { type: "string", description: "[Type] ID for filtering" },
+            label: { type: "string", description: "Display name" },
+            slug: { type: "string", description: "URL-friendly identifier" },
+          },
+        },
+      },
+      totalCount: { type: "number" },
+      fetchedAt: { type: "string", format: "date-time" },
+    },
+  },
+}
+```
+
+### Template: Browse By Tool
+
+```typescript
+{
+  name: "browse_by_[type]",
+  description: `🔍 BROWSE: Get all items within a specific [type].
+
+INPUT: [type]_id from get_all_[types]
+
+RETURNS: Items with:
+  - Identifiers (conditionId, tokenId, etc.) for use with analysis tools
+  - Current data (prices, volumes, etc.)
+  - URLs/links for reference
+
+DATA FLOW:
+  browse_by_[type] → identifier → [analysis tools like orderbook, trades, etc.]
+
+CROSS-PLATFORM COMPOSABILITY:
+  [Describe how results can be compared with other MCPs]`,
+  
+  inputSchema: {
+    type: "object" as const,
+    properties: {
+      [type]_id: {
+        type: "string",
+        description: "[Type] ID from get_all_[types]",
+      },
+      limit: { type: "number", default: 50 },
+    },
+    required: ["[type]_id"],
+  },
+  outputSchema: {
+    type: "object" as const,
+    properties: {
+      [type]_id: { type: "string" },
+      items: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            title: { type: "string" },
+            identifier: { type: "string", description: "ID for analysis tools" },
+            // ... item-specific fields
+          },
+        },
+      },
+      totalCount: { type: "number" },
+      fetchedAt: { type: "string", format: "date-time" },
+    },
+  },
+}
+```
+
+### Example: Prediction Market Discovery Tools
+
+```typescript
+// Tool 1: List all categories
+{
+  name: "get_all_categories",
+  description: "📂 DISCOVERY: List ALL categories (Politics, Crypto, Sports, etc.)",
+  // Returns: [{ id, label, slug }]
+}
+
+// Tool 2: Browse by category
+{
+  name: "browse_category", 
+  description: "🔍 BROWSE: Get all events in a category",
+  // Input: category slug
+  // Returns: events with conditionIds
+}
+
+// Tool 3: List all tags
+{
+  name: "get_all_tags",
+  description: "🏷️ DISCOVERY: List ALL tags (NBA, Bitcoin, Trump, etc.)",
+  // Returns: [{ id, label, slug }]
+}
+
+// Tool 4: Browse by tag
+{
+  name: "browse_by_tag",
+  description: "🔍 BROWSE: Get all events with a specific tag",
+  // Input: tag_id
+  // Returns: events with conditionIds
+}
+```
+
+### Cross-Platform Composability in Descriptions
+
+**ALWAYS** include composability hints in tool descriptions:
+
+```typescript
+description: `...
+
+CROSS-PLATFORM COMPOSABILITY:
+  This data can be combined with [OTHER_MCP] for:
+  - [Use case 1]: [How to compose]
+  - [Use case 2]: [How to compose]
+  
+Example workflow:
+  1. Call this tool → get [entity] at [price/value]
+  2. Call [OTHER_MCP].[tool] → get [comparable data]
+  3. Compare: [what to look for]`
+```
+
+### Discovery Tools Checklist
+
+| API Has... | You MUST Expose... |
+|------------|-------------------|
+| `GET /categories` | `get_all_categories` + `browse_category` |
+| `GET /tags` | `get_all_tags` + `browse_by_tag` |
+| `GET /types` | `get_all_types` + `browse_by_type` |
+| `GET /groups` | `get_all_groups` + `browse_by_group` |
+| `GET /sports` | `get_all_sports` + `browse_by_sport` |
+| `GET /regions` | `get_all_regions` + `browse_by_region` |
+
+---
+
 ## Section 4: Output Schema Patterns
 
 > **Important**: Context Protocol requires `outputSchema` for all paid tools. Use these patterns to ensure compliance and maximize AI usability.
@@ -1025,7 +1344,17 @@ Provide both high-level summary and detailed breakdown:
 - [ ] Configure authentication/API keys
 - [ ] Implement rate limiting/caching strategy
 
-### Phase 2: Tier 2 Tools (Raw Data)
+### Phase 2: Discovery Layer Tools (CRITICAL - Do First)
+
+- [ ] Identify ALL listing endpoints in the API (`GET /categories`, `GET /tags`, etc.)
+- [ ] For EACH listing endpoint, implement `get_all_[type]` tool
+- [ ] For EACH listing endpoint, implement `browse_by_[type]` tool
+- [ ] Document the data hierarchy in tool descriptions
+- [ ] Add cross-platform composability hints to descriptions
+- [ ] Test: Can an agent find ANY item by category/tag/type? (not just trending)
+- [ ] Verify: All listing endpoints from API are exposed in MCP
+
+### Phase 3: Tier 2 Tools (Raw Data)
 
 - [ ] Implement raw tool 1: `get_[name]`
 - [ ] Implement raw tool 2: `get_[name]`
@@ -1036,7 +1365,7 @@ Provide both high-level summary and detailed breakdown:
 - [ ] Test each tool independently
 - [ ] Verify `structuredContent` is returned correctly
 
-### Phase 3: Tier 1 Tools (Intelligence)
+### Phase 4: Tier 1 Tools (Intelligence)
 
 - [ ] Implement intelligence tool 1: `[name]`
 - [ ] Implement intelligence tool 2: `[name]`
@@ -1048,7 +1377,7 @@ Provide both high-level summary and detailed breakdown:
 - [ ] Add `outputSchema` to all Tier 1 tools
 - [ ] Validate output against schemas
 
-### Phase 4: MCP Server Integration
+### Phase 5: MCP Server Integration
 
 - [ ] Implement MCP server with tool registration
 - [ ] Configure SSE or HTTP Streaming transport
@@ -1057,7 +1386,7 @@ Provide both high-level summary and detailed breakdown:
 - [ ] Add proper error handling
 - [ ] Test with MCP inspector
 
-### Phase 5: Context Protocol Compliance & Security
+### Phase 6: Context Protocol Compliance & Security
 
 - [ ] Ensure all tools have `outputSchema`
 - [ ] Ensure all responses include `structuredContent`
@@ -1068,7 +1397,7 @@ Provide both high-level summary and detailed breakdown:
 
 > **⚠️ Security Note**: All paid tools MUST use `createContextMiddleware()`. This verifies JWT signatures from the Context platform, ensuring you only execute paid requests. Without it, anyone could curl your endpoint directly.
 
-### Phase 6: Deployment & Listing
+### Phase 7: Deployment & Listing
 
 - [ ] Deploy MCP server (Vercel, Railway, etc.)
 - [ ] Register server on Context marketplace
@@ -1505,6 +1834,14 @@ if (isProtectedMcpMethod(req.body.method)) {
 - [ ] All tools have `outputSchema` defined
 - [ ] All tool responses include `structuredContent`
 
+### 🔍 Discovery Layer Completeness (CRITICAL)
+- [ ] ALL listing endpoints from API are exposed (`get_all_categories`, `get_all_tags`, etc.)
+- [ ] ALL listing tools have corresponding browse tools (`browse_category`, `browse_by_tag`, etc.)
+- [ ] Data hierarchy is documented in tool descriptions
+- [ ] Cross-platform composability hints are included in descriptions
+- [ ] An agent can find ANY item by category/tag/type (not just trending items)
+- [ ] No "trending only" gaps exist in the MCP
+
 ### Security (Required for Paid Tools)
 - [ ] `createContextMiddleware()` imported from `@ctxprotocol/sdk`
 - [ ] Middleware applied to MCP endpoint
@@ -1517,4 +1854,157 @@ if (isProtectedMcpMethod(req.body.method)) {
 - [ ] Rate limiting is handled
 - [ ] Server is deployed and accessible
 - [ ] `/health` endpoint returns server info
+
+### Deployment Infrastructure (Context Protocol Servers)
+- [ ] Server directory added to `examples/server/deploy.sh`
+- [ ] Server entry added to `examples/server/setup-servers.sh`
+- [ ] HTTPS route added to `examples/server/setup-caddy-https.sh`
+
+---
+
+## Appendix B: Deployment Infrastructure Updates
+
+> **Instructions**: When adding a new MCP server to the Context Protocol infrastructure, update these three files.
+
+### File 1: `examples/server/deploy.sh`
+
+Add your server to the `PROJECTS` array:
+
+```bash
+# Find this line:
+PROJECTS=("blocknative-contributor" "hyperliquid-contributor" "polymarket-contributor" "exa-contributor" "coinglass-contributor" "odds-api-contributor")
+
+# Add your new server:
+PROJECTS=("blocknative-contributor" "hyperliquid-contributor" "polymarket-contributor" "exa-contributor" "coinglass-contributor" "odds-api-contributor" "YOUR-NEW-SERVER-contributor")
+```
+
+### File 2: `examples/server/setup-servers.sh`
+
+Add your server to the `SERVERS` array with a unique port:
+
+```bash
+# Find this section:
+SERVERS=(
+  "mcp-blocknative:blocknative-contributor:4001"
+  "mcp-hyperliquid:hyperliquid-contributor:4002"
+  "mcp-polymarket:polymarket-contributor:4003"
+  "mcp-exa:exa-contributor:4004"
+  "mcp-coinglass:coinglass-contributor:4005"
+  "mcp-odds-api:odds-api-contributor:4006"
+)
+
+# Add your new server with the next available port:
+SERVERS=(
+  "mcp-blocknative:blocknative-contributor:4001"
+  "mcp-hyperliquid:hyperliquid-contributor:4002"
+  "mcp-polymarket:polymarket-contributor:4003"
+  "mcp-exa:exa-contributor:4004"
+  "mcp-coinglass:coinglass-contributor:4005"
+  "mcp-odds-api:odds-api-contributor:4006"
+  "mcp-YOUR-NEW-SERVER:YOUR-NEW-SERVER-contributor:4007"  # <-- NEW
+)
+```
+
+Format: `"pm2-name:directory-name:port"`
+
+### File 3: `examples/server/setup-caddy-https.sh`
+
+**Step 1**: Add port variable in the configuration section:
+
+```bash
+# Find the port configuration section:
+BLOCKNATIVE_PORT=4001
+HYPERLIQUID_PORT=4002
+POLYMARKET_PORT=4003
+EXA_PORT=4004
+COINGLASS_PORT=4005
+ODDS_API_PORT=4006
+
+# Add your new server port:
+YOUR_NEW_SERVER_PORT=4007  # <-- NEW
+```
+
+**Step 2**: Add the route handler in the Caddyfile section (inside the heredoc):
+
+```bash
+# Find the last handle block before the fallback, add your new server:
+
+    # YOUR NEW SERVER MCP Server (port ${YOUR_NEW_SERVER_PORT})
+    # [Brief description of what your server does]
+    # Supports: /mcp (HTTP streaming), /health
+    handle /your-new-server/* {
+        uri strip_prefix /your-new-server
+        reverse_proxy localhost:${YOUR_NEW_SERVER_PORT} {
+            # Critical for MCP streaming
+            flush_interval -1
+            transport http {
+                read_timeout 0
+            }
+        }
+    }
+
+    # Fallback - return 404 for unknown paths
+    handle {
+        respond "Not Found" 404
+    }
+```
+
+**Step 3**: Add firewall rule (if `CLOSE_RAW_PORTS="yes"`):
+
+```bash
+# Find the firewall section, add:
+ufw deny ${YOUR_NEW_SERVER_PORT}/tcp
+```
+
+**Step 4**: Update the summary section to include your new endpoints:
+
+```bash
+# In the "Your new HTTPS endpoints:" section:
+echo "  Your New Server: https://${DOMAIN}/your-new-server/mcp"
+
+# In the "Health checks:" section:
+echo "  Your New Server: https://${DOMAIN}/your-new-server/health"
+```
+
+### Deployment Checklist
+
+After updating the scripts:
+
+```bash
+# 1. Deploy files to server
+./examples/server/deploy.sh
+
+# 2. SSH into the server
+ssh ubuntu@62.72.22.174
+
+# 3. Create .env file for new server
+cd ~/mcp-servers/YOUR-NEW-SERVER-contributor
+cp env.example .env
+nano .env  # Add your API keys
+
+# 4. Run setup script to install and start all servers
+cd ~/mcp-servers
+./setup-servers.sh
+
+# 5. Update Caddy configuration for HTTPS
+sudo ./setup-caddy-https.sh
+
+# 6. Verify health check
+curl https://mcp.ctxprotocol.com/your-new-server/health
+```
+
+### Port Allocation
+
+| Port | Server | Status |
+|------|--------|--------|
+| 4001 | Blocknative | ✅ In use |
+| 4002 | Hyperliquid | ✅ In use |
+| 4003 | Polymarket | ✅ In use |
+| 4004 | Exa | ✅ In use |
+| 4005 | Coinglass | ✅ In use |
+| 4006 | Odds API | ✅ In use |
+| 4007 | [Available] | 🟢 Next |
+| 4008 | [Available] | 🟢 |
+| 4009 | [Available] | 🟢 |
+| 4010 | [Available] | 🟢 |
 

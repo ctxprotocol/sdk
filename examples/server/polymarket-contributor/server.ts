@@ -1488,6 +1488,252 @@ Each result includes:
       required: ["comments"],
     },
   },
+
+  // ==================== DISCOVERY LAYER TOOLS ====================
+  // These tools enable cross-platform data composition by exposing
+  // all available categories, tags, and browsing capabilities.
+
+  {
+    name: "get_all_categories",
+    description: `📂 DISCOVERY: List ALL available categories on Polymarket.
+
+Returns category IDs and slugs that can be used with browse_category.
+
+CATEGORIES include: Politics, Crypto, Sports, Science, Pop Culture, Business, etc.
+
+DATA FLOW:
+  get_all_categories → category_slug → browse_category → events with conditionIds
+
+EXAMPLE USE CASES:
+  - "What categories of predictions exist?" → Call this
+  - "Find crypto markets" → Call this, then browse_category({ slug: "crypto" })
+  
+CROSS-PLATFORM: Use this to find categories that overlap with other data sources (e.g., Sports category overlaps with sportsbook futures).`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        limit: {
+          type: "number",
+          description: "Max categories to return (default: 50)",
+          default: 50,
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        categories: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "Category ID" },
+              label: { type: "string", description: "Display name (e.g., 'Politics')" },
+              slug: { type: "string", description: "URL-friendly ID for filtering (e.g., 'politics')" },
+              parentCategory: { type: "string", description: "Parent category if nested" },
+            },
+          },
+        },
+        totalCount: { type: "number" },
+        fetchedAt: { type: "string", format: "date-time" },
+      },
+      required: ["categories", "fetchedAt"],
+    },
+  },
+
+  {
+    name: "get_all_tags",
+    description: `🏷️ DISCOVERY: List ALL available tags on Polymarket.
+
+Tags are more granular than categories. Examples: "NBA", "Bitcoin", "Trump", "Fed", "Olympics".
+
+Returns tag IDs that can be used with browse_by_tag to find all markets with that tag.
+
+DATA FLOW:
+  get_all_tags → tag_id → browse_by_tag → events/markets with conditionIds
+
+EXAMPLE USE CASES:
+  - "Find all NBA prediction markets" → Get NBA tag_id, then browse_by_tag
+  - "What Bitcoin markets exist?" → Get Bitcoin tag_id, then browse_by_tag
+  
+COMPOSABILITY WITH ODDS API:
+  1. Get NBA tag from Polymarket → browse NBA markets → find "Lakers win championship" at 45%
+  2. Call Odds API get_outrights({ sport: "basketball_nba_championship_winner" }) → Lakers +450 (18%)
+  3. Compare prices for arbitrage opportunities`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        limit: {
+          type: "number",
+          description: "Max tags to return (default: 100)",
+          default: 100,
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        tags: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "Tag ID for filtering" },
+              label: { type: "string", description: "Display name" },
+              slug: { type: "string", description: "URL-friendly identifier" },
+            },
+          },
+        },
+        totalCount: { type: "number" },
+        hint: { type: "string" },
+        fetchedAt: { type: "string", format: "date-time" },
+      },
+      required: ["tags", "fetchedAt"],
+    },
+  },
+
+  {
+    name: "browse_category",
+    description: `📊 BROWSE: Get all events and markets within a category.
+
+INPUT: category slug from get_all_categories (e.g., "politics", "crypto", "sports")
+
+RETURNS: Events with:
+  - conditionId (use with check_market_efficiency, analyze_whale_flow, etc.)
+  - tokenIds (use with analyze_market_liquidity, get_orderbook)
+  - Current prices and volumes
+  - Direct URLs to markets
+
+DATA FLOW:
+  browse_category → conditionId → [any analysis tool]
+  browse_category → slug → get_event_by_slug → detailed market data
+
+CROSS-PLATFORM COMPOSABILITY:
+  - Browse "sports" category → find championship markets → compare with Odds API futures
+  - Browse "crypto" category → compare with exchange prices from CoinGecko`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        category: {
+          type: "string",
+          description: "Category slug from get_all_categories (e.g., 'politics', 'crypto', 'sports')",
+        },
+        limit: {
+          type: "number",
+          description: "Max results (default: 50)",
+          default: 50,
+        },
+        sortBy: {
+          type: "string",
+          enum: ["volume", "liquidity", "endDate"],
+          description: "Sort order (default: volume)",
+          default: "volume",
+        },
+        includeResolved: {
+          type: "boolean",
+          description: "Include resolved/closed markets (default: false)",
+          default: false,
+        },
+      },
+      required: ["category"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        category: { type: "string" },
+        events: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              slug: { type: "string" },
+              url: { type: "string" },
+              conditionId: { type: "string" },
+              currentPrice: { type: "number" },
+              volume: { type: "number" },
+              liquidity: { type: "number" },
+              endDate: { type: "string" },
+              status: { type: "string", enum: ["live", "resolved"] },
+            },
+          },
+        },
+        totalCount: { type: "number" },
+        fetchedAt: { type: "string", format: "date-time" },
+      },
+      required: ["category", "events", "fetchedAt"],
+    },
+  },
+
+  {
+    name: "browse_by_tag",
+    description: `🔍 BROWSE: Get all events/markets with a specific tag.
+
+INPUT: tag_id from get_all_tags
+
+More granular than categories. Use for:
+  - Specific sports leagues: "NBA", "NFL", "Premier League"
+  - Crypto assets: "Bitcoin", "Ethereum", "Solana"  
+  - People: "Trump", "Biden", "Elon Musk"
+  - Topics: "AI", "Fed", "Elections"
+
+DATA FLOW:
+  get_all_tags → tag_id → browse_by_tag → events with conditionIds → analysis tools
+
+CROSS-PLATFORM EXAMPLE (Sports):
+  1. browse_by_tag({ tag_id: "<NBA_TAG_ID>" }) → "Lakers NBA Finals" at 45%
+  2. Odds API get_outrights({ sport: "basketball_nba_championship_winner" }) → Lakers +450
+  3. Convert: +450 = 18.2% implied probability
+  4. DISCREPANCY: Polymarket 45% vs Sportsbooks 18% = potential arbitrage`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tag_id: {
+          type: "string",
+          description: "Tag ID from get_all_tags",
+        },
+        limit: {
+          type: "number",
+          description: "Max results (default: 50)",
+          default: 50,
+        },
+        includeResolved: {
+          type: "boolean",
+          description: "Include resolved markets (default: false)",
+          default: false,
+        },
+      },
+      required: ["tag_id"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        tag_id: { type: "string" },
+        events: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              slug: { type: "string" },
+              url: { type: "string" },
+              conditionId: { type: "string" },
+              currentPrice: { type: "number" },
+              volume: { type: "number" },
+              liquidity: { type: "number" },
+              endDate: { type: "string" },
+              category: { type: "string" },
+            },
+          },
+        },
+        totalCount: { type: "number" },
+        fetchedAt: { type: "string", format: "date-time" },
+      },
+      required: ["tag_id", "events", "fetchedAt"],
+    },
+  },
 ];
 
 // ============================================================================
@@ -1557,6 +1803,16 @@ server.setRequestHandler(
           return await handleGetTopHolders(args);
         case "get_market_comments":
           return await handleGetMarketComments(args);
+
+        // Discovery Layer Tools
+        case "get_all_categories":
+          return await handleGetAllCategories(args);
+        case "get_all_tags":
+          return await handleGetAllTags(args);
+        case "browse_category":
+          return await handleBrowseCategory(args);
+        case "browse_by_tag":
+          return await handleBrowseByTag(args);
 
         default:
           return errorResult(`Unknown tool: ${name}`);
@@ -4938,6 +5194,172 @@ async function handleGetMarketComments(
       note: "Comments not available for this market",
       fetchedAt: new Date().toISOString(),
     });
+  }
+}
+
+// ============================================================================
+// DISCOVERY LAYER HANDLERS
+// Enable cross-platform data composition by exposing categories, tags, and browsing
+// ============================================================================
+
+async function handleGetAllCategories(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const limit = (args?.limit as number) || 50;
+
+  try {
+    // Fetch categories from Gamma API
+    const categories = await fetchGamma(`/categories?limit=${limit}`) as Array<{
+      id: string;
+      label?: string;
+      slug?: string;
+      parentCategory?: string;
+    }>;
+
+    const formatted = (categories || []).map((c) => ({
+      id: c.id || "",
+      label: c.label || "",
+      slug: c.slug || "",
+      parentCategory: c.parentCategory || null,
+    }));
+
+    return successResult({
+      categories: formatted,
+      totalCount: formatted.length,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Failed to get categories: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+async function handleGetAllTags(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const limit = (args?.limit as number) || 100;
+
+  try {
+    // Fetch tags from Gamma API
+    const tags = await fetchGamma(`/tags?limit=${limit}`) as Array<{
+      id: string;
+      label?: string;
+      slug?: string;
+    }>;
+
+    const formatted = (tags || []).map((t) => ({
+      id: t.id || "",
+      label: t.label || "",
+      slug: t.slug || "",
+    }));
+
+    return successResult({
+      tags: formatted,
+      totalCount: formatted.length,
+      hint: "Use tag id with browse_by_tag to get all markets for that tag",
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Failed to get tags: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+async function handleBrowseCategory(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const category = args?.category as string;
+  const limit = (args?.limit as number) || 50;
+  const sortBy = (args?.sortBy as string) || "volume";
+  const includeResolved = args?.includeResolved === true;
+
+  if (!category) {
+    return errorResult("category parameter is required. Use get_all_categories to find available categories.");
+  }
+
+  try {
+    const closed = includeResolved ? "true" : "false";
+    const orderField = sortBy === "endDate" ? "endDate" : sortBy === "liquidity" ? "liquidity" : "volume";
+    
+    const events = await fetchGamma(
+      `/events?category=${category}&closed=${closed}&limit=${limit}&order=${orderField}&ascending=false`
+    ) as GammaEvent[];
+
+    const formatted = (events || [])
+      .filter((e) => e.slug)
+      .map((e) => {
+        const market = e.markets?.[0];
+        const prices = parseJsonArray(market?.outcomePrices);
+        const yesPrice = prices[0] ? parseFloat(prices[0]) : 0.5;
+
+        return {
+          title: e.title || "",
+          slug: e.slug || "",
+          url: `https://polymarket.com/event/${e.slug}`,
+          conditionId: market?.conditionId || e.id || "",
+          currentPrice: yesPrice,
+          volume: e.volume || 0,
+          liquidity: e.liquidity || 0,
+          endDate: e.endDate || e.endDateIso || "",
+          status: e.closed ? "resolved" : "live",
+        };
+      });
+
+    return successResult({
+      category,
+      events: formatted,
+      totalCount: formatted.length,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Failed to browse category: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+async function handleBrowseByTag(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const tag_id = args?.tag_id as string;
+  const limit = (args?.limit as number) || 50;
+  const includeResolved = args?.includeResolved === true;
+
+  if (!tag_id) {
+    return errorResult("tag_id parameter is required. Use get_all_tags to find available tags.");
+  }
+
+  try {
+    const closed = includeResolved ? "true" : "false";
+    
+    const events = await fetchGamma(
+      `/events?tag_id=${tag_id}&closed=${closed}&limit=${limit}&order=volume&ascending=false`
+    ) as GammaEvent[];
+
+    const formatted = (events || [])
+      .filter((e) => e.slug)
+      .map((e) => {
+        const market = e.markets?.[0];
+        const prices = parseJsonArray(market?.outcomePrices);
+        const yesPrice = prices[0] ? parseFloat(prices[0]) : 0.5;
+
+        return {
+          title: e.title || "",
+          slug: e.slug || "",
+          url: `https://polymarket.com/event/${e.slug}`,
+          conditionId: market?.conditionId || e.id || "",
+          currentPrice: yesPrice,
+          volume: e.volume || 0,
+          liquidity: e.liquidity || 0,
+          endDate: e.endDate || e.endDateIso || "",
+          category: e.category || "",
+        };
+      });
+
+    return successResult({
+      tag_id,
+      events: formatted,
+      totalCount: formatted.length,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Failed to browse by tag: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 
