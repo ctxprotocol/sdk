@@ -42,18 +42,22 @@ const TOOLS = [
     name: "discover_trending_markets",
     description: `Find the hottest markets on Kalshi right now. Shows volume spikes, price movements, and which markets are seeing the most action.
 
-⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent markets or construct URLs. Each result includes a real 'url' field - use ONLY those URLs. If you need to link to a market, ALWAYS use the exact URL from the response.
+⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent markets or construct URLs. Each result includes a real 'url' field - use ONLY those URLs.
+
+IMPROVED CATEGORY FILTERING: When filtering by category (e.g., 'Sports'), this tool uses both API category filtering AND keyword matching to ensure accurate results. Sports keywords include: NBA, NFL, MLB, Super Bowl, championship, etc.
 
 RETURNS: Markets ranked by activity with:
 - url: Direct Kalshi market link (ALWAYS use this, never construct URLs)
 - ticker (use with get_market_orderbook, get_market_trades)
 - event_ticker (use with get_event)
 - Current prices and volumes
+- category: The market's category
 
 CROSS-PLATFORM COMPOSABILITY:
   Compare Kalshi predictions with:
   - Polymarket: Same event at different prices = arbitrage opportunity
-  - Odds API: Sports predictions vs sportsbook odds`,
+  - Odds API: Sports predictions vs sportsbook odds
+  - Use get_comparable_markets for standardized cross-platform format`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -528,6 +532,114 @@ RETURNS:
         fetchedAt: { type: "string" },
       },
       required: ["ticker", "sentiment", "confidence"],
+    },
+  },
+
+  // ==================== CROSS-PLATFORM INTEROPERABILITY ====================
+
+  {
+    name: "get_comparable_markets",
+    description: `📊 CROSS-PLATFORM: Get Kalshi markets in a STANDARDIZED format for comparing with other platforms (Polymarket, Odds API).
+
+Returns markets with normalized probabilities (0-1 scale) and standardized fields that can be 
+directly compared across prediction markets and sportsbooks.
+
+⚠️ IMPORTANT: Kalshi currently has NO active sports markets. For sports comparisons, use Polymarket + Odds API instead.
+
+USE THIS TOOL when you need to:
+- Find arbitrage opportunities between Kalshi and Polymarket (POLITICS, ECONOMICS, ENTERTAINMENT)
+- Compare probability assessments across markets
+- Build cross-platform market analysis
+
+⚠️ CROSS-PLATFORM MATCHING GUIDE:
+Markets on different platforms have DIFFERENT titles for the SAME event:
+  - Kalshi: "Will Trump win 2028 election?"
+  - Polymarket: "Trump wins 2028 Presidential Election"
+
+DO NOT use exact title matching! Instead, use FUZZY MATCHING with these fields:
+  1. keywords: Check if 50%+ of keywords overlap between platforms
+  2. teams: For sports, check if the same teams appear (N/A for Kalshi - no sports)
+  3. eventCategory: Filter to same category first (politics, economics, etc.)
+  4. normalizedProbability: Once matched, compare these directly (all 0-1 scale)
+
+MATCHING EXAMPLE:
+  Kalshi keywords: ["trump", "win", "2028", "election"]
+  Polymarket keywords: ["trump", "wins", "2028", "presidential", "election"]
+  → Overlap: ["trump", "2028", "election"] = 60% match → SAME MARKET!
+  → Compare: Kalshi 0.38 vs Polymarket 0.42 = 4% gap
+
+PLATFORM COMPATIBILITY:
+  - Politics/Economics: Use Kalshi + Polymarket
+  - Sports: ❌ Kalshi has NO sports - use Polymarket + Odds API instead`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        category: {
+          type: "string",
+          description: "Filter by category: Sports, Politics, Economics, Financials, Entertainment, Science",
+        },
+        keywords: {
+          type: "string",
+          description: "Keywords to search for (uses OR matching for multi-word queries)",
+        },
+        minVolume: {
+          type: "number",
+          description: "Minimum 24h volume in USD (default: 100)",
+        },
+        limit: {
+          type: "number",
+          description: "Number of results (default: 30, max: 100)",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        platform: { type: "string", const: "kalshi" },
+        markets: {
+          type: "array",
+          description: "Markets in standardized format. Use keywords for FUZZY MATCHING with Polymarket - NOT title matching! Note: Kalshi has no sports markets.",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Human-readable title. DO NOT use for cross-platform matching (titles differ by platform)" },
+              description: { type: "string" },
+              eventCategory: { type: "string", description: "Standardized category (politics, economics, etc). Filter by this FIRST when matching. Note: 'sports' will be empty." },
+              keywords: { 
+                type: "array", 
+                items: { type: "string" }, 
+                description: "🔑 USE FOR MATCHING: Check if 50%+ keywords overlap with Polymarket's keywords array" 
+              },
+              teams: { 
+                type: "array", 
+                items: { type: "string" }, 
+                description: "Team names (always empty - Kalshi has no sports markets)" 
+              },
+              outcomes: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string" },
+                    normalizedProbability: { type: "number", description: "🎯 COMPARE THIS: 0-1 scale, directly comparable with Polymarket" },
+                    rawPrice: { type: "number", description: "Original Kalshi price (cents 0-100)" },
+                  },
+                },
+              },
+              volume24h: { type: "number" },
+              liquidity: { type: "number" },
+              closeTime: { type: "string", description: "Resolution date - can help confirm same event across platforms" },
+              url: { type: "string" },
+              platformMarketId: { type: "string", description: "ticker for Kalshi" },
+            },
+          },
+        },
+        totalCount: { type: "number" },
+        hint: { type: "string" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["platform", "markets", "fetchedAt"],
     },
   },
 
@@ -1179,6 +1291,10 @@ server.setRequestHandler(
         case "analyze_market_sentiment":
           return await handleAnalyzeMarketSentiment(args);
 
+        // Cross-Platform Interoperability
+        case "get_comparable_markets":
+          return await handleGetComparableMarkets(args);
+
         // Tier 2: Raw Data Tools
         case "get_events":
           return await handleGetEvents(args);
@@ -1344,13 +1460,37 @@ async function handleDiscoverTrendingMarkets(
   const sortBy = (args?.sortBy as string) || "volume_24h";
   const limit = Math.min((args?.limit as number) || 20, 100);
 
-  let endpoint = `/markets?limit=${limit}&status=open`;
+  // Fetch more markets if filtering by category to ensure we have enough after filtering
+  const fetchLimit = category ? limit * 3 : limit;
+  let endpoint = `/markets?limit=${fetchLimit}&status=open`;
   if (category) {
     endpoint += `&category=${encodeURIComponent(category)}`;
   }
 
   const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
-  const markets = response.markets || [];
+  let markets = response.markets || [];
+
+  // IMPROVED CATEGORY FILTERING: If category is specified, also filter by keywords
+  // This handles cases where Kalshi's category filter doesn't work as expected
+  if (category) {
+    const categoryKeywords: Record<string, string[]> = {
+      'Sports': ['nba', 'nfl', 'mlb', 'nhl', 'super bowl', 'championship', 'playoffs', 'football', 'basketball', 'baseball', 'hockey', 'soccer', 'tennis', 'golf', 'ufc', 'boxing', 'f1', 'nascar', 'olympics', 'world cup', 'finals', 'mvp', 'rookie', 'draft'],
+      'Politics': ['election', 'president', 'senate', 'congress', 'vote', 'trump', 'biden', 'democrat', 'republican', 'governor', 'primary', 'nominee'],
+      'Economics': ['gdp', 'inflation', 'fed', 'interest rate', 'recession', 'jobs', 'unemployment', 'cpi', 'economic'],
+      'Financials': ['stock', 's&p', 'nasdaq', 'bitcoin', 'crypto', 'price', 'market'],
+    };
+
+    const keywords = categoryKeywords[category] || [];
+    if (keywords.length > 0) {
+      // Filter to only markets that match category keywords in title
+      markets = markets.filter(m => {
+        const title = ((m.title || '') + ' ' + (m.subtitle || '') + ' ' + (m.yes_sub_title || '')).toLowerCase();
+        const matchesCategory = m.category?.toLowerCase() === category.toLowerCase();
+        const matchesKeywords = keywords.some(kw => title.includes(kw));
+        return matchesCategory || matchesKeywords;
+      });
+    }
+  }
 
   // Sort by the requested metric
   const sorted = markets.sort((a, b) => {
@@ -1890,6 +2030,205 @@ async function handleAnalyzeMarketSentiment(
   });
 }
 
+// ==================== CROSS-PLATFORM INTEROPERABILITY HANDLER ====================
+
+/**
+ * Extract keywords from market title/description for cross-platform matching
+ */
+function extractKeywords(text: string): string[] {
+  const stopWords = new Set([
+    'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 
+    'will', 'be', 'by', 'this', 'that', 'it', 'with', 'from', 'as', 'are',
+    'was', 'were', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'but',
+    'if', 'than', 'so', 'what', 'which', 'who', 'whom', 'when', 'where', 'why',
+    'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other',
+  ]);
+  
+  return text.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 2 && !stopWords.has(word))
+    .slice(0, 15);
+}
+
+/**
+ * Extract team names from sports-related text
+ */
+function extractTeams(text: string): string[] {
+  const teams: string[] = [];
+  const textLower = text.toLowerCase();
+  
+  const nbaTeams = ['lakers', 'celtics', 'warriors', 'heat', 'bucks', 'nuggets', 'suns', 'nets', 'sixers', '76ers', 'knicks', 'bulls', 'clippers', 'mavericks', 'cavaliers'];
+  const nflTeams = ['chiefs', 'eagles', 'cowboys', '49ers', 'bills', 'ravens', 'lions', 'dolphins', 'jets', 'packers', 'vikings', 'bengals', 'jaguars', 'texans', 'chargers', 'broncos', 'patriots', 'saints', 'falcons', 'bears'];
+  const mlbTeams = ['yankees', 'dodgers', 'braves', 'astros', 'mets', 'phillies', 'padres', 'mariners', 'orioles', 'rangers', 'twins', 'rays', 'guardians', 'cubs', 'red sox'];
+  
+  const allTeams = [...nbaTeams, ...nflTeams, ...mlbTeams];
+  
+  for (const team of allTeams) {
+    if (textLower.includes(team)) {
+      teams.push(team.charAt(0).toUpperCase() + team.slice(1));
+    }
+  }
+  
+  return teams;
+}
+
+/**
+ * Categorize a market into standardized categories
+ */
+function categorizeMarket(title: string, category: string | undefined): string {
+  const textLower = (title + ' ' + (category || '')).toLowerCase();
+  
+  if (['nba', 'nfl', 'mlb', 'nhl', 'soccer', 'football', 'basketball', 'baseball', 'hockey', 'tennis', 'golf', 'ufc', 'mma', 'boxing', 'f1', 'nascar', 'olympics', 'world cup', 'super bowl', 'championship', 'sports'].some(s => textLower.includes(s))) {
+    return 'sports';
+  }
+  if (['election', 'president', 'senate', 'congress', 'vote', 'trump', 'biden', 'democrat', 'republican', 'governor', 'political', 'poll', 'politics'].some(s => textLower.includes(s))) {
+    return 'politics';
+  }
+  if (['bitcoin', 'ethereum', 'crypto', 'btc', 'eth', 'solana', 'token', 'defi', 'nft', 'blockchain'].some(s => textLower.includes(s))) {
+    return 'crypto';
+  }
+  if (['stock', 'market', 'fed', 'interest rate', 'recession', 'inflation', 'gdp', 'economic', 'financials', 'economics'].some(s => textLower.includes(s))) {
+    return 'business';
+  }
+  
+  return category?.toLowerCase() || 'other';
+}
+
+async function handleGetComparableMarkets(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const category = args?.category as string | undefined;
+  const keywords = args?.keywords as string | undefined;
+  const minVolume = (args?.minVolume as number) || 0; // Lower default to catch more markets
+  const limit = Math.min((args?.limit as number) || 30, 100);
+
+  // Kalshi API category mapping (Kalshi uses different category names)
+  const kalshiCategoryMap: Record<string, string> = {
+    'sports': 'Sports',
+    'politics': 'Politics',
+    'business': 'Financials',
+    'economics': 'Economics',
+    'crypto': 'Crypto',
+    'entertainment': 'Entertainment',
+  };
+
+  let markets: KalshiMarket[] = [];
+
+  // If category is specified, use the events endpoint which has proper category filtering
+  if (category) {
+    const kalshiCategory = kalshiCategoryMap[category.toLowerCase()];
+    if (kalshiCategory) {
+      // Fetch events with the specified category
+      const eventsResponse = await fetchKalshi(`/events?status=open&limit=50`) as { events: KalshiEvent[] };
+      const events = (eventsResponse.events || []).filter(e => 
+        e.category?.toLowerCase() === kalshiCategory.toLowerCase()
+      );
+      
+      // Get markets from each matching event
+      for (const event of events.slice(0, 20)) { // Limit events to prevent too many API calls
+        try {
+          const eventDetail = await fetchKalshi(`/events/${event.event_ticker}`) as { event: KalshiEvent };
+          if (eventDetail.event?.markets) {
+            markets.push(...eventDetail.event.markets);
+          }
+        } catch (e) {
+          // Skip events that fail to load
+        }
+      }
+    }
+  }
+  
+  // If no category or no markets found via events, fall back to markets endpoint
+  // IMPORTANT: Fetch more markets to ensure we capture relevant ones (API doesn't filter well)
+  if (markets.length === 0) {
+    const fetchLimit = category ? 500 : limit * 5; // Fetch more when filtering
+    const response = await fetchKalshi(`/markets?limit=${fetchLimit}&status=open`) as { markets: KalshiMarket[] };
+    markets = response.markets || [];
+  }
+
+  // Category keywords for additional filtering and categorization
+  const categoryKeywords: Record<string, string[]> = {
+    'sports': ['nba', 'nfl', 'mlb', 'nhl', 'soccer', 'football', 'basketball', 'baseball', 'hockey', 'tennis', 'golf', 'ufc', 'mma', 'boxing', 'f1', 'nascar', 'olympics', 'world cup', 'super bowl', 'championship', 'playoffs', 'finals', 'lebron', 'stanley cup', 'mvp', 'draft', 'sonics'],
+    'politics': ['election', 'president', 'senate', 'congress', 'vote', 'trump', 'biden', 'democrat', 'republican', 'governor', 'political', 'poll', 'speaker', 'vp', 'vice president', 'impeach'],
+    'crypto': ['bitcoin', 'ethereum', 'crypto', 'btc', 'eth', 'solana', 'token', 'defi', 'nft', 'blockchain'],
+    'business': ['stock', 'market', 'fed', 'interest rate', 'recession', 'inflation', 'gdp', 'economic', 'ipo', 'company', 'trillionaire', 'unemployment'],
+  };
+
+  // Additional keyword-based filtering if category was specified but events didn't yield results
+  if (category && markets.length > 0) {
+    const catKeywords = categoryKeywords[category.toLowerCase()] || [];
+    if (catKeywords.length > 0) {
+      const keywordFiltered = markets.filter(m => {
+        const searchText = ((m.title || '') + ' ' + (m.subtitle || '') + ' ' + (m.yes_sub_title || '')).toLowerCase();
+        return catKeywords.some(kw => searchText.includes(kw));
+      });
+      // Only use keyword filtering if it finds results
+      if (keywordFiltered.length > 0) {
+        markets = keywordFiltered;
+      }
+    }
+  }
+
+  // Filter by keywords if provided (using OR matching)
+  if (keywords) {
+    const queryWords = keywords.toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length > 2);
+    
+    markets = markets.filter(m => {
+      const searchText = ((m.title || '') + ' ' + (m.subtitle || '') + ' ' + (m.yes_sub_title || '')).toLowerCase();
+      return queryWords.some(word => searchText.includes(word));
+    });
+  }
+
+  // Filter by minimum volume
+  if (minVolume > 0) {
+    markets = markets.filter(m => (m.volume_24h || 0) >= minVolume);
+  }
+
+  // Transform to standardized format
+  const comparableMarkets = markets.slice(0, limit).map(m => {
+    const title = m.title || m.yes_sub_title || m.ticker;
+    const yesPrice = m.yes_ask || m.last_price || 50;
+    const noPrice = m.no_ask || (100 - yesPrice);
+    
+    return {
+      title,
+      description: m.subtitle || '',
+      eventCategory: categorizeMarket(title, m.category),
+      keywords: extractKeywords(title + ' ' + (m.subtitle || '')),
+      teams: extractTeams(title + ' ' + (m.subtitle || '')),
+      outcomes: [
+        { name: 'Yes', normalizedProbability: yesPrice / 100, rawPrice: yesPrice },
+        { name: 'No', normalizedProbability: noPrice / 100, rawPrice: noPrice },
+      ],
+      volume24h: m.volume_24h || 0,
+      liquidity: m.liquidity || 0,
+      closeTime: m.close_time || null,
+      url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
+      platformMarketId: m.ticker,
+    };
+  });
+
+  const sportsCount = comparableMarkets.filter(m => m.eventCategory === 'sports').length;
+  const politicsCount = comparableMarkets.filter(m => m.eventCategory === 'politics').length;
+
+  return successResult({
+    platform: 'kalshi',
+    markets: comparableMarkets,
+    totalCount: comparableMarkets.length,
+    categoryBreakdown: {
+      sports: sportsCount,
+      politics: politicsCount,
+      business: comparableMarkets.filter(m => m.eventCategory === 'business').length,
+      other: comparableMarkets.filter(m => !['sports', 'politics', 'business'].includes(m.eventCategory)).length,
+    },
+    hint: `Returned ${comparableMarkets.length} markets. Probabilities are normalized 0-1 (original Kalshi prices are in cents 0-100). Compare with Polymarket or Odds API.`,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
 // ==================== TIER 2: RAW DATA HANDLERS ====================
 
 async function handleGetEvents(
@@ -2004,7 +2343,10 @@ async function handleSearchMarkets(
   const status = (args?.status as string) || "open";
   const limit = Math.min((args?.limit as number) || 20, 50);
 
-  let endpoint = `/markets?limit=${limit}`;
+  // IMPORTANT: Kalshi API doesn't do server-side text search, so fetch more and filter client-side
+  const fetchLimit = query ? 500 : limit * 3;
+  
+  let endpoint = `/markets?limit=${fetchLimit}`;
   if (status !== "all") {
     endpoint += `&status=${status}`;
   }
@@ -2015,12 +2357,18 @@ async function handleSearchMarkets(
   const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
   let markets = response.markets || [];
 
-  // Filter by query if provided
+  // Filter by query if provided - using WORD-BY-WORD matching (any word matches)
+  // This is critical for queries like "Senate control" to find "Senate" OR "control"
   if (query) {
-    const lowerQuery = query.toLowerCase();
+    const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by']);
+    const queryWords = query.toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length > 1 && !stopWords.has(word));
+    
     markets = markets.filter(m => {
-      const title = (m.title || m.yes_sub_title || m.ticker).toLowerCase();
-      return title.includes(lowerQuery);
+      const searchText = ((m.title || '') + ' ' + (m.yes_sub_title || '') + ' ' + m.ticker).toLowerCase();
+      // ANY query word matches (OR matching for better cross-platform compatibility)
+      return queryWords.some(word => searchText.includes(word));
     });
   }
 

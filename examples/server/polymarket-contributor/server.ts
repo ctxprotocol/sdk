@@ -919,6 +919,113 @@ const TOOLS = [
     },
   },
 
+  // ==================== CROSS-PLATFORM INTEROPERABILITY ====================
+
+  {
+    name: "get_comparable_markets",
+    description: `📊 CROSS-PLATFORM: Get markets in a STANDARDIZED format for comparing with other platforms (Kalshi, Odds API).
+
+Returns markets with normalized probabilities (0-1 scale) and standardized fields that can be 
+directly compared across prediction markets and sportsbooks.
+
+USE THIS TOOL when you need to:
+- Find arbitrage opportunities between Polymarket and other platforms
+- Compare probability assessments across markets
+- Build cross-platform market analysis
+
+⚠️ CROSS-PLATFORM MATCHING GUIDE:
+Markets on different platforms have DIFFERENT titles for the SAME event:
+  - Polymarket: "Super Bowl Champion 2026"
+  - Odds API: "NFL Super Bowl Winner"  
+  - Kalshi: "Who wins Super Bowl LX?"
+
+DO NOT use exact title matching! Instead, use FUZZY MATCHING with these fields:
+  1. keywords: Check if 50%+ of keywords overlap between platforms
+  2. teams: For sports, check if the same teams appear
+  3. eventCategory: Filter to same category first (sports, politics, etc.)
+  4. normalizedProbability: Once matched, compare these directly (all 0-1 scale)
+
+MATCHING EXAMPLE:
+  Polymarket keywords: ["super", "bowl", "champion", "2026", "nfl"]
+  Odds API keywords: ["nfl", "super", "bowl", "winner"]
+  → Overlap: ["super", "bowl", "nfl"] = 60% match → SAME MARKET!
+  → Compare: Polymarket 0.25 vs Odds API 0.22 = 3% gap
+
+PLATFORM COMPATIBILITY:
+  - Sports comparisons: Use Polymarket + Odds API (Kalshi has NO sports markets)
+  - Politics comparisons: Use Polymarket + Kalshi`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        category: {
+          type: "string",
+          description: "Filter by category: sports, politics, crypto, entertainment, science, business",
+        },
+        keywords: {
+          type: "string",
+          description: "Keywords to search for (uses OR matching for multi-word queries)",
+        },
+        minVolume: {
+          type: "number",
+          description: "Minimum 24h volume in USD (default: 1000)",
+        },
+        limit: {
+          type: "number",
+          description: "Number of results (default: 30, max: 100)",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        platform: { type: "string", const: "polymarket" },
+        markets: {
+          type: "array",
+          description: "Markets in standardized format. Use keywords/teams for FUZZY MATCHING with other platforms - NOT title matching!",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Human-readable title. DO NOT use for cross-platform matching (titles differ by platform)" },
+              description: { type: "string" },
+              eventCategory: { type: "string", description: "Standardized category (sports, politics, crypto, etc). Filter by this FIRST when matching" },
+              keywords: { 
+                type: "array", 
+                items: { type: "string" }, 
+                description: "🔑 USE FOR MATCHING: Check if 50%+ keywords overlap with other platform's keywords array" 
+              },
+              teams: { 
+                type: "array", 
+                items: { type: "string" }, 
+                description: "🔑 USE FOR MATCHING: For sports, check if same teams appear on both platforms" 
+              },
+              outcomes: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string" },
+                    normalizedProbability: { type: "number", description: "🎯 COMPARE THIS: 0-1 scale, directly comparable across all platforms" },
+                    rawPrice: { type: "number", description: "Original Polymarket price (0-1)" },
+                  },
+                },
+              },
+              volume24h: { type: "number" },
+              liquidity: { type: "number" },
+              endDate: { type: "string", description: "Resolution date - can help confirm same event across platforms" },
+              url: { type: "string" },
+              platformMarketId: { type: "string", description: "conditionId for Polymarket" },
+            },
+          },
+        },
+        totalCount: { type: "number" },
+        hint: { type: "string" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["platform", "markets", "fetchedAt"],
+    },
+  },
+
   // ==================== TIER 2: RAW DATA TOOLS ====================
 
   {
@@ -1176,6 +1283,9 @@ const TOOLS = [
 
 By default, only LIVE (tradeable) markets are returned. Use status='resolved' for finished markets or status='all' for both.
 
+CROSS-PLATFORM TIP: When searching for multiple topics like "NBA NFL MLB", use matchMode='any' (default) 
+to find markets matching ANY of those terms, not all of them.
+
 Each result includes:
 - url: Direct link to the market on Polymarket (always use this, never construct URLs)
 - status: Either "live" (tradeable) or "resolved" (finished)
@@ -1185,7 +1295,12 @@ Each result includes:
       properties: {
         query: {
           type: "string",
-          description: "Search query (searches title and description)",
+          description: "Search query (searches title and description). Multiple words are searched based on matchMode.",
+        },
+        matchMode: {
+          type: "string",
+          enum: ["any", "all"],
+          description: "How to match multiple words: 'any' (default) = match markets containing ANY word (good for 'NBA NFL MLB'), 'all' = require ALL words to match (good for 'Bitcoin price 2025')",
         },
         category: {
           type: "string",
@@ -1781,6 +1896,10 @@ server.setRequestHandler(
           return await handleDiscoverTrendingMarkets(args);
         case "analyze_my_positions":
           return await handleAnalyzeMyPositions(args);
+
+        // Cross-Platform Interoperability
+        case "get_comparable_markets":
+          return await handleGetComparableMarkets(args);
 
         // Tier 2: Raw Data Tools
         case "get_events":
@@ -4396,6 +4515,188 @@ function generateOverallRecommendation(params: {
 }
 
 // ============================================================================
+// CROSS-PLATFORM INTEROPERABILITY HANDLER
+// ============================================================================
+
+/**
+ * Extract keywords from market title/description for cross-platform matching
+ */
+function extractKeywords(text: string): string[] {
+  const stopWords = new Set([
+    'the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 
+    'will', 'be', 'by', 'this', 'that', 'it', 'with', 'from', 'as', 'are',
+    'was', 'were', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'but',
+    'if', 'than', 'so', 'what', 'which', 'who', 'whom', 'when', 'where', 'why',
+    'how', 'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other',
+    'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'too', 'very',
+    'can', 'just', 'should', 'now', 'before', 'after', 'during', 'while',
+  ]);
+  
+  return text.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length > 2 && !stopWords.has(word))
+    .slice(0, 15); // Limit to 15 keywords
+}
+
+/**
+ * Extract team names from sports-related text
+ */
+function extractTeams(text: string): string[] {
+  const teams: string[] = [];
+  const textLower = text.toLowerCase();
+  
+  // Common sports team patterns
+  const nbaTeams = ['lakers', 'celtics', 'warriors', 'heat', 'bucks', 'nuggets', 'suns', 'nets', 'sixers', '76ers', 'knicks', 'bulls', 'clippers', 'mavericks', 'cavaliers'];
+  const nflTeams = ['chiefs', 'eagles', 'cowboys', '49ers', 'bills', 'ravens', 'lions', 'dolphins', 'jets', 'packers', 'vikings', 'bengals', 'jaguars', 'texans', 'chargers', 'broncos', 'patriots', 'saints', 'falcons', 'bears'];
+  const mlbTeams = ['yankees', 'dodgers', 'braves', 'astros', 'mets', 'phillies', 'padres', 'mariners', 'orioles', 'rangers', 'twins', 'rays', 'guardians', 'cubs', 'red sox'];
+  
+  const allTeams = [...nbaTeams, ...nflTeams, ...mlbTeams];
+  
+  for (const team of allTeams) {
+    if (textLower.includes(team)) {
+      teams.push(team.charAt(0).toUpperCase() + team.slice(1));
+    }
+  }
+  
+  return teams;
+}
+
+/**
+ * Categorize a market into standardized categories
+ */
+function categorizeMarket(title: string, category: string | undefined): string {
+  const textLower = (title + ' ' + (category || '')).toLowerCase();
+  
+  // Sports detection
+  if (['nba', 'nfl', 'mlb', 'nhl', 'soccer', 'football', 'basketball', 'baseball', 'hockey', 'tennis', 'golf', 'ufc', 'mma', 'boxing', 'f1', 'nascar', 'olympics', 'world cup', 'super bowl', 'championship'].some(s => textLower.includes(s))) {
+    return 'sports';
+  }
+  
+  // Politics
+  if (['election', 'president', 'senate', 'congress', 'vote', 'trump', 'biden', 'democrat', 'republican', 'governor', 'political', 'poll'].some(s => textLower.includes(s))) {
+    return 'politics';
+  }
+  
+  // Crypto
+  if (['bitcoin', 'ethereum', 'crypto', 'btc', 'eth', 'solana', 'token', 'defi', 'nft', 'blockchain'].some(s => textLower.includes(s))) {
+    return 'crypto';
+  }
+  
+  // Entertainment
+  if (['oscar', 'grammy', 'emmy', 'movie', 'film', 'tv', 'show', 'actor', 'singer', 'celebrity', 'music', 'album', 'award'].some(s => textLower.includes(s))) {
+    return 'entertainment';
+  }
+  
+  // Finance/Business
+  if (['stock', 'market', 'fed', 'interest rate', 'recession', 'inflation', 'gdp', 'economic', 'company', 'earnings', 'ipo', 'merger'].some(s => textLower.includes(s))) {
+    return 'business';
+  }
+  
+  // Science/Tech
+  if (['ai', 'spacex', 'nasa', 'launch', 'scientific', 'research', 'climate', 'technology', 'tech'].some(s => textLower.includes(s))) {
+    return 'science';
+  }
+  
+  return category || 'other';
+}
+
+async function handleGetComparableMarkets(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const category = args?.category as string | undefined;
+  const keywords = args?.keywords as string | undefined;
+  const minVolume = (args?.minVolume as number) || 1000;
+  const limit = Math.min((args?.limit as number) || 30, 100);
+
+  try {
+    // IMPORTANT: The Gamma API doesn't properly filter by category, so we must fetch MORE events
+    // and filter client-side. Political/sports markets may not be in the first 100 results.
+    // When category filter is specified, fetch 500 events to ensure we capture all relevant markets.
+    const fetchLimit = category ? 500 : limit * 5;
+    const events = (await fetchGamma(`/events?closed=false&limit=${fetchLimit}&order=volume&ascending=false`)) as GammaEvent[];
+
+    let filtered = events || [];
+
+    // Filter by keywords if provided (using OR matching)
+    if (keywords) {
+      const queryWords = keywords.toLowerCase()
+        .split(/\s+/)
+        .filter(word => word.length > 2);
+      
+      filtered = filtered.filter((e) => {
+        const searchText = ((e.title || '') + ' ' + (e.description || '')).toLowerCase();
+        return queryWords.some(word => searchText.includes(word));
+      });
+    }
+
+    // Filter by minimum volume
+    filtered = filtered.filter(e => (e.volume || 0) >= minVolume);
+
+    // Filter by category if provided
+    if (category) {
+      filtered = filtered.filter(e => {
+        const marketCategory = categorizeMarket(e.title || '', e.category);
+        return marketCategory.toLowerCase() === category.toLowerCase();
+      });
+    }
+
+    // Transform to standardized format
+    const markets = filtered
+      .slice(0, limit)
+      .map((e) => {
+        const title = e.title || '';
+        const description = e.description || '';
+        const fullText = title + ' ' + description;
+        
+        // Extract outcomes from the first market (most events have one main market)
+        const mainMarket = e.markets?.[0];
+        const prices = parseJsonArray(mainMarket?.outcomePrices);
+        // Standard Polymarket markets have Yes/No outcomes with prices in outcomePrices array
+        const yesPrice = prices[0] ? parseFloat(prices[0]) : 0.5;
+        const noPrice = prices[1] ? parseFloat(prices[1]) : 0.5;
+        const outcomes = [
+          { name: 'Yes', normalizedProbability: yesPrice, rawPrice: yesPrice },
+          { name: 'No', normalizedProbability: noPrice, rawPrice: noPrice },
+        ];
+
+        return {
+          title,
+          description: description.slice(0, 200) + (description.length > 200 ? '...' : ''),
+          eventCategory: categorizeMarket(title, e.category),
+          keywords: extractKeywords(fullText),
+          teams: extractTeams(fullText),
+          outcomes,
+          volume24h: e.volume || 0,
+          liquidity: e.liquidity || 0,
+          endDate: e.endDate || e.endDateIso || null,
+          url: e.slug ? `https://polymarket.com/event/${e.slug}` : null,
+          platformMarketId: mainMarket?.conditionId || e.id,
+        };
+      });
+
+    const sportsCount = markets.filter(m => m.eventCategory === 'sports').length;
+    const politicsCount = markets.filter(m => m.eventCategory === 'politics').length;
+
+    return successResult({
+      platform: 'polymarket',
+      markets,
+      totalCount: markets.length,
+      categoryBreakdown: {
+        sports: sportsCount,
+        politics: politicsCount,
+        crypto: markets.filter(m => m.eventCategory === 'crypto').length,
+        other: markets.filter(m => !['sports', 'politics', 'crypto'].includes(m.eventCategory)).length,
+      },
+      hint: `Returned ${markets.length} markets. Probabilities are normalized 0-1. Compare with Kalshi (yesPrice/100) or Odds API (1/decimal_odds).`,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Failed to get comparable markets: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// ============================================================================
 // TIER 2: RAW DATA TOOL HANDLERS
 // ============================================================================
 
@@ -4720,11 +5021,14 @@ async function handleSearchMarkets(
   const category = args?.category as string;
   const status = (args?.status as string) || "live"; // Default to live (tradeable) markets
   const limit = Math.min((args?.limit as number) || 20, 50);
+  // matchMode: "all" = all words must match, "any" = any word matches (better for multi-topic searches)
+  const matchMode = (args?.matchMode as string) || "any"; // Default to "any" for better cross-platform compatibility
 
   // Determine which markets to fetch based on status filter
   // closed=false means live/active markets, closed=true means resolved/finished markets
   // Use order=id&ascending=false to get NEWEST markets first (critical for finding recent crypto markets)
-  let fetchLimit = limit * 5; // Fetch more to account for filtering
+  // IMPORTANT: Gamma API doesn't do server-side text search, so we must fetch more and filter client-side
+  let fetchLimit = query ? 500 : limit * 5; // Fetch more when searching to find relevant markets
   
   let allEvents: GammaEvent[] = [];
   
@@ -4748,8 +5052,9 @@ async function handleSearchMarkets(
 
   let filtered = allEvents || [];
 
-  // Filter by query if provided - use WORD-BASED matching (all words must be present)
-  // This fixes the bug where "Bitcoin price" didn't match "What price will Bitcoin hit in 2025?"
+  // Filter by query if provided
+  // matchMode="any": ANY word matches (good for "NBA NFL MLB" to find NBA OR NFL OR MLB markets)
+  // matchMode="all": ALL words must match (good for "Bitcoin price 2025" to require all terms)
   if (query) {
     // Split query into words and filter out common stop words
     const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by']);
@@ -4762,8 +5067,13 @@ async function handleSearchMarkets(
       const descLower = (e.description || '').toLowerCase();
       const searchText = titleLower + ' ' + descLower;
       
-      // ALL query words must be present in either title or description
-      return queryWords.every(word => searchText.includes(word));
+      if (matchMode === "all") {
+        // ALL query words must be present (strict matching)
+        return queryWords.every(word => searchText.includes(word));
+      } else {
+        // ANY query word matches (better for multi-topic searches like "NBA NFL MLB")
+        return queryWords.some(word => searchText.includes(word));
+      }
     });
   }
 

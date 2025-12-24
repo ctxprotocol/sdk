@@ -483,6 +483,178 @@ const TOOLS = [
     },
   },
 
+  // ==================== CROSS-PLATFORM INTEROPERABILITY ====================
+
+  {
+    name: "find_cross_platform_gaps",
+    description: `🔍 CROSS-PLATFORM INTELLIGENCE: This tool provides GUIDANCE for finding probability gaps between sportsbooks and prediction markets.
+
+⚠️ IMPORTANT: This tool returns INSTRUCTIONS and METHODOLOGY, not live cross-platform data.
+To find actual gaps, you must:
+1. Call get_comparable_markets on THIS server (Odds API) to get sports probabilities
+2. Call get_comparable_markets on Polymarket/Kalshi servers to get prediction market probabilities  
+3. Compare normalized probabilities (all on 0-1 scale)
+
+PROBABILITY GAP = Difference between sportsbook implied probability and prediction market price
+
+EXAMPLE WORKFLOW:
+1. Odds API: get_outrights({ sport: "basketball_nba_championship_winner" })
+   → "Lakers" best odds 5.00 → implied probability = 1/5.00 = 0.20 (20%)
+2. Polymarket: search_markets({ query: "Lakers NBA Finals" })
+   → "Lakers win NBA Finals" YES price = 0.35 (35%)
+3. GAP = |0.35 - 0.20| = 0.15 (15 percentage points!)
+
+ARBITRAGE DETECTION:
+- Gap > 10 percentage points = potential arbitrage
+- Gap > 5 percentage points = significant discrepancy worth investigating
+- Gap < 5 percentage points = markets roughly agree
+
+COMMON CROSS-PLATFORM OVERLAPS:
+- NBA/NFL/MLB championship winners (Odds API outrights vs Polymarket/Kalshi futures)
+- Super Bowl winner
+- World Series winner
+- Presidential election outcomes (Kalshi/Polymarket only - no Odds API)`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        targetSport: {
+          type: "string",
+          description: "Sport to analyze (e.g., 'basketball_nba', 'americanfootball_nfl')",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        methodology: { type: "string" },
+        sportsAvailable: { type: "array", items: { type: "string" } },
+        crossPlatformOverlaps: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              category: { type: "string" },
+              oddsApiSport: { type: "string" },
+              polymarketSearch: { type: "string" },
+              kalshiCategory: { type: "string" },
+            },
+          },
+        },
+        instructions: { type: "array", items: { type: "string" } },
+        fetchedAt: { type: "string" },
+      },
+      required: ["methodology", "instructions", "fetchedAt"],
+    },
+  },
+
+  {
+    name: "get_comparable_markets",
+    description: `📊 CROSS-PLATFORM: Get sports betting events in a STANDARDIZED format for comparing with prediction markets (Polymarket only - Kalshi has no sports).
+
+Returns events with normalized probabilities (0-1 scale) derived from decimal odds, matching the format
+used by prediction markets. This enables direct probability comparison.
+
+USE THIS TOOL when you need to:
+- Find arbitrage opportunities between sportsbooks and Polymarket
+- Compare probability assessments for sports events
+- Build cross-platform analysis of championship/futures markets
+
+⚠️ CROSS-PLATFORM MATCHING GUIDE:
+Markets on different platforms have DIFFERENT titles for the SAME event:
+  - Odds API: "NFL Super Bowl Winner" or "Kansas City Chiefs vs Detroit Lions"
+  - Polymarket: "Super Bowl Champion 2026" or "Chiefs win Super Bowl"
+
+DO NOT use exact title matching! Instead, use FUZZY MATCHING with these fields:
+  1. teams: Check if the same teams appear on both platforms (most reliable for sports!)
+  2. keywords: Check if 50%+ of keywords overlap
+  3. sport: Map to Polymarket's eventCategory (both should be "sports")
+  4. normalizedProbability: Once matched, compare these directly (all 0-1 scale)
+
+MATCHING EXAMPLE:
+  Odds API teams: ["Kansas City Chiefs", "Detroit Lions"]
+  Odds API keywords: ["nfl", "super", "bowl", "kansas city chiefs"]
+  Polymarket keywords: ["super", "bowl", "champion", "2026", "chiefs"]
+  → Team match: "Chiefs" appears in both → SAME MARKET!
+  → Compare: Odds API 0.28 vs Polymarket 0.25 = 3% gap
+
+PROBABILITY CONVERSION (already done for you):
+  - Decimal 2.00 → 1/2.00 = 0.50 (50%)
+  - Decimal 1.50 → 1/1.50 = 0.667 (66.7%)
+  - Decimal 3.00 → 1/3.00 = 0.333 (33.3%)
+
+PLATFORM COMPATIBILITY:
+  - Sports: Use Odds API + Polymarket (Kalshi has NO sports markets)
+  - For outrights/futures, use sport keys ending in _winner (e.g., americanfootball_nfl_super_bowl_winner)`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        sport: {
+          type: "string",
+          description: "Sport key (e.g., 'americanfootball_nfl', 'basketball_nba'). Use 'upcoming' for next events across all sports.",
+          default: "upcoming",
+        },
+        market: {
+          type: "string",
+          description: "Market type: h2h (moneyline), spreads, totals, outrights",
+          default: "h2h",
+        },
+        limit: {
+          type: "number",
+          description: "Number of results (default: 30, max: 50)",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        platform: { type: "string", const: "odds_api" },
+        markets: {
+          type: "array",
+          description: "Sports events in standardized format. Use teams/keywords for FUZZY MATCHING with Polymarket - NOT title matching!",
+          items: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Human-readable title. DO NOT use for cross-platform matching (titles differ by platform)" },
+              description: { type: "string" },
+              eventCategory: { type: "string", const: "sports", description: "Always 'sports' - compare with Polymarket sports category" },
+              sport: { type: "string", description: "Sport key (e.g., americanfootball_nfl). Helps narrow matching scope" },
+              keywords: { 
+                type: "array", 
+                items: { type: "string" }, 
+                description: "🔑 USE FOR MATCHING: Check if 50%+ keywords overlap with Polymarket's keywords array" 
+              },
+              teams: { 
+                type: "array", 
+                items: { type: "string" }, 
+                description: "🔑 BEST FOR MATCHING: Check if team names appear in Polymarket market (most reliable for sports!)" 
+              },
+              outcomes: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string", description: "Outcome name (team name or Over/Under)" },
+                    normalizedProbability: { type: "number", description: "🎯 COMPARE THIS: 0-1 scale, directly comparable with Polymarket" },
+                    rawOdds: { type: "number", description: "Original decimal odds (normalizedProbability = 1/rawOdds)" },
+                    bestBookmaker: { type: "string", description: "Which bookmaker has the best odds for this outcome" },
+                  },
+                },
+              },
+              commenceTime: { type: "string", description: "Event start time - can help confirm same event across platforms" },
+              platformEventId: { type: "string" },
+            },
+          },
+        },
+        totalCount: { type: "number" },
+        hint: { type: "string" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["platform", "markets", "fetchedAt"],
+    },
+  },
+
   // ==================== TIER 2: RAW DATA TOOLS ====================
 
   {
@@ -2196,6 +2368,178 @@ async function handleDiscoverValueBets(
 }
 
 // ============================================================================
+// CROSS-PLATFORM INTEROPERABILITY HANDLERS
+// ============================================================================
+
+async function handleFindCrossPlatformGaps(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const targetSport = args?.targetSport as string | undefined;
+
+  // Fetch available sports to provide accurate guidance
+  let availableSports: string[] = [];
+  try {
+    const sports = (await fetchOddsApi("/sports")) as OddsApiSport[];
+    availableSports = sports
+      .filter(s => s.active)
+      .map(s => s.key)
+      .slice(0, 20);
+  } catch {
+    availableSports = POPULAR_SPORTS;
+  }
+
+  const crossPlatformOverlaps = [
+    {
+      category: "NBA Championship",
+      oddsApiSport: "basketball_nba_championship_winner",
+      polymarketSearch: "Lakers Celtics NBA Finals championship",
+      kalshiCategory: "Sports",
+      description: "NBA Finals winner - compare futures odds vs prediction market prices",
+    },
+    {
+      category: "NFL Super Bowl",
+      oddsApiSport: "americanfootball_nfl_super_bowl_winner",
+      polymarketSearch: "Super Bowl Chiefs Eagles",
+      kalshiCategory: "Sports",
+      description: "Super Bowl winner - often has significant cross-platform gaps",
+    },
+    {
+      category: "MLB World Series",
+      oddsApiSport: "baseball_mlb_world_series_winner",
+      polymarketSearch: "World Series Yankees Dodgers",
+      kalshiCategory: "Sports",
+      description: "World Series champion predictions",
+    },
+    {
+      category: "Soccer Major Tournaments",
+      oddsApiSport: "soccer_fifa_world_cup_winner",
+      polymarketSearch: "World Cup winner soccer",
+      kalshiCategory: "Sports",
+      description: "FIFA World Cup predictions",
+    },
+  ];
+
+  const instructions = [
+    "STEP 1: Get sportsbook odds from Odds API",
+    `  → Call: get_outrights({ sport: "${targetSport || 'basketball_nba_championship_winner'}" })`,
+    "  → Or: get_comparable_markets({ sport: 'upcoming', market: 'h2h' })",
+    "",
+    "STEP 2: Get prediction market prices",
+    "  → For Polymarket: search_markets({ query: '<team_name> championship', matchMode: 'any' })",
+    "  → For Kalshi: get_comparable_markets({ keywords: '<team_name> <sport>' })",
+    "",
+    "STEP 3: Compare normalized probabilities",
+    "  → Odds API: probability = 1 / decimal_odds (e.g., 1/2.50 = 0.40)",
+    "  → Polymarket: probability = YES price (e.g., 0.45)",
+    "  → Kalshi: probability = yesPrice / 100 (e.g., 45/100 = 0.45)",
+    "",
+    "STEP 4: Calculate gap",
+    "  → Gap = |sportsbook_prob - prediction_market_prob|",
+    "  → Gap > 0.10 (10pp) = significant arbitrage potential",
+    "  → Gap > 0.05 (5pp) = worth investigating",
+    "",
+    "STEP 5: Identify arbitrage opportunity",
+    "  → If sportsbook prob < prediction market prob: bet on sportsbook, sell YES on prediction market",
+    "  → If sportsbook prob > prediction market prob: sell on sportsbook (if possible), buy YES on prediction market",
+  ];
+
+  return successResult({
+    methodology: "Cross-platform probability gap detection compares normalized probabilities (0-1 scale) across sportsbooks and prediction markets to find pricing discrepancies.",
+    sportsAvailable: availableSports,
+    crossPlatformOverlaps,
+    instructions,
+    targetSport: targetSport || "Use one of the sportsAvailable keys",
+    hint: "This tool provides METHODOLOGY. To find actual gaps, call get_comparable_markets on multiple servers and compare the normalizedProbability values.",
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleGetComparableMarkets(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const sport = (args?.sport as string) || "upcoming";
+  const market = (args?.market as string) || "h2h";
+  const limit = Math.min((args?.limit as number) || 30, 50);
+
+  try {
+    const oddsData = (await fetchOddsApi(`/sports/${sport}/odds`, {
+      regions: DEFAULT_REGIONS,
+      markets: market,
+      oddsFormat: "decimal",
+    })) as OddsApiOddsEvent[];
+
+    const comparableMarkets = oddsData.slice(0, limit).map(event => {
+      // Build a map of best odds for each outcome across all bookmakers
+      const bestOdds: Map<string, { bookmaker: string; odds: number }> = new Map();
+
+      for (const bookmaker of event.bookmakers) {
+        const mkt = bookmaker.markets.find(m => m.key === market);
+        if (!mkt) continue;
+
+        for (const outcome of mkt.outcomes) {
+          const key = outcome.point !== undefined 
+            ? `${outcome.name} (${outcome.point > 0 ? "+" : ""}${outcome.point})`
+            : outcome.name;
+          
+          const current = bestOdds.get(key);
+          if (!current || outcome.price > current.odds) {
+            bestOdds.set(key, {
+              bookmaker: bookmaker.title,
+              odds: outcome.price,
+            });
+          }
+        }
+      }
+
+      // Convert to outcomes array with normalized probabilities
+      const outcomes = Array.from(bestOdds.entries()).map(([name, data]) => ({
+        name,
+        normalizedProbability: Math.round((1 / data.odds) * 10000) / 10000,
+        rawOdds: data.odds,
+        bestBookmaker: data.bookmaker,
+      }));
+
+      // Extract keywords for cross-platform matching
+      const keywords = [
+        event.sport_key.replace(/_/g, ' '),
+        event.home_team?.toLowerCase(),
+        event.away_team?.toLowerCase(),
+      ].filter(Boolean) as string[];
+
+      return {
+        title: `${event.away_team} @ ${event.home_team}`,
+        description: `${event.sport_title} - ${market.toUpperCase()} market`,
+        eventCategory: 'sports',
+        sport: event.sport_key,
+        keywords,
+        teams: [event.home_team, event.away_team],
+        outcomes,
+        commenceTime: event.commence_time,
+        platformEventId: event.id,
+      };
+    });
+
+    // Group by sport for breakdown
+    const sportCounts: Record<string, number> = {};
+    for (const market of comparableMarkets) {
+      const sportGroup = market.sport.split('_')[0] || 'other';
+      sportCounts[sportGroup] = (sportCounts[sportGroup] || 0) + 1;
+    }
+
+    return successResult({
+      platform: 'odds_api',
+      markets: comparableMarkets,
+      totalCount: comparableMarkets.length,
+      sportBreakdown: sportCounts,
+      hint: `Returned ${comparableMarkets.length} sports events. Probabilities are normalized 0-1 (derived from decimal odds as 1/odds). Compare with Polymarket or Kalshi prediction markets. Note: Sportsbook probabilities often sum to >100% due to vig/juice.`,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Failed to get comparable markets: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+// ============================================================================
 // TIER 2: RAW DATA TOOL HANDLERS
 // ============================================================================
 
@@ -2910,6 +3254,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
     case "discover_value_bets":
       return handleDiscoverValueBets(args);
 
+    // Cross-Platform Interoperability
+    case "find_cross_platform_gaps":
+      return handleFindCrossPlatformGaps(args);
+    case "get_comparable_markets":
+      return handleGetComparableMarkets(args);
+
     // Tier 2: Raw Data Tools
     case "get_sports":
       return handleGetSports(args);
@@ -3010,6 +3360,8 @@ app.post("/test-tool", async (req: Request, res: Response) => {
       case "analyze_market_efficiency": result = await handleAnalyzeMarketEfficiency(args); break;
       case "compare_historical_closing_lines": result = await handleCompareHistoricalClosingLines(args); break;
       case "discover_value_bets": result = await handleDiscoverValueBets(args); break;
+      case "find_cross_platform_gaps": result = await handleFindCrossPlatformGaps(args); break;
+      case "get_comparable_markets": result = await handleGetComparableMarkets(args); break;
       default:
         res.status(400).json({ error: `Unknown tool: ${tool}` });
         return;
