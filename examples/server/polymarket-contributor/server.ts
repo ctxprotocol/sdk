@@ -928,10 +928,23 @@ const TOOLS = [
 Returns markets with normalized probabilities (0-1 scale) and standardized fields that can be 
 directly compared across prediction markets and sportsbooks.
 
+🕐 LIVE vs HISTORICAL DATA:
+  - DEFAULT (includeResolved: false): Returns only ACTIVE markets currently trading
+    → Use for: Current arbitrage, live comparisons, real-time analysis, trading decisions
+  - HISTORICAL (includeResolved: true): Returns CONCLUDED/RESOLVED markets
+    → Use for: Past event analysis, accuracy studies, "what were the odds on X?", backtesting
+
+WHEN TO USE includeResolved: true:
+  - "What were the Polymarket odds on the Chiefs winning Super Bowl 2024?"
+  - "How accurate were predictions for the 2024 election?"
+  - "Compare historical probability gaps between platforms"
+  - Any question about PAST events that have already resolved
+
 USE THIS TOOL when you need to:
 - Find arbitrage opportunities between Polymarket and other platforms
 - Compare probability assessments across markets
 - Build cross-platform market analysis
+- Analyze historical prediction accuracy (with includeResolved: true)
 
 ⚠️ CROSS-PLATFORM MATCHING GUIDE:
 Markets on different platforms have DIFFERENT titles for the SAME event:
@@ -972,6 +985,10 @@ PLATFORM COMPATIBILITY:
         limit: {
           type: "number",
           description: "Number of results (default: 30, max: 100)",
+        },
+        includeResolved: {
+          type: "boolean",
+          description: "Include resolved/closed markets (default: false). Set to true to see historical markets that have already concluded.",
         },
       },
       required: [],
@@ -4608,13 +4625,16 @@ async function handleGetComparableMarkets(
   const keywords = args?.keywords as string | undefined;
   const minVolume = (args?.minVolume as number) || 1000;
   const limit = Math.min((args?.limit as number) || 30, 100);
+  const includeResolved = args?.includeResolved === true;
 
   try {
     // IMPORTANT: The Gamma API doesn't properly filter by category, so we must fetch MORE events
     // and filter client-side. Political/sports markets may not be in the first 100 results.
     // When category filter is specified, fetch 500 events to ensure we capture all relevant markets.
     const fetchLimit = category ? 500 : limit * 5;
-    const events = (await fetchGamma(`/events?closed=false&limit=${fetchLimit}&order=volume&ascending=false`)) as GammaEvent[];
+    // By default, only fetch active markets (closed=false). Set includeResolved=true for historical data.
+    const closedParam = includeResolved ? "true" : "false";
+    const events = (await fetchGamma(`/events?closed=${closedParam}&limit=${fetchLimit}&order=volume&ascending=false`)) as GammaEvent[];
 
     let filtered = events || [];
 
@@ -4649,29 +4669,85 @@ async function handleGetComparableMarkets(
         const description = e.description || '';
         const fullText = title + ' ' + description;
         
-        // Extract outcomes from the first market (most events have one main market)
-        const mainMarket = e.markets?.[0];
-        const prices = parseJsonArray(mainMarket?.outcomePrices);
-        // Standard Polymarket markets have Yes/No outcomes with prices in outcomePrices array
-        const yesPrice = prices[0] ? parseFloat(prices[0]) : 0.5;
-        const noPrice = prices[1] ? parseFloat(prices[1]) : 0.5;
-        const outcomes = [
-          { name: 'Yes', normalizedProbability: yesPrice, rawPrice: yesPrice },
-          { name: 'No', normalizedProbability: noPrice, rawPrice: noPrice },
-        ];
+        // Handle both BINARY (Yes/No) and MULTI-OUTCOME (team/candidate selection) markets
+        // Multi-outcome markets like "Super Bowl Champion" have multiple markets in e.markets[]
+        // where each market represents one outcome (e.g., "Kansas City Chiefs", "Buffalo Bills")
+        const eventMarkets = e.markets || [];
+        const isMultiOutcome = eventMarkets.length > 2;
+        
+        let outcomes: Array<{ name: string; normalizedProbability: number; rawPrice: number }>;
+        
+        if (isMultiOutcome) {
+          // MULTI-OUTCOME MARKET: Extract each team/candidate as an outcome
+          // Each market has a question or title field (the outcome name) and outcomePrices[0] is the YES price
+          // By default, filter out resolved/closed markets - they show 0% because the outcome is concluded
+          // (e.g., a team eliminated from playoffs auto-resolves to "No")
+          // Set includeResolved=true to include historical/concluded outcomes
+          outcomes = eventMarkets
+            .filter((market) => {
+              if (includeResolved) return true; // Include all markets when includeResolved is true
+              // Only include ACTIVE markets that are still accepting orders
+              // Closed markets have resolved outcomes and aren't useful for comparison
+              const isClosed = market.closed === true;
+              const isResolved = market.umaResolutionStatus === 'resolved';
+              return !isClosed && !isResolved;
+            })
+            .map((market) => {
+              let outcomeName = market.question || market.title || 'Unknown';
+              
+              // Clean up common patterns like "Will the X win Y?" to extract just "X"
+              // Pattern: "Will the Buffalo Bills win Super Bowl 2026?" -> "Buffalo Bills"
+              const willTheMatch = outcomeName.match(/^Will (?:the )?(.+?) win .+\?$/i);
+              if (willTheMatch) {
+                outcomeName = willTheMatch[1];
+              }
+              // Pattern: "X to win Y" -> "X"
+              const toWinMatch = outcomeName.match(/^(.+?) to win .+$/i);
+              if (toWinMatch) {
+                outcomeName = toWinMatch[1];
+              }
+              
+              const prices = parseJsonArray(market.outcomePrices);
+              const yesPrice = prices[0] ? parseFloat(prices[0]) : 0;
+              return {
+                name: outcomeName,
+                normalizedProbability: yesPrice,
+                rawPrice: yesPrice,
+              };
+            })
+            .filter(o => o.normalizedProbability >= 0 && !isNaN(o.normalizedProbability))
+            .sort((a, b) => b.normalizedProbability - a.normalizedProbability); // Sort by probability desc
+        } else {
+          // BINARY MARKET: Standard Yes/No format
+          const mainMarket = eventMarkets[0];
+          const prices = parseJsonArray(mainMarket?.outcomePrices);
+          const yesPrice = prices[0] ? parseFloat(prices[0]) : 0.5;
+          const noPrice = prices[1] ? parseFloat(prices[1]) : 0.5;
+          outcomes = [
+            { name: 'Yes', normalizedProbability: yesPrice, rawPrice: yesPrice },
+            { name: 'No', normalizedProbability: noPrice, rawPrice: noPrice },
+          ];
+        }
+
+        // Extract team names from multi-outcome markets for fuzzy matching
+        // Include all teams (up to 50) for comprehensive cross-platform matching
+        const teamsFromOutcomes = isMultiOutcome 
+          ? outcomes.slice(0, 50).map(o => o.name) 
+          : extractTeams(fullText);
 
         return {
           title,
           description: description.slice(0, 200) + (description.length > 200 ? '...' : ''),
           eventCategory: categorizeMarket(title, e.category),
           keywords: extractKeywords(fullText),
-          teams: extractTeams(fullText),
+          teams: teamsFromOutcomes,
           outcomes,
           volume24h: e.volume || 0,
           liquidity: e.liquidity || 0,
           endDate: e.endDate || e.endDateIso || null,
           url: e.slug ? `https://polymarket.com/event/${e.slug}` : null,
-          platformMarketId: mainMarket?.conditionId || e.id,
+          platformMarketId: e.id,
+          isMultiOutcome, // Flag to indicate this is a multi-outcome market
         };
       });
 
@@ -5950,6 +6026,11 @@ interface GammaMarket {
   liquidity?: number;
   clobTokenIds?: string[] | string; // API may return JSON string
   tokens?: Array<{ token_id: string }>;
+  // Market status fields - used to filter out resolved/closed outcomes
+  closed?: boolean;
+  active?: boolean;
+  acceptingOrders?: boolean;
+  umaResolutionStatus?: string; // 'proposed', 'resolved', etc.
 }
 
 interface ClobMarket {

@@ -555,10 +555,23 @@ COMMON CROSS-PLATFORM OVERLAPS:
 Returns events with normalized probabilities (0-1 scale) derived from decimal odds, matching the format
 used by prediction markets. This enables direct probability comparison.
 
+🕐 LIVE vs HISTORICAL DATA:
+  - DEFAULT (includeCompleted: false): Returns only UPCOMING events that haven't started
+    → Use for: Current arbitrage, live comparisons, real-time betting analysis
+  - HISTORICAL (includeCompleted: true): Includes events that have already completed
+    → Use for: Past game analysis, accuracy studies, "what were the odds on X game?"
+    ⚠️ Note: Historical odds data is limited compared to Polymarket/Kalshi
+
+WHEN TO USE includeCompleted: true:
+  - "What were the sportsbook odds on the Chiefs winning Super Bowl 2024?"
+  - "How did closing lines compare to Polymarket prices for past games?"
+  - Any question about PAST sporting events
+
 USE THIS TOOL when you need to:
 - Find arbitrage opportunities between sportsbooks and Polymarket
 - Compare probability assessments for sports events
 - Build cross-platform analysis of championship/futures markets
+- Analyze historical betting odds (with includeCompleted: true)
 
 ⚠️ CROSS-PLATFORM MATCHING GUIDE:
 Markets on different platforms have DIFFERENT titles for the SAME event:
@@ -602,6 +615,10 @@ PLATFORM COMPATIBILITY:
         limit: {
           type: "number",
           description: "Number of results (default: 30, max: 50)",
+        },
+        includeCompleted: {
+          type: "boolean",
+          description: "Include completed events (default: false). Note: Odds API primarily returns upcoming events. Historical data may be limited.",
         },
       },
       required: [],
@@ -2460,6 +2477,7 @@ async function handleGetComparableMarkets(
   const sport = (args?.sport as string) || "upcoming";
   const market = (args?.market as string) || "h2h";
   const limit = Math.min((args?.limit as number) || 30, 50);
+  const includeCompleted = args?.includeCompleted === true;
 
   try {
     const oddsData = (await fetchOddsApi(`/sports/${sport}/odds`, {
@@ -2468,7 +2486,19 @@ async function handleGetComparableMarkets(
       oddsFormat: "decimal",
     })) as OddsApiOddsEvent[];
 
-    const comparableMarkets = oddsData.slice(0, limit).map(event => {
+    // By default, filter out completed events unless includeCompleted is true
+    // Completed events have passed commence_time and/or completed=true
+    const now = new Date();
+    const filteredEvents = includeCompleted 
+      ? oddsData 
+      : oddsData.filter(event => {
+          // Keep events that haven't started yet or are in-progress
+          const commenceTime = event.commence_time ? new Date(event.commence_time) : null;
+          const isCompleted = event.completed === true;
+          return !isCompleted && (!commenceTime || commenceTime > now);
+        });
+
+    const comparableMarkets = filteredEvents.slice(0, limit).map(event => {
       // Build a map of best odds for each outcome across all bookmakers
       const bestOdds: Map<string, { bookmaker: string; odds: number }> = new Map();
 
@@ -2506,16 +2536,29 @@ async function handleGetComparableMarkets(
         event.away_team?.toLowerCase(),
       ].filter(Boolean) as string[];
 
+      // For outright/futures markets, home_team and away_team are null
+      // Use sport_title as the title instead
+      const isOutright = market === 'outrights' || !event.home_team || !event.away_team;
+      const title = isOutright 
+        ? event.sport_title || event.sport_key.replace(/_/g, ' ')
+        : `${event.away_team} @ ${event.home_team}`;
+      
+      // For outrights, extract team names from outcomes for matching
+      const teamNames = isOutright 
+        ? outcomes.map(o => o.name)
+        : [event.home_team, event.away_team].filter(Boolean);
+
       return {
-        title: `${event.away_team} @ ${event.home_team}`,
+        title,
         description: `${event.sport_title} - ${market.toUpperCase()} market`,
         eventCategory: 'sports',
         sport: event.sport_key,
-        keywords,
-        teams: [event.home_team, event.away_team],
+        keywords: [...keywords, ...teamNames.slice(0, 5).map(t => t.toLowerCase())],
+        teams: teamNames,
         outcomes,
         commenceTime: event.commence_time,
         platformEventId: event.id,
+        isOutright, // Flag to indicate this is a futures/outright market
       };
     });
 

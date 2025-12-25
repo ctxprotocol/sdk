@@ -544,12 +544,25 @@ RETURNS:
 Returns markets with normalized probabilities (0-1 scale) and standardized fields that can be 
 directly compared across prediction markets and sportsbooks.
 
+🕐 LIVE vs HISTORICAL DATA:
+  - DEFAULT (includeResolved: false): Returns only ACTIVE markets currently trading
+    → Use for: Current arbitrage, live comparisons, real-time analysis, trading decisions
+  - HISTORICAL (includeResolved: true): Returns SETTLED/RESOLVED markets  
+    → Use for: Past event analysis, accuracy studies, "what were the odds on X?", backtesting
+
+WHEN TO USE includeResolved: true:
+  - "What were Kalshi's odds on Trump winning in 2024?"
+  - "How accurate were Kalshi predictions for Fed rate decisions?"
+  - "Compare historical probability gaps between platforms"
+  - Any question about PAST events that have already resolved
+
 ⚠️ IMPORTANT: Kalshi currently has NO active sports markets. For sports comparisons, use Polymarket + Odds API instead.
 
 USE THIS TOOL when you need to:
 - Find arbitrage opportunities between Kalshi and Polymarket (POLITICS, ECONOMICS, ENTERTAINMENT)
 - Compare probability assessments across markets
 - Build cross-platform market analysis
+- Analyze historical prediction accuracy (with includeResolved: true)
 
 ⚠️ CROSS-PLATFORM MATCHING GUIDE:
 Markets on different platforms have DIFFERENT titles for the SAME event:
@@ -589,6 +602,10 @@ PLATFORM COMPATIBILITY:
         limit: {
           type: "number",
           description: "Number of results (default: 30, max: 100)",
+        },
+        includeResolved: {
+          type: "boolean",
+          description: "Include resolved/closed markets (default: false). Set to true to see historical markets that have already concluded.",
         },
       },
       required: [],
@@ -809,6 +826,13 @@ RETURNS: Full market details including prices, volumes, rules.`,
 
 ⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent markets or construct URLs. Each result includes a real 'url' field - use ONLY those URLs.
 
+🕐 LIVE vs HISTORICAL MARKETS:
+  - status: 'open' (default) → Active markets currently trading. Use for current analysis.
+  - status: 'settled' → Resolved/concluded markets. Use for historical questions like:
+    → "What were Kalshi's odds on the 2024 election?"
+    → "How accurate were Kalshi predictions for past Fed decisions?"
+  - status: 'all' → Both active and historical markets.
+
 RETURNS: Matching markets with tickers and direct URLs for further analysis.`,
     inputSchema: {
       type: "object" as const,
@@ -824,7 +848,7 @@ RETURNS: Matching markets with tickers and direct URLs for further analysis.`,
         status: {
           type: "string",
           enum: ["open", "closed", "settled", "all"],
-          description: "Filter by status (default: open)",
+          description: "Filter by status: 'open' (default) = active/trading, 'settled' = resolved/historical, 'all' = both. Use 'settled' for past event questions.",
         },
         limit: {
           type: "number",
@@ -2102,6 +2126,10 @@ async function handleGetComparableMarkets(
   const keywords = args?.keywords as string | undefined;
   const minVolume = (args?.minVolume as number) || 0; // Lower default to catch more markets
   const limit = Math.min((args?.limit as number) || 30, 100);
+  const includeResolved = args?.includeResolved === true;
+
+  // By default, only fetch active markets. Set includeResolved=true for historical data.
+  const statusParam = includeResolved ? "settled" : "open";
 
   // Kalshi API category mapping (Kalshi uses different category names)
   const kalshiCategoryMap: Record<string, string> = {
@@ -2120,7 +2148,7 @@ async function handleGetComparableMarkets(
     const kalshiCategory = kalshiCategoryMap[category.toLowerCase()];
     if (kalshiCategory) {
       // Fetch events with the specified category
-      const eventsResponse = await fetchKalshi(`/events?status=open&limit=50`) as { events: KalshiEvent[] };
+      const eventsResponse = await fetchKalshi(`/events?status=${statusParam}&limit=50`) as { events: KalshiEvent[] };
       const events = (eventsResponse.events || []).filter(e => 
         e.category?.toLowerCase() === kalshiCategory.toLowerCase()
       );
@@ -2143,7 +2171,7 @@ async function handleGetComparableMarkets(
   // IMPORTANT: Fetch more markets to ensure we capture relevant ones (API doesn't filter well)
   if (markets.length === 0) {
     const fetchLimit = category ? 500 : limit * 5; // Fetch more when filtering
-    const response = await fetchKalshi(`/markets?limit=${fetchLimit}&status=open`) as { markets: KalshiMarket[] };
+    const response = await fetchKalshi(`/markets?limit=${fetchLimit}&status=${statusParam}`) as { markets: KalshiMarket[] };
     markets = response.markets || [];
   }
 
