@@ -2,8 +2,7 @@
  * Dune Analytics MCP Server v1.0
  *
  * A streamlined MCP server for blockchain analytics using the Dune Analytics API.
- * Provides trending contract discovery, DEX insights, Farcaster trends, EigenLayer
- * metrics, and the ability to execute any of Dune's 750K+ community queries.
+ * Execute any of Dune's 750K+ community queries and retrieve results.
  *
  * Context Protocol compliant with:
  * - outputSchema (typed response definitions)
@@ -11,18 +10,12 @@
  *
  * API Documentation: https://docs.dune.com/api-reference
  *
- * INTELLIGENCE LAYER
- * - discover_trending_contracts: Find trending smart contracts on any EVM chain
- * - get_dex_pair_stats: Get comprehensive DEX trading pair statistics
- * - get_farcaster_trends: Discover trending Farcaster users, channels, memecoins
- *
- * RAW DATA LAYER (Bridge to 750K+ Community Queries)
+ * TOOLS:
  * - execute_query: Execute any saved Dune query by ID
- * - get_query_results: Get cached results from a query
+ * - get_query_results: Get cached results from a query (faster, 40 RPM)
  * - get_execution_status: Check status of a query execution
  * - get_execution_results: Get results from specific execution
- * - get_eigenlayer_avs: Get EigenLayer AVS metadata and metrics
- * - get_eigenlayer_operators: Get EigenLayer operator data
+ * - run_sql: Execute raw SQL directly (Premium feature)
  *
  * Rate Limits (Free Tier):
  * - Low limit endpoints (write-heavy): 15 RPM
@@ -49,17 +42,6 @@ import { createContextMiddleware } from "@ctxprotocol/sdk";
 
 const DUNE_API_BASE = "https://api.dune.com/api/v1";
 const API_KEY = process.env.DUNE_API_KEY || "";
-
-// Supported blockchains for analytics
-const SUPPORTED_CHAINS = [
-  "ethereum",
-  "polygon",
-  "arbitrum",
-  "optimism",
-  "base",
-  "avalanche_c",
-  "bnb",
-];
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -88,232 +70,246 @@ interface DuneApiResponse<T = unknown> {
   error?: string;
 }
 
-interface TrendingContract {
-  contract_address: string;
+// ============================================================================
+// CURATED QUERY CATALOG
+// ============================================================================
+// Since Dune doesn't have a search API, we maintain a curated list of
+// high-quality, working queries organized by category.
+// These are DuneSQL queries that have been tested and are actively maintained.
+
+interface CuratedQuery {
+  id: number;
   name: string;
-  transaction_count_30d: number;
-  unique_users_30d: number;
-  category?: string;
+  description: string;
+  category: string;
+  params?: string[];
+  author?: string;
 }
 
-interface DexPairStats {
-  pair: string;
-  dex: string;
-  volume_1d: number;
-  volume_7d: number;
-  volume_30d: number;
-  liquidity_usd: number;
-  volume_to_liquidity_7d: number;
-}
-
-interface EigenlayerAVS {
-  avs_address: string;
-  name: string;
-  tvl_usd: number;
-  operator_count: number;
-  staker_count: number;
-}
-
-interface EigenlayerOperator {
-  operator_address: string;
-  name: string;
-  tvl_usd: number;
-  staker_count: number;
-  avs_count: number;
-}
-
-interface FarcasterUser {
-  fid: number;
-  username: string;
-  display_name: string;
-  follower_count: number;
-  engagement_score: number;
-}
-
-interface FarcasterChannel {
-  channel_id: string;
-  name: string;
-  follower_count: number;
-  cast_count_24h: number;
-  engagement_score: number;
-}
-
-interface FarcasterMemecoin {
-  token_address: string;
-  symbol: string;
-  name: string;
-  holder_count: number;
-  volume_24h: number;
-  liquidity_usd: number;
-}
+const QUERY_CATALOG: CuratedQuery[] = [
+  // DEX & Trading
+  {
+    id: 3358886,
+    name: "DEX Volume by Chain (24h)",
+    description: "Total DEX trading volume across all chains in the last 24 hours",
+    category: "dex",
+  },
+  {
+    id: 2803687,
+    name: "Top DEX Protocols by Volume",
+    description: "Ranking of DEX protocols by trading volume",
+    category: "dex",
+  },
+  {
+    id: 1324628,
+    name: "Uniswap Daily Volume",
+    description: "Daily trading volume on Uniswap across all chains",
+    category: "dex",
+  },
+  
+  // Wallet Analysis
+  {
+    id: 3352067,
+    name: "Wallet Token Balances",
+    description: "Get all token balances for a wallet address",
+    category: "wallet",
+    params: ["wallet_address"],
+  },
+  {
+    id: 2898034,
+    name: "Token Holder Analysis",
+    description: "Analyze holders of a specific token",
+    category: "wallet",
+    params: ["token_address"],
+  },
+  
+  // NFT
+  {
+    id: 3429556,
+    name: "NFT Marketplace Volume",
+    description: "Trading volume across NFT marketplaces",
+    category: "nft",
+  },
+  {
+    id: 2477537,
+    name: "Top NFT Collections",
+    description: "Most traded NFT collections by volume",
+    category: "nft",
+  },
+  
+  // Stablecoins
+  {
+    id: 3306394,
+    name: "Stablecoin Market Cap",
+    description: "Total market cap and distribution of stablecoins",
+    category: "stablecoin",
+  },
+  {
+    id: 2420432,
+    name: "USDC vs USDT Volume",
+    description: "Comparison of USDC and USDT trading activity",
+    category: "stablecoin",
+  },
+  
+  // Ethereum
+  {
+    id: 3298549,
+    name: "ETH Gas Tracker",
+    description: "Current Ethereum gas prices and trends",
+    category: "ethereum",
+  },
+  {
+    id: 2165698,
+    name: "ETH Burned (EIP-1559)",
+    description: "Total ETH burned since EIP-1559",
+    category: "ethereum",
+  },
+  {
+    id: 1610960,
+    name: "ETH Staking Stats",
+    description: "Ethereum staking statistics and validator count",
+    category: "ethereum",
+  },
+  
+  // Layer 2
+  {
+    id: 3357344,
+    name: "L2 TVL Comparison",
+    description: "Total Value Locked across Layer 2 networks",
+    category: "l2",
+  },
+  {
+    id: 3121877,
+    name: "Base Chain Activity",
+    description: "Transaction activity and growth on Base",
+    category: "l2",
+  },
+  {
+    id: 2904411,
+    name: "Arbitrum Stats",
+    description: "Key metrics for Arbitrum network",
+    category: "l2",
+  },
+  
+  // DeFi
+  {
+    id: 2635316,
+    name: "Top DeFi Protocols by TVL",
+    description: "Ranking of DeFi protocols by Total Value Locked",
+    category: "defi",
+  },
+  {
+    id: 3130886,
+    name: "Lending Protocol Stats",
+    description: "Aave, Compound, and other lending metrics",
+    category: "defi",
+  },
+  
+  // Bridge Activity
+  {
+    id: 2850663,
+    name: "Bridge Volume",
+    description: "Cross-chain bridge transfer volumes",
+    category: "bridge",
+  },
+  
+  // Memecoins
+  {
+    id: 3476890,
+    name: "Top Memecoins by Volume",
+    description: "Most traded memecoins in the last 24h",
+    category: "memecoin",
+  },
+  
+  // General/Utility
+  {
+    id: 1215383,
+    name: "Test Query",
+    description: "Simple test query to verify API connectivity",
+    category: "utility",
+  },
+];
 
 // ============================================================================
 // TOOL DEFINITIONS
 // ============================================================================
 
 const TOOLS = [
-  // ============================================================================
-  // INTELLIGENCE LAYER
-  // ============================================================================
-
   {
-    name: "discover_trending_contracts",
-    description: `🧠 INTELLIGENCE: Discover trending smart contracts on any EVM chain.
-    
-Identifies contracts with high activity in the last 30 days based on transaction
-count and unique users. Great for finding emerging protocols and hot projects.
+    name: "search_queries",
+    description: `Search the curated catalog of high-quality Dune queries.
 
-Supports: ethereum, polygon, arbitrum, optimism, base, avalanche, bnb, and more.`,
+Returns query IDs that you can use with execute_query or get_query_results.
+
+Categories: dex, wallet, nft, stablecoin, ethereum, l2, defi, bridge, memecoin, utility
+
+Examples:
+- "dex volume" → finds DEX trading queries
+- "wallet balance" → finds wallet analysis queries  
+- "ethereum gas" → finds ETH gas tracking queries
+- "nft" → finds NFT marketplace queries
+
+WORKFLOW:
+1. FIRST: Search this curated catalog (fast, reliable queries)
+2. IF NOT FOUND: Use the Exa Search tool to search "site:dune.com [your topic]" to discover more query IDs from Dune's 750K+ community dashboards
+3. Extract the query ID from the Dune URL (e.g., dune.com/queries/1234567 → 1234567)
+4. Use execute_query or get_query_results with that ID`,
     inputSchema: {
       type: "object" as const,
       properties: {
-        chain: {
+        query: {
           type: "string",
-          description: "EVM chain (e.g., ethereum, polygon, arbitrum, base)",
-          enum: ["ethereum", "polygon", "arbitrum", "optimism", "base", "avalanche_c", "bnb"],
+          description: "Search term (e.g., 'dex volume', 'wallet balance', 'nft', 'ethereum')",
         },
-        limit: {
-          type: "number",
-          description: "Max results (default: 20, max: 100)",
+        category: {
+          type: "string",
+          description: "Filter by category: dex, wallet, nft, stablecoin, ethereum, l2, defi, bridge, memecoin",
+          enum: ["dex", "wallet", "nft", "stablecoin", "ethereum", "l2", "defi", "bridge", "memecoin", "utility"],
         },
       },
-      required: ["chain"],
+      required: [],
     },
     outputSchema: {
       type: "object" as const,
       properties: {
-        chain: { type: "string" },
-        contracts: {
+        queries: {
           type: "array",
           items: {
             type: "object",
             properties: {
-              contractAddress: { type: "string" },
+              id: { type: "number" },
               name: { type: "string" },
-              transactionCount30d: { type: "number" },
-              uniqueUsers30d: { type: "number" },
+              description: { type: "string" },
               category: { type: "string" },
-              activityScore: { type: "number" },
+              params: { type: "array", items: { type: "string" } },
             },
           },
         },
         totalCount: { type: "number" },
-        fetchedAt: { type: "string" },
+        tip: { type: "string" },
       },
-      required: ["chain", "contracts"],
+      required: ["queries"],
     },
   },
-
-  {
-    name: "get_dex_pair_stats",
-    description: `🧠 INTELLIGENCE: Get comprehensive DEX trading pair statistics.
-    
-Returns trading volumes (1d/7d/30d), liquidity, volume-to-liquidity ratio,
-and pool addresses for any token pair. Aggregates data across multiple DEXs.`,
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        blockchain: {
-          type: "string",
-          description: "Blockchain (e.g., ethereum, polygon)",
-          enum: SUPPORTED_CHAINS,
-        },
-        tokenAddress: {
-          type: "string",
-          description: "Token contract address (0x...)",
-        },
-        pairedTokenAddress: {
-          type: "string",
-          description: "Paired token address (e.g., WETH, USDC). Optional.",
-        },
-      },
-      required: ["blockchain", "tokenAddress"],
-    },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        blockchain: { type: "string" },
-        tokenAddress: { type: "string" },
-        pairs: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              pairAddress: { type: "string" },
-              dex: { type: "string" },
-              token0: { type: "string" },
-              token1: { type: "string" },
-              volume1d: { type: "number" },
-              volume7d: { type: "number" },
-              volume30d: { type: "number" },
-              liquidityUsd: { type: "number" },
-              volumeToLiquidity7d: { type: "number" },
-            },
-          },
-        },
-        aggregatedStats: {
-          type: "object",
-          properties: {
-            totalVolume24h: { type: "number" },
-            totalLiquidity: { type: "number" },
-            topDex: { type: "string" },
-            pairCount: { type: "number" },
-          },
-        },
-        fetchedAt: { type: "string" },
-      },
-      required: ["blockchain", "pairs"],
-    },
-  },
-
-  {
-    name: "get_farcaster_trends",
-    description: `🧠 INTELLIGENCE: Discover trending Farcaster users, channels, and memecoins.
-    
-Get curated lists of trending Farcaster ecosystem data based on engagement,
-on-chain activity, and social signals. Includes trending users, channels, and memecoins.`,
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        type: {
-          type: "string",
-          description: "Type of trends to fetch",
-          enum: ["users", "channels", "memecoins"],
-        },
-        limit: {
-          type: "number",
-          description: "Max results (default: 20)",
-        },
-      },
-      required: ["type"],
-    },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        type: { type: "string" },
-        data: {
-          type: "array",
-          description: "Trending items (users, channels, or memecoins)",
-        },
-        totalCount: { type: "number" },
-        fetchedAt: { type: "string" },
-      },
-      required: ["type", "data"],
-    },
-  },
-
-  // ============================================================================
-  // RAW DATA LAYER (Bridge to 750K+ Community Queries)
-  // ============================================================================
 
   {
     name: "execute_query",
-    description: `📊 RAW: Execute a saved Dune query by ID and return results.
-    
-Triggers execution of a saved query. For queries that take time to execute,
-use get_execution_status and get_query_results to poll for completion.
+    description: `Execute any saved Dune query by ID and return results.
 
-Note: This is a write-heavy endpoint (15 RPM on free tier).`,
+This is your gateway to Dune's 750,000+ community queries! Find query IDs on dune.com.
+
+How to find queries:
+1. Go to dune.com and search for dashboards (e.g., "Uniswap Volume", "NFT Sales")
+2. Click on a chart to see the underlying query
+3. The query ID is in the URL: dune.com/queries/1234567 → use 1234567
+
+Popular query IDs:
+- 3237721: Top DEX traders by volume
+- 2030664: Ethereum gas tracker  
+- 1747157: NFT marketplace volumes
+- 3296627: Wallet token balances (pass wallet_address param)
+
+Note: This triggers a new execution (15 RPM limit). For cached data, use get_query_results (40 RPM).`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -323,7 +319,7 @@ Note: This is a write-heavy endpoint (15 RPM on free tier).`,
         },
         parameters: {
           type: "object",
-          description: "Query parameters as key-value pairs",
+          description: "Query parameters as key-value pairs (e.g., {wallet_address: '0x...'})",
         },
       },
       required: ["queryId"],
@@ -350,12 +346,17 @@ Note: This is a write-heavy endpoint (15 RPM on free tier).`,
 
   {
     name: "get_query_results",
-    description: `📊 RAW: Get results from a query by query ID.
-    
-Returns the latest cached results for a public query. For private queries,
-you must be the owner. Results are cached for 90 days.
+    description: `Get the latest cached results from a Dune query WITHOUT triggering a new execution.
 
-Note: This is a read-heavy endpoint (40 RPM on free tier).`,
+This is FASTER and has HIGHER rate limits (40 RPM vs 15 RPM for execute_query).
+Results are cached for up to 90 days.
+
+Use this when:
+- You want quick results from a query that's been run recently
+- You're hitting rate limits with execute_query
+- You need to paginate through large result sets
+
+Supports filtering, sorting, and pagination via parameters.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -365,7 +366,7 @@ Note: This is a read-heavy endpoint (40 RPM on free tier).`,
         },
         limit: {
           type: "number",
-          description: "Max rows to return (default: 100)",
+          description: "Max rows to return (default: 100, max: 10000)",
         },
         offset: {
           type: "number",
@@ -377,11 +378,11 @@ Note: This is a read-heavy endpoint (40 RPM on free tier).`,
         },
         filters: {
           type: "string",
-          description: "SQL WHERE-like filter expression (optional)",
+          description: "SQL WHERE-like filter (e.g., 'amount > 1000')",
         },
         sortBy: {
           type: "string",
-          description: "SQL ORDER BY-like sort expression (optional)",
+          description: "Sort expression (e.g., 'amount desc')",
         },
       },
       required: ["queryId"],
@@ -404,7 +405,6 @@ Note: This is a read-heavy endpoint (40 RPM on free tier).`,
                 columnTypes: { type: "array", items: { type: "string" } },
                 rowCount: { type: "number" },
                 totalRowCount: { type: "number" },
-                datapointCount: { type: "number" },
               },
             },
           },
@@ -417,16 +417,18 @@ Note: This is a read-heavy endpoint (40 RPM on free tier).`,
 
   {
     name: "get_execution_status",
-    description: `📊 RAW: Check the status of a query execution.
-    
-Poll this endpoint to check if a query execution is complete.
-Use the executionId returned from execute_query.`,
+    description: `Check the status of a query execution.
+
+Use this to poll for completion after calling execute_query.
+States: QUERY_STATE_PENDING → QUERY_STATE_EXECUTING → QUERY_STATE_COMPLETED (or FAILED)
+
+Once isExecutionFinished is true, use get_execution_results to get the data.`,
     inputSchema: {
       type: "object" as const,
       properties: {
         executionId: {
           type: "string",
-          description: "Execution ID from execute_query",
+          description: "Execution ID from execute_query response",
         },
       },
       required: ["executionId"],
@@ -450,10 +452,10 @@ Use the executionId returned from execute_query.`,
 
   {
     name: "get_execution_results",
-    description: `📊 RAW: Get results from a specific query execution.
-    
-Returns results for a specific execution ID. Useful when you need results
-from a particular run rather than the latest cached results.`,
+    description: `Get results from a specific query execution by executionId.
+
+Use this after execute_query returns an executionId and the status shows completed.
+Supports pagination with limit/offset for large result sets.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -493,118 +495,42 @@ from a particular run rather than the latest cached results.`,
   },
 
   {
-    name: "get_eigenlayer_avs",
-    description: `📊 RAW: Get EigenLayer AVS (Actively Validated Services) metadata and metrics.
-    
-Returns AVS data including name, TVL, operator count, and staker count.`,
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        limit: {
-          type: "number",
-          description: "Max results (default: 50)",
-        },
-        sortBy: {
-          type: "string",
-          description: "Sort field (e.g., 'tvl desc')",
-        },
-      },
-      required: [],
-    },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        avsData: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              avsAddress: { type: "string" },
-              name: { type: "string" },
-              tvlUsd: { type: "number" },
-              operatorCount: { type: "number" },
-              stakerCount: { type: "number" },
-            },
-          },
-        },
-        totalCount: { type: "number" },
-        fetchedAt: { type: "string" },
-      },
-      required: ["avsData"],
-    },
-  },
+    name: "run_sql",
+    description: `Execute raw SQL directly against Dune's data warehouse.
 
-  {
-    name: "get_eigenlayer_operators",
-    description: `📊 RAW: Get EigenLayer operator metadata and metrics.
-    
-Returns operator data including name, TVL, staker count, and AVS registrations.`,
-    inputSchema: {
-      type: "object" as const,
-      properties: {
-        limit: {
-          type: "number",
-          description: "Max results (default: 50)",
-        },
-        sortBy: {
-          type: "string",
-          description: "Sort field (e.g., 'tvl desc')",
-        },
-      },
-      required: [],
-    },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        operators: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              operatorAddress: { type: "string" },
-              name: { type: "string" },
-              tvlUsd: { type: "number" },
-              stakerCount: { type: "number" },
-              avsCount: { type: "number" },
-            },
-          },
-        },
-        totalCount: { type: "number" },
-        fetchedAt: { type: "string" },
-      },
-      required: ["operators"],
-    },
-  },
+⚠️ PREMIUM FEATURE: Requires Plus tier or higher subscription.
 
-  {
-    name: "list_supported_chains",
-    description: `📂 DISCOVERY: List all supported blockchain networks for analysis.
-    
-Returns the list of EVM chains supported by Dune for wallet analysis,
-token tracking, and other blockchain-specific queries.`,
+This allows you to run arbitrary SQL without saving a query first.
+Great for one-off analyses or dynamic queries.
+
+Example SQL:
+- SELECT * FROM dex.trades WHERE blockchain = 'ethereum' LIMIT 10
+- SELECT SUM(amount_usd) FROM dex.trades WHERE block_time > now() - interval '24' hour`,
     inputSchema: {
       type: "object" as const,
-      properties: {},
-      required: [],
+      properties: {
+        sql: {
+          type: "string",
+          description: "SQL query to execute",
+        },
+      },
+      required: ["sql"],
     },
     outputSchema: {
       type: "object" as const,
       properties: {
-        chains: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              name: { type: "string" },
-              displayName: { type: "string" },
-              chainId: { type: "number" },
-            },
+        executionId: { type: "string" },
+        state: { type: "string" },
+        result: {
+          type: "object",
+          properties: {
+            rows: { type: "array" },
+            metadata: { type: "object" },
           },
         },
-        totalCount: { type: "number" },
         fetchedAt: { type: "string" },
       },
-      required: ["chains"],
+      required: ["state"],
     },
   },
 ];
@@ -657,133 +583,52 @@ async function duneApiRequest<T>(
 // TOOL HANDLERS
 // ============================================================================
 
-async function discoverTrendingContracts(args: {
-  chain: string;
-  limit?: number;
-}): Promise<CallToolResult> {
-  const limit = Math.min(args.limit || 20, 100);
-
-  try {
-    const data: DuneApiResponse<TrendingContract> = await duneApiRequest(
-      `/trends/evm/contracts/${args.chain}`,
-      {
-        params: { limit },
-      }
-    );
-
-    const contracts = (data.result?.rows || []).map((row, index) => ({
-      contractAddress: row.contract_address,
-      name: row.name || "Unknown",
-      transactionCount30d: row.transaction_count_30d,
-      uniqueUsers30d: row.unique_users_30d,
-      category: row.category || "Unknown",
-      activityScore: Math.round(
-        (row.transaction_count_30d * 0.6 + row.unique_users_30d * 0.4) / 1000
-      ),
-      rank: index + 1,
-    }));
-
-    return successResult({
-      chain: args.chain,
-      contracts,
-      totalCount: contracts.length,
-      fetchedAt: new Date().toISOString(),
-    });
-  } catch (error) {
-    return errorResult(
-      `Failed to get trending contracts: ${error instanceof Error ? error.message : "Unknown error"}`
+function searchQueries(args: {
+  query?: string;
+  category?: string;
+}): CallToolResult {
+  let results = [...QUERY_CATALOG];
+  
+  // Filter by category if provided
+  if (args.category) {
+    results = results.filter(q => q.category === args.category.toLowerCase());
+  }
+  
+  // Search by query term if provided
+  if (args.query) {
+    const searchTerm = args.query.toLowerCase();
+    results = results.filter(q => 
+      q.name.toLowerCase().includes(searchTerm) ||
+      q.description.toLowerCase().includes(searchTerm) ||
+      q.category.toLowerCase().includes(searchTerm)
     );
   }
-}
-
-async function getDexPairStats(args: {
-  blockchain: string;
-  tokenAddress: string;
-  pairedTokenAddress?: string;
-}): Promise<CallToolResult> {
-  try {
-    const params: Record<string, string> = {
-      blockchain: args.blockchain,
-      token_address: args.tokenAddress,
-    };
-    if (args.pairedTokenAddress) {
-      params.paired_token_address = args.pairedTokenAddress;
-    }
-
-    const data: DuneApiResponse<DexPairStats> = await duneApiRequest("/dex/pair", {
-      params,
-    });
-
-    const pairs = (data.result?.rows || []).map((row) => ({
-      pairAddress: row.pair,
-      dex: row.dex,
-      token0: args.tokenAddress,
-      token1: args.pairedTokenAddress || "Various",
-      volume1d: row.volume_1d,
-      volume7d: row.volume_7d,
-      volume30d: row.volume_30d,
-      liquidityUsd: row.liquidity_usd,
-      volumeToLiquidity7d: row.volume_to_liquidity_7d,
-    }));
-
-    const totalVolume24h = pairs.reduce((sum, p) => sum + (p.volume1d || 0), 0);
-    const totalLiquidity = pairs.reduce((sum, p) => sum + (p.liquidityUsd || 0), 0);
-    const topDex =
-      pairs.sort((a, b) => (b.volume1d || 0) - (a.volume1d || 0))[0]?.dex || "N/A";
-
-    return successResult({
-      blockchain: args.blockchain,
-      tokenAddress: args.tokenAddress,
-      pairs,
-      aggregatedStats: {
-        totalVolume24h,
-        totalLiquidity,
-        topDex,
-        pairCount: pairs.length,
-      },
-      fetchedAt: new Date().toISOString(),
-    });
-  } catch (error) {
-    return errorResult(
-      `Failed to get DEX pair stats: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
+  
+  // If no filters, return all
+  if (!args.query && !args.category) {
+    // Return first 10 as suggestions
+    results = results.slice(0, 10);
   }
-}
-
-async function getFarcasterTrends(args: {
-  type: "users" | "channels" | "memecoins";
-  limit?: number;
-}): Promise<CallToolResult> {
-  const limit = args.limit || 20;
-
-  try {
-    let endpoint = "";
-    switch (args.type) {
-      case "users":
-        endpoint = "/farcaster/users";
-        break;
-      case "channels":
-        endpoint = "/farcaster/channels";
-        break;
-      case "memecoins":
-        endpoint = "/farcaster/memecoins";
-        break;
-    }
-
-    const data: DuneApiResponse<FarcasterUser | FarcasterChannel | FarcasterMemecoin> =
-      await duneApiRequest(endpoint, { params: { limit } });
-
-    return successResult({
-      type: args.type,
-      data: data.result?.rows || [],
-      totalCount: data.result?.rows?.length || 0,
-      fetchedAt: new Date().toISOString(),
-    });
-  } catch (error) {
-    return errorResult(
-      `Failed to get Farcaster trends: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
-  }
+  
+  const queries = results.map(q => ({
+    id: q.id,
+    name: q.name,
+    description: q.description,
+    category: q.category,
+    params: q.params,
+    usage: q.params 
+      ? `execute_query(queryId: ${q.id}, parameters: {${q.params.map(p => `${p}: "..."`).join(", ")}})`
+      : `execute_query(queryId: ${q.id})`,
+  }));
+  
+  return successResult({
+    queries,
+    totalCount: queries.length,
+    tip: queries.length > 0 
+      ? `Found ${queries.length} queries. Use execute_query or get_query_results with the query ID.`
+      : "No matching queries found. Try a different search term or browse categories: dex, wallet, nft, ethereum, l2, defi",
+    categories: ["dex", "wallet", "nft", "stablecoin", "ethereum", "l2", "defi", "bridge", "memecoin"],
+  });
 }
 
 async function executeQuery(args: {
@@ -819,6 +664,7 @@ async function executeQuery(args: {
             metadata: data.result.metadata,
           }
         : undefined,
+      note: "Query execution started. Use get_execution_status to check progress, then get_execution_results for data.",
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {
@@ -863,7 +709,6 @@ async function getQueryResults(args: {
               columnTypes: data.result.metadata?.column_types,
               rowCount: data.result.metadata?.row_count,
               totalRowCount: data.result.metadata?.total_row_count,
-              datapointCount: data.result.metadata?.datapoint_count,
             },
           }
         : undefined,
@@ -936,95 +781,39 @@ async function getExecutionResults(args: {
   }
 }
 
-async function getEigenlayerAVS(args: {
-  limit?: number;
-  sortBy?: string;
-}): Promise<CallToolResult> {
+async function runSql(args: { sql: string }): Promise<CallToolResult> {
   try {
-    const data: DuneApiResponse<EigenlayerAVS> = await duneApiRequest(
-      "/eigenlayer/avs-stats",
-      {
-        params: {
-          limit: args.limit || 50,
-          sort_by: args.sortBy,
-        },
-      }
-    );
-
-    const avsData = (data.result?.rows || []).map((row) => ({
-      avsAddress: row.avs_address,
-      name: row.name,
-      tvlUsd: row.tvl_usd,
-      operatorCount: row.operator_count,
-      stakerCount: row.staker_count,
-    }));
+    const data: DuneApiResponse = await duneApiRequest("/query/execute/sql", {
+      method: "POST",
+      body: {
+        query_sql: args.sql,
+      },
+    });
 
     return successResult({
-      avsData,
-      totalCount: avsData.length,
+      executionId: data.execution_id,
+      state: data.state || "QUERY_STATE_PENDING",
+      result: data.result
+        ? {
+            rows: data.result.rows,
+            metadata: data.result.metadata,
+          }
+        : undefined,
+      note: data.execution_id
+        ? "SQL execution started. Use get_execution_status to check progress."
+        : "SQL executed successfully.",
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {
-    return errorResult(
-      `Failed to get EigenLayer AVS data: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    // Check if it's a premium feature error
+    if (errorMsg.includes("402") || errorMsg.includes("Payment")) {
+      return errorResult(
+        "run_sql requires a Premium Dune subscription. Use execute_query with a saved query ID instead."
+      );
+    }
+    return errorResult(`Failed to run SQL: ${errorMsg}`);
   }
-}
-
-async function getEigenlayerOperators(args: {
-  limit?: number;
-  sortBy?: string;
-}): Promise<CallToolResult> {
-  try {
-    const data: DuneApiResponse<EigenlayerOperator> = await duneApiRequest(
-      "/eigenlayer/operator-stats",
-      {
-        params: {
-          limit: args.limit || 50,
-          sort_by: args.sortBy,
-        },
-      }
-    );
-
-    const operators = (data.result?.rows || []).map((row) => ({
-      operatorAddress: row.operator_address,
-      name: row.name,
-      tvlUsd: row.tvl_usd,
-      stakerCount: row.staker_count,
-      avsCount: row.avs_count,
-    }));
-
-    return successResult({
-      operators,
-      totalCount: operators.length,
-      fetchedAt: new Date().toISOString(),
-    });
-  } catch (error) {
-    return errorResult(
-      `Failed to get EigenLayer operators: ${error instanceof Error ? error.message : "Unknown error"}`
-    );
-  }
-}
-
-function listSupportedChains(): CallToolResult {
-  const chainData = [
-    { name: "ethereum", displayName: "Ethereum", chainId: 1 },
-    { name: "polygon", displayName: "Polygon", chainId: 137 },
-    { name: "arbitrum", displayName: "Arbitrum One", chainId: 42161 },
-    { name: "optimism", displayName: "Optimism", chainId: 10 },
-    { name: "base", displayName: "Base", chainId: 8453 },
-    { name: "avalanche_c", displayName: "Avalanche C-Chain", chainId: 43114 },
-    { name: "bnb", displayName: "BNB Smart Chain", chainId: 56 },
-    { name: "gnosis", displayName: "Gnosis", chainId: 100 },
-    { name: "fantom", displayName: "Fantom", chainId: 250 },
-    { name: "celo", displayName: "Celo", chainId: 42220 },
-  ];
-
-  return successResult({
-    chains: chainData,
-    totalCount: chainData.length,
-    fetchedAt: new Date().toISOString(),
-  });
 }
 
 // ============================================================================
@@ -1047,15 +836,8 @@ server.setRequestHandler(
 
     try {
       switch (name) {
-        // Intelligence Layer
-        case "discover_trending_contracts":
-          return await discoverTrendingContracts(args as any);
-        case "get_dex_pair_stats":
-          return await getDexPairStats(args as any);
-        case "get_farcaster_trends":
-          return await getFarcasterTrends(args as any);
-
-        // Raw Data Layer (Bridge to Community Queries)
+        case "search_queries":
+          return searchQueries(args as any);
         case "execute_query":
           return await executeQuery(args as any);
         case "get_query_results":
@@ -1064,15 +846,8 @@ server.setRequestHandler(
           return await getExecutionStatus(args as any);
         case "get_execution_results":
           return await getExecutionResults(args as any);
-        case "get_eigenlayer_avs":
-          return await getEigenlayerAVS(args as any);
-        case "get_eigenlayer_operators":
-          return await getEigenlayerOperators(args as any);
-
-        // Discovery
-        case "list_supported_chains":
-          return listSupportedChains();
-
+        case "run_sql":
+          return await runSql(args as any);
         default:
           return errorResult(`Unknown tool: ${name}`);
       }
@@ -1184,12 +959,13 @@ app.listen(port, () => {
   console.log(`🔒 Context Protocol Security Enabled`);
   console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health`);
-  console.log(`\n🛠️  Available tools (${TOOLS.length} total):`);
-  console.log(`   Intelligence: ${TOOLS.filter((t) => t.description.includes("🧠")).map((t) => t.name).join(", ")}`);
-  console.log(`   Raw Data: ${TOOLS.filter((t) => t.description.includes("📊")).map((t) => t.name).join(", ")}`);
-  console.log(`   Discovery: ${TOOLS.filter((t) => t.description.includes("📂")).map((t) => t.name).join(", ")}`);
+  console.log(`\n🛠️  Available tools (${TOOLS.length}):`);
+  TOOLS.forEach(t => console.log(`   - ${t.name}`));
   console.log(`\n⚙️  Configuration:`);
   console.log(`   API Key: ${API_KEY ? "✅ Configured" : "❌ Missing (set DUNE_API_KEY)"}`);
-  console.log(`\n💡 Use execute_query to run any of Dune's 750K+ community queries!\n`);
+  console.log(`\n💡 TIP: Use get_query_results for cached data (40 RPM) vs execute_query (15 RPM)\n`);
+  console.log(`📊 Popular query IDs to try:`);
+  console.log(`   - 3237721: Top DEX traders`);
+  console.log(`   - 2030664: ETH gas tracker`);
+  console.log(`   - 1747157: NFT volumes\n`);
 });
-

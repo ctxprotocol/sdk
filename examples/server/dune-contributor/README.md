@@ -1,151 +1,124 @@
 # Dune Analytics MCP Server
 
-A streamlined MCP server for blockchain analytics using the [Dune Analytics API](https://docs.dune.com/api-reference). Access trending contracts, DEX stats, Farcaster trends, EigenLayer metrics, and execute any of Dune's **750,000+ community queries**.
+A streamlined MCP server that provides access to **Dune's 750,000+ community queries** via their official API.
 
 ## Features
 
-### Intelligence Tools
-- **discover_trending_contracts** - Find trending smart contracts on any EVM chain
-- **get_dex_pair_stats** - Get comprehensive DEX trading pair statistics
-- **get_farcaster_trends** - Discover trending Farcaster users, channels, memecoins
-
-### Raw Data Tools (Bridge to Community Queries)
-- **execute_query** - Execute ANY saved Dune query by ID
-- **get_query_results** - Get cached results from previously executed queries
-- **get_execution_status** - Check query execution status
-- **get_execution_results** - Get results from specific execution
-- **get_eigenlayer_avs** - EigenLayer AVS metadata and metrics
-- **get_eigenlayer_operators** - EigenLayer operator data
-
-### Discovery Tools
-- **list_supported_chains** - List all supported blockchain networks
+| Tool | Description | Rate Limit |
+|------|-------------|------------|
+| `search_queries` | **Search curated query catalog** | Instant |
+| `execute_query` | Execute any saved Dune query by ID | 15 RPM |
+| `get_query_results` | Get cached results (faster!) | 40 RPM |
+| `get_execution_status` | Check if query finished | 40 RPM |
+| `get_execution_results` | Get results from execution | 40 RPM |
+| `run_sql` | Execute raw SQL (Premium only) | 15 RPM |
 
 ## Quick Start
 
-1. **Get a Dune API Key**
-   - Sign up at [dune.com](https://dune.com)
-   - Go to Settings → API → Create New API Key
-   - Free tier includes 40 RPM for read-heavy endpoints
+```bash
+# 1. Configure API key
+echo 'DUNE_API_KEY="your_key_here"' > .env
 
-2. **Configure Environment**
-   ```bash
-   cp env.example .env
-   # Edit .env and add your API key
-   ```
+# 2. Install & run
+npm install
+npm run dev
+```
 
-3. **Install Dependencies**
-   ```bash
-   npm install
-   ```
+## How It Works
 
-4. **Run the Server**
-   ```bash
-   npm run dev   # Development with hot reload
-   npm start     # Production
-   ```
+### Step 1: Search for the Right Query
 
-5. **Health Check**
-   ```bash
-   curl http://localhost:4008/health
-   ```
+Use `search_queries` to find a query ID for your use case:
 
-## Using Community Queries (The Power of Dune)
-
-Dune has **750,000+ community queries** covering every aspect of blockchain analytics. The `execute_query` tool lets you tap into this massive resource.
-
-### Finding Useful Queries
-1. Go to [dune.com](https://dune.com) and search for dashboards (e.g., "Uniswap Volume", "Wallet Analysis")
-2. Open a chart and look at the underlying query
-3. Note the query ID from the URL: `dune.com/queries/1234567` → **1234567**
-
-### Example: Execute a Community Query
 ```json
 {
-  "tool": "execute_query",
+  "tool": "search_queries",
   "arguments": {
-    "queryId": 1234567,
-    "parameters": {
-      "wallet_address": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
-    }
+    "query": "dex volume"
   }
 }
 ```
 
-### Popular Community Query IDs
-| Query ID | Description |
-|----------|-------------|
-| `3237721` | Top DEX traders by volume |
-| `2030664` | Ethereum gas tracker |
-| `1747157` | NFT marketplace volumes |
-| `3296627` | Wallet token balances |
-| `2898034` | Token holder analysis |
+Returns curated queries like:
+- `3358886` - DEX Volume by Chain (24h)
+- `2803687` - Top DEX Protocols by Volume
+- `1324628` - Uniswap Daily Volume
 
-> **Note**: Community queries can change or break. For critical applications, fork queries to your own account.
+### Step 2: Execute the Query
+
+```json
+{
+  "tool": "get_query_results",
+  "arguments": {
+    "queryId": 3358886,
+    "limit": 100
+  }
+}
+```
+
+## Query Categories
+
+| Category | Examples |
+|----------|----------|
+| `dex` | DEX volume, trading stats, Uniswap |
+| `wallet` | Token balances, wallet analysis |
+| `nft` | NFT marketplace volume, top collections |
+| `ethereum` | Gas prices, ETH burned, staking |
+| `l2` | Layer 2 TVL, Base, Arbitrum, Optimism |
+| `defi` | TVL rankings, lending protocols |
+| `stablecoin` | USDC/USDT volume, market cap |
+| `bridge` | Cross-chain bridge volume |
+| `memecoin` | Top memecoins by volume |
+
+## Workflow for AI Agents
+
+```
+1. search_queries(query: "what you're looking for")
+   → Returns matching query IDs
+   
+2. get_query_results(queryId: <id from step 1>)
+   → Returns cached data (fast, 40 RPM)
+   
+   OR
+   
+   execute_query(queryId: <id>, parameters: {...})
+   → Triggers fresh execution (15 RPM)
+   
+3. If execute_query returns "PENDING":
+   → get_execution_status(executionId: <id>)
+   → get_execution_results(executionId: <id>)
+```
+
+## Example Questions for AI Chat
+
+| Question | Workflow |
+|----------|----------|
+| "What's the DEX volume today?" | `search_queries("dex volume")` → `get_query_results(3358886)` |
+| "What tokens does vitalik.eth hold?" | `search_queries("wallet balance")` → `execute_query(3352067, {wallet_address: "0x..."})` |
+| "Top NFT collections?" | `search_queries("nft")` → `get_query_results(2477537)` |
+| "Ethereum gas prices?" | `search_queries("gas")` → `get_query_results(3298549)` |
 
 ## Rate Limits
 
-| Tier | Write Endpoints | Read Endpoints |
-|------|-----------------|----------------|
+| Tier | Write (execute_query) | Read (get_query_results) |
+|------|----------------------|--------------------------|
 | Free | 15 RPM | 40 RPM |
 | Plus | 70 RPM | 200 RPM |
 | Premium | 350 RPM | 1000 RPM |
 
-**Write-heavy:** `execute_query`  
-**Read-heavy:** `get_query_results`, `get_execution_status`, `get_execution_results`, etc.
+**Pro Tip**: Always prefer `get_query_results` for cached data!
 
-## Supported Chains
+## Adding New Queries to Catalog
 
-- Ethereum (mainnet)
-- Polygon
-- Arbitrum One
-- Optimism
-- Base
-- Avalanche C-Chain
-- BNB Smart Chain
+To add more queries to the catalog, edit `server.ts` and add entries to `QUERY_CATALOG`:
 
-## Example Usage
-
-### Find Trending Contracts
-```json
+```typescript
 {
-  "tool": "discover_trending_contracts",
-  "arguments": {
-    "chain": "base",
-    "limit": 10
-  }
-}
-```
-
-### Get DEX Pair Stats
-```json
-{
-  "tool": "get_dex_pair_stats",
-  "arguments": {
-    "blockchain": "ethereum",
-    "tokenAddress": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
-  }
-}
-```
-
-### Discover Farcaster Trends
-```json
-{
-  "tool": "get_farcaster_trends",
-  "arguments": {
-    "type": "memecoins",
-    "limit": 20
-  }
-}
-```
-
-### Get EigenLayer AVS Rankings
-```json
-{
-  "tool": "get_eigenlayer_avs",
-  "arguments": {
-    "limit": 10,
-    "sortBy": "tvl desc"
-  }
+  id: 1234567,
+  name: "My Query Name",
+  description: "What this query does",
+  category: "dex",  // or wallet, nft, ethereum, etc.
+  params: ["param1", "param2"],  // optional
 }
 ```
 
@@ -153,9 +126,7 @@ Dune has **750,000+ community queries** covering every aspect of blockchain anal
 
 - [Dune API Reference](https://docs.dune.com/api-reference)
 - [Query Execution](https://docs.dune.com/api-reference/executions/endpoint/execute-query)
-- [Trending Contracts](https://docs.dune.com/api-reference/evm/endpoint/contracts)
-- [EigenLayer API](https://docs.dune.com/api-reference/eigenlayer/introduction)
-- [Farcaster API](https://docs.dune.com/api-reference/farcaster/introduction)
+- [Get Results](https://docs.dune.com/api-reference/executions/endpoint/get-query-result)
 
 ## License
 
