@@ -19,6 +19,7 @@ SERVERS=(
   "mcp-coinglass:coinglass-contributor:4005"
   "mcp-odds-api:odds-api-contributor:4006"
   "mcp-kalshi:kalshi-contributor:4007"
+  "mcp-dune:dune-contributor:4008"
 )
 
 for SERVER in "${SERVERS[@]}"; do
