@@ -5576,7 +5576,8 @@ async function handleGetAllTags(
 async function handleBrowseCategory(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
-  const category = args?.category as string;
+  // Accept both "category" and "slug" parameters for flexibility (AI sometimes uses wrong name)
+  const category = (args?.category || args?.slug) as string;
   const limit = (args?.limit as number) || 50;
   const sortBy = (args?.sortBy as string) || "volume";
   const includeResolved = args?.includeResolved === true;
