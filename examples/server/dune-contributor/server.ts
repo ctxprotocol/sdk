@@ -86,147 +86,195 @@ interface CuratedQuery {
   author?: string;
 }
 
+// ⚠️ LIMITED SAMPLE CATALOG - NOT curated "best" queries
+// These are random PUBLIC queries we found that work - NOT verified as popular/valuable
+// Dune has 750K+ community queries - users should provide their own Query IDs
+// for specific data they want. Find IDs at dune.com → click any chart → get ID from URL
 const QUERY_CATALOG: CuratedQuery[] = [
-  // DEX & Trading
-  {
-    id: 3358886,
-    name: "DEX Volume by Chain (24h)",
-    description: "Total DEX trading volume across all chains in the last 24 hours",
-    category: "dex",
-  },
-  {
-    id: 2803687,
-    name: "Top DEX Protocols by Volume",
-    description: "Ranking of DEX protocols by trading volume",
-    category: "dex",
-  },
-  {
-    id: 1324628,
-    name: "Uniswap Daily Volume",
-    description: "Daily trading volume on Uniswap across all chains",
-    category: "dex",
-  },
-  
-  // Wallet Analysis
-  {
-    id: 3352067,
-    name: "Wallet Token Balances",
-    description: "Get all token balances for a wallet address",
-    category: "wallet",
-    params: ["wallet_address"],
-  },
-  {
-    id: 2898034,
-    name: "Token Holder Analysis",
-    description: "Analyze holders of a specific token",
-    category: "wallet",
-    params: ["token_address"],
-  },
-  
-  // NFT
-  {
-    id: 3429556,
-    name: "NFT Marketplace Volume",
-    description: "Trading volume across NFT marketplaces",
-    category: "nft",
-  },
-  {
-    id: 2477537,
-    name: "Top NFT Collections",
-    description: "Most traded NFT collections by volume",
-    category: "nft",
-  },
-  
-  // Stablecoins
-  {
-    id: 3306394,
-    name: "Stablecoin Market Cap",
-    description: "Total market cap and distribution of stablecoins",
-    category: "stablecoin",
-  },
-  {
-    id: 2420432,
-    name: "USDC vs USDT Volume",
-    description: "Comparison of USDC and USDT trading activity",
-    category: "stablecoin",
-  },
-  
-  // Ethereum
-  {
-    id: 3298549,
-    name: "ETH Gas Tracker",
-    description: "Current Ethereum gas prices and trends",
-    category: "ethereum",
-  },
-  {
-    id: 2165698,
-    name: "ETH Burned (EIP-1559)",
-    description: "Total ETH burned since EIP-1559",
-    category: "ethereum",
-  },
-  {
-    id: 1610960,
-    name: "ETH Staking Stats",
-    description: "Ethereum staking statistics and validator count",
-    category: "ethereum",
-  },
-  
-  // Layer 2
-  {
-    id: 3357344,
-    name: "L2 TVL Comparison",
-    description: "Total Value Locked across Layer 2 networks",
-    category: "l2",
-  },
-  {
-    id: 3121877,
-    name: "Base Chain Activity",
-    description: "Transaction activity and growth on Base",
-    category: "l2",
-  },
-  {
-    id: 2904411,
-    name: "Arbitrum Stats",
-    description: "Key metrics for Arbitrum network",
-    category: "l2",
-  },
-  
-  // DeFi
-  {
-    id: 2635316,
-    name: "Top DeFi Protocols by TVL",
-    description: "Ranking of DeFi protocols by Total Value Locked",
-    category: "defi",
-  },
-  {
-    id: 3130886,
-    name: "Lending Protocol Stats",
-    description: "Aave, Compound, and other lending metrics",
-    category: "defi",
-  },
-  
-  // Bridge Activity
-  {
-    id: 2850663,
-    name: "Bridge Volume",
-    description: "Cross-chain bridge transfer volumes",
-    category: "bridge",
-  },
-  
-  // Memecoins
-  {
-    id: 3476890,
-    name: "Top Memecoins by Volume",
-    description: "Most traded memecoins in the last 24h",
-    category: "memecoin",
-  },
-  
-  // General/Utility
+  // ═══════════════════════════════════════════════════════════════
+  // UTILITY & REFERENCE
+  // ═══════════════════════════════════════════════════════════════
   {
     id: 1215383,
-    name: "Test Query",
-    description: "Simple test query to verify API connectivity",
+    name: "API Test Query",
+    description: "Simple test query to verify Dune API connectivity - always works",
     category: "utility",
+  },
+  {
+    id: 1747157,
+    name: "Blockchain Explorers",
+    description: "List of all 12 supported chains with block explorer URLs (ethereum, polygon, arbitrum, optimism, avalanche, etc.)",
+    category: "ethereum",
+  },
+  {
+    id: 2999200,
+    name: "Labeled Addresses",
+    description: "383 known addresses with names and blockchain labels (exchanges, protocols, whales)",
+    category: "wallet",
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // ETHEREUM & GAS
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 2991700,
+    name: "Daily Transaction Stats",
+    description: "180 days of txn count, avg price USD, total gas used, average gas price",
+    category: "ethereum",
+  },
+  {
+    id: 2991800,
+    name: "Ethereum Fees & Burn",
+    description: "1134 records of total fees, ETH burned (EIP-1559), priority fees, slot utilization",
+    category: "ethereum",
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // DEX & TRADING
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 1747600,
+    name: "OHM/DAI Trading History",
+    description: "1598 trades with block time, OHM amount, DAI amount, DAI per OHM price",
+    category: "dex",
+  },
+  {
+    id: 1756400,
+    name: "DEX Solver Rankings",
+    description: "171 solvers ranked by batches, trades, first batch date (CoW Protocol style)",
+    category: "dex",
+  },
+  {
+    id: 3506700,
+    name: "Top DEX Traders",
+    description: "89 traders ranked by total volume USD and number of trades",
+    category: "dex",
+  },
+  {
+    id: 3700000,
+    name: "Trading Pair Rewards",
+    description: "2388 epoch rewards by trading pair with token amounts and prices",
+    category: "dex",
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // DEFI & STAKING
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 3000000,
+    name: "Self-Stakes by Address",
+    description: "48533 addresses ranked by number of self-stakes",
+    category: "defi",
+  },
+  {
+    id: 3001900,
+    name: "DeFi Markets List",
+    description: "1662 markets with timestamp, name, symbol, underlying token address",
+    category: "defi",
+  },
+  {
+    id: 3003100,
+    name: "Validator Bounties",
+    description: "Total bounties, average bounties in USD, validator stats",
+    category: "defi",
+  },
+  {
+    id: 3695600,
+    name: "Protocol Depositors",
+    description: "152962 unique depositor addresses for a DeFi protocol",
+    category: "defi",
+  },
+  {
+    id: 3697500,
+    name: "Token Shares by Date",
+    description: "8526 records of daily shares, underlying token, symbol, price",
+    category: "defi",
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // TOKEN & PROTOCOL METRICS
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 3491000,
+    name: "Total Protocol Users",
+    description: "Cumulative unique users for a protocol",
+    category: "defi",
+  },
+  {
+    id: 3493600,
+    name: "Token Holders & Supply",
+    description: "Number of holders and circulating supply for a token",
+    category: "wallet",
+  },
+  {
+    id: 3500000,
+    name: "Protocol Stats",
+    description: "Total user count and transaction count for a protocol",
+    category: "defi",
+  },
+  {
+    id: 3696700,
+    name: "Daily Token Transfers",
+    description: "927 days of transfer activity by type and symbol",
+    category: "wallet",
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // NFT & ENS
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 2993900,
+    name: "ENS Name Registrations",
+    description: "100 recent ENS name registrations with hash, cost, name, expiration",
+    category: "nft",
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // BLOCKCHAIN ACTIVITY
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 3145000,
+    name: "Daily Transaction Stats",
+    description: "1013 days of transactions succeeded/failed, unique senders/receivers",
+    category: "ethereum",
+  },
+  {
+    id: 2590100,
+    name: "Daily Protocol Checks",
+    description: "1072 days of checkForAll, checkForContract, checkForToken activity",
+    category: "defi",
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // TOKEN PRICES (MASSIVE DATASET)
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 3333000,
+    name: "Token Prices by Epoch",
+    description: "26.7 MILLION rows - token contract addresses, symbols, prices by epoch",
+    category: "dex",
+  },
+  {
+    id: 3185000,
+    name: "Daily Price Groups",
+    description: "771 days of grouped price summaries with deltas and max prices",
+    category: "dex",
+  },
+
+  // ═══════════════════════════════════════════════════════════════
+  // FUTURES & ETFs
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 3332000,
+    name: "Open Interest by Date",
+    description: "89 days of futures/options open interest data",
+    category: "defi",
+  },
+  {
+    id: 3382000,
+    name: "Bitcoin ETF TVL",
+    description: "7865 records of Bitcoin ETF TVL by issuer (Invesco, etc.) and date",
+    category: "defi",
   },
 ];
 
@@ -237,23 +285,23 @@ const QUERY_CATALOG: CuratedQuery[] = [
 const TOOLS = [
   {
     name: "search_queries",
-    description: `Search the curated catalog of high-quality Dune queries.
+    description: `Search our LIMITED catalog of 25 working Dune query IDs.
 
-Returns query IDs that you can use with execute_query or get_query_results.
+⚠️ IMPORTANT: This catalog contains random PUBLIC queries we verified work - NOT necessarily the most popular or valuable queries on Dune.
 
-Categories: dex, wallet, nft, stablecoin, ethereum, l2, defi, bridge, memecoin, utility
+🎯 FOR BEST RESULTS: Provide your own Query ID!
+1. Go to dune.com and find a dashboard you want to query
+2. Click any chart → the query ID is in the URL (dune.com/queries/1234567)
+3. Use execute_query(1234567) with that ID
 
-Examples:
-- "dex volume" → finds DEX trading queries
-- "wallet balance" → finds wallet analysis queries  
-- "ethereum gas" → finds ETH gas tracking queries
-- "nft" → finds NFT marketplace queries
+OUR CATALOG (sample queries, not curated):
+- ethereum: Gas, fees, transaction stats
+- dex: Trading data, token prices
+- defi: Staking, depositors, ETFs
+- wallet: Addresses, transfers
+- nft: ENS registrations
 
-WORKFLOW:
-1. FIRST: Search this curated catalog (fast, reliable queries)
-2. IF NOT FOUND: Use the Exa Search tool to search "site:dune.com [your topic]" to discover more query IDs from Dune's 750K+ community dashboards
-3. Extract the query ID from the Dune URL (e.g., dune.com/queries/1234567 → 1234567)
-4. Use execute_query or get_query_results with that ID`,
+Dune has 750K+ community queries - our 25 are just a starting point.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -294,22 +342,24 @@ WORKFLOW:
 
   {
     name: "execute_query",
-    description: `Execute any saved Dune query by ID and return results.
+    description: `Execute ANY Dune query by ID - this is the main tool!
 
-This is your gateway to Dune's 750,000+ community queries! Find query IDs on dune.com.
+🎯 BRING YOUR OWN QUERY ID for best results:
+1. Browse dune.com dashboards (750K+ community queries)
+2. Find a chart you want → click it → get ID from URL
+3. URL: dune.com/queries/1234567 → use ID: 1234567
 
-How to find queries:
-1. Go to dune.com and search for dashboards (e.g., "Uniswap Volume", "NFT Sales")
-2. Click on a chart to see the underlying query
-3. The query ID is in the URL: dune.com/queries/1234567 → use 1234567
+EXAMPLE IDS (from our small catalog):
+- 1215383: API test (always works)
+- 2991800: Ethereum fees
+- 3333000: Token prices
 
-Popular query IDs:
-- 3237721: Top DEX traders by volume
-- 2030664: Ethereum gas tracker  
-- 1747157: NFT marketplace volumes
-- 3296627: Wallet token balances (pass wallet_address param)
+EXECUTION FLOW:
+1. execute_query(queryId) → executionId + state
+2. If PENDING, wait 5-30s, then poll get_execution_status
+3. get_execution_results(executionId) → data
 
-Note: This triggers a new execution (15 RPM limit). For cached data, use get_query_results (40 RPM).`,
+Rate limit: 15 RPM (free tier).`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -348,15 +398,14 @@ Note: This triggers a new execution (15 RPM limit). For cached data, use get_que
     name: "get_query_results",
     description: `Get the latest cached results from a Dune query WITHOUT triggering a new execution.
 
-This is FASTER and has HIGHER rate limits (40 RPM vs 15 RPM for execute_query).
-Results are cached for up to 90 days.
+⚠️ IMPORTANT: This only works if the query has been executed before and has cached results.
+If you get "No execution found" error, use execute_query instead to trigger a fresh run.
 
 Use this when:
-- You want quick results from a query that's been run recently
+- You want quick results from a popular/frequently-run query
 - You're hitting rate limits with execute_query
-- You need to paginate through large result sets
 
-Supports filtering, sorting, and pagination via parameters.`,
+If this fails with 404, fallback to: execute_query → get_execution_status → get_execution_results`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -624,10 +673,11 @@ function searchQueries(args: {
   return successResult({
     queries,
     totalCount: queries.length,
+    catalogSize: QUERY_CATALOG.length,
     tip: queries.length > 0 
-      ? `Found ${queries.length} queries. Use execute_query or get_query_results with the query ID.`
-      : "No matching queries found. Try a different search term or browse categories: dex, wallet, nft, ethereum, l2, defi",
-    categories: ["dex", "wallet", "nft", "stablecoin", "ethereum", "l2", "defi", "bridge", "memecoin"],
+      ? `Found ${queries.length} in our LIMITED catalog. For specific data, ask user for a Query ID from dune.com.`
+      : "Not found in our small catalog (25 queries). Ask user for a specific Query ID from dune.com - there are 750K+ community queries!",
+    howToGetMoreIds: "Browse dune.com → find dashboard → click chart → get ID from URL (dune.com/queries/1234567 → 1234567)",
   });
 }
 
