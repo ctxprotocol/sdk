@@ -55,9 +55,10 @@ async function hbFetch<T>(
     method?: "GET" | "POST";
     body?: unknown;
     params?: Record<string, string>;
+    timeoutMs?: number;
   } = {}
 ): Promise<T> {
-  const { method = "GET", body, params } = options;
+  const { method = "GET", body, params, timeoutMs = 30000 } = options;
   
   let url = `${HUMMINGBOT_API_BASE_URL}${endpoint}`;
   if (params) {
@@ -65,21 +66,35 @@ async function hbFetch<T>(
     url += `?${searchParams.toString()}`;
   }
   
-  const response = await fetch(url, {
-    method,
-    headers: {
-      "Authorization": getBasicAuthHeader(),
-      "Content-Type": "application/json",
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  // Add timeout via AbortController
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        "Authorization": getBasicAuthHeader(),
+        "Content-Type": "application/json",
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Hummingbot API error (${response.status}): ${errorText.slice(0, 500)}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Hummingbot API error (${response.status}): ${errorText.slice(0, 500)}`);
+    }
+
+    return response.json() as T;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error(`Hummingbot API timeout after ${timeoutMs}ms for ${endpoint}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return response.json() as T;
 }
 
 // ============================================================================
@@ -250,22 +265,23 @@ Perfect for: Funding arbitrage, market sentiment overview, position timing.`,
 
   {
     name: "find_yield_pools",
-    description: `🧠 GIGA-BRAIN: "Where can I earn yield on my SOL/USDC?"
+    description: `🧠 GIGA-BRAIN: "Where can I earn yield on my SOL/USDC on Meteora?"
 
-Searches Meteora DLMM pools for the best yield opportunities:
+Searches Meteora DLMM pools for yield opportunities:
 - Top pools by APY
 - TVL and volume data
 - Fee earnings potential
 
-Example: "Best yield for SOL?" → Returns top pools sorted by APY.
+Example: "Best Meteora yield for SOL?" → Returns top pools sorted by APY.
 
-Perfect for: Yield farming, LP research, DeFi opportunities.`,
+Note: For multi-DEX yield comparison (Raydium, Orca, etc.), use a DeFiLlama tool.`,
     inputSchema: {
       type: "object" as const,
       properties: {
         token: {
           type: "string",
           description: "Token to find pools for (e.g., 'SOL', 'USDC', 'JUP')",
+          default: "SOL",
         },
         min_tvl: {
           type: "number",
@@ -283,10 +299,41 @@ Perfect for: Yield farming, LP research, DeFi opportunities.`,
     outputSchema: {
       type: "object" as const,
       properties: {
-        token: { type: "string" },
-        poolsFound: { type: "number" },
-        topPools: { type: "array", items: { type: "object" } },
-        bestApy: { type: "object" },
+        token: { type: "string", description: "Token searched for" },
+        poolsFound: { type: "number", description: "Number of Meteora pools found" },
+        topPools: { 
+          type: "array", 
+          description: "Top Meteora pools sorted by APY",
+          items: { 
+            type: "object",
+            properties: {
+              rank: { type: "number" },
+              pair: { type: "string" },
+              apy: { type: "string", description: "Annualized yield as percentage string" },
+              apr: { type: "string" },
+              tvl: { type: "string", description: "Total value locked as USD string" },
+              volume24h: { type: "string" },
+              fees24h: { type: "string" },
+              feeRate: { type: "string" },
+              address: { type: "string" },
+              source: { type: "string", description: "Always 'Meteora DLMM'" },
+            },
+          },
+        },
+        bestApy: { 
+          type: "object", 
+          description: "Best pool by APY, or {found: false} if none",
+          properties: {
+            found: { type: "boolean" },
+            pair: { type: "string" },
+            apy: { type: "string" },
+            tvl: { type: "string" },
+            address: { type: "string" },
+          },
+        },
+        protocol: { type: "string", description: "Always 'Meteora DLMM'" },
+        network: { type: "string", description: "Always 'Solana'" },
+        note: { type: "string", description: "Filtering explanation" },
         timestamp: { type: "string" },
       },
     },
@@ -482,7 +529,7 @@ Supported connectors: binance_perpetual, bybit_perpetual, hyperliquid_perpetual,
 
   {
     name: "get_dex_swap_quote",
-    description: `🔄 DEX: Get a swap quote from decentralized exchanges via aggregators.
+    description: `🔄 DEX: Get a swap quote from decentralized exchanges.
 
 Returns:
 - Expected output amount
@@ -491,8 +538,9 @@ Returns:
 - Slippage settings
 
 Supported DEXs:
-- Jupiter (Solana): SOL, USDC, tokens on Solana
-- 0x Protocol (EVM): ETH, Base, Polygon, Arbitrum, etc.
+- Jupiter (Solana): SOL, USDC, all SPL tokens - network: solana-mainnet-beta
+- Uniswap (EVM): ETH, tokens - networks: ethereum-mainnet, ethereum-base, ethereum-arbitrum
+- PancakeSwap (BSC): BNB, tokens - network: ethereum-bsc
 
 Perfect for: DEX trading analysis, route comparison, gas estimation.`,
     inputSchema: {
@@ -500,16 +548,16 @@ Perfect for: DEX trading analysis, route comparison, gas estimation.`,
       properties: {
         connector: {
           type: "string",
-          enum: ["jupiter", "0x"],
-          description: "DEX aggregator to use",
+          enum: ["jupiter", "uniswap", "pancakeswap"],
+          description: "DEX to use",
         },
         network: {
           type: "string",
-          description: "Network ID (e.g., 'solana-mainnet-beta', 'ethereum-mainnet', 'base-mainnet')",
+          description: "Network ID. Jupiter: 'solana-mainnet-beta'. Uniswap: 'ethereum-mainnet', 'ethereum-base', 'ethereum-arbitrum'. PancakeSwap: 'ethereum-bsc'",
         },
         trading_pair: {
           type: "string",
-          description: "Token pair in BASE-QUOTE format (e.g., 'SOL-USDC', 'ETH-USDT')",
+          description: "Token pair in BASE-QUOTE format. Solana: 'SOL-USDC'. EVM: 'WETH-USDC', 'WBNB-USDT'",
         },
         side: {
           type: "string",
@@ -547,6 +595,50 @@ Perfect for: DEX trading analysis, route comparison, gas estimation.`,
   },
 
   {
+    name: "compare_multi_dex",
+    description: `🔄 MULTI-DEX: Compare swap quotes across multiple DEXs and chains.
+
+Queries ALL available DEXs in parallel to find the best price:
+- Jupiter (Solana)
+- Uniswap (Ethereum, Base, Arbitrum)
+- PancakeSwap (BSC)
+- CEX (Binance) for reference
+
+Returns ranked results by price - answers: "Which DEX has the best rate for this swap?"
+
+Perfect for: Cross-chain arbitrage, best execution, route optimization.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        base_asset: {
+          type: "string",
+          description: "Asset to receive (e.g., 'SOL', 'ETH', 'BNB')",
+        },
+        quote_asset: {
+          type: "string",
+          description: "Asset to spend (e.g., 'USDC', 'USDT')",
+          default: "USDC",
+        },
+        amount: {
+          type: "number",
+          description: "Amount of base asset to receive",
+        },
+      },
+      required: ["base_asset", "amount"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        query: { type: "object" },
+        quotes: { type: "array", items: { type: "object" } },
+        bestDex: { type: "object" },
+        savingsVsWorst: { type: "object" },
+        timestamp: { type: "string" },
+      },
+    },
+  },
+
+  {
     name: "get_clmm_pool_info",
     description: `🌊 DeFi: Get detailed CLMM (Concentrated Liquidity) pool information.
 
@@ -559,7 +651,8 @@ Returns:
 
 Supported protocols:
 - Meteora (Solana DLMM)
-- Raydium (Solana CLMM)
+- Orca (Solana Whirlpools)
+- Raydium (Solana CLMM) - Note: Only CLMM pools, not standard AMM
 
 Perfect for: LP analysis, yield farming research, liquidity provision planning.`,
     inputSchema: {
@@ -567,7 +660,7 @@ Perfect for: LP analysis, yield farming research, liquidity provision planning.`
       properties: {
         connector: {
           type: "string",
-          enum: ["meteora", "raydium"],
+          enum: ["meteora", "orca", "raydium"],
           description: "CLMM protocol",
         },
         network: {
@@ -1527,37 +1620,49 @@ interface MeteoraPool {
   is_verified: boolean;
 }
 
+// Maximum realistic APY (500%) - filter out meme pool outliers
+const MAX_REALISTIC_APY = 500;
+
 async function findYieldPools(args: Record<string, unknown>): Promise<CallToolResult> {
   try {
-    const token = (args.token as string).toUpperCase();
+    const token = (args.token as string)?.toUpperCase() || "SOL";
     const minTvl = (args.min_tvl as number) || 10000;
     const limit = (args.limit as number) || 10;
 
-    // Fetch Meteora pools
+    // Fetch Meteora pools via Hummingbot Gateway
     const poolsResponse = await hbFetch<{ pools: MeteoraPool[]; total: number }>("/gateway/clmm/pools", {
       params: {
         connector: "meteora",
         network: "solana-mainnet-beta",
       },
+      timeoutMs: 25000,
     });
 
     // Filter pools containing the token
     const relevantPools = poolsResponse.pools
       .filter(p => {
         const pair = p.trading_pair || p.name || "";
-        return pair.includes(token) && Number(p.liquidity) >= minTvl && p.is_verified;
+        const tvl = Number(p.liquidity) || 0;
+        const apy = Number(p.apy) || 0;
+        
+        return (
+          pair.toUpperCase().includes(token) && 
+          tvl >= minTvl && 
+          p.is_verified &&
+          apy > 0 && 
+          apy <= MAX_REALISTIC_APY
+        );
       })
       .map(p => ({
-        address: p.address,
-        pair: p.trading_pair || p.name,
-        price: Number(p.current_price),
-        tvl: Number(p.liquidity),
-        apr: Number(p.apr) * 100, // Convert to percentage
-        apy: Number(p.apy),
-        volume24h: Number(p.volume_24h),
-        fees24h: Number(p.fees_24h),
-        feeRate: Number(p.base_fee_percentage),
-        binStep: p.bin_step,
+        address: p.address || "unknown",
+        pair: p.trading_pair || p.name || "unknown",
+        tvl: Number(p.liquidity) || 0,
+        apr: (Number(p.apr) || 0) * 100,
+        apy: Number(p.apy) || 0,
+        volume24h: Number(p.volume_24h) || 0,
+        fees24h: Number(p.fees_24h) || 0,
+        feeRate: Number(p.base_fee_percentage) || 0,
+        binStep: p.bin_step || 0,
       }))
       .sort((a, b) => b.apy - a.apy)
       .slice(0, limit);
@@ -1566,7 +1671,11 @@ async function findYieldPools(args: Record<string, unknown>): Promise<CallToolRe
       return successResult({
         token,
         poolsFound: 0,
-        message: `No verified pools found for ${token} with TVL >= $${minTvl.toLocaleString()}`,
+        topPools: [],
+        bestApy: { found: false, reason: `No verified Meteora pools found for ${token} with APY 0-${MAX_REALISTIC_APY}% and TVL >= $${minTvl.toLocaleString()}` },
+        protocol: "Meteora DLMM",
+        network: "Solana",
+        note: "Pools with APY > 500% are filtered out as likely meme pool outliers",
         timestamp: new Date().toISOString(),
       });
     }
@@ -1586,8 +1695,10 @@ async function findYieldPools(args: Record<string, unknown>): Promise<CallToolRe
         fees24h: `$${p.fees24h.toFixed(2)}`,
         feeRate: `${p.feeRate}%`,
         address: p.address,
+        source: "Meteora DLMM",
       })),
       bestApy: {
+        found: true,
         pair: bestPool.pair,
         apy: `${bestPool.apy.toFixed(2)}%`,
         tvl: `$${bestPool.tvl.toLocaleString()}`,
@@ -1595,10 +1706,156 @@ async function findYieldPools(args: Record<string, unknown>): Promise<CallToolRe
       },
       protocol: "Meteora DLMM",
       network: "Solana",
+      note: "Showing verified Meteora pools with realistic APY (<500%). Sorted by APY descending.",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     return errorResult(`Yield pool search failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+async function compareMultiDex(args: Record<string, unknown>): Promise<CallToolResult> {
+  try {
+    const baseAsset = (args.base_asset as string).toUpperCase();
+    const quoteAsset = ((args.quote_asset as string) || "USDC").toUpperCase();
+    const amount = args.amount as number;
+
+    // Define all DEX configurations to query
+    const dexConfigs = [
+      // Solana DEXs
+      { name: "Jupiter", connector: "jupiter", network: "solana-mainnet-beta", base: baseAsset, quote: quoteAsset, chain: "Solana" },
+      // EVM DEXs - ETH pairs
+      ...(baseAsset === "ETH" || baseAsset === "WETH" ? [
+        { name: "Uniswap/Ethereum", connector: "uniswap", network: "ethereum-mainnet", base: "WETH", quote: "USDC", chain: "Ethereum" },
+        { name: "Uniswap/Base", connector: "uniswap", network: "ethereum-base", base: "WETH", quote: "USDC", chain: "Base" },
+        { name: "Uniswap/Arbitrum", connector: "uniswap", network: "ethereum-arbitrum", base: "WETH", quote: "USDC", chain: "Arbitrum" },
+      ] : []),
+      // BNB pairs
+      ...(baseAsset === "BNB" || baseAsset === "WBNB" ? [
+        { name: "PancakeSwap/BSC", connector: "pancakeswap", network: "ethereum-bsc", base: "WBNB", quote: "USDT", chain: "BSC" },
+      ] : []),
+    ];
+
+    // Query all DEXs in parallel
+    const results = await Promise.allSettled(
+      dexConfigs.map(async (dex) => {
+        try {
+          const quote = await hbFetch<SwapQuoteResponse>("/gateway/swap/quote", {
+            method: "POST",
+            body: {
+              connector: dex.connector,
+              network: dex.network,
+              trading_pair: `${dex.base}-${dex.quote}`,
+              side: "BUY",
+              amount,
+              slippage_pct: 1.0,
+            },
+            timeoutMs: 15000,
+          });
+
+          const price = Number(quote.price);
+          if (price <= 0) return { ...dex, available: false, error: "No price returned" };
+
+          return {
+            ...dex,
+            available: true,
+            price,
+            totalCost: Number(quote.amount_in || (amount * price)),
+            amountOut: Number(quote.amount_out || amount),
+          };
+        } catch (e) {
+          return { ...dex, available: false, error: (e as Error).message.slice(0, 50) };
+        }
+      })
+    );
+
+    // Also get CEX price for reference
+    let cexPrice: { available: boolean; price: number; totalCost: number } | null = null;
+    try {
+      const cexPair = `${baseAsset}-USDT`;
+      const vwap = await hbFetch<OrderBookQueryResult>("/market-data/order-book/vwap-for-volume", {
+        method: "POST",
+        body: { connector_name: "binance", trading_pair: cexPair, is_buy: true, volume: amount },
+        timeoutMs: 10000,
+      });
+      const price = vwap.average_price || vwap.result_price || 0;
+      if (price > 0) {
+        cexPrice = { available: true, price, totalCost: amount * price };
+      }
+    } catch {
+      // CEX not available for this pair
+    }
+
+    // Process and rank results
+    const validQuotes: Array<{ name: string; chain: string; price: number; totalCost: number }> = [];
+    for (const r of results) {
+      if (r.status === "fulfilled" && r.value.available && "price" in r.value && r.value.price > 0) {
+        validQuotes.push({
+          name: r.value.name,
+          chain: r.value.chain,
+          price: r.value.price,
+          totalCost: r.value.totalCost,
+        });
+      }
+    }
+    validQuotes.sort((a, b) => a.price - b.price); // Lower price = better for BUY
+
+    if (validQuotes.length === 0 && !cexPrice) {
+      return errorResult(`No DEX quotes available for ${baseAsset}. Try common pairs like SOL, ETH, or BNB.`);
+    }
+
+    // Add CEX to comparison if available
+    const allQuotes: Array<{ rank: number; dex: string; chain: string; price: number; totalCost: number; type: string }> = [
+      ...validQuotes.map((q, i) => ({
+        rank: i + 1,
+        dex: q.name,
+        chain: q.chain,
+        price: Number(q.price.toFixed(8)),
+        totalCost: Number(q.totalCost.toFixed(2)),
+        type: "DEX",
+      })),
+    ];
+
+    if (cexPrice) {
+      allQuotes.push({
+        rank: allQuotes.length + 1,
+        dex: "Binance (CEX)",
+        chain: "Centralized",
+        price: Number(cexPrice.price.toFixed(8)),
+        totalCost: Number(cexPrice.totalCost.toFixed(2)),
+        type: "CEX",
+      });
+      // Re-sort with CEX included
+      allQuotes.sort((a, b) => a.price - b.price);
+      allQuotes.forEach((q, i) => q.rank = i + 1);
+    }
+
+    const best = allQuotes[0];
+    const worst = allQuotes[allQuotes.length - 1];
+    const savingsPerUnit = worst.price - best.price;
+
+    return successResult({
+      query: { baseAsset, quoteAsset, amount },
+      quotes: allQuotes,
+      bestDex: {
+        name: best.dex,
+        chain: best.chain,
+        price: best.price,
+        totalCost: best.totalCost,
+        type: best.type,
+      },
+      savingsVsWorst: {
+        perUnit: Number(savingsPerUnit.toFixed(8)),
+        total: Number((savingsPerUnit * amount).toFixed(2)),
+        percentage: Number((savingsPerUnit / worst.price * 100).toFixed(4)),
+      },
+      dexesChecked: dexConfigs.length,
+      dexesWithQuotes: validQuotes.length,
+      cexIncluded: cexPrice !== null,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Multi-DEX comparison failed: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 
@@ -1715,6 +1972,9 @@ server.setRequestHandler(
 
         case "find_arbitrage":
           return await findArbitrage(args || {});
+
+        case "compare_multi_dex":
+          return await compareMultiDex(args || {});
 
         // TIER 1: Intelligence Tools
         case "analyze_trade_impact":
@@ -1882,7 +2142,7 @@ app.get("/health", (_req: Request, res: Response) => {
     scope: "Public Market Data + Multi-Exchange Intelligence",
     hummingbotApiUrl: HUMMINGBOT_API_BASE_URL,
     toolCount: TOOLS.length,
-    gigaBrainTools: ["find_best_execution", "compare_swap_routes", "scan_funding_opportunities", "find_yield_pools", "find_arbitrage"],
+    gigaBrainTools: ["find_best_execution", "compare_swap_routes", "compare_multi_dex", "scan_funding_opportunities", "find_yield_pools", "find_arbitrage"],
     tools: TOOLS.map(t => t.name),
   });
 });
@@ -1954,7 +2214,7 @@ app.listen(port, () => {
   console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health`);
   console.log(`\n🛠️  Tools (${TOOLS.length} total):`);
-  console.log(`   🧠 GIGA-BRAIN: find_best_execution, compare_swap_routes, scan_funding_opportunities, find_yield_pools, find_arbitrage`);
+  console.log(`   🧠 GIGA-BRAIN: find_best_execution, compare_swap_routes, compare_multi_dex, scan_funding_opportunities, find_yield_pools, find_arbitrage`);
   console.log(`   📊 Intelligence: analyze_trade_impact, analyze_market_depth, analyze_funding_sentiment, get_dex_swap_quote, get_clmm_pool_info`);
   console.log(`   📈 Raw Data: get_prices, get_market_candles, get_historical_candles, get_order_book, get_funding_rates, get_connectors\n`);
 });
