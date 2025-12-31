@@ -2198,16 +2198,51 @@ async function handleGetComparableMarkets(
     }
   }
 
-  // Filter by keywords if provided (using OR matching)
+  // IMPROVED KEYWORD MATCHING: Score-based matching with title priority
+  // - Title matches get 3x weight vs subtitle/description matches
+  // - Year-only matches in subtitles get 0 weight (to avoid false positives)
+  // - Requires minimum score based on number of keywords
   if (keywords) {
+    const yearPattern = /^(20\d{2})$/; // Matches years like 2024, 2025, 2026, etc.
     const queryWords = keywords.toLowerCase()
       .split(/\s+/)
       .filter(word => word.length > 2);
     
-    markets = markets.filter(m => {
-      const searchText = ((m.title || '') + ' ' + (m.subtitle || '') + ' ' + (m.yes_sub_title || '')).toLowerCase();
-      return queryWords.some(word => searchText.includes(word));
+    // Score each market by keyword relevance
+    const scored = markets.map((m) => {
+      const titleLower = (m.title || '').toLowerCase();
+      const subtitleLower = (m.subtitle || '').toLowerCase();
+      const yesSubLower = (m.yes_sub_title || '').toLowerCase(); // Candidate/team name
+      
+      let score = 0;
+      let titleMatches = 0;
+      
+      for (const word of queryWords) {
+        const isYear = yearPattern.test(word);
+        
+        // Title match: 3 points (or 1 point if year-only)
+        if (titleLower.includes(word)) {
+          score += isYear ? 1 : 3;
+          titleMatches++;
+        }
+        // Yes subtitle match (candidate name): 2 points
+        else if (yesSubLower.includes(word)) {
+          score += isYear ? 0.5 : 2;
+        }
+        // Subtitle match: 1 point (but 0 for year-only to avoid false matches)
+        else if (subtitleLower.includes(word)) {
+          score += isYear ? 0 : 1;
+        }
+      }
+      
+      return { market: m, score, titleMatches };
     });
+    
+    // Require minimum relevance: at least 1 title match OR score >= 2
+    markets = scored
+      .filter(s => s.titleMatches >= 1 || s.score >= 2)
+      .sort((a, b) => b.score - a.score)
+      .map(s => s.market);
   }
 
   // Filter by minimum volume
@@ -2215,27 +2250,88 @@ async function handleGetComparableMarkets(
     markets = markets.filter(m => (m.volume_24h || 0) >= minVolume);
   }
 
-  // Transform to standardized format
-  const comparableMarkets = markets.slice(0, limit).map(m => {
-    const title = m.title || m.yes_sub_title || m.ticker;
-    const yesPrice = m.yes_ask || m.last_price || 50;
-    const noPrice = m.no_ask || (100 - yesPrice);
+  // Group markets by event_ticker to detect multi-outcome events
+  const eventGroups = new Map<string, KalshiMarket[]>();
+  for (const m of markets) {
+    const eventTicker = m.event_ticker || m.ticker;
+    if (!eventGroups.has(eventTicker)) {
+      eventGroups.set(eventTicker, []);
+    }
+    eventGroups.get(eventTicker)!.push(m);
+  }
+
+  // Transform to standardized format with multi-outcome support
+  const comparableMarkets = Array.from(eventGroups.entries()).slice(0, limit).map(([eventTicker, eventMarkets]) => {
+    const firstMarket = eventMarkets[0];
+    const title = firstMarket.title || firstMarket.yes_sub_title || firstMarket.ticker;
+    const isMultiOutcome = eventMarkets.length > 1;
+    
+    // Generate a matchKey for cross-platform matching
+    const generateMatchKey = (t: string): string => {
+      const lower = t.toLowerCase();
+      const yearMatch = lower.match(/(20\d{2})/);
+      const year = yearMatch ? yearMatch[1] : '';
+      
+      if (lower.includes('president') && (lower.includes('election') || lower.includes('win'))) {
+        return `presidential_election_${year}`;
+      }
+      if (lower.includes('senate') && lower.includes('race')) {
+        // Extract state for state-level races
+        const stateMatch = lower.match(/senate race in (\w+)/i);
+        const state = stateMatch ? stateMatch[1].toLowerCase() : '';
+        return `senate_race_${state}_${year}`;
+      }
+      if (lower.includes('senate') && lower.includes('control')) {
+        return `senate_control_${year}`;
+      }
+      if (lower.includes('house') && lower.includes('control')) {
+        return `house_control_${year}`;
+      }
+      return extractKeywords(t).slice(0, 3).join('_');
+    };
+
+    let outcomes: Array<{ name: string; normalizedProbability: number; rawPrice: number }>;
+    let outcomeNames: string[] = [];
+    
+    if (isMultiOutcome) {
+      // MULTI-OUTCOME: Each market in the group is an outcome (e.g., each candidate)
+      outcomes = eventMarkets.map(m => {
+        const outcomeName = m.yes_sub_title || m.ticker.split('-').pop() || 'Unknown';
+        const yesPrice = m.yes_ask || m.last_price || 50;
+        return {
+          name: outcomeName,
+          normalizedProbability: yesPrice / 100,
+          rawPrice: yesPrice,
+        };
+      }).sort((a, b) => b.normalizedProbability - a.normalizedProbability);
+      outcomeNames = outcomes.slice(0, 20).map(o => o.name);
+    } else {
+      // BINARY: Single market with Yes/No
+      const yesPrice = firstMarket.yes_ask || firstMarket.last_price || 50;
+      const noPrice = firstMarket.no_ask || (100 - yesPrice);
+      outcomes = [
+        { name: 'Yes', normalizedProbability: yesPrice / 100, rawPrice: yesPrice },
+        { name: 'No', normalizedProbability: noPrice / 100, rawPrice: noPrice },
+      ];
+    }
     
     return {
       title,
-      description: m.subtitle || '',
-      eventCategory: categorizeMarket(title, m.category),
-      keywords: extractKeywords(title + ' ' + (m.subtitle || '')),
-      teams: extractTeams(title + ' ' + (m.subtitle || '')),
-      outcomes: [
-        { name: 'Yes', normalizedProbability: yesPrice / 100, rawPrice: yesPrice },
-        { name: 'No', normalizedProbability: noPrice / 100, rawPrice: noPrice },
-      ],
-      volume24h: m.volume_24h || 0,
-      liquidity: m.liquidity || 0,
-      closeTime: m.close_time || null,
-      url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
-      platformMarketId: m.ticker,
+      description: firstMarket.subtitle || '',
+      eventCategory: categorizeMarket(title, firstMarket.category),
+      keywords: extractKeywords(title + ' ' + (firstMarket.subtitle || '')),
+      teams: extractTeams(title + ' ' + (firstMarket.subtitle || '')),
+      outcomes,
+      // NEW: Cross-platform matching fields
+      matchKey: generateMatchKey(title),
+      outcomeNames, // List of candidate/team names for direct matching
+      topOutcomes: outcomes.slice(0, 5).map(o => ({ name: o.name, prob: o.normalizedProbability })),
+      isMultiOutcome,
+      volume24h: eventMarkets.reduce((sum, m) => sum + (m.volume_24h || 0), 0),
+      liquidity: firstMarket.liquidity || 0,
+      closeTime: firstMarket.close_time || null,
+      url: `https://kalshi.com/markets/${getSeriesTicker(eventTicker)}`,
+      platformMarketId: eventTicker,
     };
   });
 
@@ -2252,7 +2348,12 @@ async function handleGetComparableMarkets(
       business: comparableMarkets.filter(m => m.eventCategory === 'business').length,
       other: comparableMarkets.filter(m => !['sports', 'politics', 'business'].includes(m.eventCategory)).length,
     },
-    hint: `Returned ${comparableMarkets.length} markets. Probabilities are normalized 0-1 (original Kalshi prices are in cents 0-100). Compare with Polymarket or Odds API.`,
+    crossPlatformMatchingGuide: {
+      howToMatch: "Use matchKey for event-level matching. For multi-outcome markets (isMultiOutcome=true), compare outcomeNames arrays to find matching candidates/teams.",
+      exampleMatch: "Kalshi 'Who will win the next presidential election?' (matchKey: presidential_election_2028) matches Polymarket 'Presidential Election Winner 2028'",
+      probabilityConversion: "Kalshi: cents 0-100 (30 = 30%), shown here as normalizedProbability 0-1. Polymarket: 0-1 scale. Values should match directly.",
+    },
+    hint: `Returned ${comparableMarkets.length} events (${markets.length} individual markets). Use matchKey and outcomeNames for cross-platform matching.`,
     fetchedAt: new Date().toISOString(),
   });
 }

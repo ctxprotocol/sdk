@@ -4638,16 +4638,55 @@ async function handleGetComparableMarkets(
 
     let filtered = events || [];
 
-    // Filter by keywords if provided (using OR matching)
+    // IMPROVED KEYWORD MATCHING: Score-based matching with title priority
+    // - Title matches get 3x weight vs description matches
+    // - Year-only matches in description get 0 weight (to avoid "Fed Chair by Dec 2026" matching "2026")
+    // - Requires minimum score based on number of keywords
     if (keywords) {
+      const yearPattern = /^(20\d{2})$/; // Matches years like 2024, 2025, 2026, etc.
       const queryWords = keywords.toLowerCase()
         .split(/\s+/)
         .filter(word => word.length > 2);
       
-      filtered = filtered.filter((e) => {
-        const searchText = ((e.title || '') + ' ' + (e.description || '')).toLowerCase();
-        return queryWords.some(word => searchText.includes(word));
+      // Score each event by keyword relevance
+      const scored = filtered.map((e) => {
+        const titleLower = (e.title || '').toLowerCase();
+        const descLower = (e.description || '').toLowerCase();
+        // Also check outcome names for multi-outcome markets
+        const outcomeNames = (e.markets || [])
+          .map(m => (m.question || m.title || '').toLowerCase())
+          .join(' ');
+        
+        let score = 0;
+        let titleMatches = 0;
+        
+        for (const word of queryWords) {
+          const isYear = yearPattern.test(word);
+          
+          // Title match: 3 points (or 1 point if year-only)
+          if (titleLower.includes(word)) {
+            score += isYear ? 1 : 3;
+            titleMatches++;
+          }
+          // Outcome name match: 2 points (important for candidate matching)
+          else if (outcomeNames.includes(word)) {
+            score += isYear ? 0.5 : 2;
+          }
+          // Description match: 1 point (but 0 for year-only to avoid false matches)
+          else if (descLower.includes(word)) {
+            score += isYear ? 0 : 1;
+          }
+        }
+        
+        return { event: e, score, titleMatches };
       });
+      
+      // Require minimum relevance: at least 1 title match OR score >= 2
+      // This filters out events that only match on years in description
+      filtered = scored
+        .filter(s => s.titleMatches >= 1 || s.score >= 2)
+        .sort((a, b) => b.score - a.score)
+        .map(s => s.event);
     }
 
     // Filter by minimum volume
@@ -4729,11 +4768,51 @@ async function handleGetComparableMarkets(
           ];
         }
 
-        // Extract team names from multi-outcome markets for fuzzy matching
+        // Extract team/candidate names from multi-outcome markets for fuzzy matching
         // Include all teams (up to 50) for comprehensive cross-platform matching
         const teamsFromOutcomes = isMultiOutcome 
           ? outcomes.slice(0, 50).map(o => o.name) 
           : extractTeams(fullText);
+
+        // Generate a matchKey for cross-platform matching
+        // This normalizes the event to make matching easier
+        // e.g., "Presidential Election Winner 2028" -> "presidential_2028"
+        // e.g., "Super Bowl Champion 2026" -> "superbowl_2026"
+        const generateMatchKey = (t: string): string => {
+          const lower = t.toLowerCase();
+          // Extract year if present
+          const yearMatch = lower.match(/(20\d{2})/);
+          const year = yearMatch ? yearMatch[1] : '';
+          
+          // Identify event type
+          if (lower.includes('president') && lower.includes('election')) {
+            return `presidential_election_${year}`;
+          }
+          if (lower.includes('president') && lower.includes('nominee')) {
+            const party = lower.includes('democrat') ? 'dem' : lower.includes('republican') ? 'rep' : '';
+            return `presidential_nominee_${party}_${year}`;
+          }
+          if (lower.includes('senate') && lower.includes('control')) {
+            return `senate_control_${year}`;
+          }
+          if (lower.includes('house') && lower.includes('control')) {
+            return `house_control_${year}`;
+          }
+          if (lower.includes('super bowl') || lower.includes('superbowl')) {
+            return `superbowl_${year}`;
+          }
+          if (lower.includes('nba') && lower.includes('champion')) {
+            return `nba_champion_${year}`;
+          }
+          // Default: extract key terms
+          return extractKeywords(t).slice(0, 3).join('_');
+        };
+
+        // For multi-outcome markets, create a lookup of outcome names for easy matching
+        // This helps match "JD Vance" on Polymarket to "JD Vance" on Kalshi
+        const outcomeNames = isMultiOutcome 
+          ? outcomes.slice(0, 20).map(o => o.name)
+          : [];
 
         return {
           title,
@@ -4742,6 +4821,10 @@ async function handleGetComparableMarkets(
           keywords: extractKeywords(fullText),
           teams: teamsFromOutcomes,
           outcomes,
+          // NEW: Cross-platform matching fields
+          matchKey: generateMatchKey(title),
+          outcomeNames, // List of candidate/team names for direct matching
+          topOutcomes: outcomes.slice(0, 5).map(o => ({ name: o.name, prob: o.normalizedProbability })),
           volume24h: e.volume || 0,
           liquidity: e.liquidity || 0,
           endDate: e.endDate || e.endDateIso || null,
@@ -4764,7 +4847,12 @@ async function handleGetComparableMarkets(
         crypto: markets.filter(m => m.eventCategory === 'crypto').length,
         other: markets.filter(m => !['sports', 'politics', 'crypto'].includes(m.eventCategory)).length,
       },
-      hint: `Returned ${markets.length} markets. Probabilities are normalized 0-1. Compare with Kalshi (yesPrice/100) or Odds API (1/decimal_odds).`,
+      crossPlatformMatchingGuide: {
+        howToMatch: "Use matchKey for event-level matching (e.g., 'presidential_election_2028'). For multi-outcome markets, compare outcomeNames arrays to find matching candidates/teams.",
+        exampleMatch: "Polymarket 'Presidential Election Winner 2028' (matchKey: presidential_election_2028) matches Kalshi 'Who will win the next presidential election?' - then compare specific candidates like 'JD Vance' in outcomeNames.",
+        probabilityConversion: "Polymarket: 0-1 scale (0.30 = 30%). Kalshi: cents (30 = 30%). Multiply Polymarket by 100 to compare.",
+      },
+      hint: `Returned ${markets.length} markets. Use matchKey and outcomeNames for cross-platform matching. Probabilities are 0-1 scale.`,
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {
@@ -5666,12 +5754,39 @@ async function handleBrowseCategory(
     const closed = includeResolved ? "true" : "false";
     const orderField = sortBy === "endDate" ? "endDate" : sortBy === "liquidity" ? "liquidity" : "volume";
     
+    // IMPORTANT: The Gamma API's ?category= parameter is BROKEN and returns wrong results.
+    // Instead, we fetch more events and filter CLIENT-SIDE by checking the tags array.
+    // Each event has a tags[] array with objects like {slug: "politics", label: "Politics"}
+    const fetchLimit = limit * 10; // Fetch more to ensure enough matches after filtering
     const events = await fetchGamma(
-      `/events?category=${category}&closed=${closed}&limit=${limit}&order=${orderField}&ascending=false`
+      `/events?closed=${closed}&limit=${fetchLimit}&order=${orderField}&ascending=false`
     ) as GammaEvent[];
 
-    const formatted = (events || [])
+    // Normalize category for matching (lowercase, handle common aliases)
+    const categoryLower = category.toLowerCase();
+    const categoryAliases: Record<string, string[]> = {
+      'politics': ['politics', 'elections', 'political'],
+      'sports': ['sports', 'nfl', 'nba', 'mlb', 'soccer', 'football', 'basketball', 'baseball'],
+      'crypto': ['crypto', 'bitcoin', 'ethereum', 'cryptocurrency'],
+      'pop-culture': ['pop-culture', 'culture', 'movies', 'entertainment', 'hollywood'],
+      'science': ['science', 'tech', 'technology'],
+      'business': ['business', 'economics', 'finance'],
+    };
+    const matchingSlugs = categoryAliases[categoryLower] || [categoryLower];
+
+    // Filter events by checking if any tag matches the requested category
+    const filteredEvents = (events || []).filter((e) => {
+      if (!e.tags || !Array.isArray(e.tags)) return false;
+      return e.tags.some((tag: { slug?: string; label?: string }) => {
+        const tagSlug = (tag.slug || '').toLowerCase();
+        const tagLabel = (tag.label || '').toLowerCase();
+        return matchingSlugs.some(s => tagSlug === s || tagLabel === s || tagSlug.includes(s) || tagLabel.includes(s));
+      });
+    });
+
+    const formatted = filteredEvents
       .filter((e) => e.slug)
+      .slice(0, limit) // Apply limit after filtering
       .map((e) => {
         const market = e.markets?.[0];
         const prices = parseJsonArray(market?.outcomePrices);
