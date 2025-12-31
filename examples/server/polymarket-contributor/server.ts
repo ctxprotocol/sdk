@@ -5196,8 +5196,9 @@ async function handleSearchMarkets(
   
   let allEvents: GammaEvent[] = [];
   
-  // Build query string with ordering to get newest markets first
-  const orderParams = "&order=id&ascending=false";
+  // Build query string with ordering
+  // Use volume ordering when searching to find important markets (not just newest)
+  const orderParams = query ? "&order=volume&ascending=false" : "&order=id&ascending=false";
   
   if (status === "all") {
     // Fetch both live and resolved markets
@@ -5229,7 +5230,9 @@ async function handleSearchMarkets(
     filtered = filtered.filter((e) => {
       const titleLower = (e.title || '').toLowerCase();
       const descLower = (e.description || '').toLowerCase();
-      const searchText = titleLower + ' ' + descLower;
+      // CRITICAL: Search within market outcomes to find candidates like "JD Vance"
+      const marketOutcomes = (e.markets || []).map((m: any) => ((m.question || '') + ' ' + (m.title || '')).toLowerCase()).join(' ');
+      const searchText = titleLower + ' ' + descLower + ' ' + marketOutcomes;
       
       if (matchMode === "all") {
         // ALL query words must be present (strict matching)

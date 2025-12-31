@@ -2486,18 +2486,50 @@ async function handleSearchMarkets(
   const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
   let markets = response.markets || [];
 
+  // CRITICAL: Fetch known important political events that may not appear in standard listings
+  // The 2028 Presidential election (KXPRESPERSON-28) is active but not returned by /markets?status=open
+  const importantEvents = ["KXPRESPERSON-28", "POWER-28"];
+  const shouldFetchPolitical = !category || 
+    category.toLowerCase() === "politics" ||
+    (query && (query.toLowerCase().includes("president") || 
+               query.toLowerCase().includes("2028") ||
+               query.toLowerCase().includes("vance") ||
+               query.toLowerCase().includes("senate")));
+  
+  if (shouldFetchPolitical && status !== "settled") {
+    for (const eventTicker of importantEvents) {
+      try {
+        const eventDetail = await fetchKalshi(`/events/${eventTicker}`) as { event: KalshiEvent; markets?: KalshiMarket[] };
+        const eventMarkets = eventDetail.markets || [];
+        const existingTickers = new Set(markets.map(m => m.ticker));
+        for (const m of eventMarkets) {
+          if (!existingTickers.has(m.ticker)) {
+            markets.push(m);
+          }
+        }
+      } catch (e) {
+        // Event may not exist, ignore
+      }
+    }
+  }
+
   // Filter by query if provided - using WORD-BY-WORD matching (any word matches)
   // This is critical for queries like "Senate control" to find "Senate" OR "control"
+  // FIXED: Use word-boundary regex to avoid "Pirates" matching "rate"
   if (query) {
     const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by']);
     const queryWords = query.toLowerCase()
       .split(/\s+/)
-      .filter(word => word.length > 1 && !stopWords.has(word));
+      .filter(word => word.length > 2 && !stopWords.has(word)); // Min 3 chars to avoid partial matches
     
     markets = markets.filter(m => {
       const searchText = ((m.title || '') + ' ' + (m.yes_sub_title || '') + ' ' + m.ticker).toLowerCase();
-      // ANY query word matches (OR matching for better cross-platform compatibility)
-      return queryWords.some(word => searchText.includes(word));
+      // ANY query word matches - use word boundary to avoid "Pirates" matching "rate"
+      return queryWords.some(word => {
+        // Word boundary match: word must be at start/end or surrounded by non-word chars
+        const regex = new RegExp(`\\b${word}\\b`, 'i');
+        return regex.test(searchText);
+      });
     });
   }
 
