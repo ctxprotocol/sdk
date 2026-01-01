@@ -4115,8 +4115,15 @@ async function handleDiscoverTrendingMarkets(
     const volume24h = Number(event.volume24hr || market.volume24hr || 0);
     const liquidity = Number(event.liquidity || market.liquidity || 0);
     
-    // Skip low activity markets
+    // Skip low activity markets or near-resolved markets (for meaningful whale analysis)
     if (volume24h < 1000 || liquidity < 1000) continue;
+    
+    // Skip near-resolved markets (>95% or <5%) - no meaningful position building
+    const gammaPricesPrecheck = parseJsonArray(market.outcomePrices);
+    const yesPricePrecheck = parseFloat(gammaPricesPrecheck[0]) || 0.5;
+    if (yesPricePrecheck > 0.95 || yesPricePrecheck < 0.05) {
+      continue; // Near-resolved, skip for whale analysis
+    }
     
     const gammaPrices = parseJsonArray(market.outcomePrices);
     const yesPrice = parseFloat(gammaPrices[0]) || 0.5;
@@ -5248,6 +5255,14 @@ async function handleSearchMarkets(
   let liveCount = 0;
   let resolvedCount = 0;
 
+  // Build query words for matching specific candidates/outcomes
+  // CRITICAL: Exclude year numbers (like "2028") which match ALL markets in multi-outcome events
+  const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by', 'win', 'presidential', 'nomination', 'president', 'democratic', 'republican']);
+  const searchQueryWords = query ? query.toLowerCase().split(/\s+/).filter(w => {
+    // Filter out: short words, stop words, and pure numbers (years like 2028)
+    return w.length > 2 && !stopWords.has(w) && !/^\d+$/.test(w);
+  }) : [];
+
   const results = filtered
     .filter((e) => e.slug) // Only include markets with valid slugs (for URL generation)
     .slice(0, limit)
@@ -5262,13 +5277,42 @@ async function handleSearchMarkets(
         liveCount++;
       }
 
+      // CRITICAL FIX: Find the specific market matching the search query (e.g., "Gavin Newsom")
+      // instead of always returning the first market in the array
+      let matchedMarket = e.markets?.[0]; // Default to first market
+      let matchedOutcomePrice: string | null = null;
+      
+      if (searchQueryWords.length > 0 && e.markets && e.markets.length > 1) {
+        // This is a multi-outcome event - find the specific market matching the query
+        for (const market of e.markets) {
+          const marketText = ((market.question || '') + ' ' + (market.title || '')).toLowerCase();
+          const matches = searchQueryWords.some(word => marketText.includes(word));
+          if (matches) {
+            matchedMarket = market;
+            // Extract YES price from outcomePrices array (format: ["0.335", "0.665"])
+            if (market.outcomePrices) {
+              try {
+                const prices = typeof market.outcomePrices === 'string' 
+                  ? JSON.parse(market.outcomePrices) 
+                  : market.outcomePrices;
+                matchedOutcomePrice = prices[0]; // YES price
+              } catch {}
+            }
+            break;
+          }
+        }
+      }
+
       return {
         title: e.title,
         url: `https://polymarket.com/event/${e.slug}`, // Always include URL from slug
         slug: e.slug,
         status: marketStatus,
         category: e.category,
-        conditionId: e.markets?.[0]?.conditionId,
+        conditionId: matchedMarket?.conditionId,
+        // Include the matched outcome for multi-outcome markets
+        matchedOutcome: matchedMarket?.question || matchedMarket?.title,
+        outcomePrice: matchedOutcomePrice,
         volume: e.volume,
         liquidity: e.liquidity,
         endDate: e.endDate || e.endDateIso,
@@ -6026,6 +6070,12 @@ async function handleAnalyzeTopHolders(
     marketTitle = holdersData.market || resolvedConditionId;
   }
 
+  // Check if market is near-resolved (limited whale activity expected)
+  const isNearResolved = currentPrice > 0.95 || currentPrice < 0.05;
+  const nearResolvedWarning = isNearResolved
+    ? `⚠️ Market is ${(currentPrice * 100).toFixed(1)}% YES - near-resolved. Position values appear small because most trading has concluded. For meaningful whale analysis, consider markets with prices between 10-90%.`
+    : null;
+
   return successResult({
     market: marketTitle,
     conditionId: resolvedConditionId,
@@ -6046,6 +6096,7 @@ async function handleAnalyzeTopHolders(
       reasoning,
     },
     recommendation,
+    nearResolvedWarning,
     fetchedAt: new Date().toISOString(),
   });
 }
