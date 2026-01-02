@@ -240,6 +240,7 @@ Returns real tables with their schemas - no guessing!
 • Find tables for a blockchain: discover_tables(search: "arbitrum")  
 • Find tables by sector: discover_tables(search: "lending")
 • Browse available spells: discover_tables(limit: 100)
+• Find TVL/reserve event tables: discover_tables(search: "{protocol} sync")
 
 📊 RETURNS:
 • Table names with full schemas (columns, types)
@@ -558,9 +559,10 @@ dex_aggregator.trades (1inch, Cowswap, Paraswap etc):
   token_bought_amount, token_sold_amount, amount_usd,
   taker, maker, tx_hash, tx_from, tx_to
 
-dex.pools (Liquidity pools):
+dex.pools (Liquidity pool METADATA - NOT TVL!):
   blockchain, project, version, pool, fee, token0, token1,
   creation_block_time, creation_block_number, contract_address
+  ⚠️ NOTE: This table has pool addresses and tokens, but NO TVL or reserves!
 
 ═══════════════════════════════════════════════════════════════════════
 🔹 NFT TRADING
@@ -640,6 +642,28 @@ solana.transactions:
   block_time, block_date, signature, fee, success, signer, compute_units_consumed
 
 ═══════════════════════════════════════════════════════════════════════
+🔹 TVL / LIQUIDITY / POOL RESERVES
+═══════════════════════════════════════════════════════════════════════
+⚠️ NO UNIFIED TVL TABLE EXISTS! Reserves live in protocol-specific event tables.
+
+To get pool TVL/reserves, you need to:
+1. Use discover_tables("{protocol} sync") or discover_tables("{protocol} reserve")
+   to find the protocol's event tables
+2. Look for these common patterns:
+   - V2-style AMMs: "Sync" events with reserve0, reserve1 columns
+   - V3-style AMMs: liquidity position events (Mint, Burn)
+   - Curve/Balancer: pool-specific balance queries
+
+Example workflow for TVL:
+1. discover_tables("curve reserve") → find curve event tables
+2. get_dataset_schema("curve_ethereum.StableSwap_evt_*") → check columns
+3. Query latest reserves and join with prices.usd for USD value
+
+Common TVL event tables (use discover_tables to find others):
+- {protocol}_v2_{chain}.Pair_evt_Sync → reserve0, reserve1
+- {protocol}_v3_{chain}.*_evt_Mint → liquidity positions
+
+═══════════════════════════════════════════════════════════════════════
 
 ⚠️ For protocol-specific tables (uniswap_v3_ethereum.*, aave_v3_*.*, etc.),
    call get_dataset_schema("table") first to get exact columns!
@@ -663,6 +687,33 @@ solana.transactions:
 - ✅ Case-insensitive: WHERE lower(project) LIKE '%pendle%'
 - ✅ Date arithmetic: current_date - interval '7' day (this DOES work)
 - ✅ Pattern matching: column LIKE '%pattern%' (case-sensitive)
+
+🚨 FAKE VOLUME WARNING (IMPORTANT FOR WHALE QUERIES!):
+BNB Chain and other low-gas chains have MASSIVE fake volume from:
+- Wash trading (same wallet trading with itself)
+- Illiquid shitcoins with manipulated prices
+- Scam tokens that appear as "$43M trades" but have zero real liquidity
+
+⚡ ALWAYS USE THIS FILTER FOR WHALE/LARGE TRADE QUERIES:
+Filter to tokens with REAL trading activity (100+ unique traders OR has price feed):
+
+WHERE (
+  -- Option A: Token has verified price feed (established tokens)
+  token_bought_address IN (SELECT contract_address FROM prices.usd WHERE blockchain = t.blockchain)
+  OR
+  -- Option B: Token has 100+ unique traders in last 7 days (organic activity = hard to fake)
+  token_bought_address IN (
+    SELECT token_bought_address FROM dex.trades
+    WHERE block_date >= current_date - interval '7' day
+    GROUP BY 1 HAVING COUNT(DISTINCT tx_from) >= 100
+  )
+)
+
+This hybrid filter:
+✅ Includes established tokens (via prices.usd)
+✅ Includes NEW legit tokens with organic trading (100+ unique wallets)
+❌ Excludes wash trading (1-2 wallets faking volume)
+❌ Excludes illiquid shitcoins with no real traders
 
 Example:
   run_sql("SELECT blockchain, SUM(amount_usd) as volume FROM dex.trades WHERE block_date >= current_date - interval '1' day GROUP BY 1 ORDER BY 2 DESC LIMIT 10")`,
