@@ -2500,8 +2500,13 @@ server.setRequestHandler(
 );
 
 /**
- * Extract wallet context from MCP request _meta field
+ * Extract wallet context from MCP request
  * The client SDK injects context when tools have contextRequirements
+ * 
+ * The client may inject wallet data in different formats:
+ * 1. _meta.context.wallet - full wallet context object
+ * 2. args.wallet.address - direct wallet object in args
+ * 3. args.walletAddresses - array of wallet addresses (injected by Context platform)
  */
 function extractContext(request: CallToolRequest): { wallet?: WalletContext } | undefined {
   try {
@@ -2510,11 +2515,27 @@ function extractContext(request: CallToolRequest): { wallet?: WalletContext } | 
     if (meta?.context?.wallet) {
       return { wallet: meta.context.wallet };
     }
-    // Also check args for direct wallet injection (alternative pattern)
+    
     const args = request.params.arguments as any;
+    
+    // Check for direct wallet injection (alternative pattern)
     if (args?.wallet?.address) {
       return { wallet: args.wallet };
     }
+    
+    // Check for walletAddresses array (injected by Context platform)
+    // This is the primary injection format from the client SDK
+    if (args?.walletAddresses && Array.isArray(args.walletAddresses) && args.walletAddresses.length > 0) {
+      return {
+        wallet: {
+          address: args.walletAddresses[0], // Use first wallet address
+          chainId: 1, // Default to Ethereum mainnet
+          balances: [],
+          fetchedAt: new Date().toISOString(),
+        }
+      };
+    }
+    
     return undefined;
   } catch {
     return undefined;
