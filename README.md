@@ -513,21 +513,19 @@ Want to earn money by contributing tools to the Context marketplace? Build a sta
 | `outputSchema` | AI agents use this to generate type-safe code. Context uses it for dispute resolution. |
 | `structuredContent` | Agents parse this for programmatic access. Text `content` is for humans. |
 
-### Context Injection (Portfolio Analysis Tools)
+### Context Injection (Personalized Tools)
 
-Building tools that analyze user portfolios? Context automatically injects user portfolio data into your tools—no authentication required from the user.
-
-**📖 Read the full guide: [Context Injection Architecture](./docs/context-injection.md)**
+Building tools that analyze user data? Context automatically injects user context into your tools—no authentication required.
 
 **How it works:**
-1. User links their wallet in Context app settings
-2. When your tool is selected, the platform reads `inputSchema["x-context-requirements"]`
-3. Platform fetches the user's portfolio data from protocol APIs
-4. Data is injected as the `portfolio` argument to your tool
+1. User connects their wallet in the Context app (we start with blockchain user data, but we're open to other client-side personal data types in the future)
+2. When your tool is selected, the platform reads `_meta.contextRequirements` from your tool definition
+3. Platform fetches the user's data (wallet balances, protocol positions, etc.)
+4. Data is injected as an argument to your tool
 
 **Key benefits:**
-- **No Auth Required** — User data is injected automatically from their linked wallets
-- **Type-Safe** — Use SDK types like `PolymarketContext`, `HyperliquidContext`
+- **No Auth Required** — User data is injected automatically from connected wallets
+- **Type-Safe** — Use SDK types like `WalletContext`, `PolymarketContext`, `HyperliquidContext`
 - **Focus on Analysis** — You receive structured data, you provide insights
 
 **What gets injected:**
