@@ -1,9 +1,10 @@
 # Dune Analytics MCP Server
 
-A streamlined MCP server that provides access to **Dune's 750,000+ community queries** via their official API.
+A comprehensive MCP server providing access to **Dune's 750,000+ community queries** plus **personalized wallet analytics** via their official API.
 
 ## Features
 
+### General Tools
 | Tool | Description | Rate Limit |
 |------|-------------|------------|
 | `search_queries` | **Search curated query catalog** | Instant |
@@ -11,7 +12,50 @@ A streamlined MCP server that provides access to **Dune's 750,000+ community que
 | `get_query_results` | Get cached results (faster!) | 40 RPM |
 | `get_execution_status` | Check if query finished | 40 RPM |
 | `get_execution_results` | Get results from execution | 40 RPM |
-| `run_sql` | Execute raw SQL (Premium only) | 15 RPM |
+| `run_sql` | Execute raw SQL (Plus tier required) | 15 RPM |
+| `discover_tables` | Search Spellbook/community tables | Instant |
+| `get_dataset_schema` | Get table columns & types | Instant |
+
+### Personalized Wallet Tools (Requires Connected Wallet)
+| Tool | Description | Context |
+|------|-------------|---------|
+| `analyze_my_portfolio` | Analyze your token holdings & risk | `wallet` |
+| `my_trading_history` | View your complete DEX trading history | `wallet` |
+| `my_token_pnl` | Calculate profit/loss for your tokens | `wallet` |
+| `wallets_like_mine` | Find lookalike wallets with similar trading patterns | `wallet` |
+
+### How Wallet Context Works
+
+The personalized tools use `_meta.contextRequirements` to receive user wallet data:
+
+```typescript
+{
+  name: "my_trading_history",
+  description: "...",
+  
+  // ⭐ Context platform reads this and injects wallet data
+  _meta: {
+    contextRequirements: ["wallet"],
+  },
+  
+  inputSchema: {
+    type: "object",
+    properties: {
+      wallet: {
+        type: "object",
+        description: "Wallet context (injected by platform)",
+      },
+      // ... other optional params
+    },
+  },
+}
+```
+
+When a user with a connected wallet asks "show my trading history", the Context platform:
+1. Reads `_meta.contextRequirements: ["wallet"]`
+2. Fetches the user's wallet address from their session
+3. Injects it into the tool call
+4. Your tool receives the wallet data and queries Dune for that specific address
 
 ## Quick Start
 

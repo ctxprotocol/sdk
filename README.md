@@ -269,8 +269,6 @@ const result = await client.tools.execute({
 
 ```typescript
 import {
-  // Constant for declaring context requirements
-  CONTEXT_REQUIREMENTS_KEY,
   // Auth utilities for tool contributors
   verifyContextRequest,
   isProtectedMcpMethod,
@@ -334,21 +332,27 @@ interface ExecutionResult<T = unknown> {
 ### Context Requirement Types (MCP Server Contributors)
 
 ```typescript
-import { CONTEXT_REQUIREMENTS_KEY, type ContextRequirementType } from "@ctxprotocol/sdk";
+import type { ContextRequirementType } from "@ctxprotocol/sdk";
 
 /** Context types supported by the marketplace */
 type ContextRequirementType = "polymarket" | "hyperliquid" | "wallet";
 
-/** JSON Schema extension key for declaring context requirements */
-const CONTEXT_REQUIREMENTS_KEY = "x-context-requirements";
-
-// Usage in inputSchema:
-inputSchema: {
-  type: "object",
-  [CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"] as ContextRequirementType[],
-  properties: { portfolio: { type: "object" } },
-  required: ["portfolio"]
-}
+// Usage: Add _meta.contextRequirements to your tool definition
+const TOOLS = [{
+  name: "analyze_my_positions",
+  description: "...",
+  
+  // ⭐ Declare context requirements in _meta (MCP spec)
+  _meta: {
+    contextRequirements: ["wallet"] as ContextRequirementType[],
+  },
+  
+  inputSchema: {
+    type: "object",
+    properties: { wallet: { type: "object" } },
+    required: ["wallet"]
+  },
+}];
 ```
 
 ## Error Handling
@@ -559,35 +563,38 @@ interface WalletContext {
 
 ### Context Requirements Declaration
 
-If your tool needs user portfolio data, you **MUST** declare this using the `x-context-requirements` JSON Schema extension inside `inputSchema`:
+If your tool needs user portfolio data, you **MUST** declare this using `_meta.contextRequirements` on the tool definition:
 
 ```typescript
-import { CONTEXT_REQUIREMENTS_KEY, type ContextRequirementType } from "@ctxprotocol/sdk";
+import type { ContextRequirementType } from "@ctxprotocol/sdk";
 
 const TOOLS = [{
   name: "analyze_my_positions",
   description: "Analyze your positions with personalized insights",
 
+  // ⭐ REQUIRED: Context requirements in _meta (MCP spec for arbitrary metadata)
+  // The Context platform reads this to inject user data
+  _meta: {
+    contextRequirements: ["wallet"] as ContextRequirementType[],
+  },
+
   inputSchema: {
     type: "object",
-    // ⭐ REQUIRED: Context requirements embedded in inputSchema
-    [CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"] as ContextRequirementType[],
-    // Or use the string directly: "x-context-requirements": ["hyperliquid"]
     properties: {
-      portfolio: {
+      wallet: {
         type: "object",
-        description: "Portfolio context (injected by platform)",
+        description: "Wallet context (injected by platform)",
       },
     },
-    required: ["portfolio"],
+    required: ["wallet"],
   },
   outputSchema: { /* ... */ },
 }];
 ```
 
-**Why `x-context-requirements` in inputSchema (not a top-level field)?**
+**Why `_meta` at the tool level?**
 
-The MCP protocol only transmits standard fields (`name`, `description`, `inputSchema`, `outputSchema`). Custom top-level fields like `requirements` get **stripped** by the MCP SDK during `listTools()` transport. JSON Schema allows `x-` prefixed extension properties, and `inputSchema` is preserved through transport.
+The `_meta` field is part of the [MCP specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool-definition) for arbitrary tool metadata. The Context platform reads `_meta.contextRequirements` to determine what user data to inject. This is preserved through MCP transport because it's a standard field.
 
 **Available context types:**
 
