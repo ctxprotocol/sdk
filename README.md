@@ -515,7 +515,7 @@ Want to earn money by contributing tools to the Context marketplace? Build a sta
 
 ### Context Injection (Personalized Tools)
 
-Building tools that analyze user data? Context automatically injects user context into your tools—no authentication required.
+Building tools that analyze user data? Context automatically injects user context into your tools no authentication required.
 
 **How it works:**
 1. User connects their wallet in the Context app (we start with blockchain user data, but we're open to other client-side personal data types in the future)
