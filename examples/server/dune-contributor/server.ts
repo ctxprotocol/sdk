@@ -1772,6 +1772,38 @@ interface WalletContext {
 }
 
 /**
+ * Quick pre-check to see if a wallet has ANY DEX trades
+ * Returns immediately if no trades found, saving time and credits
+ */
+async function checkWalletHasDexTrades(walletAddress: string): Promise<{ hasTrades: boolean; totalCount?: number; error?: string }> {
+  if (!duneClient) {
+    return { hasTrades: false, error: "DUNE_API_KEY not configured" };
+  }
+
+  try {
+    const checkSql = `
+      SELECT COUNT(*) as trade_count
+      FROM dex.trades
+      WHERE (taker = from_hex('${walletAddress.replace('0x', '')}') OR tx_from = from_hex('${walletAddress.replace('0x', '')}'))
+        AND amount_usd > 0
+      LIMIT 1
+    `;
+
+    const result = await duneClient.runSql({
+      query_sql: checkSql,
+      isPrivate: false,
+    });
+
+    const count = result.result?.rows?.[0]?.trade_count || 0;
+    return { hasTrades: count > 0, totalCount: count };
+  } catch (error) {
+    // If pre-check fails, proceed with main query anyway
+    console.error("[dune] Pre-check failed:", error);
+    return { hasTrades: true }; // Assume trades exist to proceed with main query
+  }
+}
+
+/**
  * Analyze connected wallet's portfolio
  */
 async function analyzeMyPortfolio(
@@ -1794,6 +1826,31 @@ async function analyzeMyPortfolio(
   const walletAddress = context.wallet.address.toLowerCase();
   const days = args.timeframe === "7d" ? 7 : args.timeframe === "90d" ? 90 : args.timeframe === "365d" ? 365 : 30;
   const chainFilter = args.chain && args.chain !== "all" ? `AND blockchain = '${args.chain}'` : "";
+
+  // Quick pre-check: Does this wallet have ANY DEX trades?
+  const preCheck = await checkWalletHasDexTrades(walletAddress);
+  if (!preCheck.hasTrades && !preCheck.error) {
+    trackCredits("analyze_my_portfolio", 10, { wallet: walletAddress, preCheck: true });
+    return successResult({
+      wallet: context.wallet.address,
+      timeframe: `${days} days`,
+      tradingSummary: {
+        totalTrades: 0,
+        totalVolumeUsd: 0,
+        avgTradeSize: 0,
+        chainsUsed: 0,
+        dexesUsed: 0,
+      },
+      topTokens: [],
+      chainBreakdown: [],
+      note: "🔍 No DEX trading activity found for this wallet.\n\n" +
+        "This wallet hasn't made any swaps on decentralized exchanges.\n" +
+        "Possible reasons:\n" +
+        "• Wallet primarily uses centralized exchanges (Binance, Coinbase)\n" +
+        "• Wallet is used for transfers/holding only\n" +
+        "• Try connecting a different wallet with DEX activity",
+    });
+  }
 
   try {
     // Query trading summary
@@ -1929,7 +1986,31 @@ async function myTradingHistory(
 
   const walletAddress = context.wallet.address.toLowerCase();
   const limit = Math.min(args.limit || 50, 500);
-  const days = args.days || 90;
+  const days = args.days || 30; // Default to 30 days instead of 90 for faster queries
+
+  // Quick pre-check: Does this wallet have ANY DEX trades?
+  const preCheck = await checkWalletHasDexTrades(walletAddress);
+  if (!preCheck.hasTrades && !preCheck.error) {
+    trackCredits("my_trading_history", 10, { wallet: walletAddress, preCheck: true });
+    return successResult({
+      wallet: context.wallet.address,
+      totalTrades: 0,
+      totalVolumeUsd: 0,
+      filters: {
+        token: args.token || "all",
+        chain: args.chain || "all",
+        dex: args.dex || "all",
+        days,
+      },
+      trades: [],
+      note: "🔍 No DEX trades found for this wallet.\n\n" +
+        "This wallet hasn't made any swaps on decentralized exchanges (Uniswap, Curve, etc.).\n" +
+        "Possible reasons:\n" +
+        "• Wallet primarily uses centralized exchanges (Binance, Coinbase)\n" +
+        "• Wallet is used for transfers/holding only\n" +
+        "• Try connecting a different wallet that has DEX activity",
+    });
+  }
 
   // Build filters
   const filters: string[] = [];
@@ -1996,7 +2077,7 @@ async function myTradingHistory(
         txHash: t.tx_hash,
       })),
       note: trades.length === 0 
-        ? `No trades found matching your filters in the last ${days} days.`
+        ? `No trades found matching your filters in the last ${days} days. Try increasing the 'days' parameter.`
         : `Showing ${trades.length} most recent trades.`,
     });
   } catch (error) {
@@ -2027,6 +2108,20 @@ async function myTokenPnl(
   const walletAddress = context.wallet.address.toLowerCase();
   const chainFilter = args.chain ? `AND blockchain = '${args.chain.toLowerCase()}'` : "";
   const isAllTokens = !args.token || args.token.toLowerCase() === "all";
+
+  // Quick pre-check: Does this wallet have ANY DEX trades?
+  const preCheck = await checkWalletHasDexTrades(walletAddress);
+  if (!preCheck.hasTrades && !preCheck.error) {
+    trackCredits("my_token_pnl", 10, { wallet: walletAddress, preCheck: true });
+    return successResult({
+      wallet: context.wallet.address,
+      tokens: [],
+      totalRealizedPnl: 0,
+      note: "🔍 No DEX trading activity found for this wallet.\n\n" +
+        "Cannot calculate P&L without trading history.\n" +
+        "This wallet hasn't made any swaps on decentralized exchanges.",
+    });
+  }
 
   try {
     let sql: string;
@@ -2210,6 +2305,21 @@ async function walletsLikeMine(
   const similarityType = args.similarity_type || "balanced";
   const minTrades = args.min_trades || 10;
   const days = args.timeframe === "7d" ? 7 : args.timeframe === "90d" ? 90 : 30;
+
+  // Quick pre-check: Does this wallet have ANY DEX trades?
+  const preCheck = await checkWalletHasDexTrades(walletAddress);
+  if (!preCheck.hasTrades && !preCheck.error) {
+    trackCredits("wallets_like_mine", 10, { wallet: walletAddress, preCheck: true });
+    return successResult({
+      wallet: context.wallet.address,
+      yourProfile: { tradeCount: 0, totalVolume: 0, uniqueTokens: 0 },
+      lookalikeWallets: [],
+      alphaOpportunities: [],
+      note: "🔍 No DEX trading activity found for this wallet.\n\n" +
+        "Cannot find similar traders without your trading history.\n" +
+        "Try connecting a wallet that has DEX trading activity.",
+    });
+  }
 
   try {
     // Step 1: Get your trading profile
