@@ -439,17 +439,22 @@ app.post("/mcp", (req, res) => {
 | **Free Tools ($0.00)** | Optional | Perfect for distribution and adoption |
 | **Paid Tools ($0.01+)** | **Mandatory** | We cannot route payments to insecure endpoints |
 
-### Security Model
+### MCP Security Model
 
-The SDK implements a **selective authentication** model:
+The SDK implements a **selective authentication** model — discovery is open, execution is protected:
 
-| MCP Method | Auth Required | Reason |
-|------------|---------------|--------|
-| `tools/list` | ❌ No | Discovery - just returns tool schemas |
-| `tools/call` | ✅ Yes | Execution - runs code, may cost money |
+| MCP Method | Auth Required | Why |
+|------------|---------------|-----|
 | `initialize` | ❌ No | Session setup |
+| `tools/list` | ❌ No | Discovery - agents need to see your schemas |
 | `resources/list` | ❌ No | Discovery |
 | `prompts/list` | ❌ No | Discovery |
+| `tools/call` | ✅ **Yes** | **Execution - costs money, runs your code** |
+
+**What this means in practice:**
+- ✅ `https://your-mcp.com/mcp` + `initialize` → Works without auth
+- ✅ `https://your-mcp.com/mcp` + `tools/list` → Works without auth  
+- ❌ `https://your-mcp.com/mcp` + `tools/call` → **Requires Context Protocol JWT**
 
 This matches standard API patterns (OpenAPI schemas are public, GraphQL introspection is open).
 
