@@ -688,35 +688,52 @@ Common TVL event tables (use discover_tables to find others):
 - ✅ Date arithmetic: current_date - interval '7' day (this DOES work)
 - ✅ Pattern matching: column LIKE '%pattern%' (case-sensitive)
 
-🚨 FAKE VOLUME WARNING (IMPORTANT FOR WHALE QUERIES!):
+🚨 FAKE VOLUME WARNING (CRITICAL FOR ANY VOLUME/RANKING QUERY!):
 BNB Chain and other low-gas chains have MASSIVE fake volume from:
 - Wash trading (same wallet trading with itself)
-- Illiquid shitcoins with manipulated prices
-- Scam tokens that appear as "$43M trades" but have zero real liquidity
+- Illiquid shitcoins with manipulated prices  
+- Scam tokens showing "$48 BILLION volume" but traded by only 50 wallets
 
-⚡ ALWAYS USE THIS FILTER FOR WHALE/LARGE TRADE QUERIES:
-Filter to tokens with REAL trading activity (100+ unique traders OR has price feed):
+⚡ FOR ANY QUERY INVOLVING VOLUME, RANKINGS, OR NEW TOKENS:
+1. ALWAYS include COUNT(DISTINCT tx_from) as unique_traders in your SELECT
+2. ALWAYS filter with HAVING COUNT(DISTINCT tx_from) >= 100
+3. Show unique_traders in results so users can assess legitimacy
 
-WHERE (
-  -- Option A: Token has verified price feed (established tokens)
-  token_bought_address IN (SELECT contract_address FROM prices.usd WHERE blockchain = t.blockchain)
-  OR
-  -- Option B: Token has 100+ unique traders in last 7 days (organic activity = hard to fake)
-  token_bought_address IN (
-    SELECT token_bought_address FROM dex.trades
-    WHERE block_date >= current_date - interval '7' day
-    GROUP BY 1 HAVING COUNT(DISTINCT tx_from) >= 100
-  )
+📊 STANDARD PATTERN FOR VOLUME QUERIES:
+SELECT 
+  token_pair,
+  blockchain,
+  SUM(amount_usd) as volume_usd,
+  COUNT(DISTINCT tx_from) as unique_traders,  -- ALWAYS INCLUDE THIS!
+  COUNT(*) as trade_count
+FROM dex.trades
+WHERE block_date >= current_date - interval '30' day
+GROUP BY 1, 2
+HAVING COUNT(DISTINCT tx_from) >= 100  -- FILTER OUT WASH TRADING!
+ORDER BY volume_usd DESC
+
+📊 FOR "NEW PAIRS" OR "TRENDING" QUERIES:
+WITH pair_stats AS (
+  SELECT 
+    blockchain, project, token_pair,
+    MIN(block_date) as first_seen,
+    SUM(amount_usd) as volume_30d,
+    COUNT(DISTINCT tx_from) as unique_traders  -- CRITICAL!
+  FROM dex.trades
+  WHERE block_date >= current_date - interval '120' day
+  GROUP BY 1, 2, 3
+  HAVING COUNT(DISTINCT tx_from) >= 100  -- REMOVE WASH TRADING
 )
+SELECT * FROM pair_stats
+WHERE first_seen >= current_date - interval '90' day
+ORDER BY volume_30d DESC LIMIT 10
 
-This hybrid filter:
-✅ Includes established tokens (via prices.usd)
-✅ Includes NEW legit tokens with organic trading (100+ unique wallets)
-❌ Excludes wash trading (1-2 wallets faking volume)
-❌ Excludes illiquid shitcoins with no real traders
+Why 100 unique traders?
+✅ Real tokens have diverse trader bases
+❌ Wash trading typically involves <50 wallets trading back-and-forth
+❌ Scam tokens like "ChadZhao" show $48B volume but only ~60 unique wallets
 
-Example:
-  run_sql("SELECT blockchain, SUM(amount_usd) as volume FROM dex.trades WHERE block_date >= current_date - interval '1' day GROUP BY 1 ORDER BY 2 DESC LIMIT 10")`,
+⚠️ WITHOUT THIS FILTER, BNB CHAIN RESULTS WILL BE 90% SCAMS!`,
     inputSchema: {
       type: "object" as const,
       properties: {
