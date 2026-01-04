@@ -664,6 +664,22 @@ See complete working examples in `/examples/server/`:
 - **[blocknative-contributor](./examples/server/blocknative-contributor)** — Gas price API (3 tools)
 - **[hyperliquid-contributor](./examples/server/hyperliquid-contributor)** — DeFi analytics (16 tools)
 
+### Execution Timeout & Product Design
+
+⚠️ **Important**: MCP tool execution has a **~60 second timeout** (enforced at the platform/client level, not by MCP itself). This is intentional—it encourages building pre-computed insight products rather than raw data access.
+
+**Best practice**: Run heavy queries offline (via cron jobs), store results in your database, and serve instant results via MCP. This is how Bloomberg, Nansen, and Arkham work—they don't give raw SQL access, they serve curated insights.
+
+```typescript
+// ❌ BAD: Raw access (timeout-prone, no moat)
+{ name: "run_sql", description: "Run any SQL against blockchain data" }
+
+// ✅ GOOD: Pre-computed product (instant, defensible)
+{ name: "get_smart_money_wallets", description: "Top 100 wallets that timed market tops" }
+```
+
+See the [full documentation](https://docs.ctxprotocol.com/guides/build-tools#execution-limits--product-design) for detailed guidance.
+
 ### Schema Accuracy = Revenue
 
 ⚠️ **Important**: Your `outputSchema` is a contract. Context's "Robot Judge" validates that your `structuredContent` matches your declared schema. Schema violations result in automatic refunds to users.
