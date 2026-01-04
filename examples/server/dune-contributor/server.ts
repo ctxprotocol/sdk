@@ -567,11 +567,35 @@ dex.pools (Liquidity pool METADATA - NOT TVL!):
 ═══════════════════════════════════════════════════════════════════════
 🔹 NFT TRADING
 ═══════════════════════════════════════════════════════════════════════
-nft.trades (ALL NFT sales across ALL chains):
+nft.trades (ALL NFT SALES across ALL chains):
   blockchain, project, version, block_date, block_time, block_number,
   nft_contract_address, collection, token_id, token_standard,
   trade_type, buyer, seller, amount_original, amount_usd,
   currency_symbol, currency_contract, tx_hash, tx_from, tx_to
+
+  ⚠️ CRITICAL: nft.trades contains COMPLETED SALES, NOT current listings!
+  
+  🚨 FLOOR PRICE WARNING:
+  - MIN(amount_usd) is NOT floor price - it's the minimum SALE (could be outliers)
+  - AVG(amount_usd) is NOT floor price - rare items heavily skew averages UP
+  - Floor price = lowest CURRENT LISTING, which requires live marketplace APIs
+  
+  ✅ USE nft.trades FOR:
+  - Volume analysis (SUM(amount_usd))
+  - Trade counts and trends
+  - Marketplace comparison (OpenSea vs Blur)
+  - Historical price ranges (approx_percentile for median)
+  
+  ❌ DO NOT USE nft.trades TO CLAIM "FLOOR PRICE" - it's misleading!
+  
+  📊 FOR PRICE ANALYSIS, USE MEDIAN (more accurate than average):
+  SELECT 
+    collection,
+    approx_percentile(amount_usd, 0.5) as median_price,  -- 50th percentile
+    approx_percentile(amount_usd, 0.1) as floor_estimate -- 10th percentile
+  FROM nft.trades
+  WHERE block_date >= current_date - interval '7' day
+  GROUP BY 1
 
 nft.mints (NFT mints):
   blockchain, project, collection, token_id, block_date,
@@ -681,12 +705,58 @@ Common TVL event tables (use discover_tables to find others):
 - Quote reserved words: SELECT "from", "to" FROM ethereum.transactions
 - Add LIMIT for faster results
 
+🔑 WALLET ADDRESS QUERIES (CRITICAL!):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Address columns (tx_from, taker, maker, buyer, seller, "from", "to") are VARBINARY, not varchar!
+
+❌ WRONG (will error):
+  WHERE lower(tx_from) = lower('0xd8dA...')  -- lower() doesn't work on varbinary!
+  WHERE tx_from = '0xd8dA...'                -- string comparison fails!
+
+✅ CORRECT (use FROM_HEX without 0x prefix):
+  WHERE tx_from = FROM_HEX('d8dA6BF26964aF9D7eEd9e03E53415D37aA96045')
+  WHERE taker = FROM_HEX('d8dA6BF26964aF9D7eEd9e03E53415D37aA96045')
+
+📊 WALLET TRADING HISTORY EXAMPLE:
+SELECT 
+  blockchain, project, token_bought_symbol, token_sold_symbol,
+  amount_usd, block_time, tx_hash
+FROM dex.trades
+WHERE (tx_from = FROM_HEX('d8dA6BF26964aF9D7eEd9e03E53415D37aA96045') 
+   OR taker = FROM_HEX('d8dA6BF26964aF9D7eEd9e03E53415D37aA96045'))
+  AND block_date >= current_date - interval '90' day
+ORDER BY block_time DESC
+LIMIT 100
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 ⚠️ TRINO SYNTAX (NOT PostgreSQL!):
 - ❌ ILIKE does NOT exist in Trino! Use: lower(column) LIKE lower('%pattern%')
 - ❌ || for string concat - Use: concat(a, b) instead
 - ✅ Case-insensitive: WHERE lower(project) LIKE '%pendle%'
 - ✅ Date arithmetic: current_date - interval '7' day (this DOES work)
 - ✅ Pattern matching: column LIKE '%pattern%' (case-sensitive)
+
+🎨 NFT PRICE ANALYSIS WARNING (CRITICAL!):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ FLOOR PRICE ≠ AVERAGE SALE PRICE ≠ MIN SALE PRICE
+
+The nft.trades table contains COMPLETED SALES, not current listings.
+This means you CANNOT accurately determine floor prices from this data!
+
+WRONG approaches (do NOT use for "floor price"):
+❌ MIN(amount_usd) → Returns minimum sale (could be wash trades, errors)
+❌ AVG(amount_usd) → Heavily skewed by rare items (a $10K rare sale makes avg look 10x floor)
+❌ "today's avg vs 7-day avg" → Does NOT reflect floor price movements
+
+RIGHT approaches for NFT price analysis:
+✅ approx_percentile(amount_usd, 0.1) → 10th percentile as floor ESTIMATE
+✅ approx_percentile(amount_usd, 0.5) → Median price (more stable than avg)
+✅ SUM(amount_usd) → Volume analysis (accurate)
+✅ COUNT(*) → Trade count trends (accurate)
+
+Example: If Sappy Seals floor is $377 on OpenSea, but someone buys a rare one 
+for $3,000 today, AVG() will show $888 while the actual floor stays at $377.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 🚨 FAKE VOLUME WARNING (CRITICAL FOR ANY VOLUME/RANKING QUERY!):
 BNB Chain and other low-gas chains have MASSIVE fake volume from:
