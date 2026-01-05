@@ -700,6 +700,36 @@ Common TVL event tables (use discover_tables to find others):
 
 ⚡ PERFORMANCE: Use "large" for complex queries with multiple JOINs.
 
+🚨 QUERY COMPLEXITY & TIMEOUT WARNING (CRITICAL!):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MCP requests timeout after ~60-90 seconds. Avoid queries that scan years of data!
+
+❌ QUERIES THAT WILL TIMEOUT:
+- WHERE block_date >= '2021-01-01' (4+ years of data = billions of rows)
+- GROUP BY wallet without strict filters (millions of wallets)
+- Multiple JOINs across massive tables without date filters
+- "Find all wallets that did X across 3 market cycles"
+
+✅ QUERIES THAT WORK:
+- WHERE block_date >= current_date - interval '30' day (recent data only)
+- WHERE blockchain = 'ethereum' (single chain, not all chains)
+- Adding LIMIT early in CTEs
+- Breaking into multiple smaller queries
+
+📊 EXAMPLE: "Find smart money wallets" - BAD vs GOOD approach:
+
+❌ BAD (will timeout - scans years, groups by all wallets):
+  SELECT tx_from, SUM(amount_usd) 
+  FROM dex.trades 
+  WHERE block_date >= '2021-01-01' 
+  GROUP BY 1 HAVING SUM(...) > 500000
+
+✅ GOOD (breaks it down into focused queries):
+  Step 1: Get known whale wallets from recent high-value trades (30 days)
+  Step 2: Check each specific wallet's history separately
+  Step 3: Use blockchain='ethereum' filter to reduce scope
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 💡 SQL TIPS:
 - ALWAYS filter by block_date (e.g., WHERE block_date >= current_date - interval '7' day)
 - Quote reserved words: SELECT "from", "to" FROM ethereum.transactions
