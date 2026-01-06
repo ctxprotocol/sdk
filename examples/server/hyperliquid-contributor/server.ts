@@ -1,5 +1,5 @@
 /**
- * Hyperliquid Ultimate MCP Server v2.2
+ * Hyperliquid Ultimate MCP Server v2.3.1
  *
  * A standard MCP server built with @modelcontextprotocol/sdk.
  * The world's most comprehensive Hyperliquid MCP server.
@@ -17,14 +17,16 @@
  * These tools synthesize multiple data sources into actionable insights.
  * They encode domain expertise and answer complex questions.
  *
- *   • analyze_large_order       - Comprehensive large order impact analysis
- *   • calculate_price_impact    - Orderbook absorption simulation
- *   • get_funding_analysis      - Cross-venue funding arbitrage detection
+ *   • analyze_large_order        - Comprehensive large order impact analysis
+ *   • calculate_price_impact     - Orderbook absorption simulation
+ *   • get_funding_analysis       - Cross-venue funding arbitrage detection
  *   • get_open_interest_analysis - OI concentration and liquidation risk
- *   • analyze_my_positions      - Portfolio risk assessment with recommendations
- *   • analyze_trader_performance - P&L analysis, win rate, fee optimization (NEW)
- *   • analyze_spot_markets      - Spot market depth and opportunity detection (NEW)
- *   • analyze_whale_wallet      - Comprehensive whale position analysis (NEW)
+ *   • analyze_my_positions       - DIRECT position risk assessment (main account only)
+ *   • analyze_vault_exposure     - Vault position analysis & shadow positions (NEW v2.3)
+ *   • analyze_full_portfolio     - COMPLETE exposure: main + vaults + sub-accounts (NEW v2.3)
+ *   • analyze_trader_performance - P&L analysis, win rate, fee optimization
+ *   • analyze_spot_markets       - Spot market depth and opportunity detection
+ *   • analyze_whale_wallet       - Comprehensive whale position analysis
  *
  * TIER 2: RAW DATA LAYER (Building Blocks)
  * ----------------------------------------
@@ -399,12 +401,12 @@ const TOOLS = [
   // ============================================================================
   {
     name: "get_recent_trades",
-    description: "Get recent trades with whale detection. Identifies large trades and calculates buy/sell pressure.",
+    description: "Get recent trades with whale detection. Returns the last ~100 trades chronologically and flags any exceeding the whale threshold. NOTE: True whale trades ($100k+) are rare events and may not appear in this snapshot. Use analyze_whale_wallet with known addresses for reliable whale tracking.",
     inputSchema: {
       type: "object" as const,
       properties: {
         coin: { type: "string", description: 'Coin symbol (e.g., "HYPE")' },
-        whaleThresholdUsd: { type: "number", description: "USD threshold for whale trades (default: $100,000)" },
+        whaleThresholdUsd: { type: "number", description: "USD threshold for whale trades (default: $100,000). Lower for altcoins, higher for BTC." },
       },
       required: ["coin"],
     },
@@ -413,13 +415,15 @@ const TOOLS = [
       properties: {
         coin: { type: "string" },
         trades: { type: "array" },
-        whaleTrades: { type: "array" },
+        whaleTrades: { type: "array", description: "Trades exceeding whale threshold (may be empty)" },
+        whaleStatus: { type: "string", description: "Human-readable status of whale detection" },
         summary: { type: "object" },
+        limitations: { type: "string", description: "Data source limitations to consider" },
         dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
         dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["coin", "trades", "summary", "dataSources", "dataFreshness"],
+      required: ["coin", "trades", "summary", "whaleStatus", "dataSources", "dataFreshness"],
     },
   },
 
@@ -597,7 +601,7 @@ const TOOLS = [
 
   {
     name: "get_spot_balances",
-    description: "Get spot token balances for any wallet address. Shows all tokens held and their values.",
+    description: "Get spot token balances for any wallet address with CURRENT market values and unrealized P&L. Unlike perps, spot holdings are simply owned tokens (no margin/leverage).",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -609,13 +613,39 @@ const TOOLS = [
       type: "object" as const,
       properties: {
         address: { type: "string" },
-        balances: { type: "array", description: "Token balances with holds and entry notional" },
-        totalValue: { type: "number" },
+        balances: {
+          type: "array",
+          description: "Token balances with current prices and P&L",
+          items: {
+            type: "object",
+            properties: {
+              coin: { type: "string" },
+              total: { type: "number" },
+              hold: { type: "number", description: "Locked in open orders" },
+              available: { type: "number" },
+              entryNtl: { type: "number", description: "Cost basis (what you paid)" },
+              currentPrice: { type: "number" },
+              currentValue: { type: "number", description: "Current market value" },
+              unrealizedPnl: { type: "number" },
+              unrealizedPnlPercent: { type: "number" },
+            },
+          },
+        },
+        summary: {
+          type: "object",
+          properties: {
+            totalEntryValue: { type: "number", description: "Total cost basis" },
+            totalCurrentValue: { type: "number", description: "Total current market value" },
+            totalUnrealizedPnl: { type: "number" },
+            totalUnrealizedPnlPercent: { type: "number" },
+          },
+        },
+        totalValue: { type: "number", description: "Total current value (for backwards compatibility)" },
         dataSources: { type: "array", items: { type: "string" } },
         dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["address", "balances", "dataSources", "dataFreshness"],
+      required: ["address", "balances", "summary", "dataSources", "dataFreshness"],
     },
   },
 
@@ -1035,8 +1065,8 @@ const TOOLS = [
   {
     name: "analyze_my_positions",
     description:
-      "🧠 INTELLIGENCE: Analyze your Hyperliquid perpetual positions with risk assessment, P&L breakdown, " +
-      "liquidation warnings, and personalized recommendations. Requires portfolio context.",
+      "🧠 INTELLIGENCE: Analyze your DIRECT Hyperliquid perpetual positions (main trading account) with risk assessment, P&L breakdown, " +
+      "liquidation warnings, and personalized recommendations. Does NOT include vault positions - use analyze_vault_exposure for that. Requires portfolio context.",
 
     // ✅ Context requirements in _meta (preserved by MCP SDK)
     // The Context platform reads this to inject user's Hyperliquid portfolio data.
@@ -1117,6 +1147,7 @@ const TOOLS = [
             },
           },
         },
+        vaultExposureNote: { type: "string", description: "Note if user has vault equity that should be analyzed separately" },
         overallRecommendation: { type: "string" },
         confidence: { type: "number", minimum: 0, maximum: 1, description: "Confidence in risk assessment" },
         dataSources: { type: "array", items: { type: "string" }, description: "Data sources used" },
@@ -1126,6 +1157,190 @@ const TOOLS = [
       required: ["walletAddress", "totalPositions", "portfolioSummary", "positionAnalyses", "confidence", "dataSources", "dataFreshness"],
     },
   },
+
+  // ============================================================================
+  // TIER 1: INTELLIGENCE LAYER - Vault Exposure Analysis (NEW)
+  // ============================================================================
+
+  {
+    name: "analyze_vault_exposure",
+    description:
+      "🧠 INTELLIGENCE: Analyze your exposure through Hyperliquid vaults (like HLP). Shows your equity in each vault, " +
+      "the vault's positions, and calculates your 'shadow positions' (proportional share of vault positions). " +
+      "Essential for understanding true market exposure when you're invested in vaults.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: {
+          type: "string",
+          description: "Wallet address (0x...). If not provided, requires portfolio context.",
+        },
+        portfolio: {
+          type: "object",
+          description: "Optional: Your Hyperliquid portfolio context (injected by the Context app) - only walletAddress is used",
+        },
+      },
+      required: [],
+    },
+    _meta: {
+      contextRequirements: ["hyperliquid"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        walletAddress: { type: "string" },
+        vaultSummary: {
+          type: "object",
+          properties: {
+            totalVaultEquity: { type: "number", description: "Total USD value across all vaults" },
+            vaultCount: { type: "number" },
+          },
+        },
+        vaults: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              vaultAddress: { type: "string" },
+              vaultName: { type: "string" },
+              userEquity: { type: "number" },
+              ownershipPercent: { type: "number" },
+              vaultTotalEquity: { type: "number" },
+              apr: { type: "number" },
+              lockupUntil: { type: "string" },
+              shadowPositions: {
+                type: "array",
+                description: "User's proportional share of vault positions",
+                items: {
+                  type: "object",
+                  properties: {
+                    coin: { type: "string" },
+                    direction: { type: "string", enum: ["LONG", "SHORT"] },
+                    effectiveSize: { type: "number", description: "Your share of this position" },
+                    effectiveNotional: { type: "number" },
+                    vaultFullSize: { type: "number" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        aggregatedExposure: {
+          type: "object",
+          description: "Combined exposure across all vaults by coin",
+          properties: {
+            byCoins: { type: "array" },
+            netLongExposure: { type: "number" },
+            netShortExposure: { type: "number" },
+            bias: { type: "string" },
+          },
+        },
+        insights: { type: "array", items: { type: "string" } },
+        confidence: { type: "number", minimum: 0, maximum: 1 },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["walletAddress", "vaultSummary", "vaults", "confidence", "dataSources", "dataFreshness"],
+    },
+  },
+
+  // ============================================================================
+  // TIER 1: INTELLIGENCE LAYER - Full Portfolio Analysis (NEW)
+  // ============================================================================
+
+  {
+    name: "analyze_full_portfolio",
+    description:
+      "🧠 INTELLIGENCE: COMPREHENSIVE portfolio analysis combining ALL exposure sources: " +
+      "(1) Direct trading positions (main account), (2) Vault exposure (HLP, user vaults), (3) Sub-accounts. " +
+      "Provides true total market exposure with clear source labeling. Use this to answer 'What is my REAL exposure?'",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: {
+          type: "string",
+          description: "Wallet address (0x...). If not provided, requires portfolio context.",
+        },
+        portfolio: {
+          type: "object",
+          description: "Optional: Your Hyperliquid portfolio context (injected by the Context app)",
+        },
+      },
+      required: [],
+    },
+    _meta: {
+      contextRequirements: ["hyperliquid"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        walletAddress: { type: "string" },
+        portfolioOverview: {
+          type: "object",
+          properties: {
+            totalAccountValue: { type: "number", description: "Main account + vault equity + sub-accounts" },
+            mainAccountValue: { type: "number" },
+            vaultEquity: { type: "number" },
+            subAccountsValue: { type: "number" },
+          },
+        },
+        directPositions: {
+          type: "object",
+          description: "Positions in main trading account",
+          properties: {
+            source: { type: "string", enum: ["main_account"] },
+            positions: { type: "array" },
+            totalValue: { type: "number" },
+            unrealizedPnL: { type: "number" },
+          },
+        },
+        vaultExposure: {
+          type: "object",
+          description: "Exposure through vault positions",
+          properties: {
+            source: { type: "string", enum: ["vaults"] },
+            vaults: { type: "array" },
+            totalEquity: { type: "number" },
+            shadowPositions: { type: "array", description: "Aggregated proportional positions across vaults" },
+          },
+        },
+        subAccountPositions: {
+          type: "object",
+          description: "Positions in sub-accounts",
+          properties: {
+            source: { type: "string", enum: ["sub_accounts"] },
+            accounts: { type: "array" },
+            totalValue: { type: "number" },
+          },
+        },
+        aggregatedExposure: {
+          type: "object",
+          description: "Total exposure by coin across ALL sources",
+          properties: {
+            byCoin: { type: "array" },
+            netLongExposure: { type: "number" },
+            netShortExposure: { type: "number" },
+            directionalBias: { type: "string" },
+          },
+        },
+        riskSummary: {
+          type: "object",
+          properties: {
+            positionsAtRisk: { type: "number" },
+            highLeveragePositions: { type: "number" },
+            concentrationRisk: { type: "string" },
+          },
+        },
+        insights: { type: "array", items: { type: "string" } },
+        confidence: { type: "number", minimum: 0, maximum: 1 },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["walletAddress", "portfolioOverview", "directPositions", "vaultExposure", "aggregatedExposure", "confidence", "dataSources", "dataFreshness"],
+    },
+  },
 ];
 
 // ============================================================================
@@ -1133,7 +1348,7 @@ const TOOLS = [
 // ============================================================================
 
 const server = new Server(
-  { name: "hyperliquid-ultimate", version: "2.2.0" },
+  { name: "hyperliquid-ultimate", version: "2.3.1" },
   { capabilities: { tools: {} } }
 );
 
@@ -1210,6 +1425,10 @@ server.setRequestHandler(
           return await handleAnalyzeWhaleWallet(args);
         case "analyze_my_positions":
           return await handleAnalyzeMyPositions(args);
+        case "analyze_vault_exposure":
+          return await handleAnalyzeVaultExposure(args);
+        case "analyze_full_portfolio":
+          return await handleAnalyzeFullPortfolio(args);
         default:
           return errorResult(`Unknown tool: ${name}`);
       }
@@ -1639,10 +1858,16 @@ async function handleGetRecentTrades(args: Record<string, unknown> | undefined):
     return trade;
   });
 
+  // Provide clear feedback when no whale trades detected
+  const whaleStatus = whaleTrades.length === 0
+    ? `No whale trades detected in last ${parsed.length} trades (threshold: $${whaleThreshold.toLocaleString()}). Note: This API only captures a snapshot of recent trades - true whale activity ($500k+) is rare and may not appear in this window.`
+    : `${whaleTrades.length} whale trade(s) detected above $${whaleThreshold.toLocaleString()} threshold`;
+
   return successResult({
     coin,
     trades: parsed,
     whaleTrades,
+    whaleStatus,
     summary: {
       totalVolume,
       totalNotional: Number(totalNotional.toFixed(2)),
@@ -1654,6 +1879,7 @@ async function handleGetRecentTrades(args: Record<string, unknown> | undefined):
       whaleSellVolume,
       whaleNetFlow: whaleBuyVolume - whaleSellVolume,
     },
+    limitations: "The recentTrades API returns only the last ~100 trades chronologically. Whale trades ($100k+) are rare events that may not appear in this snapshot. For more reliable whale tracking, consider monitoring specific known whale wallet addresses using analyze_whale_wallet.",
     dataSources: ["recentTrades"],
     dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
@@ -2051,25 +2277,72 @@ async function handleGetSpotBalances(args: Record<string, unknown> | undefined):
   const address = args?.address as string;
   if (!address) return errorResult("address parameter is required");
 
-  const data = await fetchSpotClearinghouseState(address);
+  // Fetch balances AND current spot prices in parallel
+  const [data, spotData] = await Promise.all([
+    fetchSpotClearinghouseState(address),
+    fetchSpotMetaAndAssetCtxs(),
+  ]);
+
   const balances = data.balances || [];
+  const [spotMeta, spotCtxs] = spotData;
 
-  const parsedBalances = balances.map(b => ({
-    coin: b.coin,
-    token: b.token,
-    total: Number(b.total),
-    hold: Number(b.hold),
-    available: Number(b.total) - Number(b.hold),
-    entryNtl: Number(b.entryNtl),
-  }));
+  // Build price lookup from spot asset contexts
+  // Note: spotCtxs indices correspond to spotMeta.universe indices
+  const tokenPrices: Record<number, number> = {};
+  for (let i = 0; i < spotMeta.universe.length; i++) {
+    const pair = spotMeta.universe[i];
+    const ctx = spotCtxs[i];
+    if (ctx && pair.tokens[0] !== 0) { // Skip USDC pairs where base is USDC
+      const baseTokenIdx = pair.tokens[0];
+      const price = Number(ctx.markPx || ctx.midPx || 0);
+      if (price > 0) {
+        tokenPrices[baseTokenIdx] = price;
+      }
+    }
+  }
+  // USDC is always worth $1
+  tokenPrices[0] = 1;
 
-  const totalValue = parsedBalances.reduce((sum, b) => sum + b.entryNtl, 0);
+  const parsedBalances = balances.map(b => {
+    const total = Number(b.total);
+    const hold = Number(b.hold);
+    const entryNtl = Number(b.entryNtl);
+    const currentPrice = tokenPrices[b.token] || 0;
+    const currentValue = total * currentPrice;
+    const unrealizedPnl = currentPrice > 0 ? currentValue - entryNtl : 0;
+
+    return {
+      coin: b.coin,
+      token: b.token,
+      total,
+      hold,
+      available: total - hold,
+      entryNtl,
+      currentPrice,
+      currentValue: Number(currentValue.toFixed(2)),
+      unrealizedPnl: Number(unrealizedPnl.toFixed(2)),
+      unrealizedPnlPercent: entryNtl > 0 ? Number(((unrealizedPnl / entryNtl) * 100).toFixed(2)) : 0,
+    };
+  });
+
+  const totalEntryValue = parsedBalances.reduce((sum, b) => sum + b.entryNtl, 0);
+  const totalCurrentValue = parsedBalances.reduce((sum, b) => sum + b.currentValue, 0);
+  const totalUnrealizedPnl = parsedBalances.reduce((sum, b) => sum + b.unrealizedPnl, 0);
 
   return successResult({
     address,
     balances: parsedBalances,
-    totalValue,
-    dataSources: ["spotClearinghouseState"],
+    summary: {
+      totalEntryValue: Number(totalEntryValue.toFixed(2)),
+      totalCurrentValue: Number(totalCurrentValue.toFixed(2)),
+      totalUnrealizedPnl: Number(totalUnrealizedPnl.toFixed(2)),
+      totalUnrealizedPnlPercent: totalEntryValue > 0 
+        ? Number(((totalUnrealizedPnl / totalEntryValue) * 100).toFixed(2)) 
+        : 0,
+    },
+    // Backwards compatibility
+    totalValue: Number(totalCurrentValue.toFixed(2)),
+    dataSources: ["spotClearinghouseState", "spotMetaAndAssetCtxs"],
     dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
@@ -2778,6 +3051,21 @@ async function handleAnalyzeMyPositions(
 
   const { perpPositions, accountSummary, walletAddress } = portfolio;
 
+  // Check if user has vault equity (for advisory note)
+  let vaultExposureNote: string | null = null;
+  try {
+    const vaultEquities = await fetchUserVaultEquities(walletAddress);
+    if (vaultEquities && vaultEquities.length > 0) {
+      const totalVaultEquity = vaultEquities.reduce((sum, v) => sum + Number(v.equity), 0);
+      if (totalVaultEquity > 0) {
+        vaultExposureNote = `📊 Note: You also have $${totalVaultEquity.toFixed(2)} in ${vaultEquities.length} vault(s). ` +
+          `Use 'analyze_vault_exposure' to see your vault positions, or 'analyze_full_portfolio' for complete exposure.`;
+      }
+    }
+  } catch {
+    // Silently ignore - vault check is advisory only
+  }
+
   if (perpPositions.length === 0) {
     return successResult({
       walletAddress,
@@ -2790,9 +3078,12 @@ async function handleAnalyzeMyPositions(
         atRiskPositions: 0,
       },
       positionAnalyses: [],
-      overallRecommendation: "You have no active Hyperliquid positions to analyze.",
+      vaultExposureNote: vaultExposureNote || "No vault exposure detected.",
+      overallRecommendation: vaultExposureNote 
+        ? "You have no direct trading positions, but you have vault exposure. Use 'analyze_vault_exposure' to see your vault positions."
+        : "You have no active Hyperliquid positions to analyze.",
       confidence: 1.0,
-      dataSources: ["portfolio context (injected)"],
+      dataSources: ["portfolio context (injected)", "userVaultEquities"],
       dataFreshness: "real-time" as const,
       fetchedAt: new Date().toISOString(),
     });
@@ -2911,9 +3202,520 @@ async function handleAnalyzeMyPositions(
       atRiskPositions,
     },
     positionAnalyses,
+    vaultExposureNote: vaultExposureNote || null,
     overallRecommendation,
     confidence,
-    dataSources: ["portfolio context (injected)"],
+    dataSources: ["portfolio context (injected)", "userVaultEquities"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+// ============================================================================
+// NEW TIER 1 HANDLERS - Vault & Full Portfolio Analysis
+// ============================================================================
+
+async function handleAnalyzeVaultExposure(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  // Get address from args or portfolio context
+  let address = args?.address as string | undefined;
+  if (!address) {
+    const portfolio = args?.portfolio as { walletAddress?: string } | undefined;
+    address = portfolio?.walletAddress;
+  }
+  if (!address) return errorResult("address or portfolio.walletAddress is required");
+
+  // Fetch vault equities for this user
+  const vaultEquities = await fetchUserVaultEquities(address);
+  
+  if (!vaultEquities || vaultEquities.length === 0) {
+    return successResult({
+      walletAddress: address,
+      vaultSummary: {
+        totalVaultEquity: 0,
+        vaultCount: 0,
+      },
+      vaults: [],
+      aggregatedExposure: {
+        byCoin: [],
+        netLongExposure: 0,
+        netShortExposure: 0,
+        bias: "neutral (no vault positions)",
+      },
+      insights: ["No vault positions detected. Your exposure is limited to direct trading positions."],
+      confidence: 1.0,
+      dataSources: ["userVaultEquities"],
+      dataFreshness: "real-time" as const,
+      fetchedAt: new Date().toISOString(),
+    });
+  }
+
+  const vaultAnalyses: Array<{
+    vaultAddress: string;
+    vaultName: string;
+    userEquity: number;
+    ownershipPercent: number;
+    vaultTotalEquity: number;
+    apr: number;
+    lockupUntil: string | null;
+    shadowPositions: Array<{
+      coin: string;
+      direction: "LONG" | "SHORT";
+      effectiveSize: number;
+      effectiveNotional: number;
+      vaultFullSize: number;
+    }>;
+  }> = [];
+
+  // Aggregate exposure across all vaults by coin
+  const coinExposure: Record<string, { long: number; short: number }> = {};
+  const insights: string[] = [];
+
+  // Fetch details and positions for each vault
+  for (const vault of vaultEquities) {
+    const userEquity = Number(vault.equity);
+    if (userEquity <= 0) continue;
+
+    // Fetch vault details and clearinghouse state in parallel
+    const [vaultDetails, vaultState] = await Promise.all([
+      fetchVaultDetails(vault.vaultAddress).catch(() => null),
+      fetchClearinghouseState(vault.vaultAddress).catch(() => null),
+    ]);
+
+    const vaultName = vaultDetails?.name || "Unknown Vault";
+    const vaultTotalEquity = Number(vaultState?.marginSummary?.accountValue || 0);
+    const ownershipPercent = vaultTotalEquity > 0 ? (userEquity / vaultTotalEquity) * 100 : 0;
+    const apr = vaultDetails?.apr || 0;
+
+    // Find user's lockup info from followers
+    let lockupUntil: string | null = null;
+    if (vaultDetails?.followers) {
+      const userFollower = vaultDetails.followers.find(
+        f => f.user.toLowerCase() === address!.toLowerCase()
+      );
+      if (userFollower) {
+        lockupUntil = new Date(userFollower.lockupUntil).toISOString();
+      }
+    }
+
+    // Calculate shadow positions
+    const shadowPositions: typeof vaultAnalyses[0]["shadowPositions"] = [];
+    
+    if (vaultState?.assetPositions) {
+      for (const ap of vaultState.assetPositions) {
+        const fullSize = Number(ap.position.szi);
+        if (fullSize === 0) continue;
+
+        const direction: "LONG" | "SHORT" = fullSize > 0 ? "LONG" : "SHORT";
+        const effectiveSize = Math.abs(fullSize) * (ownershipPercent / 100);
+        const markPrice = Number(ap.position.positionValue) / Math.abs(fullSize);
+        const effectiveNotional = effectiveSize * markPrice;
+
+        shadowPositions.push({
+          coin: ap.position.coin,
+          direction,
+          effectiveSize: Number(effectiveSize.toFixed(6)),
+          effectiveNotional: Number(effectiveNotional.toFixed(2)),
+          vaultFullSize: Math.abs(fullSize),
+        });
+
+        // Aggregate by coin
+        if (!coinExposure[ap.position.coin]) {
+          coinExposure[ap.position.coin] = { long: 0, short: 0 };
+        }
+        if (direction === "LONG") {
+          coinExposure[ap.position.coin].long += effectiveNotional;
+        } else {
+          coinExposure[ap.position.coin].short += effectiveNotional;
+        }
+      }
+    }
+
+    vaultAnalyses.push({
+      vaultAddress: vault.vaultAddress,
+      vaultName,
+      userEquity,
+      ownershipPercent: Number(ownershipPercent.toFixed(4)),
+      vaultTotalEquity,
+      apr: Number((apr * 100).toFixed(2)),
+      lockupUntil,
+      shadowPositions,
+    });
+  }
+
+  // Calculate aggregated exposure
+  const byCoin = Object.entries(coinExposure).map(([coin, exp]) => ({
+    coin,
+    longExposure: Number(exp.long.toFixed(2)),
+    shortExposure: Number(exp.short.toFixed(2)),
+    netExposure: Number((exp.long - exp.short).toFixed(2)),
+    bias: exp.long > exp.short * 1.2 ? "LONG" : exp.short > exp.long * 1.2 ? "SHORT" : "NEUTRAL",
+  })).sort((a, b) => Math.abs(b.netExposure) - Math.abs(a.netExposure));
+
+  const netLongExposure = byCoin.reduce((sum, c) => sum + Math.max(0, c.netExposure), 0);
+  const netShortExposure = byCoin.reduce((sum, c) => sum + Math.abs(Math.min(0, c.netExposure)), 0);
+  const totalExposure = netLongExposure + netShortExposure;
+  
+  let bias: string;
+  if (totalExposure === 0) bias = "neutral (no positions)";
+  else if (netLongExposure > netShortExposure * 1.5) bias = "strongly_long";
+  else if (netLongExposure > netShortExposure * 1.1) bias = "long";
+  else if (netShortExposure > netLongExposure * 1.5) bias = "strongly_short";
+  else if (netShortExposure > netLongExposure * 1.1) bias = "short";
+  else bias = "neutral";
+
+  // Generate insights
+  const totalVaultEquity = vaultAnalyses.reduce((sum, v) => sum + v.userEquity, 0);
+  insights.push(`Total vault equity: $${totalVaultEquity.toFixed(2)} across ${vaultAnalyses.length} vault(s)`);
+  
+  if (byCoin.length > 0) {
+    const topExposure = byCoin[0];
+    insights.push(`Largest vault exposure: ${topExposure.coin} (${topExposure.bias}, $${Math.abs(topExposure.netExposure).toFixed(0)} net)`);
+  }
+
+  const hlpVault = vaultAnalyses.find(v => v.vaultName === "HLP" || v.vaultAddress === HLP_VAULT_ADDRESS);
+  if (hlpVault) {
+    insights.push(`HLP exposure: $${hlpVault.userEquity.toFixed(2)} (${hlpVault.ownershipPercent.toFixed(4)}% ownership, APR: ${hlpVault.apr}%)`);
+  }
+
+  return successResult({
+    walletAddress: address,
+    vaultSummary: {
+      totalVaultEquity,
+      vaultCount: vaultAnalyses.length,
+    },
+    vaults: vaultAnalyses,
+    aggregatedExposure: {
+      byCoin,
+      netLongExposure: Number(netLongExposure.toFixed(2)),
+      netShortExposure: Number(netShortExposure.toFixed(2)),
+      bias,
+    },
+    insights,
+    confidence: vaultAnalyses.length > 0 ? 0.85 : 1.0,
+    dataSources: ["userVaultEquities", "vaultDetails", "clearinghouseState"],
+    dataFreshness: "real-time" as const,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleAnalyzeFullPortfolio(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  // Get address from args or portfolio context
+  let address = args?.address as string | undefined;
+  const portfolio = args?.portfolio as HyperliquidContext | undefined;
+  if (!address && portfolio) {
+    address = portfolio.walletAddress;
+  }
+  if (!address) return errorResult("address or portfolio.walletAddress is required");
+
+  // Fetch all data sources in parallel
+  const [userState, vaultEquities, subAccounts, spotBalances, spotData] = await Promise.all([
+    fetchClearinghouseState(address),
+    fetchUserVaultEquities(address).catch(() => []),
+    fetchSubAccounts(address).catch(() => null),
+    fetchSpotClearinghouseState(address).catch(() => ({ balances: [] })),
+    fetchSpotMetaAndAssetCtxs().catch(() => [{ tokens: [], universe: [] }, []] as SpotMetaAndAssetCtxsResponse),
+  ]);
+
+  const insights: string[] = [];
+  const dataSources: string[] = ["clearinghouseState"];
+
+  // Build spot price lookup for valuing spot holdings
+  const [spotMeta, spotCtxs] = spotData;
+  const tokenPrices: Record<number, number> = { 0: 1 }; // USDC = $1
+  for (let i = 0; i < spotMeta.universe.length; i++) {
+    const pair = spotMeta.universe[i];
+    const ctx = spotCtxs[i];
+    if (ctx && pair.tokens[0] !== 0) {
+      const price = Number(ctx.markPx || ctx.midPx || 0);
+      if (price > 0) tokenPrices[pair.tokens[0]] = price;
+    }
+  }
+
+  // 1. DIRECT POSITIONS (Main Account)
+  const directPositions = userState.assetPositions.map(ap => {
+    const size = Number(ap.position.szi);
+    const posValue = Number(ap.position.positionValue);
+    return {
+      coin: ap.position.coin,
+      direction: size > 0 ? "LONG" as const : "SHORT" as const,
+      size: Math.abs(size),
+      positionValue: posValue,
+      unrealizedPnl: Number(ap.position.unrealizedPnl),
+      leverage: ap.position.leverage.value,
+      source: "main_account" as const,
+    };
+  });
+
+  const directTotalValue = Number(userState.marginSummary.accountValue);
+  const directUnrealizedPnl = directPositions.reduce((sum, p) => sum + p.unrealizedPnl, 0);
+
+  // 2. VAULT EXPOSURE
+  let vaultTotalEquity = 0;
+  const vaultShadowPositions: Array<{
+    coin: string;
+    direction: "LONG" | "SHORT";
+    effectiveSize: number;
+    effectiveNotional: number;
+    source: string;
+  }> = [];
+  const vaultDetails: Array<{
+    name: string;
+    address: string;
+    userEquity: number;
+    ownershipPercent: number;
+  }> = [];
+
+  if (vaultEquities.length > 0) {
+    dataSources.push("userVaultEquities", "vaultDetails");
+
+    for (const vault of vaultEquities) {
+      const userEquity = Number(vault.equity);
+      if (userEquity <= 0) continue;
+      vaultTotalEquity += userEquity;
+
+      // Fetch vault state to get positions
+      const [vd, vs] = await Promise.all([
+        fetchVaultDetails(vault.vaultAddress).catch(() => null),
+        fetchClearinghouseState(vault.vaultAddress).catch(() => null),
+      ]);
+
+      const vaultName = vd?.name || "Unknown Vault";
+      const vaultAccountValue = Number(vs?.marginSummary?.accountValue || 0);
+      const ownershipPercent = vaultAccountValue > 0 ? (userEquity / vaultAccountValue) * 100 : 0;
+
+      vaultDetails.push({
+        name: vaultName,
+        address: vault.vaultAddress,
+        userEquity,
+        ownershipPercent: Number(ownershipPercent.toFixed(4)),
+      });
+
+      // Calculate shadow positions
+      if (vs?.assetPositions) {
+        for (const ap of vs.assetPositions) {
+          const fullSize = Number(ap.position.szi);
+          if (fullSize === 0) continue;
+
+          const direction: "LONG" | "SHORT" = fullSize > 0 ? "LONG" : "SHORT";
+          const effectiveSize = Math.abs(fullSize) * (ownershipPercent / 100);
+          const markPrice = Math.abs(Number(ap.position.positionValue) / fullSize);
+
+          vaultShadowPositions.push({
+            coin: ap.position.coin,
+            direction,
+            effectiveSize: Number(effectiveSize.toFixed(6)),
+            effectiveNotional: Number((effectiveSize * markPrice).toFixed(2)),
+            source: `vault:${vaultName}`,
+          });
+        }
+      }
+    }
+  }
+
+  // 3. SUB-ACCOUNT POSITIONS
+  let subAccountsTotalValue = 0;
+  const subAccountDetails: Array<{
+    name: string;
+    address: string;
+    accountValue: number;
+    positions: Array<{ coin: string; direction: string; size: number; positionValue: number }>;
+  }> = [];
+
+  if (subAccounts && subAccounts.length > 0) {
+    dataSources.push("subAccounts");
+
+    for (const sa of subAccounts) {
+      const saValue = Number(sa.clearinghouseState.marginSummary.accountValue);
+      subAccountsTotalValue += saValue;
+
+      const positions = sa.clearinghouseState.assetPositions.map(ap => ({
+        coin: ap.position.coin,
+        direction: Number(ap.position.szi) > 0 ? "LONG" : "SHORT",
+        size: Math.abs(Number(ap.position.szi)),
+        positionValue: Number(ap.position.positionValue),
+      }));
+
+      subAccountDetails.push({
+        name: sa.name,
+        address: sa.subAccountUser,
+        accountValue: saValue,
+        positions,
+      });
+    }
+  }
+
+  // 4. AGGREGATE EXPOSURE BY COIN (across all sources)
+  const coinExposure: Record<string, { long: number; short: number; sources: string[] }> = {};
+
+  // Add direct positions
+  for (const pos of directPositions) {
+    if (!coinExposure[pos.coin]) coinExposure[pos.coin] = { long: 0, short: 0, sources: [] };
+    if (pos.direction === "LONG") coinExposure[pos.coin].long += pos.positionValue;
+    else coinExposure[pos.coin].short += pos.positionValue;
+    if (!coinExposure[pos.coin].sources.includes("main_account")) {
+      coinExposure[pos.coin].sources.push("main_account");
+    }
+  }
+
+  // Add vault shadow positions
+  for (const pos of vaultShadowPositions) {
+    if (!coinExposure[pos.coin]) coinExposure[pos.coin] = { long: 0, short: 0, sources: [] };
+    if (pos.direction === "LONG") coinExposure[pos.coin].long += pos.effectiveNotional;
+    else coinExposure[pos.coin].short += pos.effectiveNotional;
+    if (!coinExposure[pos.coin].sources.includes(pos.source)) {
+      coinExposure[pos.coin].sources.push(pos.source);
+    }
+  }
+
+  // Add sub-account positions
+  for (const sa of subAccountDetails) {
+    for (const pos of sa.positions) {
+      if (!coinExposure[pos.coin]) coinExposure[pos.coin] = { long: 0, short: 0, sources: [] };
+      if (pos.direction === "LONG") coinExposure[pos.coin].long += pos.positionValue;
+      else coinExposure[pos.coin].short += pos.positionValue;
+      const source = `sub:${sa.name}`;
+      if (!coinExposure[pos.coin].sources.includes(source)) {
+        coinExposure[pos.coin].sources.push(source);
+      }
+    }
+  }
+
+  const aggregatedByCoin = Object.entries(coinExposure).map(([coin, exp]) => ({
+    coin,
+    totalLong: Number(exp.long.toFixed(2)),
+    totalShort: Number(exp.short.toFixed(2)),
+    netExposure: Number((exp.long - exp.short).toFixed(2)),
+    sources: exp.sources,
+  })).sort((a, b) => Math.abs(b.netExposure) - Math.abs(a.netExposure));
+
+  const totalLongExposure = aggregatedByCoin.reduce((sum, c) => sum + Math.max(0, c.netExposure), 0);
+  const totalShortExposure = aggregatedByCoin.reduce((sum, c) => sum + Math.abs(Math.min(0, c.netExposure)), 0);
+
+  // Determine directional bias
+  let directionalBias: string;
+  const totalNet = totalLongExposure - totalShortExposure;
+  const totalGross = totalLongExposure + totalShortExposure;
+  if (totalGross === 0) directionalBias = "no exposure";
+  else if (totalNet / totalGross > 0.5) directionalBias = "strongly_long";
+  else if (totalNet / totalGross > 0.2) directionalBias = "long";
+  else if (totalNet / totalGross < -0.5) directionalBias = "strongly_short";
+  else if (totalNet / totalGross < -0.2) directionalBias = "short";
+  else directionalBias = "neutral";
+
+  // 5. RISK SUMMARY
+  const positionsAtRisk = directPositions.filter(p => {
+    // Simple heuristic - high leverage = higher risk
+    return p.leverage > 15;
+  }).length;
+
+  const highLeveragePositions = directPositions.filter(p => p.leverage > 10).length;
+
+  // Concentration risk
+  let concentrationRisk = "low";
+  if (aggregatedByCoin.length > 0 && totalGross > 0) {
+    const topConcentration = Math.abs(aggregatedByCoin[0].netExposure) / totalGross;
+    if (topConcentration > 0.8) concentrationRisk = `high - ${(topConcentration * 100).toFixed(0)}% in ${aggregatedByCoin[0].coin}`;
+    else if (topConcentration > 0.5) concentrationRisk = `medium - ${(topConcentration * 100).toFixed(0)}% in ${aggregatedByCoin[0].coin}`;
+  }
+
+  // 6. SPOT HOLDINGS WITH CURRENT VALUES
+  const spotHoldingsWithValue = spotBalances.balances.map(b => {
+    const total = Number(b.total);
+    const entryNtl = Number(b.entryNtl);
+    const currentPrice = tokenPrices[b.token] || 0;
+    const currentValue = total * currentPrice;
+    const unrealizedPnl = currentPrice > 0 ? currentValue - entryNtl : 0;
+    return {
+      token: b.coin,
+      tokenIndex: b.token,
+      total,
+      hold: Number(b.hold),
+      available: total - Number(b.hold),
+      entryNotional: entryNtl,
+      currentPrice,
+      currentValue: Number(currentValue.toFixed(2)),
+      unrealizedPnl: Number(unrealizedPnl.toFixed(2)),
+    };
+  });
+  const spotTotalValue = spotHoldingsWithValue.reduce((sum, b) => sum + b.currentValue, 0);
+  const spotTotalPnl = spotHoldingsWithValue.reduce((sum, b) => sum + b.unrealizedPnl, 0);
+  
+  if (spotBalances.balances.length > 0) {
+    dataSources.push("spotClearinghouseState", "spotMetaAndAssetCtxs");
+  }
+
+  // 7. GENERATE INSIGHTS
+  const totalAccountValue = directTotalValue + vaultTotalEquity + subAccountsTotalValue + spotTotalValue;
+  insights.push(`Total portfolio: $${totalAccountValue.toFixed(2)} (Perp: $${directTotalValue.toFixed(2)}, Vaults: $${vaultTotalEquity.toFixed(2)}, Sub-accounts: $${subAccountsTotalValue.toFixed(2)}, Spot: $${spotTotalValue.toFixed(2)})`);
+
+  if (vaultTotalEquity > directTotalValue * 0.5) {
+    insights.push(`⚠️ Significant vault exposure (${((vaultTotalEquity / totalAccountValue) * 100).toFixed(0)}% of portfolio) - shadow positions affect your real market exposure`);
+  }
+
+  if (spotTotalValue > 1000) {
+    const nonUsdcSpot = spotHoldingsWithValue.filter(b => b.token !== "USDC" && b.currentValue > 100);
+    if (nonUsdcSpot.length > 0) {
+      const topSpot = nonUsdcSpot.sort((a, b) => b.currentValue - a.currentValue)[0];
+      insights.push(`Spot holdings: $${spotTotalValue.toFixed(0)} total (largest: ${topSpot.token} worth $${topSpot.currentValue.toFixed(0)}, P&L: ${topSpot.unrealizedPnl >= 0 ? "+" : ""}$${topSpot.unrealizedPnl.toFixed(0)})`);
+    }
+  }
+
+  if (aggregatedByCoin.length > 0) {
+    const topCoin = aggregatedByCoin[0];
+    const topDirection = topCoin.netExposure > 0 ? "LONG" : "SHORT";
+    insights.push(`Largest perp exposure: ${topCoin.coin} ${topDirection} $${Math.abs(topCoin.netExposure).toFixed(2)} (from: ${topCoin.sources.join(", ")})`);
+  }
+
+  if (directionalBias !== "neutral" && directionalBias !== "no exposure") {
+    insights.push(`Overall perp bias: ${directionalBias.replace("_", " ").toUpperCase()}`);
+  }
+
+  return successResult({
+    walletAddress: address,
+    portfolioOverview: {
+      totalAccountValue: Number(totalAccountValue.toFixed(2)),
+      mainAccountValue: Number(directTotalValue.toFixed(2)),
+      vaultEquity: Number(vaultTotalEquity.toFixed(2)),
+      subAccountsValue: Number(subAccountsTotalValue.toFixed(2)),
+      spotValue: Number(spotTotalValue.toFixed(2)),
+    },
+    directPositions: {
+      source: "main_account",
+      positions: directPositions,
+      totalValue: Number(directTotalValue.toFixed(2)),
+      unrealizedPnL: Number(directUnrealizedPnl.toFixed(2)),
+    },
+    vaultExposure: {
+      source: "vaults",
+      vaults: vaultDetails,
+      totalEquity: Number(vaultTotalEquity.toFixed(2)),
+      shadowPositions: vaultShadowPositions,
+    },
+    subAccountPositions: {
+      source: "sub_accounts",
+      accounts: subAccountDetails,
+      totalValue: Number(subAccountsTotalValue.toFixed(2)),
+    },
+    spotHoldings: {
+      source: "spot",
+      balances: spotHoldingsWithValue,
+      totalValue: Number(spotTotalValue.toFixed(2)),
+      totalUnrealizedPnl: Number(spotTotalPnl.toFixed(2)),
+    },
+    aggregatedExposure: {
+      byCoin: aggregatedByCoin,
+      netLongExposure: Number(totalLongExposure.toFixed(2)),
+      netShortExposure: Number(totalShortExposure.toFixed(2)),
+      directionalBias,
+    },
+    riskSummary: {
+      positionsAtRisk,
+      highLeveragePositions,
+      concentrationRisk,
+    },
+    insights,
+    confidence: 0.9,
+    dataSources,
     dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
@@ -3317,13 +4119,14 @@ app.get("/health", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     server: "hyperliquid-ultimate",
-    version: "2.2.0",
+    version: "2.3.1",
     protocol: "2025-11-25",
     transport: "streamable-http",
     toolCount: TOOLS.length,
     tools: TOOLS.map((t) => t.name),
     tier1Tools: TOOLS.filter((t) => t.description.includes("🧠 INTELLIGENCE")).map((t) => t.name),
     tier2Tools: TOOLS.filter((t) => !t.description.includes("🧠 INTELLIGENCE")).map((t) => t.name),
+    newInV23: ["analyze_vault_exposure", "analyze_full_portfolio"],
     description: "The world's most comprehensive Hyperliquid MCP server",
   });
 });
@@ -3412,13 +4215,16 @@ app.listen(port, () => {
   const tier1 = TOOLS.filter((t) => t.description.includes("🧠 INTELLIGENCE"));
   const tier2 = TOOLS.filter((t) => !t.description.includes("🧠 INTELLIGENCE"));
   
-  console.log("\n🚀 Hyperliquid Ultimate MCP Server v2.2.0");
+  console.log("\n🚀 Hyperliquid Ultimate MCP Server v2.3.0");
   console.log(`   The world's most comprehensive Hyperliquid MCP`);
   console.log(`   ${TOOLS.length} tools (${tier1.length} intelligence + ${tier2.length} raw data)\n`);
   console.log(`🔒 Context Protocol Security Enabled`);
   console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health`);
   console.log(`🔄 Protocol: Streamable HTTP (2025-11-25)\n`);
+  console.log(`✨ NEW in v2.3.0: Vault Exposure Analysis`);
+  console.log(`   • analyze_vault_exposure - See your shadow positions in vaults`);
+  console.log(`   • analyze_full_portfolio - Complete exposure across all sources\n`);
   console.log(`🧠 TIER 1 - INTELLIGENCE TOOLS (${tier1.length}):`);
   tier1.forEach((tool) => {
     console.log(`   • ${tool.name}`);
