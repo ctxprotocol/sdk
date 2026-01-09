@@ -722,23 +722,33 @@ Each event has:
     name: "get_event",
     description: `Get detailed information about a specific event including all its markets.
 
-🆕 SLUG SUPPORT: This tool now auto-detects and resolves URL slugs!
-  - If you provide an event_ticker (e.g., 'KXPRESPERSON-28'), it fetches directly
-  - If you provide a slug from a URL (e.g., 'kxdjtvostariffs'), it auto-resolves to the correct event
+🆕 SLUG SUPPORT: This tool auto-detects and resolves URL slugs!
 
-URL HANDLING: When users share Kalshi URLs like:
-  https://kalshi.com/markets/kxdjtvostariffs/tariffs-case
-Extract the first path segment after /markets/ ('kxdjtvostariffs') and pass it as eventTicker.
+EXAMPLE INPUTS (all work):
+  { "eventTicker": "KXDJTVOSTARIFFS" }       // Direct event ticker
+  { "eventTicker": "kxdjtvostariffs" }       // URL slug (auto-resolved)
+  { "eventTicker": "KXPRESPERSON-28" }       // Event with numeric suffix
 
-INPUT: event_ticker OR slug from a Kalshi URL
+URL HANDLING: When users share URLs like https://kalshi.com/markets/kxdjtvostariffs/tariffs-case
+  → Extract 'kxdjtvostariffs' and pass as eventTicker
 
-RETURNS: Event metadata and array of markets with tickers for further analysis.`,
+EXAMPLE OUTPUT:
+  {
+    "event": { "eventTicker": "KXDJTVOSTARIFFS", "title": "Will the Supreme Court..." },
+    "markets": [
+      { "ticker": "KXDJTVOSTARIFFS", "title": "...", "yesPrice": 32 }
+    ]
+  }
+
+⚠️ TO GET MARKET DETAILS: Use the 'ticker' from markets[] EXACTLY as-is:
+  get_market({ ticker: "KXDJTVOSTARIFFS" })  ✅
+  get_market({ ticker: "KXDJTVOSTARIFFS-001" })  ❌ DON'T add suffixes`,
     inputSchema: {
       type: "object" as const,
       properties: {
         eventTicker: {
           type: "string",
-          description: "Event ticker (e.g., 'KXPRESPERSON-28') OR URL slug (e.g., 'kxdjtvostariffs'). Slugs are auto-resolved.",
+          description: "Event ticker (e.g., 'KXDJTVOSTARIFFS') OR URL slug (e.g., 'kxdjtvostariffs'). Slugs are auto-resolved.",
         },
         withNestedMarkets: {
           type: "boolean",
@@ -752,8 +762,9 @@ RETURNS: Event metadata and array of markets with tickers for further analysis.`
       properties: {
         event: {
           type: "object",
+          description: "Event metadata",
           properties: {
-            eventTicker: { type: "string" },
+            eventTicker: { type: "string", description: "Event ticker (e.g., 'KXDJTVOSTARIFFS')" },
             title: { type: "string" },
             category: { type: "string" },
             status: { type: "string" },
@@ -761,13 +772,14 @@ RETURNS: Event metadata and array of markets with tickers for further analysis.`
         },
         markets: {
           type: "array",
+          description: "Markets in this event. Use 'ticker' field EXACTLY for get_market calls.",
           items: {
             type: "object",
             properties: {
-              ticker: { type: "string" },
+              ticker: { type: "string", description: "⭐ EXACT market ticker - use this in get_market({ ticker: ... })" },
               title: { type: "string" },
-              yesPrice: { type: "number" },
-              noPrice: { type: "number" },
+              yesPrice: { type: "number", description: "YES price in cents (32 = 32%)" },
+              noPrice: { type: "number", description: "NO price in cents" },
               volume: { type: "number" },
               status: { type: "string" },
             },
@@ -843,21 +855,31 @@ THEN USE: get_event({ eventTicker: "KXDJTVOSTARIFFS-123" }) for full details`,
     name: "get_event_by_slug",
     description: `📍 Get event details directly from a Kalshi URL slug.
 
-CONVENIENCE METHOD: Combines resolve_slug + get_event in one call.
-
 WHEN USERS SHARE URLS like: https://kalshi.com/markets/kxdjtvostariffs/tariffs-case
   1. Extract the slug: 'kxdjtvostariffs' (first segment after /markets/)
   2. Call: get_event_by_slug({ slug: "kxdjtvostariffs" })
 
-This is the RECOMMENDED method when working with Kalshi URLs.
+EXAMPLE INPUT:
+  { "slug": "kxdjtvostariffs" }
 
-RETURNS: Same as get_event - full event details with all markets.`,
+EXAMPLE OUTPUT:
+  {
+    "event": { "eventTicker": "KXDJTVOSTARIFFS", "title": "Will the Supreme Court rule..." },
+    "markets": [{ "ticker": "KXDJTVOSTARIFFS", "yesPrice": 32, ... }]
+  }
+
+⚠️ IMPORTANT - HOW TO USE THE OUTPUT:
+  - The 'ticker' field in markets[] is the EXACT value to pass to get_market
+  - For this example: get_market({ ticker: "KXDJTVOSTARIFFS" })
+  - DO NOT modify the ticker (no adding -001, -01, or any suffix)
+
+This is the RECOMMENDED method when working with Kalshi URLs.`,
     inputSchema: {
       type: "object" as const,
       properties: {
         slug: {
           type: "string",
-          description: "The slug from a Kalshi URL (e.g., 'kxdjtvostariffs')",
+          description: "The slug from a Kalshi URL. Example: 'kxdjtvostariffs' from URL kalshi.com/markets/kxdjtvostariffs/...",
         },
         withNestedMarkets: {
           type: "boolean",
@@ -871,32 +893,34 @@ RETURNS: Same as get_event - full event details with all markets.`,
       properties: {
         event: {
           type: "object",
+          description: "Event metadata",
           properties: {
-            eventTicker: { type: "string" },
-            seriesTicker: { type: "string" },
-            title: { type: "string" },
+            eventTicker: { type: "string", description: "Event ticker (e.g., 'KXDJTVOSTARIFFS')" },
+            seriesTicker: { type: "string", description: "Series ticker / slug (e.g., 'kxdjtvostariffs')" },
+            title: { type: "string", description: "Human-readable title" },
             category: { type: "string" },
             status: { type: "string" },
           },
         },
         markets: {
           type: "array",
+          description: "Array of markets in this event. Use the 'ticker' field EXACTLY as-is for get_market calls.",
           items: {
             type: "object",
             properties: {
-              ticker: { type: "string" },
+              ticker: { type: "string", description: "⭐ EXACT market ticker - use this value directly in get_market({ ticker: ... })" },
               title: { type: "string" },
-              yesPrice: { type: "number" },
-              noPrice: { type: "number" },
+              yesPrice: { type: "number", description: "Current YES price in cents (32 = 32%)" },
+              noPrice: { type: "number", description: "Current NO price in cents" },
               volume: { type: "number" },
               volume24h: { type: "number" },
               liquidity: { type: "number" },
               status: { type: "string" },
-              url: { type: "string" },
+              url: { type: "string", description: "Direct Kalshi URL" },
             },
           },
         },
-        resolvedFrom: { type: "string" },
+        resolvedFrom: { type: "string", description: "Shows how the slug was resolved" },
         fetchedAt: { type: "string" },
       },
       required: ["event"],
@@ -907,15 +931,30 @@ RETURNS: Same as get_event - full event details with all markets.`,
     name: "get_market",
     description: `Get detailed information about a specific market.
 
-INPUT: market ticker from discover_trending_markets or search_markets
+⚠️ CRITICAL: Use EXACT ticker values from API responses. DO NOT construct or guess tickers!
 
-RETURNS: Full market details including prices, volumes, rules.`,
+CORRECT WORKFLOW:
+  1. Call get_event_by_slug({ slug: "kxdjtvostariffs" })
+  2. Response includes: markets: [{ ticker: "KXDJTVOSTARIFFS", ... }]
+  3. Call get_market({ ticker: "KXDJTVOSTARIFFS" })  // Use EXACT value from step 2
+
+EXAMPLE - CORRECT:
+  get_market({ "ticker": "KXDJTVOSTARIFFS" })  ✅
+
+EXAMPLE - WRONG (DO NOT DO THIS):
+  get_market({ "ticker": "KXDJTVOSTARIFFS-001" })  ❌ Adding -001 is WRONG
+  get_market({ "ticker": "KXDJTVOSTARIFFS-01" })   ❌ Adding -01 is WRONG
+  get_market({ "ticker": "kxdjtvostariffs" })      ❌ Wrong case
+
+The ticker field from API responses is the EXACT string to use. Copy it exactly, don't modify it.
+
+🆕 FALLBACK: If a ticker fails, this tool will auto-attempt to fix common mistakes.`,
     inputSchema: {
       type: "object" as const,
       properties: {
         ticker: {
           type: "string",
-          description: "Market ticker",
+          description: "EXACT market ticker from API response. Example: 'KXDJTVOSTARIFFS' (not 'KXDJTVOSTARIFFS-001'). Copy the ticker value exactly from get_event_by_slug or search_markets results.",
         },
       },
       required: ["ticker"],
@@ -956,36 +995,46 @@ RETURNS: Full market details including prices, volumes, rules.`,
     name: "search_markets",
     description: `Search for Kalshi markets by keyword or filters.
 
-⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent markets or construct URLs. Each result includes a real 'url' field - use ONLY those URLs.
+⚠️ CRITICAL: Use EXACT ticker values from results. NEVER modify or construct tickers!
 
-🔍 URL SLUG SUPPORT: When users share Kalshi URLs, you can search by the slug!
+EXAMPLE INPUT:
+  { "query": "trump tariffs" }
+
+EXAMPLE OUTPUT:
+  {
+    "results": [
+      { "ticker": "KXDJTVOSTARIFFS", "title": "Will the Supreme Court...", "yesPrice": 32 }
+    ]
+  }
+
+HOW TO USE RESULTS:
+  - To get more details: get_market({ ticker: "KXDJTVOSTARIFFS" })  ✅
+  - DON'T modify ticker: get_market({ ticker: "KXDJTVOSTARIFFS-001" })  ❌
+
+🔍 URL SLUG SUPPORT: When users share Kalshi URLs, search by the slug:
   - URL: https://kalshi.com/markets/kxdjtvostariffs/tariffs-case
   - Search: search_markets({ query: "kxdjtvostariffs" })
-  - Or use: get_event_by_slug({ slug: "kxdjtvostariffs" }) for direct lookup
+  - Or better: get_event_by_slug({ slug: "kxdjtvostariffs" })
 
-🕐 LIVE vs HISTORICAL MARKETS:
-  - status: 'open' (default) → Active markets currently trading. Use for current analysis.
-  - status: 'settled' → Resolved/concluded markets. Use for historical questions like:
-    → "What were Kalshi's odds on the 2024 election?"
-    → "How accurate were Kalshi predictions for past Fed decisions?"
-  - status: 'all' → Both active and historical markets.
-
-RETURNS: Matching markets with tickers and direct URLs for further analysis.`,
+🕐 STATUS OPTIONS:
+  - 'open' (default): Active markets currently trading
+  - 'settled': Resolved markets (for historical questions)
+  - 'all': Both active and historical`,
     inputSchema: {
       type: "object" as const,
       properties: {
         query: {
           type: "string",
-          description: "Search query (searches titles)",
+          description: "Search query. Examples: 'trump tariffs', 'kxdjtvostariffs', 'supreme court'",
         },
         category: {
           type: "string",
-          description: "Filter by category",
+          description: "Filter by category (e.g., 'Politics', 'Economics')",
         },
         status: {
           type: "string",
           enum: ["open", "closed", "settled", "all"],
-          description: "Filter by status: 'open' (default) = active/trading, 'settled' = resolved/historical, 'all' = both. Use 'settled' for past event questions.",
+          description: "'open' = active (default), 'settled' = historical, 'all' = both",
         },
         limit: {
           type: "number",
@@ -999,22 +1048,23 @@ RETURNS: Matching markets with tickers and direct URLs for further analysis.`,
       properties: {
         results: {
           type: "array",
+          description: "Array of matching markets. Use 'ticker' field EXACTLY as-is for get_market calls.",
           items: {
             type: "object",
             properties: {
-              title: { type: "string" },
-              ticker: { type: "string" },
-              eventTicker: { type: "string" },
-              url: { type: "string", format: "uri", description: "Direct Kalshi URL - always use this, never construct URLs" },
-              yesPrice: { type: "number" },
-              volume24h: { type: "number" },
+              title: { type: "string", description: "Human-readable market title" },
+              ticker: { type: "string", description: "⭐ EXACT market ticker - use this value in get_market({ ticker: ... }). DO NOT modify it." },
+              eventTicker: { type: "string", description: "Parent event ticker" },
+              url: { type: "string", format: "uri", description: "Direct Kalshi URL - use this for links" },
+              yesPrice: { type: "number", description: "Current YES price in cents (32 = 32%)" },
+              volume24h: { type: "number", description: "24-hour trading volume" },
               category: { type: "string" },
               status: { type: "string" },
               closeTime: { type: "string" },
             },
           },
         },
-        count: { type: "number" },
+        count: { type: "number", description: "Number of results returned" },
         fetchedAt: { type: "string" },
       },
       required: ["results", "count"],
@@ -2888,32 +2938,103 @@ async function handleGetMarket(
     return errorResult("ticker is required");
   }
 
-  const response = await fetchKalshi(`/markets/${ticker}`) as { market: KalshiMarket };
-  const m = response.market;
+  // Helper to format market result
+  const formatMarketResult = (m: KalshiMarket, resolvedFrom?: string) => {
+    const result: Record<string, unknown> = {
+      market: {
+        ticker: m.ticker,
+        eventTicker: m.event_ticker,
+        title: m.title || m.yes_sub_title || m.ticker,
+        subtitle: m.subtitle || m.no_sub_title || "",
+        yesPrice: m.yes_ask || m.last_price || 0,
+        noPrice: m.no_ask || (100 - (m.yes_ask || m.last_price || 50)),
+        yesBid: m.yes_bid || 0,
+        yesAsk: m.yes_ask || 0,
+        lastPrice: m.last_price || 0,
+        volume: m.volume || 0,
+        volume24h: m.volume_24h || 0,
+        openInterest: m.open_interest || 0,
+        liquidity: m.liquidity || 0,
+        status: m.status || "open",
+        closeTime: m.close_time || "",
+        category: m.category || "Unknown",
+        rules: m.rules_primary || "",
+        url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
+      },
+      fetchedAt: new Date().toISOString(),
+    };
+    if (resolvedFrom) {
+      result.resolvedFrom = resolvedFrom;
+    }
+    return result;
+  };
 
-  return successResult({
-    market: {
-      ticker: m.ticker,
-      eventTicker: m.event_ticker,
-      title: m.title || m.yes_sub_title || m.ticker,
-      subtitle: m.subtitle || m.no_sub_title || "",
-      yesPrice: m.yes_ask || m.last_price || 0,
-      noPrice: m.no_ask || (100 - (m.yes_ask || m.last_price || 50)),
-      yesBid: m.yes_bid || 0,
-      yesAsk: m.yes_ask || 0,
-      lastPrice: m.last_price || 0,
-      volume: m.volume || 0,
-      volume24h: m.volume_24h || 0,
-      openInterest: m.open_interest || 0,
-      liquidity: m.liquidity || 0,
-      status: m.status || "open",
-      closeTime: m.close_time || "",
-      category: m.category || "Unknown",
-      rules: m.rules_primary || "",
-      url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
-    },
-    fetchedAt: new Date().toISOString(),
-  });
+  // Strategy 1: Try exact ticker
+  try {
+    const response = await fetchKalshi(`/markets/${ticker}`) as { market: KalshiMarket };
+    return successResult(formatMarketResult(response.market));
+  } catch (error) {
+    if (!(error instanceof Error && error.message.includes('404'))) {
+      throw error;
+    }
+  }
+
+  // Strategy 2: Try removing common suffixes AI might have added (like -001, -01, etc.)
+  const tickerWithoutSuffix = ticker.replace(/-0+\d*$/, '');
+  if (tickerWithoutSuffix !== ticker) {
+    try {
+      const response = await fetchKalshi(`/markets/${tickerWithoutSuffix}`) as { market: KalshiMarket };
+      return successResult(formatMarketResult(response.market, `corrected:${ticker}->${tickerWithoutSuffix}`));
+    } catch (e) {
+      // Continue to next strategy
+    }
+  }
+
+  // Strategy 3: Try as a slug (lowercase version)
+  const slugVersion = ticker.toLowerCase();
+  if (isSlug(slugVersion)) {
+    const resolved = await resolveSlugToEvent(slugVersion);
+    if (resolved.found && resolved.markets.length > 0) {
+      const firstMarket = resolved.markets[0];
+      try {
+        const response = await fetchKalshi(`/markets/${firstMarket.ticker}`) as { market: KalshiMarket };
+        return successResult(formatMarketResult(response.market, `slug:${slugVersion}->${firstMarket.ticker}`));
+      } catch (e) {
+        // Return basic info from resolved markets
+        return successResult(formatMarketResult(firstMarket, `slug:${slugVersion}`));
+      }
+    }
+  }
+
+  // Strategy 4: Search for similar tickers
+  try {
+    const searchResponse = await fetchKalshi(`/markets?limit=100&status=open`) as { markets: KalshiMarket[] };
+    const markets = searchResponse.markets || [];
+    const tickerBase = ticker.replace(/-\d+$/, '').toLowerCase();
+    
+    const matching = markets.filter(m => 
+      m.ticker.toLowerCase() === ticker.toLowerCase() ||
+      m.ticker.toLowerCase().startsWith(tickerBase) ||
+      getSeriesTicker(m.event_ticker) === tickerBase
+    );
+
+    if (matching.length > 0) {
+      const bestMatch = matching[0];
+      const response = await fetchKalshi(`/markets/${bestMatch.ticker}`) as { market: KalshiMarket };
+      return successResult(formatMarketResult(response.market, `search:${ticker}->${bestMatch.ticker}`));
+    }
+  } catch (e) {
+    // Fall through to error
+  }
+
+  // All strategies failed
+  return errorResult(
+    `Market '${ticker}' not found. ` +
+    `Possible issues:\n` +
+    `1. The ticker may have been incorrectly constructed (don't add suffixes like -001)\n` +
+    `2. Use the exact 'ticker' value from get_event_by_slug or search_markets results\n` +
+    `3. Try get_event_by_slug({ slug: "${ticker.toLowerCase()}" }) first to get the correct ticker`
+  );
 }
 
 async function handleSearchMarkets(
