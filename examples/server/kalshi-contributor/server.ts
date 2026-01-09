@@ -722,7 +722,15 @@ Each event has:
     name: "get_event",
     description: `Get detailed information about a specific event including all its markets.
 
-INPUT: event_ticker from get_events or discover_trending_markets
+🆕 SLUG SUPPORT: This tool now auto-detects and resolves URL slugs!
+  - If you provide an event_ticker (e.g., 'KXPRESPERSON-28'), it fetches directly
+  - If you provide a slug from a URL (e.g., 'kxdjtvostariffs'), it auto-resolves to the correct event
+
+URL HANDLING: When users share Kalshi URLs like:
+  https://kalshi.com/markets/kxdjtvostariffs/tariffs-case
+Extract the first path segment after /markets/ ('kxdjtvostariffs') and pass it as eventTicker.
+
+INPUT: event_ticker OR slug from a Kalshi URL
 
 RETURNS: Event metadata and array of markets with tickers for further analysis.`,
     inputSchema: {
@@ -730,7 +738,7 @@ RETURNS: Event metadata and array of markets with tickers for further analysis.`
       properties: {
         eventTicker: {
           type: "string",
-          description: "Event ticker (e.g., 'PRES-2024')",
+          description: "Event ticker (e.g., 'KXPRESPERSON-28') OR URL slug (e.g., 'kxdjtvostariffs'). Slugs are auto-resolved.",
         },
         withNestedMarkets: {
           type: "boolean",
@@ -765,6 +773,130 @@ RETURNS: Event metadata and array of markets with tickers for further analysis.`
             },
           },
         },
+        resolvedFrom: { type: "string", description: "If a slug was resolved, shows 'slug:{original_input}'" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["event"],
+    },
+  },
+
+  {
+    name: "resolve_slug",
+    description: `🔍 SLUG RESOLUTION: Convert a Kalshi URL slug to the proper event ticker.
+
+USE THIS WHEN: Users share Kalshi URLs and you need to find the market.
+
+URL STRUCTURE: https://kalshi.com/markets/{SERIES_TICKER}/{SLUG}/{EVENT_TICKER}
+  - The series_ticker/slug is lowercase (e.g., 'kxdjtvostariffs')
+  - The event_ticker is uppercase with suffix (e.g., 'KXDJTVOSTARIFFS-123')
+
+HOW IT WORKS:
+  1. Searches all markets for ones matching the slug
+  2. Extracts the event_ticker from matching markets
+  3. Returns the proper ticker(s) for use with get_event
+
+EXAMPLE:
+  Input: { slug: "kxdjtvostariffs" }
+  Output: { eventTicker: "KXDJTVOSTARIFFS-123", markets: [...] }
+
+THEN USE: get_event({ eventTicker: "KXDJTVOSTARIFFS-123" }) for full details`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        slug: {
+          type: "string",
+          description: "The slug from a Kalshi URL (e.g., 'kxdjtvostariffs' from kalshi.com/markets/kxdjtvostariffs/...)",
+        },
+      },
+      required: ["slug"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        found: { type: "boolean" },
+        slug: { type: "string" },
+        eventTicker: { type: "string", description: "The proper event ticker for use with get_event" },
+        seriesTicker: { type: "string" },
+        title: { type: "string" },
+        markets: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              ticker: { type: "string" },
+              eventTicker: { type: "string" },
+              title: { type: "string" },
+              yesPrice: { type: "number" },
+              volume24h: { type: "number" },
+            },
+          },
+        },
+        url: { type: "string" },
+        hint: { type: "string" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["found", "slug"],
+    },
+  },
+
+  {
+    name: "get_event_by_slug",
+    description: `📍 Get event details directly from a Kalshi URL slug.
+
+CONVENIENCE METHOD: Combines resolve_slug + get_event in one call.
+
+WHEN USERS SHARE URLS like: https://kalshi.com/markets/kxdjtvostariffs/tariffs-case
+  1. Extract the slug: 'kxdjtvostariffs' (first segment after /markets/)
+  2. Call: get_event_by_slug({ slug: "kxdjtvostariffs" })
+
+This is the RECOMMENDED method when working with Kalshi URLs.
+
+RETURNS: Same as get_event - full event details with all markets.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        slug: {
+          type: "string",
+          description: "The slug from a Kalshi URL (e.g., 'kxdjtvostariffs')",
+        },
+        withNestedMarkets: {
+          type: "boolean",
+          description: "Include nested markets (default: true)",
+        },
+      },
+      required: ["slug"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        event: {
+          type: "object",
+          properties: {
+            eventTicker: { type: "string" },
+            seriesTicker: { type: "string" },
+            title: { type: "string" },
+            category: { type: "string" },
+            status: { type: "string" },
+          },
+        },
+        markets: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              ticker: { type: "string" },
+              title: { type: "string" },
+              yesPrice: { type: "number" },
+              noPrice: { type: "number" },
+              volume: { type: "number" },
+              volume24h: { type: "number" },
+              liquidity: { type: "number" },
+              status: { type: "string" },
+              url: { type: "string" },
+            },
+          },
+        },
+        resolvedFrom: { type: "string" },
         fetchedAt: { type: "string" },
       },
       required: ["event"],
@@ -825,6 +957,11 @@ RETURNS: Full market details including prices, volumes, rules.`,
     description: `Search for Kalshi markets by keyword or filters.
 
 ⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent markets or construct URLs. Each result includes a real 'url' field - use ONLY those URLs.
+
+🔍 URL SLUG SUPPORT: When users share Kalshi URLs, you can search by the slug!
+  - URL: https://kalshi.com/markets/kxdjtvostariffs/tariffs-case
+  - Search: search_markets({ query: "kxdjtvostariffs" })
+  - Or use: get_event_by_slug({ slug: "kxdjtvostariffs" }) for direct lookup
 
 🕐 LIVE vs HISTORICAL MARKETS:
   - status: 'open' (default) → Active markets currently trading. Use for current analysis.
@@ -1324,6 +1461,10 @@ server.setRequestHandler(
           return await handleGetEvents(args);
         case "get_event":
           return await handleGetEvent(args);
+        case "resolve_slug":
+          return await handleResolveSlug(args);
+        case "get_event_by_slug":
+          return await handleGetEventBySlug(args);
         case "get_market":
           return await handleGetMarket(args);
         case "search_markets":
@@ -1400,14 +1541,176 @@ async function fetchKalshi(endpoint: string, timeoutMs = 15000): Promise<unknown
 // ============================================================================
 
 /**
- * Extracts the series ticker from an event_ticker by removing the numeric suffix.
- * Example: KXNEWPOPE-70 -> kxnewpope
- * This is needed because Kalshi URLs use the series ticker format:
- * https://kalshi.com/markets/{series_ticker}/{slug}
+ * Extracts the series ticker from an event_ticker by removing various suffix patterns.
+ * 
+ * Kalshi event tickers have different formats:
+ * - KXPRESPERSON-28 (numeric suffix) -> kxpresperson
+ * - KXNBAPTS-26JAN09ATLDEN (date+teams) -> kxnbapts
+ * - KXMVENBASINGLEGAME-S2025000ECCE13C4 (UUID suffix) -> kxmvenbasinglegame
+ * 
+ * The series ticker is used in URLs: https://kalshi.com/markets/{series_ticker}/{slug}
  */
 function getSeriesTicker(eventTicker: string): string {
-  // Remove -XX numeric suffix and convert to lowercase
-  return eventTicker.replace(/-\d+$/, '').toLowerCase();
+  // Remove various suffix patterns and convert to lowercase
+  // Pattern 1: -S20XX... (UUID-like suffix)
+  // Pattern 2: -XXMONXX... (date pattern like 26JAN09)
+  // Pattern 3: -XX (numeric suffix)
+  const cleaned = eventTicker
+    .replace(/-S20[0-9]{2}[A-F0-9]+$/i, '')  // UUID-like: -S2025000ECCE13C4
+    .replace(/-\d{2}[A-Z]{3}\d{2}[A-Z]+$/i, '')  // Date+teams: -26JAN09ATLDEN
+    .replace(/-\d+$/, '');  // Numeric: -28
+  
+  return cleaned.toLowerCase();
+}
+
+/**
+ * Detects if an input looks like a URL slug rather than an event ticker.
+ * Slugs are:
+ * - All lowercase
+ * - Don't have a -XX numeric suffix
+ * - May contain hyphens but not in ticker format
+ */
+function isSlug(input: string): boolean {
+  // Event tickers are typically uppercase and have -NUMBER suffix (e.g., KXPRESPERSON-28)
+  // Slugs are lowercase (e.g., kxdjtvostariffs)
+  
+  // If it's all lowercase and doesn't have the typical ticker format, it's likely a slug
+  const isLowercase = input === input.toLowerCase();
+  const hasTickerSuffix = /-\d+$/.test(input);
+  const looksLikeTickerFormat = /^[A-Z]+-[A-Z0-9-]+$/.test(input) || hasTickerSuffix;
+  
+  return isLowercase && !looksLikeTickerFormat;
+}
+
+/**
+ * Resolves a URL slug to market/event information by searching markets.
+ * Returns the best matching event ticker and associated markets.
+ */
+async function resolveSlugToEvent(slug: string): Promise<{
+  found: boolean;
+  eventTicker?: string;
+  seriesTicker?: string;
+  title?: string;
+  markets: KalshiMarket[];
+}> {
+  const slugLower = slug.toLowerCase();
+  
+  // Try multiple strategies to find the market
+  
+  // Strategy 1: Search markets with the slug as query
+  try {
+    const response = await fetchKalshi(`/markets?limit=500&status=open`) as { markets: KalshiMarket[] };
+    const markets = response.markets || [];
+    
+    // Find markets where the series ticker matches the slug
+    // Use multiple matching strategies:
+    // 1. Exact series ticker match
+    // 2. Event ticker starts with slug (case-insensitive)
+    // 3. Ticker contains slug (case-insensitive)
+    const matchingMarkets = markets.filter(m => {
+      const seriesTicker = getSeriesTicker(m.event_ticker);
+      const eventTickerLower = m.event_ticker.toLowerCase();
+      const tickerLower = m.ticker.toLowerCase();
+      
+      return seriesTicker === slugLower || 
+             eventTickerLower.startsWith(slugLower) ||
+             eventTickerLower.startsWith(slugLower + '-') ||
+             tickerLower.includes(slugLower);
+    });
+    
+    if (matchingMarkets.length > 0) {
+      const firstMatch = matchingMarkets[0];
+      return {
+        found: true,
+        eventTicker: firstMatch.event_ticker,
+        seriesTicker: getSeriesTicker(firstMatch.event_ticker),
+        title: firstMatch.title || firstMatch.yes_sub_title,
+        markets: matchingMarkets,
+      };
+    }
+  } catch (e) {
+    // Continue to next strategy
+  }
+  
+  // Strategy 2: Try to fetch events and check series tickers
+  try {
+    const response = await fetchKalshi(`/events?limit=200&status=open`) as { events: KalshiEvent[] };
+    const events = response.events || [];
+    
+    // Find event where the ticker matches the slug pattern
+    const matchingEvent = events.find(e => {
+      const eventSeriesTicker = getSeriesTicker(e.event_ticker);
+      const eventTickerLower = e.event_ticker.toLowerCase();
+      return eventSeriesTicker === slugLower || 
+             eventTickerLower.startsWith(slugLower) ||
+             eventTickerLower.startsWith(slugLower + '-');
+    });
+    
+    if (matchingEvent) {
+      // Fetch the full event with markets
+      const eventDetail = await fetchKalshi(`/events/${matchingEvent.event_ticker}?with_nested_markets=true`) as { event: KalshiEvent };
+      return {
+        found: true,
+        eventTicker: matchingEvent.event_ticker,
+        seriesTicker: getSeriesTicker(matchingEvent.event_ticker),
+        title: matchingEvent.title,
+        markets: eventDetail.event?.markets || [],
+      };
+    }
+  } catch (e) {
+    // Continue to next strategy
+  }
+  
+  // Strategy 3: Try direct event fetch with uppercase slug
+  const possibleTickers = [
+    slugLower.toUpperCase(),
+    `${slugLower.toUpperCase()}-1`,
+    `${slugLower.toUpperCase()}-24`,
+    `${slugLower.toUpperCase()}-25`,
+    `${slugLower.toUpperCase()}-26`,
+    `${slugLower.toUpperCase()}-28`,
+  ];
+  
+  for (const ticker of possibleTickers) {
+    try {
+      const eventDetail = await fetchKalshi(`/events/${ticker}?with_nested_markets=true`) as { event: KalshiEvent };
+      if (eventDetail.event) {
+        return {
+          found: true,
+          eventTicker: eventDetail.event.event_ticker,
+          seriesTicker: getSeriesTicker(eventDetail.event.event_ticker),
+          title: eventDetail.event.title,
+          markets: eventDetail.event.markets || [],
+        };
+      }
+    } catch (e) {
+      // Try next ticker
+    }
+  }
+  
+  // Strategy 4: Try series endpoint if it exists
+  try {
+    const seriesResponse = await fetchKalshi(`/series/${slugLower.toUpperCase()}`) as { series: KalshiSeries };
+    if (seriesResponse.series) {
+      // Get events for this series
+      const eventsResponse = await fetchKalshi(`/events?series_ticker=${slugLower.toUpperCase()}&limit=10`) as { events: KalshiEvent[] };
+      const firstEvent = eventsResponse.events?.[0];
+      if (firstEvent) {
+        const eventDetail = await fetchKalshi(`/events/${firstEvent.event_ticker}?with_nested_markets=true`) as { event: KalshiEvent };
+        return {
+          found: true,
+          eventTicker: firstEvent.event_ticker,
+          seriesTicker: slugLower,
+          title: firstEvent.title || seriesResponse.series.title,
+          markets: eventDetail.event?.markets || [],
+        };
+      }
+    }
+  } catch (e) {
+    // Series doesn't exist
+  }
+  
+  return { found: false, markets: [] };
 }
 
 // ============================================================================
@@ -2396,14 +2699,158 @@ async function handleGetEvents(
 async function handleGetEvent(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
-  const eventTicker = args?.eventTicker as string;
+  let eventTicker = args?.eventTicker as string;
   if (!eventTicker) {
     return errorResult("eventTicker is required");
   }
 
   const withNested = args?.withNestedMarkets !== false;
+  let resolvedFrom: string | undefined;
+  
+  // Auto-detect if this looks like a slug and resolve it
+  if (isSlug(eventTicker)) {
+    const resolved = await resolveSlugToEvent(eventTicker);
+    if (resolved.found && resolved.eventTicker) {
+      resolvedFrom = `slug:${eventTicker}`;
+      eventTicker = resolved.eventTicker;
+    } else {
+      return errorResult(
+        `Could not resolve slug '${eventTicker}' to an event. ` +
+        `Try using search_markets({ query: "${eventTicker}" }) to find matching markets, ` +
+        `or use resolve_slug({ slug: "${eventTicker}" }) for detailed resolution info.`
+      );
+    }
+  }
+  
+  try {
+    const response = await fetchKalshi(
+      `/events/${eventTicker}?with_nested_markets=${withNested}`
+    ) as { event: KalshiEvent };
+    const event = response.event;
+
+    const markets = (event.markets || []).map(m => ({
+      ticker: m.ticker,
+      title: m.title || m.yes_sub_title || m.ticker,
+      yesPrice: m.yes_ask || m.last_price || 0,
+      noPrice: m.no_ask || (100 - (m.yes_ask || m.last_price || 50)),
+      volume: m.volume || 0,
+      status: m.status || "open",
+    }));
+
+    const result: Record<string, unknown> = {
+      event: {
+        eventTicker: event.event_ticker,
+        title: event.title || event.event_ticker,
+        category: event.category || "Unknown",
+        status: event.status || "open",
+      },
+      markets,
+      fetchedAt: new Date().toISOString(),
+    };
+    
+    if (resolvedFrom) {
+      result.resolvedFrom = resolvedFrom;
+    }
+
+    return successResult(result);
+  } catch (error) {
+    // If direct fetch fails and we haven't tried slug resolution, try it now
+    if (!resolvedFrom && error instanceof Error && error.message.includes('404')) {
+      const resolved = await resolveSlugToEvent(eventTicker);
+      if (resolved.found && resolved.eventTicker && resolved.eventTicker !== eventTicker) {
+        // Retry with resolved ticker
+        const response = await fetchKalshi(
+          `/events/${resolved.eventTicker}?with_nested_markets=${withNested}`
+        ) as { event: KalshiEvent };
+        const event = response.event;
+
+        const markets = (event.markets || []).map(m => ({
+          ticker: m.ticker,
+          title: m.title || m.yes_sub_title || m.ticker,
+          yesPrice: m.yes_ask || m.last_price || 0,
+          noPrice: m.no_ask || (100 - (m.yes_ask || m.last_price || 50)),
+          volume: m.volume || 0,
+          status: m.status || "open",
+        }));
+
+        return successResult({
+          event: {
+            eventTicker: event.event_ticker,
+            title: event.title || event.event_ticker,
+            category: event.category || "Unknown",
+            status: event.status || "open",
+          },
+          markets,
+          resolvedFrom: `fallback:${eventTicker}`,
+          fetchedAt: new Date().toISOString(),
+        });
+      }
+    }
+    throw error;
+  }
+}
+
+async function handleResolveSlug(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const slug = args?.slug as string;
+  if (!slug) {
+    return errorResult("slug is required");
+  }
+
+  const resolved = await resolveSlugToEvent(slug);
+
+  if (!resolved.found) {
+    return successResult({
+      found: false,
+      slug,
+      hint: `Could not find any markets matching slug '${slug}'. The market may be closed/settled, or the slug may be incorrect. Try search_markets({ query: "${slug}" }) for a broader search.`,
+      fetchedAt: new Date().toISOString(),
+    });
+  }
+
+  const markets = resolved.markets.slice(0, 10).map(m => ({
+    ticker: m.ticker,
+    eventTicker: m.event_ticker,
+    title: m.title || m.yes_sub_title || m.ticker,
+    yesPrice: m.yes_ask || m.last_price || 0,
+    volume24h: m.volume_24h || 0,
+  }));
+
+  return successResult({
+    found: true,
+    slug,
+    eventTicker: resolved.eventTicker,
+    seriesTicker: resolved.seriesTicker,
+    title: resolved.title,
+    markets,
+    url: `https://kalshi.com/markets/${resolved.seriesTicker}`,
+    hint: `Found! Use get_event({ eventTicker: "${resolved.eventTicker}" }) for full details.`,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleGetEventBySlug(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const slug = args?.slug as string;
+  if (!slug) {
+    return errorResult("slug is required");
+  }
+
+  const withNested = args?.withNestedMarkets !== false;
+  const resolved = await resolveSlugToEvent(slug);
+
+  if (!resolved.found || !resolved.eventTicker) {
+    return errorResult(
+      `Could not resolve slug '${slug}' to an event. ` +
+      `Try using search_markets({ query: "${slug}" }) to find matching markets.`
+    );
+  }
+
+  // Fetch the full event details
   const response = await fetchKalshi(
-    `/events/${eventTicker}?with_nested_markets=${withNested}`
+    `/events/${resolved.eventTicker}?with_nested_markets=${withNested}`
   ) as { event: KalshiEvent };
   const event = response.event;
 
@@ -2413,17 +2860,22 @@ async function handleGetEvent(
     yesPrice: m.yes_ask || m.last_price || 0,
     noPrice: m.no_ask || (100 - (m.yes_ask || m.last_price || 50)),
     volume: m.volume || 0,
+    volume24h: m.volume_24h || 0,
+    liquidity: m.liquidity || 0,
     status: m.status || "open",
+    url: `https://kalshi.com/markets/${resolved.seriesTicker}`,
   }));
 
   return successResult({
     event: {
       eventTicker: event.event_ticker,
+      seriesTicker: resolved.seriesTicker,
       title: event.title || event.event_ticker,
       category: event.category || "Unknown",
       status: event.status || "open",
     },
     markets,
+    resolvedFrom: `slug:${slug}`,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -2879,7 +3331,7 @@ app.listen(PORT, () => {
   console.log(`🔌 MCP endpoint: http://localhost:${PORT}/mcp`);
   console.log(`\n📝 ${TOOLS.length} tools available:`);
   console.log("   Tier 1 (Intelligence): 7 tools");
-  console.log("   Tier 2 (Raw Data): 7 tools");
+  console.log("   Tier 2 (Raw Data): 9 tools (includes resolve_slug, get_event_by_slug)");
   console.log("   Discovery Layer: 4 tools");
 });
 
