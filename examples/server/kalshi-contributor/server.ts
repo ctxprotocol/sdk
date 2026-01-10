@@ -3351,38 +3351,115 @@ async function handleSearchMarkets(
 
   const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by', 'rule', 'market', 'markets']);
   
-  // Synonym expansion for common prediction market terms
-  const synonyms: Record<string, string[]> = {
-    'trump': ['trump', 'djt', 'djtvo', 'donald'],
-    'supreme': ['supreme', 'scotus'],
-    'court': ['court', 'scotus', 'courts'],
-    'bitcoin': ['bitcoin', 'btc'],
-    'ethereum': ['ethereum', 'eth'],
-  };
-  
-  // Parse query and expand with synonyms
+  // Parse query words
   let queryWords = query ? query.toLowerCase()
     .replace(/[^a-z0-9\s]/g, '')
     .split(/\s+/)
     .filter(word => word.length > 2 && !stopWords.has(word)) : [];
-  
-  // Expand query words with synonyms
-  const expandedQueryWords: string[] = [];
-  for (const word of queryWords) {
-    expandedQueryWords.push(word);
-    if (synonyms[word]) {
-      expandedQueryWords.push(...synonyms[word]);
-    }
-  }
-  queryWords = [...new Set(expandedQueryWords)];
 
-  // STRATEGY 1: Search the /series endpoint (contains ALL 7,883+ series)
-  // Then fetch EVENT details for better titles (event titles are more descriptive than series titles)
+  // STRATEGY 1: INTELLIGENT HIERARCHICAL SEARCH WITH DYNAMIC TAG MATCHING
+  // Fetch Kalshi's actual categories/tags and match query words dynamically
   if (query && queryWords.length > 0) {
     try {
-      // Fetch all series
-      const seriesResponse = await fetchKalshi(`/series?limit=2000`) as { series: KalshiSeries[] };
-      const allSeries = seriesResponse.series || [];
+      // Step 1: Dynamically fetch Kalshi's categories and tags (cached in production)
+      let tagsByCategory: Record<string, string[]> = {};
+      try {
+        const tagsResponse = await fetchKalshi('/search/tags_by_categories') as { tags_by_categories: Record<string, string[]> };
+        tagsByCategory = tagsResponse.tags_by_categories || {};
+      } catch {
+        console.warn('[Kalshi Search] Could not fetch tags, using fallback');
+      }
+      
+      // Step 2: Build reverse index: word fragments → { category, tag }
+      // e.g., "scotus" → { category: "Politics", tag: "SCOTUS & courts" }
+      const wordToTagMap: Map<string, { category: string; tag: string }> = new Map();
+      
+      for (const [category, tags] of Object.entries(tagsByCategory)) {
+        for (const tag of tags) {
+          // Extract words from tag for matching
+          const tagWords = tag.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+          for (const word of tagWords) {
+            wordToTagMap.set(word, { category, tag });
+          }
+          // Also map the full tag (lowercased, cleaned)
+          const cleanTag = tag.toLowerCase().replace(/[^a-z0-9]/g, '');
+          wordToTagMap.set(cleanTag, { category, tag });
+        }
+      }
+      
+      // Step 3: Also add common abbreviation mappings (these ARE robust - they're standard abbreviations)
+      const abbreviations: Record<string, string[]> = {
+        'trump': ['trump', 'djt', 'donald'],
+        'bitcoin': ['btc'],
+        'ethereum': ['eth'],
+        'scotus': ['supreme', 'court'],
+      };
+      
+      // Expand query words with abbreviations
+      const expandedQueryWords: string[] = [...queryWords];
+      for (const word of queryWords) {
+        // Check if this word is an abbreviation that maps to a tag word
+        for (const [tagWord, abbrevs] of Object.entries(abbreviations)) {
+          if (abbrevs.includes(word) && !expandedQueryWords.includes(tagWord)) {
+            expandedQueryWords.push(tagWord);
+          }
+          if (word === tagWord) {
+            expandedQueryWords.push(...abbrevs.filter(a => !expandedQueryWords.includes(a)));
+          }
+        }
+      }
+      queryWords = [...new Set(expandedQueryWords)];
+      
+      // Step 4: Match query words to categories/tags and count matches per tag
+      let detectedCategory: string | null = null;
+      const tagMatchCounts: Map<string, { category: string; count: number }> = new Map();
+      
+      for (const word of queryWords) {
+        const match = wordToTagMap.get(word);
+        if (match) {
+          if (!detectedCategory) detectedCategory = match.category;
+          const existing = tagMatchCounts.get(match.tag);
+          if (existing) {
+            existing.count++;
+          } else {
+            tagMatchCounts.set(match.tag, { category: match.category, count: 1 });
+          }
+        }
+      }
+      
+      // Pick the tag with the MOST query word matches (most specific)
+      let primaryTag: string | null = null;
+      let maxCount = 0;
+      for (const [tag, { count }] of tagMatchCounts.entries()) {
+        if (count > maxCount) {
+          maxCount = count;
+          primaryTag = tag;
+        }
+      }
+      
+      // Step 5: Build server-side filtered query
+      let seriesEndpoint = '/series?limit=500';
+      if (detectedCategory) {
+        seriesEndpoint += `&category=${encodeURIComponent(detectedCategory)}`;
+      }
+      if (primaryTag) {
+        seriesEndpoint += `&tags=${encodeURIComponent(primaryTag)}`;
+      }
+      
+      console.log(`[Kalshi Search] Dynamic tag match - Category: ${detectedCategory}, Primary Tag: ${primaryTag} (${maxCount} matches)`);
+      console.log(`[Kalshi Search] All matched tags: ${[...tagMatchCounts.keys()].join(', ')}`);
+      console.log(`[Kalshi Search] Using endpoint: ${seriesEndpoint}`);
+      
+      // Step 6: Fetch filtered series (server-side filtering first!)
+      const seriesResponse = await fetchKalshi(seriesEndpoint) as { series: KalshiSeries[] };
+      let allSeries = seriesResponse.series || [];
+      
+      // If no results with filters, fall back to broader search
+      if (allSeries.length === 0 && (detectedCategory || primaryTag)) {
+        console.log('[Kalshi Search] No results with filters, falling back to broader search');
+        const fallbackResponse = await fetchKalshi('/series?limit=2000') as { series: KalshiSeries[] };
+        allSeries = fallbackResponse.series || [];
+      }
       
       // Initial filter - any query word matches series title/ticker/tags
       // Also pre-score for better initial ranking
