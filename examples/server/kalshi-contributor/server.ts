@@ -664,41 +664,19 @@ PLATFORM COMPATIBILITY:
     name: "search_on_polymarket",
     description: `🔗 CROSS-PLATFORM SEARCH: Find equivalent Polymarket markets for a Kalshi market.
 
-USE THIS when you have a Kalshi market and need to find the same market on Polymarket for:
-  - Price comparison / arbitrage detection
-  - Cross-platform probability analysis  
-  - Finding additional liquidity
+✅ Uses Polymarket's official /public-search API for reliable server-side text search.
 
 WORKFLOW:
   1. You have a Kalshi market (e.g., from get_event_by_slug)
-  2. Call: search_on_polymarket({ keywords: "tariffs revenue 2025" })
-  3. Returns matching Polymarket markets with prices
+  2. Call: search_on_polymarket({ keywords: "supreme court trump tariffs" })
+  3. Returns matching Polymarket markets with prices and rules
 
-EXAMPLE INPUT:
-  { "keywords": "tariffs revenue 2025" }
+PRICE COMPARISON:
+  - Polymarket: decimals (0.28 = 28%)
+  - Kalshi: cents (28 = 28%)
 
-EXAMPLE OUTPUT:
-  {
-    "searchedFor": { "keywords": "tariffs revenue 2025", "kalshiTicker": null },
-    "polymarketResults": [
-      { 
-        "title": "How much revenue will the U.S. raise from tariffs in 2025?", 
-        "slug": "how-much-revenue-will-the-us-raise-from-tariffs-in-2025", 
-        "yesPrice": 0.28, 
-        "matchScore": 1.0,
-        "rules": "This market will resolve to Yes if..." 
-      }
-    ],
-    "hint": "Found 2 potential matches on Polymarket...",
-    "fetchedAt": "2025-01-10T..."
-  }
-
-NEXT STEPS after finding match:
-  - ⚠️ CRITICAL: Compare the 'rules' field with Kalshi's rules to ensure YES/NO mean the same thing!
-  - Use Polymarket MCP tools (get_event_by_slug, search_markets) with the 'slug' for deeper analysis
-  - Compare prices: Polymarket uses decimals (0.28 = 28%), Kalshi uses cents (28 = 28%)
-
-⚠️ IMPORTANT: Always compare resolution rules before calculating arbitrage! Markets may define YES/NO differently.`,
+⚠️ CRITICAL: Compare 'rules' and 'yesOutcomeMeans' fields!
+Markets may define YES/NO differently - verify before calculating arbitrage.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -740,16 +718,19 @@ NEXT STEPS after finding match:
               title: { type: "string", description: "Polymarket market title" },
               slug: { type: "string", description: "Use this with Polymarket's get_event_by_slug tool" },
               question: { type: "string" },
-              yesPrice: { type: "number", description: "Current YES price (0-1 scale, compare with Kalshi)" },
+              yesPrice: { type: "number", description: "Current YES price (0-1 scale, e.g., 0.25 = 25%)" },
               volume: { type: "number" },
               liquidity: { type: "number" },
               url: { type: "string", description: "Direct Polymarket URL" },
               matchScore: { type: "number", description: "Keyword match score (higher = better match)" },
-              rules: { type: "string", description: "⚠️ CRITICAL: Resolution rules - compare with Kalshi rules before calculating arbitrage!" },
+              rules: { type: "string", description: "Full resolution rules text" },
+              yesOutcomeMeans: { type: "string", description: "⚠️ CRITICAL: What does buying YES mean? Compare with Kalshi!" },
+              noOutcomeMeans: { type: "string", description: "⚠️ CRITICAL: What does buying NO mean? Compare with Kalshi!" },
             },
           },
         },
         hint: { type: "string" },
+        comparisonNote: { type: "string", description: "⚠️ MUST READ: Step-by-step guide for comparing outcomes across platforms" },
         fetchedAt: { type: "string" },
       },
       required: ["polymarketResults"],
@@ -1098,28 +1079,19 @@ The ticker field from API responses is the EXACT string to use. Copy it exactly,
     name: "search_markets",
     description: `Search for Kalshi markets by keyword or filters.
 
-⚠️ CRITICAL: Use EXACT ticker values from results. NEVER modify or construct tickers!
+⚠️ API LIMITATION: Kalshi's API does NOT support server-side text search.
+This tool fetches recent markets and filters client-side by your keywords.
+Some active markets may not appear in listings.
 
-EXAMPLE INPUT:
-  { "query": "trump tariffs" }
-
-EXAMPLE OUTPUT:
-  {
-    "results": [
-      { "ticker": "KXDJTVOSTARIFFS", "title": "Will the Supreme Court...", "yesPrice": 32 }
-    ]
-  }
-
-HOW TO USE RESULTS:
-  - To get more details: get_market({ ticker: "KXDJTVOSTARIFFS" })  ✅
-  - DON'T modify ticker: get_market({ ticker: "KXDJTVOSTARIFFS-001" })  ❌
-
-🔍 URL SLUG SUPPORT: When users share Kalshi URLs, search by the slug:
+BEST PRACTICE: If you have a Kalshi URL, use get_event_by_slug instead:
   - URL: https://kalshi.com/markets/kxdjtvostariffs/tariffs-case
-  - Search: search_markets({ query: "kxdjtvostariffs" })
-  - Or better: get_event_by_slug({ slug: "kxdjtvostariffs" })
+  - Use: get_event_by_slug({ slug: "kxdjtvostariffs" })  ← MORE RELIABLE
 
-🕐 STATUS OPTIONS:
+⚠️ CRITICAL: Use EXACT ticker values from results. NEVER modify tickers!
+  - Correct: get_market({ ticker: "KXDJTVOSTARIFFS" })  ✅
+  - Wrong: get_market({ ticker: "KXDJTVOSTARIFFS-001" })  ❌
+
+STATUS OPTIONS:
   - 'open' (default): Active markets currently trading
   - 'settled': Resolved markets (for historical questions)
   - 'all': Both active and historical`,
@@ -2819,6 +2791,63 @@ async function handleGetComparableMarkets(
 }
 
 // Cross-platform search on Polymarket
+// Helper function to extract YES/NO outcome meanings from resolution rules
+function extractOutcomeMeanings(rules: string, marketTitle: string): { yesOutcomeMeans: string; noOutcomeMeans: string } {
+  const rulesLower = rules.toLowerCase();
+  const titleLower = marketTitle.toLowerCase();
+  
+  // Default fallback based on title
+  let yesOutcomeMeans = `The event described in "${marketTitle}" occurs`;
+  let noOutcomeMeans = `The event described in "${marketTitle}" does NOT occur`;
+  
+  // Pattern 1: "resolve to Yes if..." / "resolve to No if..."
+  const yesIfMatch = rules.match(/resolves?\s+to\s+["']?yes["']?\s+if\s+([^.]+)/i);
+  const noIfMatch = rules.match(/resolves?\s+to\s+["']?no["']?\s+if\s+([^.]+)/i);
+  
+  if (yesIfMatch) {
+    yesOutcomeMeans = yesIfMatch[1].trim().replace(/[,;]$/, '');
+    // Capitalize first letter
+    yesOutcomeMeans = yesOutcomeMeans.charAt(0).toUpperCase() + yesOutcomeMeans.slice(1);
+  }
+  if (noIfMatch) {
+    noOutcomeMeans = noIfMatch[1].trim().replace(/[,;]$/, '');
+    noOutcomeMeans = noOutcomeMeans.charAt(0).toUpperCase() + noOutcomeMeans.slice(1);
+  }
+  
+  // Pattern 2: "This market will resolve to 'Yes' if..."
+  const willResolveYes = rules.match(/will\s+resolve\s+to\s+["']?yes["']?\s+if\s+([^.]+)/i);
+  if (willResolveYes && !yesIfMatch) {
+    yesOutcomeMeans = willResolveYes[1].trim().replace(/[,;]$/, '');
+    yesOutcomeMeans = yesOutcomeMeans.charAt(0).toUpperCase() + yesOutcomeMeans.slice(1);
+  }
+  
+  // Pattern 3: Look for "in favor of" patterns
+  if (rulesLower.includes('in favor of') || titleLower.includes('in favor of')) {
+    const favorMatch = rules.match(/in\s+favor\s+of\s+([^,.']+)/i);
+    if (favorMatch) {
+      const subject = favorMatch[1].trim();
+      yesOutcomeMeans = `Ruling/decision is IN FAVOR OF ${subject}`;
+      noOutcomeMeans = `Ruling/decision is AGAINST ${subject}`;
+    }
+  }
+  
+  // Pattern 4: "reverses, vacates, or otherwise overturns" - legal patterns
+  if (rulesLower.includes('reverses') || rulesLower.includes('overturns') || rulesLower.includes('vacates')) {
+    yesOutcomeMeans = 'Court reverses/overturns the lower court decision (ruling FAVORS the appellant)';
+    noOutcomeMeans = 'Court upholds/affirms the lower court decision (ruling AGAINST the appellant)';
+  }
+  
+  // Truncate if too long
+  if (yesOutcomeMeans.length > 150) {
+    yesOutcomeMeans = yesOutcomeMeans.substring(0, 147) + '...';
+  }
+  if (noOutcomeMeans.length > 150) {
+    noOutcomeMeans = noOutcomeMeans.substring(0, 147) + '...';
+  }
+  
+  return { yesOutcomeMeans, noOutcomeMeans };
+}
+
 async function handleSearchOnPolymarket(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
@@ -2855,159 +2884,109 @@ async function handleSearchOnPolymarket(
       liquidity: number;
       url: string;
       matchScore: number;
+      rules: string;
+      yesOutcomeMeans: string;
+      noOutcomeMeans: string;
     }> = [];
 
-    // STRATEGY 1: Generate potential slugs and try direct lookups
-    // This is critical because Polymarket's events listing doesn't include all markets!
-    const potentialSlugs = [
-      // Try common slug patterns
-      `will-${queryWords.slice(0, 4).join('-')}`,
-      queryWords.slice(0, 5).join('-'),
-      `${queryWords[0]}-${queryWords.slice(1).join('-')}`,
-    ];
-    
-    // If we have keywords like "supreme court trump tariffs", try specific patterns
-    if (queryWords.includes('supreme') && queryWords.includes('court')) {
-      potentialSlugs.push('will-the-supreme-court-rule-in-favor-of-trumps-tariffs');
-      potentialSlugs.push('supreme-court-rules-in-favor-of-trumps-tariffs');
-    }
-    if (queryWords.includes('tariff') || queryWords.includes('tariffs')) {
-      potentialSlugs.push('will-the-supreme-court-rule-in-favor-of-trumps-tariffs');
-      potentialSlugs.push('how-much-revenue-will-the-us-raise-from-tariffs-in-2025');
-    }
-
-    // Try direct slug lookups
-    for (const slug of potentialSlugs) {
-      try {
-        const slugUrl = `https://gamma-api.polymarket.com/events/slug/${slug}`;
-        const slugResponse = await fetch(slugUrl, {
-          headers: { 'Accept': 'application/json', 'User-Agent': 'Kalshi-MCP-Server/1.0' },
-        });
-        
-        if (slugResponse.ok) {
-          const event = await slugResponse.json() as {
-            title: string;
-            slug: string;
-            description?: string;
-            volume?: number;
-            liquidity?: number;
-            markets?: Array<{ question?: string; description?: string; outcomePrices?: string; volume?: number; liquidity?: number; }>;
-          };
-          
-          // Calculate match score
-          const searchText = (event.title + ' ' + (event.description || '')).toLowerCase();
-          let matchCount = 0;
-          for (const word of queryWords) {
-            if (searchText.includes(word)) matchCount++;
-          }
-          const matchScore = queryWords.length > 0 ? matchCount / queryWords.length : 0;
-          
-          if (matchScore >= 0.3 && !allResults.find(r => r.slug === event.slug)) {
-            let yesPrice = 0;
-            let volume = event.volume || 0;
-            let liquidity = event.liquidity || 0;
-            let question = event.title;
-            // CRITICAL: Get resolution rules for cross-platform comparison
-            let rules = event.description || '';
-            
-            if (event.markets && event.markets.length > 0) {
-              const firstMarket = event.markets[0];
-              question = firstMarket.question || event.title;
-              volume = firstMarket.volume || volume;
-              liquidity = firstMarket.liquidity || liquidity;
-              // Market-level description often has more detailed rules
-              rules = firstMarket.description || event.description || '';
-              if (firstMarket.outcomePrices) {
-                try {
-                  const prices = JSON.parse(firstMarket.outcomePrices);
-                  yesPrice = parseFloat(prices[0]) || 0;
-                } catch {}
-              }
-            }
-            
-            allResults.push({
-              title: event.title,
-              slug: event.slug,
-              question,
-              yesPrice: Math.round(yesPrice * 100) / 100,
-              volume,
-              liquidity,
-              url: `https://polymarket.com/event/${event.slug}`,
-              matchScore: Math.round(matchScore * 100) / 100,
-              rules, // Resolution rules for comparing with Kalshi
-            });
-          }
-        }
-      } catch {
-        // Ignore individual slug lookup failures
-      }
-    }
-
-    // STRATEGY 2: Fall back to events listing (may not have all markets)
-    const polymarketUrl = `https://gamma-api.polymarket.com/events?closed=false&limit=${limit * 5}`;
-    const response = await fetch(polymarketUrl, {
+    // Use Polymarket's official /public-search API for server-side text search
+    const searchUrl = `https://gamma-api.polymarket.com/public-search?q=${encodeURIComponent(searchQuery)}&limit_per_type=${limit * 2}&events_status=active`;
+    const response = await fetch(searchUrl, {
       headers: { 'Accept': 'application/json', 'User-Agent': 'Kalshi-MCP-Server/1.0' },
     });
 
     if (response.ok) {
-      const events = await response.json() as Array<{
-        id: string; slug: string; title: string; description?: string;
-        markets?: Array<{ question?: string; description?: string; outcomePrices?: string; volume?: number; liquidity?: number; }>;
-      }>;
+      const searchData = await response.json() as { 
+        events?: Array<{
+          id: string; 
+          slug: string; 
+          title: string; 
+          description?: string;
+          volume?: number;
+          liquidity?: number;
+          markets?: Array<{ 
+            question?: string; 
+            description?: string; 
+            outcomePrices?: string; 
+            volume?: number; 
+            liquidity?: number; 
+          }>;
+        }>; 
+      };
 
-      for (const event of events) {
-        if (allResults.find(r => r.slug === event.slug)) continue; // Skip duplicates
-        
+      for (const event of (searchData.events || [])) {
+        // Calculate match score for sorting
         const searchText = (event.title + ' ' + (event.description || '')).toLowerCase();
         let matchCount = 0;
         for (const word of queryWords) {
           if (searchText.includes(word)) matchCount++;
         }
-        const matchScore = queryWords.length > 0 ? matchCount / queryWords.length : 0;
+        const matchScore = queryWords.length > 0 ? matchCount / queryWords.length : 1;
 
-        if (matchScore > 0.2) {
-          let yesPrice = 0, volume = 0, liquidity = 0, question = event.title;
-          let rules = event.description || '';
-          if (event.markets && event.markets.length > 0) {
-            const firstMarket = event.markets[0];
-            rules = firstMarket.description || event.description || '';
-            question = firstMarket.question || event.title;
-            volume = firstMarket.volume || 0;
-            liquidity = firstMarket.liquidity || 0;
-            if (firstMarket.outcomePrices) {
-              try {
-                const prices = JSON.parse(firstMarket.outcomePrices);
-                yesPrice = parseFloat(prices[0]) || 0;
-              } catch {}
-            }
+        let yesPrice = 0;
+        let volume = event.volume || 0;
+        let liquidity = event.liquidity || 0;
+        let question = event.title;
+        let rules = event.description || '';
+        
+        if (event.markets && event.markets.length > 0) {
+          const firstMarket = event.markets[0];
+          question = firstMarket.question || event.title;
+          volume = firstMarket.volume || volume;
+          liquidity = firstMarket.liquidity || liquidity;
+          rules = firstMarket.description || event.description || '';
+          if (firstMarket.outcomePrices) {
+            try {
+              const prices = JSON.parse(firstMarket.outcomePrices);
+              yesPrice = parseFloat(prices[0]) || 0;
+            } catch {}
           }
-          allResults.push({
-            title: event.title, slug: event.slug, question,
-            yesPrice: Math.round(yesPrice * 100) / 100, volume, liquidity,
-            url: `https://polymarket.com/event/${event.slug}`,
-            matchScore: Math.round(matchScore * 100) / 100,
-            rules, // Resolution rules for comparing with Kalshi
-          });
         }
+        
+        const { yesOutcomeMeans, noOutcomeMeans } = extractOutcomeMeanings(rules, event.title);
+        allResults.push({
+          title: event.title,
+          slug: event.slug,
+          question,
+          yesPrice: Math.round(yesPrice * 100) / 100,
+          volume,
+          liquidity,
+          url: `https://polymarket.com/event/${event.slug}`,
+          matchScore: Math.round(matchScore * 100) / 100,
+          rules,
+          yesOutcomeMeans,
+          noOutcomeMeans,
+        });
       }
     }
 
-    // Sort and limit results
+    // Sort by match score and volume
     const scoredResults = allResults
       .sort((a, b) => b.matchScore - a.matchScore || b.volume - a.volume)
       .slice(0, limit);
 
     const hint = scoredResults.length > 0
-      ? `Found ${scoredResults.length} potential matches on Polymarket. ⚠️ IMPORTANT: Compare 'rules' field with Kalshi rules before calculating arbitrage - ensure YES/NO outcomes mean the same thing!`
-      : `No strong matches found on Polymarket for "${searchQuery}". Try different keywords or use get_event_by_slug with a known slug.`;
+      ? `✅ Found ${scoredResults.length} matches on Polymarket via server-side search. ⚠️ CRITICAL: Check 'yesOutcomeMeans' and 'noOutcomeMeans' fields to ensure you're comparing equivalent outcomes!`
+      : `No matches found on Polymarket for "${searchQuery}". Try different keywords.`;
+
+    // Build comparison guidance
+    const comparisonNote = scoredResults.length > 0 
+      ? `⚠️ CROSS-PLATFORM COMPARISON GUIDE:
+1. Polymarket prices are decimals (0.25 = 25%), Kalshi prices are cents (25 = 25%)
+2. READ 'yesOutcomeMeans' for each market - they may be INVERTED!
+3. Example: If Polymarket YES means "Court rules AGAINST" and Kalshi YES means "Court rules IN FAVOR", then Polymarket NO ≈ Kalshi YES
+4. Only compare prices AFTER confirming outcomes align!`
+      : null;
 
     return successResult({
       searchedFor: {
         keywords: searchQuery,
         kalshiTicker: kalshiTicker || null,
       },
+      searchMethod: "public-search API",
       polymarketResults: scoredResults,
       hint,
+      comparisonNote,
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {
@@ -3370,32 +3349,9 @@ async function handleSearchMarkets(
   const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
   let markets = response.markets || [];
 
-  // CRITICAL: Fetch known important political events that may not appear in standard listings
-  // The 2028 Presidential election (KXPRESPERSON-28) is active but not returned by /markets?status=open
-  const importantEvents = ["KXPRESPERSON-28", "POWER-28"];
-  const shouldFetchPolitical = !category || 
-    category.toLowerCase() === "politics" ||
-    (query && (query.toLowerCase().includes("president") || 
-               query.toLowerCase().includes("2028") ||
-               query.toLowerCase().includes("vance") ||
-               query.toLowerCase().includes("senate")));
-  
-  if (shouldFetchPolitical && status !== "settled") {
-    for (const eventTicker of importantEvents) {
-      try {
-        const eventDetail = await fetchKalshi(`/events/${eventTicker}`) as { event: KalshiEvent; markets?: KalshiMarket[] };
-        const eventMarkets = eventDetail.markets || [];
-        const existingTickers = new Set(markets.map(m => m.ticker));
-        for (const m of eventMarkets) {
-          if (!existingTickers.has(m.ticker)) {
-            markets.push(m);
-          }
-        }
-      } catch (e) {
-        // Event may not exist, ignore
-      }
-    }
-  }
+  // Note: Kalshi's API may not return all active markets in standard listings.
+  // However, we avoid hardcoding specific event tickers as they change over time.
+  // If users need specific markets, they should use get_event_by_slug with the URL slug.
 
   // Filter by query if provided - using WORD-BY-WORD matching (any word matches)
   // This is critical for queries like "Senate control" to find "Senate" OR "control"

@@ -1130,15 +1130,18 @@ NEXT STEPS after finding match:
               title: { type: "string", description: "Kalshi market title" },
               ticker: { type: "string", description: "Use this with Kalshi's get_market or get_event tools" },
               eventTicker: { type: "string" },
-              yesPrice: { type: "number", description: "Current YES price in cents (29 = 29%, compare with Polymarket * 100)" },
+              yesPrice: { type: "number", description: "Current YES price in cents (29 = 29%)" },
               volume24h: { type: "number" },
               url: { type: "string", description: "Direct Kalshi URL" },
               matchScore: { type: "number", description: "Keyword match score (higher = better match)" },
-              rules: { type: "string", description: "⚠️ CRITICAL: Resolution rules - compare with Polymarket rules before calculating arbitrage!" },
+              rules: { type: "string", description: "Full resolution rules text" },
+              yesOutcomeMeans: { type: "string", description: "⚠️ CRITICAL: What does buying YES mean? Compare with Polymarket!" },
+              noOutcomeMeans: { type: "string", description: "⚠️ CRITICAL: What does buying NO mean? Compare with Polymarket!" },
             },
           },
         },
         hint: { type: "string" },
+        comparisonNote: { type: "string", description: "⚠️ MUST READ: Step-by-step guide for comparing outcomes across platforms" },
         fetchedAt: { type: "string" },
       },
       required: ["kalshiResults"],
@@ -1392,34 +1395,173 @@ NEXT STEPS after finding match:
     },
   },
 
+  // ==================== NEW BATCH/PARAMETER TOOLS ====================
+  {
+    name: "get_batch_orderbooks",
+    description: `Get orderbooks for MULTIPLE tokens in a single request. Much faster than calling get_orderbook multiple times.
+
+USE THIS when comparing prices across multiple markets or scanning for arbitrage.
+
+Returns bids/asks arrays for each token with best prices and depth.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tokenIds: {
+          type: "array",
+          items: { type: "string" },
+          description: "Array of token IDs to get orderbooks for (max 20)",
+        },
+      },
+      required: ["tokenIds"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        orderbooks: {
+          type: "object",
+          description: "Map of token_id to orderbook data",
+          additionalProperties: {
+            type: "object",
+            properties: {
+              bestBid: { type: "number" },
+              bestAsk: { type: "number" },
+              midpoint: { type: "number" },
+              spread: { type: "number" },
+              bidDepth: { type: "number", description: "Total size at best bid" },
+              askDepth: { type: "number", description: "Total size at best ask" },
+              bids: { type: "array", description: "Top 5 bids" },
+              asks: { type: "array", description: "Top 5 asks" },
+            },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["orderbooks"],
+    },
+  },
+
+  {
+    name: "get_market_parameters",
+    description: `Get trading parameters for a market: tick size, fee rate, and negative risk setting.
+
+- tick_size: Minimum price increment (e.g., 0.01 = 1 cent)
+- fee_rate_bps: Trading fee in basis points (e.g., 100 = 1%)
+- neg_risk: Whether market uses negative risk model`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tokenId: {
+          type: "string",
+          description: "Token ID to get parameters for",
+        },
+      },
+      required: ["tokenId"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        tokenId: { type: "string" },
+        tickSize: { type: "string", description: "Minimum price increment" },
+        feeRateBps: { type: "number", description: "Fee rate in basis points" },
+        negRisk: { type: "boolean", description: "Whether market uses negative risk" },
+        minOrderSize: { type: "number", description: "Minimum order size" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["tokenId", "tickSize"],
+    },
+  },
+
+  {
+    name: "get_midpoints",
+    description: `Get midpoint prices for multiple tokens at once. Midpoint = (best_bid + best_ask) / 2.
+
+Faster than fetching full orderbooks when you only need the mid price.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tokenIds: {
+          type: "array",
+          items: { type: "string" },
+          description: "Array of token IDs (max 50)",
+        },
+      },
+      required: ["tokenIds"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        midpoints: {
+          type: "object",
+          description: "Map of token_id to midpoint price (0-1 scale)",
+          additionalProperties: { type: "number" },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["midpoints"],
+    },
+  },
+
+  {
+    name: "get_spreads",
+    description: `Get bid-ask spreads for multiple tokens at once. Spread = best_ask - best_bid.
+
+Useful for identifying liquid vs illiquid markets. Wide spreads (>0.05) indicate low liquidity.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tokenIds: {
+          type: "array",
+          items: { type: "string" },
+          description: "Array of token IDs (max 50)",
+        },
+      },
+      required: ["tokenIds"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        spreads: {
+          type: "object",
+          description: "Map of token_id to spread info",
+          additionalProperties: {
+            type: "object",
+            properties: {
+              spread: { type: "number", description: "Absolute spread (ask - bid)" },
+              spreadPercent: { type: "number", description: "Spread as % of midpoint" },
+              bestBid: { type: "number" },
+              bestAsk: { type: "number" },
+            },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["spreads"],
+    },
+  },
+  // ==================== END NEW BATCH/PARAMETER TOOLS ====================
+
   {
     name: "search_markets",
     description: `Search for Polymarket prediction markets by keyword or category.
 
-⚠️ IMPORTANT FOR LLMs: This tool distinguishes between LIVE and RESOLVED markets:
-- LIVE markets: Still trading, outcome not yet determined. Users can place bets on these.
-- RESOLVED markets: Already finished, outcome determined. For historical reference only - cannot trade.
+✅ Uses Polymarket's official /public-search API for reliable server-side text search.
 
-By default, only LIVE (tradeable) markets are returned. Use status='resolved' for finished markets or status='all' for both.
+MARKET STATUS:
+- LIVE markets: Still trading, outcome not yet determined
+- RESOLVED markets: Already finished, for historical reference only
 
-CROSS-PLATFORM TIP: When searching for multiple topics like "NBA NFL MLB", use matchMode='any' (default) 
-to find markets matching ANY of those terms, not all of them.
+By default, only LIVE markets are returned. Use status='resolved' for finished markets.
 
 Each result includes:
-- url: Direct link to the market on Polymarket (always use this, never construct URLs)
-- status: Either "live" (tradeable) or "resolved" (finished)
-- endDate: When the market resolves/resolved`,
+- url: Direct link to the market (always use this, never construct URLs)
+- slug: Use with get_event_by_slug for detailed market data
+- status: Either "live" or "resolved"`,
     inputSchema: {
       type: "object" as const,
       properties: {
         query: {
           type: "string",
-          description: "Search query (searches title and description). Multiple words are searched based on matchMode.",
-        },
-        matchMode: {
-          type: "string",
-          enum: ["any", "all"],
-          description: "How to match multiple words: 'any' (default) = match markets containing ANY word (good for 'NBA NFL MLB'), 'all' = require ALL words to match (good for 'Bitcoin price 2025')",
+          description: "Search query (searches title and description). Natural language queries work well (e.g., 'supreme court trump tariffs').",
         },
         category: {
           type: "string",
@@ -2033,6 +2175,14 @@ server.setRequestHandler(
           return await handleGetPrices(args);
         case "get_price_history":
           return await handleGetPriceHistory(args);
+        case "get_batch_orderbooks":
+          return await handleGetBatchOrderbooks(args);
+        case "get_market_parameters":
+          return await handleGetMarketParameters(args);
+        case "get_midpoints":
+          return await handleGetMidpoints(args);
+        case "get_spreads":
+          return await handleGetSpreads(args);
         case "search_markets":
           return await handleSearchMarkets(args);
         case "get_market_trades":
@@ -4971,6 +5121,62 @@ async function handleGetComparableMarkets(
   }
 }
 
+// Helper function to extract YES/NO outcome meanings from Kalshi resolution rules
+function extractKalshiOutcomeMeanings(rules: string, marketTitle: string): { yesOutcomeMeans: string; noOutcomeMeans: string } {
+  const rulesLower = rules.toLowerCase();
+  const titleLower = marketTitle.toLowerCase();
+  
+  // Default fallback based on title
+  let yesOutcomeMeans = `The event described in "${marketTitle}" occurs`;
+  let noOutcomeMeans = `The event described in "${marketTitle}" does NOT occur`;
+  
+  // Pattern 1: "resolve to Yes if..." / "resolves Yes if..."
+  const yesIfMatch = rules.match(/resolves?\s+(?:to\s+)?["']?yes["']?\s+if\s+([^.]+)/i);
+  const noIfMatch = rules.match(/resolves?\s+(?:to\s+)?["']?no["']?\s+if\s+([^.]+)/i);
+  
+  if (yesIfMatch) {
+    yesOutcomeMeans = yesIfMatch[1].trim().replace(/[,;]$/, '');
+    yesOutcomeMeans = yesOutcomeMeans.charAt(0).toUpperCase() + yesOutcomeMeans.slice(1);
+  }
+  if (noIfMatch) {
+    noOutcomeMeans = noIfMatch[1].trim().replace(/[,;]$/, '');
+    noOutcomeMeans = noOutcomeMeans.charAt(0).toUpperCase() + noOutcomeMeans.slice(1);
+  }
+  
+  // Pattern 2: Look for "in favor of" patterns
+  if (rulesLower.includes('in favor of') || titleLower.includes('in favor of')) {
+    const favorMatch = rules.match(/in\s+favor\s+of\s+([^,.']+)/i);
+    if (favorMatch) {
+      const subject = favorMatch[1].trim();
+      yesOutcomeMeans = `Ruling/decision is IN FAVOR OF ${subject}`;
+      noOutcomeMeans = `Ruling/decision is AGAINST ${subject}`;
+    }
+  }
+  
+  // Pattern 3: "reverses, vacates, or otherwise overturns" - legal patterns (Kalshi style)
+  if (rulesLower.includes('reverses') || rulesLower.includes('overturns') || rulesLower.includes('vacates')) {
+    yesOutcomeMeans = 'Court rules IN FAVOR of the party seeking to overturn (Trump wins tariffs case)';
+    noOutcomeMeans = 'Court rules AGAINST the party seeking to overturn (Trump loses tariffs case)';
+  }
+  
+  // Pattern 4: Look for "If X, then Yes" patterns
+  const ifThenMatch = rules.match(/if\s+([^,]+),\s+(?:the\s+)?market\s+(?:will\s+)?resolves?\s+(?:to\s+)?yes/i);
+  if (ifThenMatch && !yesIfMatch) {
+    yesOutcomeMeans = ifThenMatch[1].trim();
+    yesOutcomeMeans = yesOutcomeMeans.charAt(0).toUpperCase() + yesOutcomeMeans.slice(1);
+  }
+  
+  // Truncate if too long
+  if (yesOutcomeMeans.length > 150) {
+    yesOutcomeMeans = yesOutcomeMeans.substring(0, 147) + '...';
+  }
+  if (noOutcomeMeans.length > 150) {
+    noOutcomeMeans = noOutcomeMeans.substring(0, 147) + '...';
+  }
+  
+  return { yesOutcomeMeans, noOutcomeMeans };
+}
+
 // Cross-platform search on Kalshi
 async function handleSearchOnKalshi(
   args: Record<string, unknown> | undefined
@@ -5058,6 +5264,8 @@ async function handleSearchOnKalshi(
         url: `https://kalshi.com/markets/${slug}`,
         matchScore: Math.round(matchScore * 100) / 100,
         rules: '', // Will be fetched below for top matches
+        yesOutcomeMeans: '', // Will be computed after fetching rules
+        noOutcomeMeans: '',  // Will be computed after fetching rules
       };
     })
     .filter(r => r.matchScore > 0.2) // At least 20% keyword match
@@ -5066,7 +5274,7 @@ async function handleSearchOnKalshi(
 
     // Fetch rules for top matches (rules_primary is only in individual market endpoint)
     // This is critical for cross-platform comparison!
-    const topMatches = scoredResults.slice(0, 3); // Fetch rules for top 3
+    const topMatches = scoredResults.slice(0, 5); // Fetch rules for top 5
     await Promise.all(topMatches.map(async (result) => {
       try {
         const marketUrl = `https://api.elections.kalshi.com/trade-api/v2/markets/${result.ticker}`;
@@ -5074,8 +5282,13 @@ async function handleSearchOnKalshi(
           headers: { 'Accept': 'application/json', 'User-Agent': 'Polymarket-MCP-Server/1.0' },
         });
         if (marketResponse.ok) {
-          const marketData = await marketResponse.json() as { market?: { rules_primary?: string } };
-          result.rules = marketData.market?.rules_primary || '';
+          const marketData = await marketResponse.json() as { market?: { rules_primary?: string; rules_secondary?: string } };
+          const rules = marketData.market?.rules_secondary || marketData.market?.rules_primary || '';
+          result.rules = rules;
+          // Extract outcome meanings
+          const { yesOutcomeMeans, noOutcomeMeans } = extractKalshiOutcomeMeanings(rules, result.title);
+          result.yesOutcomeMeans = yesOutcomeMeans;
+          result.noOutcomeMeans = noOutcomeMeans;
         }
       } catch {
         // Ignore individual fetch failures
@@ -5083,8 +5296,17 @@ async function handleSearchOnKalshi(
     }));
 
     const hint = scoredResults.length > 0
-      ? `Found ${scoredResults.length} potential matches on Kalshi. ⚠️ IMPORTANT: Compare 'rules' field with Polymarket rules before calculating arbitrage - ensure YES/NO outcomes mean the same thing! Note: Kalshi prices are in cents (29 = 29%).`
+      ? `Found ${scoredResults.length} potential matches on Kalshi. ⚠️ CRITICAL: Check 'yesOutcomeMeans' and 'noOutcomeMeans' to ensure you're comparing equivalent outcomes!`
       : `No strong matches found on Kalshi for "${searchQuery}". Try different keywords. Note: Kalshi has NO sports markets.`;
+
+    // Build comparison guidance
+    const comparisonNote = scoredResults.length > 0 
+      ? `⚠️ CROSS-PLATFORM COMPARISON GUIDE:
+1. Kalshi prices are in cents (29 = 29%), Polymarket prices are decimals (0.29 = 29%)
+2. READ 'yesOutcomeMeans' for each market - they may be INVERTED!
+3. Example: If Kalshi YES means "Court rules IN FAVOR" and Polymarket YES means "Court rules AGAINST", then Kalshi YES ≈ Polymarket NO
+4. Only compare prices AFTER confirming outcomes align!`
+      : null;
 
     return successResult({
       searchedFor: {
@@ -5093,6 +5315,7 @@ async function handleSearchOnKalshi(
       },
       kalshiResults: scoredResults,
       hint,
+      comparisonNote,
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {
@@ -5418,6 +5641,257 @@ async function handleGetPriceHistory(
   });
 }
 
+// ==================== NEW BATCH/PARAMETER HANDLERS ====================
+
+async function handleGetBatchOrderbooks(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const tokenIds = args?.tokenIds as string[];
+
+  if (!tokenIds || tokenIds.length === 0) {
+    return errorResult("tokenIds array is required");
+  }
+
+  if (tokenIds.length > 20) {
+    return errorResult("Maximum 20 tokens per batch request");
+  }
+
+  const orderbooks: Record<string, {
+    bestBid: number;
+    bestAsk: number;
+    midpoint: number;
+    spread: number;
+    bidDepth: number;
+    askDepth: number;
+    bids: Array<{ price: number; size: number }>;
+    asks: Array<{ price: number; size: number }>;
+  }> = {};
+
+  // Fetch orderbooks in parallel (batches of 5 to respect rate limits)
+  const batchSize = 5;
+  for (let i = 0; i < tokenIds.length; i += batchSize) {
+    const batch = tokenIds.slice(i, i + batchSize);
+    
+    await Promise.all(
+      batch.map(async (tokenId) => {
+        try {
+          const orderbook = (await fetchClob(`/book?token_id=${tokenId}`)) as OrderbookResponse;
+          const bids = orderbook.bids || [];
+          const asks = orderbook.asks || [];
+          
+          const bestBid = bids.length > 0 ? Number(bids[0].price) : 0;
+          const bestAsk = asks.length > 0 ? Number(asks[0].price) : 1;
+          const midpoint = (bestBid + bestAsk) / 2;
+          const spread = bestAsk - bestBid;
+          
+          // Calculate depth at best price
+          const bidDepth = bids.length > 0 ? Number(bids[0].size) : 0;
+          const askDepth = asks.length > 0 ? Number(asks[0].size) : 0;
+
+          orderbooks[tokenId] = {
+            bestBid: Number(bestBid.toFixed(4)),
+            bestAsk: Number(bestAsk.toFixed(4)),
+            midpoint: Number(midpoint.toFixed(4)),
+            spread: Number(spread.toFixed(4)),
+            bidDepth: Math.round(bidDepth),
+            askDepth: Math.round(askDepth),
+            bids: bids.slice(0, 5).map(b => ({ price: Number(b.price), size: Number(b.size) })),
+            asks: asks.slice(0, 5).map(a => ({ price: Number(a.price), size: Number(a.size) })),
+          };
+        } catch {
+          orderbooks[tokenId] = {
+            bestBid: 0,
+            bestAsk: 1,
+            midpoint: 0.5,
+            spread: 1,
+            bidDepth: 0,
+            askDepth: 0,
+            bids: [],
+            asks: [],
+          };
+        }
+      })
+    );
+  }
+
+  return successResult({
+    orderbooks,
+    count: Object.keys(orderbooks).length,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleGetMarketParameters(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const tokenId = args?.tokenId as string;
+
+  if (!tokenId) {
+    return errorResult("tokenId is required");
+  }
+
+  try {
+    // Get orderbook which includes tick_size and neg_risk
+    const orderbook = (await fetchClob(`/book?token_id=${tokenId}`)) as OrderbookResponse & {
+      tick_size?: string;
+      neg_risk?: boolean;
+      min_tick_size?: string;
+    };
+
+    // Try to get market info for fee rate
+    let feeRateBps = 0;
+    let minOrderSize = 1;
+    
+    if (orderbook.market) {
+      try {
+        const market = (await fetchClob(`/markets/${orderbook.market}`)) as ClobMarket & {
+          maker_base_fee?: number;
+          taker_base_fee?: number;
+          min_order_size?: number;
+        };
+        feeRateBps = (market.taker_base_fee || 0) * 100; // Convert to bps
+        minOrderSize = market.min_order_size || 1;
+      } catch {
+        // Continue with defaults
+      }
+    }
+
+    return successResult({
+      tokenId,
+      tickSize: orderbook.tick_size || orderbook.min_tick_size || "0.01",
+      feeRateBps,
+      negRisk: orderbook.neg_risk || false,
+      minOrderSize,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Failed to get market parameters: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+async function handleGetMidpoints(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const tokenIds = args?.tokenIds as string[];
+
+  if (!tokenIds || tokenIds.length === 0) {
+    return errorResult("tokenIds array is required");
+  }
+
+  if (tokenIds.length > 50) {
+    return errorResult("Maximum 50 tokens per request");
+  }
+
+  const midpoints: Record<string, number> = {};
+
+  try {
+    // Use batch prices endpoint
+    const buyResp = (await fetchClobPost("/prices", 
+      tokenIds.map(id => ({ token_id: id, side: "BUY" }))
+    )) as Record<string, { BUY?: string } | string>;
+
+    const sellResp = (await fetchClobPost("/prices",
+      tokenIds.map(id => ({ token_id: id, side: "SELL" }))
+    )) as Record<string, { SELL?: string } | string>;
+
+    for (const tokenId of tokenIds) {
+      const buyData = buyResp[tokenId];
+      const sellData = sellResp[tokenId];
+      
+      const buy = buyData 
+        ? (typeof buyData === "object" && buyData.BUY ? Number(buyData.BUY) : Number(buyData))
+        : 0;
+      const sell = sellData
+        ? (typeof sellData === "object" && sellData.SELL ? Number(sellData.SELL) : Number(sellData))
+        : 0;
+      
+      const mid = (buy + sell) / 2 || buy || sell;
+      midpoints[tokenId] = Number(mid.toFixed(4));
+    }
+  } catch {
+    // If CLOB fails, return 0.5 as default (unknown)
+    for (const tokenId of tokenIds) {
+      midpoints[tokenId] = 0.5;
+    }
+  }
+
+  return successResult({
+    midpoints,
+    count: Object.keys(midpoints).length,
+    note: "Midpoint = (best_bid + best_ask) / 2. Values are 0-1 scale (0.55 = 55%)",
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleGetSpreads(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const tokenIds = args?.tokenIds as string[];
+
+  if (!tokenIds || tokenIds.length === 0) {
+    return errorResult("tokenIds array is required");
+  }
+
+  if (tokenIds.length > 50) {
+    return errorResult("Maximum 50 tokens per request");
+  }
+
+  const spreads: Record<string, {
+    spread: number;
+    spreadPercent: number;
+    bestBid: number;
+    bestAsk: number;
+  }> = {};
+
+  try {
+    // Use batch prices endpoint
+    const buyResp = (await fetchClobPost("/prices", 
+      tokenIds.map(id => ({ token_id: id, side: "BUY" }))
+    )) as Record<string, { BUY?: string } | string>;
+
+    const sellResp = (await fetchClobPost("/prices",
+      tokenIds.map(id => ({ token_id: id, side: "SELL" }))
+    )) as Record<string, { SELL?: string } | string>;
+
+    for (const tokenId of tokenIds) {
+      const buyData = buyResp[tokenId];
+      const sellData = sellResp[tokenId];
+      
+      const bestAsk = buyData 
+        ? (typeof buyData === "object" && buyData.BUY ? Number(buyData.BUY) : Number(buyData))
+        : 1;
+      const bestBid = sellData
+        ? (typeof sellData === "object" && sellData.SELL ? Number(sellData.SELL) : Number(sellData))
+        : 0;
+      
+      const spread = bestAsk - bestBid;
+      const mid = (bestBid + bestAsk) / 2;
+      const spreadPercent = mid > 0 ? (spread / mid) * 100 : 0;
+
+      spreads[tokenId] = {
+        spread: Number(spread.toFixed(4)),
+        spreadPercent: Number(spreadPercent.toFixed(2)),
+        bestBid: Number(bestBid.toFixed(4)),
+        bestAsk: Number(bestAsk.toFixed(4)),
+      };
+    }
+  } catch {
+    // If CLOB fails, return wide spread (unknown)
+    for (const tokenId of tokenIds) {
+      spreads[tokenId] = { spread: 1, spreadPercent: 100, bestBid: 0, bestAsk: 1 };
+    }
+  }
+
+  return successResult({
+    spreads,
+    count: Object.keys(spreads).length,
+    note: "Spread = best_ask - best_bid. Wide spreads (>0.05) indicate low liquidity.",
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+// ==================== END NEW BATCH/PARAMETER HANDLERS ====================
+
 async function handleSearchMarkets(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
@@ -5425,134 +5899,79 @@ async function handleSearchMarkets(
   const category = args?.category as string;
   const status = (args?.status as string) || "live"; // Default to live (tradeable) markets
   const limit = Math.min((args?.limit as number) || 20, 50);
-  // matchMode: "all" = all words must match, "any" = any word matches (better for multi-topic searches)
-  const matchMode = (args?.matchMode as string) || "any"; // Default to "any" for better cross-platform compatibility
 
-  // STRATEGY 1: Try direct slug lookups first
-  // CRITICAL: Gamma API events listing doesn't include all markets!
-  // Some active markets with millions in volume are missing from the list.
-  const directMatches: GammaEvent[] = [];
-  if (query) {
-    const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-    
-    // Generate potential slugs from keywords
-    const potentialSlugs: string[] = [];
-    
-    // Try specific known slug patterns for common queries
-    if (queryWords.includes('supreme') && queryWords.includes('court')) {
-      potentialSlugs.push('will-the-supreme-court-rule-in-favor-of-trumps-tariffs');
-    }
-    if (queryWords.includes('tariff') || queryWords.includes('tariffs')) {
-      potentialSlugs.push('will-the-supreme-court-rule-in-favor-of-trumps-tariffs');
-      potentialSlugs.push('how-much-revenue-will-the-us-raise-from-tariffs-in-2025');
-      potentialSlugs.push('will-tariffs-generate-250b-in-2025');
-    }
-    // Try generating slug from query words
-    if (queryWords.length >= 3) {
-      potentialSlugs.push(`will-${queryWords.slice(0, 6).join('-')}`);
-      potentialSlugs.push(queryWords.slice(0, 6).join('-'));
-    }
-    
-    // Try direct slug lookups
-    for (const slug of potentialSlugs.slice(0, 5)) { // Limit to 5 tries
-      try {
-        const event = await fetchGamma(`/events/slug/${slug}`) as GammaEvent;
-        if (event && event.slug && !directMatches.find(e => e.slug === event.slug)) {
-          // Verify it matches the query keywords
-          const eventText = ((event.title || '') + ' ' + (event.description || '')).toLowerCase();
-          const matchCount = queryWords.filter(w => eventText.includes(w)).length;
-          if (matchCount >= Math.max(1, queryWords.length * 0.3)) {
-            directMatches.push(event);
-          }
-        }
-      } catch {
-        // Ignore slug lookup failures
-      }
-    }
-  }
+  // Build query words for matching specific candidates/outcomes in multi-outcome events
+  const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by', 'win', 'presidential', 'nomination', 'president', 'democratic', 'republican']);
+  const searchQueryWords = query ? query.toLowerCase().split(/\s+/).filter(w => {
+    return w.length > 2 && !stopWords.has(w) && !/^\d+$/.test(w);
+  }) : [];
 
-  // STRATEGY 2: Fall back to events listing
-  // Determine which markets to fetch based on status filter
-  // closed=false means live/active markets, closed=true means resolved/finished markets
-  // Use order=id&ascending=false to get NEWEST markets first (critical for finding recent crypto markets)
-  // IMPORTANT: Gamma API doesn't do server-side text search, so we must fetch more and filter client-side
-  let fetchLimit = query ? 500 : limit * 5; // Fetch more when searching to find relevant markets
-  
   let allEvents: GammaEvent[] = [];
-  
-  // Build query string with ordering
-  // Use volume ordering when searching to find important markets (not just newest)
-  const orderParams = query ? "&order=volume&ascending=false" : "&order=id&ascending=false";
-  
-  if (status === "all") {
-    // Fetch both live and resolved markets
-    const [liveEvents, resolvedEvents] = await Promise.all([
-      fetchGamma(`/events?closed=false&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
-      fetchGamma(`/events?closed=true&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
-    ]);
-    allEvents = [...(liveEvents || []), ...(resolvedEvents || [])];
-  } else if (status === "resolved") {
-    // Only resolved/finished markets
-    allEvents = (await fetchGamma(`/events?closed=true&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`)) as GammaEvent[];
-  } else {
-    // Default: only live/tradeable markets
-    allEvents = (await fetchGamma(`/events?closed=false&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`)) as GammaEvent[];
+  let searchUsed = false;
+
+  // PRIMARY STRATEGY: Use the /public-search endpoint for server-side text search
+  // This is the proper Polymarket search API that actually works!
+  if (query) {
+    try {
+      const searchUrl = `https://gamma-api.polymarket.com/public-search?q=${encodeURIComponent(query)}&limit_per_type=${limit * 2}${status === 'resolved' ? '&events_status=closed' : status === 'live' ? '&events_status=active' : ''}`;
+      const searchResponse = await fetch(searchUrl, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'Polymarket-MCP-Server/1.0' },
+      });
+      
+      if (searchResponse.ok) {
+        const searchData = await searchResponse.json() as { 
+          events?: GammaEvent[]; 
+          pagination?: { totalResults: number; hasMore: boolean };
+        };
+        
+        if (searchData.events && searchData.events.length > 0) {
+          allEvents = searchData.events;
+          searchUsed = true;
+        }
+      }
+    } catch (err) {
+      // Fall through to events listing if search fails
+      console.error('Public search failed, falling back to events listing:', err);
+    }
   }
 
-  // Merge direct matches (from slug lookups) with events list
-  // Add direct matches first since they're more likely to be what the user wants
-  for (const dm of directMatches) {
-    if (!allEvents.find(e => e.slug === dm.slug)) {
-      allEvents.unshift(dm); // Add to beginning
+  // FALLBACK: Use events listing only if search wasn't used or returned nothing
+  if (!searchUsed) {
+    const fetchLimit = limit * 5;
+    const orderParams = "&order=volume&ascending=false";
+    
+    if (status === "all") {
+      const [liveEvents, resolvedEvents] = await Promise.all([
+        fetchGamma(`/events?closed=false&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
+        fetchGamma(`/events?closed=true&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
+      ]);
+      allEvents = [...(liveEvents || []), ...(resolvedEvents || [])];
+    } else if (status === "resolved") {
+      allEvents = (await fetchGamma(`/events?closed=true&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`)) as GammaEvent[];
+    } else {
+      allEvents = (await fetchGamma(`/events?closed=false&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`)) as GammaEvent[];
     }
   }
 
   let filtered = allEvents || [];
 
-  // Filter by query if provided
-  // matchMode="any": ANY word matches (good for "NBA NFL MLB" to find NBA OR NFL OR MLB markets)
-  // matchMode="all": ALL words must match (good for "Bitcoin price 2025" to require all terms)
-  if (query) {
-    // Split query into words and filter out common stop words
-    const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by']);
-    const queryWords = query.toLowerCase()
-      .split(/\s+/)
-      .filter(word => word.length > 1 && !stopWords.has(word));
-    
-    filtered = filtered.filter((e) => {
-      const titleLower = (e.title || '').toLowerCase();
-      const descLower = (e.description || '').toLowerCase();
-      // CRITICAL: Search within market outcomes to find candidates like "JD Vance"
-      const marketOutcomes = (e.markets || []).map((m: any) => ((m.question || '') + ' ' + (m.title || '')).toLowerCase()).join(' ');
-      const searchText = titleLower + ' ' + descLower + ' ' + marketOutcomes;
-      
-      if (matchMode === "all") {
-        // ALL query words must be present (strict matching)
-        return queryWords.every(word => searchText.includes(word));
-      } else {
-        // ANY query word matches (better for multi-topic searches like "NBA NFL MLB")
-        return queryWords.some(word => searchText.includes(word));
-      }
+  // Apply status filter if search was used (search may return mixed status)
+  if (searchUsed && status !== "all") {
+    filtered = filtered.filter(e => {
+      const isClosed = e.closed === true;
+      if (status === "live") return !isClosed;
+      if (status === "resolved") return isClosed;
+      return true;
     });
   }
 
   // Count by status for breakdown
   let liveCount = 0;
   let resolvedCount = 0;
-
-  // Build query words for matching specific candidates/outcomes
-  // CRITICAL: Exclude year numbers (like "2028") which match ALL markets in multi-outcome events
-  const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by', 'win', 'presidential', 'nomination', 'president', 'democratic', 'republican']);
-  const searchQueryWords = query ? query.toLowerCase().split(/\s+/).filter(w => {
-    // Filter out: short words, stop words, and pure numbers (years like 2028)
-    return w.length > 2 && !stopWords.has(w) && !/^\d+$/.test(w);
-  }) : [];
-
+  
   const results = filtered
-    .filter((e) => e.slug) // Only include markets with valid slugs (for URL generation)
     .slice(0, limit)
     .map((e) => {
-      // Determine market status: closed=true means resolved, active=false means not trading
       const isResolved = e.closed === true;
       const marketStatus = isResolved ? "resolved" : "live";
       
@@ -5562,25 +5981,22 @@ async function handleSearchMarkets(
         liveCount++;
       }
 
-      // CRITICAL FIX: Find the specific market matching the search query (e.g., "Gavin Newsom")
-      // instead of always returning the first market in the array
+      // Find the specific market matching the search query (e.g., "Gavin Newsom")
       let matchedMarket = e.markets?.[0]; // Default to first market
       let matchedOutcomePrice: string | null = null;
       
       if (searchQueryWords.length > 0 && e.markets && e.markets.length > 1) {
-        // This is a multi-outcome event - find the specific market matching the query
         for (const market of e.markets) {
           const marketText = ((market.question || '') + ' ' + (market.title || '')).toLowerCase();
           const matches = searchQueryWords.some(word => marketText.includes(word));
           if (matches) {
             matchedMarket = market;
-            // Extract YES price from outcomePrices array (format: ["0.335", "0.665"])
             if (market.outcomePrices) {
               try {
                 const prices = typeof market.outcomePrices === 'string' 
                   ? JSON.parse(market.outcomePrices) 
                   : market.outcomePrices;
-                matchedOutcomePrice = prices[0]; // YES price
+                matchedOutcomePrice = prices[0];
               } catch {}
             }
             break;
@@ -5590,12 +6006,11 @@ async function handleSearchMarkets(
 
       return {
         title: e.title,
-        url: `https://polymarket.com/event/${e.slug}`, // Always include URL from slug
+        url: `https://polymarket.com/event/${e.slug}`,
         slug: e.slug,
         status: marketStatus,
         category: e.category,
         conditionId: matchedMarket?.conditionId,
-        // Include the matched outcome for multi-outcome markets
         matchedOutcome: matchedMarket?.question || matchedMarket?.title,
         outcomePrice: matchedOutcomePrice,
         volume: e.volume,
@@ -5604,18 +6019,27 @@ async function handleSearchMarkets(
       };
     });
 
+  const hint = searchUsed
+    ? `✅ Server-side search used. Found ${results.length} results for "${query}".`
+    : (query 
+        ? `⚠️ Search fallback: browsing events listing. Results may not be comprehensive.`
+        : `Browsing ${status} markets by volume.`);
+  
+  const statusHint = status === "live"
+    ? " Showing LIVE markets only (open for trading)."
+    : status === "resolved"
+      ? " Showing RESOLVED markets only (already finished)."
+      : " Showing ALL markets (both live and resolved).";
+
   return successResult({
     results,
     count: results.length,
+    searchMethod: searchUsed ? "public-search API" : "events listing",
     statusBreakdown: {
       live: liveCount,
       resolved: resolvedCount,
     },
-    hint: status === "live"
-      ? "Showing LIVE markets only (open for trading). Use status='resolved' to see finished markets."
-      : status === "resolved"
-        ? "Showing RESOLVED markets only (already finished). Use status='live' to see tradeable markets."
-        : "Showing ALL markets (both live and resolved).",
+    hint: hint + statusHint,
     fetchedAt: new Date().toISOString(),
   });
 }
