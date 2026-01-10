@@ -661,14 +661,19 @@ PLATFORM COMPATIBILITY:
   },
 
   {
-    name: "search_on_polymarket",
-    description: `🔗 CROSS-PLATFORM SEARCH: Find equivalent Polymarket markets for a Kalshi market.
+    name: "kalshi_crossref_polymarket",
+    description: `[KALSHI SERVER] Search Polymarket for markets equivalent to a Kalshi market.
 
-✅ Uses Polymarket's official /public-search API for reliable server-side text search.
+This tool belongs to the KALSHI MCP server. Use it when you have a Kalshi market 
+and want to find the corresponding market on Polymarket for comparison.
+
+⚠️ Call this tool with KALSHI's toolId, not Polymarket's.
+
+Uses Polymarket's official /public-search API for reliable text search.
 
 WORKFLOW:
-  1. You have a Kalshi market (e.g., from get_event_by_slug)
-  2. Call: search_on_polymarket({ keywords: "supreme court trump tariffs" })
+  1. You have a Kalshi market (from get_event_by_slug or search_markets)
+  2. Call: kalshi_crossref_polymarket({ keywords: "supreme court trump tariffs" })
   3. Returns matching Polymarket markets with prices and rules
 
 PRICE COMPARISON:
@@ -1077,17 +1082,22 @@ The ticker field from API responses is the EXACT string to use. Copy it exactly,
 
   {
     name: "search_markets",
-    description: `Search for Kalshi markets by keyword or filters.
+    description: `Search for Kalshi markets by keyword.
 
-⚠️ API LIMITATION: Kalshi's API does NOT support server-side text search.
-This tool fetches recent markets and filters client-side by your keywords.
-Some active markets may not appear in listings.
+✅ ROBUST SEARCH: This tool searches Kalshi's /series endpoint (7,800+ series with titles)
+   then fetches markets for matching series. This finds markets that don't appear in
+   standard listings.
 
-BEST PRACTICE: If you have a Kalshi URL, use get_event_by_slug instead:
+EXAMPLES:
+  - "trump tariffs" → finds KXDJTVOSTARIFFS (Supreme Court tariffs case)
+  - "supreme court" → finds all SCOTUS-related markets
+  - "bitcoin" → finds all BTC price markets
+
+IF YOU HAVE A KALSHI URL, use get_event_by_slug instead:
   - URL: https://kalshi.com/markets/kxdjtvostariffs/tariffs-case
-  - Use: get_event_by_slug({ slug: "kxdjtvostariffs" })  ← MORE RELIABLE
+  - Use: get_event_by_slug({ slug: "kxdjtvostariffs" })
 
-⚠️ CRITICAL: Use EXACT ticker values from results. NEVER modify tickers!
+⚠️ Use EXACT ticker values from results. NEVER modify tickers!
   - Correct: get_market({ ticker: "KXDJTVOSTARIFFS" })  ✅
   - Wrong: get_market({ ticker: "KXDJTVOSTARIFFS-001" })  ❌
 
@@ -1580,7 +1590,8 @@ server.setRequestHandler(
         // Cross-Platform Interoperability
         case "get_comparable_markets":
           return await handleGetComparableMarkets(args);
-        case "search_on_polymarket":
+        case "kalshi_crossref_polymarket":
+        case "search_on_polymarket": // Backward compatibility alias
           return await handleSearchOnPolymarket(args);
 
         // Tier 2: Raw Data Tools
@@ -3335,45 +3346,188 @@ async function handleSearchMarkets(
   const status = (args?.status as string) || "open";
   const limit = Math.min((args?.limit as number) || 20, 50);
 
-  // IMPORTANT: Kalshi API doesn't do server-side text search, so fetch more and filter client-side
-  const fetchLimit = query ? 500 : limit * 3;
+  let markets: KalshiMarket[] = [];
+  let matchedSeries: string[] = [];
+
+  const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by', 'rule', 'market', 'markets']);
   
-  let endpoint = `/markets?limit=${fetchLimit}`;
-  if (status !== "all") {
-    endpoint += `&status=${status}`;
+  // Synonym expansion for common prediction market terms
+  const synonyms: Record<string, string[]> = {
+    'trump': ['trump', 'djt', 'djtvo', 'donald'],
+    'supreme': ['supreme', 'scotus'],
+    'court': ['court', 'scotus', 'courts'],
+    'bitcoin': ['bitcoin', 'btc'],
+    'ethereum': ['ethereum', 'eth'],
+  };
+  
+  // Parse query and expand with synonyms
+  let queryWords = query ? query.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter(word => word.length > 2 && !stopWords.has(word)) : [];
+  
+  // Expand query words with synonyms
+  const expandedQueryWords: string[] = [];
+  for (const word of queryWords) {
+    expandedQueryWords.push(word);
+    if (synonyms[word]) {
+      expandedQueryWords.push(...synonyms[word]);
+    }
   }
-  if (category) {
-    endpoint += `&category=${encodeURIComponent(category)}`;
+  queryWords = [...new Set(expandedQueryWords)];
+
+  // STRATEGY 1: Search the /series endpoint (contains ALL 7,883+ series)
+  // Then fetch EVENT details for better titles (event titles are more descriptive than series titles)
+  if (query && queryWords.length > 0) {
+    try {
+      // Fetch all series
+      const seriesResponse = await fetchKalshi(`/series?limit=2000`) as { series: KalshiSeries[] };
+      const allSeries = seriesResponse.series || [];
+      
+      // Initial filter - any query word matches series title/ticker/tags
+      // Also pre-score for better initial ranking
+      const initialMatches: Array<{series: KalshiSeries; score: number}> = [];
+      for (const s of allSeries) {
+        const tagsText = Array.isArray(s.tags) ? s.tags.join(' ') : '';
+        const searchText = ((s.title || '') + ' ' + s.ticker + ' ' + tagsText).toLowerCase();
+        const matchCount = queryWords.filter(word => searchText.includes(word)).length;
+        if (matchCount > 0) {
+          initialMatches.push({ series: s, score: matchCount });
+        }
+      }
+      
+      // Sort by initial score
+      initialMatches.sort((a, b) => b.score - a.score);
+      
+      // Take top candidates (limit to avoid too many event fetches)
+      const topCandidates = initialMatches.slice(0, 30).map(m => m.series);
+      
+      // Fetch event details for better titles and re-rank
+      interface EnrichedSeries {
+        series: KalshiSeries;
+        eventTitle: string;
+        score: number;
+        hasMarkets: boolean;
+      }
+      
+      const enrichedResults: EnrichedSeries[] = [];
+      
+      // Fetch markets for each series, then get event details for better titles
+      // Series ticker often != event ticker, so we need to go: series -> markets -> event
+      for (let i = 0; i < topCandidates.length; i += 10) {
+        const batch = topCandidates.slice(i, i + 10);
+        const eventPromises = batch.map(async (s) => {
+          try {
+            // First, fetch markets for this series to get event_ticker
+            const marketsResponse = await fetchKalshi(`/markets?series_ticker=${s.ticker}&status=${status}&limit=1`) as { markets: KalshiMarket[] };
+            const firstMarket = marketsResponse.markets?.[0];
+            
+            let eventTitle = s.title || '';
+            
+            if (firstMarket?.event_ticker) {
+              // Now fetch the event using the correct event_ticker
+              try {
+                const eventResponse = await fetchKalshi(`/events/${firstMarket.event_ticker}`) as { event: KalshiEvent };
+                eventTitle = eventResponse.event?.title || firstMarket.title || s.title || '';
+              } catch {
+                // Use market title as fallback
+                eventTitle = firstMarket.title || s.title || '';
+              }
+            }
+            
+            // Score based on ALL text: series title + event title + ticker
+            const fullText = ((s.title || '') + ' ' + eventTitle + ' ' + s.ticker).toLowerCase();
+            const score = queryWords.filter(w => fullText.includes(w)).length;
+            
+            // Bonus for exact phrase matches
+            const bonusScore = queryWords.length > 1 && fullText.includes(queryWords.join(' ')) ? 3 : 0;
+            
+            return { series: s, eventTitle, score: score + bonusScore, hasMarkets: !!firstMarket };
+          } catch {
+            // If all fetches fail, use series data only
+            const fullText = ((s.title || '') + ' ' + s.ticker).toLowerCase();
+            return { series: s, eventTitle: s.title || '', score: queryWords.filter(w => fullText.includes(w)).length, hasMarkets: false };
+          }
+        });
+        
+        const results = await Promise.all(eventPromises);
+        enrichedResults.push(...results);
+      }
+      
+      // Filter to only series with active markets, then sort by score
+      const withMarkets = enrichedResults.filter(r => r.hasMarkets);
+      withMarkets.sort((a, b) => b.score - a.score);
+      
+      // Take top results
+      const topResults = withMarkets.slice(0, 10);
+      matchedSeries = topResults.map(r => `${r.series.ticker} (score:${r.score})`);
+      
+      for (const result of topResults) {
+        try {
+          const response = await fetchKalshi(`/markets?series_ticker=${result.series.ticker}&status=${status}`) as { markets: KalshiMarket[] };
+          if (response.markets && response.markets.length > 0) {
+            for (const m of response.markets) {
+              if (!markets.find(existing => existing.ticker === m.ticker)) {
+                // Enrich market with event title for better display
+                if (!m.title || m.title.length < result.eventTitle.length) {
+                  m.title = result.eventTitle;
+                }
+                markets.push(m);
+              }
+            }
+          }
+        } catch {
+          // Continue with other series
+        }
+      }
+    } catch (e) {
+      console.warn("Series search failed:", e);
+    }
   }
 
-  const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
-  let markets = response.markets || [];
+  // STRATEGY 2: Fallback - fetch from standard markets listing (for non-query or additional results)
+  if (markets.length < limit) {
+    const fetchLimit = query ? 200 : limit * 3;
+    
+    let endpoint = `/markets?limit=${fetchLimit}`;
+    if (status !== "all") {
+      endpoint += `&status=${status}`;
+    }
+    if (category) {
+      endpoint += `&category=${encodeURIComponent(category)}`;
+    }
 
-  // Note: Kalshi's API may not return all active markets in standard listings.
-  // However, we avoid hardcoding specific event tickers as they change over time.
-  // If users need specific markets, they should use get_event_by_slug with the URL slug.
+    try {
+      const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
+      const listingMarkets = response.markets || [];
+      
+      for (const m of listingMarkets) {
+        if (!markets.find(existing => existing.ticker === m.ticker)) {
+          markets.push(m);
+        }
+      }
+    } catch {
+      // Continue with what we have
+    }
+  }
 
-  // Filter by query if provided - using WORD-BY-WORD matching (any word matches)
-  // This is critical for queries like "Senate control" to find "Senate" OR "control"
-  // FIXED: Use word-boundary regex to avoid "Pirates" matching "rate"
+  // Filter by query if provided (for markets from fallback that may not match)
   if (query) {
     const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by']);
     const queryWords = query.toLowerCase()
       .split(/\s+/)
-      .filter(word => word.length > 2 && !stopWords.has(word)); // Min 3 chars to avoid partial matches
+      .filter(word => word.length > 2 && !stopWords.has(word));
     
     markets = markets.filter(m => {
-      const searchText = ((m.title || '') + ' ' + (m.yes_sub_title || '') + ' ' + m.ticker).toLowerCase();
-      // ANY query word matches - use word boundary to avoid "Pirates" matching "rate"
+      const searchText = ((m.title || '') + ' ' + (m.yes_sub_title || '') + ' ' + m.ticker + ' ' + m.event_ticker).toLowerCase();
       return queryWords.some(word => {
-        // Word boundary match: word must be at start/end or surrounded by non-word chars
         const regex = new RegExp(`\\b${word}\\b`, 'i');
         return regex.test(searchText);
       });
     });
   }
 
-  const results = markets.map(m => ({
+  const results = markets.slice(0, limit).map(m => ({
     title: m.title || m.yes_sub_title || m.ticker,
     ticker: m.ticker,
     eventTicker: m.event_ticker,
@@ -3385,9 +3539,19 @@ async function handleSearchMarkets(
     closeTime: m.close_time || "",
   }));
 
+  // Build helpful hint
+  const hint = results.length === 0 && query
+    ? `⚠️ No Kalshi markets found for "${query}". Try: (1) Different keywords, (2) Check kalshi.com for the exact URL, (3) Use get_event_by_slug with the slug from the URL.`
+    : matchedSeries.length > 0 
+      ? `✅ Found ${results.length} markets via series search. Matched series: ${matchedSeries.slice(0, 5).join(', ')}`
+      : `Found ${results.length} markets matching "${query || 'all'}".`;
+
   return successResult({
     results,
     count: results.length,
+    matchedSeries: matchedSeries.slice(0, 10),
+    searchMethod: matchedSeries.length > 0 ? "series_search" : "market_listing",
+    hint,
     fetchedAt: new Date().toISOString(),
   });
 }

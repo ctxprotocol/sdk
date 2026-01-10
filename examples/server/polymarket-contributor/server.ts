@@ -1044,17 +1044,22 @@ PLATFORM COMPATIBILITY:
   },
 
   {
-    name: "search_on_kalshi",
-    description: `🔗 CROSS-PLATFORM SEARCH: Find equivalent Kalshi markets for a Polymarket market.
+    name: "polymarket_crossref_kalshi",
+    description: `[POLYMARKET SERVER] Search Kalshi for markets equivalent to a Polymarket market.
 
-USE THIS when you have a Polymarket market and need to find the same market on Kalshi for:
+This tool belongs to the POLYMARKET MCP server. Use it when you have a Polymarket market 
+and want to find the corresponding market on Kalshi for comparison.
+
+⚠️ Call this tool with POLYMARKET's toolId, not Kalshi's.
+
+USE THIS when you have a Polymarket market and want to find the same on Kalshi for:
   - Price comparison / arbitrage detection
   - Cross-platform probability analysis
   - Finding additional liquidity
 
 WORKFLOW:
-  1. You have a Polymarket market (e.g., from get_event_by_slug)
-  2. Call: search_on_kalshi({ keywords: "tariffs revenue 2025" })
+  1. You have a Polymarket market (from get_event_by_slug or search_markets)
+  2. Call: polymarket_crossref_kalshi({ keywords: "tariffs revenue 2025" })
   3. Returns matching Kalshi markets with prices
 
 EXAMPLE INPUT:
@@ -2161,7 +2166,8 @@ server.setRequestHandler(
         // Cross-Platform Interoperability
         case "get_comparable_markets":
           return await handleGetComparableMarkets(args);
-        case "search_on_kalshi":
+        case "polymarket_crossref_kalshi":
+        case "search_on_kalshi": // Backward compatibility alias
           return await handleSearchOnKalshi(args);
 
         // Tier 2: Raw Data Tools
