@@ -2868,16 +2868,60 @@ async function handleSearchOnPolymarket(
   const limit = Math.min((args?.limit as number) || 10, 25);
 
   // Build search query from title or keywords
-  let searchQuery = keywords || '';
-  if (!searchQuery && title) {
-    // Extract meaningful keywords from title
-    const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by', 'this', 'that', 'with', 'from', 'as', 'are', 'was', 'were', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'but', 'if', 'than', 'so', 'just']);
-    searchQuery = title.toLowerCase()
+  // IMPORTANT: Extract meaningful keywords - long queries fail on Polymarket's search
+  const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by', 'this', 'that', 'with', 'from', 'as', 'are', 'was', 'were', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'but', 'if', 'than', 'so', 'just', 'inc', 'vs', 'case']);
+  
+  let searchQuery = '';
+  const sourceText = keywords || title || '';
+  
+  if (sourceText) {
+    // Extract meaningful keywords - Polymarket search works best with 3-6 short keywords
+    // Long queries like "Will the Supreme Court rule in favor of Trump in V.O.S. Selections, Inc. v. Trump"
+    // fail, but "supreme court trump tariffs" works perfectly
+    const extractedWords = sourceText.toLowerCase()
       .replace(/[^a-z0-9\s]/g, ' ')
       .split(/\s+/)
-      .filter(w => w.length > 2 && !stopWords.has(w))
-      .slice(0, 6)
-      .join(' ');
+      .filter(w => w.length > 2 && !stopWords.has(w));
+    
+    // Also extract keywords from Kalshi ticker if provided (e.g., KXDJTVOSTARIFFS contains "tariffs")
+    // These are HIGH PRIORITY - often contain the key differentiating term
+    const tickerKeywords: string[] = [];
+    if (kalshiTicker) {
+      // Extract meaningful words from ticker
+      // Ticker format: KXDJTVOSTARIFFS -> contains "tariffs" which is crucial
+      const tickerLower = kalshiTicker.toLowerCase().replace(/^kx/, '');
+      
+      // Look for embedded keywords in ticker - these are CRITICAL for matching
+      const keywordPatterns = [
+        { pattern: /tariffs?/i, keyword: 'tariffs' },
+        { pattern: /scotus/i, keyword: 'scotus' },
+        { pattern: /bitcoin|btc/i, keyword: 'bitcoin' },
+        { pattern: /ethereum|eth/i, keyword: 'ethereum' },
+        { pattern: /election/i, keyword: 'election' },
+        { pattern: /president/i, keyword: 'president' },
+      ];
+      
+      for (const { pattern, keyword } of keywordPatterns) {
+        if (pattern.test(tickerLower) && !extractedWords.includes(keyword)) {
+          tickerKeywords.push(keyword);
+        }
+      }
+    }
+    
+    // Prioritize keywords that are most likely to be useful for matching:
+    // 1. High-value keywords (names, specific terms) from title
+    // 2. Ticker-derived keywords (often contain the key differentiating term)
+    // 3. Skip common verbs like "rule", "favor" which are less distinctive
+    const lowValueWords = new Set(['rule', 'ruling', 'favor', 'decide', 'decision', 'vote', 'pass', 'approve']);
+    
+    const highValueWords = extractedWords.filter(w => !lowValueWords.has(w));
+    const normalWords = extractedWords.filter(w => lowValueWords.has(w));
+    
+    // Combine: high-value words first, then ticker keywords, then normal words
+    const priorityWords = [...highValueWords, ...tickerKeywords, ...normalWords];
+    // Remove duplicates while preserving order
+    const uniqueWords = [...new Set(priorityWords)];
+    searchQuery = uniqueWords.slice(0, 5).join(' ');
   }
 
   if (!searchQuery) {
