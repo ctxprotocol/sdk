@@ -3374,8 +3374,19 @@ async function handleSearchMarkets(
       // e.g., "scotus" → { category: "Politics", tag: "SCOTUS & courts" }
       const wordToTagMap: Map<string, { category: string; tag: string }> = new Map();
       
-      for (const [category, tags] of Object.entries(tagsByCategory)) {
-        for (const tag of tags) {
+      // Safely iterate - Kalshi API sometimes returns null for some category tag lists
+      const entries = Object.entries(tagsByCategory || {});
+      for (let i = 0; i < entries.length; i++) {
+        const [category, tags] = entries[i];
+        // Guard against null/undefined/non-array tags
+        if (tags === null || tags === undefined || !Array.isArray(tags)) {
+          continue;
+        }
+        
+        for (let j = 0; j < tags.length; j++) {
+          const tag = tags[j];
+          if (!tag || typeof tag !== 'string') continue;
+          
           // Extract words from tag for matching
           const tagWords = tag.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length > 2);
           for (const word of tagWords) {
@@ -3427,35 +3438,51 @@ async function handleSearchMarkets(
         }
       }
       
-      // Pick the tag with the MOST query word matches (most specific)
-      let primaryTag: string | null = null;
-      let maxCount = 0;
-      for (const [tag, { count }] of tagMatchCounts.entries()) {
-        if (count > maxCount) {
-          maxCount = count;
-          primaryTag = tag;
+      // Get ALL matched tags, sorted by count (most specific first)
+      const sortedTags = [...tagMatchCounts.entries()]
+        .sort((a, b) => b[1].count - a[1].count)
+        .slice(0, 3); // Take up to 3 most relevant tags
+      
+      console.log(`[Kalshi Search] Matched tags: ${sortedTags.map(([t, {count}]) => `${t}(${count})`).join(', ')}`);
+      console.log(`[Kalshi Search] Detected category: ${detectedCategory}`);
+      
+      // Step 5: Fetch series from MULTIPLE tags to maximize coverage
+      // Some markets may be tagged with different tags (e.g., SCOTUS vs Trump Agenda)
+      const allSeriesMap = new Map<string, KalshiSeries>();
+      
+      // Fetch from each matched tag
+      for (const [tag] of sortedTags) {
+        let seriesEndpoint = `/series?limit=300`;
+        if (detectedCategory) {
+          seriesEndpoint += `&category=${encodeURIComponent(detectedCategory)}`;
+        }
+        seriesEndpoint += `&tags=${encodeURIComponent(tag)}`;
+        
+        console.log(`[Kalshi Search] Fetching series with tag: ${tag}`);
+        const seriesResponse = await fetchKalshi(seriesEndpoint) as { series: KalshiSeries[] };
+        for (const s of (seriesResponse.series || [])) {
+          allSeriesMap.set(s.ticker, s);
         }
       }
       
-      // Step 5: Build server-side filtered query
-      let seriesEndpoint = '/series?limit=500';
-      if (detectedCategory) {
-        seriesEndpoint += `&category=${encodeURIComponent(detectedCategory)}`;
+      // If no tags matched, fall back to category-only or broad search
+      if (sortedTags.length === 0) {
+        let seriesEndpoint = '/series?limit=500';
+        if (detectedCategory) {
+          seriesEndpoint += `&category=${encodeURIComponent(detectedCategory)}`;
+        }
+        console.log(`[Kalshi Search] No tag matches, using endpoint: ${seriesEndpoint}`);
+        const seriesResponse = await fetchKalshi(seriesEndpoint) as { series: KalshiSeries[] };
+        for (const s of (seriesResponse.series || [])) {
+          allSeriesMap.set(s.ticker, s);
+        }
       }
-      if (primaryTag) {
-        seriesEndpoint += `&tags=${encodeURIComponent(primaryTag)}`;
-      }
       
-      console.log(`[Kalshi Search] Dynamic tag match - Category: ${detectedCategory}, Primary Tag: ${primaryTag} (${maxCount} matches)`);
-      console.log(`[Kalshi Search] All matched tags: ${[...tagMatchCounts.keys()].join(', ')}`);
-      console.log(`[Kalshi Search] Using endpoint: ${seriesEndpoint}`);
+      let allSeries = [...allSeriesMap.values()];
+      console.log(`[Kalshi Search] Total unique series from tag searches: ${allSeries.length}`);
       
-      // Step 6: Fetch filtered series (server-side filtering first!)
-      const seriesResponse = await fetchKalshi(seriesEndpoint) as { series: KalshiSeries[] };
-      let allSeries = seriesResponse.series || [];
-      
-      // If no results with filters, fall back to broader search
-      if (allSeries.length === 0 && (detectedCategory || primaryTag)) {
+      // If still no results, fall back to broader search
+      if (allSeries.length === 0) {
         console.log('[Kalshi Search] No results with filters, falling back to broader search');
         const fallbackResponse = await fetchKalshi('/series?limit=2000') as { series: KalshiSeries[] };
         allSeries = fallbackResponse.series || [];
