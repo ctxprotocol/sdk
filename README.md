@@ -9,6 +9,20 @@ Context Protocol is **npm for AI capabilities**. Just as you install packages to
 [![npm version](https://img.shields.io/npm/v/@ctxprotocol/sdk.svg)](https://www.npmjs.com/package/@ctxprotocol/sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+---
+
+### 💰 $10,000 Developer Grant Program
+
+We're funding the initial supply of MCP Tools for the Context Marketplace. **Become a Data Broker.**
+
+- **🛠️ Build:** Create an MCP Server using this SDK (Solana data, Trading tools, Scrapers, etc.)
+- **📦 List:** Publish it to the Context Registry
+- **💵 Earn:** Get a **$250–$1,000 Grant** + earn USDC every time an agent queries your tool
+
+👉 [**View Open Bounties & Apply Here**](https://docs.ctxprotocol.com/grants)
+
+---
+
 ## Why use Context?
 
 - **🔌 One Interface, Everything:** Stop integrating APIs one by one. Use a single SDK to access any tool in the marketplace.
