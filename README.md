@@ -28,7 +28,7 @@ We're funding the initial supply of MCP Tools for the Context Marketplace. **Bec
 - **🔌 One Interface, Everything:** Stop integrating APIs one by one. Use a single SDK to access any tool in the marketplace.
 - **🧠 Zero-Ops:** We're a gateway to the best MCP tools. Just send the JSON and get the result.
 - **⚡️ Agentic Discovery:** Your Agent can search the marketplace at runtime to find tools it didn't know it needed.
-- **💸 Micro-Billing:** Pay only for what you use (e.g., $0.001/query). No monthly subscriptions for tools you rarely use.
+- **💸 Pay-Per-Response:** The $500/year subscription? Now $0.01/response. No monthly fees, just results.
 
 ## Who Is This SDK For?
 
