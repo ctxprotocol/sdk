@@ -5101,22 +5101,87 @@ async function handlePlacePolymarketOrder(
   }
   const marketTitle = marketData?.title || `Market ${marketConditionId.slice(0, 10)}...`;
 
-  // Fetch current orderbook to calculate price if not provided
+  // Fetch MERGED orderbook to calculate price
+  // Polymarket prices come from both direct orders AND synthetic liquidity from complement token
+  // Raw orderbook often shows wide spreads because real liquidity is in the complement
   let orderPrice = price;
   let currentBestBid = 0;
   let currentBestAsk = 1;
 
   try {
-    const orderbook = await fetchClob(`/book?token_id=${tokenId}`) as OrderbookResponse;
-    const bids = orderbook?.bids || [];
-    const asks = orderbook?.asks || [];
+    // Fetch YES token orderbook
+    const yesOrderbook = await fetchClob(`/book?token_id=${tokenId}`) as OrderbookResponse;
+    const directBids = yesOrderbook?.bids || [];
+    const directAsks = yesOrderbook?.asks || [];
 
-    if (bids.length > 0) {
-      currentBestBid = parseFloat(bids[0].price);
+    // Get the complement (NO) token to build merged orderbook
+    let complementTokenId: string | null = null;
+    if (clobMarket?.tokens) {
+      const complementToken = clobMarket.tokens.find(t => t.token_id !== tokenId);
+      if (complementToken) {
+        complementTokenId = complementToken.token_id;
+      }
     }
-    if (asks.length > 0) {
-      currentBestAsk = parseFloat(asks[0].price);
+
+    // Build merged orderbook (this is what Polymarket UI shows)
+    const mergedBids: number[] = [];
+    const mergedAsks: number[] = [];
+
+    // Add direct YES bids and asks
+    for (const bid of directBids) {
+      mergedBids.push(parseFloat(bid.price));
     }
+    for (const ask of directAsks) {
+      mergedAsks.push(parseFloat(ask.price));
+    }
+
+    // Add synthetic liquidity from complement token
+    if (complementTokenId) {
+      try {
+        const noOrderbook = await fetchClob(`/book?token_id=${complementTokenId}`) as OrderbookResponse;
+        const noBids = noOrderbook?.bids || [];
+        const noAsks = noOrderbook?.asks || [];
+
+        // NO asks create synthetic YES bids: sell NO at X → buy YES at (1-X)
+        for (const ask of noAsks) {
+          const syntheticPrice = 1 - parseFloat(ask.price);
+          if (syntheticPrice > 0.001 && syntheticPrice < 0.999) {
+            mergedBids.push(syntheticPrice);
+          }
+        }
+
+        // NO bids create synthetic YES asks: buy NO at X → sell YES at (1-X)
+        for (const bid of noBids) {
+          const syntheticPrice = 1 - parseFloat(bid.price);
+          if (syntheticPrice > 0.001 && syntheticPrice < 0.999) {
+            mergedAsks.push(syntheticPrice);
+          }
+        }
+      } catch {
+        // Continue without synthetic liquidity
+        console.log("[polymarket] Could not fetch complement orderbook for synthetic liquidity");
+      }
+    }
+
+    // Sort and get best prices from merged orderbook
+    mergedBids.sort((a, b) => b - a); // Highest first
+    mergedAsks.sort((a, b) => a - b); // Lowest first
+
+    if (mergedBids.length > 0) {
+      currentBestBid = mergedBids[0];
+    }
+    if (mergedAsks.length > 0) {
+      currentBestAsk = mergedAsks[0];
+    }
+
+    console.log("[polymarket] Merged orderbook prices:", {
+      directBidsCount: directBids.length,
+      directAsksCount: directAsks.length,
+      mergedBidsCount: mergedBids.length,
+      mergedAsksCount: mergedAsks.length,
+      bestBid: currentBestBid,
+      bestAsk: currentBestAsk,
+    });
 
     // Calculate market price if not provided
     if (!orderPrice) {
@@ -5128,7 +5193,8 @@ async function handlePlacePolymarketOrder(
         orderPrice = Math.max(currentBestBid * 0.98, 0.01);
       }
     }
-  } catch {
+  } catch (error) {
+    console.error("[polymarket] Failed to fetch orderbook:", error);
     // If we can't fetch orderbook, require explicit price
     if (!orderPrice) {
       return errorResult("Could not fetch orderbook. Please provide an explicit price.");
