@@ -1359,7 +1359,8 @@ const TOOLS = [
       "🔐 WRITE ACTION: Place a perpetual order on Hyperliquid. " +
       "Returns a signature request that must be approved by the user. " +
       "Supports limit, market, stop-loss, and take-profit orders. " +
-      "The signature is used to authorize the order without exposing the user's private key.",
+      "The signature is used to authorize the order without exposing the user's private key. " +
+      "To CLOSE a position: set closeEntirePosition=true and the size will be auto-calculated from the user's current position.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -1373,7 +1374,7 @@ const TOOLS = [
         },
         size: {
           type: "number",
-          description: "Order size in base units (e.g., 0.1 ETH)",
+          description: "Order size in base units (e.g., 0.1 ETH). NOT required if closeEntirePosition=true.",
         },
         price: {
           type: "number",
@@ -1395,12 +1396,16 @@ const TOOLS = [
           type: "boolean",
           description: "If true, order will only be placed if it would be a maker order (default: false)",
         },
+        closeEntirePosition: {
+          type: "boolean",
+          description: "If true, automatically use the FULL position size from portfolio context. Sets reduceOnly=true. Use this for closing positions instead of guessing the size.",
+        },
         portfolio: {
           type: "object",
           description: "Optional: Your Hyperliquid portfolio context (injected by the Context app)",
         },
       },
-      required: ["coin", "isBuy", "size", "price"],
+      required: ["coin", "isBuy"],
     },
     _meta: {
       contextRequirements: ["hyperliquid"],
@@ -4186,17 +4191,46 @@ async function handlePlaceOrder(args: Record<string, unknown> | undefined): Prom
   // Extract and validate parameters
   const coin = args?.coin as string;
   const isBuy = args?.isBuy as boolean;
-  const size = args?.size as number;
+  let size = args?.size as number | undefined;
   const priceArg = args?.price as number | undefined;
   const orderType = (args?.orderType as string) ?? "limit";
   const triggerPrice = args?.triggerPrice as number | undefined;
   let reduceOnly = (args?.reduceOnly as boolean) ?? false;
   const postOnly = (args?.postOnly as boolean) ?? false;
+  const closeEntirePosition = (args?.closeEntirePosition as boolean) ?? false;
   const portfolio = args?.portfolio as HyperliquidContext | undefined;
 
   if (!coin) return errorResult("coin parameter is required");
   if (typeof isBuy !== "boolean") return errorResult("isBuy parameter is required (true/false)");
-  if (typeof size !== "number" || size <= 0) return errorResult("size must be a positive number");
+  
+  // Handle closeEntirePosition: auto-calculate size from portfolio
+  if (closeEntirePosition) {
+    if (!portfolio?.perpPositions?.length) {
+      return errorResult("closeEntirePosition=true requires portfolio context with positions. Make sure wallet is connected.");
+    }
+    
+    // Find the position for this coin
+    const position = portfolio.perpPositions.find(
+      (p) => p.coin?.toUpperCase() === coin.toUpperCase()
+    );
+    
+    if (!position || !position.size) {
+      return errorResult(`No open position found for ${coin}. Cannot close non-existent position.`);
+    }
+    
+    // Get absolute size of position
+    const positionSize = Math.abs(Number(position.size));
+    if (positionSize <= 0) {
+      return errorResult(`Position size for ${coin} is zero. Nothing to close.`);
+    }
+    
+    size = positionSize;
+    reduceOnly = true; // Closing a position is always reduce-only
+    
+    console.log(`[place_order] closeEntirePosition=true: Using full position size ${size} for ${coin}`);
+  }
+  
+  if (typeof size !== "number" || size <= 0) return errorResult("size must be a positive number (or use closeEntirePosition=true)");
 
   // Validate order type
   const validOrderTypes = ["limit", "market", "stop_loss", "take_profit"];
