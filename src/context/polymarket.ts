@@ -50,8 +50,14 @@ export interface PolymarketOrder {
  * This is what gets passed to MCP tools for personalized analysis.
  */
 export interface PolymarketContext {
-  /** The wallet address this context is for */
+  /** The wallet address this context is for (may be comma-separated if multiple) */
   walletAddress: string;
+  /** 
+   * The active wallet address for signing (the one with Polymarket activity).
+   * When multiple wallets are linked, this is the wallet that should be used
+   * for placing orders. Determined by activity detection on the client.
+   */
+  activeWalletAddress?: string;
   /** All open positions */
   positions: PolymarketPosition[];
   /** All open orders */

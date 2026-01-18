@@ -5039,16 +5039,22 @@ async function handlePlacePolymarketOrder(
   }
 
   // Get wallet address from portfolio context
-  // Note: portfolio.walletAddress may be comma-separated if multiple wallets are linked
-  // The first address is typically the one with Polymarket activity (detected by context injection)
+  // Use activeWalletAddress if available (detected by client-side activity detection)
+  // Fall back to walletAddress (may be comma-separated for multiple wallets)
+  const activeWallet = portfolio?.activeWalletAddress;
   const rawWalletAddress = portfolio?.walletAddress;
-  if (!rawWalletAddress) {
+  
+  if (!activeWallet && !rawWalletAddress) {
     return errorResult("Wallet address not found. Please ensure your wallet is connected.");
   }
-  // Extract the first wallet address (the one with Polymarket activity)
-  const walletAddress = rawWalletAddress.includes(",")
-    ? rawWalletAddress.split(",")[0].trim()
-    : rawWalletAddress;
+  
+  // Priority: 1) activeWalletAddress (smart detection), 2) first from comma-separated list
+  const walletAddress = activeWallet 
+    || (rawWalletAddress?.includes(",") ? rawWalletAddress.split(",")[0].trim() : rawWalletAddress);
+  
+  if (!walletAddress) {
+    return errorResult("Could not determine active wallet for Polymarket. Please try again.");
+  }
 
   // Resolve market by conditionId or slug
   let marketConditionId = conditionId;
