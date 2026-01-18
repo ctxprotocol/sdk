@@ -33,6 +33,70 @@ const CLOB_API_URL = "https://clob.polymarket.com";
 const DATA_API_URL = "https://data-api.polymarket.com";
 
 // ============================================================================
+// POLYMARKET EIP-712 CONSTANTS FOR ORDER SIGNING
+// Based on @polymarket/order-utils (clob-order-utils)
+// ============================================================================
+
+// Polymarket CTF Exchange contracts on Polygon (chain ID 137)
+const POLYMARKET_CONTRACTS = {
+  CTF_EXCHANGE: "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E", // Regular exchange
+  NEG_RISK_EXCHANGE: "0xC5d563A36AE78145C45a50134d48A1215220f80a", // Negative risk exchange
+  COLLATERAL: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", // USDC.e
+  CONDITIONAL_TOKENS: "0x4D97DCd97eC945f40cF65F87097ACe5EA0476045", // CTF
+};
+
+// EIP-712 Domain for Polymarket CTF Exchange
+const POLYMARKET_ORDER_DOMAIN = {
+  name: "Polymarket CTF Exchange",
+  version: "1",
+  chainId: 137, // Polygon Mainnet
+  verifyingContract: POLYMARKET_CONTRACTS.CTF_EXCHANGE,
+};
+
+// EIP-712 Domain for Polymarket Negative Risk Exchange
+const POLYMARKET_NEG_RISK_ORDER_DOMAIN = {
+  name: "Polymarket CTF Exchange",
+  version: "1",
+  chainId: 137, // Polygon Mainnet
+  verifyingContract: POLYMARKET_CONTRACTS.NEG_RISK_EXCHANGE,
+};
+
+// EIP-712 Types for Polymarket Orders
+// From @polymarket/order-utils ORDER_STRUCTURE
+const POLYMARKET_ORDER_TYPES = {
+  Order: [
+    { name: "salt", type: "uint256" },
+    { name: "maker", type: "address" },
+    { name: "signer", type: "address" },
+    { name: "taker", type: "address" },
+    { name: "tokenId", type: "uint256" },
+    { name: "makerAmount", type: "uint256" },
+    { name: "takerAmount", type: "uint256" },
+    { name: "expiration", type: "uint256" },
+    { name: "nonce", type: "uint256" },
+    { name: "feeRateBps", type: "uint256" },
+    { name: "side", type: "uint8" },
+    { name: "signatureType", type: "uint8" },
+  ],
+};
+
+// Polymarket Signature Types
+const enum PolymarketSignatureType {
+  EOA = 0, // Direct EOA signing
+  POLY_PROXY = 1, // Magic.link email proxy
+  POLY_GNOSIS_SAFE = 2, // Browser wallet (MetaMask, Phantom) with proxy
+}
+
+// Polymarket Order Sides
+const enum PolymarketSide {
+  BUY = 0,
+  SELL = 1,
+}
+
+// Collateral token decimals (USDC.e has 6 decimals)
+const COLLATERAL_DECIMALS = 6;
+
+// ============================================================================
 // TOOL DEFINITIONS
 //
 // Standard MCP tool definitions with:
@@ -916,6 +980,134 @@ const TOOLS = [
         fetchedAt: { type: "string" },
       },
       required: ["walletAddress", "totalPositions", "portfolioSummary", "positionAnalyses"],
+    },
+  },
+
+  // ==================== TRADING TOOLS (HANDSHAKE) ====================
+
+  {
+    name: "place_polymarket_order",
+    description: `Place an order on Polymarket prediction markets. Supports buying/selling YES or NO outcome tokens.
+
+This tool returns a signature request that requires user approval via the handshake flow.
+The order will be signed using EIP-712 and submitted to the Polymarket CLOB.
+
+Order Types:
+- GTC (Good-Til-Cancelled): Limit order that stays until filled or cancelled
+- FOK (Fill-Or-Kill): Market order that fills immediately or cancels entirely
+- FAK (Fill-And-Kill): Market order that fills what it can, cancels the rest
+
+Use cases:
+- "Buy $10 of YES on Trump winning" → Buy order for YES tokens
+- "Sell my NO position" → Sell order for NO tokens
+- "Bet $50 on YES at 0.55" → Limit buy order at specific price`,
+    
+    // Requires Polymarket portfolio context to get wallet info and market details
+    _meta: {
+      contextRequirements: ["polymarket"],
+      handshakeAction: true, // Indicates this tool returns a signature request
+    },
+
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        portfolio: {
+          type: "object",
+          description: "Your Polymarket portfolio context (injected by the Context app)",
+        },
+        conditionId: {
+          type: "string",
+          description: "The market condition ID (hex string). Can be obtained from search_markets or other market tools.",
+        },
+        slug: {
+          type: "string",
+          description: "The market slug (e.g., 'will-trump-win-2024'). Alternative to conditionId.",
+        },
+        outcome: {
+          type: "string",
+          enum: ["YES", "NO"],
+          description: "Which outcome to trade (YES or NO token)",
+        },
+        side: {
+          type: "string",
+          enum: ["BUY", "SELL"],
+          description: "BUY to purchase shares, SELL to sell shares you own",
+        },
+        amount: {
+          type: "number",
+          description: "For BUY: dollar amount to spend. For SELL: number of shares to sell.",
+        },
+        price: {
+          type: "number",
+          description: "Limit price (0.01-0.99). If not provided for BUY, will calculate market price.",
+        },
+        orderType: {
+          type: "string",
+          enum: ["GTC", "FOK", "FAK"],
+          description: "Order type: GTC (limit), FOK (fill-or-kill market), FAK (fill-and-kill market). Defaults to GTC.",
+        },
+      },
+      required: ["outcome", "side", "amount"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        orderDetails: {
+          type: "object",
+          properties: {
+            market: { type: "string" },
+            conditionId: { type: "string" },
+            outcome: { type: "string" },
+            side: { type: "string" },
+            amount: { type: "number" },
+            price: { type: "number" },
+            estimatedShares: { type: "number" },
+            orderType: { type: "string" },
+          },
+        },
+      },
+    },
+  },
+
+  {
+    name: "submit_signed_polymarket_order",
+    description: `Submit a signed Polymarket order to the CLOB API. 
+This is a callback tool used after the user signs an order via the handshake flow.
+Not intended to be called directly by users.`,
+    
+    _meta: {
+      isCallbackTool: true, // Internal tool for handshake flow
+    },
+
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        signature: {
+          type: "string",
+          description: "The EIP-712 signature from the user's wallet",
+        },
+        order: {
+          type: "object",
+          description: "The signed order data from the original place_polymarket_order call",
+        },
+        orderType: {
+          type: "string",
+          enum: ["GTC", "FOK", "FAK", "GTD"],
+          description: "The order type for CLOB submission",
+        },
+      },
+      required: ["signature", "order", "orderType"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string" },
+        orderId: { type: "string" },
+        message: { type: "string" },
+        orderHashes: { type: "array", items: { type: "string" } },
+      },
     },
   },
 
@@ -2162,6 +2354,12 @@ server.setRequestHandler(
           return await handleDiscoverTrendingMarkets(args);
         case "analyze_my_positions":
           return await handleAnalyzeMyPositions(args);
+
+        // Trading Tools (Handshake)
+        case "place_polymarket_order":
+          return await handlePlacePolymarketOrder(args);
+        case "submit_signed_polymarket_order":
+          return await handleSubmitSignedPolymarketOrder(args);
 
         // Cross-Platform Interoperability
         case "get_comparable_markets":
@@ -4796,6 +4994,378 @@ function generateOverallRecommendation(params: {
   }
 
   return parts.join(" ");
+}
+
+// ============================================================================
+// TRADING HANDLERS (HANDSHAKE FLOW)
+// ============================================================================
+
+/**
+ * Handle place_polymarket_order - Create and return a signature request for a Polymarket order.
+ * 
+ * This function:
+ * 1. Validates the order parameters
+ * 2. Fetches current market data to calculate prices
+ * 3. Constructs the EIP-712 order message
+ * 4. Returns a handshake response with the signature request
+ */
+async function handlePlacePolymarketOrder(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const portfolio = args?.portfolio as PolymarketContext | undefined;
+  const conditionId = args?.conditionId as string | undefined;
+  const slug = args?.slug as string | undefined;
+  const outcome = args?.outcome as "YES" | "NO";
+  const side = args?.side as "BUY" | "SELL";
+  const amount = args?.amount as number;
+  const price = args?.price as number | undefined;
+  const orderType = (args?.orderType as string) || "GTC";
+
+  // Validate required fields
+  if (!outcome || !side || !amount) {
+    return errorResult("Missing required fields: outcome, side, and amount are required");
+  }
+
+  if (!["YES", "NO"].includes(outcome)) {
+    return errorResult("Outcome must be 'YES' or 'NO'");
+  }
+
+  if (!["BUY", "SELL"].includes(side)) {
+    return errorResult("Side must be 'BUY' or 'SELL'");
+  }
+
+  if (amount <= 0) {
+    return errorResult("Amount must be greater than 0");
+  }
+
+  // Get wallet address from portfolio context
+  const walletAddress = portfolio?.walletAddress;
+  if (!walletAddress) {
+    return errorResult("Wallet address not found. Please ensure your wallet is connected.");
+  }
+
+  // Resolve market by conditionId or slug
+  let marketConditionId = conditionId;
+  let marketData: GammaEvent | undefined;
+
+  if (!marketConditionId && slug) {
+    try {
+      marketData = await fetchGamma(`/events/slug/${slug}`) as GammaEvent;
+      const firstMarket = marketData?.markets?.[0];
+      marketConditionId = firstMarket?.conditionId;
+    } catch {
+      return errorResult(`Market not found for slug: ${slug}`);
+    }
+  }
+
+  if (!marketConditionId) {
+    return errorResult("Either conditionId or slug is required to identify the market");
+  }
+
+  // Fetch market details from CLOB
+  let clobMarket: ClobMarket;
+  try {
+    clobMarket = await fetchClob(`/markets/${marketConditionId}`) as ClobMarket;
+  } catch {
+    return errorResult(`Market not found: ${marketConditionId}`);
+  }
+
+  // Get token ID for the selected outcome
+  const tokens = clobMarket.tokens || [];
+  const targetToken = tokens.find(t => t.outcome?.toUpperCase() === outcome);
+  if (!targetToken || !targetToken.token_id) {
+    return errorResult(`Could not find ${outcome} token for market ${marketConditionId}`);
+  }
+  const tokenId = targetToken.token_id;
+
+  // Get market title if we don't have it
+  if (!marketData) {
+    try {
+      const events = await fetchGamma(`/events?closed=false&limit=100`) as GammaEvent[];
+      marketData = events.find(e => e.markets?.some(m => m.conditionId === marketConditionId));
+    } catch {
+      // Non-critical, continue without title
+    }
+  }
+  const marketTitle = marketData?.title || `Market ${marketConditionId.slice(0, 10)}...`;
+
+  // Fetch current orderbook to calculate price if not provided
+  let orderPrice = price;
+  let currentBestBid = 0;
+  let currentBestAsk = 1;
+
+  try {
+    const orderbook = await fetchClob(`/book?token_id=${tokenId}`) as OrderbookResponse;
+    const bids = orderbook?.bids || [];
+    const asks = orderbook?.asks || [];
+
+    if (bids.length > 0) {
+      currentBestBid = parseFloat(bids[0].price);
+    }
+    if (asks.length > 0) {
+      currentBestAsk = parseFloat(asks[0].price);
+    }
+
+    // Calculate market price if not provided
+    if (!orderPrice) {
+      if (side === "BUY") {
+        // For market buy, use best ask with small slippage buffer
+        orderPrice = Math.min(currentBestAsk * 1.02, 0.99);
+      } else {
+        // For market sell, use best bid with small slippage buffer
+        orderPrice = Math.max(currentBestBid * 0.98, 0.01);
+      }
+    }
+  } catch {
+    // If we can't fetch orderbook, require explicit price
+    if (!orderPrice) {
+      return errorResult("Could not fetch orderbook. Please provide an explicit price.");
+    }
+  }
+
+  // Validate price range
+  orderPrice = Math.max(0.01, Math.min(0.99, orderPrice));
+
+  // Calculate shares from amount
+  // For BUY: amount is in USDC, calculate shares = amount / price
+  // For SELL: amount is shares directly
+  let shares: number;
+  let usdValue: number;
+
+  if (side === "BUY") {
+    shares = amount / orderPrice;
+    usdValue = amount;
+  } else {
+    shares = amount;
+    usdValue = shares * orderPrice;
+  }
+
+  // Convert to USDC decimal format (6 decimals)
+  const makerAmountRaw = side === "BUY" 
+    ? Math.floor(usdValue * Math.pow(10, COLLATERAL_DECIMALS))
+    : Math.floor(shares * Math.pow(10, COLLATERAL_DECIMALS));
+  const takerAmountRaw = side === "BUY"
+    ? Math.floor(shares * Math.pow(10, COLLATERAL_DECIMALS))
+    : Math.floor(usdValue * Math.pow(10, COLLATERAL_DECIMALS));
+
+  // Generate order parameters
+  const salt = BigInt(Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)).toString();
+  const nonce = 0; // Polymarket uses 0 for market orders, can be incremented for tracking
+  const expiration = 0; // 0 for no expiration (GTC)
+  const feeRateBps = 0; // No additional fees for basic orders
+
+  // Determine signature type based on wallet context
+  // For linked external wallets (MetaMask, Phantom), use POLY_GNOSIS_SAFE (2)
+  // This is because the user's linked wallet is the signer, but funds come from proxy
+  const signatureType = PolymarketSignatureType.POLY_GNOSIS_SAFE;
+
+  // Build the EIP-712 order message
+  const orderMessage = {
+    salt: salt,
+    maker: walletAddress, // The wallet that funds the order (proxy wallet on Polymarket)
+    signer: walletAddress, // The wallet that signs (linked external wallet)
+    taker: "0x0000000000000000000000000000000000000000", // Open to any taker
+    tokenId: tokenId,
+    makerAmount: makerAmountRaw.toString(),
+    takerAmount: takerAmountRaw.toString(),
+    expiration: expiration.toString(),
+    nonce: nonce.toString(),
+    feeRateBps: feeRateBps.toString(),
+    side: side === "BUY" ? PolymarketSide.BUY : PolymarketSide.SELL,
+    signatureType: signatureType,
+  };
+
+  // Determine which exchange contract to use
+  // For most markets, use the regular CTF Exchange
+  // Negative risk markets use the NEG_RISK_EXCHANGE
+  const useNegRisk = false; // TODO: Detect neg-risk markets from market data
+  const domain = useNegRisk ? POLYMARKET_NEG_RISK_ORDER_DOMAIN : POLYMARKET_ORDER_DOMAIN;
+
+  // Build UI labels
+  const sideLabel = side === "BUY" ? "Buy" : "Sell";
+  const orderTypeLabel = {
+    GTC: "Limit",
+    FOK: "Fill-Or-Kill",
+    FAK: "Fill-And-Kill",
+  }[orderType] || "Limit";
+
+  // Build the signature request
+  const signatureRequest = {
+    _action: "signature_request" as const,
+    domain: domain,
+    types: POLYMARKET_ORDER_TYPES,
+    primaryType: "Order",
+    message: orderMessage,
+    meta: {
+      // UI Customization
+      title: `${sideLabel} ${outcome}`,
+      subtitle: `${orderTypeLabel} order: ${shares.toFixed(2)} shares at $${orderPrice.toFixed(2)}`,
+      description: `${sideLabel} ${shares.toFixed(2)} ${outcome} shares on "${marketTitle}"`,
+      protocol: "Polymarket",
+      action: `${sideLabel} ${outcome}`,
+      tokenSymbol: outcome,
+      tokenAmount: shares.toFixed(2),
+      warningLevel: usdValue > 1000 ? "caution" as const : "info" as const,
+      // Order data for callback
+      _orderData: {
+        order: orderMessage,
+        orderType,
+        conditionId: marketConditionId,
+        tokenId,
+        marketTitle,
+      },
+    },
+    callbackToolName: "submit_signed_polymarket_order",
+  };
+
+  // Build order details for response
+  const orderDetails = {
+    market: marketTitle,
+    conditionId: marketConditionId,
+    tokenId,
+    outcome,
+    side,
+    amount,
+    price: orderPrice,
+    estimatedShares: shares,
+    orderType,
+    currentBestBid,
+    currentBestAsk,
+    estimatedUsdValue: usdValue,
+  };
+
+  const approvalMessage = `Please approve the ${orderTypeLabel.toLowerCase()} ${sideLabel.toLowerCase()} order for ${shares.toFixed(2)} ${outcome} shares at $${orderPrice.toFixed(2)}`;
+
+  // Return the handshake response
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({
+          status: "handshake_required",
+          message: approvalMessage,
+          orderDetails,
+        }, null, 2),
+      },
+    ],
+    structuredContent: {
+      status: "handshake_required",
+      message: approvalMessage,
+      orderDetails,
+      _meta: {
+        handshakeAction: signatureRequest,
+      },
+    },
+  };
+}
+
+/**
+ * Handle submit_signed_polymarket_order - Submit a signed order to Polymarket CLOB.
+ * 
+ * This is the callback tool called after the user signs the order via the handshake flow.
+ */
+async function handleSubmitSignedPolymarketOrder(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const signature = args?.signature as string;
+  const orderData = args?.order as {
+    salt: string;
+    maker: string;
+    signer: string;
+    taker: string;
+    tokenId: string;
+    makerAmount: string;
+    takerAmount: string;
+    expiration: string;
+    nonce: string;
+    feeRateBps: string;
+    side: number;
+    signatureType: number;
+  };
+  const orderType = (args?.orderType as string) || "GTC";
+
+  if (!signature) {
+    return errorResult("Missing signature from handshake");
+  }
+
+  if (!orderData) {
+    return errorResult("Missing order data from handshake");
+  }
+
+  // Build the signed order for CLOB submission
+  const signedOrder = {
+    ...orderData,
+    signature: signature,
+  };
+
+  try {
+    // Submit to Polymarket CLOB API
+    const response = await fetch(`${CLOB_API_URL}/order`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        order: signedOrder,
+        orderType: orderType,
+        owner: orderData.maker, // The API key / owner address
+      }),
+    });
+
+    const responseData = await response.json() as {
+      success?: boolean;
+      errorMsg?: string;
+      orderId?: string;
+      orderHashes?: string[];
+    };
+
+    if (!response.ok || !responseData.success) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              status: "error",
+              message: responseData.errorMsg || `CLOB API error: ${response.status}`,
+              error: responseData,
+              dataSources: [CLOB_API_URL],
+              dataFreshness: "real-time",
+              fetchedAt: new Date().toISOString(),
+            }, null, 2),
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    // Success!
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            status: "success",
+            message: "Order submitted successfully to Polymarket",
+            orderId: responseData.orderId,
+            orderHashes: responseData.orderHashes,
+            orderDetails: {
+              tokenId: orderData.tokenId,
+              side: orderData.side === 0 ? "BUY" : "SELL",
+              makerAmount: orderData.makerAmount,
+              takerAmount: orderData.takerAmount,
+              orderType,
+            },
+            dataSources: [CLOB_API_URL],
+            dataFreshness: "real-time",
+            fetchedAt: new Date().toISOString(),
+          }, null, 2),
+        },
+      ],
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResult(`Failed to submit order to Polymarket CLOB: ${message}`);
+  }
 }
 
 // ============================================================================
