@@ -262,6 +262,56 @@ function createContextMiddleware(options = {}) {
   };
 }
 
-export { CONTEXT_REQUIREMENTS_KEY, ContextClient, ContextError, Discovery, Tools, createContextMiddleware, isOpenMcpMethod, isProtectedMcpMethod, verifyContextRequest };
+// src/handshake/types.ts
+function isHandshakeAction(value) {
+  return typeof value === "object" && value !== null && "_action" in value && (value._action === "signature_request" || value._action === "transaction_proposal" || value._action === "auth_required");
+}
+function isSignatureRequest(value) {
+  return isHandshakeAction(value) && value._action === "signature_request";
+}
+function isTransactionProposal(value) {
+  return isHandshakeAction(value) && value._action === "transaction_proposal";
+}
+function isAuthRequired(value) {
+  return isHandshakeAction(value) && value._action === "auth_required";
+}
+function createSignatureRequest(params) {
+  return {
+    _action: "signature_request",
+    ...params
+  };
+}
+function createTransactionProposal(params) {
+  return {
+    _action: "transaction_proposal",
+    ...params
+  };
+}
+function createAuthRequired(params) {
+  return {
+    _action: "auth_required",
+    ...params
+  };
+}
+function wrapHandshakeResponse(action) {
+  const actionType = action._action.replace("_", " ");
+  return {
+    content: [
+      {
+        type: "text",
+        text: `Handshake required: ${actionType}. Please approve in the Context app.`
+      }
+    ],
+    structuredContent: {
+      _meta: {
+        handshakeAction: action
+      },
+      status: "handshake_required",
+      message: action.meta?.description ?? `${actionType} required`
+    }
+  };
+}
+
+export { CONTEXT_REQUIREMENTS_KEY, ContextClient, ContextError, Discovery, Tools, createAuthRequired, createContextMiddleware, createSignatureRequest, createTransactionProposal, isAuthRequired, isHandshakeAction, isOpenMcpMethod, isProtectedMcpMethod, isSignatureRequest, isTransactionProposal, verifyContextRequest, wrapHandshakeResponse };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

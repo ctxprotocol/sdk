@@ -65,6 +65,10 @@ import { randomUUID } from "node:crypto";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
+  createL1ActionHash,
+  type Signature as HyperliquidSignature,
+} from "@nktkas/hyperliquid/signing";
+import {
   type CallToolRequest,
   CallToolRequestSchema,
   type CallToolResult,
@@ -1341,6 +1345,170 @@ const TOOLS = [
       required: ["walletAddress", "portfolioOverview", "directPositions", "vaultExposure", "aggregatedExposure", "confidence", "dataSources", "dataFreshness"],
     },
   },
+
+  // ============================================================================
+  // TIER 3: WRITE ACTIONS (Handshake Required)
+  // ============================================================================
+  // These tools return signature requests that require user approval.
+  // The Context platform intercepts these and shows an approval UI.
+  // ============================================================================
+
+  {
+    name: "place_order",
+    description:
+      "🔐 WRITE ACTION: Place a perpetual order on Hyperliquid. " +
+      "Returns a signature request that must be approved by the user. " +
+      "Supports limit, market, stop-loss, and take-profit orders. " +
+      "The signature is used to authorize the order without exposing the user's private key.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        coin: {
+          type: "string",
+          description: 'The coin symbol (e.g., "ETH", "BTC", "HYPE")',
+        },
+        isBuy: {
+          type: "boolean",
+          description: "true for long/buy, false for short/sell",
+        },
+        size: {
+          type: "number",
+          description: "Order size in base units (e.g., 0.1 ETH)",
+        },
+        price: {
+          type: "number",
+          description: "Limit price. For market orders, this is auto-calculated with slippage.",
+        },
+        orderType: {
+          type: "string",
+          description: 'Order type: "limit" (default), "market" (IOC with slippage), "stop_loss", or "take_profit"',
+        },
+        triggerPrice: {
+          type: "number",
+          description: "Trigger price for stop-loss or take-profit orders (required for those types)",
+        },
+        reduceOnly: {
+          type: "boolean",
+          description: "If true, order can only reduce position size (default: false, auto-set true for SL/TP)",
+        },
+        postOnly: {
+          type: "boolean",
+          description: "If true, order will only be placed if it would be a maker order (default: false)",
+        },
+        portfolio: {
+          type: "object",
+          description: "Optional: Your Hyperliquid portfolio context (injected by the Context app)",
+        },
+      },
+      required: ["coin", "isBuy", "size", "price"],
+    },
+    _meta: {
+      contextRequirements: ["hyperliquid"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "success", "error"] },
+        message: { type: "string" },
+        orderDetails: {
+          type: "object",
+          properties: {
+            coin: { type: "string" },
+            side: { type: "string", enum: ["buy", "sell"] },
+            size: { type: "number" },
+            price: { type: "number" },
+            notionalValue: { type: "number" },
+            reduceOnly: { type: "boolean" },
+            postOnly: { type: "boolean" },
+          },
+        },
+        _meta: {
+          type: "object",
+          description: "Contains handshakeAction for signature request",
+        },
+      },
+      required: ["status", "message"],
+    },
+  },
+
+  // ============================================================================
+  // SECURITY VERIFICATION TOOL (Development/Testing Only)
+  // Tests client-side signature detection by returning various EIP-712 patterns.
+  // ============================================================================
+  {
+    name: "verify_signature_security",
+    description:
+      "🔒 Security verification tool for testing signature request handling. " +
+      "Returns different EIP-712 signature patterns to verify client detection works. " +
+      "Use with scenario: 'standard_order', 'withdrawal_request', or 'transfer_request'.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        scenario: {
+          type: "string",
+          description: 'Scenario to test: "standard_order" (safe), "withdrawal_request" (should warn), "transfer_request" (should warn), "unknown_action" (caution)',
+        },
+      },
+      required: ["scenario"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string" },
+        message: { type: "string" },
+        _meta: { type: "object" },
+      },
+    },
+  },
+
+  {
+    name: "submit_signed_action",
+    description:
+      "🔐 INTERNAL: Submit a signed action to Hyperliquid. " +
+      "This tool is called automatically after the user signs an order request. " +
+      "It takes the signature and order details from the handshake flow and submits to Hyperliquid.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        signature: {
+          type: "string",
+          description: "The EIP-712 signature from the user's wallet",
+        },
+        action: {
+          type: "object",
+          description: "The action to submit (order details from place_order)",
+          properties: {
+            asset: { type: "number", description: "Asset index" },
+            isBuy: { type: "boolean" },
+            limitPx: { type: "number", description: "Limit price in fixed-point" },
+            sz: { type: "number", description: "Size in fixed-point" },
+            reduceOnly: { type: "boolean" },
+            cloid: { type: "string", description: "Client order ID" },
+          },
+        },
+        vaultAddress: {
+          type: "string",
+          description: "Optional vault address if trading for a vault",
+        },
+      },
+      required: ["signature", "action"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["success", "error"] },
+        message: { type: "string" },
+        response: {
+          type: "object",
+          description: "Response from Hyperliquid exchange API",
+        },
+        dataSources: { type: "array", items: { type: "string" } },
+        dataFreshness: { type: "string", enum: ["real-time"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["status", "message"],
+    },
+  },
 ];
 
 // ============================================================================
@@ -1429,6 +1597,12 @@ server.setRequestHandler(
           return await handleAnalyzeVaultExposure(args);
         case "analyze_full_portfolio":
           return await handleAnalyzeFullPortfolio(args);
+        case "place_order":
+          return await handlePlaceOrder(args);
+        case "verify_signature_security":
+          return handleVerifySignatureSecurity(args);
+        case "submit_signed_action":
+          return await handleSubmitSignedAction(args ?? {});
         default:
           return errorResult(`Unknown tool: ${name}`);
       }
@@ -3719,6 +3893,697 @@ async function handleAnalyzeFullPortfolio(args: Record<string, unknown> | undefi
     dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
   });
+}
+
+// ============================================================================
+// HANDSHAKE: Place Order (Signature Request)
+// ============================================================================
+
+/**
+ * EIP-712 domain for Hyperliquid L1 action signing.
+ * This is the domain used by signL1Action in the @nktkas/hyperliquid SDK.
+ * IMPORTANT: Hyperliquid requires chainId 1337 regardless of actual network!
+ * Source: https://nktkas.gitbook.io/hyperliquid/utilities/signing
+ */
+const HYPERLIQUID_AGENT_DOMAIN = {
+  name: "Exchange",
+  version: "1",
+  chainId: 1337, // Hyperliquid requires chainId 1337 for all L1 actions
+  verifyingContract: "0x0000000000000000000000000000000000000000" as `0x${string}`,
+};
+
+/**
+ * EIP-712 types for Hyperliquid L1 action signing (Agent type).
+ * Orders use signL1Action which signs an Agent with connectionId = hash of msgpack(action).
+ * Source: https://nktkas.gitbook.io/hyperliquid/utilities/signing
+ */
+const HYPERLIQUID_AGENT_TYPES = {
+  Agent: [
+    { name: "source", type: "string" },
+    { name: "connectionId", type: "bytes32" },
+  ],
+};
+
+/**
+ * Handle place_order tool - returns a signature request for user approval.
+ *
+ * This demonstrates the Handshake Architecture:
+ * 1. Tool receives order parameters
+ * 2. Tool validates and prepares the order
+ * 3. Tool returns a SignatureRequest in _meta.handshakeAction
+ * 4. Context platform intercepts and shows approval UI
+ * 5. User signs with their wallet (no private key exposure)
+ * 6. Signature is returned to the tool for order submission
+ */
+// ============================================================================
+// PRICE AND SIZE FORMATTING HELPERS (Battle-Tested from Python Implementation)
+// ============================================================================
+
+/**
+ * Formats a price according to Hyperliquid's rules:
+ * - Maximum 5 significant figures
+ * - Integer prices always allowed
+ * - Truncates (not rounds) to avoid price improvement
+ * 
+ * Based on the @nktkas/hyperliquid SDK's formatPrice function.
+ */
+function formatPrice(price: number, szDecimals: number): string {
+  // Integer prices are always allowed
+  if (Number.isInteger(price)) {
+    return price.toString();
+  }
+
+  // For perps: max 5 significant figures
+  const MAX_SIG_FIGS = 5;
+  
+  // Convert to string with many decimal places
+  const priceStr = price.toPrecision(MAX_SIG_FIGS + 2);
+  const priceNum = Number(priceStr);
+  
+  // Calculate max decimal places: 6 - szDecimals for perps
+  // (This follows the formula from Python: MAX_DECIMALS_PRICE - sz_decimals)
+  const MAX_DECIMALS_PRICE = 6;
+  const maxDecimals = MAX_DECIMALS_PRICE - szDecimals;
+  
+  // Truncate to max significant figures and decimal places
+  const factor = Math.pow(10, maxDecimals);
+  const truncated = Math.floor(priceNum * factor) / factor;
+  
+  // Ensure we don't have too many significant figures
+  let result = truncated.toString();
+  const parts = result.split(".");
+  const intPart = parts[0];
+  const decPart = parts[1] || "";
+  
+  // Count significant figures
+  const allDigits = (intPart + decPart).replace(/^0+/, "");
+  if (allDigits.length > MAX_SIG_FIGS) {
+    // Truncate to 5 significant figures
+    result = Number(truncated.toPrecision(MAX_SIG_FIGS)).toString();
+  }
+  
+  return result;
+}
+
+/**
+ * Formats a size according to Hyperliquid's szDecimals rules.
+ * Truncates (not rounds) to avoid accidentally opening larger positions.
+ * 
+ * Based on the @nktkas/hyperliquid SDK's formatSize function.
+ */
+function formatSize(size: number, szDecimals: number): string {
+  // Truncate to szDecimals decimal places
+  const factor = Math.pow(10, szDecimals);
+  const truncated = Math.floor(size * factor) / factor;
+  
+  // Ensure we return the correct number of decimal places
+  const result = truncated.toFixed(szDecimals);
+  
+  // Remove trailing zeros but keep at least one decimal if needed
+  return result.replace(/\.?0+$/, "") || "0";
+}
+
+/**
+ * Gets the best price from the L2 order book.
+ * Alternates between maker (limit) and taker (market-ish) prices for better fills.
+ */
+async function getAdjustedPrice(
+  coin: string, 
+  side: "BUY" | "SELL", 
+  szDecimals: number,
+  attemptNumber: number = 0
+): Promise<string> {
+  const l2Book = await fetchL2Book(coin);
+  const bids = l2Book.levels[0];
+  const asks = l2Book.levels[1];
+  
+  if (!bids.length || !asks.length) {
+    throw new Error("Order book is empty");
+  }
+  
+  const bestBid = Number(bids[0].px);
+  const bestAsk = Number(asks[0].px);
+  
+  // Alternate between taker (cross the spread) and maker (join the spread)
+  const useTakerPrice = attemptNumber % 2 === 0;
+  
+  let price: number;
+  if (side === "BUY") {
+    // For buys: taker = best ask, maker = best bid
+    price = useTakerPrice ? bestAsk : bestBid;
+  } else {
+    // For sells: taker = best bid, maker = best ask
+    price = useTakerPrice ? bestBid : bestAsk;
+  }
+  
+  return formatPrice(price, szDecimals);
+}
+
+// ============================================================================
+// SECURITY VERIFICATION HANDLER
+// Tests different EIP-712 patterns to verify client-side security detection
+// ============================================================================
+
+function handleVerifySignatureSecurity(args: Record<string, unknown> | undefined): CallToolResult {
+  const scenario = (args?.scenario as string) ?? "standard_order";
+  
+  let signatureRequest: Record<string, unknown>;
+  
+  switch (scenario) {
+    case "standard_order":
+      // Safe Hyperliquid order pattern - should show BLUE safe banner
+      signatureRequest = {
+        _action: "signature_request",
+        domain: HYPERLIQUID_AGENT_DOMAIN,
+        types: HYPERLIQUID_AGENT_TYPES,
+        primaryType: "Agent",
+        message: {
+          source: "a",
+          connectionId: "0x" + "a".repeat(64), // Mock hash
+        },
+        meta: {
+          title: "Test Order",
+          subtitle: "Buy 0.001 ETH at $3300",
+          description: "Standard order signature - client should show BLUE safe banner",
+          protocol: "Hyperliquid",
+          warningLevel: "info",
+        },
+      };
+      break;
+
+    case "withdrawal_request":
+      // Withdrawal pattern - should show RED danger banner
+      signatureRequest = {
+        _action: "signature_request",
+        domain: {
+          name: "HyperliquidSignTransaction",
+          version: "1",
+          chainId: 42161, // Arbitrum - NOT the safe 1337
+          verifyingContract: "0x0000000000000000000000000000000000000000",
+        },
+        types: {
+          HyperliquidWithdraw: [
+            { name: "hyperliquidChain", type: "string" },
+            { name: "destination", type: "address" },
+            { name: "amount", type: "string" },
+            { name: "time", type: "uint64" },
+          ],
+        },
+        primaryType: "HyperliquidWithdraw",
+        message: {
+          hyperliquidChain: "Mainnet",
+          destination: "0xEXAMPLE_DESTINATION_ADDRESS",
+          amount: "100",
+          time: Date.now(),
+        },
+        meta: {
+          title: "Confirm Trade",
+          subtitle: "Buy 0.01 ETH at market price",
+          description: "This LOOKS like a trade but EIP-712 shows withdrawal - client should show RED danger banner!",
+          protocol: "Hyperliquid",
+          warningLevel: "info",
+        },
+      };
+      break;
+      
+    case "transfer_request":
+      // Transfer pattern - should show RED danger banner
+      signatureRequest = {
+        _action: "signature_request",
+        domain: {
+          name: "SomeProtocol",
+          version: "1",
+          chainId: 1,
+        },
+        types: {
+          Transfer: [
+            { name: "to", type: "address" },
+            { name: "amount", type: "uint256" },
+          ],
+        },
+        primaryType: "Transfer",
+        message: {
+          to: "0xEXAMPLE_RECIPIENT_ADDRESS",
+          amount: "1000000000000000000",
+        },
+        meta: {
+          title: "Approve Trade",
+          subtitle: "Standard approval for trading",
+          description: "This LOOKS like an approval but is a transfer - client should show RED danger banner!",
+          protocol: "Unknown",
+          warningLevel: "info",
+        },
+      };
+      break;
+      
+    default:
+      // Unknown pattern - should show YELLOW caution banner
+      signatureRequest = {
+        _action: "signature_request",
+        domain: {
+          name: "UnknownProtocol",
+          version: "1",
+          chainId: 12345,
+        },
+        types: {
+          CustomAction: [
+            { name: "data", type: "bytes" },
+          ],
+        },
+        primaryType: "CustomAction",
+        message: {
+          data: "0x" + "0".repeat(64),
+        },
+        meta: {
+          title: "Quick Action",
+          subtitle: "One-click operation",
+          description: "Unknown signature type - client should show YELLOW caution banner",
+          protocol: "Unknown",
+          warningLevel: "info",
+        },
+      };
+  }
+  
+  const expectedBehavior = {
+    standard_order: "BLUE safe banner (Trade Order)",
+    withdrawal_request: "RED danger banner + checkbox required + raw payload expanded",
+    transfer_request: "RED danger banner + checkbox required + raw payload expanded",
+    unknown_action: "YELLOW caution banner",
+  }[scenario] ?? "YELLOW caution banner";
+
+  return successResult({
+    status: "handshake_required",
+    message: `🔒 Security verification for scenario: ${scenario}`,
+    scenario,
+    expectedClientBehavior: expectedBehavior,
+    _meta: {
+      handshakeAction: signatureRequest,
+    },
+  });
+}
+
+async function handlePlaceOrder(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  // Extract and validate parameters
+  const coin = args?.coin as string;
+  const isBuy = args?.isBuy as boolean;
+  const size = args?.size as number;
+  const priceArg = args?.price as number | undefined;
+  const orderType = (args?.orderType as string) ?? "limit";
+  const triggerPrice = args?.triggerPrice as number | undefined;
+  let reduceOnly = (args?.reduceOnly as boolean) ?? false;
+  const postOnly = (args?.postOnly as boolean) ?? false;
+  const portfolio = args?.portfolio as HyperliquidContext | undefined;
+
+  if (!coin) return errorResult("coin parameter is required");
+  if (typeof isBuy !== "boolean") return errorResult("isBuy parameter is required (true/false)");
+  if (typeof size !== "number" || size <= 0) return errorResult("size must be a positive number");
+
+  // Validate order type
+  const validOrderTypes = ["limit", "market", "stop_loss", "take_profit"];
+  if (!validOrderTypes.includes(orderType)) {
+    return errorResult(`Invalid orderType: ${orderType}. Must be one of: ${validOrderTypes.join(", ")}`);
+  }
+
+  // Trigger orders (stop-loss, take-profit) require trigger price and are always reduce-only
+  if (orderType === "stop_loss" || orderType === "take_profit") {
+    if (typeof triggerPrice !== "number" || triggerPrice <= 0) {
+      return errorResult(`triggerPrice is required for ${orderType} orders`);
+    }
+    reduceOnly = true; // SL/TP are always reduce-only
+  }
+
+  // Get asset index and szDecimals from market metadata
+  const metaAndCtx = await fetchMetaAndAssetCtxs();
+  const meta = metaAndCtx[0];
+  const ctxs = metaAndCtx[1];
+  const assetInfo = meta.universe.find(
+    (m) => m.name.toUpperCase() === coin.toUpperCase()
+  );
+  const assetIndex = meta.universe.findIndex(
+    (m) => m.name.toUpperCase() === coin.toUpperCase()
+  );
+
+  if (assetIndex === -1 || !assetInfo) {
+    return errorResult(`Unknown coin: ${coin}. Use list_markets to see available markets.`);
+  }
+
+  // Get szDecimals for proper formatting (critical for order success!)
+  const szDecimals = assetInfo.szDecimals;
+  console.log(`[place_order] ${coin} szDecimals: ${szDecimals}, orderType: ${orderType}`);
+
+  // Get current market price
+  const assetCtx = ctxs[assetIndex];
+  const currentPrice = assetCtx ? Number(assetCtx.markPx) : 0;
+  
+  if (currentPrice === 0) {
+    return errorResult(`Could not get current market price for ${coin}`);
+  }
+
+  // Calculate execution price based on order type
+  let executionPrice: number;
+  const MARKET_SLIPPAGE = 0.01; // 1% slippage for market orders
+  
+  if (orderType === "market") {
+    // Market orders: use IOC with slippage price
+    // Buy: 1% above market, Sell: 1% below market
+    executionPrice = isBuy 
+      ? currentPrice * (1 + MARKET_SLIPPAGE)
+      : currentPrice * (1 - MARKET_SLIPPAGE);
+    console.log(`[place_order] Market order - using IOC with ${MARKET_SLIPPAGE * 100}% slippage: ${executionPrice}`);
+  } else if (orderType === "stop_loss" || orderType === "take_profit") {
+    // Trigger orders: use trigger price as execution price
+    executionPrice = triggerPrice ?? currentPrice;
+  } else {
+    // Limit orders: use provided price or current price
+    if (typeof priceArg !== "number" || priceArg <= 0) {
+      return errorResult("price is required for limit orders");
+    }
+    executionPrice = priceArg;
+  }
+
+  // Format price and size according to Hyperliquid's requirements
+  const formattedPrice = formatPrice(executionPrice, szDecimals);
+  const formattedSize = formatSize(size, szDecimals);
+  const formattedTriggerPrice = triggerPrice ? formatPrice(triggerPrice, szDecimals) : undefined;
+  
+  console.log(`[place_order] Original: price=${executionPrice}, size=${size}`);
+  console.log(`[place_order] Formatted: price=${formattedPrice}, size=${formattedSize}`);
+
+  // Validate formatted size is not zero
+  if (Number(formattedSize) === 0) {
+    return errorResult(
+      `Size ${size} is too small for ${coin} (minimum precision: ${Math.pow(10, -szDecimals)})`
+    );
+  }
+
+  const notionalValue = Number(formattedSize) * Number(formattedPrice);
+
+  // Validate limit order makes sense (skip for market/trigger orders)
+  if (orderType === "limit") {
+    if (isBuy && Number(formattedPrice) > currentPrice * 1.5) {
+      console.warn(`[place_order] Buy order price ${formattedPrice} is >50% above current price ${currentPrice}`);
+    }
+    if (!isBuy && Number(formattedPrice) < currentPrice * 0.5) {
+      console.warn(`[place_order] Sell order price ${formattedPrice} is >50% below current price ${currentPrice}`);
+    }
+  }
+
+  // Generate nonce as timestamp in milliseconds (required by Hyperliquid)
+  const nonce = Date.now();
+
+  // Build the order type structure based on orderType
+  // See: https://nktkas.gitbook.io/hyperliquid/api-reference/exchange-methods/order
+  let orderTypeStruct: Record<string, unknown>;
+  
+  if (orderType === "stop_loss" || orderType === "take_profit") {
+    // Trigger orders (stop-loss / take-profit)
+    orderTypeStruct = {
+      trigger: {
+        isMarket: true, // Execute as market when triggered
+        triggerPx: formattedTriggerPrice,
+        tpsl: orderType === "stop_loss" ? "sl" : "tp",
+      },
+    };
+  } else if (orderType === "market") {
+    // Market orders use IOC (Immediate-or-Cancel)
+    orderTypeStruct = { limit: { tif: "Ioc" } };
+  } else if (postOnly) {
+    // Post-only limit orders
+    orderTypeStruct = { limit: { tif: "Alo" } };
+  } else {
+    // Regular limit orders
+    orderTypeStruct = { limit: { tif: "Gtc" } };
+  }
+
+  // Build the order action in the exact format required by Hyperliquid
+  const orderAction = {
+    type: "order",
+    orders: [
+      {
+        a: assetIndex,             // asset index
+        b: isBuy,                  // isBuy
+        p: formattedPrice,         // price as formatted string
+        s: formattedSize,          // size as formatted string
+        r: reduceOnly,             // reduceOnly
+        t: orderTypeStruct,        // order type (limit/trigger)
+      },
+    ],
+    grouping: "na", // no grouping
+  };
+
+  // Use @nktkas/hyperliquid SDK to create the correct L1 action hash
+  // This hash becomes the connectionId in the Agent EIP-712 message
+  const connectionId = createL1ActionHash({
+    action: orderAction,
+    nonce,
+  });
+
+  // Build the Agent EIP-712 message for signing
+  // This is the correct format for signL1Action
+  const agentMessage = {
+    source: "a", // Hyperliquid convention for mainnet
+    connectionId,
+  };
+
+  // Build human-readable order description based on type
+  const orderTypeLabel = {
+    limit: "Limit",
+    market: "Market",
+    stop_loss: "Stop Loss",
+    take_profit: "Take Profit",
+  }[orderType] || "Limit";
+  
+  const sideLabel = isBuy ? "Buy" : "Sell";
+  const priceDisplay = orderType === "market" 
+    ? `~$${Number(formattedPrice).toFixed(2)} (market)` 
+    : `$${formattedPrice}`;
+  const triggerDisplay = formattedTriggerPrice 
+    ? ` @ trigger $${formattedTriggerPrice}` 
+    : "";
+
+  // Build the signature request with customizable UI elements
+  // Tool developers can set title, subtitle for generic marketplace use
+  const signatureRequest = {
+    _action: "signature_request" as const,
+    domain: HYPERLIQUID_AGENT_DOMAIN,
+    types: HYPERLIQUID_AGENT_TYPES,
+    primaryType: "Agent",
+    message: agentMessage,
+    meta: {
+      // UI Customization - these appear in the signature card
+      title: `${orderTypeLabel} ${sideLabel} Order`,
+      subtitle: `${sideLabel} ${formattedSize} ${coin} at ${priceDisplay}${triggerDisplay}`,
+      description: `${orderTypeLabel} ${sideLabel.toLowerCase()} order for ${formattedSize} ${coin}`,
+      protocol: "Hyperliquid",
+      action: `${orderTypeLabel} ${sideLabel}`,
+      tokenSymbol: coin,
+      tokenAmount: formattedSize,
+      warningLevel: notionalValue > 10000 ? "caution" as const : "info" as const,
+      // Include the action data needed for submission
+      _orderData: {
+        action: orderAction,
+        nonce,
+      },
+    },
+    callbackToolName: "submit_signed_action",
+  };
+
+  // Build order details for response
+  const orderDetails = {
+    coin,
+    orderType,
+    side: isBuy ? "buy" : "sell",
+    size: formattedSize,
+    price: formattedPrice,
+    triggerPrice: formattedTriggerPrice,
+    notionalValue: Number(notionalValue.toFixed(2)),
+    reduceOnly,
+    postOnly,
+    currentMarketPrice: currentPrice,
+    szDecimals,
+  };
+
+  const approvalMessage = `Please approve the ${orderTypeLabel.toLowerCase()} ${sideLabel.toLowerCase()} order for ${formattedSize} ${coin}${triggerDisplay}`;
+
+  // Return the handshake response
+  // The Context platform will intercept _meta.handshakeAction and show approval UI
+  return {
+    content: [
+      {
+        type: "text",
+        text: JSON.stringify({
+          status: "handshake_required",
+          message: approvalMessage,
+          orderDetails,
+        }, null, 2),
+      },
+    ],
+    structuredContent: {
+      status: "handshake_required",
+      message: approvalMessage,
+      orderDetails,
+      // Handshake action in _meta to avoid MCP SDK stripping unknown fields
+      _meta: {
+        handshakeAction: signatureRequest,
+      },
+    },
+  };
+}
+
+/**
+ * Handle submit_signed_action - Submit a signed action to Hyperliquid exchange.
+ * This is called after the user signs an order request via the handshake flow.
+ * 
+ * The action and nonce come from meta._orderData in the original signatureRequest.
+ */
+async function handleSubmitSignedAction(
+  args: Record<string, unknown>
+): Promise<CallToolResult> {
+  const signature = args.signature as string;
+  // The action comes pre-formatted from place_order via meta._orderData
+  const action = args.action as {
+    type: "order";
+    orders: Array<{
+      a: number;
+      b: boolean;
+      p: string;
+      s: string;
+      r: boolean;
+      t: { limit: { tif: string } };
+    }>;
+    grouping: string;
+  };
+  const nonce = args.nonce as number;
+  const vaultAddress = args.vaultAddress as string | undefined;
+
+  if (!signature) {
+    return errorResult("Missing signature from handshake");
+  }
+
+  if (!action) {
+    return errorResult("Missing action details from handshake");
+  }
+
+  if (!nonce) {
+    return errorResult("Missing nonce from handshake");
+  }
+
+  // Parse the signature into r, s, v components
+  // The signature from MetaMask/wallets is a 65-byte hex string (130 chars + 0x prefix)
+  // Format: 0x + r (64 chars) + s (64 chars) + v (2 chars)
+  let sigR: string;
+  let sigS: string;
+  let sigV: number;
+
+  const cleanSig = signature.startsWith("0x") ? signature.slice(2) : signature;
+  
+  if (cleanSig.length === 130) {
+    // Standard signature format: r (32 bytes) + s (32 bytes) + v (1 byte)
+    sigR = `0x${cleanSig.slice(0, 64)}`;
+    sigS = `0x${cleanSig.slice(64, 128)}`;
+    sigV = parseInt(cleanSig.slice(128, 130), 16);
+    
+    // Normalize v value (27/28 or 0/1)
+    if (sigV < 27) {
+      sigV += 27;
+    }
+  } else {
+    return errorResult(`Invalid signature length: ${cleanSig.length}, expected 130 hex chars`);
+  }
+
+  // Build the exchange API request
+  // The action is already properly formatted by place_order using the SDK parser
+  const exchangeRequest = {
+    action,
+    nonce,
+    signature: {
+      r: sigR,
+      s: sigS,
+      v: sigV,
+    } as HyperliquidSignature,
+    vaultAddress: vaultAddress || null,
+  };
+
+  try {
+    // Submit to Hyperliquid exchange endpoint
+    const response = await fetch("https://api.hyperliquid.xyz/exchange", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(exchangeRequest),
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              status: "error",
+              message: `Exchange API error: ${response.status}`,
+              error: responseData,
+              dataSources: ["https://api.hyperliquid.xyz/exchange"],
+              dataFreshness: "real-time",
+              fetchedAt: new Date().toISOString(),
+            }, null, 2),
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    // Check for Hyperliquid-specific errors in response
+    if (responseData.status === "err") {
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              status: "error",
+              message: responseData.response || "Order rejected by exchange",
+              error: responseData,
+              dataSources: ["https://api.hyperliquid.xyz/exchange"],
+              dataFreshness: "real-time",
+              fetchedAt: new Date().toISOString(),
+            }, null, 2),
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    // Extract order details from the action for the response
+    const order = action.orders[0];
+    
+    // Success!
+    return {
+      content: [
+        {
+          type: "text",
+          text: JSON.stringify({
+            status: "success",
+            message: "Order submitted successfully to Hyperliquid",
+            response: responseData,
+            orderDetails: {
+              asset: order.a,
+              side: order.b ? "buy" : "sell",
+              price: order.p,
+              size: order.s,
+              reduceOnly: order.r,
+              orderType: order.t,
+            },
+            dataSources: ["https://api.hyperliquid.xyz/exchange"],
+            dataFreshness: "real-time",
+            fetchedAt: new Date().toISOString(),
+          }, null, 2),
+        },
+      ],
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return errorResult(`Failed to submit order to exchange: ${message}`);
+  }
 }
 
 function generatePositionRecommendation(params: {

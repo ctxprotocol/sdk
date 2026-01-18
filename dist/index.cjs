@@ -264,14 +264,72 @@ function createContextMiddleware(options = {}) {
   };
 }
 
+// src/handshake/types.ts
+function isHandshakeAction(value) {
+  return typeof value === "object" && value !== null && "_action" in value && (value._action === "signature_request" || value._action === "transaction_proposal" || value._action === "auth_required");
+}
+function isSignatureRequest(value) {
+  return isHandshakeAction(value) && value._action === "signature_request";
+}
+function isTransactionProposal(value) {
+  return isHandshakeAction(value) && value._action === "transaction_proposal";
+}
+function isAuthRequired(value) {
+  return isHandshakeAction(value) && value._action === "auth_required";
+}
+function createSignatureRequest(params) {
+  return {
+    _action: "signature_request",
+    ...params
+  };
+}
+function createTransactionProposal(params) {
+  return {
+    _action: "transaction_proposal",
+    ...params
+  };
+}
+function createAuthRequired(params) {
+  return {
+    _action: "auth_required",
+    ...params
+  };
+}
+function wrapHandshakeResponse(action) {
+  const actionType = action._action.replace("_", " ");
+  return {
+    content: [
+      {
+        type: "text",
+        text: `Handshake required: ${actionType}. Please approve in the Context app.`
+      }
+    ],
+    structuredContent: {
+      _meta: {
+        handshakeAction: action
+      },
+      status: "handshake_required",
+      message: action.meta?.description ?? `${actionType} required`
+    }
+  };
+}
+
 exports.CONTEXT_REQUIREMENTS_KEY = CONTEXT_REQUIREMENTS_KEY;
 exports.ContextClient = ContextClient;
 exports.ContextError = ContextError;
 exports.Discovery = Discovery;
 exports.Tools = Tools;
+exports.createAuthRequired = createAuthRequired;
 exports.createContextMiddleware = createContextMiddleware;
+exports.createSignatureRequest = createSignatureRequest;
+exports.createTransactionProposal = createTransactionProposal;
+exports.isAuthRequired = isAuthRequired;
+exports.isHandshakeAction = isHandshakeAction;
 exports.isOpenMcpMethod = isOpenMcpMethod;
 exports.isProtectedMcpMethod = isProtectedMcpMethod;
+exports.isSignatureRequest = isSignatureRequest;
+exports.isTransactionProposal = isTransactionProposal;
 exports.verifyContextRequest = verifyContextRequest;
+exports.wrapHandshakeResponse = wrapHandshakeResponse;
 //# sourceMappingURL=index.cjs.map
 //# sourceMappingURL=index.cjs.map

@@ -61,3 +61,27 @@ export type {
   CreateContextMiddlewareOptions,
   ContextMiddlewareRequest,
 } from "./auth/index.js";
+
+// Handshake types and helpers for tools that need user interaction
+// (signatures, transactions, OAuth)
+export {
+  createSignatureRequest,
+  createTransactionProposal,
+  createAuthRequired,
+  wrapHandshakeResponse,
+  isHandshakeAction,
+  isSignatureRequest,
+  isTransactionProposal,
+  isAuthRequired,
+} from "./handshake/index.js";
+export type {
+  HandshakeMeta,
+  EIP712Domain,
+  EIP712TypeField,
+  SignatureRequest,
+  TransactionProposalMeta,
+  TransactionProposal,
+  AuthRequiredMeta,
+  AuthRequired,
+  HandshakeAction,
+} from "./handshake/index.js";
