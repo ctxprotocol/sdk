@@ -1088,9 +1088,9 @@ Not intended to be called directly by users.`,
           type: "string",
           description: "The EIP-712 signature from the user's wallet",
         },
-        order: {
+        action: {
           type: "object",
-          description: "The signed order data from the original place_polymarket_order call",
+          description: "The signed order data from the original place_polymarket_order call (passed as 'action' by the handshake flow)",
         },
         orderType: {
           type: "string",
@@ -1098,7 +1098,7 @@ Not intended to be called directly by users.`,
           description: "The order type for CLOB submission",
         },
       },
-      required: ["signature", "order", "orderType"],
+      required: ["signature", "action"],
     },
     outputSchema: {
       type: "object" as const,
@@ -5284,9 +5284,9 @@ async function handlePlacePolymarketOrder(
       tokenSymbol: outcome,
       tokenAmount: shares.toFixed(2),
       warningLevel: usdValue > 1000 ? "caution" as const : "info" as const,
-      // Order data for callback
+      // Order data for callback (use 'action' field for consistency with Hyperliquid)
       _orderData: {
-        order: orderMessage,
+        action: orderMessage,
         orderType,
         conditionId: marketConditionId,
         tokenId,
@@ -5346,7 +5346,8 @@ async function handleSubmitSignedPolymarketOrder(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
   const signature = args?.signature as string;
-  const orderData = args?.order as {
+  // The handshake flow passes order data as 'action' (consistent with Hyperliquid)
+  const orderData = args?.action as {
     salt: string;
     maker: string;
     signer: string;
@@ -5367,7 +5368,7 @@ async function handleSubmitSignedPolymarketOrder(
   }
 
   if (!orderData) {
-    return errorResult("Missing order data from handshake");
+    return errorResult("Missing order data from handshake. Expected 'action' field with order details.");
   }
 
   // Build the signed order for CLOB submission
