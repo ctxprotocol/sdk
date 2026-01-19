@@ -1409,6 +1409,7 @@ const TOOLS = [
     },
     _meta: {
       contextRequirements: ["hyperliquid"],
+      handshakeAction: true, // Marks this tool as requiring user signature
     },
     outputSchema: {
       type: "object" as const,
@@ -1455,6 +1456,9 @@ const TOOLS = [
         },
       },
       required: ["scenario"],
+    },
+    _meta: {
+      handshakeAction: true, // Marks this tool as requiring user signature
     },
     outputSchema: {
       type: "object" as const,
