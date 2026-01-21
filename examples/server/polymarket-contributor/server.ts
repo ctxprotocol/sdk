@@ -1519,6 +1519,78 @@ NEXT STEPS after finding match:
   },
 
   {
+    name: "get_event_outcomes",
+    description: `📊 Get ALL outcomes in a multi-outcome event with their individual volumes.
+
+Works for ANY multi-outcome market:
+- Political: "Which candidate has the highest volume?" (returns all real candidates)
+- Sports: "Show all teams and their betting volumes" (returns all teams)
+- Crypto: "What Bitcoin price targets are most traded?" (returns all price brackets)
+- General: "List all options in this market by volume"
+
+PERFECT FOR questions about:
+- Individual outcome volumes within an event
+- Top N most traded outcomes
+- Complete breakdown of all options
+- Comparing volumes across outcomes
+
+NOTE: Automatically filters out placeholder entries (e.g., "Person A", "Person AB") that Polymarket 
+uses as reserved slots for future outcomes. These have zero volume and aren't real options.
+Only ACTIVE outcomes with real trading data are returned by default.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        slug: {
+          type: "string",
+          description: "The event slug (e.g., 'democratic-presidential-nominee-2028')",
+        },
+        sortBy: {
+          type: "string",
+          enum: ["volume", "price", "name"],
+          description: "How to sort outcomes: 'volume' (default), 'price' (probability), or 'name' (alphabetical)",
+        },
+        limit: {
+          type: "number",
+          description: "Max outcomes to return (default: all). Use for 'top 10' type questions.",
+        },
+        includeInactive: {
+          type: "boolean",
+          description: "Include placeholder/inactive outcomes with zero volume (default: false). Rarely needed.",
+        },
+      },
+      required: ["slug"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        eventTitle: { type: "string" },
+        eventSlug: { type: "string" },
+        totalVolume: { type: "number", description: "Total event volume" },
+        totalOutcomes: { type: "number", description: "Total number of outcomes in this event" },
+        returnedOutcomes: { type: "number", description: "Number returned (may be limited)" },
+        sortedBy: { type: "string" },
+        outcomes: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              rank: { type: "number" },
+              name: { type: "string", description: "Outcome name (e.g., 'Gavin Newsom', 'Chiefs', '$100K-$110K')" },
+              volume: { type: "number", description: "Individual trading volume for this outcome" },
+              price: { type: "number", description: "Current price (0-1, represents probability)" },
+              pricePercent: { type: "string", description: "Price as percentage (e.g., '34.0%')" },
+              conditionId: { type: "string" },
+            },
+          },
+        },
+        url: { type: "string", description: "Direct Polymarket URL" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["eventTitle", "outcomes"],
+    },
+  },
+
+  {
     name: "get_orderbook",
     description: "Get the Level 2 orderbook for a specific token. Use merged=true to see the full orderbook including synthetic liquidity (matches Polymarket UI). Raw orderbook only shows direct orders and may appear to have very wide spreads.",
     inputSchema: {
@@ -2422,6 +2494,8 @@ server.setRequestHandler(
           return await handleGetEvents(args);
         case "get_event_by_slug":
           return await handleGetEventBySlug(args);
+        case "get_event_outcomes":
+          return await handleGetEventOutcomes(args);
         case "get_orderbook":
           return await handleGetOrderbook(args);
         case "get_prices":
@@ -6098,6 +6172,120 @@ async function handleGetEventBySlug(
   });
 }
 
+/**
+ * Get all outcomes/candidates in a multi-outcome event with individual volumes
+ * Perfect for "which candidate has the highest volume" type questions
+ */
+async function handleGetEventOutcomes(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const slug = args?.slug as string;
+  const sortBy = (args?.sortBy as string) || "volume";
+  const limit = args?.limit as number | undefined;
+  const includeInactive = (args?.includeInactive as boolean) || false;
+
+  if (!slug) {
+    return errorResult("slug is required. Example: 'democratic-presidential-nominee-2028'");
+  }
+
+  const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+
+  if (!event) {
+    return errorResult(`Event not found: ${slug}`);
+  }
+
+  if (!event.markets || event.markets.length === 0) {
+    return errorResult(`Event has no markets/outcomes: ${slug}`);
+  }
+
+  // Extract and transform all outcomes
+  let outcomes = event.markets.map((m) => {
+    const prices = parseJsonArray(m.outcomePrices);
+    const yesPrice = prices[0] ? parseFloat(prices[0]) : 0;
+    // Volume can be string or number from API
+    const volume = typeof m.volume === 'string' ? parseFloat(m.volume) : (m.volume || 0);
+    
+    // Use groupItemTitle for multi-outcome events (e.g., "Gavin Newsom")
+    // Fall back to question for binary events
+    const name = m.groupItemTitle || m.question || "Unknown";
+
+    return {
+      rank: 0,
+      name,
+      volume,
+      price: yesPrice,
+      pricePercent: `${(yesPrice * 100).toFixed(1)}%`,
+      conditionId: m.conditionId || "",
+    };
+  });
+
+  // Track raw count before filtering
+  const rawOutcomeCount = outcomes.length;
+
+  // Filter out placeholder entries that Polymarket uses for future candidates
+  // These have names like "Person A", "Person AB", "Person BZ", "Other" and typically have 0 volume
+  // Skip filtering if includeInactive is true (for advanced users who need raw data)
+  if (!includeInactive) {
+    const placeholderPattern = /^Person [A-Z]{1,2}$/;
+    outcomes = outcomes.filter((o) => {
+      // Remove placeholder "Person X" entries
+      if (placeholderPattern.test(o.name)) {
+        return false;
+      }
+      // Remove "Other" entries with no trading activity
+      if (o.name === "Other" && o.volume === 0) {
+        return false;
+      }
+      // Remove "Unknown" entries with no activity
+      if (o.name === "Unknown" && o.volume === 0) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  const filteredCount = rawOutcomeCount - outcomes.length;
+
+  // Sort based on sortBy parameter
+  switch (sortBy) {
+    case "volume":
+      outcomes.sort((a, b) => b.volume - a.volume);
+      break;
+    case "price":
+      outcomes.sort((a, b) => b.price - a.price);
+      break;
+    case "name":
+      outcomes.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    default:
+      outcomes.sort((a, b) => b.volume - a.volume);
+  }
+
+  // Apply limit if specified
+  const totalOutcomes = outcomes.length;
+  if (limit && limit > 0) {
+    outcomes = outcomes.slice(0, limit);
+  }
+
+  // Assign ranks
+  outcomes.forEach((o, idx) => {
+    o.rank = idx + 1;
+  });
+
+  return successResult({
+    eventTitle: event.title,
+    eventSlug: event.slug,
+    totalVolume: event.volume,
+    totalOutcomes,
+    returnedOutcomes: outcomes.length,
+    filteredPlaceholders: filteredCount,
+    sortedBy: sortBy,
+    outcomes,
+    url: `https://polymarket.com/event/${event.slug}`,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
 async function handleGetOrderbook(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
@@ -7570,8 +7758,9 @@ interface GammaMarket {
   question?: string;
   title?: string;
   description?: string;
+  groupItemTitle?: string; // For multi-outcome events, the specific outcome name (e.g., "Gavin Newsom")
   outcomePrices?: string[] | string; // API may return JSON string
-  volume?: number;
+  volume?: number | string; // Can be number or string from API
   volume24hr?: number;
   liquidity?: number;
   clobTokenIds?: string[] | string; // API may return JSON string
