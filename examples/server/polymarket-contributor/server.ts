@@ -890,6 +890,99 @@ const TOOLS = [
   },
 
   {
+    name: "get_top_markets",
+    description:
+      `📊 Get the highest volume/liquidity markets on Polymarket. 
+      
+Sorting options (mirrors Polymarket UI):
+- total_volume: ALL-TIME volume (e.g., $507M) - USE THIS for "biggest markets" questions
+- volume: 24-hour trading volume (e.g., $9M) - USE THIS for "most active today" questions  
+- liquidity: Deepest orderbooks
+- trending: Most popular (default)
+- newest: Recently created markets  
+- ending_soon: Markets closing soon
+- competitive: 50/50 contested markets
+
+USE THIS for questions like:
+- "What are the highest volume markets?" → sortBy: "total_volume"
+- "What's most active right now?" → sortBy: "volume"
+- "Show me the most liquid markets" → sortBy: "liquidity"
+
+Returns BOTH total volume AND 24h volume for each market, plus direct Polymarket URLs.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        sortBy: {
+          type: "string",
+          enum: ["total_volume", "volume", "liquidity", "trending", "newest", "ending_soon", "competitive"],
+          description: "How to sort: 'total_volume' for all-time biggest markets, 'volume' for 24h active markets (default: total_volume)",
+        },
+        category: {
+          type: "string",
+          description: "Filter by category (politics, crypto, sports, etc.)",
+        },
+        minTotalVolume: {
+          type: "number",
+          description: "Minimum ALL-TIME volume in USD (e.g., 10000000 for $10M+). Use this to find only major markets.",
+        },
+        maxTotalVolume: {
+          type: "number",
+          description: "Maximum ALL-TIME volume in USD. Use with minTotalVolume to find mid-tier markets.",
+        },
+        minLiquidity: {
+          type: "number",
+          description: "Minimum liquidity in USD. Higher = better exit options.",
+        },
+        endDateBefore: {
+          type: "string",
+          description: "Only markets ending before this date (ISO format: 2026-02-01). Great for 'ending this week/month'.",
+        },
+        endDateAfter: {
+          type: "string",
+          description: "Only markets ending after this date (ISO format). Excludes markets ending too soon.",
+        },
+        offset: {
+          type: "number",
+          description: "Skip first N results for pagination. Use to go DEEPER (e.g., offset=50 for results 51-100).",
+        },
+        limit: {
+          type: "number",
+          description: "Number of markets to return (default: 15, max: 100)",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        sortedBy: { type: "string" },
+        markets: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              rank: { type: "number" },
+              title: { type: "string" },
+              url: { type: "string", format: "uri", description: "Direct Polymarket URL - ALWAYS provided" },
+              slug: { type: "string" },
+              conditionId: { type: "string" },
+              currentPrice: { type: "number", description: "YES price (0-1)" },
+              volume24h: { type: "number", description: "24h trading volume in USD" },
+              totalVolume: { type: "number", description: "All-time volume" },
+              liquidity: { type: "number", description: "Current liquidity in USD" },
+              endDate: { type: "string" },
+              category: { type: "string" },
+            },
+          },
+        },
+        summary: { type: "string" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["sortedBy", "markets"],
+    },
+  },
+
+  {
     name: "analyze_my_positions",
     description:
       "Analyze your Polymarket positions with exit liquidity simulation, P&L calculation, " +
@@ -2308,6 +2401,8 @@ server.setRequestHandler(
           return await handleGetBetsByProbability(args);
         case "discover_trending_markets":
           return await handleDiscoverTrendingMarkets(args);
+        case "get_top_markets":
+          return await handleGetTopMarkets(args);
         case "analyze_my_positions":
           return await handleAnalyzeMyPositions(args);
 
@@ -2409,6 +2504,20 @@ function parseJsonArray(value: string | string[] | undefined): string[] {
     }
   }
   return [];
+}
+
+/**
+ * Generate a Polymarket URL - ALWAYS returns a valid URL
+ * Uses slug if available, falls back to conditionId
+ */
+function getPolymarketUrl(slug?: string, conditionId?: string): string {
+  if (slug) {
+    return `https://polymarket.com/event/${slug}`;
+  }
+  if (conditionId) {
+    return `https://polymarket.com/event/${conditionId}`;
+  }
+  return "https://polymarket.com/markets";
 }
 
 async function fetchGamma(endpoint: string, timeoutMs = 15000): Promise<unknown> {
@@ -3799,7 +3908,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
-            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+            url: getPolymarketUrl(eventSlug, market.conditionId),
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "lottery_tickets",
@@ -3834,7 +3943,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
-            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+            url: getPolymarketUrl(eventSlug, market.conditionId),
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "lottery_tickets",
@@ -3874,7 +3983,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
-            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+            url: getPolymarketUrl(eventSlug, market.conditionId),
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "moderate_conviction",
@@ -3913,7 +4022,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
-            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+            url: getPolymarketUrl(eventSlug, market.conditionId),
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "high_confidence",
@@ -3946,7 +4055,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
-            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+            url: getPolymarketUrl(eventSlug, market.conditionId),
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "high_confidence",
@@ -3986,7 +4095,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
-            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+            url: getPolymarketUrl(eventSlug, market.conditionId),
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "momentum",
@@ -4040,7 +4149,7 @@ async function handleFindTradingOpportunities(
           opportunities.push({
             rank: 0,
             market: marketTitle,
-            url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+            url: getPolymarketUrl(eventSlug, market.conditionId),
             conditionId: market.conditionId || "",
             slug: eventSlug,
             opportunityType: "mispriced",
@@ -4092,7 +4201,7 @@ async function handleFindTradingOpportunities(
               opportunities.push({
                 rank: 0,
                 market: marketTitle,
-                url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+                url: getPolymarketUrl(eventSlug, market.conditionId),
                 conditionId: market.conditionId || "",
                 slug: eventSlug,
                 opportunityType: "near_resolution",
@@ -4319,7 +4428,7 @@ async function handleFindModerateProbabilityBets(
 
         opportunities.push({
           market: marketTitle,
-          url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+          url: getPolymarketUrl(eventSlug, market.conditionId),
           slug: eventSlug,
           conditionId: market.conditionId || "",
           currentPrice: yesPrice,
@@ -4433,7 +4542,7 @@ async function handleGetBetsByProbability(
         const returnPercent = ((1 - yesPrice) / yesPrice * 100);
         bets.push({
           market: marketTitle,
-          url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+          url: getPolymarketUrl(eventSlug, market.conditionId),
           slug: eventSlug,
           conditionId: market.conditionId || "",
           currentPrice: yesPrice,
@@ -4450,7 +4559,7 @@ async function handleGetBetsByProbability(
         const returnPercent = ((1 - noPrice) / noPrice * 100);
         bets.push({
           market: marketTitle,
-          url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+          url: getPolymarketUrl(eventSlug, market.conditionId),
           slug: eventSlug,
           conditionId: market.conditionId || "",
           currentPrice: noPrice,
@@ -4492,8 +4601,23 @@ async function handleDiscoverTrendingMarkets(
   const sortBy = (args?.sortBy as string) || "volume";
   const limit = Math.min((args?.limit as number) || 20, 50);
 
-  // Fetch active events with volume sorting
-  let endpoint = `/events?closed=false&limit=${Math.max(limit * 2, 50)}&order=volume24hr&ascending=false`;
+  // Map sortBy to API order parameter - respect user's choice
+  let orderParam: string;
+  switch (sortBy) {
+    case "liquidity":
+      orderParam = "liquidity";
+      break;
+    case "price_change":
+      orderParam = "volume24hr"; // Use volume as proxy for price activity
+      break;
+    case "volume":
+    default:
+      orderParam = "volume24hr";
+      break;
+  }
+
+  // Fetch active events with proper sorting
+  let endpoint = `/events?closed=false&limit=${Math.max(limit * 2, 50)}&order=${orderParam}&ascending=false`;
   if (category) {
     endpoint += `&category=${category}`;
   }
@@ -4616,7 +4740,7 @@ async function handleDiscoverTrendingMarkets(
     trendingMarkets.push({
       rank: 0,
       title: event.title || market.question || "Unknown",
-      url: eventSlug ? `https://polymarket.com/event/${eventSlug}` : "",
+      url: getPolymarketUrl(eventSlug, market.conditionId),
       slug: eventSlug,
       conditionId: market.conditionId || event.id || "",
       currentPrice: yesPrice,
@@ -4661,6 +4785,217 @@ async function handleDiscoverTrendingMarkets(
     trendingMarkets: finalMarkets,
     categories: categoryBreakdown,
     totalActive: events.length,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+/**
+ * Get top markets sorted by volume, liquidity, etc. - mirrors Polymarket UI filters
+ * This is the GO-TO tool for "highest volume markets" type questions.
+ */
+async function handleGetTopMarkets(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const sortBy = (args?.sortBy as string) || "total_volume"; // Default to total volume (biggest markets)
+  const category = args?.category as string;
+  const minTotalVolume = args?.minTotalVolume as number | undefined;
+  const maxTotalVolume = args?.maxTotalVolume as number | undefined;
+  const minLiquidity = args?.minLiquidity as number | undefined;
+  const endDateBefore = args?.endDateBefore as string | undefined;
+  const endDateAfter = args?.endDateAfter as string | undefined;
+  const offset = (args?.offset as number) || 0;
+  const limit = Math.min((args?.limit as number) || 15, 100); // Increased max to 100
+
+  // Map sortBy to API order parameter
+  let orderParam: string;
+  let ascending = false;
+  
+  switch (sortBy) {
+    case "total_volume":
+      orderParam = "volume"; // ALL-TIME total volume (e.g., $507M)
+      break;
+    case "volume":
+      orderParam = "volume24hr"; // 24h volume - for "most active today"
+      break;
+    case "liquidity":
+      orderParam = "liquidity";
+      break;
+    case "trending":
+      orderParam = "volume"; // Total volume as proxy for trending
+      break;
+    case "newest":
+      orderParam = "startDate";
+      ascending = true; // Newest first means descending by start date
+      break;
+    case "ending_soon":
+      orderParam = "endDate";
+      ascending = true; // Closest end date first
+      break;
+    case "competitive":
+      orderParam = "competitive"; // Polymarket's competitive score
+      break;
+    default:
+      orderParam = "volume"; // Default to total volume
+  }
+
+  // Build endpoint with all filters - these are applied SERVER-SIDE by Polymarket API
+  let endpoint = `/events?closed=false&limit=${limit}&offset=${offset}&order=${orderParam}&ascending=${ascending}`;
+  
+  if (category) {
+    endpoint += `&category=${category}`;
+  }
+  
+  // Volume filters (server-side filtering for efficiency)
+  // Note: /events endpoint uses volume_min/max (not volume_num_min/max)
+  if (minTotalVolume !== undefined) {
+    endpoint += `&volume_min=${minTotalVolume}`;
+  }
+  if (maxTotalVolume !== undefined) {
+    endpoint += `&volume_max=${maxTotalVolume}`;
+  }
+  
+  // Liquidity filter
+  // Note: /events endpoint uses liquidity_min/max (not liquidity_num_min/max)
+  if (minLiquidity !== undefined) {
+    endpoint += `&liquidity_min=${minLiquidity}`;
+  }
+  
+  // Date filters
+  if (endDateBefore) {
+    endpoint += `&end_date_max=${endDateBefore}`;
+  }
+  if (endDateAfter) {
+    endpoint += `&end_date_min=${endDateAfter}`;
+  }
+
+  const events = (await fetchGamma(endpoint)) as GammaEvent[];
+
+  const markets: Array<{
+    rank: number;
+    title: string;
+    url: string;
+    slug: string;
+    conditionId: string;
+    currentPrice: number;
+    volume24h: number;
+    totalVolume: number;
+    liquidity: number;
+    endDate: string;
+    category: string;
+  }> = [];
+
+  for (const event of events) {
+    const market = event.markets?.[0];
+    if (!market) continue;
+
+    const volume24h = Number(event.volume24hr || market.volume24hr || 0);
+    const totalVolume = Number(event.volume || market.volume || 0);
+    const liquidity = Number(event.liquidity || market.liquidity || 0);
+
+    const gammaPrices = parseJsonArray(market.outcomePrices);
+    const yesPrice = parseFloat(gammaPrices[0]) || 0.5;
+
+    // Skip near-resolved markets for some sorts (not for total_volume, ending_soon, or when explicit filters used)
+    const hasExplicitFilters = minTotalVolume !== undefined || maxTotalVolume !== undefined || minLiquidity !== undefined;
+    if (!hasExplicitFilters && sortBy !== "ending_soon" && sortBy !== "total_volume" && (yesPrice > 0.95 || yesPrice < 0.05)) continue;
+
+    // For competitive sort, only include markets between 35-65%
+    if (sortBy === "competitive" && (yesPrice < 0.35 || yesPrice > 0.65)) continue;
+
+    const eventSlug = event.slug || "";
+    const conditionId = market.conditionId || event.id || "";
+    
+    // ALWAYS provide a URL - use slug if available, otherwise construct from conditionId
+    const url = eventSlug 
+      ? `https://polymarket.com/event/${eventSlug}` 
+      : (conditionId ? `https://polymarket.com/event/${conditionId}` : "");
+
+    markets.push({
+      rank: 0,
+      title: event.title || market.question || "Unknown",
+      url,
+      slug: eventSlug,
+      conditionId,
+      currentPrice: yesPrice,
+      volume24h,
+      totalVolume,
+      liquidity,
+      endDate: event.endDate || event.endDateIso || "",
+      category: event.category || "other",
+    });
+  }
+
+  // For "ending_soon", sort by end date ascending (closest first)
+  if (sortBy === "ending_soon") {
+    markets.sort((a, b) => {
+      const dateA = new Date(a.endDate).getTime() || Infinity;
+      const dateB = new Date(b.endDate).getTime() || Infinity;
+      return dateA - dateB;
+    });
+  }
+
+  // Assign ranks and limit
+  const finalMarkets = markets.slice(0, limit);
+  finalMarkets.forEach((m, idx) => {
+    m.rank = idx + 1;
+  });
+
+  // Generate summary based on sortBy
+  const topTotalVol = finalMarkets[0]?.totalVolume || 0;
+  const topVol24h = finalMarkets[0]?.volume24h || 0;
+  const combinedTotalVol = finalMarkets.reduce((sum, m) => sum + m.totalVolume, 0);
+  
+  // Format volume as human-readable (e.g., $507M, $6.2M)
+  const formatVol = (v: number) => v >= 1e9 ? `$${(v / 1e9).toFixed(1)}B` : `$${(v / 1e6).toFixed(1)}M`;
+  
+  let summary: string;
+  switch (sortBy) {
+    case "total_volume":
+      summary = `Top ${finalMarkets.length} markets by ALL-TIME volume. #1: ${formatVol(topTotalVol)}. Combined: ${formatVol(combinedTotalVol)}.`;
+      break;
+    case "volume":
+      summary = `Top ${finalMarkets.length} markets by 24h volume. #1: ${formatVol(topVol24h)} today.`;
+      break;
+    case "liquidity":
+      summary = `Top ${finalMarkets.length} markets by liquidity depth.`;
+      break;
+    case "trending":
+      summary = `Top ${finalMarkets.length} trending markets by total volume.`;
+      break;
+    case "newest":
+      summary = `${finalMarkets.length} newest markets on Polymarket.`;
+      break;
+    case "ending_soon":
+      summary = `${finalMarkets.length} markets ending soonest.`;
+      break;
+    case "competitive":
+      summary = `${finalMarkets.length} most contested markets (40-60% range).`;
+      break;
+    default:
+      summary = `Top ${finalMarkets.length} markets.`;
+  }
+
+  // Add pagination info
+  const paginationInfo = offset > 0 ? ` (showing results ${offset + 1}-${offset + finalMarkets.length})` : "";
+  
+  return successResult({
+    sortedBy: sortBy,
+    markets: finalMarkets,
+    summary: summary + paginationInfo,
+    pagination: {
+      offset,
+      returned: finalMarkets.length,
+      hasMore: events.length === limit, // If we got exactly limit results, there's probably more
+      nextOffset: offset + finalMarkets.length,
+    },
+    filtersApplied: {
+      minTotalVolume,
+      maxTotalVolume,
+      minLiquidity,
+      endDateBefore,
+      endDateAfter,
+      category,
+    },
     fetchedAt: new Date().toISOString(),
   });
 }
