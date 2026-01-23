@@ -174,9 +174,23 @@ Based on APPROVED discovery questions:
 - Data composition diagrams
 
 ### STEP 5: Implementation
-- Generate MCP server boilerplate
+- Generate MCP server boilerplate (WITHOUT security middleware for local testing)
 - Implement each tool
-- Test and validate schemas
+- Test locally with curl to verify all tools work
+- Add `createContextMiddleware()` before deploying
+
+### STEP 6: Deploy & Test Agentically
+Deploy to VPS and test all endpoints using AI-assisted SSH:
+
+```
+1. Deploy server files to VPS
+2. Run setup-servers.sh to start with PM2
+3. Run setup-caddy-https.sh for HTTPS
+4. SSH into server and test endpoints agentically
+5. Register on Context Marketplace
+```
+
+See [Agentic Testing Workflow](#agentic-testing-workflow) below for details.
 ````
 
 ---
