@@ -1169,23 +1169,35 @@ Use cases:
 Returns markets with normalized probabilities (0-1 scale) and standardized fields that can be 
 directly compared across prediction markets and sportsbooks.
 
+⚠️ WHEN TO USE vs WHEN NOT TO USE:
+
+✅ USE THIS TOOL when:
+  - You need GENERAL DISCOVERY across multiple categories
+  - You're doing broad cross-platform scanning
+  - You need standardized format for automated matching
+
+❌ DO NOT USE THIS TOOL when:
+  - You need SPECIFIC MARKET DATA with full outcomes/prices
+    → Instead use: search_markets({ query: "..." }) + get_event_outcomes({ slug })
+  - You know the market slug or want detailed outcome breakdown
+    → Instead use: get_event_by_slug or get_event_outcomes
+  - You need to TRADE or see orderbook depth
+    → Instead use: get_orderbook, get_prices, or prepare_order
+  - You need market efficiency analysis
+    → Instead use: check_market_efficiency
+
+The specific tools (search_markets, get_event_outcomes) return richer data with all 
+outcomes, exact prices, and trading information. This tool returns simplified format
+for cross-platform comparison.
+
 🕐 LIVE vs HISTORICAL DATA:
   - DEFAULT (includeResolved: false): Returns only ACTIVE markets currently trading
-    → Use for: Current arbitrage, live comparisons, real-time analysis, trading decisions
   - HISTORICAL (includeResolved: true): Returns CONCLUDED/RESOLVED markets
-    → Use for: Past event analysis, accuracy studies, "what were the odds on X?", backtesting
-
-WHEN TO USE includeResolved: true:
-  - "What were the Polymarket odds on the Chiefs winning Super Bowl 2024?"
-  - "How accurate were predictions for the 2024 election?"
-  - "Compare historical probability gaps between platforms"
-  - Any question about PAST events that have already resolved
 
 USE THIS TOOL when you need to:
-- Find arbitrage opportunities between Polymarket and other platforms
-- Compare probability assessments across markets
-- Build cross-platform market analysis
-- Analyze historical prediction accuracy (with includeResolved: true)
+- Find arbitrage opportunities between Polymarket and other platforms (broad scanning)
+- Compare probability assessments across markets (general discovery)
+- Build cross-platform analysis (when you don't have specific slugs/identifiers)
 
 ⚠️ CROSS-PLATFORM MATCHING GUIDE:
 Markets on different platforms have DIFFERENT titles for the SAME event:

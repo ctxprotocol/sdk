@@ -555,23 +555,32 @@ COMMON CROSS-PLATFORM OVERLAPS:
 Returns events with normalized probabilities (0-1 scale) derived from decimal odds, matching the format
 used by prediction markets. This enables direct probability comparison.
 
+⚠️ WHEN TO USE vs WHEN NOT TO USE:
+
+✅ USE THIS TOOL when:
+  - You need GENERAL DISCOVERY across multiple sports/events
+  - You're doing broad cross-platform scanning
+  - You don't know the specific sport key yet
+
+❌ DO NOT USE THIS TOOL when:
+  - You need SPECIFIC FUTURES/CHAMPIONSHIP data (e.g., "NBA Championship Winner")
+    → Instead use: get_outrights({ sport: "basketball_nba_championship_winner" })
+  - You need data for a SPECIFIC SPORT and already know the sport key
+    → Instead use: get_outrights or get_odds with the specific sport key
+  - You need BEST ODDS comparison across bookmakers
+    → Instead use: find_best_odds or find_arbitrage_opportunities
+
+The more specific tools (get_outrights, get_odds) return richer data with all bookmakers
+and exact odds. This tool returns simplified/standardized format for cross-platform matching.
+
 🕐 LIVE vs HISTORICAL DATA:
   - DEFAULT (includeCompleted: false): Returns only UPCOMING events that haven't started
-    → Use for: Current arbitrage, live comparisons, real-time betting analysis
   - HISTORICAL (includeCompleted: true): Includes events that have already completed
-    → Use for: Past game analysis, accuracy studies, "what were the odds on X game?"
-    ⚠️ Note: Historical odds data is limited compared to Polymarket/Kalshi
-
-WHEN TO USE includeCompleted: true:
-  - "What were the sportsbook odds on the Chiefs winning Super Bowl 2024?"
-  - "How did closing lines compare to Polymarket prices for past games?"
-  - Any question about PAST sporting events
 
 USE THIS TOOL when you need to:
-- Find arbitrage opportunities between sportsbooks and Polymarket
-- Compare probability assessments for sports events
-- Build cross-platform analysis of championship/futures markets
-- Analyze historical betting odds (with includeCompleted: true)
+- Find arbitrage opportunities between sportsbooks and Polymarket (broad scanning)
+- Compare probability assessments for sports events (general discovery)
+- Build cross-platform analysis (when you don't have specific identifiers)
 
 ⚠️ CROSS-PLATFORM MATCHING GUIDE:
 Markets on different platforms have DIFFERENT titles for the SAME event:
