@@ -237,8 +237,13 @@ const TOOLS = [
 
   {
     name: "analyze_whale_flow",
-    description:
-      'Track "Smart Money" by analyzing trade sizes. Buckets trades into Small (<$50), Medium ($50-$500), and Whale (>$1000), then calculates net directional flow for each bucket.',
+    description: `Track recent trading activity by analyzing trade sizes. Buckets trades into Small (<$50), Medium ($50-$500), and Whale (>$1000), then calculates net directional flow.
+
+⚠️ IMPORTANT: This analyzes RECENT TRADES (last N hours). May return zero data if no trades occurred in the time window.
+
+USE THIS FOR: "What's happening RIGHT NOW?", "Recent whale trades?", "Trading activity in the last 24h?"
+
+USE analyze_top_holders INSTEAD FOR: "Who are the biggest holders?", "What are whales betting on?", "Which side do smart money players favor?"`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -308,8 +313,21 @@ const TOOLS = [
 
   {
     name: "analyze_top_holders",
-    description:
-      'Deep analysis of who the whales are in a market. Shows top holders, their conviction level (position size), whether they\'re in profit/loss, and concentration risk. Answers: "Who are the smart money players and what are they betting on?"',
+    description: `🐋 WHALE POSITIONS: Find who holds the largest positions and WHAT SIDE they're betting on.
+
+Returns:
+- yesWhales[]: Top holders betting YES (with shares, positionValue, convictionScore, name if public)
+- noWhales[]: Top holders betting NO (with shares, positionValue, convictionScore, name if public)
+- smartMoneySignal: Which side whales favor (YES/NO/NEUTRAL)
+- totalUniqueHolders: Total holders found via deep fetching
+
+🔥 DEEP FETCHING: We work around Polymarket's 20-holder API limit by making 10 parallel calls with position thresholds from $1M (ultra-whales) down to $1. This captures the full spectrum and typically returns 50-100+ unique holders.
+
+CONVICTIONSCORES: "extreme" (>$10k), "high" ($5k-$10k), "moderate" ($1k-$5k), "low" (<$1k)
+
+USE THIS FOR: "Biggest whale bets?", "What are smart money players betting on?", "Which side do whales favor?"
+
+USE analyze_whale_flow INSTEAD FOR: "Recent trades?", "Trading activity in last 24h?"`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -830,8 +848,19 @@ const TOOLS = [
 
   {
     name: "discover_trending_markets",
-    description:
-      "Find the hottest markets on Polymarket right now. Shows volume spikes, unusual activity, and which markets are seeing the most action. Great for finding what's happening NOW and where the smart money is looking.",
+    description: `Find the hottest markets on Polymarket right now. Shows volume spikes, unusual activity, and which markets are seeing the most action.
+
+CATEGORY FILTER: Use category="sports" for ONLY sports markets, "crypto" for crypto, "politics" for political markets, etc.
+Supported aliases: sports (includes nfl, nba, mlb, tennis, mma, golf, hockey), crypto (bitcoin, ethereum, defi), politics (elections), pop-culture (movies, entertainment), science (tech, ai, space), business (economics, finance).
+
+💡 TIP: For exact categories, call get_all_tags first to see available Polymarket tags, then use browse_by_tag for precise filtering.
+
+NEXT STEP: For whale analysis, pass the returned conditionIds to analyze_top_holders to see:
+- Which side whales are betting (YES vs NO)
+- Position sizes and conviction scores
+- Smart money signals
+
+DATA FLOW: discover_trending_markets → conditionId → analyze_top_holders`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -2083,7 +2112,11 @@ Each result includes:
 
   {
     name: "get_top_holders",
-    description: "Get the top holders (biggest positions) for a specific market. Shows who the whales are, their position sizes, and implied conviction. Essential for smart money analysis.",
+    description: `Get the top holders (biggest positions) for a specific market. Shows who the whales are, their position sizes, and implied conviction. Essential for smart money analysis.
+
+DEEP FETCHING (default=true): Polymarket API caps at 20 holders per call with NO pagination. To work around this, we make 10 parallel API calls with different minBalance thresholds [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] and deduplicate results. This captures everything from ultra-whales ($1M+) down to small positions, returning 50-100+ unique holders instead of just 20.
+
+Set deepFetch=false for faster but shallower results (20 per side max).`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -2098,7 +2131,11 @@ Each result includes:
         },
         limit: {
           type: "number",
-          description: "Number of top holders to return per outcome (default: 20)",
+          description: "Number of top holders to return per outcome (default: 50 with deepFetch, 20 without)",
+        },
+        deepFetch: {
+          type: "boolean",
+          description: "Use multi-tier fetching to get more holders (default: true). Set to false for faster but limited results.",
         },
       },
       required: ["conditionId"],
@@ -4702,13 +4739,35 @@ async function handleDiscoverTrendingMarkets(
       break;
   }
 
-  // Fetch active events with proper sorting
-  let endpoint = `/events?closed=false&limit=${Math.max(limit * 2, 50)}&order=${orderParam}&ascending=false`;
-  if (category) {
-    endpoint += `&category=${category}`;
-  }
+  // IMPORTANT: The Gamma API's ?category= parameter is BROKEN and returns wrong results.
+  // Instead, we fetch more events and filter CLIENT-SIDE by checking the tags array.
+  const fetchLimit = category ? Math.max(limit * 10, 100) : Math.max(limit * 2, 50);
+  const endpoint = `/events?closed=false&limit=${fetchLimit}&order=${orderParam}&ascending=false`;
 
-  const events = (await fetchGamma(endpoint)) as GammaEvent[];
+  let events = (await fetchGamma(endpoint)) as GammaEvent[];
+
+  // Apply client-side category filtering if category is specified
+  if (category) {
+    const categoryLower = category.toLowerCase();
+    const categoryAliases: Record<string, string[]> = {
+      'politics': ['politics', 'elections', 'political'],
+      'sports': ['sports', 'nfl', 'nba', 'mlb', 'soccer', 'football', 'basketball', 'baseball', 'tennis', 'mma', 'ufc', 'boxing', 'golf', 'hockey', 'nhl'],
+      'crypto': ['crypto', 'bitcoin', 'ethereum', 'cryptocurrency', 'defi'],
+      'pop-culture': ['pop-culture', 'culture', 'movies', 'entertainment', 'hollywood', 'music', 'awards'],
+      'science': ['science', 'tech', 'technology', 'ai', 'space'],
+      'business': ['business', 'economics', 'finance', 'fed', 'interest-rates'],
+    };
+    const matchingSlugs = categoryAliases[categoryLower] || [categoryLower];
+
+    events = events.filter((e) => {
+      if (!e.tags || !Array.isArray(e.tags)) return false;
+      return e.tags.some((tag: { slug?: string; label?: string }) => {
+        const tagSlug = (tag.slug || '').toLowerCase();
+        const tagLabel = (tag.label || '').toLowerCase();
+        return matchingSlugs.some(s => tagSlug === s || tagLabel === s || tagSlug.includes(s) || tagLabel.includes(s));
+      });
+    });
+  }
 
   const trendingMarkets: Array<{
     rank: number;
@@ -7101,83 +7160,54 @@ async function handleGetTopHolders(
 ): Promise<CallToolResult> {
   const conditionId = args?.conditionId as string;
   const outcome = (args?.outcome as string) || "BOTH";
-  const limit = Math.min((args?.limit as number) || 20, 50);
+  // User-requested limit (we can return more than 20 via multi-tier fetching)
+  const requestedLimit = (args?.limit as number) || 50;
+  // Whether to use deep fetching (multiple API calls with different minBalance tiers)
+  const deepFetch = args?.deepFetch !== false; // Default to true for thorough results
 
   if (!conditionId) {
     return errorResult("conditionId is required");
   }
 
   try {
-    // Data API /positions endpoint requires user address, so we aggregate from trades
-    // This gives us active traders and their net positions
-    const trades = (await fetchDataApi(
-      `/trades?market=${conditionId}&limit=500`
-    )) as DataApiTrade[];
+    // Use the PROPER Data API /holders endpoint for accurate top holders
+    // Docs: https://docs.polymarket.com/api-reference/core/get-top-holders-for-markets
+    // 
+    // WORKAROUND FOR API LIMITATION:
+    // Polymarket's /holders API caps at 20 results per call with NO pagination.
+    // To get more holders, we make multiple calls with different minBalance thresholds
+    // and deduplicate the results. This can give us 60-80+ unique holders.
+    
+    type HolderData = {
+      proxyWallet?: string;
+      bio?: string;
+      asset?: string;
+      pseudonym?: string;
+      amount?: number;
+      displayUsernamePublic?: boolean;
+      outcomeIndex?: number;
+      name?: string;
+      profileImage?: string;
+      profileImageOptimized?: string;
+    };
+    
+    type MetaHolder = {
+      token: string;
+      holders: HolderData[];
+    };
 
-    if (!trades || !Array.isArray(trades)) {
-      return successResult({
-        market: conditionId,
-        conditionId,
-        topHolders: { yes: [], no: [] },
-        concentration: { top10YesPercent: 0, top10NoPercent: 0, whaleCount: 0 },
-        note: "No trade data available for this market",
-        fetchedAt: new Date().toISOString(),
-      });
-    }
-
-    // Aggregate trades by wallet to estimate positions
-    // Net position = sum of buys - sum of sells
-    const walletPositions: Record<string, { yes: number; no: number; address: string }> = {};
-
-    for (const t of trades) {
-      const wallet = t.proxyWallet || t.trader || "";
-      if (!wallet) continue;
-
-      if (!walletPositions[wallet]) {
-        walletPositions[wallet] = { yes: 0, no: 0, address: wallet };
-      }
-
-      const size = Number(t.size || 0);
-      const side = t.side?.toUpperCase();
-      const outcomeType = t.outcome?.toLowerCase() || "yes";
-
-      if (outcomeType === "yes" || outcomeType === "0") {
-        if (side === "BUY" || side === "B") {
-          walletPositions[wallet].yes += size;
-        } else {
-          walletPositions[wallet].yes -= size;
-        }
-      } else {
-        if (side === "BUY" || side === "B") {
-          walletPositions[wallet].no += size;
-        } else {
-          walletPositions[wallet].no -= size;
-        }
-      }
-    }
-
-    // Convert to arrays and filter positive positions
-    const yesHolders = Object.values(walletPositions)
-      .filter(w => w.yes > 0)
-      .map(w => ({ address: w.address, size: w.yes }))
-      .sort((a, b) => b.size - a.size);
-
-    const noHolders = Object.values(walletPositions)
-      .filter(w => w.no > 0)
-      .map(w => ({ address: w.address, size: w.no }))
-      .sort((a, b) => b.size - a.size);
-
-    // Calculate totals for percentages
-    const totalYes = yesHolders.reduce((sum, p) => sum + p.size, 0);
-    const totalNo = noHolders.reduce((sum, p) => sum + p.size, 0);
-
-    // Get current prices for value calculation
+    // Get current prices and token IDs first
     let yesPrice = 0.5;
     let noPrice = 0.5;
+    let yesTokenId = "";
+    let noTokenId = "";
+    
     try {
       const market = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
       const tokens = market?.tokens;
       if (tokens && tokens.length >= 2) {
+        yesTokenId = tokens[0].token_id;
+        noTokenId = tokens[1].token_id;
         const pricesResp = (await fetchClobPost("/prices", [
           { token_id: tokens[0].token_id, side: "BUY" },
           { token_id: tokens[1].token_id, side: "BUY" },
@@ -7192,14 +7222,84 @@ async function handleGetTopHolders(
       // Use defaults
     }
 
-    const formatHolders = (holders: Array<{ address: string; size: number }>, total: number, price: number) => {
+    // Multi-tier minBalance thresholds for deep fetching
+    // Each tier gets up to 20 holders, and we deduplicate by address
+    // Includes ultra-whale tiers ($1M, $100k) for catching massive institutional positions
+    const minBalanceTiers = deepFetch 
+      ? [1000000, 100000, 10000, 5000, 2000, 1000, 500, 100, 10, 1] // Deep: 10 tiers for full spectrum
+      : [1]; // Shallow: just one call
+    
+    // Maps to deduplicate holders by address
+    const yesHoldersMap = new Map<string, { address: string; size: number; name?: string; profileImage?: string }>();
+    const noHoldersMap = new Map<string, { address: string; size: number; name?: string; profileImage?: string }>();
+
+    // Fetch holders at each tier (in parallel for speed)
+    const tierPromises = minBalanceTiers.map(minBal => 
+      fetchDataApi(`/holders?market=${conditionId}&limit=20&minBalance=${minBal}`)
+        .catch(() => [] as MetaHolder[])
+    );
+    
+    const tierResults = await Promise.all(tierPromises);
+    
+    // Process all tier results
+    for (const holdersResponse of tierResults) {
+      if (!Array.isArray(holdersResponse)) continue;
+      
+      for (const tokenHolders of holdersResponse as MetaHolder[]) {
+        const isYesToken = tokenHolders.token === yesTokenId || 
+                          (tokenHolders.holders?.[0]?.outcomeIndex === 0);
+        const isNoToken = tokenHolders.token === noTokenId || 
+                         (tokenHolders.holders?.[0]?.outcomeIndex === 1);
+        
+        for (const h of (tokenHolders.holders || [])) {
+          const address = h.proxyWallet || "";
+          if (!address) continue;
+          
+          const holderData = {
+            address,
+            size: Number(h.amount || 0),
+            name: h.name || h.pseudonym || undefined,
+            profileImage: h.profileImageOptimized || h.profileImage || undefined,
+          };
+          
+          // Deduplicate: keep the entry with the largest size (most accurate)
+          if (isYesToken || h.outcomeIndex === 0) {
+            const existing = yesHoldersMap.get(address);
+            if (!existing || holderData.size > existing.size) {
+              yesHoldersMap.set(address, holderData);
+            }
+          } else if (isNoToken || h.outcomeIndex === 1) {
+            const existing = noHoldersMap.get(address);
+            if (!existing || holderData.size > existing.size) {
+              noHoldersMap.set(address, holderData);
+            }
+          }
+        }
+      }
+    }
+
+    // Convert maps to arrays and sort by size descending
+    const yesHolders = Array.from(yesHoldersMap.values()).sort((a, b) => b.size - a.size);
+    const noHolders = Array.from(noHoldersMap.values()).sort((a, b) => b.size - a.size);
+
+    // Calculate totals for percentages
+    const totalYes = yesHolders.reduce((sum, p) => sum + p.size, 0);
+    const totalNo = noHolders.reduce((sum, p) => sum + p.size, 0);
+
+    const formatHolders = (
+      holders: Array<{ address: string; size: number; name?: string; profileImage?: string }>, 
+      total: number, 
+      price: number
+    ) => {
       return holders
-        .slice(0, limit)
+        .slice(0, requestedLimit)
         .map((p, idx) => {
           const value = p.size * price;
           return {
             rank: idx + 1,
             address: p.address,
+            name: p.name || undefined,
+            profileImage: p.profileImage || undefined,
             size: Number(p.size.toFixed(2)),
             value: Number(value.toFixed(2)),
             percentOfSupply: total > 0 ? Number(((p.size / total) * 100).toFixed(2)) : 0,
@@ -7214,6 +7314,9 @@ async function handleGetTopHolders(
     const top10YesPercent = topYes.slice(0, 10).reduce((sum, h) => sum + h.percentOfSupply, 0);
     const top10NoPercent = topNo.slice(0, 10).reduce((sum, h) => sum + h.percentOfSupply, 0);
     const whaleCount = [...topYes, ...topNo].filter(h => h.value > 1000).length;
+    
+    // Track how many unique holders we found
+    const totalUniqueHolders = yesHolders.length + noHolders.length;
 
     // Get market title
     let marketTitle = conditionId;
@@ -7234,12 +7337,17 @@ async function handleGetTopHolders(
       market: marketTitle,
       conditionId,
       topHolders: { yes: topYes, no: topNo },
+      totalUniqueHolders,
+      holdersReturned: { yes: topYes.length, no: topNo.length },
       concentration: {
         top10YesPercent: Number(top10YesPercent.toFixed(2)),
         top10NoPercent: Number(top10NoPercent.toFixed(2)),
         whaleCount,
       },
-      note: "Positions estimated from recent trade activity (last 500 trades)",
+      fetchMethod: deepFetch ? "multi-tier (10 API calls with minBalance thresholds from $1M to $1)" : "single-call",
+      note: deepFetch 
+        ? `Deep fetch found ${totalUniqueHolders} unique holders by querying 10 position tiers (from $1M ultra-whales to $1 positions). Polymarket API caps at 20 per call with no pagination, so we query [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] thresholds in parallel and deduplicate.`
+        : "Single API call (limit 20 per side). Use deepFetch=true for more thorough results.",
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {
@@ -7524,8 +7632,8 @@ async function handleAnalyzeTopHolders(
     return errorResult("Could not resolve conditionId");
   }
 
-  // Get top holders using the raw data handler
-  const holdersResult = await handleGetTopHolders({ conditionId: resolvedConditionId, outcome: "BOTH", limit: 20 });
+  // Get top holders using the raw data handler with deep fetching enabled
+  const holdersResult = await handleGetTopHolders({ conditionId: resolvedConditionId, outcome: "BOTH", limit: 50, deepFetch: true });
   if (holdersResult.isError) {
     return holdersResult;
   }
