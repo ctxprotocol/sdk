@@ -313,7 +313,9 @@ USE analyze_top_holders INSTEAD FOR: "Who are the biggest holders?", "What are w
 
   {
     name: "analyze_top_holders",
-    description: `🐋 WHALE POSITIONS: Find who holds the largest positions and WHAT SIDE they're betting on.
+    description: `🐋 WHALE POSITIONS: Find who holds the largest positions and WHAT SIDE (YES/NO) they're betting on.
+
+⚠️ IMPORTANT: For MULTI-OUTCOME events (tournaments, elections with multiple candidates), use analyze_event_whale_breakdown instead! This tool only shows YES/NO for ONE market, not which specific outcome (player/candidate) whales favor.
 
 Returns:
 - yesWhales[]: Top holders betting YES (with shares, positionValue, convictionScore, name if public)
@@ -325,9 +327,9 @@ Returns:
 
 CONVICTIONSCORES: "extreme" (>$10k), "high" ($5k-$10k), "moderate" ($1k-$5k), "low" (<$1k)
 
-USE THIS FOR: "Biggest whale bets?", "What are smart money players betting on?", "Which side do whales favor?"
-
-USE analyze_whale_flow INSTEAD FOR: "Recent trades?", "Trading activity in last 24h?"`,
+USE THIS FOR: Single-outcome markets like "Will Bitcoin hit $100k?" or "Will Trump win?"
+USE analyze_event_whale_breakdown FOR: "Which player are whales betting on in Australian Open?"
+USE analyze_whale_flow FOR: "Recent trades?", "Trading activity in last 24h?"`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -404,6 +406,76 @@ USE analyze_whale_flow INSTEAD FOR: "Recent trades?", "Trading activity in last 
         fetchedAt: { type: "string" },
       },
       required: ["market", "conditionId", "whaleAnalysis", "smartMoneySignal"],
+    },
+  },
+
+  {
+    name: "analyze_event_whale_breakdown",
+    description: `🐋 MULTI-OUTCOME WHALE ANALYSIS: For events with multiple outcomes (like "Australian Open Winner"), shows WHICH SPECIFIC OUTCOME whales are betting on.
+
+⚠️ USE THIS for multi-outcome events like sports tournaments, elections with multiple candidates, etc.
+⚠️ analyze_top_holders only shows YES/NO for ONE market. This tool shows whale positions ACROSS ALL outcomes in an event.
+
+Example: For "Australian Open Winner" event with 20+ player markets:
+- Returns: "Whales have $100k on Sinner, $50k on Djokovic, $30k on Alcaraz..."
+- NOT just: "Whales have $X on YES, $Y on NO" (which is meaningless without knowing WHICH player)
+
+DATA FLOW: discover_trending_markets → slug → analyze_event_whale_breakdown
+
+Returns:
+- eventTitle: The event name
+- totalMarketsAnalyzed: How many outcome markets were checked
+- whalesByOutcome[]: Sorted by total whale value, showing which outcomes have biggest whale positions
+- topWhaleOutcome: The outcome with most whale money`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        slug: {
+          type: "string",
+          description: "The EVENT slug (e.g., '2026-mens-australian-open-winner'). Required.",
+        },
+        maxOutcomes: {
+          type: "number",
+          description: "Maximum number of outcomes/markets to analyze (default: 10, max: 20). Higher = slower but more thorough.",
+        },
+      },
+      required: ["slug"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        eventTitle: { type: "string" },
+        eventSlug: { type: "string" },
+        totalMarketsInEvent: { type: "number" },
+        totalMarketsAnalyzed: { type: "number" },
+        whalesByOutcome: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              rank: { type: "number" },
+              outcome: { type: "string", description: "The specific outcome (e.g., 'Sinner', 'Djokovic')" },
+              conditionId: { type: "string" },
+              currentPrice: { type: "number", description: "Current YES price (implied probability)" },
+              totalWhaleValue: { type: "number", description: "Total $ value of whale positions on this outcome" },
+              topWhalePosition: { type: "number", description: "Largest single whale position" },
+              whaleCount: { type: "number", description: "Number of whale-sized positions" },
+              convictionLevel: { type: "string", enum: ["extreme", "high", "moderate", "low"] },
+            },
+          },
+        },
+        topWhaleOutcome: {
+          type: "object",
+          properties: {
+            outcome: { type: "string" },
+            totalValue: { type: "number" },
+            confidence: { type: "string" },
+          },
+        },
+        smartMoneyConsensus: { type: "string" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["eventTitle", "whalesByOutcome", "topWhaleOutcome"],
     },
   },
 
@@ -855,12 +927,15 @@ Supported aliases: sports (includes nfl, nba, mlb, tennis, mma, golf, hockey), c
 
 💡 TIP: For exact categories, call get_all_tags first to see available Polymarket tags, then use browse_by_tag for precise filtering.
 
-NEXT STEP: For whale analysis, pass the returned conditionIds to analyze_top_holders to see:
-- Which side whales are betting (YES vs NO)
-- Position sizes and conviction scores
-- Smart money signals
+🐋 WHALE ANALYSIS - CHOOSE THE RIGHT TOOL:
+- For MULTI-OUTCOME events (tournaments, elections): Use slug → analyze_event_whale_breakdown
+  Shows: "Whales have $100k on Sinner, $50k on Djokovic..."
+- For SINGLE-OUTCOME markets (yes/no questions): Use conditionId → analyze_top_holders
+  Shows: "Whales have $X on YES, $Y on NO"
 
-DATA FLOW: discover_trending_markets → conditionId → analyze_top_holders`,
+DATA FLOWS:
+- Multi-outcome: discover_trending_markets → slug → analyze_event_whale_breakdown
+- Single-outcome: discover_trending_markets → conditionId → analyze_top_holders`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -2508,6 +2583,8 @@ server.setRequestHandler(
           return await handleAnalyzeWhaleFlow(args);
         case "analyze_top_holders":
           return await handleAnalyzeTopHolders(args);
+        case "analyze_event_whale_breakdown":
+          return await handleAnalyzeEventWhaleBreakdown(args);
         case "find_correlated_markets":
           return await handleFindCorrelatedMarkets(args);
         case "check_market_rules":
@@ -7788,6 +7865,211 @@ async function handleAnalyzeTopHolders(
     nearResolvedWarning,
     fetchedAt: new Date().toISOString(),
   });
+}
+
+async function handleAnalyzeEventWhaleBreakdown(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const slug = args?.slug as string;
+  const maxOutcomes = Math.min((args?.maxOutcomes as number) || 10, 20);
+
+  if (!slug) {
+    return errorResult("slug is required - provide the event slug (e.g., '2026-mens-australian-open-winner')");
+  }
+
+  try {
+    // Fetch the event with all its markets
+    const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+    
+    if (!event) {
+      return errorResult(`Event not found: ${slug}`);
+    }
+
+    const markets = event.markets || [];
+    if (markets.length === 0) {
+      return errorResult(`Event has no markets: ${slug}`);
+    }
+
+    const eventTitle = event.title || slug;
+    const totalMarketsInEvent = markets.length;
+
+    // Sort markets by volume/liquidity to prioritize the most active ones
+    const sortedMarkets = [...markets].sort((a, b) => {
+      const volA = Number(a.volume24hr || a.volume || 0);
+      const volB = Number(b.volume24hr || b.volume || 0);
+      return volB - volA;
+    });
+
+    // Analyze top N markets
+    const marketsToAnalyze = sortedMarkets.slice(0, maxOutcomes);
+
+    // Fetch holders for each market in parallel (with rate limiting)
+    const whaleResults: Array<{
+      outcome: string;
+      conditionId: string;
+      currentPrice: number;
+      totalWhaleValue: number;
+      topWhalePosition: number;
+      whaleCount: number;
+    }> = [];
+
+    // Process in batches of 3 to avoid overwhelming the API
+    const batchSize = 3;
+    for (let i = 0; i < marketsToAnalyze.length; i += batchSize) {
+      const batch = marketsToAnalyze.slice(i, i + batchSize);
+      
+      const batchPromises = batch.map(async (market) => {
+        const conditionId = market.conditionId;
+        if (!conditionId) return null;
+
+        // Extract outcome name from market question
+        // e.g., "Will Sinner win?" -> "Sinner" or just use the question
+        let outcomeName = market.question || market.groupItemTitle || "Unknown";
+        // Try to extract just the subject name
+        const willMatch = outcomeName.match(/Will (.+?) win/i);
+        if (willMatch) {
+          outcomeName = willMatch[1];
+        }
+
+        try {
+          // Get top holders with deep fetch enabled
+          const holdersResult = await handleGetTopHolders({ 
+            conditionId, 
+            outcome: "YES", // Focus on YES side for multi-outcome markets
+            limit: 20, 
+            deepFetch: true 
+          });
+          
+          if (holdersResult.isError) {
+            return null;
+          }
+
+          const holdersData = JSON.parse((holdersResult.content[0] as { text: string }).text);
+          
+          // Calculate whale metrics for YES positions
+          const yesHolders = holdersData.topHolders?.yes || [];
+          const totalWhaleValue = yesHolders.reduce((sum: number, h: { value: number }) => sum + (h.value || 0), 0);
+          const topWhalePosition = yesHolders[0]?.value || 0;
+          const whaleCount = yesHolders.filter((h: { value: number }) => h.value > 1000).length;
+
+          // Get current price
+          let currentPrice = 0.5;
+          try {
+            const clobMarket = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
+            const tokens = clobMarket?.tokens;
+            if (tokens && tokens.length >= 1) {
+              const pricesResp = (await fetchClobPost("/prices", [
+                { token_id: tokens[0].token_id, side: "BUY" },
+              ])) as Record<string, { BUY?: string } | string>;
+              const yesData = pricesResp[tokens[0].token_id];
+              if (yesData) currentPrice = typeof yesData === "object" && yesData.BUY ? Number(yesData.BUY) : Number(yesData);
+            }
+          } catch {
+            // Try to use outcomePrices from gamma
+            if (market.outcomePrices) {
+              try {
+                const prices = JSON.parse(market.outcomePrices as string);
+                if (prices[0]) currentPrice = Number(prices[0]);
+              } catch {
+                // Use default
+              }
+            }
+          }
+
+          return {
+            outcome: outcomeName,
+            conditionId,
+            currentPrice,
+            totalWhaleValue,
+            topWhalePosition,
+            whaleCount,
+          };
+        } catch {
+          return null;
+        }
+      });
+
+      const batchResults = await Promise.all(batchPromises);
+      for (const result of batchResults) {
+        if (result) {
+          whaleResults.push(result);
+        }
+      }
+
+      // Small delay between batches to respect rate limits
+      if (i + batchSize < marketsToAnalyze.length) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    }
+
+    // Sort by total whale value descending
+    whaleResults.sort((a, b) => b.totalWhaleValue - a.totalWhaleValue);
+
+    // Format the results with ranks
+    const whalesByOutcome = whaleResults.map((r, idx) => {
+      let convictionLevel: "extreme" | "high" | "moderate" | "low";
+      if (r.totalWhaleValue > 50000) convictionLevel = "extreme";
+      else if (r.totalWhaleValue > 10000) convictionLevel = "high";
+      else if (r.totalWhaleValue > 1000) convictionLevel = "moderate";
+      else convictionLevel = "low";
+
+      return {
+        rank: idx + 1,
+        outcome: r.outcome,
+        conditionId: r.conditionId,
+        currentPrice: Number(r.currentPrice.toFixed(4)),
+        totalWhaleValue: Number(r.totalWhaleValue.toFixed(2)),
+        topWhalePosition: Number(r.topWhalePosition.toFixed(2)),
+        whaleCount: r.whaleCount,
+        convictionLevel,
+      };
+    });
+
+    // Determine top whale outcome
+    const topOutcome = whalesByOutcome[0];
+    const secondOutcome = whalesByOutcome[1];
+    
+    let confidence: "high" | "medium" | "low" = "low";
+    if (topOutcome && secondOutcome) {
+      if (topOutcome.totalWhaleValue > secondOutcome.totalWhaleValue * 2) {
+        confidence = "high";
+      } else if (topOutcome.totalWhaleValue > secondOutcome.totalWhaleValue * 1.3) {
+        confidence = "medium";
+      }
+    } else if (topOutcome && topOutcome.totalWhaleValue > 10000) {
+      confidence = "medium";
+    }
+
+    // Generate smart money consensus
+    let smartMoneyConsensus: string;
+    if (!topOutcome || topOutcome.totalWhaleValue < 1000) {
+      smartMoneyConsensus = "No significant whale positions detected across outcomes. Market may be too new or lack smart money interest.";
+    } else if (confidence === "high") {
+      smartMoneyConsensus = `Strong whale consensus on "${topOutcome.outcome}" with $${topOutcome.totalWhaleValue.toFixed(0)} in positions (${topOutcome.whaleCount} whales). This is ${(topOutcome.totalWhaleValue / (secondOutcome?.totalWhaleValue || 1)).toFixed(1)}x the next closest outcome.`;
+    } else if (confidence === "medium") {
+      smartMoneyConsensus = `Moderate whale preference for "${topOutcome.outcome}" ($${topOutcome.totalWhaleValue.toFixed(0)}) over "${secondOutcome?.outcome || 'others'}" ($${secondOutcome?.totalWhaleValue.toFixed(0) || 0}). Not a strong consensus.`;
+    } else {
+      smartMoneyConsensus = `Whale positions spread across multiple outcomes. "${topOutcome.outcome}" has slight edge ($${topOutcome.totalWhaleValue.toFixed(0)}) but no clear smart money consensus.`;
+    }
+
+    return successResult({
+      eventTitle,
+      eventSlug: slug,
+      totalMarketsInEvent,
+      totalMarketsAnalyzed: whaleResults.length,
+      whalesByOutcome,
+      topWhaleOutcome: topOutcome ? {
+        outcome: topOutcome.outcome,
+        totalValue: topOutcome.totalWhaleValue,
+        confidence,
+      } : null,
+      smartMoneyConsensus,
+      note: `Analyzed ${whaleResults.length} of ${totalMarketsInEvent} markets. Whale positions show YES bets on each outcome - the outcome with most whale money suggests smart money's pick.`,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Failed to analyze event whale breakdown: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
 }
 
 // ============================================================================
