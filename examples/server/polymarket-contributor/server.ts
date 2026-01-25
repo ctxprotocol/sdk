@@ -1647,14 +1647,16 @@ This tool:
 2. Automatically fetches all outcomes for that market
 3. Returns everything in one response
 
+⚠️ VERIFY THE RETURNED MARKET: Always check that eventTitle matches your intent!
+If the returned market doesn't match (e.g., got a division market instead of championship),
+try a different query with the correct terminology.
+
 PERFECT FOR CROSS-PLATFORM COMPARISON:
-  - "NBA Championship" → Returns all 30 teams with their Polymarket prices
-  - "Super Bowl Winner" → Returns all NFL teams with prices
-  - "Presidential Election" → Returns all candidates with prices
+  - Sports championships → Returns all teams with their Polymarket prices
+  - Political elections → Returns all candidates with prices
+  - Any multi-outcome event → Returns all possibilities
 
-Then compare the returned team prices directly against The Odds API or other platforms!
-
-INPUT: Natural language query (e.g., "NBA Champion", "Super Bowl", "World Series")
+INPUT: Natural language query describing the market you want
 OUTPUT: All outcomes with prices, ready for comparison`,
     inputSchema: {
       type: "object" as const,
@@ -2060,6 +2062,8 @@ MARKET STATUS:
 - RESOLVED markets: Already finished, for historical reference only
 
 By default, only LIVE markets are returned. Use status='resolved' for finished markets.
+
+⚠️ Always verify the returned results match your intent by checking the title field.
 
 Each result includes:
 - url: Direct link to the market (always use this, never construct URLs)
@@ -6576,7 +6580,7 @@ async function handleSearchAndGetOutcomes(
         ? "Found exact match for your search query."
         : matchConfidence === "high"
         ? "Found high-confidence match. Verify this is the market you wanted."
-        : "Best match found. If this isn't the right market, try a more specific query.",
+        : "Best match found. If this isn't the right market, try a different query.",
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {
