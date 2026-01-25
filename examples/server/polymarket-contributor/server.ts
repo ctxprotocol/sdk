@@ -1641,8 +1641,8 @@ NEXT STEPS after finding match:
 Works for ANY multi-outcome market:
 - Political: "Which candidate has the highest volume?" (returns all real candidates)
 - Sports: "Show all teams and their betting volumes" (returns all teams)
+- Awards: "NBA MVP", "NFL MVP" (returns all PLAYERS)
 - Crypto: "What Bitcoin price targets are most traded?" (returns all price brackets)
-- General: "List all options in this market by volume"
 
 PERFECT FOR questions about:
 - Individual outcome volumes within an event
@@ -1650,9 +1650,15 @@ PERFECT FOR questions about:
 - Complete breakdown of all options
 - Comparing volumes across outcomes
 
+⚠️ CROSS-PLATFORM COMPARISON NOTE:
+For PLAYER AWARD markets (MVP, DPOY, etc.), Polymarket is often the ONLY source!
+Traditional sportsbook APIs (The Odds API) typically only have TEAM championship futures.
+
+✅ Can compare across platforms: "NBA Champion" (both have TEAMS)
+❌ Cannot compare: "NBA MVP" (Polymarket has PLAYERS, Odds API doesn't have MVP)
+
 NOTE: Automatically filters out placeholder entries (e.g., "Person A", "Person AB") that Polymarket 
-uses as reserved slots for future outcomes. These have zero volume and aren't real options.
-Only ACTIVE outcomes with real trading data are returned by default.`,
+uses as reserved slots for future outcomes. Only ACTIVE outcomes returned.`,
     inputSchema: {
       type: "object" as const,
       properties: {

@@ -753,24 +753,33 @@ CROSS-PLATFORM COMPOSABILITY:
 
 Filters to only sports where has_outrights=true.
 
-FUTURES EXAMPLES:
-  - americanfootball_nfl_super_bowl_winner
-  - basketball_nba_championship_winner
+AVAILABLE FUTURES (TEAMS/WINNERS):
+  - basketball_nba_championship_winner (TEAMS, not players)
+  - americanfootball_nfl_super_bowl_winner (TEAMS)
   - golf_masters_tournament_winner
   - soccer_epl_league_winner
+
+⚠️ NOT AVAILABLE on this API:
+  - NBA MVP (player award) - USE POLYMARKET ONLY
+  - NFL MVP, Defensive Player of Year - USE POLYMARKET ONLY
+  - Any individual player award futures
+
+MARKET TYPE WARNING:
+  - Championship Winner = TEAMS (Thunder, Lakers, etc.)
+  - MVP/Awards = PLAYERS (Jokić, Shai, etc.)
+  Do NOT try to compare Championship odds (teams) with MVP odds (players)!
 
 USE WITH: get_outrights({ sport: <sport_key> }) to get actual odds
 
 ⚠️ SCOPE: This API covers SPORTS BETTING ONLY - no politics, crypto, or entertainment.
-For those categories, use Polymarket.
 
-CROSS-PLATFORM STRATEGY:
-  This is where Odds API and Polymarket OVERLAP!
+CROSS-PLATFORM COMPARISON STRATEGY:
+  Only compare SAME market types across platforms!
   
-  1. Call get_futures_sports → find "basketball_nba_championship_winner"
-  2. Call get_outrights → Lakers +450 (implied 18.2%)
-  3. Search Polymarket for "Lakers NBA Finals" → 45% YES price
-  4. Compare probabilities → 27 percentage point discrepancy!`,
+  ✅ VALID: "NBA Champion" on Odds API vs "NBA Champion" on Polymarket (both TEAMS)
+  ❌ INVALID: "NBA Champion" on Odds API vs "NBA MVP" on Polymarket (teams vs players!)
+  
+  For MVP comparisons, Polymarket is your ONLY source - traditional books don't list MVP futures in this API.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -1296,13 +1305,18 @@ CROSS-PLATFORM STRATEGY:
     name: "get_outrights",
     description: `🎰 RAW DATA: Get futures/championship winner odds from 50+ sportsbooks.
 
-INPUT: Futures sport key from get_futures_sports or get_sports (has_outrights: true)
-  Examples: 
+⚠️ MARKET TYPE: Returns TEAM/EVENT outcomes ONLY, NOT player awards!
+  - "basketball_nba_championship_winner" → Teams (Thunder, Lakers, Nuggets)
+  - "americanfootball_nfl_super_bowl_winner" → Teams (Chiefs, Eagles, 49ers)
+  - NOT available: MVP, DPOY, ROY, or any player award futures
+
+INPUT: Futures sport key from get_futures_sports (has_outrights: true)
+  Valid keys: 
   - "americanfootball_nfl_super_bowl_winner"
   - "basketball_nba_championship_winner"
   - "golf_masters_tournament_winner"
 
-RETURNS: All teams/outcomes with:
+RETURNS: All TEAMS with:
   - Best odds across all bookmakers
   - Implied probability (calculated as 1/decimal_odds)
   - Which bookmaker offers the best price
@@ -1310,19 +1324,19 @@ RETURNS: All teams/outcomes with:
 CONVERTING ODDS TO PROBABILITY:
   - Decimal 2.50 → 1/2.50 = 40% implied probability
   - American +450 → 100/(450+100) = 18.2% implied probability
-  - American -200 → 200/(200+100) = 66.7% implied probability
 
 CROSS-PLATFORM COMPARISON:
-  Sportsbook odds can be directly compared to Polymarket prices!
+  ✅ VALID: Compare Championship Winner (teams) across platforms
+  ❌ INVALID: Compare Championship (teams) with MVP (players) - different markets!
   
-  Example workflow:
+  Example workflow (SAME market type):
   1. get_outrights({ sport: "basketball_nba_championship_winner" })
-     → Lakers +450 = 18.2% implied probability
-  2. Polymarket browse_by_tag for "NBA" → "Will Lakers win NBA Finals?" 
-     → YES price 0.45 = 45% probability
-  3. DISCREPANCY: 45% - 18.2% = 26.8 percentage points
-  4. If you believe sportsbooks are right, bet NO on Polymarket
-     If you believe Polymarket is right, bet Lakers at sportsbook`,
+     → Thunder +215 = 46.5% implied probability
+  2. Polymarket search "NBA Champion" → "Will Thunder win NBA Finals?" 
+     → YES price 0.40 = 40% probability
+  3. DISCREPANCY: 46.5% - 40% = 6.5 percentage points
+  
+  For MVP comparisons: Use Polymarket ONLY - sportsbook MVP odds not available in this API.`,
     inputSchema: {
       type: "object" as const,
       properties: {
