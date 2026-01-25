@@ -1635,8 +1635,74 @@ NEXT STEPS after finding match:
   },
 
   {
+    name: "search_and_get_outcomes",
+    description: `🔍 SEARCH + GET OUTCOMES in ONE CALL. Finds a market and returns all its outcomes immediately.
+
+⚠️ USE THIS INSTEAD OF: search_markets → get_event_outcomes (which requires chaining calls)
+
+This tool:
+1. Searches for the most relevant market matching your query
+2. Automatically fetches all outcomes for that market
+3. Returns everything in one response
+
+PERFECT FOR CROSS-PLATFORM COMPARISON:
+  - "NBA Championship" → Returns all 30 teams with their Polymarket prices
+  - "Super Bowl Winner" → Returns all NFL teams with prices
+  - "Presidential Election" → Returns all candidates with prices
+
+Then compare the returned team prices directly against The Odds API or other platforms!
+
+INPUT: Natural language query (e.g., "NBA Champion", "Super Bowl", "World Series")
+OUTPUT: All outcomes with prices, ready for comparison`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        query: {
+          type: "string",
+          description: "Natural language search query (e.g., 'NBA Champion', 'Super Bowl Winner', 'Presidential Election')",
+        },
+        category: {
+          type: "string",
+          enum: ["sports", "politics", "crypto", "pop-culture", "science", "business"],
+          description: "Optional category to narrow search",
+        },
+      },
+      required: ["query"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        eventTitle: { type: "string" },
+        eventSlug: { type: "string" },
+        eventUrl: { type: "string" },
+        totalVolume: { type: "number" },
+        totalOutcomes: { type: "number" },
+        outcomes: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string", description: "Team/candidate/outcome name" },
+              price: { type: "number", description: "Current YES price (0-1, treat as probability)" },
+              pricePercent: { type: "string" },
+              volume: { type: "number" },
+              conditionId: { type: "string" },
+            },
+          },
+        },
+        searchQuery: { type: "string" },
+        matchConfidence: { type: "string", enum: ["exact", "high", "medium", "low"] },
+        fetchedAt: { type: "string" },
+      },
+      required: ["eventTitle", "outcomes"],
+    },
+  },
+
+  {
     name: "get_event_outcomes",
     description: `📊 Get ALL outcomes in a multi-outcome event with their individual volumes.
+
+⚠️ PREFER search_and_get_outcomes if you don't have a slug! That tool searches AND returns outcomes in one call.
 
 Works for ANY multi-outcome market:
 - Political: "Which candidate has the highest volume?" (returns all real candidates)
@@ -2626,6 +2692,8 @@ server.setRequestHandler(
           return await handleGetEvents(args);
         case "get_event_by_slug":
           return await handleGetEventBySlug(args);
+        case "search_and_get_outcomes":
+          return await handleSearchAndGetOutcomes(args);
         case "get_event_outcomes":
           return await handleGetEventOutcomes(args);
         case "get_orderbook":
@@ -6324,6 +6392,149 @@ async function handleGetEventBySlug(
     markets,
     fetchedAt: new Date().toISOString(),
   });
+}
+
+/**
+ * Search for a market AND return its outcomes in one call.
+ * Avoids the chained search → get_event_outcomes flow that's error-prone.
+ */
+async function handleSearchAndGetOutcomes(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const query = args?.query as string;
+  const category = args?.category as string | undefined;
+
+  if (!query) {
+    return errorResult("query is required - provide a search term like 'NBA Champion' or 'Super Bowl Winner'");
+  }
+
+  try {
+    // Step 1: Search for the market
+    const searchParams = new URLSearchParams({
+      q: query,
+      limit: "10",
+    });
+    if (category) {
+      searchParams.set("category", category);
+    }
+
+    interface SearchResult {
+      id?: string;
+      title?: string;
+      slug?: string;
+      conditionId?: string;
+      volume?: string | number;
+      liquidity?: string | number;
+      outcomes?: string;
+      outcomePrices?: string;
+      endDate?: string;
+      closed?: boolean;
+    }
+
+    const searchResults = (await fetchGamma(`/search?${searchParams.toString()}`)) as SearchResult[];
+
+    if (!Array.isArray(searchResults) || searchResults.length === 0) {
+      return errorResult(`No markets found for query: "${query}". Try a different search term.`);
+    }
+
+    // Find the best match - prefer exact title matches, then highest volume
+    let bestMatch = searchResults[0];
+    let matchConfidence: "exact" | "high" | "medium" | "low" = "medium";
+
+    const queryLower = query.toLowerCase();
+    for (const result of searchResults) {
+      const titleLower = (result.title || "").toLowerCase();
+      
+      // Exact match
+      if (titleLower === queryLower || titleLower.includes(queryLower)) {
+        bestMatch = result;
+        matchConfidence = "exact";
+        break;
+      }
+      
+      // Check for key terms
+      const queryTerms = queryLower.split(/\s+/);
+      const matchedTerms = queryTerms.filter(term => titleLower.includes(term));
+      if (matchedTerms.length >= queryTerms.length * 0.7) {
+        bestMatch = result;
+        matchConfidence = "high";
+      }
+    }
+
+    const slug = bestMatch.slug;
+    if (!slug) {
+      return errorResult(`Found market "${bestMatch.title}" but it has no slug for fetching outcomes.`);
+    }
+
+    // Step 2: Fetch the event with all its outcomes
+    const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+
+    if (!event) {
+      return errorResult(`Could not fetch event details for slug: ${slug}`);
+    }
+
+    const markets = event.markets || [];
+    if (markets.length === 0) {
+      return errorResult(`Event "${event.title}" has no markets/outcomes.`);
+    }
+
+    // Parse outcomes
+    const outcomes = markets
+      .filter(m => {
+        // Filter out placeholder entries
+        const name = m.groupItemTitle || m.question || "";
+        const isPlaceholder = /^(Person|Team|Option)\s*[A-Z]{1,2}$/i.test(name);
+        const hasVolume = Number(m.volume || 0) > 0 || Number(m.liquidity || 0) > 0;
+        return !isPlaceholder && (hasVolume || markets.length <= 5);
+      })
+      .map(m => {
+        // Get YES price
+        let price = 0.5;
+        if (m.outcomePrices) {
+          try {
+            const pricesStr = typeof m.outcomePrices === "string" 
+              ? m.outcomePrices 
+              : JSON.stringify(m.outcomePrices);
+            const prices = JSON.parse(pricesStr);
+            if (Array.isArray(prices) && prices.length > 0) {
+              price = Number(prices[0]) || 0.5;
+            }
+          } catch {
+            // Use default
+          }
+        }
+
+        return {
+          name: m.groupItemTitle || m.question || "Unknown",
+          price: Number(price.toFixed(4)),
+          pricePercent: `${(price * 100).toFixed(1)}%`,
+          volume: Number(m.volume || 0),
+          conditionId: m.conditionId || "",
+        };
+      })
+      .sort((a, b) => b.price - a.price); // Sort by price (probability) descending
+
+    const totalVolume = outcomes.reduce((sum, o) => sum + o.volume, 0);
+
+    return successResult({
+      eventTitle: event.title || slug,
+      eventSlug: slug,
+      eventUrl: `https://polymarket.com/event/${slug}`,
+      totalVolume,
+      totalOutcomes: outcomes.length,
+      outcomes,
+      searchQuery: query,
+      matchConfidence,
+      note: matchConfidence === "exact" 
+        ? "Found exact match for your search query."
+        : matchConfidence === "high"
+        ? "Found high-confidence match. Verify this is the market you wanted."
+        : "Best match found. If this isn't the right market, try a more specific query.",
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(`Search and get outcomes failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
 }
 
 /**
