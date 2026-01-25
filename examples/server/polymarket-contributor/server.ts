@@ -1638,10 +1638,12 @@ NEXT STEPS after finding match:
     name: "search_and_get_outcomes",
     description: `🔍 SEARCH + GET OUTCOMES in ONE CALL. Finds a market and returns all its outcomes immediately.
 
+✅ Uses Polymarket's official /public-search API for reliable server-side text search.
+
 ⚠️ USE THIS INSTEAD OF: search_markets → get_event_outcomes (which requires chaining calls)
 
 This tool:
-1. Searches for the most relevant market matching your query
+1. Searches for the most relevant market matching your query (using /public-search API)
 2. Automatically fetches all outcomes for that market
 3. Returns everything in one response
 
@@ -1691,6 +1693,7 @@ OUTPUT: All outcomes with prices, ready for comparison`,
           },
         },
         searchQuery: { type: "string" },
+        searchMethod: { type: "string", enum: ["public-search", "events-fallback"], description: "Which search method was used" },
         matchConfidence: { type: "string", enum: ["exact", "high", "medium", "low"] },
         fetchedAt: { type: "string" },
       },
@@ -6397,6 +6400,8 @@ async function handleGetEventBySlug(
 /**
  * Search for a market AND return its outcomes in one call.
  * Avoids the chained search → get_event_outcomes flow that's error-prone.
+ * 
+ * Uses /public-search endpoint for reliable server-side text search.
  */
 async function handleSearchAndGetOutcomes(
   args: Record<string, unknown> | undefined
@@ -6409,16 +6414,7 @@ async function handleSearchAndGetOutcomes(
   }
 
   try {
-    // Step 1: Search for the market
-    const searchParams = new URLSearchParams({
-      q: query,
-      limit: "10",
-    });
-    if (category) {
-      searchParams.set("category", category);
-    }
-
-    interface SearchResult {
+    interface GammaEventResult {
       id?: string;
       title?: string;
       slug?: string;
@@ -6429,12 +6425,62 @@ async function handleSearchAndGetOutcomes(
       outcomePrices?: string;
       endDate?: string;
       closed?: boolean;
+      markets?: GammaMarket[];
     }
 
-    const searchResults = (await fetchGamma(`/search?${searchParams.toString()}`)) as SearchResult[];
+    let searchResults: GammaEventResult[] = [];
+    let searchMethod = "public-search";
 
-    if (!Array.isArray(searchResults) || searchResults.length === 0) {
-      return errorResult(`No markets found for query: "${query}". Try a different search term.`);
+    // PRIMARY: Use /public-search endpoint for server-side text search
+    // This is the official Polymarket search API - no auth/cookies required
+    try {
+      const searchUrl = `https://gamma-api.polymarket.com/public-search?q=${encodeURIComponent(query)}&limit_per_type=20&events_status=active`;
+      const searchResponse = await fetch(searchUrl, {
+        headers: { 'Accept': 'application/json', 'User-Agent': 'Polymarket-MCP-Server/1.0' },
+      });
+      
+      if (searchResponse.ok) {
+        const searchData = await searchResponse.json() as { 
+          events?: GammaEventResult[]; 
+        };
+        
+        if (searchData.events && searchData.events.length > 0) {
+          searchResults = searchData.events;
+        }
+      }
+    } catch (err) {
+      console.error('Public search failed, falling back to events listing:', err);
+    }
+
+    // FALLBACK: Use /events endpoint with client-side filtering if search fails
+    if (searchResults.length === 0) {
+      searchMethod = "events-fallback";
+      const eventParams = new URLSearchParams({
+        active: "true",
+        closed: "false",
+        limit: "50",
+      });
+      
+      // Add tag filter if category provided
+      if (category) {
+        eventParams.set("tag", category);
+      }
+
+      const events = (await fetchGamma(`/events?${eventParams.toString()}`)) as GammaEventResult[];
+      
+      if (Array.isArray(events) && events.length > 0) {
+        // Filter events by query terms client-side
+        const queryTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+        searchResults = events.filter(event => {
+          const title = (event.title || "").toLowerCase();
+          const matchedTerms = queryTerms.filter(term => title.includes(term));
+          return matchedTerms.length >= Math.ceil(queryTerms.length * 0.5);
+        });
+      }
+    }
+
+    if (searchResults.length === 0) {
+      return errorResult(`No markets found for query: "${query}". Try a different search term or check spelling.`);
     }
 
     // Find the best match - prefer exact title matches, then highest volume
@@ -6524,6 +6570,7 @@ async function handleSearchAndGetOutcomes(
       totalOutcomes: outcomes.length,
       outcomes,
       searchQuery: query,
+      searchMethod,
       matchConfidence,
       note: matchConfidence === "exact" 
         ? "Found exact match for your search query."
