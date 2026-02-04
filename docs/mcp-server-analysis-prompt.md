@@ -53,6 +53,11 @@ Features:
 - [Key feature 3 with specific details]
 - [Additional features as needed]
 
+Try asking:
+- "[Natural language question showcasing a key feature]"
+- "[Question demonstrating a unique capability]"
+- "[Question showing an advanced or powerful use case]"
+
 Agent tips:
 - [Best practice for using this tool]
 - [Common workflow or call sequence]
@@ -68,6 +73,11 @@ Features:
 - EIP-1559 support (maxFeePerGas, maxPriorityFeePerGas)
 - Estimated confirmation times in seconds
 - Support for legacy and type-2 transactions
+
+Try asking:
+- "What's the current gas price on Ethereum?"
+- "Compare gas prices across Base, Arbitrum, and Optimism"
+- "What gas settings should I use for a time-sensitive swap on mainnet?"
 
 Agent tips:
 - Call list_chains first to get all supported chainIds
