@@ -35,7 +35,7 @@ export class Discovery {
     const queryString = params.toString();
     const endpoint = `/api/v1/tools/search${queryString ? `?${queryString}` : ""}`;
 
-    const response = await this.client.fetch<SearchResponse>(endpoint);
+    const response = await this.client._fetch<SearchResponse>(endpoint);
 
     return response.tools;
   }

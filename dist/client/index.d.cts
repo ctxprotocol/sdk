@@ -48,15 +48,23 @@ interface Tool {
     category?: string;
     /** Whether the tool is verified by Context Protocol */
     isVerified?: boolean;
+    /** Tool type - currently always "mcp" */
+    kind?: string;
     /**
      * Available MCP tool methods
      * Use items from this array as `toolName` when executing
      */
     mcpTools?: McpTool[];
-    /** Creation timestamp */
-    createdAt?: string;
-    /** Last update timestamp */
-    updatedAt?: string;
+    /** Total number of queries processed */
+    totalQueries?: number;
+    /** Success rate percentage (0-100) */
+    successRate?: string;
+    /** Uptime percentage (0-100) */
+    uptimePercent?: string;
+    /** Total USDC staked by the developer */
+    totalStaked?: string;
+    /** Whether the tool has "Proven" status (100+ queries, >95% success, >98% uptime) */
+    isProven?: boolean;
 }
 /**
  * Response from the tools search endpoint
@@ -249,6 +257,7 @@ declare class Tools {
 declare class ContextClient {
     private readonly apiKey;
     private readonly baseUrl;
+    private _closed;
     /**
      * Discovery resource for searching tools
      */
@@ -266,12 +275,17 @@ declare class ContextClient {
      */
     constructor(options: ContextClientOptions);
     /**
+     * Close the client and clean up resources.
+     * After calling close(), any in-flight requests may be aborted.
+     */
+    close(): void;
+    /**
      * Internal method for making authenticated HTTP requests
-     * All requests include the Authorization header with the API key
+     * Includes timeout (30s) and retry with exponential backoff for transient errors
      *
      * @internal
      */
-    fetch<T>(endpoint: string, options?: RequestInit): Promise<T>;
+    _fetch<T>(endpoint: string, options?: RequestInit): Promise<T>;
 }
 
 export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecutionResult, type McpTool, type SearchOptions, type SearchResponse, type Tool, Tools };

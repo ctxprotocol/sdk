@@ -8,9 +8,11 @@
  * DECLARING CONTEXT REQUIREMENTS
  * =============================================================================
  *
- * Since the MCP protocol only transmits standard fields (name, description,
- * inputSchema, outputSchema), context requirements MUST be embedded in the
- * inputSchema using the "x-context-requirements" JSON Schema extension.
+ * Context requirements are declared via `_meta.contextRequirements` at the tool level.
+ * This is the primary mechanism that the Context Platform reads.
+ *
+ * Previously, `x-context-requirements` in inputSchema was recommended, but the MCP SDK
+ * may strip extension properties during transport. Use `_meta` instead.
  *
  * @example
  * ```typescript
@@ -19,9 +21,11 @@
  *
  * const tool = {
  *   name: "analyze_my_positions",
+ *   _meta: {
+ *     contextRequirements: ["hyperliquid"] as ContextRequirementType[],
+ *   },
  *   inputSchema: {
  *     type: "object",
- *     [CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"] as ContextRequirementType[],
  *     properties: {
  *       portfolio: { type: "object" }
  *     },
@@ -60,30 +64,34 @@ import type { HyperliquidContext } from "./hyperliquid.js";
 // ============================================================================
 
 /**
- * JSON Schema extension key for declaring context requirements.
+ * @deprecated Use `_meta.contextRequirements` instead (see META_CONTEXT_REQUIREMENTS_KEY).
  *
- * WHY THIS APPROACH?
- * - MCP protocol only transmits: name, description, inputSchema, outputSchema
- * - Custom fields like `requirements` get stripped by MCP SDK during transport
- * - JSON Schema allows custom "x-" prefixed extension properties
- * - inputSchema is preserved end-to-end through MCP transport
+ * This key was designed for embedding requirements in inputSchema,
+ * but the MCP SDK may strip `x-` prefixed extension properties during transport.
+ * The `_meta.contextRequirements` approach is what the Context Platform reads.
+ */
+export const CONTEXT_REQUIREMENTS_KEY = "x-context-requirements" as const;
+
+/**
+ * The key used inside `_meta` to declare context requirements.
+ * This is the PRIMARY mechanism — the Context Platform reads `_meta.contextRequirements`.
  *
  * @example
  * ```typescript
- * import { CONTEXT_REQUIREMENTS_KEY } from "@ctxprotocol/sdk";
- *
  * const tool = {
  *   name: "analyze_my_positions",
+ *   _meta: {
+ *     [META_CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"] as ContextRequirementType[],
+ *   },
  *   inputSchema: {
  *     type: "object",
- *     [CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"],
  *     properties: { portfolio: { type: "object" } },
  *     required: ["portfolio"]
  *   }
  * };
  * ```
  */
-export const CONTEXT_REQUIREMENTS_KEY = "x-context-requirements" as const;
+export const META_CONTEXT_REQUIREMENTS_KEY = "contextRequirements" as const;
 
 /**
  * Context requirement types supported by the Context marketplace.

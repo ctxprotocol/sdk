@@ -60,17 +60,30 @@ export interface Tool {
   /** Whether the tool is verified by Context Protocol */
   isVerified?: boolean;
 
+  /** Tool type - currently always "mcp" */
+  kind?: string;
+
   /**
    * Available MCP tool methods
    * Use items from this array as `toolName` when executing
    */
   mcpTools?: McpTool[];
 
-  /** Creation timestamp */
-  createdAt?: string;
+  // Trust metrics (Level 2 - Reputation Ledger)
+  /** Total number of queries processed */
+  totalQueries?: number;
 
-  /** Last update timestamp */
-  updatedAt?: string;
+  /** Success rate percentage (0-100) */
+  successRate?: string;
+
+  /** Uptime percentage (0-100) */
+  uptimePercent?: string;
+
+  /** Total USDC staked by the developer */
+  totalStaked?: string;
+
+  /** Whether the tool has "Proven" status (100+ queries, >95% success, >98% uptime) */
+  isProven?: boolean;
 }
 
 /**
@@ -189,5 +202,6 @@ export class ContextError extends Error {
   ) {
     super(message);
     this.name = "ContextError";
+    Object.setPrototypeOf(this, ContextError.prototype);
   }
 }

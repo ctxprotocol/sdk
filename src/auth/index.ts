@@ -53,6 +53,60 @@ weipe6amt9lzQzi8WXaFKpOXHQs//WDlUytz/Hl8pvd5craZKzo6Kyrg1Vfan7H3
 TQIDAQAB
 -----END PUBLIC KEY-----`;
 
+// ============================================================================
+// JWKS Key Fetching (with hardcoded fallback)
+// ============================================================================
+
+const JWKS_URL = "https://ctxprotocol.com/.well-known/jwks.json";
+const KEY_CACHE_TTL_MS = 3_600_000; // 1 hour
+
+let cachedPublicKey: Awaited<ReturnType<typeof importSPKI>> | null = null;
+let cacheTimestamp = 0;
+
+/**
+ * Get the platform public key, trying JWKS endpoint first with hardcoded fallback.
+ * Caches the result for 1 hour.
+ */
+async function getPlatformPublicKey(): Promise<Awaited<ReturnType<typeof importSPKI>>> {
+  const now = Date.now();
+
+  // Return cached key if still valid
+  if (cachedPublicKey && now - cacheTimestamp < KEY_CACHE_TTL_MS) {
+    return cachedPublicKey;
+  }
+
+  // Try JWKS endpoint first
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(JWKS_URL, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (response.ok) {
+      const jwks = await response.json() as { keys?: Array<{ x5c?: string[]; kty?: string; n?: string; e?: string }> };
+      if (jwks.keys && jwks.keys.length > 0) {
+        const key = jwks.keys[0];
+        // If the JWKS contains x5c (X.509 cert chain), extract the public key
+        if (key.x5c && key.x5c.length > 0) {
+          const pem = `-----BEGIN CERTIFICATE-----\n${key.x5c[0]}\n-----END CERTIFICATE-----`;
+          const { importX509 } = await import("jose");
+          cachedPublicKey = await importX509(pem, "RS256");
+          cacheTimestamp = now;
+          return cachedPublicKey;
+        }
+      }
+    }
+  } catch {
+    // JWKS fetch failed - fall back to hardcoded key
+  }
+
+  // Fallback: use hardcoded key
+  cachedPublicKey = await importSPKI(CONTEXT_PLATFORM_PUBLIC_KEY_PEM, "RS256");
+  cacheTimestamp = now;
+  return cachedPublicKey;
+}
+
 /**
  * MCP methods that require authentication.
  * - tools/call: Executes tool logic, may cost money
@@ -145,7 +199,7 @@ export async function verifyContextRequest(options: VerifyRequestOptions) {
   const token = authorizationHeader.split(" ")[1];
 
   try {
-    const publicKey = await importSPKI(CONTEXT_PLATFORM_PUBLIC_KEY_PEM, "RS256");
+    const publicKey = await getPlatformPublicKey();
 
     const { payload } = await jwtVerify(token, publicKey, {
       issuer: "https://ctxprotocol.com",

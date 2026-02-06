@@ -90,8 +90,14 @@ interface PolymarketOrder {
  * This is what gets passed to MCP tools for personalized analysis.
  */
 interface PolymarketContext {
-    /** The wallet address this context is for */
+    /** The wallet address this context is for (may be comma-separated if multiple) */
     walletAddress: string;
+    /**
+     * The active wallet address for signing (the one with Polymarket activity).
+     * When multiple wallets are linked, this is the wallet that should be used
+     * for placing orders. Determined by activity detection on the client.
+     */
+    activeWalletAddress?: string;
     /** All open positions */
     positions: PolymarketPosition[];
     /** All open orders */
@@ -228,9 +234,11 @@ interface HyperliquidContext {
  * DECLARING CONTEXT REQUIREMENTS
  * =============================================================================
  *
- * Since the MCP protocol only transmits standard fields (name, description,
- * inputSchema, outputSchema), context requirements MUST be embedded in the
- * inputSchema using the "x-context-requirements" JSON Schema extension.
+ * Context requirements are declared via `_meta.contextRequirements` at the tool level.
+ * This is the primary mechanism that the Context Platform reads.
+ *
+ * Previously, `x-context-requirements` in inputSchema was recommended, but the MCP SDK
+ * may strip extension properties during transport. Use `_meta` instead.
  *
  * @example
  * ```typescript
@@ -239,9 +247,11 @@ interface HyperliquidContext {
  *
  * const tool = {
  *   name: "analyze_my_positions",
+ *   _meta: {
+ *     contextRequirements: ["hyperliquid"] as ContextRequirementType[],
+ *   },
  *   inputSchema: {
  *     type: "object",
- *     [CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"] as ContextRequirementType[],
  *     properties: {
  *       portfolio: { type: "object" }
  *     },
@@ -260,30 +270,33 @@ interface HyperliquidContext {
  */
 
 /**
- * JSON Schema extension key for declaring context requirements.
+ * @deprecated Use `_meta.contextRequirements` instead (see META_CONTEXT_REQUIREMENTS_KEY).
  *
- * WHY THIS APPROACH?
- * - MCP protocol only transmits: name, description, inputSchema, outputSchema
- * - Custom fields like `requirements` get stripped by MCP SDK during transport
- * - JSON Schema allows custom "x-" prefixed extension properties
- * - inputSchema is preserved end-to-end through MCP transport
+ * This key was designed for embedding requirements in inputSchema,
+ * but the MCP SDK may strip `x-` prefixed extension properties during transport.
+ * The `_meta.contextRequirements` approach is what the Context Platform reads.
+ */
+declare const CONTEXT_REQUIREMENTS_KEY: "x-context-requirements";
+/**
+ * The key used inside `_meta` to declare context requirements.
+ * This is the PRIMARY mechanism — the Context Platform reads `_meta.contextRequirements`.
  *
  * @example
  * ```typescript
- * import { CONTEXT_REQUIREMENTS_KEY } from "@ctxprotocol/sdk";
- *
  * const tool = {
  *   name: "analyze_my_positions",
+ *   _meta: {
+ *     [META_CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"] as ContextRequirementType[],
+ *   },
  *   inputSchema: {
  *     type: "object",
- *     [CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"],
  *     properties: { portfolio: { type: "object" } },
  *     required: ["portfolio"]
  *   }
  * };
  * ```
  */
-declare const CONTEXT_REQUIREMENTS_KEY: "x-context-requirements";
+declare const META_CONTEXT_REQUIREMENTS_KEY: "contextRequirements";
 /**
  * Context requirement types supported by the Context marketplace.
  * Maps to protocol-specific context builders on the platform.
@@ -467,6 +480,10 @@ type HandshakeMeta = {
     tokenAmount?: string;
     /** UI warning level */
     warningLevel?: "info" | "caution" | "danger";
+    /** Custom title for the signature card (marketplace-friendly, overrides action-based title) */
+    title?: string;
+    /** Custom subtitle for the signature card (overrides tool name display) */
+    subtitle?: string;
 };
 type EIP712Domain = {
     /** Domain name (e.g., "Hyperliquid", "ClobAuthDomain") */
@@ -671,4 +688,4 @@ declare function wrapHandshakeResponse(action: HandshakeAction): {
     };
 };
 
-export { type AuthRequired, type AuthRequiredMeta, CONTEXT_REQUIREMENTS_KEY, type ContextMiddlewareRequest, type ContextRequirementType, type CreateContextMiddlewareOptions, type EIP712Domain, type EIP712TypeField, type ERC20Context, type ERC20TokenBalance, type HandshakeAction, type HandshakeMeta, type HyperliquidAccountSummary, type HyperliquidContext, type HyperliquidOrder, type HyperliquidPerpPosition, type HyperliquidSpotBalance, type PolymarketContext, type PolymarketOrder, type PolymarketPosition, type SignatureRequest, type ToolRequirements, type TransactionProposal, type TransactionProposalMeta, type UserContext, type VerifyRequestOptions, type WalletContext, createAuthRequired, createContextMiddleware, createSignatureRequest, createTransactionProposal, isAuthRequired, isHandshakeAction, isOpenMcpMethod, isProtectedMcpMethod, isSignatureRequest, isTransactionProposal, verifyContextRequest, wrapHandshakeResponse };
+export { type AuthRequired, type AuthRequiredMeta, CONTEXT_REQUIREMENTS_KEY, type ContextMiddlewareRequest, type ContextRequirementType, type CreateContextMiddlewareOptions, type EIP712Domain, type EIP712TypeField, type ERC20Context, type ERC20TokenBalance, type HandshakeAction, type HandshakeMeta, type HyperliquidAccountSummary, type HyperliquidContext, type HyperliquidOrder, type HyperliquidPerpPosition, type HyperliquidSpotBalance, META_CONTEXT_REQUIREMENTS_KEY, type PolymarketContext, type PolymarketOrder, type PolymarketPosition, type SignatureRequest, type ToolRequirements, type TransactionProposal, type TransactionProposalMeta, type UserContext, type VerifyRequestOptions, type WalletContext, createAuthRequired, createContextMiddleware, createSignatureRequest, createTransactionProposal, isAuthRequired, isHandshakeAction, isOpenMcpMethod, isProtectedMcpMethod, isSignatureRequest, isTransactionProposal, verifyContextRequest, wrapHandshakeResponse };

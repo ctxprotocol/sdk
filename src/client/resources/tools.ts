@@ -46,7 +46,7 @@ export class Tools {
   async execute<T = unknown>(options: ExecuteOptions): Promise<ExecutionResult<T>> {
     const { toolId, toolName, args } = options;
 
-    const response = await this.client.fetch<ExecuteApiResponse>(
+    const response = await this.client._fetch<ExecuteApiResponse>(
       "/api/v1/tools/execute",
       {
         method: "POST",
@@ -59,7 +59,7 @@ export class Tools {
       throw new ContextError(
         response.error,
         response.code,
-        400,
+        undefined, // Don't hardcode - this was a 200 OK with error body
         response.helpUrl
       );
     }

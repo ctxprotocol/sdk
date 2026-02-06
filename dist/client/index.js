@@ -1,11 +1,12 @@
 // src/client/types.ts
-var ContextError = class extends Error {
+var ContextError = class _ContextError extends Error {
   constructor(message, code, statusCode, helpUrl) {
     super(message);
     this.code = code;
     this.statusCode = statusCode;
     this.helpUrl = helpUrl;
     this.name = "ContextError";
+    Object.setPrototypeOf(this, _ContextError.prototype);
   }
 };
 
@@ -38,7 +39,7 @@ var Discovery = class {
     }
     const queryString = params.toString();
     const endpoint = `/api/v1/tools/search${queryString ? `?${queryString}` : ""}`;
-    const response = await this.client.fetch(endpoint);
+    const response = await this.client._fetch(endpoint);
     return response.tools;
   }
   /**
@@ -95,7 +96,7 @@ var Tools = class {
    */
   async execute(options) {
     const { toolId, toolName, args } = options;
-    const response = await this.client.fetch(
+    const response = await this.client._fetch(
       "/api/v1/tools/execute",
       {
         method: "POST",
@@ -106,7 +107,8 @@ var Tools = class {
       throw new ContextError(
         response.error,
         response.code,
-        400,
+        void 0,
+        // Don't hardcode - this was a 200 OK with error body
         response.helpUrl
       );
     }
@@ -125,6 +127,7 @@ var Tools = class {
 var ContextClient = class {
   apiKey;
   baseUrl;
+  _closed = false;
   /**
    * Discovery resource for searching tools
    */
@@ -150,37 +153,88 @@ var ContextClient = class {
     this.tools = new Tools(this);
   }
   /**
+   * Close the client and clean up resources.
+   * After calling close(), any in-flight requests may be aborted.
+   */
+  close() {
+    this._closed = true;
+  }
+  /**
    * Internal method for making authenticated HTTP requests
-   * All requests include the Authorization header with the API key
+   * Includes timeout (30s) and retry with exponential backoff for transient errors
    *
    * @internal
    */
-  async fetch(endpoint, options = {}) {
-    const url = `${this.baseUrl}${endpoint}`;
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKey}`,
-        ...options.headers
-      }
-    });
-    if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      let errorCode;
-      let helpUrl;
-      try {
-        const errorBody = await response.json();
-        if (errorBody.error) {
-          errorMessage = errorBody.error;
-          errorCode = errorBody.code;
-          helpUrl = errorBody.helpUrl;
-        }
-      } catch {
-      }
-      throw new ContextError(errorMessage, errorCode, response.status, helpUrl);
+  async _fetch(endpoint, options = {}) {
+    if (this._closed) {
+      throw new ContextError("Client has been closed");
     }
-    return response.json();
+    const url = `${this.baseUrl}${endpoint}`;
+    const maxRetries = 3;
+    const timeoutMs = 3e4;
+    let lastError;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.apiKey}`,
+            ...options.headers
+          }
+        });
+        clearTimeout(timeout);
+        if (!response.ok) {
+          if (response.status >= 500 && attempt < maxRetries) {
+            const delay = Math.min(1e3 * 2 ** attempt, 1e4);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+          let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          let errorCode;
+          let helpUrl;
+          try {
+            const errorBody = await response.json();
+            if (errorBody.error) {
+              errorMessage = errorBody.error;
+              errorCode = errorBody.code;
+              helpUrl = errorBody.helpUrl;
+            }
+          } catch {
+          }
+          throw new ContextError(errorMessage, errorCode, response.status, helpUrl);
+        }
+        return response.json();
+      } catch (error) {
+        clearTimeout(timeout);
+        if (error instanceof ContextError) {
+          throw error;
+        }
+        lastError = error instanceof Error ? error : new Error(String(error));
+        const isRetryable = lastError.name === "AbortError" || lastError.message.includes("fetch failed") || lastError.message.includes("ECONNRESET") || lastError.message.includes("ETIMEDOUT");
+        if (isRetryable && attempt < maxRetries) {
+          const delay = Math.min(1e3 * 2 ** attempt, 1e4);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+        if (lastError.name === "AbortError") {
+          throw new ContextError(
+            `Request timed out after ${timeoutMs / 1e3}s`,
+            void 0,
+            408
+          );
+        }
+        throw new ContextError(
+          lastError.message,
+          void 0,
+          void 0
+        );
+      }
+    }
+    throw lastError ?? new ContextError("Request failed after retries");
   }
 };
 

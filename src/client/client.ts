@@ -30,6 +30,7 @@ import { Tools } from "./resources/tools.js";
 export class ContextClient {
   private readonly apiKey: string;
   private readonly baseUrl: string;
+  private _closed = false;
 
   /**
    * Discovery resource for searching tools
@@ -62,42 +63,112 @@ export class ContextClient {
   }
 
   /**
+   * Close the client and clean up resources.
+   * After calling close(), any in-flight requests may be aborted.
+   */
+  close(): void {
+    this._closed = true;
+  }
+
+  /**
    * Internal method for making authenticated HTTP requests
-   * All requests include the Authorization header with the API key
+   * Includes timeout (30s) and retry with exponential backoff for transient errors
    *
    * @internal
    */
-  async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
-
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKey}`,
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      let errorCode: string | undefined;
-      let helpUrl: string | undefined;
-
-      try {
-        const errorBody = await response.json();
-        if (errorBody.error) {
-          errorMessage = errorBody.error;
-          errorCode = errorBody.code;
-          helpUrl = errorBody.helpUrl;
-        }
-      } catch {
-        // Use default error message if JSON parsing fails
-      }
-
-      throw new ContextError(errorMessage, errorCode, response.status, helpUrl);
+  async _fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    if (this._closed) {
+      throw new ContextError("Client has been closed");
     }
 
-    return response.json() as Promise<T>;
+    const url = `${this.baseUrl}${endpoint}`;
+    const maxRetries = 3;
+    const timeoutMs = 30_000;
+
+    let lastError: Error | undefined;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.apiKey}`,
+            ...options.headers,
+          },
+        });
+
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+          // Retry on 5xx server errors
+          if (response.status >= 500 && attempt < maxRetries) {
+            const delay = Math.min(1000 * 2 ** attempt, 10_000);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+
+          let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          let errorCode: string | undefined;
+          let helpUrl: string | undefined;
+
+          try {
+            const errorBody = await response.json();
+            if (errorBody.error) {
+              errorMessage = errorBody.error;
+              errorCode = errorBody.code;
+              helpUrl = errorBody.helpUrl;
+            }
+          } catch {
+            // Use default error message if JSON parsing fails
+          }
+
+          throw new ContextError(errorMessage, errorCode, response.status, helpUrl);
+        }
+
+        return response.json() as Promise<T>;
+      } catch (error) {
+        clearTimeout(timeout);
+
+        if (error instanceof ContextError) {
+          throw error;
+        }
+
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        // Retry on network errors and timeouts
+        const isRetryable =
+          lastError.name === "AbortError" ||
+          lastError.message.includes("fetch failed") ||
+          lastError.message.includes("ECONNRESET") ||
+          lastError.message.includes("ETIMEDOUT");
+
+        if (isRetryable && attempt < maxRetries) {
+          const delay = Math.min(1000 * 2 ** attempt, 10_000);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+
+        if (lastError.name === "AbortError") {
+          throw new ContextError(
+            `Request timed out after ${timeoutMs / 1000}s`,
+            undefined,
+            408
+          );
+        }
+
+        throw new ContextError(
+          lastError.message,
+          undefined,
+          undefined
+        );
+      }
+    }
+
+    throw lastError ?? new ContextError("Request failed after retries");
   }
 }

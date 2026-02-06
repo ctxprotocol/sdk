@@ -3,13 +3,14 @@
 var jose = require('jose');
 
 // src/client/types.ts
-var ContextError = class extends Error {
+var ContextError = class _ContextError extends Error {
   constructor(message, code, statusCode, helpUrl) {
     super(message);
     this.code = code;
     this.statusCode = statusCode;
     this.helpUrl = helpUrl;
     this.name = "ContextError";
+    Object.setPrototypeOf(this, _ContextError.prototype);
   }
 };
 
@@ -42,7 +43,7 @@ var Discovery = class {
     }
     const queryString = params.toString();
     const endpoint = `/api/v1/tools/search${queryString ? `?${queryString}` : ""}`;
-    const response = await this.client.fetch(endpoint);
+    const response = await this.client._fetch(endpoint);
     return response.tools;
   }
   /**
@@ -99,7 +100,7 @@ var Tools = class {
    */
   async execute(options) {
     const { toolId, toolName, args } = options;
-    const response = await this.client.fetch(
+    const response = await this.client._fetch(
       "/api/v1/tools/execute",
       {
         method: "POST",
@@ -110,7 +111,8 @@ var Tools = class {
       throw new ContextError(
         response.error,
         response.code,
-        400,
+        void 0,
+        // Don't hardcode - this was a 200 OK with error body
         response.helpUrl
       );
     }
@@ -129,6 +131,7 @@ var Tools = class {
 var ContextClient = class {
   apiKey;
   baseUrl;
+  _closed = false;
   /**
    * Discovery resource for searching tools
    */
@@ -154,42 +157,94 @@ var ContextClient = class {
     this.tools = new Tools(this);
   }
   /**
+   * Close the client and clean up resources.
+   * After calling close(), any in-flight requests may be aborted.
+   */
+  close() {
+    this._closed = true;
+  }
+  /**
    * Internal method for making authenticated HTTP requests
-   * All requests include the Authorization header with the API key
+   * Includes timeout (30s) and retry with exponential backoff for transient errors
    *
    * @internal
    */
-  async fetch(endpoint, options = {}) {
-    const url = `${this.baseUrl}${endpoint}`;
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKey}`,
-        ...options.headers
-      }
-    });
-    if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      let errorCode;
-      let helpUrl;
-      try {
-        const errorBody = await response.json();
-        if (errorBody.error) {
-          errorMessage = errorBody.error;
-          errorCode = errorBody.code;
-          helpUrl = errorBody.helpUrl;
-        }
-      } catch {
-      }
-      throw new ContextError(errorMessage, errorCode, response.status, helpUrl);
+  async _fetch(endpoint, options = {}) {
+    if (this._closed) {
+      throw new ContextError("Client has been closed");
     }
-    return response.json();
+    const url = `${this.baseUrl}${endpoint}`;
+    const maxRetries = 3;
+    const timeoutMs = 3e4;
+    let lastError;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.apiKey}`,
+            ...options.headers
+          }
+        });
+        clearTimeout(timeout);
+        if (!response.ok) {
+          if (response.status >= 500 && attempt < maxRetries) {
+            const delay = Math.min(1e3 * 2 ** attempt, 1e4);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+          let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          let errorCode;
+          let helpUrl;
+          try {
+            const errorBody = await response.json();
+            if (errorBody.error) {
+              errorMessage = errorBody.error;
+              errorCode = errorBody.code;
+              helpUrl = errorBody.helpUrl;
+            }
+          } catch {
+          }
+          throw new ContextError(errorMessage, errorCode, response.status, helpUrl);
+        }
+        return response.json();
+      } catch (error) {
+        clearTimeout(timeout);
+        if (error instanceof ContextError) {
+          throw error;
+        }
+        lastError = error instanceof Error ? error : new Error(String(error));
+        const isRetryable = lastError.name === "AbortError" || lastError.message.includes("fetch failed") || lastError.message.includes("ECONNRESET") || lastError.message.includes("ETIMEDOUT");
+        if (isRetryable && attempt < maxRetries) {
+          const delay = Math.min(1e3 * 2 ** attempt, 1e4);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+        if (lastError.name === "AbortError") {
+          throw new ContextError(
+            `Request timed out after ${timeoutMs / 1e3}s`,
+            void 0,
+            408
+          );
+        }
+        throw new ContextError(
+          lastError.message,
+          void 0,
+          void 0
+        );
+      }
+    }
+    throw lastError ?? new ContextError("Request failed after retries");
   }
 };
 
 // src/context/index.ts
 var CONTEXT_REQUIREMENTS_KEY = "x-context-requirements";
+var META_CONTEXT_REQUIREMENTS_KEY = "contextRequirements";
 var CONTEXT_PLATFORM_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs9YOgdpkmVQ5aoNovjsu
 chJdV54OT7dUdbVXz914a7Px8EwnpDqhsvG7WO8xL8sj2Rn6ueAJBk+04Hy/P/UN
@@ -199,6 +254,41 @@ lfOKbr7w0u72dZjiZPwnNDsX6PEEgvfmoautTFYTQgnZjDzq8UimTcv3KF+hJ5Ep
 weipe6amt9lzQzi8WXaFKpOXHQs//WDlUytz/Hl8pvd5craZKzo6Kyrg1Vfan7H3
 TQIDAQAB
 -----END PUBLIC KEY-----`;
+var JWKS_URL = "https://ctxprotocol.com/.well-known/jwks.json";
+var KEY_CACHE_TTL_MS = 36e5;
+var cachedPublicKey = null;
+var cacheTimestamp = 0;
+async function getPlatformPublicKey() {
+  const now = Date.now();
+  if (cachedPublicKey && now - cacheTimestamp < KEY_CACHE_TTL_MS) {
+    return cachedPublicKey;
+  }
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5e3);
+    const response = await fetch(JWKS_URL, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (response.ok) {
+      const jwks = await response.json();
+      if (jwks.keys && jwks.keys.length > 0) {
+        const key = jwks.keys[0];
+        if (key.x5c && key.x5c.length > 0) {
+          const pem = `-----BEGIN CERTIFICATE-----
+${key.x5c[0]}
+-----END CERTIFICATE-----`;
+          const { importX509 } = await import('jose');
+          cachedPublicKey = await importX509(pem, "RS256");
+          cacheTimestamp = now;
+          return cachedPublicKey;
+        }
+      }
+    }
+  } catch {
+  }
+  cachedPublicKey = await jose.importSPKI(CONTEXT_PLATFORM_PUBLIC_KEY_PEM, "RS256");
+  cacheTimestamp = now;
+  return cachedPublicKey;
+}
 var PROTECTED_MCP_METHODS = /* @__PURE__ */ new Set([
   "tools/call"
   // Uncomment these if you want to protect resource/prompt access:
@@ -230,7 +320,7 @@ async function verifyContextRequest(options) {
   }
   const token = authorizationHeader.split(" ")[1];
   try {
-    const publicKey = await jose.importSPKI(CONTEXT_PLATFORM_PUBLIC_KEY_PEM, "RS256");
+    const publicKey = await getPlatformPublicKey();
     const { payload } = await jose.jwtVerify(token, publicKey, {
       issuer: "https://ctxprotocol.com",
       audience
@@ -318,6 +408,7 @@ exports.CONTEXT_REQUIREMENTS_KEY = CONTEXT_REQUIREMENTS_KEY;
 exports.ContextClient = ContextClient;
 exports.ContextError = ContextError;
 exports.Discovery = Discovery;
+exports.META_CONTEXT_REQUIREMENTS_KEY = META_CONTEXT_REQUIREMENTS_KEY;
 exports.Tools = Tools;
 exports.createAuthRequired = createAuthRequired;
 exports.createContextMiddleware = createContextMiddleware;
