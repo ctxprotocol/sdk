@@ -91,12 +91,15 @@ Choose the most appropriate category:
 
 | Category | Description | Use When |
 |----------|-------------|----------|
-| `Network` | Gas, RPC, Nodes | Tool provides blockchain infrastructure data |
-| `Actions` | Swaps, Lending, Execution | Tool performs on-chain actions or trading |
-| `Market Data` | Crypto, Stocks, Forex | Tool provides price feeds, market analysis |
-| `Real World` | Weather, Sports, News | Tool provides off-chain real-world data |
-| `Social` | Identity, Governance | Tool handles social graphs, DAOs, identity |
-| `Utility` | Search, Compute | General-purpose tools, computation |
+| `Crypto & DeFi` | On-Chain, Markets, Wallets | Tool provides blockchain data, crypto market analysis, DeFi, prediction markets, on-chain analytics |
+| `Financial Markets` | Stocks, Forex, Odds, Macro, Filings | Tool provides TradFi data, SEC filings, earnings, sports betting odds, macro analysis |
+| `Business & Sales` | Leads, Companies, Competitive Intel | Tool provides company enrichment, lead gen, tech stack detection, e-commerce data |
+| `Marketing & SEO` | Ads, Social Media, Rankings | Tool provides ad intelligence, backlink analysis, keyword research, social monitoring |
+| `Legal & Regulatory` | Filings, Compliance, Patents | Tool provides court filings, patent search, trademark lookup, regulatory tracking |
+| `Real World` | Weather, News, Sports, Location | Tool provides weather, news, real estate, location, or general real-world data |
+| `Developer Tools` | Security, Code, Dependencies | Tool provides vulnerability scanning, repo analytics, supply chain analysis |
+| `Research & Academia` | Papers, Grants, Clinical | Tool provides research mapping, grant matching, clinical trial data |
+| `Utility` | Search, Compute, Infrastructure | General-purpose tools, search engines, computation |
 | `Other` | Anything else | Only if nothing else fits |
 
 ### 4. Price (required, 0.00 to 100.00 USDC)
