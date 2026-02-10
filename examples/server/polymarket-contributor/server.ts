@@ -114,7 +114,7 @@ const TOOLS = [
   {
     name: "analyze_market_liquidity",
     description:
-      'Analyze market liquidity and calculate "Whale Cost" - simulates the slippage for selling $1k, $5k, and $10k positions. Answers: "Can I exit this position if I put $X in?"',
+      'Analyze market liquidity and calculate "Whale Cost" - simulates the slippage for selling $1k, $5k, and $10k positions. Answers: "Can I exit this position if I put $X in?" Merges direct + synthetic liquidity from both YES and NO orderbooks for accurate depth.\n\n⏱️ PERFORMANCE: Makes 3 CLOB API calls (~3-5s). Safe to call in parallel with 1-2 other lightweight tools, but avoid calling alongside find_trading_opportunities or analyze_top_holders.',
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -329,7 +329,11 @@ CONVICTIONSCORES: "extreme" (>$10k), "high" ($5k-$10k), "moderate" ($1k-$5k), "l
 
 USE THIS FOR: Single-outcome markets like "Will Bitcoin hit $100k?" or "Will Trump win?"
 USE analyze_event_whale_breakdown FOR: "Which player are whales betting on in Australian Open?"
-USE analyze_whale_flow FOR: "Recent trades?", "Trading activity in last 24h?"`,
+USE analyze_whale_flow FOR: "Recent trades?", "Trading activity in last 24h?"
+
+⏱️ PERFORMANCE: This tool performs deep fetching (10 parallel API calls). It takes ~10-15s to complete.
+⚠️ Call this tool ALONE (not in parallel with other heavy tools like find_trading_opportunities or analyze_market_liquidity) to avoid timeouts.
+If you need multiple analyses, call them SEQUENTIALLY, not with Promise.all().`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -659,7 +663,13 @@ Returns:
 
 ⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent markets or construct URLs. If no results match the criteria, say "No matching markets found" - do NOT make up markets that might exist.
 
-⚠️ FOR SIMPLER QUERIES: If user wants 'likely bets', 'safer bets', or 'bets that will probably win' → use find_moderate_probability_bets instead. For filtering by probability like 'coinflip bets' or 'unlikely bets' → use get_bets_by_probability instead.`,
+⚠️ FOR SIMPLER QUERIES: If user wants 'likely bets', 'safer bets', or 'bets that will probably win' → use find_moderate_probability_bets instead. For filtering by probability like 'coinflip bets' or 'unlikely bets' → use get_bets_by_probability instead.
+
+⏱️ PERFORMANCE: This tool scans many markets. Use the 'depth' parameter to control how many markets are scanned:
+- "shallow" (~500 markets, ~5s) - Quick scan for fast answers or when called alongside other tools
+- "medium" (~1000 markets, ~10s) - Good balance, DEFAULT for most queries
+- "deep" (~2000+ markets, ~20s) - Maximum coverage. Use when user specifically asks for thorough/comprehensive analysis, or when initial results are insufficient
+⚠️ Call this tool ALONE (not in parallel with other heavy tools) when using "deep" depth to avoid timeouts.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -700,6 +710,11 @@ Returns:
           type: "string",
           enum: ["conservative", "moderate", "aggressive"],
           description: "Risk tolerance affects which opportunities are shown. Default: moderate",
+        },
+        depth: {
+          type: "string",
+          enum: ["shallow", "medium", "deep"],
+          description: "How many markets to scan. 'shallow' (~500, fast), 'medium' (~1000, default), 'deep' (~2000+, thorough). Use 'deep' for comprehensive analysis but call this tool ALONE to avoid timeouts.",
         },
       },
       required: [],
@@ -783,7 +798,9 @@ Returns:
     description:
       `🎯 BEST TOOL for 'likely bets', 'safer bets', or 'bets that will probably win'. Finds prediction market bets priced 40-75¢ (40-75% implied probability) with good liquidity. Returns 1.3-2.5x if correct. USE THIS instead of find_trading_opportunities when user wants higher probability outcomes.
 
-⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent additional markets or URLs. Each result includes a real 'url' field - use ONLY those URLs.`,
+⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent additional markets or URLs. Each result includes a real 'url' field - use ONLY those URLs.
+
+⏱️ PERFORMANCE: Scans ~50 events (~5-8s). Safe to call alone or alongside lightweight tools like check_market_efficiency.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -2136,7 +2153,10 @@ Each result includes:
 
 DEEP FETCHING (default=true): Polymarket API caps at 20 holders per call with NO pagination. To work around this, we make 10 parallel API calls with different minBalance thresholds [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] and deduplicate results. This captures everything from ultra-whales ($1M+) down to small positions, returning 50-100+ unique holders instead of just 20.
 
-Set deepFetch=false for faster but shallower results (20 per side max).`,
+Set deepFetch=false for faster but shallower results (20 per side max).
+
+⏱️ PERFORMANCE: With deepFetch=true, this makes 10 parallel API calls and takes ~10-15s.
+⚠️ Call ALONE (not in parallel with other heavy tools) when deepFetch=true to avoid timeouts.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -2768,9 +2788,11 @@ async function handleAnalyzeMarketLiquidity(
   let yesTokenId = tokenId;
   let noTokenId = "";
 
-  // Get both token IDs - we need both to calculate synthetic liquidity
+  // PERF: Resolve token IDs first, then fetch both orderbooks in parallel.
+  // Previously this was 5 sequential calls (market → yesBook → market again → noBook → prices).
+  // Now it's: 1 market call → 2 parallel book calls + 1 price call = 2 round-trips total.
   if (conditionId) {
-    const market = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
+    const market = (await fetchClob(`/markets/${conditionId}`, undefined, 8000)) as ClobMarket;
     yesTokenId = market.tokens?.[0]?.token_id || tokenId;
     noTokenId = market.tokens?.[1]?.token_id || "";
   }
@@ -2779,32 +2801,13 @@ async function handleAnalyzeMarketLiquidity(
     return errorResult("Could not resolve token ID");
   }
 
-  // Fetch orderbook for this token first
-  const yesOrderbook = (await fetchClob(`/book?token_id=${yesTokenId}`)) as OrderbookResponse;
-  
-  // If we don't have the complement token yet, try to get it from the market
-  if (!noTokenId && yesOrderbook.market) {
-    try {
-      const market = (await fetchClob(`/markets/${yesOrderbook.market}`)) as ClobMarket;
-      if (market?.tokens) {
-        const otherToken = market.tokens.find((t: { token_id: string }) => t.token_id !== yesTokenId);
-        if (otherToken) {
-          noTokenId = otherToken.token_id;
-        }
-      }
-    } catch {
-      // Continue without complement token
-    }
-  }
-  let noOrderbook: OrderbookResponse | null = null;
-  
-  if (noTokenId) {
-    try {
-      noOrderbook = (await fetchClob(`/book?token_id=${noTokenId}`)) as OrderbookResponse;
-    } catch {
-      // Continue without NO orderbook
-    }
-  }
+  // Fetch both orderbooks in parallel (+ price) instead of sequentially
+  const [yesOrderbook, noOrderbook] = await Promise.all([
+    fetchClob(`/book?token_id=${yesTokenId}`, undefined, 8000).then(r => r as OrderbookResponse),
+    noTokenId 
+      ? fetchClob(`/book?token_id=${noTokenId}`, undefined, 8000).then(r => r as OrderbookResponse).catch(() => null)
+      : Promise.resolve(null),
+  ]) as [OrderbookResponse, OrderbookResponse | null];
 
   // Build MERGED orderbook combining direct + synthetic liquidity
   // Polymarket UI shows this merged view
@@ -3013,51 +3016,34 @@ async function handleCheckMarketEfficiency(
     }
     market = event.markets[0];
   } else {
-    // Query by conditionId - use CLOB API for fast validation, then search Gamma for full data
-    // Note: Gamma API /markets?condition_id= does NOT filter (tested via Context7 docs)
-    
-    // Step 1: Validate conditionId exists via CLOB API (fast)
-    try {
-      const clobMarket = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
-      if (!clobMarket || !clobMarket.condition_id) {
-        return errorResult(`Market not found for conditionId: ${conditionId}`);
-      }
-    } catch {
-      return errorResult(`Market not found for conditionId: ${conditionId}`);
+    // Query by conditionId - use Gamma /markets?condition_ids= for direct lookup
+    // and CLOB API in parallel for token data. This replaces the old approach of
+    // brute-force searching through 100+50 events which caused MCP timeouts.
+    const [gammaMarkets, clobMarket] = await Promise.all([
+      fetchGamma(`/markets?condition_ids=${conditionId}&limit=1`, 8000)
+        .then(r => r as GammaMarket[])
+        .catch(() => [] as GammaMarket[]),
+      fetchClob(`/markets/${conditionId}`, undefined, 8000)
+        .then(r => r as ClobMarket)
+        .catch(() => null),
+    ]);
+
+    if (Array.isArray(gammaMarkets) && gammaMarkets.length > 0) {
+      market = gammaMarkets[0];
     }
 
-    // Step 2: Search through Gamma events to get full market data (needed for prices, question, etc.)
-    const events = (await fetchGamma(`/events?closed=false&limit=100`)) as GammaEvent[];
-    for (const event of events) {
-      const found = event.markets?.find(m => m.conditionId === conditionId);
-      if (found) {
-        market = found;
-        break;
-      }
-    }
-    
-    // Fallback: search through closed events
-    if (!market) {
-      const closedEvents = (await fetchGamma(`/events?closed=true&limit=50`)) as GammaEvent[];
-      for (const event of closedEvents) {
-        const found = event.markets?.find(m => m.conditionId === conditionId);
-        if (found) {
-          market = found;
-          break;
-        }
-      }
-    }
-    
-    // If CLOB found it but Gamma didn't, create minimal market object from CLOB data
-    if (!market) {
-      // Re-fetch CLOB data to build minimal market
-      const clobMarket = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
+    // If Gamma didn't find it, build minimal market from CLOB data
+    if (!market && clobMarket && clobMarket.condition_id) {
       const tokenIds = clobMarket.tokens?.map(t => t.token_id) || [];
       market = {
         conditionId: conditionId,
         question: `Market ${conditionId.slice(0, 10)}...`,
         clobTokenIds: tokenIds,
       };
+    }
+
+    if (!market) {
+      return errorResult(`Market not found for conditionId: ${conditionId}`);
     }
   }
 
@@ -3389,32 +3375,23 @@ async function handleFindCorrelatedMarkets(
   let sourceEvent: GammaEvent | undefined;
 
   if (slug) {
-    sourceEvent = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+    sourceEvent = (await fetchGamma(`/events/slug/${slug}`, 8000)) as GammaEvent;
   } else {
-    // Query by conditionId - validate via CLOB API first, then search Gamma events
-    // Note: Gamma API /markets?condition_id= does NOT filter (per Context7 docs)
-    
+    // Use Gamma /markets?condition_ids= for direct market lookup
+    // PERF: Replaces brute-force search through 100+50 events
     try {
-      const clobMarket = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
-      if (!clobMarket || !clobMarket.condition_id) {
-        return errorResult(`Market not found for conditionId: ${conditionId}`);
+      const gammaMarkets = (await fetchGamma(`/markets?condition_ids=${conditionId}&limit=1`, 8000)) as GammaMarket[];
+      if (Array.isArray(gammaMarkets) && gammaMarkets.length > 0) {
+        const m = gammaMarkets[0];
+        // Construct a minimal event-like object from market data
+        sourceEvent = {
+          title: m.question || m.title,
+          category: (m as Record<string, unknown>).category as string | undefined,
+          markets: [m],
+        } as GammaEvent;
       }
     } catch {
-      return errorResult(`Market not found for conditionId: ${conditionId}`);
-    }
-
-    // Search in active events for a market with this conditionId
-    const events = (await fetchGamma(`/events?closed=false&limit=100`)) as GammaEvent[];
-    sourceEvent = events.find(e => 
-      e.markets?.some(m => m.conditionId === conditionId)
-    );
-    
-    // Fallback: search closed events
-    if (!sourceEvent) {
-      const closedEvents = (await fetchGamma(`/events?closed=true&limit=50`)) as GammaEvent[];
-      sourceEvent = closedEvents.find(e => 
-        e.markets?.some(m => m.conditionId === conditionId)
-      );
+      // Fall through to error
     }
   }
 
@@ -3539,32 +3516,25 @@ async function handleCheckMarketRules(
   let event: GammaEvent | undefined;
 
   if (slug) {
-    event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+    event = (await fetchGamma(`/events/slug/${slug}`, 8000)) as GammaEvent;
   } else {
-    // Query by conditionId - validate via CLOB API first, then search Gamma events
-    // Note: Gamma API /markets?condition_id= does NOT filter (per Context7 docs)
-    
+    // Use Gamma /markets?condition_ids= for direct market lookup
+    // PERF: Replaces brute-force search through 100+50 events
     try {
-      const clobMarket = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
-      if (!clobMarket || !clobMarket.condition_id) {
-        return errorResult(`Market not found for conditionId: ${conditionId}`);
+      const gammaMarkets = (await fetchGamma(`/markets?condition_ids=${conditionId}&limit=1`, 8000)) as GammaMarket[];
+      if (Array.isArray(gammaMarkets) && gammaMarkets.length > 0) {
+        const m = gammaMarkets[0];
+        // Construct event-like object from market data (has description, resolutionSource, etc.)
+        event = {
+          title: m.question || m.title,
+          description: m.description,
+          resolutionSource: (m as Record<string, unknown>).resolutionSource as string | undefined,
+          endDate: (m as Record<string, unknown>).endDate as string | undefined,
+          markets: [m],
+        } as GammaEvent;
       }
     } catch {
       return errorResult(`Market not found for conditionId: ${conditionId}`);
-    }
-
-    // Search in active events
-    const events = (await fetchGamma(`/events?closed=false&limit=100`)) as GammaEvent[];
-    event = events.find(e => 
-      e.markets?.some(m => m.conditionId === conditionId)
-    );
-    
-    // Fallback: search closed events
-    if (!event) {
-      const closedEvents = (await fetchGamma(`/events?closed=true&limit=50`)) as GammaEvent[];
-      event = closedEvents.find(e => 
-        e.markets?.some(m => m.conditionId === conditionId)
-      );
     }
   }
 
@@ -3681,7 +3651,7 @@ async function handleFindArbitrageOpportunities(
     endpoint += `&category=${category}`;
   }
 
-  const events = (await fetchGamma(endpoint)) as GammaEvent[];
+  const events = (await fetchGamma(endpoint, 10000)) as GammaEvent[];
 
   const arbitrageOpportunities: Array<{
     market: string;
@@ -3931,11 +3901,20 @@ async function handleFindTradingOpportunities(
 
   const hasPriceFilter = effectivePriceMin > 0 || effectivePriceMax < 1;
 
-  // Fetch active markets sorted by different criteria
+  // Depth-tiered fetching: controls how many events (and thus markets) are scanned.
+  // The tool description instructs AI clients to use appropriate depth and avoid
+  // calling this in parallel with other heavy tools when using "deep".
+  const depth = (args?.depth as string) || "medium";
+  const depthConfig = {
+    shallow: { vol: 25, liq: 25, new: 15, timeout: 8000 },  // ~500 markets, ~5s
+    medium:  { vol: 50, liq: 50, new: 25, timeout: 12000 },  // ~1000 markets, ~10s
+    deep:    { vol: 100, liq: 100, new: 50, timeout: 20000 }, // ~2000+ markets, ~20s
+  }[depth] || { vol: 50, liq: 50, new: 25, timeout: 12000 };
+
   const [volumeEvents, liquidityEvents, newEvents] = await Promise.all([
-    fetchGamma(`/events?closed=false&limit=100&order=volume24hr&ascending=false${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
-    fetchGamma(`/events?closed=false&limit=100&order=liquidity&ascending=false${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
-    fetchGamma(`/events?closed=false&limit=50&order=startDate&ascending=false${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
+    fetchGamma(`/events?closed=false&limit=${depthConfig.vol}&order=volume24hr&ascending=false${category ? `&category=${category}` : ""}`, depthConfig.timeout) as Promise<GammaEvent[]>,
+    fetchGamma(`/events?closed=false&limit=${depthConfig.liq}&order=liquidity&ascending=false${category ? `&category=${category}` : ""}`, depthConfig.timeout) as Promise<GammaEvent[]>,
+    fetchGamma(`/events?closed=false&limit=${depthConfig.new}&order=startDate&ascending=false${category ? `&category=${category}` : ""}`, depthConfig.timeout) as Promise<GammaEvent[]>,
   ]);
 
   // Combine and dedupe events
@@ -4498,12 +4477,14 @@ async function handleFindModerateProbabilityBets(
   const limit = (args?.limit as number) ?? 10;
 
   // Fetch active markets
-  let endpoint = `/events?closed=false&limit=150&order=liquidity&ascending=false`;
+  // PERF: Reduced from limit=150 to limit=50 to avoid MCP transport timeouts.
+  // 50 events ordered by liquidity still covers the most liquid/tradeable markets.
+  let endpoint = `/events?closed=false&limit=50&order=liquidity&ascending=false`;
   if (category && category !== "all") {
     endpoint += `&category=${category}`;
   }
 
-  const events = (await fetchGamma(endpoint)) as GammaEvent[];
+  const events = (await fetchGamma(endpoint, 10000)) as GammaEvent[];
 
   const opportunities: Array<{
     market: string;
@@ -4640,12 +4621,13 @@ async function handleGetBetsByProbability(
   }
 
   // Fetch active markets
-  let endpoint = `/events?closed=false&limit=100&order=liquidity&ascending=false`;
+  // PERF: Reduced from limit=100 to limit=50 to avoid MCP transport timeouts
+  let endpoint = `/events?closed=false&limit=50&order=liquidity&ascending=false`;
   if (category && category !== "all") {
     endpoint += `&category=${category}`;
   }
 
-  const events = (await fetchGamma(endpoint)) as GammaEvent[];
+  const events = (await fetchGamma(endpoint, 10000)) as GammaEvent[];
 
   const bets: Array<{
     market: string;
@@ -4763,10 +4745,11 @@ async function handleDiscoverTrendingMarkets(
 
   // IMPORTANT: The Gamma API's ?category= parameter is BROKEN and returns wrong results.
   // Instead, we fetch more events and filter CLIENT-SIDE by checking the tags array.
-  const fetchLimit = category ? Math.max(limit * 10, 100) : Math.max(limit * 2, 50);
+  // PERF: Capped at 50 events max to avoid MCP transport timeouts (was up to 200).
+  const fetchLimit = category ? Math.min(Math.max(limit * 5, 50), 50) : Math.min(Math.max(limit * 2, 30), 50);
   const endpoint = `/events?closed=false&limit=${fetchLimit}&order=${orderParam}&ascending=false`;
 
-  let events = (await fetchGamma(endpoint)) as GammaEvent[];
+  let events = (await fetchGamma(endpoint, 10000)) as GammaEvent[];
 
   // Apply client-side category filtering if category is specified
   if (category) {
@@ -5035,7 +5018,7 @@ async function handleGetTopMarkets(
     endpoint += `&end_date_min=${endDateAfter}`;
   }
 
-  const events = (await fetchGamma(endpoint)) as GammaEvent[];
+  const events = (await fetchGamma(endpoint, 10000)) as GammaEvent[];
 
   const markets: Array<{
     rank: number;
@@ -5527,10 +5510,14 @@ async function handlePlacePolymarketOrder(
   const tokenId = targetToken.token_id;
 
   // Get market title if we don't have it
+  // PERF: Use direct /markets?condition_ids= instead of fetching 100 events
   if (!marketData) {
     try {
-      const events = await fetchGamma(`/events?closed=false&limit=100`) as GammaEvent[];
-      marketData = events.find(e => e.markets?.some(m => m.conditionId === marketConditionId));
+      const gammaMarkets = await fetchGamma(`/markets?condition_ids=${marketConditionId}&limit=1`, 5000) as GammaMarket[];
+      if (Array.isArray(gammaMarkets) && gammaMarkets.length > 0) {
+        // Create a minimal event-like object with the market data
+        marketData = { title: gammaMarkets[0].question, slug: gammaMarkets[0].slug } as GammaEvent;
+      }
     } catch {
       // Non-critical, continue without title
     }
@@ -5933,7 +5920,7 @@ async function handleGetEvents(
   const offset = (args?.offset as number) || 0;
 
   const endpoint = `/events?closed=${closed}&limit=${limit}&offset=${offset}&order=id&ascending=false`;
-  const events = (await fetchGamma(endpoint)) as GammaEvent[];
+  const events = (await fetchGamma(endpoint, 10000)) as GammaEvent[];
 
   const filteredEvents = active ? events.filter((e) => e.active !== false) : events;
 
@@ -7189,11 +7176,12 @@ async function handleGetTopHolders(
       // Use defaults
     }
 
-    // Multi-tier minBalance thresholds for deep fetching
-    // Each tier gets up to 20 holders, and we deduplicate by address
-    // Includes ultra-whale tiers ($1M, $100k) for catching massive institutional positions
+    // Multi-tier minBalance thresholds for deep fetching.
+    // Each tier gets up to 20 holders, and we deduplicate by address.
+    // The tool description instructs AI clients to call this ALONE (not in parallel)
+    // when using deepFetch=true to avoid MCP transport timeouts.
     const minBalanceTiers = deepFetch 
-      ? [1000000, 100000, 10000, 5000, 2000, 1000, 500, 100, 10, 1] // Deep: 10 tiers for full spectrum
+      ? [1000000, 100000, 10000, 5000, 2000, 1000, 500, 100, 10, 1] // Deep: 10 tiers for full spectrum (whales → small)
       : [1]; // Shallow: just one call
     
     // Maps to deduplicate holders by address
@@ -7285,16 +7273,13 @@ async function handleGetTopHolders(
     // Track how many unique holders we found
     const totalUniqueHolders = yesHolders.length + noHolders.length;
 
-    // Get market title
+    // Get market title - use direct Gamma /markets?condition_ids= lookup instead of
+    // brute-force searching through 50 events (which was adding 5-10s to response time)
     let marketTitle = conditionId;
     try {
-      const events = (await fetchGamma(`/events?closed=false&limit=50`)) as GammaEvent[];
-      for (const e of events) {
-        const m = e.markets?.find(m => m.conditionId === conditionId);
-        if (m) {
-          marketTitle = m.question || e.title || conditionId;
-          break;
-        }
+      const markets = (await fetchGamma(`/markets?condition_ids=${conditionId}&limit=1`, 5000)) as GammaMarket[];
+      if (Array.isArray(markets) && markets.length > 0) {
+        marketTitle = markets[0].question || conditionId;
       }
     } catch {
       // Use conditionId as title
@@ -8050,6 +8035,7 @@ interface GammaMarket {
   question?: string;
   title?: string;
   description?: string;
+  slug?: string; // Market slug for URL construction - returned by /markets endpoint
   groupItemTitle?: string; // For multi-outcome events, the specific outcome name (e.g., "Gavin Newsom")
   outcomePrices?: string[] | string; // API may return JSON string
   volume?: number | string; // Can be number or string from API
