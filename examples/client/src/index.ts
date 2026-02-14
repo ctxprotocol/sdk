@@ -121,7 +121,7 @@ Generate the correct arguments as JSON to get gas prices for Ethereum mainnet.`;
           console.log(`\n💡 Solution: Set up your wallet at ${error.helpUrl}`);
           break;
         case "insufficient_allowance":
-          console.log(`\n💡 Solution: Enable Auto Pay at ${error.helpUrl}`);
+          console.log(`\n💡 Solution: Set a spending cap at ${error.helpUrl}`);
           break;
         case "payment_failed":
           console.log("\n💡 Solution: Check your USDC balance and try again");

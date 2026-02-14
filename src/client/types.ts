@@ -180,6 +180,127 @@ export interface ExecutionResult<T = unknown> {
   durationMs: number;
 }
 
+// ---------------------------------------------------------------------------
+// Query types (pay-per-response / agentic mode)
+// ---------------------------------------------------------------------------
+
+/**
+ * Options for the agentic query endpoint (pay-per-response).
+ *
+ * Unlike `execute()` which calls a single tool once, `query()` sends a
+ * natural-language question and lets the server handle tool discovery,
+ * multi-tool orchestration, self-healing retries, and AI synthesis.
+ * One flat fee covers up to 100 MCP skill calls per tool.
+ */
+export interface QueryOptions {
+  /** The natural-language question to answer */
+  query: string;
+
+  /**
+   * Optional tool IDs to use. When omitted the server discovers tools
+   * automatically (Auto Mode). When provided, only these tools are used
+   * (Manual Mode).
+   */
+  tools?: string[];
+}
+
+/**
+ * Information about a tool that was used during a query response
+ */
+export interface QueryToolUsage {
+  /** Tool ID */
+  id: string;
+
+  /** Tool name */
+  name: string;
+
+  /** Number of MCP skill calls made for this tool */
+  skillCalls: number;
+}
+
+/**
+ * Cost breakdown for a query response.
+ * All values are strings representing USD amounts.
+ */
+export interface QueryCost {
+  /** AI model inference cost */
+  modelCostUsd: string;
+
+  /** Sum of all tool fees */
+  toolCostUsd: string;
+
+  /** Total cost (model + tools) */
+  totalCostUsd: string;
+}
+
+/**
+ * The resolved result of a pay-per-response query
+ */
+export interface QueryResult {
+  /** The AI-synthesized response text */
+  response: string;
+
+  /** Tools that were used to answer the query */
+  toolsUsed: QueryToolUsage[];
+
+  /** Cost breakdown */
+  cost: QueryCost;
+
+  /** Total duration in milliseconds */
+  durationMs: number;
+}
+
+/**
+ * Successful response from the /api/v1/query endpoint
+ */
+export interface QueryApiSuccessResponse {
+  success: true;
+  response: string;
+  toolsUsed: QueryToolUsage[];
+  cost: QueryCost;
+  durationMs: number;
+}
+
+/**
+ * Raw API response from the query endpoint
+ */
+export type QueryApiResponse = QueryApiSuccessResponse | ExecuteApiErrorResponse;
+
+// ---------------------------------------------------------------------------
+// Query stream event types
+// ---------------------------------------------------------------------------
+
+/** Emitted when a tool starts or changes execution status */
+export interface QueryStreamToolStatusEvent {
+  type: "tool-status";
+  tool: { id: string; name: string };
+  status: string;
+}
+
+/** Emitted for each chunk of the AI response text */
+export interface QueryStreamTextDeltaEvent {
+  type: "text-delta";
+  delta: string;
+}
+
+/** Emitted when the full response is complete */
+export interface QueryStreamDoneEvent {
+  type: "done";
+  result: QueryResult;
+}
+
+/**
+ * Union of all events emitted during a streaming query
+ */
+export type QueryStreamEvent =
+  | QueryStreamToolStatusEvent
+  | QueryStreamTextDeltaEvent
+  | QueryStreamDoneEvent;
+
+// ---------------------------------------------------------------------------
+// Error types
+// ---------------------------------------------------------------------------
+
 /**
  * Specific error codes returned by the Context Protocol API
  */
@@ -188,7 +309,8 @@ export type ContextErrorCode =
   | "no_wallet"
   | "insufficient_allowance"
   | "payment_failed"
-  | "execution_failed";
+  | "execution_failed"
+  | "query_failed";
 
 /**
  * Error thrown by the Context Protocol client

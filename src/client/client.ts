@@ -2,6 +2,7 @@ import type { ContextClientOptions } from "./types.js";
 import { ContextError } from "./types.js";
 import { Discovery } from "./resources/discovery.js";
 import { Tools } from "./resources/tools.js";
+import { Query } from "./resources/query.js";
 
 /**
  * The official TypeScript client for the Context Protocol.
@@ -16,15 +17,16 @@ import { Tools } from "./resources/tools.js";
  *   apiKey: "sk_live_..."
  * });
  *
- * // Discover tools
- * const tools = await client.discovery.search("gas prices");
- *
- * // Execute a tool method
+ * // Pay-per-request: Execute a specific tool
  * const result = await client.tools.execute({
- *   toolId: tools[0].id,
- *   toolName: tools[0].mcpTools[0].name,
+ *   toolId: "tool-uuid",
+ *   toolName: "get_gas_prices",
  *   args: { chainId: 1 }
  * });
+ *
+ * // Pay-per-response: Ask a question, get a curated answer
+ * const answer = await client.query.run("What are the top whale movements on Base?");
+ * console.log(answer.response);
  * ```
  */
 export class ContextClient {
@@ -38,9 +40,18 @@ export class ContextClient {
   public readonly discovery: Discovery;
 
   /**
-   * Tools resource for executing tools
+   * Tools resource for executing tools (pay-per-request)
    */
   public readonly tools: Tools;
+
+  /**
+   * Query resource for agentic queries (pay-per-response).
+   *
+   * Unlike `tools.execute()` which calls a single tool once, `query` sends
+   * a natural-language question and lets the server handle tool discovery,
+   * multi-tool orchestration, self-healing, and AI synthesis — one flat fee.
+   */
+  public readonly query: Query;
 
   /**
    * Creates a new Context Protocol client
@@ -60,6 +71,7 @@ export class ContextClient {
     // Initialize resources
     this.discovery = new Discovery(this);
     this.tools = new Tools(this);
+    this.query = new Query(this);
   }
 
   /**
@@ -170,5 +182,49 @@ export class ContextClient {
     }
 
     throw lastError ?? new ContextError("Request failed after retries");
+  }
+
+  /**
+   * Internal method for making authenticated HTTP requests that returns
+   * the raw Response object. Used for streaming endpoints (SSE).
+   *
+   * @internal
+   */
+  async _fetchRaw(endpoint: string, options: RequestInit = {}): Promise<Response> {
+    if (this._closed) {
+      throw new ContextError("Client has been closed");
+    }
+
+    const url = `${this.baseUrl}${endpoint}`;
+
+    const response = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      let errorCode: string | undefined;
+      let helpUrl: string | undefined;
+
+      try {
+        const errorBody = await response.json();
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+          errorCode = errorBody.code;
+          helpUrl = errorBody.helpUrl;
+        }
+      } catch {
+        // Use default error message if JSON parsing fails
+      }
+
+      throw new ContextError(errorMessage, errorCode, response.status, helpUrl);
+    }
+
+    return response;
   }
 }

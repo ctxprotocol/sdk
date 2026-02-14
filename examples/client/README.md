@@ -7,7 +7,7 @@ This example demonstrates how to use the `@ctxprotocol/sdk` to discover and exec
 Before running this example, complete the setup at [ctxprotocol.com](https://ctxprotocol.com):
 
 1. **Sign in** — Creates your embedded wallet
-2. **Enable Auto Pay** — Approve USDC spending
+2. **Set spending cap** — Approve USDC spending on the ContextRouter
 3. **Fund wallet** — Add USDC for tool payments
 4. **Generate API key** — In Settings page
 
@@ -158,7 +158,7 @@ The example demonstrates handling common error cases:
 | Error Code               | Meaning                          | Solution                           |
 | ------------------------ | -------------------------------- | ---------------------------------- |
 | `no_wallet`              | Wallet not set up                | Visit settings page                |
-| `insufficient_allowance` | Auto Pay not enabled             | Enable Auto Pay in settings        |
+| `insufficient_allowance` | Spending cap not set             | Set spending cap in settings       |
 | `payment_failed`         | USDC payment failed              | Check balance, retry               |
 | `execution_failed`       | Tool execution error             | Check args, contact tool developer |
 

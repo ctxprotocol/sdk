@@ -22,8 +22,8 @@ export class Tools {
    * @returns The execution result with the tool's output data
    *
    * @throws {ContextError} With code `no_wallet` if wallet not set up
-   * @throws {ContextError} With code `insufficient_allowance` if Auto Pay not enabled
-   * @throws {ContextError} With code `payment_failed` if on-chain payment fails
+   * @throws {ContextError} With code `insufficient_allowance` if spending cap not set
+   * @throws {ContextError} With code `payment_failed` if payment settlement fails
    * @throws {ContextError} With code `execution_failed` if tool execution fails
    *
    * @example

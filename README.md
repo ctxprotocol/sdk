@@ -64,9 +64,35 @@ yarn add @ctxprotocol/sdk
 Before using the API, complete setup at [ctxprotocol.com](https://ctxprotocol.com):
 
 1. **Sign in** — Creates your embedded wallet
-2. **Enable Auto Pay** — Approve USDC spending for tool payments
+2. **Set spending cap** — Approve USDC spending on the ContextRouter (one-time setup)
 3. **Fund wallet** — Add USDC for tool execution fees
 4. **Generate API key** — In Settings page
+
+## Two Modes: Precision vs Intelligence
+
+The SDK offers two payment models to serve different use cases:
+
+| Mode | Method | Payment Model | Use Case |
+|------|--------|---------------|----------|
+| **Execute** | `client.tools.execute()` | Pay-per-request | Simple data fetches, predictable costs, building custom pipelines |
+| **Query** | `client.query.run()` | Pay-per-response | Complex questions, multi-tool synthesis, curated intelligence |
+
+**Execute mode** gives you raw data and full control — one tool, one call, one payment:
+```typescript
+const result = await client.tools.execute({
+  toolId: "tool-uuid",
+  toolName: "whale_transactions",
+  args: { chain: "base", limit: 20 },
+});
+```
+
+**Query mode** gives you curated answers — the server handles tool discovery, multi-tool orchestration (up to 100 MCP calls per tool), self-healing retries, and AI synthesis for one flat fee:
+```typescript
+const answer = await client.query.run("What are the top whale movements on Base?");
+console.log(answer.response);   // AI-synthesized answer
+console.log(answer.toolsUsed);  // Which tools were used
+console.log(answer.cost);       // Cost breakdown
+```
 
 ## Quick Start
 
@@ -77,16 +103,17 @@ const client = new ContextClient({
   apiKey: "sk_live_...",
 });
 
-// Discover tools
-const tools = await client.discovery.search("gas prices");
+// Pay-per-response: Ask a question, get a curated answer
+const answer = await client.query.run("What are the top whale movements on Base?");
+console.log(answer.response);
 
-// Execute a tool
+// Pay-per-request: Execute a specific tool for raw data
+const tools = await client.discovery.search("gas prices");
 const result = await client.tools.execute({
   toolId: tools[0].id,
   toolName: tools[0].mcpTools[0].name,
   args: { chainId: 1 },
 });
-
 console.log(result.result);
 ```
 
@@ -265,11 +292,11 @@ Get featured/popular tools.
 const featured = await client.discovery.getFeatured(5);
 ```
 
-### Tools
+### Tools (Pay-Per-Request)
 
 #### `client.tools.execute(options)`
 
-Execute a tool method.
+Execute a single tool method. One call, one payment, raw result.
 
 ```typescript
 const result = await client.tools.execute({
@@ -277,6 +304,48 @@ const result = await client.tools.execute({
   toolName: "get_gas_prices",
   args: { chainId: 1 },
 });
+```
+
+### Query (Pay-Per-Response)
+
+#### `client.query.run(options)`
+
+Run an agentic query. The server discovers tools, executes the full pipeline (up to 100 MCP calls per tool), and returns an AI-synthesized answer.
+
+```typescript
+// Simple string
+const answer = await client.query.run("What are the top whale movements on Base?");
+
+// With options
+const answer = await client.query.run({
+  query: "Analyze whale activity on Base",
+  tools: ["tool-uuid-1", "tool-uuid-2"],  // optional — auto-discover if omitted
+});
+
+console.log(answer.response);     // AI-synthesized text
+console.log(answer.toolsUsed);    // [{ id, name, skillCalls }]
+console.log(answer.cost);         // { modelCostUsd, toolCostUsd, totalCostUsd }
+console.log(answer.durationMs);   // Total time
+```
+
+#### `client.query.stream(options)`
+
+Same as `run()` but streams events in real-time via SSE.
+
+```typescript
+for await (const event of client.query.stream("What are the top whale movements?")) {
+  switch (event.type) {
+    case "tool-status":
+      console.log(`Tool ${event.tool.name}: ${event.status}`);
+      break;
+    case "text-delta":
+      process.stdout.write(event.delta);
+      break;
+    case "done":
+      console.log("\nTotal cost:", event.result.cost.totalCostUsd);
+      break;
+  }
+}
 ```
 
 ## Types
@@ -296,6 +365,11 @@ import type {
   McpTool,
   ExecuteOptions,
   ExecutionResult,
+  // Query types (pay-per-response)
+  QueryOptions,
+  QueryResult,
+  QueryCost,
+  QueryStreamEvent,
   ContextErrorCode,
   // Auth types (for MCP server contributors)
   VerifyRequestOptions,
@@ -333,12 +407,23 @@ interface McpTool {
 }
 ```
 
-### ExecutionResult
+### ExecutionResult (Pay-Per-Request)
 
 ```typescript
 interface ExecutionResult<T = unknown> {
   result: T;
   tool: { id: string; name: string };
+  durationMs: number;
+}
+```
+
+### QueryResult (Pay-Per-Response)
+
+```typescript
+interface QueryResult {
+  response: string;                    // AI-synthesized answer
+  toolsUsed: QueryToolUsage[];         // Tools used: { id, name, skillCalls }
+  cost: QueryCost;                     // { modelCostUsd, toolCostUsd, totalCostUsd }
   durationMs: number;
 }
 ```
@@ -386,8 +471,8 @@ try {
         console.log("Setup required:", error.helpUrl);
         break;
       case "insufficient_allowance":
-        // User needs to enable Auto Pay
-        console.log("Enable Auto Pay:", error.helpUrl);
+        // User needs to set a spending cap
+        console.log("Set spending cap:", error.helpUrl);
         break;
       case "payment_failed":
         // Insufficient USDC balance
@@ -407,7 +492,7 @@ try {
 | ------------------------ | ---------------------------------------- | ----------------------------------- |
 | `unauthorized`           | Invalid API key                          | Check configuration                 |
 | `no_wallet`              | Wallet not set up                        | Direct user to `helpUrl`            |
-| `insufficient_allowance` | Auto Pay not enabled                     | Direct user to `helpUrl`            |
+| `insufficient_allowance` | Spending cap not set                     | Direct user to `helpUrl`            |
 | `payment_failed`         | USDC payment failed                      | Check balance                       |
 | `execution_failed`       | Tool error                               | Feed error to LLM for retry         |
 
@@ -426,7 +511,7 @@ By adding 1 line of code to verify a JWT, Context saves you from building:
 - Refund and dispute logic
 
 **The "Stripe Webhook" Analogy:**
-Developers are used to verifying signatures for Stripe Webhooks or GitHub Apps. Context works the same way. When we send a request saying "Execute Tool (Payment Confirmed)", you verify the signature. Without this, anyone could curl your endpoint and drain your resources.
+Developers are used to verifying signatures for Stripe Webhooks or GitHub Apps. Context works the same way. When we send a request saying "Execute Tool (Authorized)", you verify the signature. Without this, anyone could curl your endpoint and drain your resources.
 
 ### Quick Implementation (1 Line)
 
@@ -707,12 +792,13 @@ pnpm add -D @types/express
 
 ## Payment Flow
 
-When you execute a tool:
+Context uses **deferred settlement** — tools execute first, and payment is settled in the background after the result is returned:
 
-1. Your pre-approved USDC allowance is used
-2. **90%** goes to the tool developer
-3. **10%** goes to the protocol
-4. Tool executes and returns results
+1. Your USDC spending cap (ERC-20 allowance on ContextRouter) is verified
+2. Tool executes and returns results
+3. Payment is settled server-side via the operator wallet (no client-side transactions)
+4. **90%** goes to the tool developer, **10%** goes to the protocol
+5. If execution fails, tool fees are **waived** — you only pay for successful results
 
 ## Documentation
 
