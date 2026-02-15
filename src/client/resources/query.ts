@@ -55,11 +55,15 @@ export class Query {
    */
   async run(options: QueryOptions | string): Promise<QueryResult> {
     const opts = typeof options === "string" ? { query: options } : options;
+    const headers = opts.idempotencyKey
+      ? { "Idempotency-Key": opts.idempotencyKey }
+      : undefined;
 
     const response = await this.client._fetch<QueryApiResponse>(
       "/api/v1/query",
       {
         method: "POST",
+        headers,
         body: JSON.stringify({
           query: opts.query,
           tools: opts.tools,
@@ -124,9 +128,13 @@ export class Query {
     options: QueryOptions | string
   ): AsyncGenerator<QueryStreamEvent> {
     const opts = typeof options === "string" ? { query: options } : options;
+    const headers = opts.idempotencyKey
+      ? { "Idempotency-Key": opts.idempotencyKey }
+      : undefined;
 
     const response = await this.client._fetchRaw("/api/v1/query", {
       method: "POST",
+      headers,
       body: JSON.stringify({
         query: opts.query,
         tools: opts.tools,

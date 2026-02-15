@@ -123,6 +123,12 @@ export interface ExecuteOptions {
 
   /** Arguments to pass to the tool */
   args?: Record<string, unknown>;
+
+  /**
+   * Optional idempotency key (UUID recommended).
+   * Reuse the same key when retrying the same logical request.
+   */
+  idempotencyKey?: string;
 }
 
 /**
@@ -202,6 +208,12 @@ export interface QueryOptions {
    * (Manual Mode).
    */
   tools?: string[];
+
+  /**
+   * Optional idempotency key (UUID recommended).
+   * Reuse the same key when retrying the same logical request.
+   */
+  idempotencyKey?: string;
 }
 
 /**

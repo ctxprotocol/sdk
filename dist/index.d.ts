@@ -1,4 +1,4 @@
-export { ContextClient, ContextClientOptions, ContextError, ContextErrorCode, Discovery, ExecuteApiErrorResponse, ExecuteApiResponse, ExecuteApiSuccessResponse, ExecuteOptions, ExecutionResult, McpTool, SearchOptions, SearchResponse, Tool, Tools } from './client/index.js';
+export { ContextClient, ContextClientOptions, ContextError, ContextErrorCode, Discovery, ExecuteApiErrorResponse, ExecuteApiResponse, ExecuteApiSuccessResponse, ExecuteOptions, ExecutionResult, McpTool, Query, QueryApiResponse, QueryApiSuccessResponse, QueryCost, QueryOptions, QueryResult, QueryStreamDoneEvent, QueryStreamEvent, QueryStreamTextDeltaEvent, QueryStreamToolStatusEvent, QueryToolUsage, SearchOptions, SearchResponse, Tool, Tools } from './client/index.js';
 import { JWTPayload } from 'jose';
 
 /**

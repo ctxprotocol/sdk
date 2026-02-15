@@ -180,6 +180,22 @@ describe("Query Resource", () => {
       });
     });
 
+    it("forwards Idempotency-Key header for run options", async () => {
+      const mockFn = mockFetchJson(MOCK_SUCCESS_RESPONSE);
+      globalThis.fetch = mockFn;
+
+      await client.query.run({
+        query: "Analyze whale activity",
+        tools: ["tool-uuid-1", "tool-uuid-2"],
+        idempotencyKey: "f4f14e22-7db1-4a2d-8b95-b5806f3fa677",
+      });
+
+      const [, opts] = mockFn.mock.calls[0];
+      expect(opts.headers["Idempotency-Key"]).toBe(
+        "f4f14e22-7db1-4a2d-8b95-b5806f3fa677",
+      );
+    });
+
     it("parses success response into QueryResult", async () => {
       globalThis.fetch = mockFetchJson(MOCK_SUCCESS_RESPONSE);
 
@@ -373,6 +389,28 @@ describe("Query Resource", () => {
         (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
       );
       expect(body.tools).toEqual(["tool-1", "tool-2"]);
+    });
+
+    it("forwards Idempotency-Key header for stream options", async () => {
+      const mockFn = mockFetchSSE([
+        'data: {"type":"text-delta","delta":"result "}',
+        "data: [DONE]",
+      ]);
+      globalThis.fetch = mockFn;
+
+      const events = [];
+      for await (const event of client.query.stream({
+        query: "test",
+        tools: ["tool-1", "tool-2"],
+        idempotencyKey: "21118fda-33be-4d66-8df5-0e50b3371f54",
+      })) {
+        events.push(event);
+      }
+
+      const [, opts] = mockFn.mock.calls[0];
+      expect(opts.headers["Idempotency-Key"]).toBe(
+        "21118fda-33be-4d66-8df5-0e50b3371f54",
+      );
     });
 
     it("throws on error response from server", async () => {

@@ -44,12 +44,16 @@ export class Tools {
    * ```
    */
   async execute<T = unknown>(options: ExecuteOptions): Promise<ExecutionResult<T>> {
-    const { toolId, toolName, args } = options;
+    const { toolId, toolName, args, idempotencyKey } = options;
+    const headers = idempotencyKey
+      ? { "Idempotency-Key": idempotencyKey }
+      : undefined;
 
     const response = await this.client._fetch<ExecuteApiResponse>(
       "/api/v1/tools/execute",
       {
         method: "POST",
+        headers,
         body: JSON.stringify({ toolId, toolName, args }),
       }
     );

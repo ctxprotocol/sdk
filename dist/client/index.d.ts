@@ -142,9 +142,100 @@ interface ExecutionResult<T = unknown> {
     durationMs: number;
 }
 /**
+ * Options for the agentic query endpoint (pay-per-response).
+ *
+ * Unlike `execute()` which calls a single tool once, `query()` sends a
+ * natural-language question and lets the server handle tool discovery,
+ * multi-tool orchestration, self-healing retries, and AI synthesis.
+ * One flat fee covers up to 100 MCP skill calls per tool.
+ */
+interface QueryOptions {
+    /** The natural-language question to answer */
+    query: string;
+    /**
+     * Optional tool IDs to use. When omitted the server discovers tools
+     * automatically (Auto Mode). When provided, only these tools are used
+     * (Manual Mode).
+     */
+    tools?: string[];
+}
+/**
+ * Information about a tool that was used during a query response
+ */
+interface QueryToolUsage {
+    /** Tool ID */
+    id: string;
+    /** Tool name */
+    name: string;
+    /** Number of MCP skill calls made for this tool */
+    skillCalls: number;
+}
+/**
+ * Cost breakdown for a query response.
+ * All values are strings representing USD amounts.
+ */
+interface QueryCost {
+    /** AI model inference cost */
+    modelCostUsd: string;
+    /** Sum of all tool fees */
+    toolCostUsd: string;
+    /** Total cost (model + tools) */
+    totalCostUsd: string;
+}
+/**
+ * The resolved result of a pay-per-response query
+ */
+interface QueryResult {
+    /** The AI-synthesized response text */
+    response: string;
+    /** Tools that were used to answer the query */
+    toolsUsed: QueryToolUsage[];
+    /** Cost breakdown */
+    cost: QueryCost;
+    /** Total duration in milliseconds */
+    durationMs: number;
+}
+/**
+ * Successful response from the /api/v1/query endpoint
+ */
+interface QueryApiSuccessResponse {
+    success: true;
+    response: string;
+    toolsUsed: QueryToolUsage[];
+    cost: QueryCost;
+    durationMs: number;
+}
+/**
+ * Raw API response from the query endpoint
+ */
+type QueryApiResponse = QueryApiSuccessResponse | ExecuteApiErrorResponse;
+/** Emitted when a tool starts or changes execution status */
+interface QueryStreamToolStatusEvent {
+    type: "tool-status";
+    tool: {
+        id: string;
+        name: string;
+    };
+    status: string;
+}
+/** Emitted for each chunk of the AI response text */
+interface QueryStreamTextDeltaEvent {
+    type: "text-delta";
+    delta: string;
+}
+/** Emitted when the full response is complete */
+interface QueryStreamDoneEvent {
+    type: "done";
+    result: QueryResult;
+}
+/**
+ * Union of all events emitted during a streaming query
+ */
+type QueryStreamEvent = QueryStreamToolStatusEvent | QueryStreamTextDeltaEvent | QueryStreamDoneEvent;
+/**
  * Specific error codes returned by the Context Protocol API
  */
-type ContextErrorCode = "unauthorized" | "no_wallet" | "insufficient_allowance" | "payment_failed" | "execution_failed";
+type ContextErrorCode = "unauthorized" | "no_wallet" | "insufficient_allowance" | "payment_failed" | "execution_failed" | "query_failed";
 /**
  * Error thrown by the Context Protocol client
  */
@@ -206,8 +297,8 @@ declare class Tools {
      * @returns The execution result with the tool's output data
      *
      * @throws {ContextError} With code `no_wallet` if wallet not set up
-     * @throws {ContextError} With code `insufficient_allowance` if Auto Pay not enabled
-     * @throws {ContextError} With code `payment_failed` if on-chain payment fails
+     * @throws {ContextError} With code `insufficient_allowance` if spending cap not set
+     * @throws {ContextError} With code `payment_failed` if payment settlement fails
      * @throws {ContextError} With code `execution_failed` if tool execution fails
      *
      * @example
@@ -231,6 +322,85 @@ declare class Tools {
 }
 
 /**
+ * Query resource for pay-per-response agentic queries.
+ *
+ * Unlike `tools.execute()` which calls a single tool once (pay-per-request),
+ * the Query resource sends a natural-language question and lets the server
+ * handle tool discovery, multi-tool orchestration, self-healing retries,
+ * completeness checks, and AI synthesis — all for one flat fee.
+ *
+ * This is the "prepared meal" vs "raw ingredients" distinction:
+ * - `tools.execute()` = raw data, full control, predictable cost
+ * - `query.run()` / `query.stream()` = curated intelligence, one payment
+ */
+declare class Query {
+    private client;
+    constructor(client: ContextClient);
+    /**
+     * Run an agentic query and wait for the full response.
+     *
+     * The server discovers relevant tools (or uses the ones you specify),
+     * executes the full agentic pipeline (up to 100 MCP calls per tool),
+     * and returns an AI-synthesized answer. Payment is settled after
+     * successful execution via deferred settlement.
+     *
+     * @param options - Query options or a plain string question
+     * @returns The complete query result with response text, tools used, and cost
+     *
+     * @throws {ContextError} With code `no_wallet` if wallet not set up
+     * @throws {ContextError} With code `insufficient_allowance` if spending cap not set
+     * @throws {ContextError} With code `payment_failed` if payment settlement fails
+     * @throws {ContextError} With code `execution_failed` if the agentic pipeline fails
+     *
+     * @example
+     * ```typescript
+     * // Simple question — server discovers tools automatically
+     * const answer = await client.query.run("What are the top whale movements on Base?");
+     * console.log(answer.response);      // AI-synthesized answer
+     * console.log(answer.toolsUsed);     // Which tools were used
+     * console.log(answer.cost);          // Cost breakdown
+     *
+     * // With specific tools (Manual Mode)
+     * const answer = await client.query.run({
+     *   query: "Analyze whale activity",
+     *   tools: ["tool-uuid-1", "tool-uuid-2"],
+     * });
+     * ```
+     */
+    run(options: QueryOptions | string): Promise<QueryResult>;
+    /**
+     * Run an agentic query with streaming. Returns an async iterable that
+     * yields events as the server processes the query in real-time.
+     *
+     * Event types:
+     * - `tool-status` — A tool started executing or changed status
+     * - `text-delta` — A chunk of the AI response text
+     * - `done` — The full response is complete (includes final `QueryResult`)
+     *
+     * @param options - Query options or a plain string question
+     * @returns An async iterable of stream events
+     *
+     * @example
+     * ```typescript
+     * for await (const event of client.query.stream("What are the top whale movements?")) {
+     *   switch (event.type) {
+     *     case "tool-status":
+     *       console.log(`Tool ${event.tool.name}: ${event.status}`);
+     *       break;
+     *     case "text-delta":
+     *       process.stdout.write(event.delta);
+     *       break;
+     *     case "done":
+     *       console.log("\nCost:", event.result.cost.totalCostUsd);
+     *       break;
+     *   }
+     * }
+     * ```
+     */
+    stream(options: QueryOptions | string): AsyncGenerator<QueryStreamEvent>;
+}
+
+/**
  * The official TypeScript client for the Context Protocol.
  *
  * Use this client to discover and execute AI tools programmatically.
@@ -243,15 +413,16 @@ declare class Tools {
  *   apiKey: "sk_live_..."
  * });
  *
- * // Discover tools
- * const tools = await client.discovery.search("gas prices");
- *
- * // Execute a tool method
+ * // Pay-per-request: Execute a specific tool
  * const result = await client.tools.execute({
- *   toolId: tools[0].id,
- *   toolName: tools[0].mcpTools[0].name,
+ *   toolId: "tool-uuid",
+ *   toolName: "get_gas_prices",
  *   args: { chainId: 1 }
  * });
+ *
+ * // Pay-per-response: Ask a question, get a curated answer
+ * const answer = await client.query.run("What are the top whale movements on Base?");
+ * console.log(answer.response);
  * ```
  */
 declare class ContextClient {
@@ -263,9 +434,17 @@ declare class ContextClient {
      */
     readonly discovery: Discovery;
     /**
-     * Tools resource for executing tools
+     * Tools resource for executing tools (pay-per-request)
      */
     readonly tools: Tools;
+    /**
+     * Query resource for agentic queries (pay-per-response).
+     *
+     * Unlike `tools.execute()` which calls a single tool once, `query` sends
+     * a natural-language question and lets the server handle tool discovery,
+     * multi-tool orchestration, self-healing, and AI synthesis — one flat fee.
+     */
+    readonly query: Query;
     /**
      * Creates a new Context Protocol client
      *
@@ -286,6 +465,13 @@ declare class ContextClient {
      * @internal
      */
     _fetch<T>(endpoint: string, options?: RequestInit): Promise<T>;
+    /**
+     * Internal method for making authenticated HTTP requests that returns
+     * the raw Response object. Used for streaming endpoints (SSE).
+     *
+     * @internal
+     */
+    _fetchRaw(endpoint: string, options?: RequestInit): Promise<Response>;
 }
 
-export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecutionResult, type McpTool, type SearchOptions, type SearchResponse, type Tool, Tools };
+export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecutionResult, type McpTool, Query, type QueryApiResponse, type QueryApiSuccessResponse, type QueryCost, type QueryOptions, type QueryResult, type QueryStreamDoneEvent, type QueryStreamEvent, type QueryStreamTextDeltaEvent, type QueryStreamToolStatusEvent, type QueryToolUsage, type SearchOptions, type SearchResponse, type Tool, Tools };
