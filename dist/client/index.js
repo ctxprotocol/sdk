@@ -95,11 +95,13 @@ var Tools = class {
    * ```
    */
   async execute(options) {
-    const { toolId, toolName, args } = options;
+    const { toolId, toolName, args, idempotencyKey } = options;
+    const headers = idempotencyKey ? { "Idempotency-Key": idempotencyKey } : void 0;
     const response = await this.client._fetch(
       "/api/v1/tools/execute",
       {
         method: "POST",
+        headers,
         body: JSON.stringify({ toolId, toolName, args })
       }
     );
@@ -161,13 +163,18 @@ var Query = class {
    */
   async run(options) {
     const opts = typeof options === "string" ? { query: options } : options;
+    const headers = opts.idempotencyKey ? { "Idempotency-Key": opts.idempotencyKey } : void 0;
     const response = await this.client._fetch(
       "/api/v1/query",
       {
         method: "POST",
+        headers,
         body: JSON.stringify({
           query: opts.query,
           tools: opts.tools,
+          modelId: opts.modelId,
+          includeData: opts.includeData,
+          includeDataUrl: opts.includeDataUrl,
           stream: false
         })
       }
@@ -185,7 +192,9 @@ var Query = class {
         response: response.response,
         toolsUsed: response.toolsUsed,
         cost: response.cost,
-        durationMs: response.durationMs
+        durationMs: response.durationMs,
+        data: response.data,
+        dataUrl: response.dataUrl
       };
     }
     throw new ContextError("Unexpected response format from query API");
@@ -221,11 +230,16 @@ var Query = class {
    */
   async *stream(options) {
     const opts = typeof options === "string" ? { query: options } : options;
+    const headers = opts.idempotencyKey ? { "Idempotency-Key": opts.idempotencyKey } : void 0;
     const response = await this.client._fetchRaw("/api/v1/query", {
       method: "POST",
+      headers,
       body: JSON.stringify({
         query: opts.query,
         tools: opts.tools,
+        modelId: opts.modelId,
+        includeData: opts.includeData,
+        includeDataUrl: opts.includeDataUrl,
         stream: true
       })
     });
