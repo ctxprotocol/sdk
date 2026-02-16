@@ -1,0 +1,100 @@
+# Secrets & credentials — absolutely block
+# (env, local secrets, key files, wallet files)
+**/.env
+**/.env.*
+**/.secret
+**/secrets.json
+**/credentials.json
+**/*.key
+**/*.pem
+**/id_rsa
+**/id_ecdsa
+**/keystore/*
+**/keystore/**/*
+**/p12
+**/*.p12
+**/*.jks
+
+# Hardhat / Ethereum private material
+hardhat-deploy/keystore/*
+secrets/
+wallets/
+private_keys.txt
+*.key.json
+
+# Node & system-level sensitive files
+**/npmrc
+**/yarn.lock.private
+**/.npmrc
+**/.yarnrc
+
+# CI/CD secrets
+.github/workflows/**/secrets.yml
+.github/secrets/*
+.ci/secrets/*
+
+# OS / IDE / local machine files
+.DS_Store
+.vscode/
+/.idea/
+/*.sublime-project
+/*.sublime-workspace
+
+# Build artifacts that often contain addresses/compiled bytecode you don't want indexed
+# (Optional: sometimes you DO want artifacts for debugging — decide per-repo)
+artifacts/
+cache/
+build/
+dist/
+coverage/
+
+# Python virtualenvs and caches
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.python-version
+pip-wheel-metadata/
+
+# Local node modules (Cursor already ignores .gitignore by default, but make explicit if needed)
+node_modules/
+
+# Next.js output
+.next/
+out/
+public/static/ # if you generate static assets locally
+
+# Logs
+*.log
+logs/
+**/logs/
+
+# Large data / model checkpoints / datasets
+data/
+datasets/
+checkpoints/
+models/
+*.ckpt
+*.pth
+*.pt
+*.h5
+
+# Docker and machine specific images
+docker-compose.override.yml
+*.tar
+
+# Ignore environment files
+.env
+.env.*
+.env.local
+
+# Ignore node modules and build outputs
+node_modules/
+dist/
+build/
+
+# Add any additional sensitive files or folders
+secrets/

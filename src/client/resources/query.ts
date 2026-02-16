@@ -67,6 +67,9 @@ export class Query {
         body: JSON.stringify({
           query: opts.query,
           tools: opts.tools,
+          modelId: opts.modelId,
+          includeData: opts.includeData,
+          includeDataUrl: opts.includeDataUrl,
           stream: false,
         }),
       }
@@ -89,6 +92,8 @@ export class Query {
         toolsUsed: response.toolsUsed,
         cost: response.cost,
         durationMs: response.durationMs,
+        data: response.data,
+        dataUrl: response.dataUrl,
       };
     }
 
@@ -138,6 +143,9 @@ export class Query {
       body: JSON.stringify({
         query: opts.query,
         tools: opts.tools,
+        modelId: opts.modelId,
+        includeData: opts.includeData,
+        includeDataUrl: opts.includeDataUrl,
         stream: true,
       }),
     });

@@ -86,12 +86,17 @@ const result = await client.tools.execute({
 });
 ```
 
-**Query mode** gives you curated answers — the server handles tool discovery, multi-tool orchestration (up to 100 MCP calls per tool), self-healing retries, and AI synthesis for one flat fee:
+**Query mode** gives you curated answers — the server handles tool discovery, multi-tool orchestration (up to 100 MCP calls per tool), self-healing retries, completeness checks, model-aware context budgeting, and AI synthesis for one flat fee:
 ```typescript
-const answer = await client.query.run("What are the top whale movements on Base?");
+const answer = await client.query.run({
+  query: "What are the top whale movements on Base?",
+  modelId: "glm-model",      // optional: choose a supported model
+  includeDataUrl: true,      // optional: persist full execution data to blob
+});
 console.log(answer.response);   // AI-synthesized answer
 console.log(answer.toolsUsed);  // Which tools were used
 console.log(answer.cost);       // Cost breakdown
+console.log(answer.dataUrl);    // Optional blob URL with full data
 ```
 
 ## Quick Start
@@ -170,9 +175,18 @@ const result = await client.tools.execute({
   args: llmDecision.args,
 });
 
-// Feed the result back to your LLM for synthesis
+// Feed a bounded, structured summary back to your LLM for synthesis.
+// Prefer client.query.run() when you want server-managed synthesis.
+const resultPreview = JSON.stringify(result.result, null, 2).slice(0, 50_000);
+const resultKeys =
+  result.result && typeof result.result === "object"
+    ? Object.keys(result.result as Record<string, unknown>)
+    : [];
+
 const finalAnswer = await myLLM.generate(
-  `The tool returned: ${JSON.stringify(result.result)}. Summarize this for the user.`
+  `Tool output keys: ${resultKeys.join(", ") || "(non-object result)"}\n\n` +
+    `Tool output preview (truncated):\n${resultPreview}\n\n` +
+    "Summarize this for the user and mention if more data may exist beyond the preview."
 );
 ```
 
@@ -234,11 +248,17 @@ If you can answer without a tool, just respond normally.`;
         args: toolCall.args || {},
       });
 
-      // 6. Let LLM synthesize the result
+      // 6. Let LLM synthesize a bounded preview (avoid injecting giant JSON blobs)
+      const resultPreview = JSON.stringify(result.result, null, 2).slice(0, 50_000);
+      const resultKeys =
+        result.result && typeof result.result === "object"
+          ? Object.keys(result.result as Record<string, unknown>)
+          : [];
+
       return await myLLM.chat(
-        `Tool "${toolCall.toolName}" returned: ${JSON.stringify(result.result)}
-        
-Please provide a helpful response to the user's original question: "${userQuery}"`
+        `Tool "${toolCall.toolName}" returned keys: ${resultKeys.join(", ") || "(non-object result)"}\n\n` +
+        `Preview (truncated):\n${resultPreview}\n\n` +
+        `Please provide a helpful response to the user's original question: "${userQuery}"`
       );
     }
   } catch {
@@ -310,7 +330,7 @@ const result = await client.tools.execute({
 
 #### `client.query.run(options)`
 
-Run an agentic query. The server discovers tools, executes the full pipeline (up to 100 MCP calls per tool), and returns an AI-synthesized answer.
+Run an agentic query. The server discovers tools, executes the full pipeline (up to 100 MCP calls per tool), applies model-aware mediator/data budgeting, and returns an AI-synthesized answer.
 
 ```typescript
 // Simple string
@@ -320,12 +340,17 @@ const answer = await client.query.run("What are the top whale movements on Base?
 const answer = await client.query.run({
   query: "Analyze whale activity on Base",
   tools: ["tool-uuid-1", "tool-uuid-2"],  // optional — auto-discover if omitted
+  modelId: "kimi-model-thinking",          // optional
+  includeData: true,                       // optional: include execution data inline
+  includeDataUrl: true,                    // optional: include blob URL for full data
 });
 
 console.log(answer.response);     // AI-synthesized text
 console.log(answer.toolsUsed);    // [{ id, name, skillCalls }]
 console.log(answer.cost);         // { modelCostUsd, toolCostUsd, totalCostUsd }
 console.log(answer.durationMs);   // Total time
+console.log(answer.data);         // Optional execution data (when includeData=true)
+console.log(answer.dataUrl);      // Optional blob URL (when includeDataUrl=true)
 ```
 
 #### `client.query.stream(options)`
@@ -425,6 +450,8 @@ interface QueryResult {
   toolsUsed: QueryToolUsage[];         // Tools used: { id, name, skillCalls }
   cost: QueryCost;                     // { modelCostUsd, toolCostUsd, totalCostUsd }
   durationMs: number;
+  data?: unknown;                      // Optional execution data (includeData=true)
+  dataUrl?: string;                    // Optional blob URL (includeDataUrl=true)
 }
 ```
 

@@ -180,6 +180,36 @@ describe("Query Resource", () => {
       });
     });
 
+    it("forwards model and data options for run()", async () => {
+      const mockFn = mockFetchJson({
+        ...MOCK_SUCCESS_RESPONSE,
+        data: { summary: "tool output" },
+        dataUrl: "https://example.public.blob.vercel-storage.com/data.json",
+      });
+      globalThis.fetch = mockFn;
+
+      const result = await client.query.run({
+        query: "Analyze whale activity",
+        modelId: "glm-model",
+        includeData: true,
+        includeDataUrl: true,
+      });
+
+      const body = JSON.parse(mockFn.mock.calls[0][1].body);
+      expect(body).toEqual({
+        query: "Analyze whale activity",
+        tools: undefined,
+        modelId: "glm-model",
+        includeData: true,
+        includeDataUrl: true,
+        stream: false,
+      });
+      expect(result.data).toEqual({ summary: "tool output" });
+      expect(result.dataUrl).toBe(
+        "https://example.public.blob.vercel-storage.com/data.json",
+      );
+    });
+
     it("forwards Idempotency-Key header for run options", async () => {
       const mockFn = mockFetchJson(MOCK_SUCCESS_RESPONSE);
       globalThis.fetch = mockFn;
@@ -389,6 +419,30 @@ describe("Query Resource", () => {
         (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
       );
       expect(body.tools).toEqual(["tool-1", "tool-2"]);
+    });
+
+    it("forwards model and data options for stream()", async () => {
+      globalThis.fetch = mockFetchSSE([
+        'data: {"type":"text-delta","delta":"result "}',
+        "data: [DONE]",
+      ]);
+
+      const events = [];
+      for await (const event of client.query.stream({
+        query: "test",
+        modelId: "claude-sonnet-model",
+        includeData: true,
+        includeDataUrl: true,
+      })) {
+        events.push(event);
+      }
+
+      const body = JSON.parse(
+        (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
+      );
+      expect(body.modelId).toBe("claude-sonnet-model");
+      expect(body.includeData).toBe(true);
+      expect(body.includeDataUrl).toBe(true);
     });
 
     it("forwards Idempotency-Key header for stream options", async () => {

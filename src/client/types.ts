@@ -210,6 +210,24 @@ export interface QueryOptions {
   tools?: string[];
 
   /**
+   * Optional model ID for query orchestration/synthesis.
+   * Supported IDs are published by the Context API.
+   */
+  modelId?: string;
+
+  /**
+   * Include execution data inline in the query response.
+   * Useful for headless agents that need raw structured outputs.
+   */
+  includeData?: boolean;
+
+  /**
+   * Persist execution data to Vercel Blob and return a download URL.
+   * Useful for large payload workflows where inline JSON is not ideal.
+   */
+  includeDataUrl?: boolean;
+
+  /**
    * Optional idempotency key (UUID recommended).
    * Reuse the same key when retrying the same logical request.
    */
@@ -260,6 +278,12 @@ export interface QueryResult {
 
   /** Total duration in milliseconds */
   durationMs: number;
+
+  /** Optional execution data from tools (when includeData=true) */
+  data?: unknown;
+
+  /** Optional blob URL for persisted execution data (when includeDataUrl=true) */
+  dataUrl?: string;
 }
 
 /**
@@ -271,6 +295,8 @@ export interface QueryApiSuccessResponse {
   toolsUsed: QueryToolUsage[];
   cost: QueryCost;
   durationMs: number;
+  data?: unknown;
+  dataUrl?: string;
 }
 
 /**
