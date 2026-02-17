@@ -1,5 +1,5 @@
 /**
- * Coinglass MCP Server v1.1.0
+ * Coinglass MCP Server v1.2.0
  * 
  * Comprehensive crypto derivatives intelligence from Coinglass API.
  * 
@@ -7,11 +7,13 @@
  * Many endpoints require Professional tier or above and have been disabled.
  * See: https://coinglass.com/pricing
  * 
- * TIER 1: INTELLIGENCE LAYER (4 tools - Hobbyist compatible)
+ * TIER 1: INTELLIGENCE LAYER (6 tools - Hobbyist compatible)
  * - analyze_market_sentiment - Cross-market sentiment analysis  
  * - get_btc_valuation_score - Multi-indicator BTC valuation
  * - get_market_overview - Market overview with available data
  * - get_funding_rates - Current funding rates across exchanges
+ * - scan_oi_divergence - Scan for OI vs sentiment divergences across coins
+ * - get_oi_batch - Batch OI data for multiple coins in one call
  * 
  * TIER 2: RAW DATA LAYER (15 tools - Hobbyist compatible)
  * Access to Coinglass API endpoints available on Hobbyist tier
@@ -20,6 +22,11 @@
  * - find_funding_arbitrage, detect_liquidation_risk, analyze_smart_money
  * - scan_volume_anomalies, calculate_squeeze_probability
  * - Most historical/aggregated data endpoints
+ * 
+ * RATE LIMITING & CACHING:
+ * - Server-side rate limiter prevents exceeding upstream API quotas
+ * - TTL cache for frequently-accessed data (Fear & Greed, supported coins, etc.)
+ * - Batch endpoints reduce call count for multi-coin queries
  */
 
 import "dotenv/config";
@@ -39,8 +46,144 @@ import { createContextMiddleware } from "@ctxprotocol/sdk";
 const COINGLASS_API = "https://open-api-v4.coinglass.com";
 const API_KEY = process.env.COINGLASS_API_KEY || "";
 
-// Top coins for scans
-const TOP_COINS = ["BTC", "ETH", "SOL", "XRP", "BNB", "DOGE", "ADA", "AVAX", "LINK", "DOT"];
+const COINGLASS_PLAN = (process.env.COINGLASS_PLAN ?? "hobbyist").trim().toLowerCase();
+const DEFAULT_COINGLASS_RATE_LIMIT = 60;
+const MIN_COINGLASS_RATE_LIMIT = 1;
+const MAX_COINGLASS_RATE_LIMIT = 600;
+const DEFAULT_ANALYZE_COIN_LIMIT = 10;
+const DEFAULT_SCAN_COIN_LIMIT = 20;
+const MAX_DYNAMIC_COIN_LOOKUP_PAGE_SIZE = 120;
+const PROFESSIONAL_OR_HIGHER_PLANS = new Set(["professional", "pro", "enterprise", "institutional"]);
+const HOBBY_ALLOWED_ENDPOINTS = new Set([
+  "/api/index/fear-greed-history",
+  "/api/bull-market-peak-indicator",
+  "/api/index/ahr999",
+  "/api/index/bitcoin/rainbow-chart",
+  "/api/index/bitcoin/bubble-index",
+  "/api/index/puell-multiple",
+  "/api/futures/supported-coins",
+  "/api/futures/supported-exchanges",
+  "/api/futures/supported-exchange-pairs",
+  "/api/futures/coins-markets",
+  "/api/futures/pairs-markets",
+  "/api/futures/funding-rate/exchange-list",
+  "/api/futures/open-interest/exchange-list",
+  "/api/etf/bitcoin/net-assets/history",
+  "/api/exchange/balance/list",
+  "/api/exchange/balance/chart",
+]);
+
+function isHobbyConstrainedPlan(plan: string): boolean {
+  return !PROFESSIONAL_OR_HIGHER_PLANS.has(plan);
+}
+
+function getConfiguredRateLimitPerMinute(): number {
+  const rawRateLimit = process.env.COINGLASS_RATE_LIMIT;
+  if (!rawRateLimit) {
+    return DEFAULT_COINGLASS_RATE_LIMIT;
+  }
+
+  const parsedRateLimit = Number.parseInt(rawRateLimit, 10);
+  if (!Number.isFinite(parsedRateLimit)) {
+    return DEFAULT_COINGLASS_RATE_LIMIT;
+  }
+
+  return Math.min(
+    MAX_COINGLASS_RATE_LIMIT,
+    Math.max(MIN_COINGLASS_RATE_LIMIT, parsedRateLimit)
+  );
+}
+
+function assertEndpointAllowedForConfiguredPlan(endpoint: string): void {
+  if (!isHobbyConstrainedPlan(COINGLASS_PLAN)) {
+    return;
+  }
+
+  if (HOBBY_ALLOWED_ENDPOINTS.has(endpoint)) {
+    return;
+  }
+
+  throw new Error(
+    `Endpoint ${endpoint} is disabled for COINGLASS_PLAN=${COINGLASS_PLAN}. Upgrade plan or update allowlist explicitly.`
+  );
+}
+
+// ============================================================================
+// RATE LIMITER - Token bucket to prevent exceeding upstream API quotas
+// ============================================================================
+
+class RateLimiter {
+  private tokens: number;
+  private lastRefill: number;
+  private readonly maxTokens: number;
+  private readonly refillRate: number;
+
+  constructor(maxRequestsPerMinute: number) {
+    this.maxTokens = maxRequestsPerMinute;
+    this.tokens = maxRequestsPerMinute;
+    this.refillRate = maxRequestsPerMinute / 60_000;
+    this.lastRefill = Date.now();
+  }
+
+  async acquire(): Promise<void> {
+    this.refill();
+    if (this.tokens >= 1) {
+      this.tokens -= 1;
+      return;
+    }
+    const waitMs = Math.ceil((1 - this.tokens) / this.refillRate);
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+    this.refill();
+    this.tokens -= 1;
+  }
+
+  private refill(): void {
+    const now = Date.now();
+    const elapsed = now - this.lastRefill;
+    this.tokens = Math.min(this.maxTokens, this.tokens + elapsed * this.refillRate);
+    this.lastRefill = now;
+  }
+}
+
+const apiRateLimiter = new RateLimiter(
+  getConfiguredRateLimitPerMinute()
+);
+
+// ============================================================================
+// CACHE - TTL-based in-memory cache for frequently-accessed data
+// ============================================================================
+
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+
+class TtlCache {
+  private store = new Map<string, CacheEntry<unknown>>();
+
+  get<T>(key: string): T | undefined {
+    const entry = this.store.get(key);
+    if (!entry) return undefined;
+    if (Date.now() > entry.expiresAt) {
+      this.store.delete(key);
+      return undefined;
+    }
+    return entry.data as T;
+  }
+
+  set<T>(key: string, data: T, ttlMs: number): void {
+    this.store.set(key, { data, expiresAt: Date.now() + ttlMs });
+  }
+
+  has(key: string): boolean {
+    return this.get(key) !== undefined;
+  }
+}
+
+const cache = new TtlCache();
+const CACHE_TTL_SHORT = 30_000;
+const CACHE_TTL_MEDIUM = 120_000;
+const CACHE_TTL_LONG = 300_000;
 
 // ============================================================================
 // TOOL DEFINITIONS
@@ -85,11 +228,11 @@ const TOOLS = [
 
   {
     name: "analyze_market_sentiment",
-    description: "🧠 INTELLIGENCE: Analyze overall market sentiment using Fear & Greed Index, funding rates, long/short ratios, and liquidation data across top coins.",
+    description: "🧠 INTELLIGENCE: Analyze broad market sentiment using Fear & Greed plus bull-market indicators. Designed for Hobbyist tier where per-coin long/short and funding detail may be unavailable.",
     inputSchema: {
       type: "object" as const,
       properties: {
-        coins: { type: "array", items: { type: "string" }, description: "Coins to analyze (defaults to top 10)" },
+        coins: { type: "array", items: { type: "string" }, description: "Optional coin symbols for reporting context. If omitted, server resolves a dynamic top set by open interest." },
       },
       required: [],
     },
@@ -99,14 +242,25 @@ const TOOLS = [
         overallSentiment: { type: "string" },
         sentimentScore: { type: "number" },
         fearGreedIndex: { type: "object" },
+        bullMarketIndicators: { type: "object" },
+        analyzedCoins: { type: "array", items: { type: "string" } },
+        supportsLongShortThresholdCheck: { type: "boolean" },
         fundingBias: { type: "object" },
         longShortRatio: { type: "object" },
         recommendation: { type: "string" },
         confidence: { type: "number" },
         dataSources: { type: "array", items: { type: "string" } },
+        limitations: { type: "string" },
         fetchedAt: { type: "string" },
       },
-      required: ["overallSentiment", "sentimentScore", "confidence"],
+      required: [
+        "overallSentiment",
+        "sentimentScore",
+        "fearGreedIndex",
+        "recommendation",
+        "confidence",
+        "fetchedAt",
+      ],
     },
   },
   // ============================================================================
@@ -255,22 +409,79 @@ const TOOLS = [
 
   {
     name: "get_market_overview",
-    description: "🧠 INTELLIGENCE: Get complete derivatives market overview - total OI, volume, liquidations, funding, and sentiment across all exchanges.",
+    description: "🧠 INTELLIGENCE: Get a macro market snapshot (BTC price proxy, Fear & Greed, bull indicators, ETF flow, exchange BTC flow) with explicit Hobbyist-tier limitations.",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
     outputSchema: {
       type: "object" as const,
       properties: {
-        totalOpenInterest: { type: "number" },
-        totalVolume24h: { type: "number" },
-        totalLiquidations24h: { type: "object" },
-        avgFundingRate: { type: "number" },
+        btcPrice: { type: "number" },
+        btcPriceFormatted: { type: "string" },
+        fearGreedIndex: { type: "object" },
         marketSentiment: { type: "string" },
-        topGainers: { type: "array" },
-        topLosers: { type: "array" },
+        bullMarketIndicators: { type: "object" },
+        etfData: { type: "object" },
+        exchangeData: { type: "object" },
+        limitations: { type: "string" },
         dataSources: { type: "array", items: { type: "string" } },
         fetchedAt: { type: "string" },
       },
-      required: ["totalOpenInterest", "totalVolume24h"],
+      required: ["btcPrice", "fearGreedIndex", "marketSentiment", "fetchedAt"],
+    },
+  },
+
+  {
+    name: "scan_oi_divergence",
+    description: "🧠 INTELLIGENCE: Scan top coins for OI vs sentiment divergences using OI-change plus Fear & Greed regime. On Hobbyist tier this is a proxy signal and does not directly verify 80%+ long/short thresholds.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        coins: { type: "array", items: { type: "string" }, description: "Coins to scan. If omitted, server resolves top coins dynamically by open interest (max 20)." },
+        oi_change_threshold: { type: "number", description: "Minimum absolute OI change % (1h) to flag (default: 0.5)" },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        longTraps: { type: "array", description: "Coins where OI falling but longs may be trapped", items: { type: "object", properties: { symbol: { type: "string" }, oi_change_1h: { type: "number" }, oi_change_4h: { type: "number" }, oi_change_24h: { type: "number" }, total_oi_usd: { type: "number" }, signal_strength: { type: "string" } } } },
+        shortSqueezes: { type: "array", description: "Coins where OI rising into bearish sentiment", items: { type: "object" } },
+        scannedCoins: { type: "number" },
+        marketSentiment: { type: "object" },
+        summary: { type: "object" },
+        supportsLongShortThresholdCheck: { type: "boolean" },
+        recommendation: { type: "string" },
+        confidence: { type: "number" },
+        limitations: { type: "string" },
+        dataSources: { type: "array", items: { type: "string" } },
+        fetchedAt: { type: "string" },
+      },
+      required: [
+        "longTraps",
+        "shortSqueezes",
+        "scannedCoins",
+        "supportsLongShortThresholdCheck",
+      ],
+    },
+  },
+
+  {
+    name: "get_oi_batch",
+    description: "🧠 INTELLIGENCE: Get open interest data for MULTIPLE coins in a single call. Returns OI breakdown and change percentages for each coin. Use this instead of calling get_oi_by_exchange in a loop. Max 15 coins per call.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        symbols: { type: "array", items: { type: "string" }, description: "Coin symbols to fetch OI for (max 15)" },
+      },
+      required: ["symbols"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        results: { type: "array", items: { type: "object", properties: { symbol: { type: "string" }, total_oi_usd: { type: "number" }, oi_change_1h: { type: "number" }, oi_change_4h: { type: "number" }, oi_change_24h: { type: "number" }, exchange_count: { type: "number" } } } },
+        count: { type: "number" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["results", "count"],
     },
   },
 
@@ -297,8 +508,8 @@ const TOOLS = [
   },
   {
     name: "get_futures_pairs_markets",
-    description: "📊 RAW: Get detailed market data for a specific coin's futures trading pairs. Response properties use snake_case: exchange_name, symbol, base_asset, price, open_interest_usd, volume_usd, funding_rate.",
-    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Coin (e.g., BTC)" } }, required: ["symbol"] },
+    description: "📊 RAW: Get detailed market data for a coin's futures trading pairs. Response properties use snake_case: exchange_name, symbol, base_asset, price, open_interest_usd, volume_usd, funding_rate. If symbol is omitted, server resolves the highest-OI coin dynamically.",
+    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Optional coin symbol (e.g., BTC)." } }, required: [] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
@@ -309,8 +520,8 @@ const TOOLS = [
   },
   {
     name: "get_oi_by_exchange",
-    description: "📊 RAW: Get open interest breakdown by exchange for a coin. Response properties use snake_case: exchange, symbol, open_interest_usd, open_interest_quantity, open_interest_by_stable_coin_margin, open_interest_quantity_by_coin_margin, open_interest_quantity_by_stable_coin_margin, open_interest_change_percent_5m/_15m/_30m/_1h/_4h/_24h.",
-    inputSchema: { type: "object" as const, properties: { symbol: { type: "string" } }, required: ["symbol"] },
+    description: "📊 RAW: Get open interest breakdown by exchange for a coin. Response properties use snake_case: exchange, symbol, open_interest_usd, open_interest_quantity, open_interest_by_stable_coin_margin, open_interest_quantity_by_coin_margin, open_interest_quantity_by_stable_coin_margin, open_interest_change_percent_5m/_15m/_30m/_1h/_4h/_24h. If symbol is omitted, server resolves the highest-OI coin dynamically.",
+    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Optional coin symbol." } }, required: [] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
 
@@ -639,13 +850,13 @@ const TOOLS = [
   {
     name: "get_exchange_balance",
     description: "📊 RAW: Get exchange balance list for a coin. Response properties use snake_case: exchange_name, total_balance, balance_change_1d, balance_change_percent_1d, balance_change_7d, balance_change_percent_7d, balance_change_30d, balance_change_percent_30d.",
-    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", default: "BTC" } }, required: [] },
+    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Optional coin symbol. If omitted, server resolves the highest-OI coin dynamically." } }, required: [] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
     name: "get_exchange_balance_chart",
     description: "📊 RAW: Get historical exchange balance chart. Response is a nested object (not array) with snake_case properties: time_list (array of timestamps), data_map (object mapping exchange names to {balance_list: number[]}), price_list (array of prices).",
-    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", default: "BTC" } }, required: [] },
+    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Optional coin symbol. If omitted, server resolves the highest-OI coin dynamically." } }, required: [] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
 
@@ -702,7 +913,7 @@ const TOOLS = [
 // ============================================================================
 
 const server = new Server(
-  { name: "coinglass-intelligence", version: "1.0.0" },
+  { name: "coinglass-intelligence", version: "1.2.0" },
   { capabilities: { tools: {} } }
 );
 
@@ -716,6 +927,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
       case "analyze_market_sentiment": return await handleAnalyzeMarketSentiment(args);
       case "get_btc_valuation_score": return await handleGetBtcValuationScore();
       case "get_market_overview": return await handleGetMarketOverview();
+      case "scan_oi_divergence": return await handleScanOiDivergence(args);
+      case "get_oi_batch": return await handleGetOiBatch(args);
 
       // Tier 2 Raw Tools (Hobbyist-compatible)
       case "get_supported_coins": return await handleGetSupportedCoins();
@@ -789,7 +1002,18 @@ function successResult(data: Record<string, unknown>): CallToolResult {
 // API HELPERS
 // ============================================================================
 
-async function coinglassGet(endpoint: string, params: Record<string, string | number> = {}): Promise<unknown> {
+async function coinglassGet(endpoint: string, params: Record<string, string | number> = {}, cacheTtl?: number): Promise<unknown> {
+  assertEndpointAllowedForConfiguredPlan(endpoint);
+
+  const cacheKey = `${endpoint}:${JSON.stringify(params)}`;
+
+  if (cacheTtl) {
+    const cached = cache.get<unknown>(cacheKey);
+    if (cached !== undefined) return cached;
+  }
+
+  await apiRateLimiter.acquire();
+
   const url = new URL(`${COINGLASS_API}${endpoint}`);
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== "") url.searchParams.set(k, String(v));
@@ -800,7 +1024,100 @@ async function coinglassGet(endpoint: string, params: Record<string, string | nu
   if (!res.ok) throw new Error(`Coinglass API error (${res.status}): ${await res.text()}`);
   const json = await res.json() as { code: string; msg?: string; data?: unknown };
   if (json.code !== "0") throw new Error(`Coinglass error: ${json.msg || "Unknown"}`);
+
+  if (cacheTtl) {
+    cache.set(cacheKey, json.data, cacheTtl);
+  }
+
   return json.data;
+}
+
+type CoinMarketsRow = {
+  symbol?: string;
+  open_interest_usd?: number;
+  market_cap_usd?: number;
+  current_price?: number;
+};
+
+function normalizeCoinSymbols(input: unknown[], max: number): string[] {
+  const normalized: string[] = [];
+  const seen = new Set<string>();
+
+  for (const value of input) {
+    if (typeof value !== "string") {
+      continue;
+    }
+    const symbol = value.trim().toUpperCase();
+    if (!symbol || seen.has(symbol)) {
+      continue;
+    }
+    seen.add(symbol);
+    normalized.push(symbol);
+    if (normalized.length >= max) {
+      break;
+    }
+  }
+
+  return normalized;
+}
+
+async function getTopCoinsByOpenInterest(limit: number): Promise<string[]> {
+  const boundedLimit = Math.max(1, Math.min(limit, DEFAULT_SCAN_COIN_LIMIT));
+
+  try {
+    const perPage = Math.min(
+      Math.max(boundedLimit * 4, 40),
+      MAX_DYNAMIC_COIN_LOOKUP_PAGE_SIZE
+    );
+    const marketsData = await coinglassGet(
+      "/api/futures/coins-markets",
+      { page: 1, per_page: perPage },
+      CACHE_TTL_SHORT
+    );
+    const markets = Array.isArray(marketsData)
+      ? (marketsData as CoinMarketsRow[])
+      : [];
+
+    const rankedSymbols = markets
+      .filter((row) => typeof row.symbol === "string" && row.symbol.trim().length > 0)
+      .sort(
+        (a, b) =>
+          (b.open_interest_usd ?? 0) - (a.open_interest_usd ?? 0)
+      )
+      .map((row) => row.symbol as string);
+
+    const normalized = normalizeCoinSymbols(rankedSymbols, boundedLimit);
+    if (normalized.length > 0) {
+      return normalized;
+    }
+  } catch {
+    // Fall back to supported coins when market ranking is unavailable.
+  }
+
+  const supportedData = await coinglassGet(
+    "/api/futures/supported-coins",
+    {},
+    CACHE_TTL_LONG
+  ).catch(() => []);
+  const supportedCoins = Array.isArray(supportedData)
+    ? supportedData
+    : [];
+  return normalizeCoinSymbols(supportedCoins, boundedLimit);
+}
+
+async function resolveDynamicSymbol(symbolInput: unknown): Promise<string> {
+  if (typeof symbolInput === "string" && symbolInput.trim().length > 0) {
+    return symbolInput.trim().toUpperCase();
+  }
+
+  const dynamicTopCoins = await getTopCoinsByOpenInterest(1);
+  if (dynamicTopCoins.length > 0) {
+    return dynamicTopCoins[0];
+  }
+
+  throw new Error(
+    "Unable to resolve default symbol from live market data. Provide a symbol explicitly."
+  );
 }
 
 // ============================================================================
@@ -810,12 +1127,10 @@ async function coinglassGet(endpoint: string, params: Record<string, string | nu
 async function handleCalculateSqueezeProbability(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
   const symbol = (args?.symbol as string)?.toUpperCase() || "BTC";
 
-  // Note: Funding rates, OI, and L/S ratio endpoints require higher tier subscription
-  // Use available indicators for squeeze analysis
   const [fearGreedData, bullIndicators, exchangeBalance] = await Promise.all([
-    coinglassGet("/api/index/fear-greed-history").catch(() => null),
-    coinglassGet("/api/bull-market-peak-indicator").catch(() => []),
-    coinglassGet("/api/exchange/balance/list", { symbol }).catch(() => []),
+    coinglassGet("/api/index/fear-greed-history", {}, CACHE_TTL_MEDIUM).catch(() => null),
+    coinglassGet("/api/bull-market-peak-indicator", {}, CACHE_TTL_MEDIUM).catch(() => []),
+    coinglassGet("/api/exchange/balance/list", { symbol }, CACHE_TTL_SHORT).catch(() => []),
   ]);
 
   // Parse Fear & Greed for sentiment
@@ -893,11 +1208,21 @@ async function handleCalculateSqueezeProbability(args: Record<string, unknown> |
 }
 
 async function handleAnalyzeMarketSentiment(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
-  const coins = (args?.coins as string[]) || TOP_COINS;
+  const requestedCoins = Array.isArray(args?.coins)
+    ? normalizeCoinSymbols(args.coins as unknown[], DEFAULT_SCAN_COIN_LIMIT)
+    : [];
+  const coins =
+    requestedCoins.length > 0
+      ? requestedCoins
+      : await getTopCoinsByOpenInterest(DEFAULT_ANALYZE_COIN_LIMIT);
 
   const [fearGreed, bullIndicators] = await Promise.all([
-    coinglassGet("/api/index/fear-greed-history").catch(() => null),
-    coinglassGet("/api/bull-market-peak-indicator").catch(() => []),
+    coinglassGet("/api/index/fear-greed-history", {}, CACHE_TTL_MEDIUM).catch(
+      () => null
+    ),
+    coinglassGet("/api/bull-market-peak-indicator", {}, CACHE_TTL_MEDIUM).catch(
+      () => []
+    ),
   ]);
 
   // Parse fear & greed - API returns object with data_list, not array
@@ -933,6 +1258,9 @@ async function handleAnalyzeMarketSentiment(args: Record<string, unknown> | unde
         ? "Extreme fear - historically the best time to accumulate."
         : "Neutral sentiment. Market in wait-and-see mode.";
 
+  const hobbyistConstraintReason =
+    "Hobbyist tier in this server configuration does not provide direct per-coin long/short ratio and funding-bias metrics.";
+
   return successResult({
     overallSentiment,
     sentimentScore: Math.round(sentimentScore),
@@ -943,10 +1271,23 @@ async function handleAnalyzeMarketSentiment(args: Record<string, unknown> | unde
       piCycleTarget: piCycle?.target_value,
     },
     analyzedCoins: coins,
+    supportsLongShortThresholdCheck: false,
+    fundingBias: {
+      available: false,
+      data: [],
+      reason: hobbyistConstraintReason,
+    },
+    longShortRatio: {
+      available: false,
+      data: [],
+      thresholdCheckSupported: false,
+      reason: hobbyistConstraintReason,
+    },
     recommendation,
     confidence: 0.8,
     dataSources: ["fear-greed-history", "bull-market-peak-indicator"],
-    limitations: "Hobbyist tier: Funding rate data not available. Sentiment based on Fear & Greed + Bull indicators.",
+    limitations:
+      "Hobbyist tier: direct funding-bias and long/short ratio checks are unavailable in this server configuration. Sentiment is based on Fear & Greed + bull indicators.",
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -1000,11 +1341,11 @@ async function handleFindFundingArbitrage(args: Record<string, unknown> | undefi
 
 async function handleGetBtcValuationScore(): Promise<CallToolResult> {
   const [ahr999Data, rainbowData, bubbleData, fearGreedData, puellData] = await Promise.all([
-    coinglassGet("/api/index/ahr999").catch(() => null),
-    coinglassGet("/api/index/bitcoin/rainbow-chart").catch(() => null),
-    coinglassGet("/api/index/bitcoin/bubble-index").catch(() => null),
-    coinglassGet("/api/index/fear-greed-history").catch(() => null),
-    coinglassGet("/api/index/puell-multiple").catch(() => null),
+    coinglassGet("/api/index/ahr999", {}, CACHE_TTL_MEDIUM).catch(() => null),
+    coinglassGet("/api/index/bitcoin/rainbow-chart", {}, CACHE_TTL_MEDIUM).catch(() => null),
+    coinglassGet("/api/index/bitcoin/bubble-index", {}, CACHE_TTL_MEDIUM).catch(() => null),
+    coinglassGet("/api/index/fear-greed-history", {}, CACHE_TTL_MEDIUM).catch(() => null),
+    coinglassGet("/api/index/puell-multiple", {}, CACHE_TTL_MEDIUM).catch(() => null),
   ]);
 
   // Parse AHR999 - returns array of objects
@@ -1260,10 +1601,10 @@ async function handleScanVolumeAnomalies(args: Record<string, unknown> | undefin
 
 async function handleGetMarketOverview(): Promise<CallToolResult> {
   const [fearGreed, bullIndicators, etfData, exchangeBalance] = await Promise.all([
-    coinglassGet("/api/index/fear-greed-history").catch(() => null),
-    coinglassGet("/api/bull-market-peak-indicator").catch(() => []),
-    coinglassGet("/api/etf/bitcoin/net-assets/history").catch(() => []),
-    coinglassGet("/api/exchange/balance/list", { symbol: "BTC" }).catch(() => []),
+    coinglassGet("/api/index/fear-greed-history", {}, CACHE_TTL_MEDIUM).catch(() => null),
+    coinglassGet("/api/bull-market-peak-indicator", {}, CACHE_TTL_MEDIUM).catch(() => []),
+    coinglassGet("/api/etf/bitcoin/net-assets/history", {}, CACHE_TTL_MEDIUM).catch(() => []),
+    coinglassGet("/api/exchange/balance/list", { symbol: "BTC" }, CACHE_TTL_SHORT).catch(() => []),
   ]);
 
   // Fear & Greed - API returns object with data_list, NOT array
@@ -1327,17 +1668,209 @@ async function handleGetMarketOverview(): Promise<CallToolResult> {
 }
 
 // ============================================================================
+// SCAN & BATCH INTELLIGENCE HANDLERS
+// ============================================================================
+
+async function handleScanOiDivergence(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const oiChangeThreshold = (args?.oi_change_threshold as number) || 0.5;
+  const requestedCoins = Array.isArray(args?.coins)
+    ? normalizeCoinSymbols(args.coins as unknown[], DEFAULT_SCAN_COIN_LIMIT)
+    : [];
+
+  const targetCoins =
+    requestedCoins.length > 0
+      ? requestedCoins
+      : await getTopCoinsByOpenInterest(DEFAULT_SCAN_COIN_LIMIT);
+
+  const fearGreed = await coinglassGet(
+    "/api/index/fear-greed-history",
+    {},
+    CACHE_TTL_MEDIUM
+  ).catch(() => null);
+
+  let fgValue = 50;
+  let fgSentiment = "Neutral";
+  const fgData = fearGreed as { data_list?: number[] } | null;
+  if (fgData?.data_list && fgData.data_list.length > 0) {
+    fgValue = fgData.data_list.at(-1) ?? 50;
+    fgSentiment = fgValue >= 75 ? "Extreme Greed" : fgValue >= 55 ? "Greed" : fgValue >= 45 ? "Neutral" : fgValue >= 25 ? "Fear" : "Extreme Fear";
+  }
+
+  const BATCH_SIZE = 10;
+  const oiResults: Array<{
+    symbol: string;
+    totalOiUsd: number;
+    oiChange1h: number;
+    oiChange4h: number;
+    oiChange24h: number;
+    exchanges: number;
+  }> = [];
+
+  for (let i = 0; i < targetCoins.length; i += BATCH_SIZE) {
+    const batch = targetCoins.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(
+      batch.map(async (symbol) => {
+        try {
+          const data = await coinglassGet("/api/futures/open-interest/exchange-list", { symbol }, CACHE_TTL_SHORT);
+          const exchanges = Array.isArray(data) ? data : [];
+          const all = exchanges.find((e: { exchange?: string }) => e.exchange === "All") as {
+            open_interest_usd?: number;
+            open_interest_change_percent_1h?: number;
+            open_interest_change_percent_4h?: number;
+            open_interest_change_percent_24h?: number;
+          } | undefined;
+          return {
+            symbol,
+            totalOiUsd: all?.open_interest_usd ?? 0,
+            oiChange1h: all?.open_interest_change_percent_1h ?? 0,
+            oiChange4h: all?.open_interest_change_percent_4h ?? 0,
+            oiChange24h: all?.open_interest_change_percent_24h ?? 0,
+            exchanges: exchanges.length - 1,
+          };
+        } catch {
+          return null;
+        }
+      })
+    );
+    for (const r of results) {
+      if (r) oiResults.push(r);
+    }
+  }
+
+  const isFearful = fgValue < 45;
+  const isGreedy = fgValue > 55;
+
+  const longTraps = oiResults
+    .filter((r) => {
+      const oiFalling = r.oiChange1h < -oiChangeThreshold || r.oiChange4h < -oiChangeThreshold * 2;
+      return oiFalling && isGreedy;
+    })
+    .map((r) => ({
+      symbol: r.symbol,
+      oi_change_1h: r.oiChange1h,
+      oi_change_4h: r.oiChange4h,
+      oi_change_24h: r.oiChange24h,
+      total_oi_usd: r.totalOiUsd,
+      signal_strength: Math.abs(r.oiChange1h) > 2 ? "strong" : Math.abs(r.oiChange1h) > 1 ? "moderate" : "weak",
+      reason: `OI declining (${r.oiChange1h.toFixed(2)}% 1h) while market sentiment is ${fgSentiment} (${fgValue}) - longs may be getting liquidated`,
+    }))
+    .sort((a, b) => a.oi_change_1h - b.oi_change_1h);
+
+  const shortSqueezes = oiResults
+    .filter((r) => {
+      const oiRising = r.oiChange1h > oiChangeThreshold || r.oiChange4h > oiChangeThreshold * 2;
+      return oiRising && isFearful;
+    })
+    .map((r) => ({
+      symbol: r.symbol,
+      oi_change_1h: r.oiChange1h,
+      oi_change_4h: r.oiChange4h,
+      oi_change_24h: r.oiChange24h,
+      total_oi_usd: r.totalOiUsd,
+      signal_strength: r.oiChange1h > 2 ? "strong" : r.oiChange1h > 1 ? "moderate" : "weak",
+      reason: `OI increasing (${r.oiChange1h.toFixed(2)}% 1h) while market sentiment is ${fgSentiment} (${fgValue}) - new shorts may be squeezed`,
+    }))
+    .sort((a, b) => b.oi_change_1h - a.oi_change_1h);
+
+  const oiFallingCoins = oiResults.filter((r) => r.oiChange1h < -oiChangeThreshold);
+  const oiRisingCoins = oiResults.filter((r) => r.oiChange1h > oiChangeThreshold);
+
+  let recommendation: string;
+  if (longTraps.length > 3) {
+    recommendation = `Multiple potential long traps detected (${longTraps.length} coins). OI falling in greedy market suggests longs being liquidated. Consider defensive positioning.`;
+  } else if (shortSqueezes.length > 3) {
+    recommendation = `Multiple potential short squeezes brewing (${shortSqueezes.length} coins). OI rising in fearful market suggests shorts may get squeezed.`;
+  } else if (longTraps.length > 0 || shortSqueezes.length > 0) {
+    recommendation = `Some divergences found: ${longTraps.length} potential long trap(s), ${shortSqueezes.length} potential short squeeze(s). Monitor these coins closely.`;
+  } else {
+    recommendation = `No significant OI-sentiment divergences found across ${oiResults.length} coins. Market positioning appears consistent with sentiment.`;
+  }
+
+  return successResult({
+    longTraps,
+    shortSqueezes,
+    scannedCoins: oiResults.length,
+    marketSentiment: {
+      fearGreedIndex: fgValue,
+      sentiment: fgSentiment,
+      marketBias: isGreedy ? "bullish_bias" : isFearful ? "bearish_bias" : "neutral",
+    },
+    summary: {
+      coinsWithFallingOi: oiFallingCoins.length,
+      coinsWithRisingOi: oiRisingCoins.length,
+      coinsStable: oiResults.length - oiFallingCoins.length - oiRisingCoins.length,
+    },
+    supportsLongShortThresholdCheck: false,
+    recommendation,
+    confidence: oiResults.length >= 20 ? 0.8 : oiResults.length >= 10 ? 0.7 : 0.6,
+    limitations: "Hobbyist tier: Long/short ratio data not available. Divergence based on OI changes + Fear & Greed sentiment.",
+    dataSources: ["open-interest/exchange-list", "fear-greed-history", "bull-market-peak-indicator"],
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleGetOiBatch(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const symbols = (args?.symbols as string[]) || [];
+
+  if (symbols.length === 0) {
+    return errorResult("symbols array is required and must not be empty");
+  }
+
+  const targetSymbols = symbols.slice(0, 15).map((s) => s.toUpperCase());
+
+  const BATCH_SIZE = 8;
+  const results: Array<Record<string, unknown>> = [];
+
+  for (let i = 0; i < targetSymbols.length; i += BATCH_SIZE) {
+    const batch = targetSymbols.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.all(
+      batch.map(async (symbol) => {
+        try {
+          const data = await coinglassGet("/api/futures/open-interest/exchange-list", { symbol }, CACHE_TTL_SHORT);
+          const exchanges = Array.isArray(data) ? data : [];
+          const all = exchanges.find((e: { exchange?: string }) => e.exchange === "All") as {
+            open_interest_usd?: number;
+            open_interest_quantity?: number;
+            open_interest_change_percent_1h?: number;
+            open_interest_change_percent_4h?: number;
+            open_interest_change_percent_24h?: number;
+          } | undefined;
+          return {
+            symbol,
+            total_oi_usd: all?.open_interest_usd ?? 0,
+            total_oi_quantity: all?.open_interest_quantity ?? 0,
+            oi_change_1h: all?.open_interest_change_percent_1h ?? 0,
+            oi_change_4h: all?.open_interest_change_percent_4h ?? 0,
+            oi_change_24h: all?.open_interest_change_percent_24h ?? 0,
+            exchange_count: exchanges.length - 1,
+          };
+        } catch {
+          return { symbol, error: "Failed to fetch OI data", total_oi_usd: 0 };
+        }
+      })
+    );
+    results.push(...batchResults);
+  }
+
+  return successResult({
+    results,
+    count: results.length,
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+// ============================================================================
 // TIER 2: RAW DATA HANDLERS
 // ============================================================================
 
 async function handleGetSupportedCoins(): Promise<CallToolResult> {
-  const data = await coinglassGet("/api/futures/supported-coins");
+  const data = await coinglassGet("/api/futures/supported-coins", {}, CACHE_TTL_LONG);
   const coins = Array.isArray(data) ? data : [];
   return successResult({ coins, count: coins.length, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetSupportedExchanges(): Promise<CallToolResult> {
-  const data = await coinglassGet("/api/futures/supported-exchanges");
+  const data = await coinglassGet("/api/futures/supported-exchanges", {}, CACHE_TTL_LONG);
   const exchanges = Array.isArray(data) ? data : [];
   return successResult({ exchanges, count: exchanges.length, fetchedAt: new Date().toISOString() });
 }
@@ -1356,9 +1889,9 @@ async function handleGetFuturesCoinsMarkets(): Promise<CallToolResult> {
 }
 
 async function handleGetFuturesPairsMarkets(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
-  const symbol = (args?.symbol as string)?.toUpperCase() || "BTC";
+  const symbol = await resolveDynamicSymbol(args?.symbol);
   const data = await coinglassGet("/api/futures/pairs-markets", { symbol });
-  return successResult({ data, fetchedAt: new Date().toISOString() });
+  return successResult({ symbol, data, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetPriceHistory(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -1372,13 +1905,18 @@ async function handleGetPriceHistory(args: Record<string, unknown> | undefined):
 }
 
 async function handleGetFundingRates(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
-  const symbol = (args?.symbol as string)?.toUpperCase() || "BTC";
+  const symbol =
+    typeof args?.symbol === "string" && args.symbol.trim().length > 0
+      ? args.symbol.trim().toUpperCase()
+      : undefined;
   // NOTE: Use v4 kebab-case endpoint path - works on Hobbyist tier
   const data = await coinglassGet("/api/futures/funding-rate/exchange-list");
   
   // Filter by symbol if provided
   const allData = Array.isArray(data) ? data : [];
-  const filtered = symbol ? allData.filter((d: { symbol?: string }) => d.symbol === symbol) : allData;
+  const filtered = symbol
+    ? allData.filter((d: { symbol?: string }) => d.symbol === symbol)
+    : allData;
   
   return successResult({ 
     symbol: symbol || "ALL",
@@ -1432,7 +1970,7 @@ async function handleGetFundingArbitrageList(): Promise<CallToolResult> {
 }
 
 async function handleGetOiByExchange(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
-  const symbol = (args?.symbol as string)?.toUpperCase() || "BTC";
+  const symbol = await resolveDynamicSymbol(args?.symbol);
   // NOTE: Use v4 kebab-case endpoint path - works on Hobbyist tier
   const data = await coinglassGet("/api/futures/open-interest/exchange-list", { symbol });
   return successResult({ symbol, data, fetchedAt: new Date().toISOString() });
@@ -1679,15 +2217,15 @@ async function handleGetBtcEtfNetflow(args: Record<string, unknown> | undefined)
 }
 
 async function handleGetExchangeBalance(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
-  const symbol = (args?.symbol as string) || "BTC";
+  const symbol = await resolveDynamicSymbol(args?.symbol);
   const data = await coinglassGet("/api/exchange/balance/list", { symbol });
-  return successResult({ data, fetchedAt: new Date().toISOString() });
+  return successResult({ symbol, data, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetExchangeBalanceChart(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
-  const symbol = (args?.symbol as string) || "BTC";
+  const symbol = await resolveDynamicSymbol(args?.symbol);
   const data = await coinglassGet("/api/exchange/balance/chart", { symbol });
-  return successResult({ data, fetchedAt: new Date().toISOString() });
+  return successResult({ symbol, data, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetSpotCoinsMarkets(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -1729,7 +2267,11 @@ app.get("/health", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     server: "coinglass-intelligence",
-    version: "1.0.0",
+    version: "1.2.0",
+    configuredPlan: COINGLASS_PLAN,
+    endpointPolicy: isHobbyConstrainedPlan(COINGLASS_PLAN)
+      ? "hobby-allowlist"
+      : "professional",
     tier1Tools: TOOLS.filter(t => t.description.startsWith("🧠")).map(t => t.name),
     tier2Tools: TOOLS.filter(t => t.description.startsWith("📊")).map(t => t.name),
     totalTools: TOOLS.length,
@@ -1745,7 +2287,7 @@ app.post("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   } else if (!sessionId && isInitializeRequest(req.body)) {
     transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
-      onsessioninitialized: (id) => { transports[id] = transport; console.log(`Session: ${id}`); },
+      onsessioninitialized: (id: string) => { transports[id] = transport; console.log(`Session: ${id}`); },
     });
     transport.onclose = () => { if (transport.sessionId) delete transports[transport.sessionId]; };
     await server.connect(transport);
@@ -1772,13 +2314,19 @@ app.delete("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
 
 const port = Number(process.env.PORT || 4005);
 app.listen(port, () => {
-  console.log("\n🚀 Coinglass Intelligence MCP Server v1.1.0");
-  console.log(`   Crypto derivatives intelligence (Hobbyist tier)\n`);
+  console.log("\n🚀 Coinglass Intelligence MCP Server v1.2.0");
+  console.log(`   Crypto derivatives intelligence (${COINGLASS_PLAN} tier)\n`);
   console.log(`🔒 Context Protocol Security Enabled`);
   console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health\n`);
-  console.log(`⚠️  API TIER: Hobbyist - Some tools disabled (require Professional+)`);
-  console.log(`   Upgrade at: https://coinglass.com/pricing\n`);
+  if (isHobbyConstrainedPlan(COINGLASS_PLAN)) {
+    console.log(
+      `⚠️  API TIER: ${COINGLASS_PLAN} - Hobby allowlist guard is active; higher-tier endpoints are blocked.`
+    );
+    console.log(`   Upgrade at: https://coinglass.com/pricing\n`);
+  } else {
+    console.log(`✅ API TIER: ${COINGLASS_PLAN} - hobby endpoint guard disabled\n`);
+  }
   console.log(`🧠 TIER 1 - INTELLIGENCE TOOLS (${TOOLS.filter(t => t.description.startsWith("🧠")).length}):`);
   TOOLS.filter(t => t.description.startsWith("🧠")).forEach(t => console.log(`   • ${t.name}`));
   console.log(`\n📊 TIER 2 - RAW DATA TOOLS (${TOOLS.filter(t => t.description.startsWith("📊")).length}):`);
