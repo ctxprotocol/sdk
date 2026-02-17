@@ -279,158 +279,39 @@ const TOOLS = [
   // ============================================================================
   {
     name: "get_supported_coins",
-    description: "📊 RAW: Get list of all supported coin symbols on Coinglass (e.g. BTC, ETH, SOL)",
+    description: "📊 RAW: Get list of all supported coins on Coinglass",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        coins: { type: "array", items: { type: "string" }, description: "Array of supported coin symbol strings (e.g. ['BTC', 'ETH', 'SOL', ...])" },
-        count: { type: "number", description: "Total number of supported coins" },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["coins", "count"],
-    },
+    outputSchema: { type: "object" as const, properties: { coins: { type: "array" }, count: { type: "number" } }, required: ["coins"] },
   },
   {
     name: "get_supported_exchanges",
-    description: "📊 RAW: Get list of all supported futures exchange names (e.g. Binance, OKX, Bybit)",
+    description: "📊 RAW: Get list of all supported futures exchanges",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        exchanges: { type: "array", items: { type: "string" }, description: "Array of supported exchange name strings (e.g. ['Binance', 'OKX', 'Bybit', ...])" },
-        count: { type: "number", description: "Total number of supported exchanges" },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["exchanges", "count"],
-    },
+    outputSchema: { type: "object" as const, properties: { exchanges: { type: "array" }, count: { type: "number" } }, required: ["exchanges"] },
   },
   {
     name: "get_exchange_pairs",
-    description: "📊 RAW: Get supported trading pairs for futures exchanges — returns a map of exchange names to their available instruments. NOTE: All response property names use snake_case.",
-    inputSchema: { type: "object" as const, properties: { exchange: { type: "string", description: "Exchange name to filter by (e.g. 'Binance'). If omitted, returns pairs for all exchanges." } }, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        data: {
-          type: "object",
-          description: "Map of exchange names to arrays of instrument objects. Keys are exchange names (e.g. 'Binance', 'Bitget'). Each instrument object has snake_case properties: instrument_id (e.g. 'BTCUSD_PERP'), base_asset (e.g. 'BTC'), quote_asset (e.g. 'USD').",
-        },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["data"],
-    },
+    description: "📊 RAW: Get supported trading pairs for futures exchanges. Response is a map of exchange names to arrays of instrument objects with snake_case properties: instrument_id, base_asset, quote_asset.",
+    inputSchema: { type: "object" as const, properties: { exchange: { type: "string" } }, required: [] },
+    outputSchema: { type: "object" as const, properties: { data: { type: "object" } }, required: ["data"] },
   },
   {
     name: "get_futures_pairs_markets",
-    description: "📊 RAW: Get detailed market data for a specific coin's futures trading pairs across exchanges. NOTE: All response property names use snake_case.",
-    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Coin symbol (e.g., BTC, ETH)" } }, required: ["symbol"] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        data: {
-          type: "array",
-          description: "Array of futures pair market data objects (snake_case properties), one per exchange/pair combination",
-          items: {
-            type: "object",
-            properties: {
-              exchange_name: { type: "string", description: "Exchange name (e.g. 'Binance')" },
-              symbol: { type: "string", description: "Trading pair symbol (e.g. 'BTCUSDT')" },
-              base_asset: { type: "string", description: "Base asset (e.g. 'BTC')" },
-              price: { type: "number", description: "Current futures price" },
-              open_interest_usd: { type: "number", description: "Open interest in USD" },
-              volume_usd: { type: "number", description: "24h trading volume in USD" },
-              funding_rate: { type: "number", description: "Current funding rate" },
-            },
-          },
-        },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["data"],
-    },
+    description: "📊 RAW: Get detailed market data for a specific coin's futures trading pairs. Response properties use snake_case: exchange_name, symbol, base_asset, price, open_interest_usd, volume_usd, funding_rate.",
+    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Coin (e.g., BTC)" } }, required: ["symbol"] },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
     name: "get_funding_rates",
-    description: "📊 RAW: Get current funding rates for a coin across all exchanges — shows how much longs pay shorts (or vice versa) on perpetual contracts. NOTE: All response property names use snake_case.",
-    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Coin symbol to filter by (e.g., BTC, ETH). If omitted, returns all coins." } }, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string", description: "The coin symbol that was queried, or 'ALL' if no filter was applied" },
-        data: {
-          type: "array",
-          description: "Array of funding rate objects (snake_case properties), one per coin",
-          items: {
-            type: "object",
-            properties: {
-              symbol: { type: "string", description: "Coin symbol (e.g. 'BTC')" },
-              stablecoin_margin_list: {
-                type: "array",
-                description: "Funding rates for stablecoin-margined (USDT/USD) perpetual contracts, one entry per exchange",
-                items: {
-                  type: "object",
-                  properties: {
-                    exchange: { type: "string", description: "Exchange name (e.g. 'BINANCE', 'OKX')" },
-                    funding_rate: { type: "number", description: "Current funding rate (positive = longs pay shorts)" },
-                    next_funding_time: { type: "number", description: "Unix timestamp in milliseconds of the next funding event" },
-                  },
-                },
-              },
-              token_margin_list: {
-                type: "array",
-                description: "Funding rates for token-margined (coin-margined) perpetual contracts, one entry per exchange",
-                items: {
-                  type: "object",
-                  properties: {
-                    exchange: { type: "string", description: "Exchange name (e.g. 'BINANCE')" },
-                    funding_rate: { type: "number", description: "Current funding rate" },
-                    next_funding_time: { type: "number", description: "Unix timestamp in milliseconds of the next funding event" },
-                  },
-                },
-              },
-            },
-          },
-        },
-        count: { type: "number", description: "Number of items in the data array" },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["data", "count"],
-    },
+    description: "📊 RAW: Get current funding rates for a coin across all exchanges. Response properties use snake_case. Each item has: symbol, stablecoin_margin_list (array of {exchange, funding_rate, next_funding_time}), token_margin_list (array of {exchange, funding_rate, next_funding_time}).",
+    inputSchema: { type: "object" as const, properties: { symbol: { type: "string" } }, required: [] },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
     name: "get_oi_by_exchange",
-    description: "📊 RAW: Get open interest breakdown by exchange for a coin — shows total open interest per exchange in USD. NOTE: All response property names use snake_case.",
-    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Coin symbol (e.g., BTC, ETH)" } }, required: ["symbol"] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        symbol: { type: "string", description: "The coin symbol that was queried" },
-        data: {
-          type: "array",
-          description: "Array of open interest objects (snake_case properties), one per exchange. Includes an 'All' entry for the total across all exchanges.",
-          items: {
-            type: "object",
-            properties: {
-              exchange: { type: "string", description: "Exchange name (e.g. 'Binance', 'CME', 'All')" },
-              symbol: { type: "string", description: "Token symbol (e.g. 'BTC')" },
-              open_interest_usd: { type: "number", description: "Total open interest value in USD" },
-              open_interest_quantity: { type: "number", description: "Total open interest quantity in coin units" },
-              open_interest_by_stable_coin_margin: { type: "number", description: "Open interest value in USD for stablecoin-margined futures" },
-              open_interest_quantity_by_coin_margin: { type: "number", description: "Open interest quantity for coin-margined futures" },
-              open_interest_quantity_by_stable_coin_margin: { type: "number", description: "Open interest quantity for stablecoin-margined futures" },
-              open_interest_change_percent_5m: { type: "number", description: "OI change (%) in the last 5 minutes" },
-              open_interest_change_percent_15m: { type: "number", description: "OI change (%) in the last 15 minutes" },
-              open_interest_change_percent_30m: { type: "number", description: "OI change (%) in the last 30 minutes" },
-              open_interest_change_percent_1h: { type: "number", description: "OI change (%) in the last 1 hour" },
-              open_interest_change_percent_4h: { type: "number", description: "OI change (%) in the last 4 hours" },
-              open_interest_change_percent_24h: { type: "number", description: "OI change (%) in the last 24 hours" },
-            },
-          },
-        },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["symbol", "data"],
-    },
+    description: "📊 RAW: Get open interest breakdown by exchange for a coin. Response properties use snake_case: exchange, symbol, open_interest_usd, open_interest_quantity, open_interest_by_stable_coin_margin, open_interest_quantity_by_coin_margin, open_interest_quantity_by_stable_coin_margin, open_interest_change_percent_5m/_15m/_30m/_1h/_4h/_24h.",
+    inputSchema: { type: "object" as const, properties: { symbol: { type: "string" } }, required: ["symbol"] },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
 
   // ============================================================================
@@ -690,120 +571,33 @@ const TOOLS = [
   // ============================================================================
   {
     name: "get_ahr999_index",
-    description: "📊 RAW: Get AHR999 index history — a BTC accumulation indicator where <0.45 = strong buy, <1.2 = buy, >4 = bubble. NOTE: Response property names use snake_case.",
+    description: "📊 RAW: Get AHR999 index (BTC accumulation indicator). Response items use snake_case: ahr999_value (number), date, price.",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        data: {
-          type: "array",
-          description: "Array of AHR999 data points ordered by time (oldest first, latest last)",
-          items: {
-            type: "object",
-            properties: {
-              ahr999_value: { type: "number", description: "AHR999 index value. <0.45 = strong buy, <1.2 = buy, <4 = hold, >4 = sell/bubble" },
-              date: { type: "string", description: "Date of this data point" },
-              price: { type: "number", description: "BTC price at this data point" },
-            },
-          },
-        },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["data"],
-    },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
     name: "get_rainbow_chart",
-    description: "📊 RAW: Get Bitcoin Rainbow Chart data — a logarithmic regression model that shows BTC valuation bands over time. NOTE: Response property names use snake_case.",
+    description: "📊 RAW: Get Bitcoin Rainbow Chart data. Response properties use snake_case.",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        data: {
-          type: "array",
-          description: "Array of rainbow chart data points. Each point includes BTC price and the rainbow band boundaries at that time.",
-          items: {
-            type: "object",
-            properties: {
-              date: { type: "string", description: "Date of this data point" },
-              price: { type: "number", description: "BTC price" },
-              index: { type: "number", description: "Rainbow band index (lower = undervalued, higher = overvalued)" },
-            },
-          },
-        },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["data"],
-    },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
     name: "get_fear_greed_index",
-    description: "📊 RAW: Get Crypto Fear & Greed Index history — values 0-100 where 0 = Extreme Fear and 100 = Extreme Greed. NOTE: Response is an object (not array) with snake_case properties.",
+    description: "📊 RAW: Get Crypto Fear & Greed Index history. Response is an object (NOT an array) with snake_case properties: data_list (array of index values 0-100), price_list (array of BTC prices), time_list (array of timestamps). Last element in each array is the most recent.",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        data: {
-          type: "object",
-          description: "Fear & Greed history object with parallel arrays. NOTE: this is an object (not an array) containing data_list, price_list, and time_list.",
-          properties: {
-            data_list: { type: "array", items: { type: "number" }, description: "Array of Fear & Greed index values (0-100). Last element is the most recent." },
-            price_list: { type: "array", items: { type: "number" }, description: "Array of BTC prices at each data point. Last element is the most recent." },
-            time_list: { type: "array", items: { type: "number" }, description: "Array of Unix timestamps in milliseconds for each data point" },
-          },
-        },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["data"],
-    },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
     name: "get_bubble_index",
-    description: "📊 RAW: Get Bitcoin Bubble Index data — measures how far BTC deviates from its fair value trend. NOTE: Response property names use snake_case.",
+    description: "📊 RAW: Get Bitcoin Bubble Index data. Response items use snake_case: bubble_index (number), date, price.",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        data: {
-          type: "array",
-          description: "Array of bubble index data points ordered by time (oldest first, latest last)",
-          items: {
-            type: "object",
-            properties: {
-              bubble_index: { type: "number", description: "Bubble index value. Higher values indicate more overvaluation." },
-              date: { type: "string", description: "Date of this data point" },
-              price: { type: "number", description: "BTC price at this data point" },
-            },
-          },
-        },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["data"],
-    },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
     name: "get_puell_multiple",
-    description: "📊 RAW: Get Puell Multiple indicator — ratio of daily BTC mining revenue to 365-day average. <0.5 = strong buy, >4 = sell zone. NOTE: Response property names use snake_case.",
+    description: "📊 RAW: Get Puell Multiple indicator. Response items use snake_case: puell_multiple (number), date, price.",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        data: {
-          type: "array",
-          description: "Array of Puell Multiple data points ordered by time (oldest first, latest last)",
-          items: {
-            type: "object",
-            properties: {
-              puell_multiple: { type: "number", description: "Puell Multiple value. <0.5 = strong buy, <1 = buy, <4 = hold, >4 = sell" },
-              date: { type: "string", description: "Date of this data point" },
-              price: { type: "number", description: "BTC price at this data point" },
-            },
-          },
-        },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["data"],
-    },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   // ============================================================================
   // DISABLED - REQUIRES PROFESSIONAL TIER
@@ -824,28 +618,9 @@ const TOOLS = [
 
   {
     name: "get_bull_market_indicators",
-    description: "📊 RAW: Get Bull Market Peak Indicators — multiple indicators that historically signal market cycle tops. NOTE: Response property names use snake_case.",
+    description: "📊 RAW: Get Bull Market Peak Indicators. Response items use snake_case: indicator_name, current_value, target_value, hit_status (boolean).",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        data: {
-          type: "array",
-          description: "Array of bull market peak indicator objects, one per indicator",
-          items: {
-            type: "object",
-            properties: {
-              indicator_name: { type: "string", description: "Name of the indicator (e.g. 'Ahr999', 'Pi Cycle Top', 'Puell Multiple')" },
-              current_value: { type: "string", description: "Current value of the indicator" },
-              target_value: { type: "string", description: "Target/threshold value that signals a market peak" },
-              hit_status: { type: "boolean", description: "Whether this indicator has been triggered (true = peak signal active)" },
-            },
-          },
-        },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["data"],
-    },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
 
   // ============================================================================
@@ -853,27 +628,9 @@ const TOOLS = [
   // ============================================================================
   {
     name: "get_btc_etf_netflow",
-    description: "📊 RAW: Get Bitcoin ETF net assets and flow history — tracks institutional inflows/outflows across spot BTC ETFs. NOTE: All response property names use snake_case.",
-    inputSchema: { type: "object" as const, properties: { ticker: { type: "string", description: "ETF ticker to filter by (e.g., GBTC, IBIT). If omitted, returns all ETFs." } }, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        data: {
-          type: "array",
-          description: "Array of ETF net asset/flow data points ordered by time",
-          items: {
-            type: "object",
-            properties: {
-              net_assets_usd: { type: "number", description: "Total net assets in USD" },
-              change_usd: { type: "number", description: "Daily net flow change in USD (positive = inflow, negative = outflow)" },
-              date: { type: "string", description: "Date of this data point" },
-            },
-          },
-        },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["data"],
-    },
+    description: "📊 RAW: Get Bitcoin ETF net assets/flow history. Response properties use snake_case: net_assets_usd, change_usd, date.",
+    inputSchema: { type: "object" as const, properties: { ticker: { type: "string", description: "ETF ticker (e.g., GBTC, IBIT)" } }, required: [] },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
 
   // ============================================================================
@@ -881,56 +638,15 @@ const TOOLS = [
   // ============================================================================
   {
     name: "get_exchange_balance",
-    description: "📊 RAW: Get exchange balance list for a coin — shows how much of a coin each exchange holds and recent balance changes. NOTE: All response property names use snake_case.",
-    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", default: "BTC", description: "Coin symbol (e.g., BTC, ETH, SOL)" } }, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        data: {
-          type: "array",
-          description: "Array of exchange balance objects, one per exchange",
-          items: {
-            type: "object",
-            properties: {
-              exchange_name: { type: "string", description: "Exchange name (e.g. 'Binance', 'Coinbase', 'OKX')" },
-              total_balance: { type: "number", description: "Total balance of the queried coin held on this exchange" },
-              balance_change_1d: { type: "number", description: "Absolute balance change in the last 24 hours (positive = inflow, negative = outflow)" },
-              balance_change_percent_1d: { type: "number", description: "Percent balance change in the last 24 hours" },
-              balance_change_7d: { type: "number", description: "Absolute balance change in the last 7 days" },
-              balance_change_percent_7d: { type: "number", description: "Percent balance change in the last 7 days" },
-              balance_change_30d: { type: "number", description: "Absolute balance change in the last 30 days" },
-              balance_change_percent_30d: { type: "number", description: "Percent balance change in the last 30 days" },
-            },
-          },
-        },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["data"],
-    },
+    description: "📊 RAW: Get exchange balance list for a coin. Response properties use snake_case: exchange_name, total_balance, balance_change_1d, balance_change_percent_1d, balance_change_7d, balance_change_percent_7d, balance_change_30d, balance_change_percent_30d.",
+    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", default: "BTC" } }, required: [] },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
     name: "get_exchange_balance_chart",
-    description: "📊 RAW: Get historical exchange balance chart — time-series data showing how exchange holdings changed over time. NOTE: All response property names use snake_case.",
-    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", default: "BTC", description: "Coin symbol (e.g., BTC, ETH, SOL)" } }, required: [] },
-    outputSchema: {
-      type: "object" as const,
-      properties: {
-        data: {
-          type: "object",
-          description: "Chart data object with parallel arrays for timestamps and per-exchange balance history",
-          properties: {
-            time_list: { type: "array", items: { type: "number" }, description: "Array of Unix timestamps in milliseconds" },
-            data_map: {
-              type: "object",
-              description: "Map of exchange names to their balance history. Keys are exchange names (e.g. 'Binance'), values are objects containing balance_list (array of numbers matching time_list)",
-            },
-            price_list: { type: "array", items: { type: "number" }, description: "Array of coin prices at each timestamp (matches time_list)" },
-          },
-        },
-        fetchedAt: { type: "string", description: "ISO 8601 timestamp of when the data was fetched" },
-      },
-      required: ["data"],
-    },
+    description: "📊 RAW: Get historical exchange balance chart. Response is a nested object (not array) with snake_case properties: time_list (array of timestamps), data_map (object mapping exchange names to {balance_list: number[]}), price_list (array of prices).",
+    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", default: "BTC" } }, required: [] },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
 
   // ============================================================================
