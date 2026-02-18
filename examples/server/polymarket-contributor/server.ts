@@ -32,6 +32,340 @@ const GAMMA_API_URL = "https://gamma-api.polymarket.com";
 const CLOB_API_URL = "https://clob.polymarket.com";
 const DATA_API_URL = "https://data-api.polymarket.com";
 
+type UpstreamKey = "gamma" | "clob" | "data";
+
+type UpstreamRatePlan = {
+  maxRequestsPerMinute: number;
+  cooldownMs: number;
+};
+
+type ToolRateLimitMetadata = {
+  maxRequestsPerMinute: number;
+  maxConcurrency: number;
+  cooldownMs: number;
+  supportsBulk: boolean;
+  recommendedBatchTools: string[];
+  notes: string;
+};
+
+function getConfiguredInteger(
+  name: string,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  const raw = process.env[name];
+  if (!raw) return fallback;
+
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+
+  return Math.min(max, Math.max(min, parsed));
+}
+
+const POLYMARKET_RETRY_ATTEMPTS = getConfiguredInteger(
+  "POLYMARKET_RETRY_ATTEMPTS",
+  3,
+  1,
+  5
+);
+const POLYMARKET_RETRY_BASE_BACKOFF_MS = getConfiguredInteger(
+  "POLYMARKET_RETRY_BASE_BACKOFF_MS",
+  450,
+  100,
+  5_000
+);
+
+const UPSTREAM_RATE_PLANS: Record<UpstreamKey, UpstreamRatePlan> = {
+  gamma: {
+    maxRequestsPerMinute: getConfiguredInteger(
+      "POLYMARKET_GAMMA_RATE_LIMIT",
+      180,
+      1,
+      2_000
+    ),
+    cooldownMs: 0,
+  },
+  clob: {
+    maxRequestsPerMinute: getConfiguredInteger(
+      "POLYMARKET_CLOB_RATE_LIMIT",
+      240,
+      1,
+      2_000
+    ),
+    cooldownMs: 0,
+  },
+  data: {
+    maxRequestsPerMinute: getConfiguredInteger(
+      "POLYMARKET_DATA_RATE_LIMIT",
+      120,
+      1,
+      2_000
+    ),
+    cooldownMs: 0,
+  },
+};
+
+for (const plan of Object.values(UPSTREAM_RATE_PLANS)) {
+  plan.cooldownMs = Math.ceil(60_000 / plan.maxRequestsPerMinute);
+}
+
+const nextAllowedRequestByUpstream = new Map<UpstreamKey, number>();
+const rateLockByUpstream = new Map<UpstreamKey, Promise<void>>();
+
+const HEAVY_ANALYSIS_TOOLS = new Set([
+  "analyze_top_holders",
+  "analyze_event_whale_breakdown",
+  "find_trading_opportunities",
+  "find_arbitrage_opportunities",
+  "get_top_holders",
+]);
+
+const BULK_FIRST_TOOLS = new Set([
+  "find_moderate_probability_bets",
+  "get_bets_by_probability",
+  "discover_trending_markets",
+  "get_top_markets",
+  "search_markets",
+]);
+
+const TOOL_BATCH_HINTS: Record<string, string[]> = {
+  analyze_top_holders: ["search_markets", "discover_trending_markets"],
+  analyze_event_whale_breakdown: ["discover_trending_markets"],
+  get_top_holders: ["search_markets", "discover_trending_markets"],
+  find_trading_opportunities: ["find_moderate_probability_bets", "get_bets_by_probability"],
+};
+
+function buildToolRateLimitMetadata(toolName: string): ToolRateLimitMetadata {
+  const heavy = HEAVY_ANALYSIS_TOOLS.has(toolName);
+  return {
+    maxRequestsPerMinute: heavy ? 60 : 120,
+    maxConcurrency: 1,
+    cooldownMs: heavy ? 1_500 : 500,
+    supportsBulk: BULK_FIRST_TOOLS.has(toolName),
+    recommendedBatchTools: TOOL_BATCH_HINTS[toolName] ?? [],
+    notes: heavy
+      ? "Heavy Polymarket workflow. Call this tool alone and prefer narrower scopes first."
+      : "Prefer batch/snapshot tools before fan-out loops when possible.",
+  };
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withUpstreamRateLock<T>(
+  upstream: UpstreamKey,
+  work: () => Promise<T>
+): Promise<T> {
+  const previous = rateLockByUpstream.get(upstream) ?? Promise.resolve();
+  let release: () => void = () => {};
+  const current = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  rateLockByUpstream.set(upstream, previous.then(() => current));
+  await previous;
+
+  try {
+    return await work();
+  } finally {
+    release();
+    if (rateLockByUpstream.get(upstream) === current) {
+      rateLockByUpstream.delete(upstream);
+    }
+  }
+}
+
+async function reserveRateSlot(upstream: UpstreamKey, endpoint: string): Promise<void> {
+  await withUpstreamRateLock(upstream, async () => {
+    const plan = UPSTREAM_RATE_PLANS[upstream];
+    const now = Date.now();
+    const nextAllowedAt = nextAllowedRequestByUpstream.get(upstream) ?? 0;
+    const waitMs = Math.max(0, nextAllowedAt - now);
+
+    if (waitMs > 0) {
+      console.log("[polymarket-rate] wait", {
+        upstream,
+        endpoint: endpoint.slice(0, 120),
+        waitMs,
+        cooldownMs: plan.cooldownMs,
+        maxRequestsPerMinute: plan.maxRequestsPerMinute,
+      });
+      await sleep(waitMs);
+    }
+
+    nextAllowedRequestByUpstream.set(upstream, Date.now() + plan.cooldownMs);
+  });
+}
+
+function parseRetryAfterMs(headers: Headers): number | null {
+  const retryAfter = headers.get("retry-after");
+  if (!retryAfter) {
+    return null;
+  }
+
+  const seconds = Number.parseInt(retryAfter, 10);
+  if (Number.isFinite(seconds)) {
+    return Math.max(0, seconds * 1_000);
+  }
+
+  const dateMs = Date.parse(retryAfter);
+  if (Number.isNaN(dateMs)) {
+    return null;
+  }
+
+  return Math.max(0, dateMs - Date.now());
+}
+
+function isRetryableStatus(status: number): boolean {
+  return status === 408 || status === 429 || status === 502 || status === 503 || status === 504;
+}
+
+class UpstreamHttpError extends Error {
+  status: number;
+  retryable: boolean;
+
+  constructor(params: {
+    upstream: UpstreamKey;
+    status: number;
+    bodySnippet: string;
+    retryable: boolean;
+  }) {
+    const { upstream, status, bodySnippet, retryable } = params;
+    super(`${upstream.toUpperCase()} API error (${status}): ${bodySnippet}`);
+    this.name = "UpstreamHttpError";
+    this.status = status;
+    this.retryable = retryable;
+  }
+}
+
+function computeBackoffMs(attempt: number): number {
+  const exponential = POLYMARKET_RETRY_BASE_BACKOFF_MS * 2 ** (attempt - 1);
+  const jitter = Math.floor(Math.random() * 200);
+  return exponential + jitter;
+}
+
+async function fetchJsonWithPolicy(options: {
+  upstream: UpstreamKey;
+  endpoint: string;
+  init?: RequestInit;
+  timeoutMs?: number;
+}): Promise<unknown> {
+  const { upstream, endpoint, init, timeoutMs = 15_000 } = options;
+  const baseUrl =
+    upstream === "gamma"
+      ? GAMMA_API_URL
+      : upstream === "clob"
+        ? CLOB_API_URL
+        : DATA_API_URL;
+  const url = `${baseUrl}${endpoint}`;
+
+  for (let attempt = 1; attempt <= POLYMARKET_RETRY_ATTEMPTS; attempt++) {
+    await reserveRateSlot(upstream, endpoint);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(url, {
+        ...init,
+        signal: controller.signal,
+      });
+
+      if (response.ok) {
+        return response.json();
+      }
+
+      const responseText = await response.text();
+      const retryAfterMs = parseRetryAfterMs(response.headers);
+      const retryable = isRetryableStatus(response.status);
+
+      if (retryable && attempt < POLYMARKET_RETRY_ATTEMPTS) {
+        const waitMs = retryAfterMs ?? computeBackoffMs(attempt);
+        console.warn("[polymarket-api] retry", {
+          upstream,
+          endpoint: endpoint.slice(0, 120),
+          attempt,
+          status: response.status,
+          waitMs,
+          retryAfterMs,
+        });
+        await sleep(waitMs);
+        continue;
+      }
+
+      throw new UpstreamHttpError({
+        upstream,
+        status: response.status,
+        bodySnippet: responseText.slice(0, 200),
+        retryable,
+      });
+    } catch (error) {
+      const isAbortError = error instanceof Error && error.name === "AbortError";
+      const isHttpError = error instanceof UpstreamHttpError;
+      if (isHttpError && !error.retryable) {
+        throw error;
+      }
+      const canRetry = attempt < POLYMARKET_RETRY_ATTEMPTS;
+
+      if (canRetry) {
+        const waitMs = computeBackoffMs(attempt);
+        console.warn("[polymarket-api] transport_retry", {
+          upstream,
+          endpoint: endpoint.slice(0, 120),
+          attempt,
+          waitMs,
+          reason: isAbortError
+            ? `timeout (${timeoutMs}ms)`
+            : error instanceof Error
+              ? error.message
+              : String(error),
+        });
+        await sleep(waitMs);
+        continue;
+      }
+
+      if (isAbortError) {
+        throw new Error(
+          `${upstream.toUpperCase()} API timeout after ${timeoutMs}ms for ${endpoint}`
+        );
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  throw new Error(
+    `${upstream.toUpperCase()} API failed after ${POLYMARKET_RETRY_ATTEMPTS} attempts`
+  );
+}
+
+function normalizeHeaders(headersInit: HeadersInit | undefined): Record<string, string> {
+  if (!headersInit) {
+    return {};
+  }
+
+  if (headersInit instanceof Headers) {
+    const normalized: Record<string, string> = {};
+    headersInit.forEach((value, key) => {
+      normalized[key] = value;
+    });
+    return normalized;
+  }
+
+  if (Array.isArray(headersInit)) {
+    const normalized: Record<string, string> = {};
+    for (const [key, value] of headersInit) {
+      normalized[key] = value;
+    }
+    return normalized;
+  }
+
+  return { ...headersInit };
+}
+
 // ============================================================================
 // POLYMARKET EIP-712 CONSTANTS FOR ORDER SIGNING
 // Based on @polymarket/order-utils (clob-order-utils)
@@ -103,9 +437,11 @@ const COLLATERAL_DECIMALS = 6;
 // - inputSchema: JSON Schema for tool arguments (MCP standard)
 // - outputSchema: JSON Schema for response data (required by Context)
 // - _meta.contextRequirements: Context types needed for portfolio tools (MCP spec)
+// - _meta.rateLimit: Planner/runtime pacing hints for agentic loops
 //
 // NOTE: _meta is part of the MCP spec for arbitrary tool metadata.
-// The Context platform reads _meta.contextRequirements to inject user portfolio data.
+// The Context platform reads _meta.contextRequirements for context injection
+// and _meta.rateLimit hints for pacing behavior.
 // ============================================================================
 
 const TOOLS = [
@@ -323,7 +659,7 @@ Returns:
 - smartMoneySignal: Which side whales favor (YES/NO/NEUTRAL)
 - totalUniqueHolders: Total holders found via deep fetching
 
-🔥 DEEP FETCHING: We work around Polymarket's 20-holder API limit by making 10 parallel calls with position thresholds from $1M (ultra-whales) down to $1. This captures the full spectrum and typically returns 50-100+ unique holders.
+🔥 DEEP FETCHING: We work around Polymarket's 20-holder API limit by querying holder tiers from $1M (ultra-whales) down to $1, then deduplicating addresses. This captures the full spectrum and typically returns 50-100+ unique holders.
 
 CONVICTIONSCORES: "extreme" (>$10k), "high" ($5k-$10k), "moderate" ($1k-$5k), "low" (<$1k)
 
@@ -331,7 +667,7 @@ USE THIS FOR: Single-outcome markets like "Will Bitcoin hit $100k?" or "Will Tru
 USE analyze_event_whale_breakdown FOR: "Which player are whales betting on in Australian Open?"
 USE analyze_whale_flow FOR: "Recent trades?", "Trading activity in last 24h?"
 
-⏱️ PERFORMANCE: This tool performs deep fetching (10 parallel API calls). It takes ~10-15s to complete.
+⏱️ PERFORMANCE: This tool performs deep fetching in paced batches. It typically takes ~8-15s.
 ⚠️ Call this tool ALONE (not in parallel with other heavy tools like find_trading_opportunities or analyze_market_liquidity) to avoid timeouts.
 If you need multiple analyses, call them SEQUENTIALLY, not with Promise.all().`,
     inputSchema: {
@@ -344,6 +680,11 @@ If you need multiple analyses, call them SEQUENTIALLY, not with Promise.all().`,
         slug: {
           type: "string",
           description: "The event slug. Alternative to conditionId.",
+        },
+        marketQuery: {
+          type: "string",
+          description:
+            "Natural-language market title/query (e.g., 'Bitcoin above $100k'). The server resolves this to the best matching market across ACTIVE and RESOLVED markets when conditionId/slug are not provided.",
         },
       },
       required: [],
@@ -2148,14 +2489,197 @@ Each result includes:
   },
 
   {
+    name: "get_user_activity",
+    description:
+      "Get on-chain user activity from the Polymarket Data API. Useful for tracking trade flow, side bias (BUY/SELL), and recent wallet behavior.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: {
+          type: "string",
+          description: "The wallet address to inspect",
+        },
+        limit: {
+          type: "number",
+          description: "Maximum activities to return (default: 100, max: 500)",
+        },
+        offset: {
+          type: "number",
+          description: "Pagination offset (default: 0)",
+        },
+        conditionId: {
+          type: "string",
+          description: "Optional market conditionId filter",
+        },
+        side: {
+          type: "string",
+          enum: ["BUY", "SELL"],
+          description: "Optional trade side filter",
+        },
+        types: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Optional activity type filter (TRADE, SPLIT, MERGE, REDEEM, REWARD, CONVERSION, MAKER_REBATE)",
+        },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        activity: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              timestamp: { type: "string" },
+              type: { type: "string" },
+              side: { type: "string" },
+              conditionId: { type: "string" },
+              marketTitle: { type: "string" },
+              outcome: { type: "string" },
+              size: { type: "number" },
+              usdcSize: { type: "number" },
+              price: { type: "number" },
+              transactionHash: { type: "string" },
+            },
+          },
+        },
+        summary: {
+          type: "object",
+          properties: {
+            total: { type: "number" },
+            buyCount: { type: "number" },
+            sellCount: { type: "number" },
+            totalUsdcFlow: { type: "number" },
+            byType: { type: "object" },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "activity", "summary"],
+    },
+  },
+
+  {
+    name: "get_user_total_value",
+    description:
+      "Get total marked-to-market value of a user's positions from Polymarket Data API /value.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: {
+          type: "string",
+          description: "The wallet address to inspect",
+        },
+        conditionIds: {
+          type: "array",
+          items: { type: "string" },
+          description: "Optional list of conditionIds to scope valuation",
+        },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        totalValue: { type: "number" },
+        conditionIds: {
+          type: "array",
+          items: { type: "string" },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "totalValue"],
+    },
+  },
+
+  {
+    name: "get_market_open_interest",
+    description:
+      "Get open interest from Polymarket Data API /oi for one or more conditionIds.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        conditionId: {
+          type: "string",
+          description: "Single conditionId",
+        },
+        conditionIds: {
+          type: "array",
+          items: { type: "string" },
+          description: "Multiple conditionIds",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        openInterest: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              conditionId: { type: "string" },
+              value: { type: "number" },
+            },
+          },
+        },
+        totalOpenInterest: { type: "number" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["openInterest", "totalOpenInterest"],
+    },
+  },
+
+  {
+    name: "get_event_live_volume",
+    description:
+      "Get real-time event-level volume breakdown from Polymarket Data API /live-volume.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        eventId: {
+          type: "number",
+          description: "Polymarket event id",
+        },
+      },
+      required: ["eventId"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        eventId: { type: "number" },
+        total: { type: "number" },
+        markets: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              market: { type: "string" },
+              value: { type: "number" },
+            },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["eventId", "total", "markets"],
+    },
+  },
+
+  {
     name: "get_top_holders",
     description: `Get the top holders (biggest positions) for a specific market. Shows who the whales are, their position sizes, and implied conviction. Essential for smart money analysis.
 
-DEEP FETCHING (default=true): Polymarket API caps at 20 holders per call with NO pagination. To work around this, we make 10 parallel API calls with different minBalance thresholds [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] and deduplicate results. This captures everything from ultra-whales ($1M+) down to small positions, returning 50-100+ unique holders instead of just 20.
+DEEP FETCHING (default=true): Polymarket API caps at 20 holders per call with NO pagination. To work around this, we query 10 minBalance thresholds [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] in paced batches and deduplicate results. This captures everything from ultra-whales ($1M+) down to small positions, returning 50-100+ unique holders instead of just 20.
 
 Set deepFetch=false for faster but shallower results (20 per side max).
 
-⏱️ PERFORMANCE: With deepFetch=true, this makes 10 parallel API calls and takes ~10-15s.
+⏱️ PERFORMANCE: With deepFetch=true, this runs 10 holder-tier queries in paced batches and typically takes ~8-15s.
 ⚠️ Call ALONE (not in parallel with other heavy tools) when deepFetch=true to avoid timeouts.`,
     inputSchema: {
       type: "object" as const,
@@ -2519,6 +3043,21 @@ CROSS-PLATFORM EXAMPLE (Sports):
   },
 ];
 
+const TOOLS_WITH_METADATA = TOOLS.map((tool) => {
+  const existingMeta =
+    "_meta" in tool && typeof tool._meta === "object" && tool._meta !== null
+      ? (tool._meta as Record<string, unknown>)
+      : {};
+
+  return {
+    ...tool,
+    _meta: {
+      ...existingMeta,
+      rateLimit: buildToolRateLimitMetadata(tool.name),
+    },
+  };
+});
+
 // ============================================================================
 // MCP SERVER SETUP
 // ============================================================================
@@ -2529,7 +3068,7 @@ const server = new Server(
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: TOOLS,
+  tools: TOOLS_WITH_METADATA,
 }));
 
 server.setRequestHandler(
@@ -2607,6 +3146,14 @@ server.setRequestHandler(
           return await handleGetMarketTrades(args);
         case "get_user_positions":
           return await handleGetUserPositions(args);
+        case "get_user_activity":
+          return await handleGetUserActivity(args);
+        case "get_user_total_value":
+          return await handleGetUserTotalValue(args);
+        case "get_market_open_interest":
+          return await handleGetMarketOpenInterest(args);
+        case "get_event_live_volume":
+          return await handleGetEventLiveVolume(args);
         case "get_top_holders":
           return await handleGetTopHolders(args);
         case "get_market_comments":
@@ -2685,59 +3232,560 @@ function getPolymarketUrl(slug?: string, conditionId?: string): string {
   return "https://polymarket.com/markets";
 }
 
-async function fetchGamma(endpoint: string, timeoutMs = 15000): Promise<unknown> {
-  const url = `${GAMMA_API_URL}${endpoint}`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  
-  try {
-    const response = await fetch(url, { signal: controller.signal });
+type ResolvedMarketReference = {
+  conditionId: string;
+  marketTitle: string;
+  slug?: string;
+};
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Gamma API error (${response.status}): ${text.slice(0, 200)}`);
-    }
+type MarketResolveCandidate = {
+  conditionId?: string;
+  marketTitle: string;
+  slug?: string;
+  eventSlug?: string;
+  score: number;
+  closed: boolean;
+  volume: number;
+  source: string;
+};
 
-    return response.json();
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Gamma API timeout after ${timeoutMs}ms for ${endpoint}`);
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
+const MARKET_QUERY_STOP_WORDS = new Set([
+  "the",
+  "a",
+  "an",
+  "in",
+  "on",
+  "at",
+  "to",
+  "for",
+  "of",
+  "and",
+  "or",
+  "is",
+  "are",
+  "will",
+  "be",
+  "by",
+  "market",
+  "polymarket",
+  "who",
+  "what",
+  "when",
+  "where",
+]);
+
+function normalizeMarketQueryText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/,/g, "")
+    .replace(/[^a-z0-9$\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractMarketQueryTokens(value: string): string[] {
+  const normalized = normalizeMarketQueryText(value);
+  if (!normalized) {
+    return [];
   }
+
+  const tokens = normalized
+    .split(" ")
+    .map((token) => token.replace(/^\$+/, ""))
+    .filter(
+      (token) =>
+        token.length >= 3 && !MARKET_QUERY_STOP_WORDS.has(token)
+    );
+
+  return Array.from(new Set(tokens));
+}
+
+function extractPriceTargets(value: string): number[] {
+  const normalized = value.toLowerCase().replace(/,/g, "");
+  const targets = new Set<number>();
+
+  for (const match of normalized.matchAll(/(\d+(?:\.\d+)?)\s*k\b/g)) {
+    const raw = Number(match[1]);
+    if (Number.isFinite(raw) && raw > 0) {
+      targets.add(Math.round(raw * 1000));
+    }
+  }
+
+  for (const match of normalized.matchAll(/\$(\d+(?:\.\d+)?)/g)) {
+    const raw = Number(match[1]);
+    if (Number.isFinite(raw) && raw >= 1000) {
+      targets.add(Math.round(raw));
+    }
+  }
+
+  for (const match of normalized.matchAll(/\b\d{4,}\b/g)) {
+    const raw = Number(match[0]);
+    if (Number.isFinite(raw) && raw >= 1000) {
+      targets.add(Math.round(raw));
+    }
+  }
+
+  return Array.from(targets).sort((a, b) => a - b);
+}
+
+function scoreMarketCandidate(params: {
+  queryText: string;
+  queryTokens: string[];
+  queryTargets: number[];
+  candidateText: string;
+}): number {
+  const { queryText, queryTokens, queryTargets, candidateText } = params;
+  const normalizedCandidateText = normalizeMarketQueryText(candidateText);
+  if (!normalizedCandidateText) {
+    return 0;
+  }
+
+  let score = 0;
+
+  if (normalizedCandidateText.includes(queryText)) {
+    score += 420;
+  }
+
+  let tokenMatches = 0;
+  for (const token of queryTokens) {
+    if (normalizedCandidateText.includes(token)) {
+      tokenMatches += 1;
+    }
+  }
+  score += tokenMatches * 22;
+
+  if (queryText.includes("above") || queryText.includes("over")) {
+    if (
+      normalizedCandidateText.includes("above") ||
+      normalizedCandidateText.includes("over")
+    ) {
+      score += 35;
+    }
+  }
+
+  if (queryText.includes("below") || queryText.includes("under")) {
+    if (
+      normalizedCandidateText.includes("below") ||
+      normalizedCandidateText.includes("under")
+    ) {
+      score += 35;
+    }
+  }
+
+  if (queryTargets.length > 0) {
+    const candidateTargets = extractPriceTargets(normalizedCandidateText);
+    let targetOverlap = 0;
+    for (const queryTarget of queryTargets) {
+      const hasTargetMatch = candidateTargets.some((candidateTarget) => {
+        const tolerance = Math.max(1000, Math.round(queryTarget * 0.02));
+        return Math.abs(candidateTarget - queryTarget) <= tolerance;
+      });
+      if (hasTargetMatch) {
+        targetOverlap += 1;
+      }
+    }
+
+    if (targetOverlap > 0) {
+      score += targetOverlap * 240;
+    } else {
+      score -= 180;
+    }
+  }
+
+  return score;
+}
+
+function pickBestMarketCandidate(
+  candidates: MarketResolveCandidate[]
+): MarketResolveCandidate | null {
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  const sorted = [...candidates].sort((a, b) => {
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+    if (b.volume !== a.volume) {
+      return b.volume - a.volume;
+    }
+    return a.marketTitle.localeCompare(b.marketTitle);
+  });
+
+  return sorted[0] ?? null;
+}
+
+async function resolveCandidateConditionId(
+  candidate: MarketResolveCandidate | null
+): Promise<ResolvedMarketReference | null> {
+  if (!candidate) {
+    return null;
+  }
+
+  if (candidate.conditionId) {
+    return {
+      conditionId: candidate.conditionId,
+      marketTitle: candidate.marketTitle,
+      slug: candidate.slug,
+    };
+  }
+
+  if (candidate.slug) {
+    try {
+      const markets = (await fetchGamma(
+        `/markets?slug=${encodeURIComponent(candidate.slug)}&limit=1`,
+        8_000
+      )) as GammaMarket[];
+      if (Array.isArray(markets) && markets.length > 0 && markets[0].conditionId) {
+        return {
+          conditionId: markets[0].conditionId,
+          marketTitle:
+            markets[0].question || markets[0].title || candidate.marketTitle,
+          slug: markets[0].slug || candidate.slug,
+        };
+      }
+    } catch {
+      // Keep resolving through event slug fallback.
+    }
+  }
+
+  if (candidate.eventSlug) {
+    try {
+      const event = (await fetchGamma(
+        `/events/slug/${encodeURIComponent(candidate.eventSlug)}`,
+        8_000
+      )) as GammaEvent;
+      const markets = Array.isArray(event?.markets) ? event.markets : [];
+      const matched = markets.find((market) => {
+        if (!market.conditionId) {
+          return false;
+        }
+
+        if (candidate.slug && market.slug === candidate.slug) {
+          return true;
+        }
+
+        const normalizedMarketTitle = normalizeMarketQueryText(
+          `${market.question || ""} ${market.title || ""}`
+        );
+        const normalizedCandidateTitle = normalizeMarketQueryText(
+          candidate.marketTitle
+        );
+        return (
+          normalizedCandidateTitle.length > 0 &&
+          normalizedMarketTitle.includes(normalizedCandidateTitle)
+        );
+      });
+
+      if (matched?.conditionId) {
+        return {
+          conditionId: matched.conditionId,
+          marketTitle:
+            matched.question || matched.title || candidate.marketTitle,
+          slug: matched.slug || candidate.slug || candidate.eventSlug,
+        };
+      }
+    } catch {
+      // Final failure handled by caller.
+    }
+  }
+
+  return null;
+}
+
+async function resolveMarketReference(options: {
+  conditionId?: string;
+  slug?: string;
+  marketQuery?: string;
+}): Promise<ResolvedMarketReference | null> {
+  const { conditionId, slug, marketQuery } = options;
+
+  if (conditionId) {
+    return {
+      conditionId,
+      marketTitle: conditionId,
+      slug,
+    };
+  }
+
+  if (slug) {
+    try {
+      const event = (await fetchGamma(`/events/slug/${slug}`, 8_000)) as GammaEvent;
+      const market = event?.markets?.[0];
+      if (market?.conditionId) {
+        return {
+          conditionId: market.conditionId,
+          marketTitle: market.question || event.title || slug,
+          slug: market.slug || slug,
+        };
+      }
+    } catch {
+      // Fallback to market-by-slug lookup.
+    }
+
+    try {
+      const markets = (await fetchGamma(
+        `/markets?slug=${encodeURIComponent(slug)}&limit=1`,
+        8_000
+      )) as GammaMarket[];
+      if (Array.isArray(markets) && markets.length > 0 && markets[0].conditionId) {
+        return {
+          conditionId: markets[0].conditionId,
+          marketTitle: markets[0].question || markets[0].title || slug,
+          slug: markets[0].slug || slug,
+        };
+      }
+    } catch {
+      // Keep looking via marketQuery fallback below.
+    }
+  }
+
+  if (marketQuery) {
+    const trimmedQuery = marketQuery.trim();
+    const encoded = encodeURIComponent(trimmedQuery);
+    const normalizedQuery = normalizeMarketQueryText(trimmedQuery);
+    if (encoded.length === 0 || normalizedQuery.length === 0) {
+      return null;
+    }
+
+    const queryTokens = extractMarketQueryTokens(trimmedQuery);
+    const queryTargets = extractPriceTargets(trimmedQuery);
+    const strictThreshold = queryTargets.length > 0 ? 120 : 70;
+    const fallbackThreshold = queryTargets.length > 0 ? 80 : 50;
+
+    const tryPublicSearch = async (params: {
+      phase: string;
+      eventsStatus: "active" | "closed";
+      includeClosed: boolean;
+    }): Promise<MarketResolveCandidate | null> => {
+      try {
+        const path = `/public-search?q=${encoded}&limit_per_type=20&search_tags=false&search_profiles=false&optimized=true&events_status=${params.eventsStatus}${params.includeClosed ? "&keep_closed_markets=1" : ""}`;
+        const search = (await fetchJsonWithPolicy({
+          upstream: "gamma",
+          endpoint: path,
+          timeoutMs: 10_000,
+          init: {
+            headers: {
+              Accept: "application/json",
+              "User-Agent": "Polymarket-MCP-Server/1.0",
+            },
+          },
+        })) as { events?: GammaEvent[] };
+        const events = Array.isArray(search?.events) ? search.events : [];
+        const candidates: MarketResolveCandidate[] = [];
+
+        for (const event of events) {
+          for (const market of event.markets ?? []) {
+            if (!market.conditionId && !market.slug && !event.slug) {
+              continue;
+            }
+
+            const candidateText = `${event.title || ""} ${market.question || ""} ${market.title || ""}`;
+            const score = scoreMarketCandidate({
+              queryText: normalizedQuery,
+              queryTokens,
+              queryTargets,
+              candidateText,
+            });
+
+            candidates.push({
+              conditionId: market.conditionId,
+              marketTitle: market.question || market.title || event.title || trimmedQuery,
+              slug: market.slug || event.slug,
+              eventSlug: event.slug,
+              score,
+              closed: event.closed === true || market.closed === true,
+              volume: Number(event.volume || market.volume || 0),
+              source: params.phase,
+            });
+          }
+        }
+
+        const best = pickBestMarketCandidate(candidates);
+        console.info("[polymarket-resolve] phase", {
+          query: trimmedQuery.slice(0, 120),
+          phase: params.phase,
+          candidates: candidates.length,
+          bestScore: best?.score ?? null,
+          selectedConditionId: best?.conditionId ?? null,
+        });
+        return best;
+      } catch (error) {
+        console.warn("[polymarket-resolve] phase_failed", {
+          query: trimmedQuery.slice(0, 120),
+          phase: params.phase,
+          error:
+            error instanceof Error
+              ? error.message.slice(0, 160)
+              : String(error).slice(0, 160),
+        });
+        return null;
+      }
+    };
+
+    const activeBest = await tryPublicSearch({
+      phase: "public-search-active",
+      eventsStatus: "active",
+      includeClosed: false,
+    });
+    if (activeBest && activeBest.score >= strictThreshold) {
+      const resolvedFromActive = await resolveCandidateConditionId(activeBest);
+      if (resolvedFromActive) {
+        return resolvedFromActive;
+      }
+    }
+
+    const resolvedBest = await tryPublicSearch({
+      phase: "public-search-closed",
+      eventsStatus: "closed",
+      includeClosed: true,
+    });
+    if (resolvedBest && resolvedBest.score >= strictThreshold) {
+      const resolvedFromClosed = await resolveCandidateConditionId(resolvedBest);
+      if (resolvedFromClosed) {
+        return resolvedFromClosed;
+      }
+    }
+
+    const searchFallbackBest = pickBestMarketCandidate(
+      [activeBest, resolvedBest].filter(
+        (candidate): candidate is MarketResolveCandidate => candidate !== null
+      )
+    );
+    if (searchFallbackBest && searchFallbackBest.score >= fallbackThreshold) {
+      const resolvedFromSearchFallback =
+        await resolveCandidateConditionId(searchFallbackBest);
+      if (resolvedFromSearchFallback) {
+        return resolvedFromSearchFallback;
+      }
+    }
+
+    const tryMarketsList = async (params: {
+      phase: string;
+      closed: boolean;
+    }): Promise<MarketResolveCandidate | null> => {
+      try {
+        const markets = (await fetchGamma(
+          `/markets?limit=80&closed=${params.closed ? "true" : "false"}&order=volume24hr&ascending=false`,
+          10_000
+        )) as GammaMarket[];
+
+        const candidates: MarketResolveCandidate[] = [];
+        for (const market of Array.isArray(markets) ? markets : []) {
+          if (!market.conditionId) {
+            continue;
+          }
+
+          const candidateText = `${market.question || ""} ${market.title || ""}`;
+          const score = scoreMarketCandidate({
+            queryText: normalizedQuery,
+            queryTokens,
+            queryTargets,
+            candidateText,
+          });
+
+          candidates.push({
+            conditionId: market.conditionId,
+            marketTitle: market.question || market.title || trimmedQuery,
+            slug: market.slug,
+            score,
+            closed: params.closed,
+            volume: Number(market.volume || market.volume24hr || 0),
+            source: params.phase,
+          });
+        }
+
+        const best = pickBestMarketCandidate(candidates);
+        console.info("[polymarket-resolve] phase", {
+          query: trimmedQuery.slice(0, 120),
+          phase: params.phase,
+          candidates: candidates.length,
+          bestScore: best?.score ?? null,
+          selectedConditionId: best?.conditionId ?? null,
+        });
+        return best;
+      } catch (error) {
+        console.warn("[polymarket-resolve] phase_failed", {
+          query: trimmedQuery.slice(0, 120),
+          phase: params.phase,
+          error:
+            error instanceof Error
+              ? error.message.slice(0, 160)
+              : String(error).slice(0, 160),
+        });
+        return null;
+      }
+    };
+
+    const liveListBest = await tryMarketsList({
+      phase: "markets-list-live",
+      closed: false,
+    });
+    if (liveListBest && liveListBest.score >= strictThreshold) {
+      const resolvedFromLiveList =
+        await resolveCandidateConditionId(liveListBest);
+      if (resolvedFromLiveList) {
+        return resolvedFromLiveList;
+      }
+    }
+
+    const resolvedListBest = await tryMarketsList({
+      phase: "markets-list-closed",
+      closed: true,
+    });
+    if (resolvedListBest && resolvedListBest.score >= strictThreshold) {
+      const resolvedFromClosedList =
+        await resolveCandidateConditionId(resolvedListBest);
+      if (resolvedFromClosedList) {
+        return resolvedFromClosedList;
+      }
+    }
+
+    const finalBest = pickBestMarketCandidate(
+      [liveListBest, resolvedListBest].filter(
+        (candidate): candidate is MarketResolveCandidate => candidate !== null
+      )
+    );
+    if (finalBest && finalBest.score >= fallbackThreshold) {
+      const resolvedFromFinal = await resolveCandidateConditionId(finalBest);
+      if (resolvedFromFinal) {
+        return resolvedFromFinal;
+      }
+    }
+
+    console.warn("[polymarket-resolve] unresolved_query", {
+      query: trimmedQuery.slice(0, 120),
+      queryTokens,
+      queryTargets,
+    });
+  }
+
+  return null;
+}
+
+async function fetchGamma(endpoint: string, timeoutMs = 15000): Promise<unknown> {
+  return fetchJsonWithPolicy({
+    upstream: "gamma",
+    endpoint,
+    timeoutMs,
+  });
 }
 
 async function fetchClob(endpoint: string, options?: RequestInit, timeoutMs = 15000): Promise<unknown> {
-  const url = `${CLOB_API_URL}${endpoint}`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  
-  try {
-    const response = await fetch(url, {
+  const headers = normalizeHeaders(options?.headers);
+
+  return fetchJsonWithPolicy({
+    upstream: "clob",
+    endpoint,
+    timeoutMs,
+    init: {
       ...options,
-      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
-        ...options?.headers,
+        ...headers,
       },
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`CLOB API error (${response.status}): ${text.slice(0, 200)}`);
-    }
-
-    return response.json();
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`CLOB API timeout after ${timeoutMs}ms for ${endpoint}`);
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
-  }
+    },
+  });
 }
 
 async function fetchClobPost(endpoint: string, body: unknown): Promise<unknown> {
@@ -2748,27 +3796,11 @@ async function fetchClobPost(endpoint: string, body: unknown): Promise<unknown> 
 }
 
 async function fetchDataApi(endpoint: string, timeoutMs = 15000): Promise<unknown> {
-  const url = `${DATA_API_URL}${endpoint}`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Data API error (${response.status}): ${text.slice(0, 200)}`);
-    }
-
-    return response.json();
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Data API timeout after ${timeoutMs}ms for ${endpoint}`);
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  return fetchJsonWithPolicy({
+    upstream: "data",
+    endpoint,
+    timeoutMs,
+  });
 }
 
 // ============================================================================
@@ -5186,7 +6218,7 @@ async function handleAnalyzeMyPositions(
 
   // Filter to focus market if specified
   const positionsToAnalyze = focusMarket
-    ? portfolio.positions.filter((p) => p.conditionId === focusMarket)
+    ? portfolio.positions.filter((p: PolymarketPosition) => p.conditionId === focusMarket)
     : portfolio.positions;
 
   const positionAnalyses: Array<{
@@ -6321,8 +7353,30 @@ async function handleGetOrderbook(
     return errorResult("tokenId is required");
   }
 
-  // Fetch direct orderbook for this token
-  const orderbook = (await fetchClob(`/book?token_id=${tokenId}`)) as OrderbookResponse;
+  let orderbook: OrderbookResponse;
+  try {
+    // Fetch direct orderbook for this token
+    orderbook = (await fetchClob(`/book?token_id=${tokenId}`)) as OrderbookResponse;
+  } catch (error) {
+    return successResult({
+      market: "",
+      assetId: tokenId,
+      view: "raw",
+      warning:
+        "No orderbook currently available for this token (likely resolved, inactive, or not quoting on CLOB).",
+      bids: [],
+      asks: [],
+      bestBid: 0,
+      bestAsk: 1,
+      midPrice: 0.5,
+      spread: 1,
+      fetchedAt: new Date().toISOString(),
+      error:
+        error instanceof Error
+          ? error.message.slice(0, 200)
+          : String(error).slice(0, 200),
+    });
+  }
 
   const directBids = orderbook.bids || [];
   const directAsks = orderbook.asks || [];
@@ -6650,7 +7704,20 @@ async function handleGetMarketParameters(
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {
-    return errorResult(`Failed to get market parameters: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    return successResult({
+      tokenId,
+      tickSize: "0.01",
+      feeRateBps: 0,
+      negRisk: false,
+      minOrderSize: 1,
+      warning:
+        "Could not read live CLOB parameters for this token (likely resolved, inactive, or not quoting). Returned conservative defaults.",
+      fetchedAt: new Date().toISOString(),
+      error:
+        error instanceof Error
+          ? error.message.slice(0, 200)
+          : String(error).slice(0, 200),
+    });
   }
 }
 
@@ -6798,21 +7865,25 @@ async function handleSearchMarkets(
   // This is the proper Polymarket search API that actually works!
   if (query) {
     try {
-      const searchUrl = `https://gamma-api.polymarket.com/public-search?q=${encodeURIComponent(query)}&limit_per_type=${limit * 2}${status === 'resolved' ? '&events_status=closed' : status === 'live' ? '&events_status=active' : ''}`;
-      const searchResponse = await fetch(searchUrl, {
-        headers: { 'Accept': 'application/json', 'User-Agent': 'Polymarket-MCP-Server/1.0' },
-      });
-      
-      if (searchResponse.ok) {
-        const searchData = await searchResponse.json() as { 
-          events?: GammaEvent[]; 
-          pagination?: { totalResults: number; hasMore: boolean };
-        };
-        
-        if (searchData.events && searchData.events.length > 0) {
-          allEvents = searchData.events;
-          searchUsed = true;
-        }
+      const searchEndpoint = `/public-search?q=${encodeURIComponent(query)}&limit_per_type=${limit * 2}${status === 'resolved' ? '&events_status=closed&keep_closed_markets=1' : status === 'live' ? '&events_status=active' : ''}`;
+      const searchData = (await fetchJsonWithPolicy({
+        upstream: "gamma",
+        endpoint: searchEndpoint,
+        timeoutMs: 10_000,
+        init: {
+          headers: {
+            Accept: "application/json",
+            "User-Agent": "Polymarket-MCP-Server/1.0",
+          },
+        },
+      })) as {
+        events?: GammaEvent[];
+        pagination?: { totalResults: number; hasMore: boolean };
+      };
+
+      if (searchData.events && searchData.events.length > 0) {
+        allEvents = searchData.events;
+        searchUsed = true;
       }
     } catch (err) {
       // Fall through to events listing if search fails
@@ -7109,6 +8180,214 @@ async function handleGetUserPositions(
   }
 }
 
+async function handleGetUserActivity(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const address = (args?.address as string) || "";
+  const limit = Math.min((args?.limit as number) || 100, 500);
+  const offset = Math.max((args?.offset as number) || 0, 0);
+  const conditionId = args?.conditionId as string | undefined;
+  const side = args?.side as string | undefined;
+  const types = Array.isArray(args?.types)
+    ? (args?.types as unknown[]).filter((value): value is string => typeof value === "string")
+    : [];
+
+  if (!address) {
+    return errorResult("address is required");
+  }
+
+  const params = new URLSearchParams({
+    user: address,
+    limit: String(limit),
+    offset: String(offset),
+  });
+  if (conditionId) {
+    params.set("market", conditionId);
+  }
+  if (side) {
+    params.set("side", side);
+  }
+  if (types.length > 0) {
+    params.set("type", types.join(","));
+  }
+
+  try {
+    const activity = (await fetchDataApi(`/activity?${params.toString()}`)) as DataApiActivity[];
+    const normalized = Array.isArray(activity) ? activity : [];
+
+    let buyCount = 0;
+    let sellCount = 0;
+    let totalUsdcFlow = 0;
+    const byType: Record<string, number> = {};
+
+    const formatted = normalized.map((entry) => {
+      const entryType = (entry.type || "UNKNOWN").toUpperCase();
+      const entrySide = (entry.side || "").toUpperCase();
+      const usdcSize = Number(entry.usdcSize || 0);
+      const size = Number(entry.size || 0);
+      const price = Number(entry.price || 0);
+
+      byType[entryType] = (byType[entryType] ?? 0) + 1;
+      if (entrySide === "BUY") buyCount += 1;
+      if (entrySide === "SELL") sellCount += 1;
+      totalUsdcFlow += Number.isFinite(usdcSize) ? usdcSize : 0;
+
+      return {
+        timestamp: entry.timestamp
+          ? new Date(Number(entry.timestamp) * 1000).toISOString()
+          : "",
+        type: entryType,
+        side: entrySide || undefined,
+        conditionId: entry.conditionId || "",
+        marketTitle: entry.title || "",
+        outcome: entry.outcome || "",
+        size: Number.isFinite(size) ? Number(size.toFixed(4)) : 0,
+        usdcSize: Number.isFinite(usdcSize) ? Number(usdcSize.toFixed(2)) : 0,
+        price: Number.isFinite(price) ? Number(price.toFixed(4)) : 0,
+        transactionHash: entry.transactionHash || "",
+      };
+    });
+
+    return successResult({
+      address,
+      activity: formatted,
+      summary: {
+        total: formatted.length,
+        buyCount,
+        sellCount,
+        totalUsdcFlow: Number(totalUsdcFlow.toFixed(2)),
+        byType,
+      },
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(
+      `Failed to fetch user activity: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
+}
+
+async function handleGetUserTotalValue(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const address = (args?.address as string) || "";
+  const conditionIds = Array.isArray(args?.conditionIds)
+    ? (args?.conditionIds as unknown[]).filter(
+        (value): value is string => typeof value === "string" && value.length > 0
+      )
+    : [];
+
+  if (!address) {
+    return errorResult("address is required");
+  }
+
+  const params = new URLSearchParams({ user: address });
+  if (conditionIds.length > 0) {
+    params.set("market", conditionIds.join(","));
+  }
+
+  try {
+    const valueResponse = (await fetchDataApi(`/value?${params.toString()}`)) as DataApiValue[];
+    const rows = Array.isArray(valueResponse) ? valueResponse : [];
+    const first = rows[0];
+    const totalValue = Number(first?.value || 0);
+
+    return successResult({
+      address,
+      totalValue: Number.isFinite(totalValue) ? Number(totalValue.toFixed(2)) : 0,
+      conditionIds,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(
+      `Failed to fetch total user value: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
+}
+
+async function handleGetMarketOpenInterest(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const conditionId = args?.conditionId as string | undefined;
+  const conditionIds = Array.isArray(args?.conditionIds)
+    ? (args?.conditionIds as unknown[]).filter(
+        (value): value is string => typeof value === "string" && value.length > 0
+      )
+    : [];
+
+  const mergedConditionIds = [
+    ...(conditionId ? [conditionId] : []),
+    ...conditionIds,
+  ];
+  const uniqueConditionIds = Array.from(new Set(mergedConditionIds));
+
+  if (uniqueConditionIds.length === 0) {
+    return errorResult("Provide conditionId or conditionIds");
+  }
+
+  try {
+    const oiResponse = (await fetchDataApi(
+      `/oi?market=${encodeURIComponent(uniqueConditionIds.join(","))}`
+    )) as DataApiOpenInterest[];
+    const rows = Array.isArray(oiResponse) ? oiResponse : [];
+    const openInterest = rows.map((row) => ({
+      conditionId: row.market || "",
+      value: Number(row.value || 0),
+    }));
+    const totalOpenInterest = openInterest.reduce(
+      (sum, row) => sum + (Number.isFinite(row.value) ? row.value : 0),
+      0
+    );
+
+    return successResult({
+      openInterest,
+      totalOpenInterest: Number(totalOpenInterest.toFixed(2)),
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(
+      `Failed to fetch open interest: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
+}
+
+async function handleGetEventLiveVolume(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const eventId = args?.eventId as number;
+  if (!eventId || !Number.isFinite(eventId)) {
+    return errorResult("eventId is required");
+  }
+
+  try {
+    const liveVolumeResponse = (await fetchDataApi(
+      `/live-volume?id=${eventId}`
+    )) as DataApiLiveVolume[] | DataApiLiveVolume;
+    const first = Array.isArray(liveVolumeResponse)
+      ? liveVolumeResponse[0]
+      : liveVolumeResponse;
+
+    const markets = Array.isArray(first?.markets)
+      ? first.markets.map((row) => ({
+          market: row.market || "",
+          value: Number(row.value || 0),
+        }))
+      : [];
+    const total = Number(first?.total || 0);
+
+    return successResult({
+      eventId,
+      total: Number.isFinite(total) ? Number(total.toFixed(2)) : 0,
+      markets,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(
+      `Failed to fetch live event volume: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
+}
+
 async function handleGetTopHolders(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
@@ -7188,13 +8467,25 @@ async function handleGetTopHolders(
     const yesHoldersMap = new Map<string, { address: string; size: number; name?: string; profileImage?: string }>();
     const noHoldersMap = new Map<string, { address: string; size: number; name?: string; profileImage?: string }>();
 
-    // Fetch holders at each tier (in parallel for speed)
-    const tierPromises = minBalanceTiers.map(minBal => 
-      fetchDataApi(`/holders?market=${conditionId}&limit=20&minBalance=${minBal}`)
-        .catch(() => [] as MetaHolder[])
-    );
-    
-    const tierResults = await Promise.all(tierPromises);
+    // Fetch holders in paced batches to avoid bursty upstream throttling.
+    const tierResults: MetaHolder[][] = [];
+    const tierBatchSize = deepFetch ? 3 : 1;
+
+    for (let i = 0; i < minBalanceTiers.length; i += tierBatchSize) {
+      const tierBatch = minBalanceTiers.slice(i, i + tierBatchSize);
+      const batchResults = await Promise.all(
+        tierBatch.map((minBal) =>
+          (fetchDataApi(
+            `/holders?market=${conditionId}&limit=20&minBalance=${minBal}`
+          ) as Promise<MetaHolder[]>).catch(() => [] as MetaHolder[])
+        )
+      );
+      tierResults.push(...batchResults);
+
+      if (deepFetch && i + tierBatchSize < minBalanceTiers.length) {
+        await sleep(120);
+      }
+    }
     
     // Process all tier results
     for (const holdersResponse of tierResults) {
@@ -7296,9 +8587,11 @@ async function handleGetTopHolders(
         top10NoPercent: Number(top10NoPercent.toFixed(2)),
         whaleCount,
       },
-      fetchMethod: deepFetch ? "multi-tier (10 API calls with minBalance thresholds from $1M to $1)" : "single-call",
+      fetchMethod: deepFetch
+        ? "multi-tier (10 API calls in paced batches with minBalance thresholds from $1M to $1)"
+        : "single-call",
       note: deepFetch 
-        ? `Deep fetch found ${totalUniqueHolders} unique holders by querying 10 position tiers (from $1M ultra-whales to $1 positions). Polymarket API caps at 20 per call with no pagination, so we query [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] thresholds in parallel and deduplicate.`
+        ? `Deep fetch found ${totalUniqueHolders} unique holders by querying 10 position tiers (from $1M ultra-whales to $1 positions). Polymarket API caps at 20 per call with no pagination, so we query [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] thresholds in paced batches and deduplicate.`
         : "Single API call (limit 20 per side). Use deepFetch=true for more thorough results.",
       fetchedAt: new Date().toISOString(),
     });
@@ -7318,37 +8611,43 @@ async function handleGetMarketComments(
   }
 
   try {
-    // Gamma API has a comments endpoint for events
-    const comments = (await fetchGamma(`/comments?slug=${slug}&limit=${limit}`)) as GammaComment[];
-
-    if (!comments || !Array.isArray(comments)) {
-      // Try alternative endpoint
-      const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+    const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+    const eventId = Number(event?.id || 0);
+    if (!Number.isFinite(eventId) || eventId <= 0) {
       return successResult({
         event: event?.title || slug,
         comments: [],
         totalComments: 0,
-        note: "No comments found for this market",
+        note: "Event found but no numeric event id available for comments query",
         fetchedAt: new Date().toISOString(),
       });
     }
 
-    const formattedComments = comments.map((c) => ({
-      id: c.id || "",
-      author: c.userAddress || c.author || "anonymous",
-      content: c.content || c.text || "",
-      createdAt: c.createdAt || c.timestamp || "",
-      likes: Number(c.likes || c.upvotes || 0),
+    const comments = (await fetchGamma(
+      `/comments?parent_entity_type=Event&parent_entity_id=${eventId}&limit=${limit}&order=createdAt&ascending=false`
+    )) as GammaComment[];
+
+    const normalized = Array.isArray(comments) ? comments : [];
+    const formattedComments = normalized.map((comment) => ({
+      id: comment.id || "",
+      author:
+        comment.profile?.pseudonym ||
+        comment.profile?.name ||
+        comment.userAddress ||
+        comment.author ||
+        "anonymous",
+      content: comment.body || comment.content || comment.text || "",
+      createdAt: comment.createdAt || comment.timestamp || "",
+      likes: Number(comment.reactionCount || comment.likes || comment.upvotes || 0),
     }));
 
     return successResult({
-      event: slug,
+      event: event?.title || slug,
       comments: formattedComments,
-      totalComments: comments.length,
+      totalComments: formattedComments.length,
       fetchedAt: new Date().toISOString(),
     });
-  } catch (error) {
-    // Comments endpoint may not be available - return gracefully
+  } catch {
     return successResult({
       event: slug,
       comments: [],
@@ -7562,27 +8861,26 @@ async function handleAnalyzeTopHolders(
 ): Promise<CallToolResult> {
   const conditionId = args?.conditionId as string;
   const slug = args?.slug as string;
+  const marketQuery = args?.marketQuery as string | undefined;
 
-  if (!conditionId && !slug) {
-    return errorResult("Either conditionId or slug is required");
+  if (!conditionId && !slug && !marketQuery) {
+    return errorResult("Provide one of: conditionId, slug, or marketQuery");
   }
 
-  // Resolve conditionId from slug if needed
-  let resolvedConditionId = conditionId;
-  let marketTitle = "";
-
-  if (slug) {
-    const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
-    if (!event?.markets?.[0]) {
-      return errorResult(`Event not found: ${slug}`);
-    }
-    resolvedConditionId = event.markets[0].conditionId || "";
-    marketTitle = event.markets[0].question || event.title || slug;
+  const resolved = await resolveMarketReference({
+    conditionId,
+    slug,
+    marketQuery,
+  });
+  if (!resolved?.conditionId) {
+    return errorResult(
+      marketQuery
+        ? `Could not resolve marketQuery '${marketQuery}' to a market conditionId (searched active and resolved markets). Try adding a date or a more specific title.`
+        : "Could not resolve conditionId from provided inputs"
+    );
   }
-
-  if (!resolvedConditionId) {
-    return errorResult("Could not resolve conditionId");
-  }
+  const resolvedConditionId = resolved.conditionId;
+  let marketTitle = resolved.marketTitle;
 
   // Get top holders using the raw data handler with deep fetching enabled
   const holdersResult = await handleGetTopHolders({ conditionId: resolvedConditionId, outcome: "BOTH", limit: 50, deepFetch: true });
@@ -7997,14 +9295,56 @@ interface DataApiClosedPosition {
   endDate?: string;
 }
 
+interface DataApiActivity {
+  proxyWallet?: string;
+  timestamp?: string | number;
+  conditionId?: string;
+  type?: string;
+  size?: string | number;
+  usdcSize?: string | number;
+  transactionHash?: string;
+  price?: string | number;
+  asset?: string;
+  side?: string;
+  outcomeIndex?: number;
+  title?: string;
+  slug?: string;
+  eventSlug?: string;
+  outcome?: string;
+}
+
+interface DataApiValue {
+  user?: string;
+  value?: string | number;
+}
+
+interface DataApiOpenInterest {
+  market?: string;
+  value?: string | number;
+}
+
+interface DataApiLiveVolume {
+  total?: string | number;
+  markets?: Array<{
+    market?: string;
+    value?: string | number;
+  }>;
+}
+
 interface GammaComment {
   id?: string;
+  body?: string;
   userAddress?: string;
   author?: string;
+  profile?: {
+    name?: string;
+    pseudonym?: string;
+  };
   content?: string;
   text?: string;
   createdAt?: string;
   timestamp?: string;
+  reactionCount?: number;
   likes?: number;
   upvotes?: number;
 }
@@ -8088,13 +9428,26 @@ const transports: Record<string, StreamableHTTPServerTransport> = {};
 
 // Auth middleware using @ctxprotocol/sdk - 1 line!
 const verifyContextAuth = createContextMiddleware();
+const allowUnauthenticatedMcp =
+  process.env.POLYMARKET_ALLOW_UNAUTH_MCP === "true";
+const mcpAuthMiddleware = allowUnauthenticatedMcp
+  ? (_req: Request, _res: Response, next: NextFunction) => {
+      next();
+    }
+  : verifyContextAuth;
+
+if (allowUnauthenticatedMcp) {
+  console.warn(
+    "[polymarket-auth] POLYMARKET_ALLOW_UNAUTH_MCP=true (auth disabled for /mcp; use only for temporary debugging)."
+  );
+}
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     server: "polymarket-intelligence",
     version: "1.0.0",
-    tools: TOOLS.map((t) => t.name),
+    tools: TOOLS_WITH_METADATA.map((t) => t.name),
     description: "Polymarket Intelligence MCP - Whale cost, market efficiency, smart money tracking",
   });
 });
@@ -8103,7 +9456,7 @@ app.get("/health", (_req: Request, res: Response) => {
 // STREAMABLE HTTP TRANSPORT (/mcp)
 // ============================================================================
 
-app.post("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+app.post("/mcp", mcpAuthMiddleware, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
   let transport: StreamableHTTPServerTransport;
 
@@ -8112,7 +9465,7 @@ app.post("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   } else if (!sessionId && isInitializeRequest(req.body)) {
     transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),
-      onsessioninitialized: (id) => {
+      onsessioninitialized: (id: string) => {
         transports[id] = transport;
         console.log(`Session initialized: ${id}`);
       },
@@ -8138,7 +9491,7 @@ app.post("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   await transport.handleRequest(req, res, req.body);
 });
 
-app.get("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+app.get("/mcp", mcpAuthMiddleware, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const transport = transports[sessionId];
   if (transport) {
@@ -8148,7 +9501,7 @@ app.get("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   }
 });
 
-app.delete("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+app.delete("/mcp", mcpAuthMiddleware, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const transport = transports[sessionId];
   if (transport) {
@@ -8159,38 +9512,42 @@ app.delete("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
 });
 
 app.get("/debug-tools", (_req: Request, res: Response) => {
-  const analyzePos = TOOLS.find(t => t.name === "analyze_my_positions");
+  const analyzePos = TOOLS_WITH_METADATA.find((t) => t.name === "analyze_my_positions");
+  const toolMeta =
+    analyzePos?._meta && typeof analyzePos._meta === "object"
+      ? (analyzePos._meta as Record<string, unknown>)
+      : undefined;
   res.json({
     name: analyzePos?.name,
-    _meta: analyzePos?._meta,
-    contextRequirements: analyzePos?._meta?.contextRequirements,
+    _meta: toolMeta,
+    contextRequirements:
+      toolMeta && Array.isArray(toolMeta.contextRequirements)
+        ? toolMeta.contextRequirements
+        : [],
     inputSchemaKeys: Object.keys(analyzePos?.inputSchema || {}),
   });
-});
-
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  // Debug: log what we're sending
-  const analyzePos = TOOLS.find(t => t.name === "analyze_my_positions");
-  console.log("[DEBUG] analyze_my_positions _meta:", analyzePos?._meta);
-  console.log("[DEBUG] contextRequirements:", analyzePos?._meta?.contextRequirements);
-  
-  return { tools: TOOLS };
 });
 
 const port = Number(process.env.PORT || 4003);
 app.listen(port, () => {
   console.log("\n🎯 Polymarket Intelligence MCP Server v1.0.0");
   console.log("   Whale cost analysis • Market efficiency • Smart money tracking\n");
+  console.log("[polymarket-config] startup", {
+    retryAttempts: POLYMARKET_RETRY_ATTEMPTS,
+    retryBaseBackoffMs: POLYMARKET_RETRY_BASE_BACKOFF_MS,
+    upstreamRatePlans: UPSTREAM_RATE_PLANS,
+    toolCount: TOOLS_WITH_METADATA.length,
+  });
   console.log(`🔒 Context Protocol Security Enabled`);
   console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health\n`);
-  console.log(`🛠️  Available tools (${TOOLS.length}):`);
+  console.log(`🛠️  Available tools (${TOOLS_WITH_METADATA.length}):`);
   console.log("   INTELLIGENCE (12 tools):");
-  for (const tool of TOOLS.slice(0, 12)) {
+  for (const tool of TOOLS_WITH_METADATA.slice(0, 12)) {
     console.log(`   • ${tool.name}`);
   }
   console.log("   RAW DATA (10 tools):");
-  for (const tool of TOOLS.slice(12)) {
+  for (const tool of TOOLS_WITH_METADATA.slice(12)) {
     console.log(`   • ${tool.name}`);
   }
   console.log("");

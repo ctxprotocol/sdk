@@ -151,11 +151,13 @@ When analyzing an MCP server, extract:
    - List all tools from the `listTools()` implementation
    - Document input schemas for each tool
    - Note any `outputSchema` definitions (required for disputes)
+   - Note `_meta.contextRequirements` and `_meta.rateLimit` / `_meta.rateLimitHints` metadata
 
 2. **Data Sources**
    - What APIs or data sources does it connect to?
    - Are there rate limits or API keys required?
    - What's the data freshness/latency?
+   - Which tools are heavy fan-out tools and should publish pacing hints
 
 3. **Unique Value**
    - What makes this tool different from alternatives?
@@ -240,6 +242,7 @@ Remind developers about these requirements:
 2. **Deterministic Outputs**: Given the same inputs, tools should return consistent outputs
 3. **Error Handling**: Return proper MCP error responses, not silent failures
 4. **Documentation**: Include example inputs/outputs in tool descriptions
+5. **Rate-limit metadata strongly recommended**: Publish `_meta.rateLimit` (or `_meta.rateLimitHints`) so planners/runtime can avoid over-querying low-tier APIs. Include fields like `maxRequestsPerMinute`, `cooldownMs`, `maxConcurrency`, `supportsBulk`, `recommendedBatchTools`, and `notes`.
 
 Reference: https://github.com/ctxprotocol/context#-the-data-broker-standard
 

@@ -34,7 +34,15 @@ All other tools use public Polymarket API data:
   
   // ✅ _meta is preserved by MCP SDK (part of MCP spec)
   _meta: {
-    contextRequirements: ["polymarket"]  // ← Platform reads this
+    contextRequirements: ["polymarket"],  // ← Platform reads this
+    rateLimit: {
+      maxRequestsPerMinute: 60,
+      cooldownMs: 1500,
+      maxConcurrency: 1,
+      supportsBulk: false,
+      recommendedBatchTools: ["discover_trending_markets"],
+      notes: "Heavy analysis tool: run alone to avoid timeout/rate-limit failures."
+    }
   },
   
   inputSchema: {
@@ -47,10 +55,11 @@ All other tools use public Polymarket API data:
 }
 ```
 
-**Why `_meta.contextRequirements`?**
+**Why `_meta`?**
 - `_meta` is part of the MCP specification for arbitrary tool metadata
 - It is preserved through MCP transport (unlike custom top-level fields)
 - The Context platform reads `_meta.contextRequirements` to determine what user data to inject
+- The Context platform reads `_meta.rateLimit` to pace planner/runtime tool calls
 
 ### What Gets Injected
 
@@ -92,6 +101,10 @@ interface PolymarketContext {
 | `get_prices` | Current token prices |
 | `get_price_history` | Historical price data |
 | `search_markets` | Search by keyword/category |
+| `get_user_activity` | Wallet activity feed (trades/redeems/etc.) |
+| `get_user_total_value` | Total marked-to-market user value |
+| `get_market_open_interest` | Open interest by conditionId |
+| `get_event_live_volume` | Live event-level volume breakdown |
 
 ## Quick Start
 
@@ -114,6 +127,16 @@ pnpm start
 
 - **MCP**: `http://localhost:4003/mcp` - MCP Streamable HTTP endpoint
 - **Health**: `http://localhost:4003/health` - Status check
+
+### Temporary Unauthenticated Debug Mode
+
+For temporary endpoint testing only, you can bypass MCP auth middleware with:
+
+```bash
+POLYMARKET_ALLOW_UNAUTH_MCP=true
+```
+
+This is intended for short-lived debugging on isolated environments. Keep it `false` in production.
 
 ## Tool Examples
 
@@ -167,6 +190,22 @@ pnpm start
 - Flow by size bucket (Small <$50, Medium $50-500, Whale >$1000)
 - Net directional flow per bucket
 - Whale vs retail divergence detection
+
+### Analyze Top Holders (Natural-Language Query)
+
+```json
+{
+  "name": "analyze_top_holders",
+  "arguments": {
+    "marketQuery": "Bitcoin above $100k"
+  }
+}
+```
+
+**Behavior notes:**
+- `marketQuery` resolution searches both **active** and **resolved** markets
+- Matching is deterministic and price-target aware (e.g., `$100k` will not auto-match `$150k`)
+- If no exact market exists, the tool returns a clear unresolved error instead of silently drifting to a different target
 
 ### Find Arbitrage Opportunities
 
@@ -227,9 +266,22 @@ pnpm start
 
 ## Rate Limits
 
-The server respects Polymarket's rate limits:
-- CLOB API: ~50 req/10s for most endpoints
-- Gamma API: ~100 req/10s for market data
+The server now includes upstream pacing + retry hardening for Polymarket APIs:
+
+- Per-upstream cooldowns derived from requests-per-minute budgets
+- Retry with exponential backoff for transient 408/429/502/503/504 failures
+- `Retry-After` header support when upstream provides it
+- Paced deep-fetch batches for holder analysis instead of single large bursts
+
+Default budgets (override via env vars):
+
+- `POLYMARKET_GAMMA_RATE_LIMIT=180`
+- `POLYMARKET_CLOB_RATE_LIMIT=240`
+- `POLYMARKET_DATA_RATE_LIMIT=120`
+- `POLYMARKET_RETRY_ATTEMPTS=3`
+- `POLYMARKET_RETRY_BASE_BACKOFF_MS=450`
+
+In addition, tools publish `_meta.rateLimit` hints in `listTools()` so agent planners can choose safer call patterns (batch-first, sequential heavy calls).
 
 ## License
 
