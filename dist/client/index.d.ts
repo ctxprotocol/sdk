@@ -16,6 +16,38 @@ interface ContextClientOptions {
 /**
  * An individual MCP tool exposed by a tool listing
  */
+interface McpToolRateLimitHints {
+    /** Suggested request budget for this method */
+    maxRequestsPerMinute?: number;
+    /** Suggested parallel call ceiling for this method */
+    maxConcurrency?: number;
+    /** Suggested minimum delay between sequential calls */
+    cooldownMs?: number;
+    /** Whether this method already supports bulk/batch retrieval */
+    supportsBulk?: boolean;
+    /** Preferred batch-oriented methods to call instead of fan-out loops */
+    recommendedBatchTools?: string[];
+    /** Optional human-readable notes for planning */
+    notes?: string;
+}
+interface McpToolMeta {
+    /** Context injection requirements handled by the Context runtime */
+    contextRequirements?: string[];
+    /**
+     * Optional planner/runtime pacing hints.
+     * Tool contributors can publish these to reduce rate-limit failures.
+     */
+    rateLimit?: McpToolRateLimitHints;
+    rateLimitHints?: McpToolRateLimitHints;
+    /** Flat aliases accepted for convenience */
+    maxRequestsPerMinute?: number;
+    maxConcurrency?: number;
+    cooldownMs?: number;
+    supportsBulk?: boolean;
+    recommendedBatchTools?: string[];
+    notes?: string;
+    [key: string]: unknown;
+}
 interface McpTool {
     /** Name of the MCP tool method */
     name: string;
@@ -31,6 +63,8 @@ interface McpTool {
      * Used by LLMs to understand the response structure.
      */
     outputSchema?: Record<string, unknown>;
+    /** MCP metadata extensions (context injection, rate-limit hints) */
+    _meta?: McpToolMeta;
 }
 /**
  * Represents a tool available on the Context Protocol marketplace
@@ -505,4 +539,4 @@ declare class ContextClient {
     _fetchRaw(endpoint: string, options?: RequestInit): Promise<Response>;
 }
 
-export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecutionResult, type McpTool, Query, type QueryApiResponse, type QueryApiSuccessResponse, type QueryCost, type QueryOptions, type QueryResult, type QueryStreamDoneEvent, type QueryStreamEvent, type QueryStreamTextDeltaEvent, type QueryStreamToolStatusEvent, type QueryToolUsage, type SearchOptions, type SearchResponse, type Tool, Tools };
+export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecutionResult, type McpTool, type McpToolMeta, type McpToolRateLimitHints, Query, type QueryApiResponse, type QueryApiSuccessResponse, type QueryCost, type QueryOptions, type QueryResult, type QueryStreamDoneEvent, type QueryStreamEvent, type QueryStreamTextDeltaEvent, type QueryStreamToolStatusEvent, type QueryToolUsage, type SearchOptions, type SearchResponse, type Tool, Tools };
