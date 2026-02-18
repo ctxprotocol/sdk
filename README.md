@@ -701,10 +701,19 @@ const TOOLS = [{
   name: "analyze_my_positions",
   description: "Analyze your positions with personalized insights",
 
-  // ⭐ REQUIRED: Context requirements in _meta (MCP spec for arbitrary metadata)
-  // The Context platform reads this to inject user data
+  // ⭐ `_meta` is standard MCP metadata:
+  // - contextRequirements => context injection contract
+  // - rateLimit => planner/runtime pacing hints for agentic loops
   _meta: {
     contextRequirements: ["wallet"] as ContextRequirementType[],
+    rateLimit: {
+      maxRequestsPerMinute: 30,
+      cooldownMs: 2000,
+      maxConcurrency: 1,
+      supportsBulk: true,
+      recommendedBatchTools: ["get_wallet_snapshot"],
+      notes: "Hobby tier: prefer snapshot endpoints over fan-out loops.",
+    },
   },
 
   inputSchema: {
@@ -723,7 +732,11 @@ const TOOLS = [{
 
 **Why `_meta` at the tool level?**
 
-The `_meta` field is part of the [MCP specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool-definition) for arbitrary tool metadata. The Context platform reads `_meta.contextRequirements` to determine what user data to inject. This is preserved through MCP transport because it's a standard field.
+The `_meta` field is part of the [MCP specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool-definition) for arbitrary tool metadata. The Context platform reads:
+- `_meta.contextRequirements` for user-context injection
+- `_meta.rateLimit` / `_meta.rateLimitHints` for planner + runtime pacing guidance
+
+Because `_meta` is an MCP-standard field, these hints survive normal MCP transport and discovery.
 
 **Available context types:**
 

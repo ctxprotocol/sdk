@@ -18,6 +18,48 @@ export interface ContextClientOptions {
 /**
  * An individual MCP tool exposed by a tool listing
  */
+export interface McpToolRateLimitHints {
+  /** Suggested request budget for this method */
+  maxRequestsPerMinute?: number;
+
+  /** Suggested parallel call ceiling for this method */
+  maxConcurrency?: number;
+
+  /** Suggested minimum delay between sequential calls */
+  cooldownMs?: number;
+
+  /** Whether this method already supports bulk/batch retrieval */
+  supportsBulk?: boolean;
+
+  /** Preferred batch-oriented methods to call instead of fan-out loops */
+  recommendedBatchTools?: string[];
+
+  /** Optional human-readable notes for planning */
+  notes?: string;
+}
+
+export interface McpToolMeta {
+  /** Context injection requirements handled by the Context runtime */
+  contextRequirements?: string[];
+
+  /**
+   * Optional planner/runtime pacing hints.
+   * Tool contributors can publish these to reduce rate-limit failures.
+   */
+  rateLimit?: McpToolRateLimitHints;
+  rateLimitHints?: McpToolRateLimitHints;
+
+  /** Flat aliases accepted for convenience */
+  maxRequestsPerMinute?: number;
+  maxConcurrency?: number;
+  cooldownMs?: number;
+  supportsBulk?: boolean;
+  recommendedBatchTools?: string[];
+  notes?: string;
+
+  [key: string]: unknown;
+}
+
 export interface McpTool {
   /** Name of the MCP tool method */
   name: string;
@@ -36,6 +78,9 @@ export interface McpTool {
    * Used by LLMs to understand the response structure.
    */
   outputSchema?: Record<string, unknown>;
+
+  /** MCP metadata extensions (context injection, rate-limit hints) */
+  _meta?: McpToolMeta;
 }
 
 /**

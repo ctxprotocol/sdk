@@ -1,5 +1,5 @@
 /**
- * Coinglass MCP Server v1.2.0
+ * Coinglass MCP Server v1.3.0
  * 
  * Comprehensive crypto derivatives intelligence from Coinglass API.
  * 
@@ -72,6 +72,28 @@ const HOBBY_ALLOWED_ENDPOINTS = new Set([
   "/api/exchange/balance/list",
   "/api/exchange/balance/chart",
 ]);
+const COINGLASS_RATE_LIMIT_PER_MINUTE = getConfiguredRateLimitPerMinute();
+const COINGLASS_RATE_LIMIT_COOLDOWN_MS = Math.ceil(
+  60_000 / COINGLASS_RATE_LIMIT_PER_MINUTE
+);
+const BULK_FIRST_TOOLS = new Set([
+  "analyze_market_sentiment",
+  "scan_oi_divergence",
+  "get_oi_batch",
+]);
+const TOOL_BATCH_HINTS: Record<string, string[]> = {
+  get_oi_by_exchange: ["get_oi_batch"],
+  get_futures_pairs_markets: ["scan_oi_divergence", "analyze_market_sentiment"],
+};
+
+type ToolRateLimitMetadata = {
+  maxRequestsPerMinute: number;
+  maxConcurrency: number;
+  cooldownMs: number;
+  supportsBulk: boolean;
+  recommendedBatchTools: string[];
+  notes: string;
+};
 
 function isHobbyConstrainedPlan(plan: string): boolean {
   return !PROFESSIONAL_OR_HIGHER_PLANS.has(plan);
@@ -103,6 +125,11 @@ function assertEndpointAllowedForConfiguredPlan(endpoint: string): void {
     return;
   }
 
+  console.warn("[coinglass-plan] blocked_endpoint", {
+    endpoint,
+    plan: COINGLASS_PLAN,
+  });
+
   throw new Error(
     `Endpoint ${endpoint} is disabled for COINGLASS_PLAN=${COINGLASS_PLAN}. Upgrade plan or update allowlist explicitly.`
   );
@@ -125,13 +152,19 @@ class RateLimiter {
     this.lastRefill = Date.now();
   }
 
-  async acquire(): Promise<void> {
+  async acquire(scope: string): Promise<void> {
     this.refill();
     if (this.tokens >= 1) {
       this.tokens -= 1;
       return;
     }
     const waitMs = Math.ceil((1 - this.tokens) / this.refillRate);
+    console.warn("[coinglass-rate] wait", {
+      scope,
+      waitMs,
+      maxRequestsPerMinute: this.maxTokens,
+      cooldownMs: Math.ceil(60_000 / this.maxTokens),
+    });
     await new Promise((resolve) => setTimeout(resolve, waitMs));
     this.refill();
     this.tokens -= 1;
@@ -145,9 +178,7 @@ class RateLimiter {
   }
 }
 
-const apiRateLimiter = new RateLimiter(
-  getConfiguredRateLimitPerMinute()
-);
+const apiRateLimiter = new RateLimiter(COINGLASS_RATE_LIMIT_PER_MINUTE);
 
 // ============================================================================
 // CACHE - TTL-based in-memory cache for frequently-accessed data
@@ -184,6 +215,18 @@ const cache = new TtlCache();
 const CACHE_TTL_SHORT = 30_000;
 const CACHE_TTL_MEDIUM = 120_000;
 const CACHE_TTL_LONG = 300_000;
+
+function buildToolRateLimitMetadata(toolName: string): ToolRateLimitMetadata {
+  const recommendedBatchTools = TOOL_BATCH_HINTS[toolName] ?? [];
+  return {
+    maxRequestsPerMinute: COINGLASS_RATE_LIMIT_PER_MINUTE,
+    maxConcurrency: 1,
+    cooldownMs: COINGLASS_RATE_LIMIT_COOLDOWN_MS,
+    supportsBulk: BULK_FIRST_TOOLS.has(toolName),
+    recommendedBatchTools,
+    notes: `Coinglass ${COINGLASS_PLAN} tier quota. Prefer batch/snapshot tools before per-symbol fan-out loops.`,
+  };
+}
 
 // ============================================================================
 // TOOL DEFINITIONS
@@ -908,16 +951,40 @@ const TOOLS = [
   // ============================================================================
 ];
 
+const TOOLS_WITH_METADATA = TOOLS.map((tool) => {
+  const existingMeta =
+    "_meta" in tool && typeof tool._meta === "object" && tool._meta !== null
+      ? (tool._meta as Record<string, unknown>)
+      : {};
+
+  return {
+    ...tool,
+    _meta: {
+      ...existingMeta,
+      rateLimit: buildToolRateLimitMetadata(tool.name),
+    },
+  };
+});
+
 // ============================================================================
 // MCP SERVER SETUP
 // ============================================================================
 
 const server = new Server(
-  { name: "coinglass-intelligence", version: "1.2.0" },
+  { name: "coinglass-intelligence", version: "1.3.0" },
   { capabilities: { tools: {} } }
 );
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
+console.log("[coinglass-config] startup", {
+  plan: COINGLASS_PLAN,
+  maxRequestsPerMinute: COINGLASS_RATE_LIMIT_PER_MINUTE,
+  cooldownMs: COINGLASS_RATE_LIMIT_COOLDOWN_MS,
+  toolCount: TOOLS_WITH_METADATA.length,
+});
+
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: TOOLS_WITH_METADATA,
+}));
 
 server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest): Promise<CallToolResult> => {
   const { name, arguments: args } = request.params;
@@ -1012,7 +1079,7 @@ async function coinglassGet(endpoint: string, params: Record<string, string | nu
     if (cached !== undefined) return cached;
   }
 
-  await apiRateLimiter.acquire();
+  await apiRateLimiter.acquire(endpoint);
 
   const url = new URL(`${COINGLASS_API}${endpoint}`);
   for (const [k, v] of Object.entries(params)) {
@@ -1021,9 +1088,29 @@ async function coinglassGet(endpoint: string, params: Record<string, string | nu
   const res = await fetch(url.toString(), {
     headers: { "accept": "application/json", "CG-API-KEY": API_KEY },
   });
-  if (!res.ok) throw new Error(`Coinglass API error (${res.status}): ${await res.text()}`);
+  if (!res.ok) {
+    const responseText = await res.text();
+    console.error("[coinglass-api] http_error", {
+      endpoint,
+      status: res.status,
+      retryAfter: res.headers.get("retry-after"),
+      keyMaxLimit: res.headers.get("api-key-max-limit"),
+      keyLimitRemaining: res.headers.get("api-key-limit-remaining"),
+      params,
+      responsePreview: responseText.slice(0, 180),
+    });
+    throw new Error(`Coinglass API error (${res.status}): ${responseText}`);
+  }
   const json = await res.json() as { code: string; msg?: string; data?: unknown };
-  if (json.code !== "0") throw new Error(`Coinglass error: ${json.msg || "Unknown"}`);
+  if (json.code !== "0") {
+    console.error("[coinglass-api] upstream_error_code", {
+      endpoint,
+      code: json.code,
+      message: json.msg ?? "Unknown",
+      params,
+    });
+    throw new Error(`Coinglass error: ${json.msg || "Unknown"}`);
+  }
 
   if (cacheTtl) {
     cache.set(cacheKey, json.data, cacheTtl);
@@ -1090,7 +1177,11 @@ async function getTopCoinsByOpenInterest(limit: number): Promise<string[]> {
     if (normalized.length > 0) {
       return normalized;
     }
-  } catch {
+  } catch (error) {
+    console.warn("[coinglass-data] dynamic_coin_lookup_fallback", {
+      reason: error instanceof Error ? error.message : "unknown_error",
+      fallback: "/api/futures/supported-coins",
+    });
     // Fall back to supported coins when market ranking is unavailable.
   }
 
@@ -2267,7 +2358,7 @@ app.get("/health", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     server: "coinglass-intelligence",
-    version: "1.2.0",
+    version: "1.3.0",
     configuredPlan: COINGLASS_PLAN,
     endpointPolicy: isHobbyConstrainedPlan(COINGLASS_PLAN)
       ? "hobby-allowlist"
@@ -2314,7 +2405,7 @@ app.delete("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
 
 const port = Number(process.env.PORT || 4005);
 app.listen(port, () => {
-  console.log("\n🚀 Coinglass Intelligence MCP Server v1.2.0");
+  console.log("\n🚀 Coinglass Intelligence MCP Server v1.3.0");
   console.log(`   Crypto derivatives intelligence (${COINGLASS_PLAN} tier)\n`);
   console.log(`🔒 Context Protocol Security Enabled`);
   console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);

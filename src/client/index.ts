@@ -19,6 +19,8 @@ export type {
     ContextClientOptions,
     Tool,
     McpTool,
+    McpToolMeta,
+    McpToolRateLimitHints,
     SearchResponse,
     SearchOptions,
     ExecuteOptions,

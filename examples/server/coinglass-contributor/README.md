@@ -53,9 +53,9 @@ Direct access to Coinglass API endpoints:
 
 ### 1. Get API Key
 
-Get your Coinglass API key from [coinglass.com/pricing](https://www.coinglass.com/pricing)
+Get your Coinglass API key from [coinglass.com/pricing](https://www.coinglass.com/pricing).
 
-Hobbyist tier supports: 70+ endpoints, 30 req/min, ≤1 min updates
+Rate limits vary by plan/key. Set `COINGLASS_RATE_LIMIT` to match your current quota.
 
 ### 2. Configure Environment
 
@@ -129,16 +129,22 @@ await callTool("get_fear_greed_index", {});
 
 ## Rate Limits
 
-Hobbyist tier: 30 requests/minute
+The server enforces upstream pacing with:
 
-The server respects Coinglass rate limits. For high-frequency usage, consider upgrading your API plan.
+- Token-bucket limiter (`COINGLASS_RATE_LIMIT`, default `60` req/min)
+- Per-request wait logging (`[coinglass-rate]`) when throttling is applied
+- MCP tool metadata hints (`_meta.rateLimit`) for planner/runtime coordination
+
+If you see frequent throttling logs or `429` responses, lower fan-out and prefer batch tools (`get_oi_batch`, `scan_oi_divergence`), or upgrade your API plan.
 
 ## Environment Variables
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `COINGLASS_API_KEY` | ✅ | - | Your Coinglass API key |
-| `PORT` | ❌ | 4004 | Server port |
+| `COINGLASS_PLAN` | ❌ | `hobbyist` | Plan guard (`hobbyist` enables endpoint allowlist) |
+| `COINGLASS_RATE_LIMIT` | ❌ | `60` | Upstream requests/minute budget for token bucket |
+| `PORT` | ❌ | `4005` | Server port |
 
 ## License
 
