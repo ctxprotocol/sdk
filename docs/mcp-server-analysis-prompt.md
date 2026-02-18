@@ -85,6 +85,10 @@ Agent tips:
 - Use 99% confidence for time-sensitive transactions
 ```
 
+**Banned phrases (do not use in description):**
+- "mdash" or "—"
+- "**" (no bold markdown)
+
 ### 3. Category (required, select one)
 
 Choose the most appropriate category:
