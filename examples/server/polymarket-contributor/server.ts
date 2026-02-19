@@ -474,9 +474,23 @@ const TOOLS = [
         spread: {
           type: "object",
           properties: {
+            bestBid: { type: "number" },
+            bestAsk: { type: "number" },
+            spreadCents: { type: "number" },
+            spreadBps: { type: "number" },
+            // Backward-compat aliases
             absolute: { type: "number" },
             percentage: { type: "number" },
             bps: { type: "number" },
+          },
+        },
+        depth: {
+          type: "object",
+          properties: {
+            bidDepthUsd: { type: "number" },
+            askDepthUsd: { type: "number" },
+            totalDepthUsd: { type: "number" },
+            note: { type: "string" },
           },
         },
         depthWithin2Percent: {
@@ -502,7 +516,14 @@ const TOOLS = [
         recommendation: { type: "string" },
         fetchedAt: { type: "string" },
       },
-      required: ["tokenId", "currentPrice", "spread", "whaleCost", "liquidityScore"],
+      required: [
+        "market",
+        "tokenId",
+        "currentPrice",
+        "spread",
+        "whaleCost",
+        "liquidityScore",
+      ],
     },
   },
 
@@ -537,7 +558,14 @@ const TOOLS = [
               name: { type: "string" },
               tokenId: { type: "string" },
               price: { type: "number" },
-              impliedProbability: { type: "number" },
+              impliedProbability: {
+                type: "number",
+                description: "Implied probability in decimal form (0.0-1.0)",
+              },
+              impliedProbabilityPercent: {
+                type: "number",
+                description: "Implied probability in percent form (0-100)",
+              },
             },
           },
         },
@@ -562,7 +590,11 @@ const TOOLS = [
         },
         trueProbabilities: {
           type: "object",
-          description: "Vig-adjusted true probabilities",
+          description: "Vig-adjusted true probabilities in decimal form (0.0-1.0)",
+        },
+        trueProbabilitiesPercent: {
+          type: "object",
+          description: "Vig-adjusted true probabilities in percent form (0-100)",
         },
         recommendation: { type: "string" },
         fetchedAt: { type: "string" },
@@ -1131,6 +1163,86 @@ Returns:
         fetchedAt: { type: "string" },
       },
       required: ["summary", "opportunities"],
+    },
+  },
+
+  {
+    name: "build_high_conviction_workflow",
+    description:
+      `Run an end-to-end high-conviction workflow in ONE call: discover trending markets, validate rules, check efficiency, analyze liquidity, and return top tradable setups with explicit risks.
+
+This is the recommended tool when users ask for a multi-step workflow like:
+"discover trending markets → validate rules → check efficiency → top setups with risks."
+
+Why use this:
+- Avoids brittle multi-call orchestration in client-generated code
+- Executes analysis sequentially and safely on the server
+- Returns normalized setup cards with entry guidance and risk factors
+
+⏱️ PERFORMANCE: Runs several analyses sequentially (~10-25s depending on candidateCount and whale options).`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        category: {
+          type: "string",
+          description: "Optional category filter (politics, crypto, sports, etc.)",
+        },
+        candidateCount: {
+          type: "number",
+          description: "How many trending markets to analyze before ranking (default: 6, max: 10)",
+        },
+        topSetups: {
+          type: "number",
+          description: "How many final setups to return (default: 3, max: 5)",
+        },
+        includeWhaleFlow: {
+          type: "boolean",
+          description: "Include recent trade-flow sentiment checks for shortlisted setups (default: false)",
+        },
+        hoursBack: {
+          type: "number",
+          description: "Trade-flow lookback window in hours when includeWhaleFlow=true (default: 24)",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        workflowSummary: {
+          type: "object",
+          properties: {
+            strategy: { type: "string" },
+            category: { type: "string" },
+            discoveredMarkets: { type: "number" },
+            analyzedMarkets: { type: "number" },
+            topSetupsReturned: { type: "number" },
+          },
+        },
+        topSetups: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              rank: { type: "number" },
+              market: { type: "string" },
+              url: { type: "string", format: "uri" },
+              conditionId: { type: "string" },
+              slug: { type: "string" },
+              score: { type: "number" },
+              signal: { type: "string" },
+              currentPrice: { type: "number" },
+              entryPlan: { type: "object" },
+              checks: { type: "object" },
+              whaleInsights: { type: "object" },
+              risks: { type: "array", items: { type: "string" } },
+            },
+          },
+        },
+        analysisNotes: { type: "array", items: { type: "string" } },
+        fetchedAt: { type: "string" },
+      },
+      required: ["workflowSummary", "topSetups"],
     },
   },
 
@@ -3097,6 +3209,8 @@ server.setRequestHandler(
           return await handleFindArbitrageOpportunities(args);
         case "find_trading_opportunities":
           return await handleFindTradingOpportunities(args);
+        case "build_high_conviction_workflow":
+          return await handleBuildHighConvictionWorkflow(args);
         case "find_moderate_probability_bets":
           return await handleFindModerateProbabilityBets(args);
         case "get_bets_by_probability":
@@ -3833,13 +3947,98 @@ async function handleAnalyzeMarketLiquidity(
     return errorResult("Could not resolve token ID");
   }
 
-  // Fetch both orderbooks in parallel (+ price) instead of sequentially
-  const [yesOrderbook, noOrderbook] = await Promise.all([
-    fetchClob(`/book?token_id=${yesTokenId}`, undefined, 8000).then(r => r as OrderbookResponse),
-    noTokenId 
-      ? fetchClob(`/book?token_id=${noTokenId}`, undefined, 8000).then(r => r as OrderbookResponse).catch(() => null)
+  // Fetch both orderbooks in parallel (+ price) instead of sequentially.
+  // NOTE: Some Gamma markets don't have an active CLOB orderbook (or are paused),
+  // which manifests as a 404 from /book. In that case we return a best-effort
+  // response instead of failing the entire tool call.
+  const [yesOrderbook, noOrderbook] = (await Promise.all([
+    fetchClob(`/book?token_id=${yesTokenId}`, undefined, 8000)
+      .then((r) => r as OrderbookResponse)
+      .catch(() => null),
+    noTokenId
+      ? fetchClob(`/book?token_id=${noTokenId}`, undefined, 8000)
+          .then((r) => r as OrderbookResponse)
+          .catch(() => null)
       : Promise.resolve(null),
-  ]) as [OrderbookResponse, OrderbookResponse | null];
+  ])) as [OrderbookResponse | null, OrderbookResponse | null];
+
+  if (!yesOrderbook) {
+    let fallbackMarketTitle = conditionId || yesTokenId;
+    let fallbackPrice = 0.5;
+    let fallbackLiquidity = 0;
+
+    try {
+      if (conditionId) {
+        const gammaMarkets = (await fetchGamma(
+          `/markets?condition_ids=${conditionId}&limit=1`,
+          8000
+        )) as GammaMarket[];
+        if (Array.isArray(gammaMarkets) && gammaMarkets.length > 0) {
+          const m = gammaMarkets[0];
+          fallbackMarketTitle = m.question || m.title || fallbackMarketTitle;
+          fallbackLiquidity = Number(m.liquidity || 0);
+          const gammaPrices = parseJsonArray(m.outcomePrices);
+          const yesPrice = parseFloat(gammaPrices[0]) || 0;
+          if (yesPrice > 0 && yesPrice < 1) {
+            fallbackPrice = yesPrice;
+          }
+        }
+      }
+    } catch {
+      // Ignore Gamma fallback failures
+    }
+
+    const noBookWhaleCost = {
+      sell1k: {
+        amountFilled: 0,
+        avgPrice: 0,
+        worstPrice: 0,
+        slippagePercent: 100,
+        canFill: false,
+      },
+      sell5k: {
+        amountFilled: 0,
+        avgPrice: 0,
+        worstPrice: 0,
+        slippagePercent: 100,
+        canFill: false,
+      },
+      sell10k: {
+        amountFilled: 0,
+        avgPrice: 0,
+        worstPrice: 0,
+        slippagePercent: 100,
+        canFill: false,
+      },
+    };
+
+    return successResult({
+      market: fallbackMarketTitle,
+      tokenId: yesTokenId,
+      currentPrice: Number(fallbackPrice.toFixed(4)),
+      spread: {
+        bestBid: Number(fallbackPrice.toFixed(4)),
+        bestAsk: Number(fallbackPrice.toFixed(4)),
+        spreadCents: 0,
+        spreadBps: 0,
+        // Backward-compat aliases
+        absolute: 0,
+        percentage: 0,
+        bps: 0,
+      },
+      depth: {
+        bidDepthUsd: Number((fallbackLiquidity * 0.5).toFixed(2)),
+        askDepthUsd: Number((fallbackLiquidity * 0.5).toFixed(2)),
+        totalDepthUsd: Number(fallbackLiquidity.toFixed(2)),
+        note: "CLOB orderbook unavailable; Gamma liquidity used as rough proxy",
+      },
+      whaleCost: noBookWhaleCost,
+      liquidityScore: "illiquid",
+      recommendation:
+        "CLOB orderbook unavailable (market may be paused or not tradeable on the orderbook). Treat execution/exit risk as high.",
+      fetchedAt: new Date().toISOString(),
+    });
+  }
 
   // Build MERGED orderbook combining direct + synthetic liquidity
   // Polymarket UI shows this merged view
@@ -4085,6 +4284,7 @@ async function handleCheckMarketEfficiency(
     tokenId: string;
     price: number;
     impliedProbability: number;
+    impliedProbabilityPercent: number;
   }> = [];
 
   // For binary markets - parse clobTokenIds and outcomePrices (may be JSON strings)
@@ -4137,8 +4337,20 @@ async function handleCheckMarketEfficiency(
     if (isNaN(noPrice) || noPrice === 0) noPrice = 0.5;
 
     outcomes.push(
-      { name: "YES", tokenId: yesToken, price: yesPrice, impliedProbability: yesPrice * 100 },
-      { name: "NO", tokenId: noToken, price: noPrice, impliedProbability: noPrice * 100 }
+      {
+        name: "YES",
+        tokenId: yesToken,
+        price: yesPrice,
+        impliedProbability: Number(yesPrice.toFixed(4)),
+        impliedProbabilityPercent: Number((yesPrice * 100).toFixed(2)),
+      },
+      {
+        name: "NO",
+        tokenId: noToken,
+        price: noPrice,
+        impliedProbability: Number(noPrice.toFixed(4)),
+        impliedProbabilityPercent: Number((noPrice * 100).toFixed(2)),
+      }
     );
   }
 
@@ -4162,10 +4374,12 @@ async function handleCheckMarketEfficiency(
 
   // Calculate true probabilities (vig-adjusted)
   const trueProbabilities: Record<string, number> = {};
+  const trueProbabilitiesPercent: Record<string, number> = {};
+  const probabilityDenominator = sumOfOutcomes > 0 ? sumOfOutcomes : 1;
   for (const outcome of outcomes) {
-    trueProbabilities[outcome.name] = Number(
-      ((outcome.price / sumOfOutcomes) * 100).toFixed(2)
-    );
+    const decimalProbability = outcome.price / probabilityDenominator;
+    trueProbabilities[outcome.name] = Number(decimalProbability.toFixed(4));
+    trueProbabilitiesPercent[outcome.name] = Number((decimalProbability * 100).toFixed(2));
   }
 
   // Generate recommendation
@@ -4231,6 +4445,7 @@ async function handleCheckMarketEfficiency(
     },
     spreadInfo,
     trueProbabilities,
+    trueProbabilitiesPercent,
     recommendation,
     fetchedAt: new Date().toISOString(),
   });
@@ -5492,6 +5707,593 @@ async function handleFindTradingOpportunities(
     ...(nearestMatches && nearestMatches.length > 0 && { nearestMatches }),
     fetchedAt: new Date().toISOString(),
   });
+}
+
+type WorkflowCandidate = {
+  title: string;
+  slug: string;
+  conditionId: string;
+  url: string;
+  currentPrice: number;
+  trendScore: number;
+  volume24h: number;
+  liquidity: number;
+  signal: string;
+  whyTrending: string;
+};
+
+function workflowToNumber(value: unknown, fallback = 0): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return fallback;
+}
+
+function workflowToBoundedInteger(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  const numericValue = workflowToNumber(value, fallback);
+  const rounded = Math.floor(numericValue);
+  return Math.min(max, Math.max(min, rounded));
+}
+
+function workflowClamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function workflowObject(value: unknown): Record<string, unknown> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return {};
+}
+
+function workflowObjectArray(value: unknown): Array<Record<string, unknown>> {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter(
+    (entry): entry is Record<string, unknown> =>
+      !!entry && typeof entry === "object" && !Array.isArray(entry)
+  );
+}
+
+function workflowStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter((entry): entry is string => typeof entry === "string" && entry.length > 0);
+}
+
+function workflowGetErrorMessage(result: CallToolResult): string {
+  const firstContent = result.content[0];
+  if (!firstContent || firstContent.type !== "text" || typeof firstContent.text !== "string") {
+    return "Unknown tool failure";
+  }
+
+  try {
+    const parsed = JSON.parse(firstContent.text) as { error?: unknown };
+    if (typeof parsed?.error === "string" && parsed.error.length > 0) {
+      return parsed.error;
+    }
+  } catch {
+    // Not JSON, fall through to plain text
+  }
+
+  return firstContent.text;
+}
+
+function workflowExtractToolData(
+  result: CallToolResult,
+  toolName: string
+): Record<string, unknown> {
+  if (result.isError) {
+    throw new Error(`${toolName} failed: ${workflowGetErrorMessage(result)}`);
+  }
+
+  if (
+    result.structuredContent &&
+    typeof result.structuredContent === "object" &&
+    !Array.isArray(result.structuredContent)
+  ) {
+    return result.structuredContent as Record<string, unknown>;
+  }
+
+  const firstContent = result.content[0];
+  if (firstContent && firstContent.type === "text" && typeof firstContent.text === "string") {
+    try {
+      const parsed = JSON.parse(firstContent.text) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      // Non-JSON response
+    }
+  }
+
+  return {};
+}
+
+function workflowNormalizeProbability(value: unknown): number | null {
+  const numericValue = workflowToNumber(value, Number.NaN);
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    return null;
+  }
+  if (numericValue <= 1) {
+    return numericValue;
+  }
+  if (numericValue <= 100) {
+    return numericValue / 100;
+  }
+  return null;
+}
+
+function workflowLiquidityPoints(liquidityScore: string): number {
+  switch (liquidityScore) {
+    case "excellent":
+      return 22;
+    case "good":
+      return 16;
+    case "moderate":
+      return 10;
+    case "poor":
+      return 2;
+    case "illiquid":
+      // Treat "no usable orderbook" as strongly non-tradeable.
+      return -12;
+    default:
+      return 6;
+  }
+}
+
+function workflowRulePoints(status: "pass" | "caution" | "fail"): number {
+  switch (status) {
+    case "pass":
+      return 18;
+    case "caution":
+      return 10;
+    case "fail":
+      // A rules failure should dominate the score: this is existential risk.
+      return -10;
+    default:
+      return 0;
+  }
+}
+
+async function handleBuildHighConvictionWorkflow(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const category = typeof args?.category === "string" ? args.category.trim() : "";
+  const candidateCount = workflowToBoundedInteger(args?.candidateCount, 6, 3, 10);
+  const topSetupsLimit = workflowToBoundedInteger(args?.topSetups, 3, 1, 5);
+  const includeWhaleFlow = args?.includeWhaleFlow === true;
+  const hoursBack = workflowToBoundedInteger(args?.hoursBack, 24, 1, 168);
+  const analysisNotes: string[] = [];
+
+  try {
+    const discoveryInput: Record<string, unknown> = {
+      sortBy: "volume",
+      limit: Math.max(candidateCount * 2, 10),
+    };
+    if (category.length > 0) {
+      discoveryInput.category = category;
+    }
+
+    const discoveryData = workflowExtractToolData(
+      await handleDiscoverTrendingMarkets(discoveryInput),
+      "discover_trending_markets"
+    );
+
+    const discoveredMarkets = workflowObjectArray(discoveryData.trendingMarkets);
+    const candidates = discoveredMarkets
+      .map((market): WorkflowCandidate => {
+        const conditionId = typeof market.conditionId === "string" ? market.conditionId : "";
+        const slug = typeof market.slug === "string" ? market.slug : "";
+        const title = typeof market.title === "string" ? market.title : "Unknown market";
+        const url = typeof market.url === "string" && market.url.length > 0
+          ? market.url
+          : getPolymarketUrl(slug, conditionId);
+
+        return {
+          title,
+          slug,
+          conditionId,
+          url,
+          currentPrice: workflowToNumber(market.currentPrice, 0.5),
+          trendScore: workflowToNumber(market.trendScore, 0),
+          volume24h: workflowToNumber(market.volume24h, 0),
+          liquidity: workflowToNumber(market.liquidity, 0),
+          signal: typeof market.signal === "string" ? market.signal : "No trend signal",
+          whyTrending: typeof market.whyTrending === "string" ? market.whyTrending : "No trend context",
+        };
+      })
+      .filter((market) => market.conditionId.length > 0 || market.slug.length > 0)
+      .slice(0, candidateCount);
+
+    if (candidates.length === 0) {
+      return successResult({
+        workflowSummary: {
+          strategy: "high-conviction-sequential",
+          category: category || "all",
+          discoveredMarkets: discoveredMarkets.length,
+          analyzedMarkets: 0,
+          topSetupsReturned: 0,
+        },
+        topSetups: [],
+        analysisNotes: [
+          "No candidate markets were discovered with valid identifiers. Try a different category or increase candidateCount.",
+        ],
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+
+    const scoredSetups: Array<Record<string, unknown> & { internalScore: number }> = [];
+
+    for (const candidate of candidates) {
+      const risks: string[] = [];
+      let marketPriceYes = workflowClamp(candidate.currentPrice, 0.01, 0.99);
+      let ruleStatus: "pass" | "caution" | "fail" = "caution";
+      let ruleRiskCount = 0;
+      let rulesAmbiguityCount = 0;
+      let rulesSummaryText = "Read market criteria before sizing.";
+      let efficiencyLabel = "unknown";
+      let vigBps = 0;
+      let spreadCents = 0;
+      let slippage5kPercent = 0;
+      let liquidityScore = "unknown";
+      let edgePercent = 0;
+      let whaleSentiment = "neutral";
+      let whaleNetVolume = 0;
+      let whaleDivergence = "Whale flow not requested";
+      let trueProbYes: number | null = null;
+
+      try {
+        const rulesInput: Record<string, unknown> = {};
+        if (candidate.slug.length > 0) {
+          rulesInput.slug = candidate.slug;
+        } else {
+          rulesInput.conditionId = candidate.conditionId;
+        }
+        const rulesData = workflowExtractToolData(
+          await handleCheckMarketRules(rulesInput),
+          "check_market_rules"
+        );
+
+        const ruleFactors = workflowStringArray(rulesData.riskFactors);
+        const rulesSummary = workflowObject(rulesData.rulesSummary);
+        const ambiguities = workflowStringArray(rulesSummary.ambiguities);
+        const gotchas = workflowStringArray(rulesSummary.potentialGotchas);
+        const resolvesYesIf =
+          typeof rulesSummary.resolvesYesIf === "string" ? rulesSummary.resolvesYesIf : "";
+
+        rulesAmbiguityCount = ambiguities.length;
+        ruleRiskCount = ruleFactors.length + gotchas.length;
+        rulesSummaryText = resolvesYesIf.length > 0
+          ? `YES resolves if: ${resolvesYesIf}`
+          : "Resolution criteria available; review full market description.";
+
+        risks.push(...ruleFactors, ...ambiguities.map((item) => `Ambiguity: ${item}`));
+
+        const resolutionSource =
+          typeof rulesData.resolutionSource === "string" ? rulesData.resolutionSource : "";
+        if (resolutionSource === "Not specified") {
+          risks.push("Resolution source is not clearly specified.");
+        }
+
+        if (rulesAmbiguityCount >= 3 || ruleRiskCount >= 6) {
+          ruleStatus = "fail";
+        } else if (rulesAmbiguityCount > 0 || ruleRiskCount >= 2) {
+          ruleStatus = "caution";
+        } else {
+          ruleStatus = "pass";
+        }
+      } catch (error) {
+        risks.push("Could not complete automated rule validation.");
+        ruleStatus = "fail";
+        analysisNotes.push(
+          `Rules check failed for "${candidate.title}": ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+
+      try {
+        const efficiencyInput: Record<string, unknown> = {};
+        if (candidate.conditionId.length > 0) {
+          efficiencyInput.conditionId = candidate.conditionId;
+        }
+        if (candidate.slug.length > 0) {
+          efficiencyInput.slug = candidate.slug;
+        }
+
+        const efficiencyData = workflowExtractToolData(
+          await handleCheckMarketEfficiency(efficiencyInput),
+          "check_market_efficiency"
+        );
+
+        const marketEfficiency = workflowObject(efficiencyData.marketEfficiency);
+        efficiencyLabel =
+          typeof marketEfficiency.efficiency === "string" ? marketEfficiency.efficiency : "unknown";
+        vigBps = Math.abs(workflowToNumber(marketEfficiency.vigBps, 0));
+
+        const outcomes = workflowObjectArray(efficiencyData.outcomes);
+        for (const outcome of outcomes) {
+          const outcomeName = typeof outcome.name === "string" ? outcome.name.toUpperCase() : "";
+          if (outcomeName === "YES") {
+            marketPriceYes = workflowClamp(workflowToNumber(outcome.price, marketPriceYes), 0.01, 0.99);
+          }
+        }
+
+        const trueProbabilities = workflowObject(efficiencyData.trueProbabilities);
+        trueProbYes = workflowNormalizeProbability(trueProbabilities.YES);
+        if (trueProbYes !== null) {
+          edgePercent = (trueProbYes - marketPriceYes) * 100;
+        }
+
+        if (vigBps > 250) {
+          risks.push(`High vig (${vigBps.toFixed(1)} bps) can erase edge.`);
+        } else if (vigBps > 120) {
+          risks.push(`Moderate vig (${vigBps.toFixed(1)} bps) requires better entry price.`);
+        }
+      } catch (error) {
+        risks.push("Could not verify market efficiency/vig.");
+        analysisNotes.push(
+          `Efficiency check failed for "${candidate.title}": ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+
+      try {
+        const liquidityInput: Record<string, unknown> = {};
+        if (candidate.conditionId.length > 0) {
+          liquidityInput.conditionId = candidate.conditionId;
+        }
+        const liquidityData = workflowExtractToolData(
+          await handleAnalyzeMarketLiquidity(liquidityInput),
+          "analyze_market_liquidity"
+        );
+
+        liquidityScore =
+          typeof liquidityData.liquidityScore === "string" ? liquidityData.liquidityScore : "unknown";
+        const spread = workflowObject(liquidityData.spread);
+        spreadCents = workflowToNumber(
+          spread.spreadCents,
+          workflowToNumber(spread.absolute, 0)
+        );
+
+        const whaleCost = workflowObject(liquidityData.whaleCost);
+        const sell5k = workflowObject(whaleCost.sell5k);
+        slippage5kPercent = workflowToNumber(sell5k.slippagePercent, 0);
+
+        if (liquidityScore === "illiquid" || slippage5kPercent > 12) {
+          risks.push("Exit risk is high for medium-sized positions.");
+        }
+        if (spreadCents > 3) {
+          risks.push(`Wide spread (${spreadCents.toFixed(1)} cents) hurts execution.`);
+        }
+      } catch (error) {
+        risks.push("Could not verify orderbook depth/slippage.");
+        analysisNotes.push(
+          `Liquidity check failed for "${candidate.title}": ${error instanceof Error ? error.message : "Unknown error"}`
+        );
+      }
+
+      if (includeWhaleFlow) {
+        try {
+          const whaleData = workflowExtractToolData(
+            await handleAnalyzeWhaleFlow({
+              conditionId: candidate.conditionId,
+              hoursBack,
+            }),
+            "analyze_whale_flow"
+          );
+          const whaleActivity = workflowObject(whaleData.whaleActivity);
+          whaleSentiment =
+            typeof whaleActivity.sentiment === "string" ? whaleActivity.sentiment : "neutral";
+          whaleNetVolume = workflowToNumber(whaleActivity.netWhaleVolume, 0);
+          whaleDivergence =
+            typeof whaleData.divergence === "string" ? whaleData.divergence : "No divergence data";
+        } catch (error) {
+          whaleSentiment = "neutral";
+          whaleDivergence = "Whale flow unavailable";
+          analysisNotes.push(
+            `Whale-flow check failed for "${candidate.title}": ${error instanceof Error ? error.message : "Unknown error"}`
+          );
+        }
+      }
+
+      let suggestedSide: "YES" | "NO";
+      if (edgePercent > 2) {
+        suggestedSide = "YES";
+      } else if (edgePercent < -2) {
+        suggestedSide = "NO";
+      } else if (whaleSentiment === "bullish") {
+        suggestedSide = "YES";
+      } else if (whaleSentiment === "bearish") {
+        suggestedSide = "NO";
+      } else {
+        suggestedSide = marketPriceYes <= 0.5 ? "YES" : "NO";
+      }
+
+      const sideMarketPrice = suggestedSide === "YES" ? marketPriceYes : 1 - marketPriceYes;
+      const sideFairPrice = trueProbYes !== null
+        ? suggestedSide === "YES"
+          ? trueProbYes
+          : 1 - trueProbYes
+        : sideMarketPrice;
+      const sideEdgePercent = (sideFairPrice - sideMarketPrice) * 100;
+
+      const rulePoints = workflowRulePoints(ruleStatus);
+      const liquidityPoints = workflowLiquidityPoints(liquidityScore);
+      const efficiencyPoints = Math.max(0, 20 - Math.min(vigBps, 400) / 20);
+      const trendPoints = Math.min(20, candidate.trendScore * 0.25);
+      let edgePoints = Math.max(0, Math.min(16, Math.abs(sideEdgePercent) * 2));
+      if (ruleStatus === "fail" || liquidityScore === "illiquid") {
+        edgePoints = Math.min(edgePoints, 4);
+      }
+      let whalePoints = 0;
+      if (includeWhaleFlow) {
+        const sideAligned =
+          (suggestedSide === "YES" && whaleSentiment === "bullish") ||
+          (suggestedSide === "NO" && whaleSentiment === "bearish");
+        if (sideAligned) {
+          whalePoints = 6;
+        } else if (whaleSentiment === "neutral") {
+          whalePoints = 0;
+        } else {
+          whalePoints = -4;
+          risks.push("Whale flow currently leans against this side.");
+        }
+      }
+
+      const rawScore =
+        trendPoints + rulePoints + liquidityPoints + efficiencyPoints + edgePoints + whalePoints;
+      const normalizedScore = workflowClamp(rawScore, 1, 99);
+
+      const tradabilityReasons: string[] = [];
+      if (ruleStatus === "fail") {
+        tradabilityReasons.push("Resolution criteria too ambiguous");
+      }
+      if (liquidityScore === "illiquid") {
+        tradabilityReasons.push("No executable orderbook depth");
+      }
+      if (slippage5kPercent > 12) {
+        tradabilityReasons.push("Estimated $5k exit slippage is too high");
+      }
+      if (spreadCents > 5) {
+        tradabilityReasons.push("Bid/ask spread is too wide");
+      }
+      const isTradable = tradabilityReasons.length === 0;
+
+      const riskList = Array.from(
+        new Set(risks.filter((risk) => risk.length > 0))
+      ).slice(0, 8);
+
+      const takeProfitPrice = workflowClamp(sideMarketPrice + 0.08, 0.05, 0.98);
+      const invalidationPrice = workflowClamp(sideMarketPrice - 0.06, 0.01, 0.95);
+      const sizeGuidance =
+        liquidityScore === "excellent" || liquidityScore === "good"
+          ? "Normal sizing acceptable; use limit orders for better fills."
+          : "Use smaller sizing and patient limit orders to control slippage.";
+
+      const edgeLabel = sideEdgePercent >= 0
+        ? `${sideEdgePercent.toFixed(2)}% model edge`
+        : `${Math.abs(sideEdgePercent).toFixed(2)}% model deficit`;
+
+      scoredSetups.push({
+        rank: 0,
+        market: candidate.title,
+        url: candidate.url,
+        conditionId: candidate.conditionId,
+        slug: candidate.slug,
+        score: Number(normalizedScore.toFixed(1)),
+        signal: `${suggestedSide} setup: ${edgeLabel}, ${liquidityScore} liquidity, ${efficiencyLabel} pricing`,
+        currentPrice: Number(marketPriceYes.toFixed(4)),
+        entryPlan: {
+          suggestedSide,
+          sideEntryPrice: Number(sideMarketPrice.toFixed(4)),
+          sideFairPrice: Number(sideFairPrice.toFixed(4)),
+          edgePercent: Number(sideEdgePercent.toFixed(2)),
+          takeProfitPrice: Number(takeProfitPrice.toFixed(4)),
+          invalidationPrice: Number(invalidationPrice.toFixed(4)),
+          sizingGuidance: sizeGuidance,
+          executionNote: `Spread ${spreadCents.toFixed(1)}c, est. $5k exit slippage ${slippage5kPercent.toFixed(1)}%.`,
+        },
+        checks: {
+          rules: {
+            status: ruleStatus,
+            riskFactorCount: ruleRiskCount,
+            ambiguityCount: rulesAmbiguityCount,
+            summary: rulesSummaryText,
+          },
+          efficiency: {
+            status: efficiencyLabel,
+            vigBps: Number(vigBps.toFixed(1)),
+            sideEdgePercent: Number(sideEdgePercent.toFixed(2)),
+          },
+          liquidity: {
+            status: liquidityScore,
+            spreadCents: Number(spreadCents.toFixed(2)),
+            slippage5kPercent: Number(slippage5kPercent.toFixed(2)),
+          },
+          tradability: {
+            isTradable,
+            reasons: tradabilityReasons,
+          },
+        },
+        whaleInsights: {
+          enabled: includeWhaleFlow,
+          sentiment: whaleSentiment,
+          netVolume: Number(whaleNetVolume.toFixed(2)),
+          divergence: whaleDivergence,
+        },
+        risks: riskList,
+        isTradable,
+        internalScore: normalizedScore,
+      });
+    }
+
+    scoredSetups.sort((left, right) => right.internalScore - left.internalScore);
+    const tradableSetups = scoredSetups.filter(
+      (setup) => setup.isTradable === true
+    );
+    const nonTradableSetups = scoredSetups.filter(
+      (setup) => setup.isTradable !== true
+    );
+    const selectedSetups = [...tradableSetups, ...nonTradableSetups].slice(
+      0,
+      topSetupsLimit
+    );
+    const selectedTradableCount = selectedSetups.filter(
+      (setup) => setup.isTradable === true
+    ).length;
+    const topSetups = selectedSetups.map((setup, index) => {
+      const { internalScore, ...visibleSetup } = setup;
+      return {
+        ...visibleSetup,
+        rank: index + 1,
+      };
+    });
+
+    if (topSetups.length === 0) {
+      analysisNotes.push(
+        "No setups were retained after scoring. Try reducing strictness by lowering candidateCount or disabling whale checks."
+      );
+    }
+    if (tradableSetups.length === 0 && scoredSetups.length > 0) {
+      analysisNotes.push(
+        "No fully tradeable setups met execution/rules thresholds; returned best available setups with explicit cautions."
+      );
+    }
+    if (selectedTradableCount > 0 && selectedTradableCount < topSetupsLimit) {
+      analysisNotes.push(
+        `Only ${selectedTradableCount}/${topSetupsLimit} setups met tradability thresholds. Consider increasing candidateCount (max 10) or switching category for more liquid markets.`
+      );
+    }
+
+    return successResult({
+      workflowSummary: {
+        strategy: "high-conviction-sequential",
+        category: category || "all",
+        discoveredMarkets: discoveredMarkets.length,
+        analyzedMarkets: candidates.length,
+        topSetupsReturned: topSetups.length,
+      },
+      topSetups,
+      analysisNotes,
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(
+      `build_high_conviction_workflow failed: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
 }
 
 /**
@@ -9447,6 +10249,8 @@ app.get("/health", (_req: Request, res: Response) => {
     status: "ok",
     server: "polymarket-intelligence",
     version: "1.0.0",
+    contextAuthEnabled: !allowUnauthenticatedMcp,
+    mcpAuthBypassEnabled: allowUnauthenticatedMcp,
     tools: TOOLS_WITH_METADATA.map((t) => t.name),
     description: "Polymarket Intelligence MCP - Whale cost, market efficiency, smart money tracking",
   });

@@ -1,5 +1,5 @@
 /**
- * Coinglass MCP Server v1.3.0
+ * Coinglass MCP Server v1.4.0
  * 
  * Comprehensive crypto derivatives intelligence from Coinglass API.
  * 
@@ -7,16 +7,17 @@
  * Many endpoints require Professional tier or above and have been disabled.
  * See: https://coinglass.com/pricing
  * 
- * TIER 1: INTELLIGENCE LAYER (6 tools - Hobbyist compatible)
+ * TIER 1: INTELLIGENCE LAYER (7 tools - Hobbyist compatible)
  * - analyze_market_sentiment - Cross-market sentiment analysis  
  * - get_btc_valuation_score - Multi-indicator BTC valuation
  * - get_market_overview - Market overview with available data
- * - get_funding_rates - Current funding rates across exchanges
+ * - analyze_hobby_market_regime - Multi-signal macro regime for Hobby tier
+ * - analyze_exchange_balance_pressure - Coin-level exchange flow pressure
  * - scan_oi_divergence - Scan for OI vs sentiment divergences across coins
  * - get_oi_batch - Batch OI data for multiple coins in one call
  * 
- * TIER 2: RAW DATA LAYER (15 tools - Hobbyist compatible)
- * Access to Coinglass API endpoints available on Hobbyist tier
+ * TIER 2: RAW DATA LAYER (20 tools - Hobbyist compatible)
+ * Access to Coinglass API endpoints available on this Hobby-tier key
  * 
  * DISABLED (Require Professional+):
  * - find_funding_arbitrage, detect_liquidation_risk, analyze_smart_money
@@ -40,11 +41,13 @@ import {
   ListToolsRequestSchema,
   isInitializeRequest,
 } from "@modelcontextprotocol/sdk/types.js";
-import express, { type Request, type Response } from "express";
+import express, { type Request, type RequestHandler, type Response } from "express";
 import { createContextMiddleware } from "@ctxprotocol/sdk";
 
 const COINGLASS_API = "https://open-api-v4.coinglass.com";
 const API_KEY = process.env.COINGLASS_API_KEY || "";
+const SERVER_VERSION = "1.4.0";
+const CONTEXT_AUTH_ENABLED = process.env.CONTEXT_AUTH_ENABLED !== "false";
 
 const COINGLASS_PLAN = (process.env.COINGLASS_PLAN ?? "hobbyist").trim().toLowerCase();
 const DEFAULT_COINGLASS_RATE_LIMIT = 60;
@@ -53,9 +56,32 @@ const MAX_COINGLASS_RATE_LIMIT = 600;
 const DEFAULT_ANALYZE_COIN_LIMIT = 10;
 const DEFAULT_SCAN_COIN_LIMIT = 20;
 const MAX_DYNAMIC_COIN_LOOKUP_PAGE_SIZE = 120;
+const MAJOR_COIN_SYMBOL_FALLBACK = [
+  "BTC",
+  "ETH",
+  "SOL",
+  "XRP",
+  "BNB",
+  "DOGE",
+  "ADA",
+  "AVAX",
+  "LINK",
+  "TRX",
+  "TON",
+  "SUI",
+  "DOT",
+  "MATIC",
+  "LTC",
+  "BCH",
+  "APT",
+  "ARB",
+  "OP",
+  "ATOM",
+] as const;
 const PROFESSIONAL_OR_HIGHER_PLANS = new Set(["professional", "pro", "enterprise", "institutional"]);
 const HOBBY_ALLOWED_ENDPOINTS = new Set([
   "/api/index/fear-greed-history",
+  "/api/index/stock-flow",
   "/api/bull-market-peak-indicator",
   "/api/index/ahr999",
   "/api/index/bitcoin/rainbow-chart",
@@ -68,9 +94,13 @@ const HOBBY_ALLOWED_ENDPOINTS = new Set([
   "/api/futures/pairs-markets",
   "/api/futures/funding-rate/exchange-list",
   "/api/futures/open-interest/exchange-list",
+  "/api/futures/liquidation/exchange-list",
+  "/api/futures/liquidation/coin-list",
+  "/api/etf/bitcoin/list",
   "/api/etf/bitcoin/net-assets/history",
   "/api/exchange/balance/list",
   "/api/exchange/balance/chart",
+  "/api/spot/supported-coins",
 ]);
 const COINGLASS_RATE_LIMIT_PER_MINUTE = getConfiguredRateLimitPerMinute();
 const COINGLASS_RATE_LIMIT_COOLDOWN_MS = Math.ceil(
@@ -94,6 +124,38 @@ type ToolRateLimitMetadata = {
   recommendedBatchTools: string[];
   notes: string;
 };
+
+class PlanUpgradeRequiredError extends Error {
+  endpoint: string;
+
+  constructor(endpoint: string, message: string) {
+    super(message);
+    this.name = "PlanUpgradeRequiredError";
+    this.endpoint = endpoint;
+  }
+}
+
+const PLAN_UPGRADE_PATTERN = /upgrade\s+plan|professional|subscription/i;
+const API_ACCESS_PROBE_TTL_MS = 60_000;
+const API_ACCESS_PROBES: Array<{ endpoint: string; params?: Record<string, string | number> }> = [
+  { endpoint: "/api/futures/supported-coins" },
+  { endpoint: "/api/futures/open-interest/exchange-list", params: { symbol: "BTC" } },
+  { endpoint: "/api/index/fear-greed-history" },
+  { endpoint: "/api/exchange/balance/list", params: { symbol: "BTC" } },
+  { endpoint: "/api/futures/funding-rate/exchange-list" },
+];
+let apiAccessProbeCache:
+  | { checkedAt: number; accessible: true }
+  | { checkedAt: number; accessible: false; reason: string; endpoint: string }
+  | null = null;
+
+function isPlanUpgradeMessage(message: string): boolean {
+  return PLAN_UPGRADE_PATTERN.test(message);
+}
+
+function isPlanUpgradeError(error: unknown): error is PlanUpgradeRequiredError {
+  return error instanceof PlanUpgradeRequiredError;
+}
 
 function isHobbyConstrainedPlan(plan: string): boolean {
   return !PROFESSIONAL_OR_HIGHER_PLANS.has(plan);
@@ -275,7 +337,7 @@ const TOOLS = [
     inputSchema: {
       type: "object" as const,
       properties: {
-        coins: { type: "array", items: { type: "string" }, description: "Optional coin symbols for reporting context. If omitted, server resolves a dynamic top set by open interest." },
+        coins: { type: "array", items: { type: "string" }, description: "Optional coin symbols for reporting context. If omitted, server resolves a dynamic major-coin set using available live market data." },
       },
       required: [],
     },
@@ -478,7 +540,7 @@ const TOOLS = [
     inputSchema: {
       type: "object" as const,
       properties: {
-        coins: { type: "array", items: { type: "string" }, description: "Coins to scan. If omitted, server resolves top coins dynamically by open interest (max 20)." },
+        coins: { type: "array", items: { type: "string" }, description: "Coins to scan. If omitted, server resolves a dynamic major-coin set using available live market data (max 20)." },
         oi_change_threshold: { type: "number", description: "Minimum absolute OI change % (1h) to flag (default: 0.5)" },
       },
       required: [],
@@ -513,7 +575,7 @@ const TOOLS = [
     inputSchema: {
       type: "object" as const,
       properties: {
-        symbols: { type: "array", items: { type: "string" }, description: "Coin symbols to fetch OI for (max 15)" },
+        symbols: { type: "array", items: { type: "string" }, description: "Coin symbols to fetch OI for (max 15 valid symbols). Non-string/empty values are ignored." },
       },
       required: ["symbols"],
     },
@@ -522,9 +584,59 @@ const TOOLS = [
       properties: {
         results: { type: "array", items: { type: "object", properties: { symbol: { type: "string" }, total_oi_usd: { type: "number" }, oi_change_1h: { type: "number" }, oi_change_4h: { type: "number" }, oi_change_24h: { type: "number" }, exchange_count: { type: "number" } } } },
         count: { type: "number" },
+        requested_count: { type: "number" },
+        accepted_count: { type: "number" },
+        dropped_count: { type: "number" },
         fetchedAt: { type: "string" },
       },
       required: ["results", "count"],
+    },
+  },
+  {
+    name: "analyze_hobby_market_regime",
+    description: "🧠 INTELLIGENCE: Composite Hobby-tier market regime using Fear & Greed, AHR999, Stock-to-Flow, ETF flows, and Bull Market Peak indicators.",
+    inputSchema: { type: "object" as const, properties: {}, required: [] },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        regime: { type: "string" },
+        regimeScore: { type: "number" },
+        fearGreed: { type: "object" },
+        valuation: { type: "object" },
+        etfFlow: { type: "object" },
+        bullMarketIndicators: { type: "object" },
+        recommendation: { type: "string" },
+        confidence: { type: "number" },
+        dataSources: { type: "array", items: { type: "string" } },
+        fetchedAt: { type: "string" },
+      },
+      required: ["regime", "regimeScore", "recommendation", "fetchedAt"],
+    },
+  },
+  {
+    name: "analyze_exchange_balance_pressure",
+    description: "🧠 INTELLIGENCE: Coin-level exchange flow pressure by combining exchange balances and open-interest context.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        symbol: { type: "string", description: "Optional coin symbol. If omitted, server resolves the highest-OI coin dynamically." },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        symbol: { type: "string" },
+        pressure: { type: "string" },
+        pressureScore: { type: "number" },
+        exchangeFlow: { type: "object" },
+        openInterestContext: { type: "object" },
+        recommendation: { type: "string" },
+        confidence: { type: "number" },
+        dataSources: { type: "array", items: { type: "string" } },
+        fetchedAt: { type: "string" },
+      },
+      required: ["symbol", "pressure", "pressureScore", "exchangeFlow", "recommendation", "fetchedAt"],
     },
   },
 
@@ -551,7 +663,7 @@ const TOOLS = [
   },
   {
     name: "get_futures_pairs_markets",
-    description: "📊 RAW: Get detailed market data for a coin's futures trading pairs. Response properties use snake_case: exchange_name, symbol, base_asset, price, open_interest_usd, volume_usd, funding_rate. If symbol is omitted, server resolves the highest-OI coin dynamically.",
+    description: "📊 RAW: Get detailed market data for a coin's futures trading pairs. Response properties use snake_case: exchange_name, symbol, base_asset, price, open_interest_usd, volume_usd, funding_rate. If symbol is omitted, server resolves a default active major coin using live market data.",
     inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Optional coin symbol (e.g., BTC)." } }, required: [] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
@@ -563,10 +675,137 @@ const TOOLS = [
   },
   {
     name: "get_oi_by_exchange",
-    description: "📊 RAW: Get open interest breakdown by exchange for a coin. Response properties use snake_case: exchange, symbol, open_interest_usd, open_interest_quantity, open_interest_by_stable_coin_margin, open_interest_quantity_by_coin_margin, open_interest_quantity_by_stable_coin_margin, open_interest_change_percent_5m/_15m/_30m/_1h/_4h/_24h. If symbol is omitted, server resolves the highest-OI coin dynamically.",
+    description: "📊 RAW: Get open interest breakdown by exchange for a coin. Response properties use snake_case: exchange, symbol, open_interest_usd, open_interest_quantity, open_interest_by_stable_coin_margin, open_interest_quantity_by_coin_margin, open_interest_quantity_by_stable_coin_margin, open_interest_change_percent_5m/_15m/_30m/_1h/_4h/_24h. If symbol is omitted, server resolves a default active major coin using live market data.",
     inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Optional coin symbol." } }, required: [] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
+  {
+    name: "get_futures_liquidation_exchanges",
+    description: "📊 RAW: Get futures exchanges supported by liquidation endpoints.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        range: { type: "string", description: "Range window for liquidation snapshots (e.g., 1h, 4h, 24h).", default: "24h" },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: { range: { type: "string" }, data: { type: "array", items: { type: "object" } }, count: { type: "number" }, fetchedAt: { type: "string" } },
+      required: ["range", "data", "count"],
+    },
+  },
+  {
+    name: "get_futures_liquidation_coins",
+    description: "📊 RAW: Get coins supported by liquidation endpoints.",
+    inputSchema: { type: "object" as const, properties: {}, required: [] },
+    outputSchema: {
+      type: "object" as const,
+      properties: { data: { type: "array", items: { type: "object" } }, count: { type: "number" }, fetchedAt: { type: "string" } },
+      required: ["data", "count"],
+    },
+  },
+
+  // ============================================================================
+  // DISABLED - PREMIUM ENDPOINTS (kept for later re-enable)
+  // Current hobby key returns "Upgrade plan" for these endpoints.
+  // ============================================================================
+  // {
+  //   name: "get_whale_index_history",
+  //   description: "📊 RAW: Get whale index history for a coin.",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       limit: { type: "number", default: 24 },
+  //     },
+  //     required: [],
+  //   },
+  //   outputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       symbol: { type: "string" },
+  //       interval: { type: "string" },
+  //       limit: { type: "number" },
+  //       data: { type: "array", items: { type: "object" } },
+  //       fetchedAt: { type: "string" },
+  //     },
+  //     required: ["symbol", "data"],
+  //   },
+  // },
+  // {
+  //   name: "get_futures_liquidation_orders",
+  //   description: "📊 RAW: Get recent futures liquidation order stream snapshot.",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       range: { type: "string", default: "24h" },
+  //     },
+  //     required: [],
+  //   },
+  //   outputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       range: { type: "string" },
+  //       data: { type: "array", items: { type: "object" } },
+  //       count: { type: "number" },
+  //       fetchedAt: { type: "string" },
+  //     },
+  //     required: ["range", "data", "count"],
+  //   },
+  // },
+  // {
+  //   name: "get_rsi_list",
+  //   description: "📊 RAW: Get RSI values for futures coins across supported timeframes.",
+  //   inputSchema: { type: "object" as const, properties: {}, required: [] },
+  //   outputSchema: {
+  //     type: "object" as const,
+  //     properties: { data: { type: "array", items: { type: "object" } }, fetchedAt: { type: "string" } },
+  //     required: ["data"],
+  //   },
+  // },
+  // {
+  //   name: "get_indicator_ma",
+  //   description: "📊 RAW: Get Moving Average indicator history for a futures pair.",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       window: { type: "number", default: 20 },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: {
+  //     type: "object" as const,
+  //     properties: { data: { type: "array", items: { type: "object" } }, fetchedAt: { type: "string" } },
+  //     required: ["data"],
+  //   },
+  // },
+  // {
+  //   name: "get_indicator_boll",
+  //   description: "📊 RAW: Get Bollinger Bands indicator history for a futures pair.",
+  //   inputSchema: {
+  //     type: "object" as const,
+  //     properties: {
+  //       exchange: { type: "string", default: "Binance" },
+  //       symbol: { type: "string" },
+  //       interval: { type: "string", default: "1h" },
+  //       window: { type: "number", default: 20 },
+  //       mult: { type: "number", default: 2 },
+  //       limit: { type: "number", default: 100 },
+  //     },
+  //     required: ["symbol"],
+  //   },
+  //   outputSchema: {
+  //     type: "object" as const,
+  //     properties: { data: { type: "array", items: { type: "object" } }, fetchedAt: { type: "string" } },
+  //     required: ["data"],
+  //   },
+  // },
 
   // ============================================================================
   // DISABLED - REQUIRES PROFESSIONAL TIER OR ABOVE
@@ -839,7 +1078,27 @@ const TOOLS = [
     name: "get_fear_greed_index",
     description: "📊 RAW: Get Crypto Fear & Greed Index history. Response is an object (NOT an array) with snake_case properties: data_list (array of index values 0-100), price_list (array of BTC prices), time_list (array of timestamps). Last element in each array is the most recent.",
     inputSchema: { type: "object" as const, properties: {}, required: [] },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        data: {
+          type: "object",
+          properties: {
+            data_list: { type: "array", items: { type: "number" } },
+            price_list: { type: "array", items: { type: "number" } },
+            time_list: { type: "array", items: { type: "number" } },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["data"],
+    },
+  },
+  {
+    name: "get_stock_flow_index",
+    description: "📊 RAW: Get Bitcoin stock-to-flow model index history.",
+    inputSchema: { type: "object" as const, properties: {}, required: [] },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array", items: { type: "object" } }, fetchedAt: { type: "string" } }, required: ["data"] },
   },
   {
     name: "get_bubble_index",
@@ -862,14 +1121,6 @@ const TOOLS = [
   //   inputSchema: { type: "object" as const, properties: {}, required: [] },
   //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   // },
-  // {
-  //   name: "get_pi_cycle_indicator",
-  //   description: "📊 RAW: Get Pi Cycle Top Indicator data",
-  //   inputSchema: { type: "object" as const, properties: {}, required: [] },
-  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  // },
-  // ============================================================================
-
   {
     name: "get_bull_market_indicators",
     description: "📊 RAW: Get Bull Market Peak Indicators. Response items use snake_case: indicator_name, current_value, target_value, hit_status (boolean).",
@@ -886,6 +1137,12 @@ const TOOLS = [
     inputSchema: { type: "object" as const, properties: { ticker: { type: "string", description: "ETF ticker (e.g., GBTC, IBIT)" } }, required: [] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
+  {
+    name: "get_btc_etf_list",
+    description: "📊 RAW: Get supported Bitcoin ETF tickers and metadata.",
+    inputSchema: { type: "object" as const, properties: {}, required: [] },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array", items: { type: "object" } }, count: { type: "number" }, fetchedAt: { type: "string" } }, required: ["data", "count"] },
+  },
 
   // ============================================================================
   // TIER 2: RAW DATA LAYER - Exchange
@@ -893,29 +1150,51 @@ const TOOLS = [
   {
     name: "get_exchange_balance",
     description: "📊 RAW: Get exchange balance list for a coin. Response properties use snake_case: exchange_name, total_balance, balance_change_1d, balance_change_percent_1d, balance_change_7d, balance_change_percent_7d, balance_change_30d, balance_change_percent_30d.",
-    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Optional coin symbol. If omitted, server resolves the highest-OI coin dynamically." } }, required: [] },
+    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Optional coin symbol. If omitted, server resolves a default active major coin using live market data." } }, required: [] },
     outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
   },
   {
     name: "get_exchange_balance_chart",
     description: "📊 RAW: Get historical exchange balance chart. Response is a nested object (not array) with snake_case properties: time_list (array of timestamps), data_map (object mapping exchange names to {balance_list: number[]}), price_list (array of prices).",
-    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Optional coin symbol. If omitted, server resolves the highest-OI coin dynamically." } }, required: [] },
-    outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+    inputSchema: { type: "object" as const, properties: { symbol: { type: "string", description: "Optional coin symbol. If omitted, server resolves a default active major coin using live market data." } }, required: [] },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        symbol: { type: "string" },
+        data: {
+          type: "object",
+          properties: {
+            time_list: { type: "array", items: { type: "number" } },
+            price_list: { type: "array", items: { type: "number" } },
+            data_map: {
+              type: "object",
+              additionalProperties: {
+                type: "object",
+                properties: {
+                  balance_list: { type: "array", items: { type: "number" } },
+                },
+              },
+            },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["symbol", "data"],
+    },
   },
 
   // ============================================================================
   // TIER 2: RAW DATA LAYER - Spot
-  // DISABLED - REQUIRES PROFESSIONAL TIER
   // ============================================================================
-  // {
-  //   name: "get_spot_coins_markets",
-  //   description: "📊 RAW: Get spot market data for all coins",
-  //   inputSchema: { type: "object" as const, properties: { page: { type: "number", default: 1 }, per_page: { type: "number", default: 50 } }, required: [] },
-  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
-  // },
+  {
+    name: "get_spot_supported_coins",
+    description: "📊 RAW: Get spot coins supported by Coinglass.",
+    inputSchema: { type: "object" as const, properties: {}, required: [] },
+    outputSchema: { type: "object" as const, properties: { data: { type: "array", items: { type: "object" } }, count: { type: "number" }, fetchedAt: { type: "string" } }, required: ["data", "count"] },
+  },
   // {
   //   name: "get_spot_price_history",
-  //   description: "📊 RAW: Get spot price OHLCV history",
+  //   description: "📊 RAW: Get spot price OHLCV history.",
   //   inputSchema: {
   //     type: "object" as const,
   //     properties: {
@@ -926,7 +1205,11 @@ const TOOLS = [
   //     },
   //     required: ["symbol"],
   //   },
-  //   outputSchema: { type: "object" as const, properties: { data: { type: "array" } }, required: ["data"] },
+  //   outputSchema: {
+  //     type: "object" as const,
+  //     properties: { data: { type: "array", items: { type: "object" } }, fetchedAt: { type: "string" } },
+  //     required: ["data"],
+  //   },
   // },
   // ============================================================================
 
@@ -971,12 +1254,14 @@ const TOOLS_WITH_METADATA = TOOLS.map((tool) => {
 // ============================================================================
 
 const server = new Server(
-  { name: "coinglass-intelligence", version: "1.3.0" },
+  { name: "coinglass-intelligence", version: SERVER_VERSION },
   { capabilities: { tools: {} } }
 );
 
 console.log("[coinglass-config] startup", {
+  version: SERVER_VERSION,
   plan: COINGLASS_PLAN,
+  contextAuthEnabled: CONTEXT_AUTH_ENABLED,
   maxRequestsPerMinute: COINGLASS_RATE_LIMIT_PER_MINUTE,
   cooldownMs: COINGLASS_RATE_LIMIT_COOLDOWN_MS,
   toolCount: TOOLS_WITH_METADATA.length,
@@ -989,6 +1274,8 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest): Promise<CallToolResult> => {
   const { name, arguments: args } = request.params;
   try {
+    await assertCoinglassApiAccessible();
+
     switch (name) {
       // Tier 1 Intelligence Tools (Hobbyist-compatible)
       case "analyze_market_sentiment": return await handleAnalyzeMarketSentiment(args);
@@ -996,6 +1283,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
       case "get_market_overview": return await handleGetMarketOverview();
       case "scan_oi_divergence": return await handleScanOiDivergence(args);
       case "get_oi_batch": return await handleGetOiBatch(args);
+      case "analyze_hobby_market_regime": return await handleAnalyzeHobbyMarketRegime();
+      case "analyze_exchange_balance_pressure": return await handleAnalyzeExchangeBalancePressure(args);
 
       // Tier 2 Raw Tools (Hobbyist-compatible)
       case "get_supported_coins": return await handleGetSupportedCoins();
@@ -1004,15 +1293,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
       case "get_futures_pairs_markets": return await handleGetFuturesPairsMarkets(args);
       case "get_funding_rates": return await handleGetFundingRates(args);
       case "get_oi_by_exchange": return await handleGetOiByExchange(args);
+      case "get_futures_liquidation_exchanges": return await handleGetFuturesLiquidationExchanges(args);
+      case "get_futures_liquidation_coins": return await handleGetFuturesLiquidationCoins();
       case "get_ahr999_index": return await handleGetAhr999Index();
       case "get_rainbow_chart": return await handleGetRainbowChart();
       case "get_fear_greed_index": return await handleGetFearGreedIndex();
+      case "get_stock_flow_index": return await handleGetStockFlowIndex();
       case "get_bubble_index": return await handleGetBubbleIndex();
       case "get_puell_multiple": return await handleGetPuellMultiple();
       case "get_bull_market_indicators": return await handleGetBullMarketIndicators();
       case "get_btc_etf_netflow": return await handleGetBtcEtfNetflow(args);
+      case "get_btc_etf_list": return await handleGetBtcEtfList();
       case "get_exchange_balance": return await handleGetExchangeBalance(args);
       case "get_exchange_balance_chart": return await handleGetExchangeBalanceChart(args);
+      case "get_spot_supported_coins": return await handleGetSpotSupportedCoins();
+      // Disabled tools (premium endpoints) are intentionally not exposed on Hobby tier
+      // to prevent marketplace planners from calling tools that return Upgrade plan.
+      // case "get_whale_index_history": return await handleGetWhaleIndexHistory(args);
+      // case "get_futures_liquidation_orders": return await handleGetFuturesLiquidationOrders(args);
+      // case "get_rsi_list": return await handleGetRsiList();
+      // case "get_indicator_ma": return await handleGetIndicatorMa(args);
+      // case "get_indicator_boll": return await handleGetIndicatorBoll(args);
+      // case "get_spot_price_history": return await handleGetSpotPriceHistory(args);
 
       // ============================================================================
       // DISABLED HANDLERS - Require Professional tier
@@ -1036,19 +1338,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest)
       // case "get_aggregated_taker_volume": return await handleGetAggregatedTakerVolume(args);
       // case "get_cvd_history": return await handleGetCvdHistory(args);
       // case "get_volume_footprint": return await handleGetVolumeFootprint(args);
-      // case "get_rsi_list": return await handleGetRsiList();
-      // case "get_indicator_ma": return await handleGetIndicatorMa(args);
-      // case "get_indicator_boll": return await handleGetIndicatorBoll(args);
       // case "get_btc_vs_m2": return await handleGetBtcVsM2();
-      // case "get_pi_cycle_indicator": return await handleGetPiCycleIndicator();
       // case "get_spot_coins_markets": return await handleGetSpotCoinsMarkets(args);
-      // case "get_spot_price_history": return await handleGetSpotPriceHistory(args);
       // case "get_options_oi_history": return await handleGetOptionsOiHistory(args);
       // ============================================================================
 
       default: return errorResult(`Unknown tool: ${name}`);
     }
   } catch (error) {
+    if (isPlanUpgradeError(error)) {
+      return planUpgradeResult(name, error);
+    }
     return errorResult(error instanceof Error ? error.message : "Unknown error");
   }
 });
@@ -1063,6 +1363,19 @@ function errorResult(message: string): CallToolResult {
 
 function successResult(data: Record<string, unknown>): CallToolResult {
   return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }], structuredContent: data };
+}
+
+function planUpgradeResult(toolName: string, error: PlanUpgradeRequiredError): CallToolResult {
+  return successResult({
+    error: "PLAN_UPGRADE_REQUIRED",
+    tool: toolName,
+    endpoint: error.endpoint,
+    message: error.message,
+    configuredPlan: COINGLASS_PLAN,
+    suggestion:
+      "Use an API key with access to this endpoint set, or upgrade your Coinglass plan before retrying.",
+    fetchedAt: new Date().toISOString(),
+  });
 }
 
 // ============================================================================
@@ -1099,6 +1412,12 @@ async function coinglassGet(endpoint: string, params: Record<string, string | nu
       params,
       responsePreview: responseText.slice(0, 180),
     });
+    if (isPlanUpgradeMessage(responseText)) {
+      throw new PlanUpgradeRequiredError(
+        endpoint,
+        `Coinglass endpoint requires a higher plan: ${endpoint}`
+      );
+    }
     throw new Error(`Coinglass API error (${res.status}): ${responseText}`);
   }
   const json = await res.json() as { code: string; msg?: string; data?: unknown };
@@ -1109,6 +1428,12 @@ async function coinglassGet(endpoint: string, params: Record<string, string | nu
       message: json.msg ?? "Unknown",
       params,
     });
+    if (json.msg && isPlanUpgradeMessage(json.msg)) {
+      throw new PlanUpgradeRequiredError(
+        endpoint,
+        `Coinglass endpoint requires a higher plan: ${endpoint}`
+      );
+    }
     throw new Error(`Coinglass error: ${json.msg || "Unknown"}`);
   }
 
@@ -1117,6 +1442,55 @@ async function coinglassGet(endpoint: string, params: Record<string, string | nu
   }
 
   return json.data;
+}
+
+async function assertCoinglassApiAccessible(): Promise<void> {
+  const now = Date.now();
+  if (apiAccessProbeCache && now - apiAccessProbeCache.checkedAt < API_ACCESS_PROBE_TTL_MS) {
+    if (apiAccessProbeCache.accessible) {
+      return;
+    }
+    throw new PlanUpgradeRequiredError(
+      apiAccessProbeCache.endpoint,
+      apiAccessProbeCache.reason
+    );
+  }
+
+  let latestPlanUpgradeError: PlanUpgradeRequiredError | null = null;
+  let latestNonPlanError: Error | null = null;
+
+  for (const probe of API_ACCESS_PROBES) {
+    try {
+      await coinglassGet(probe.endpoint, probe.params ?? {});
+      apiAccessProbeCache = { checkedAt: Date.now(), accessible: true };
+      return;
+    } catch (error) {
+      if (isPlanUpgradeError(error)) {
+        latestPlanUpgradeError = error;
+        continue;
+      }
+      latestNonPlanError =
+        error instanceof Error ? error : new Error(String(error));
+    }
+  }
+
+  if (latestNonPlanError) {
+    throw latestNonPlanError;
+  }
+
+  if (latestPlanUpgradeError) {
+    apiAccessProbeCache = {
+      checkedAt: Date.now(),
+      accessible: false,
+      endpoint: latestPlanUpgradeError.endpoint,
+      reason:
+        "Current COINGLASS_API_KEY cannot access tested endpoints (upstream returned 'Upgrade plan').",
+    };
+    throw new PlanUpgradeRequiredError(
+      latestPlanUpgradeError.endpoint,
+      apiAccessProbeCache.reason
+    );
+  }
 }
 
 type CoinMarketsRow = {
@@ -1131,10 +1505,18 @@ function normalizeCoinSymbols(input: unknown[], max: number): string[] {
   const seen = new Set<string>();
 
   for (const value of input) {
-    if (typeof value !== "string") {
+    const rawSymbol =
+      typeof value === "string"
+        ? value
+        : typeof value === "object" &&
+            value !== null &&
+            typeof (value as { symbol?: unknown }).symbol === "string"
+          ? (value as { symbol: string }).symbol
+          : undefined;
+    if (!rawSymbol) {
       continue;
     }
-    const symbol = value.trim().toUpperCase();
+    const symbol = rawSymbol.trim().toUpperCase();
     if (!symbol || seen.has(symbol)) {
       continue;
     }
@@ -1193,7 +1575,20 @@ async function getTopCoinsByOpenInterest(limit: number): Promise<string[]> {
   const supportedCoins = Array.isArray(supportedData)
     ? supportedData
     : [];
-  return normalizeCoinSymbols(supportedCoins, boundedLimit);
+  const supportedSymbols = normalizeCoinSymbols(supportedCoins, 4_000);
+  if (supportedSymbols.length === 0) {
+    return [...MAJOR_COIN_SYMBOL_FALLBACK].slice(0, boundedLimit);
+  }
+
+  const supportedSet = new Set(supportedSymbols);
+  const majorFallback = MAJOR_COIN_SYMBOL_FALLBACK
+    .filter((symbol) => supportedSet.has(symbol))
+    .slice(0, boundedLimit);
+  if (majorFallback.length > 0) {
+    return majorFallback;
+  }
+
+  return supportedSymbols.slice(0, boundedLimit);
 }
 
 async function resolveDynamicSymbol(symbolInput: unknown): Promise<string> {
@@ -1209,6 +1604,43 @@ async function resolveDynamicSymbol(symbolInput: unknown): Promise<string> {
   throw new Error(
     "Unable to resolve default symbol from live market data. Provide a symbol explicitly."
   );
+}
+
+function toFiniteNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+function getLatestRow(data: unknown): Record<string, unknown> | null {
+  if (!Array.isArray(data) || data.length === 0) {
+    return null;
+  }
+  const latest = data[data.length - 1];
+  if (typeof latest === "object" && latest !== null) {
+    return latest as Record<string, unknown>;
+  }
+  return null;
+}
+
+function pickNumericValue(row: Record<string, unknown> | null, keys: string[]): number | null {
+  if (!row) {
+    return null;
+  }
+  for (const key of keys) {
+    const candidate = toFiniteNumber(row[key]);
+    if (candidate !== null) {
+      return candidate;
+    }
+  }
+  return null;
 }
 
 // ============================================================================
@@ -1752,8 +2184,254 @@ async function handleGetMarketOverview(): Promise<CallToolResult> {
       btcChange24h,
       flowDirection: btcChange24h > 0 ? "inflow (bearish)" : "outflow (bullish)",
     },
-    limitations: "⚠️ Hobbyist tier: OI, volume, and liquidation data require plan upgrade.",
+    limitations: "⚠️ Hobbyist tier: advanced liquidation heatmaps, long/short account ratios, and several historical analytics remain Professional+.",
     dataSources: ["fear-greed-history", "bull-market-peak-indicator", "etf/bitcoin/net-assets/history", "exchange/balance/list"],
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleAnalyzeHobbyMarketRegime(): Promise<CallToolResult> {
+  const [fearGreedData, ahr999Data, stockFlowData, bullIndicatorsData, etfData] = await Promise.all([
+    coinglassGet("/api/index/fear-greed-history", {}, CACHE_TTL_MEDIUM).catch(() => null),
+    coinglassGet("/api/index/ahr999", {}, CACHE_TTL_MEDIUM).catch(() => []),
+    coinglassGet("/api/index/stock-flow", {}, CACHE_TTL_MEDIUM).catch(() => []),
+    coinglassGet("/api/bull-market-peak-indicator", {}, CACHE_TTL_MEDIUM).catch(() => []),
+    coinglassGet("/api/etf/bitcoin/net-assets/history", {}, CACHE_TTL_MEDIUM).catch(() => []),
+  ]);
+
+  const fearGreed = fearGreedData as { data_list?: number[]; price_list?: number[] } | null;
+  const fearGreedValue =
+    fearGreed?.data_list && fearGreed.data_list.length > 0
+      ? fearGreed.data_list[fearGreed.data_list.length - 1]
+      : 50;
+  const btcPrice =
+    fearGreed?.price_list && fearGreed.price_list.length > 0
+      ? fearGreed.price_list[fearGreed.price_list.length - 1]
+      : null;
+
+  const latestAhr = getLatestRow(ahr999Data);
+  const ahr999Value = pickNumericValue(latestAhr, ["ahr999_value", "ahr999", "value"]);
+
+  const latestStockFlow = getLatestRow(stockFlowData);
+  const stockFlowValue = pickNumericValue(latestStockFlow, [
+    "stock_flow",
+    "stock_to_flow",
+    "stock_flow_index",
+    "value",
+  ]);
+  const stockFlowModelPrice = pickNumericValue(latestStockFlow, [
+    "model_price",
+    "stock_flow_price",
+    "stock_to_flow_price",
+    "s2f_price",
+  ]);
+
+  const bullIndicators = Array.isArray(bullIndicatorsData)
+    ? (bullIndicatorsData as Array<{ hit_status?: boolean }>)
+    : [];
+  const triggeredCount = bullIndicators.filter((row) => row.hit_status === true).length;
+  const totalBullIndicators = bullIndicators.length;
+
+  const latestEtf = getLatestRow(etfData);
+  const etfDailyChangeUsd = pickNumericValue(latestEtf, ["change_usd", "change"]);
+  const etfNetAssetsUsd = pickNumericValue(latestEtf, ["net_assets_usd", "net_assets"]);
+
+  let regimeScore = 50;
+  if (fearGreedValue >= 80) regimeScore += 20;
+  else if (fearGreedValue >= 60) regimeScore += 10;
+  else if (fearGreedValue <= 20) regimeScore -= 20;
+  else if (fearGreedValue <= 40) regimeScore -= 10;
+
+  if (ahr999Value !== null) {
+    if (ahr999Value < 0.45) regimeScore -= 15;
+    else if (ahr999Value < 1.2) regimeScore -= 8;
+    else if (ahr999Value > 4) regimeScore += 15;
+  }
+
+  const bullHitRatio =
+    totalBullIndicators > 0 ? triggeredCount / totalBullIndicators : 0;
+  if (bullHitRatio >= 0.6) regimeScore += 15;
+  else if (bullHitRatio >= 0.35) regimeScore += 8;
+
+  if (etfDailyChangeUsd !== null) {
+    if (etfDailyChangeUsd >= 200_000_000) regimeScore += 10;
+    else if (etfDailyChangeUsd <= -200_000_000) regimeScore -= 10;
+  }
+
+  let stockFlowPremiumPercent: number | null = null;
+  if (btcPrice !== null && stockFlowModelPrice !== null && stockFlowModelPrice > 0) {
+    stockFlowPremiumPercent = ((btcPrice / stockFlowModelPrice) - 1) * 100;
+    if (stockFlowPremiumPercent >= 25) regimeScore += 10;
+    else if (stockFlowPremiumPercent <= -20) regimeScore -= 10;
+  }
+
+  regimeScore = Math.max(0, Math.min(100, Math.round(regimeScore)));
+
+  let regime = "neutral";
+  let recommendation = "No strong directional edge. Keep position sizing balanced.";
+  if (regimeScore >= 80) {
+    regime = "euphoric_overheat";
+    recommendation = "Risk is elevated. Consider de-risking and tighter risk controls.";
+  } else if (regimeScore >= 65) {
+    regime = "risk_on";
+    recommendation = "Momentum regime is favorable, but avoid overleveraging into strength.";
+  } else if (regimeScore <= 20) {
+    regime = "capitulation";
+    recommendation = "Deep fear regime. Historically favorable for gradual accumulation.";
+  } else if (regimeScore <= 35) {
+    regime = "accumulation";
+    recommendation = "Weak sentiment but improving valuation context; DCA-style entries are reasonable.";
+  }
+
+  const availableSignals = [
+    ahr999Value !== null,
+    stockFlowValue !== null || stockFlowModelPrice !== null,
+    totalBullIndicators > 0,
+    etfDailyChangeUsd !== null,
+  ].filter(Boolean).length;
+  const confidence =
+    availableSignals >= 4 ? 0.85 : availableSignals >= 3 ? 0.75 : 0.65;
+
+  return successResult({
+    regime,
+    regimeScore,
+    fearGreed: {
+      value: fearGreedValue,
+      sentiment:
+        fearGreedValue >= 75
+          ? "Extreme Greed"
+          : fearGreedValue >= 55
+            ? "Greed"
+            : fearGreedValue >= 45
+              ? "Neutral"
+              : fearGreedValue >= 25
+                ? "Fear"
+                : "Extreme Fear",
+      btcPrice,
+    },
+    valuation: {
+      ahr999Value,
+      stockFlowValue,
+      stockFlowModelPrice,
+      stockFlowPremiumPercent,
+    },
+    etfFlow: {
+      dailyChangeUsd: etfDailyChangeUsd,
+      netAssetsUsd: etfNetAssetsUsd,
+    },
+    bullMarketIndicators: {
+      triggeredCount,
+      totalCount: totalBullIndicators,
+      hitRatio: totalBullIndicators > 0 ? Number(bullHitRatio.toFixed(2)) : null,
+    },
+    recommendation,
+    confidence,
+    dataSources: [
+      "index/fear-greed-history",
+      "index/ahr999",
+      "index/stock-flow",
+      "bull-market-peak-indicator",
+      "etf/bitcoin/net-assets/history",
+    ],
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleAnalyzeExchangeBalancePressure(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const symbol = await resolveDynamicSymbol(args?.symbol);
+  const [exchangeBalanceData, openInterestData] = await Promise.all([
+    coinglassGet("/api/exchange/balance/list", { symbol }, CACHE_TTL_SHORT).catch(() => []),
+    coinglassGet("/api/futures/open-interest/exchange-list", { symbol }, CACHE_TTL_SHORT).catch(() => []),
+  ]);
+
+  const balances = Array.isArray(exchangeBalanceData)
+    ? exchangeBalanceData as Array<Record<string, unknown>>
+    : [];
+  const openInterestRows = Array.isArray(openInterestData)
+    ? openInterestData as Array<Record<string, unknown>>
+    : [];
+
+  let totalBalance = 0;
+  let netFlow1d = 0;
+  let netFlow7d = 0;
+  let netFlow30d = 0;
+  let topExchangeBalance = 0;
+  let topExchangeName = "unknown";
+
+  for (const row of balances) {
+    const balance = toFiniteNumber(row.total_balance) ?? 0;
+    const change1d = toFiniteNumber(row.balance_change_1d) ?? 0;
+    const change7d = toFiniteNumber(row.balance_change_7d) ?? 0;
+    const change30d = toFiniteNumber(row.balance_change_30d) ?? 0;
+    totalBalance += balance;
+    netFlow1d += change1d;
+    netFlow7d += change7d;
+    netFlow30d += change30d;
+    if (balance > topExchangeBalance) {
+      topExchangeBalance = balance;
+      topExchangeName = typeof row.exchange_name === "string" ? row.exchange_name : "unknown";
+    }
+  }
+
+  const allRow = openInterestRows.find((row) => row.exchange === "All");
+  const openInterestUsd = toFiniteNumber(allRow?.open_interest_usd) ?? 0;
+
+  const flowToOiRatioPercent =
+    openInterestUsd > 0 ? (netFlow1d / openInterestUsd) * 100 : null;
+  const topExchangeConcentrationPercent =
+    totalBalance > 0 ? (topExchangeBalance / totalBalance) * 100 : 0;
+
+  let pressureScore = 0;
+  if (netFlow1d > 0) pressureScore += 35;
+  else if (netFlow1d < 0) pressureScore -= 35;
+
+  if (flowToOiRatioPercent !== null) {
+    if (flowToOiRatioPercent >= 1) pressureScore += 20;
+    else if (flowToOiRatioPercent >= 0.3) pressureScore += 10;
+    else if (flowToOiRatioPercent <= -1) pressureScore -= 20;
+    else if (flowToOiRatioPercent <= -0.3) pressureScore -= 10;
+  }
+
+  if (topExchangeConcentrationPercent >= 35) {
+    pressureScore += netFlow1d >= 0 ? 8 : -8;
+  }
+  pressureScore = Math.max(-100, Math.min(100, Math.round(pressureScore)));
+
+  let pressure = "neutral";
+  let recommendation =
+    "Exchange flow is mixed. Wait for clearer directional balance/inflow confirmation.";
+  if (pressureScore >= 25) {
+    pressure = "bearish_distribution_pressure";
+    recommendation =
+      "Net inflows to exchanges suggest potential sell pressure. Favor tighter risk controls.";
+  } else if (pressureScore <= -25) {
+    pressure = "bullish_accumulation_pressure";
+    recommendation =
+      "Net outflows from exchanges suggest accumulation. Pullbacks may be buyable in trend.";
+  }
+
+  const confidence = balances.length >= 8 ? 0.8 : balances.length >= 4 ? 0.72 : 0.62;
+
+  return successResult({
+    symbol,
+    pressure,
+    pressureScore,
+    exchangeFlow: {
+      netFlow1d,
+      netFlow7d,
+      netFlow30d,
+      totalBalance,
+      topExchange: topExchangeName,
+      topExchangeConcentrationPercent: Number(topExchangeConcentrationPercent.toFixed(2)),
+    },
+    openInterestContext: {
+      openInterestUsd,
+      flowToOiRatioPercent:
+        flowToOiRatioPercent === null ? null : Number(flowToOiRatioPercent.toFixed(4)),
+    },
+    recommendation,
+    confidence,
+    dataSources: ["exchange/balance/list", "futures/open-interest/exchange-list"],
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -1901,13 +2579,27 @@ async function handleScanOiDivergence(args: Record<string, unknown> | undefined)
 }
 
 async function handleGetOiBatch(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
-  const symbols = (args?.symbols as string[]) || [];
+  const rawSymbols = Array.isArray(args?.symbols) ? args.symbols : [];
 
-  if (symbols.length === 0) {
+  if (rawSymbols.length === 0) {
     return errorResult("symbols array is required and must not be empty");
   }
 
-  const targetSymbols = symbols.slice(0, 15).map((s) => s.toUpperCase());
+  const targetSymbols = normalizeCoinSymbols(rawSymbols as unknown[], 15);
+  if (targetSymbols.length === 0) {
+    return errorResult(
+      "symbols must include at least one valid non-empty string (e.g., ['BTC', 'ETH'])"
+    );
+  }
+
+  const droppedCount = Math.max(0, rawSymbols.length - targetSymbols.length);
+  if (droppedCount > 0) {
+    console.warn("[coinglass-oi-batch] dropped_invalid_symbols", {
+      requested: rawSymbols.length,
+      accepted: targetSymbols.length,
+      dropped: droppedCount,
+    });
+  }
 
   const BATCH_SIZE = 8;
   const results: Array<Record<string, unknown>> = [];
@@ -1946,6 +2638,9 @@ async function handleGetOiBatch(args: Record<string, unknown> | undefined): Prom
   return successResult({
     results,
     count: results.length,
+    requested_count: rawSymbols.length,
+    accepted_count: targetSymbols.length,
+    dropped_count: droppedCount,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -1970,7 +2665,7 @@ async function handleGetExchangePairs(args: Record<string, unknown> | undefined)
   const exchange = args?.exchange as string | undefined;
   const params: Record<string, string | number> = {};
   if (exchange) params.exchange = exchange;
-  const data = await coinglassGet("/api/futures/supported-exchange-pairs", params);
+  const data = await coinglassGet("/api/futures/supported-exchange-pairs", params, CACHE_TTL_LONG);
   return successResult({ data, fetchedAt: new Date().toISOString() });
 }
 
@@ -1981,7 +2676,7 @@ async function handleGetFuturesCoinsMarkets(): Promise<CallToolResult> {
 
 async function handleGetFuturesPairsMarkets(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
   const symbol = await resolveDynamicSymbol(args?.symbol);
-  const data = await coinglassGet("/api/futures/pairs-markets", { symbol });
+  const data = await coinglassGet("/api/futures/pairs-markets", { symbol }, CACHE_TTL_SHORT);
   return successResult({ symbol, data, fetchedAt: new Date().toISOString() });
 }
 
@@ -2001,7 +2696,7 @@ async function handleGetFundingRates(args: Record<string, unknown> | undefined):
       ? args.symbol.trim().toUpperCase()
       : undefined;
   // NOTE: Use v4 kebab-case endpoint path - works on Hobbyist tier
-  const data = await coinglassGet("/api/futures/funding-rate/exchange-list");
+  const data = await coinglassGet("/api/futures/funding-rate/exchange-list", {}, CACHE_TTL_SHORT);
   
   // Filter by symbol if provided
   const allData = Array.isArray(data) ? data : [];
@@ -2063,8 +2758,44 @@ async function handleGetFundingArbitrageList(): Promise<CallToolResult> {
 async function handleGetOiByExchange(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
   const symbol = await resolveDynamicSymbol(args?.symbol);
   // NOTE: Use v4 kebab-case endpoint path - works on Hobbyist tier
-  const data = await coinglassGet("/api/futures/open-interest/exchange-list", { symbol });
+  const data = await coinglassGet("/api/futures/open-interest/exchange-list", { symbol }, CACHE_TTL_SHORT);
   return successResult({ symbol, data, fetchedAt: new Date().toISOString() });
+}
+
+async function handleGetWhaleIndexHistory(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const symbol = await resolveDynamicSymbol(args?.symbol);
+  const interval = (args?.interval as string) || "1h";
+  const limit = (args?.limit as number) || 24;
+  const data = await coinglassGet("/api/futures/whale-index/history", {
+    symbol,
+    interval,
+    limit,
+  });
+  return successResult({ symbol, interval, limit, data, fetchedAt: new Date().toISOString() });
+}
+
+async function handleGetFuturesLiquidationExchanges(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const range = (args?.range as string) || "24h";
+  const data = await coinglassGet(
+    "/api/futures/liquidation/exchange-list",
+    { range },
+    CACHE_TTL_MEDIUM
+  );
+  const rows = Array.isArray(data) ? data : [];
+  return successResult({ range, data: rows, count: rows.length, fetchedAt: new Date().toISOString() });
+}
+
+async function handleGetFuturesLiquidationCoins(): Promise<CallToolResult> {
+  const data = await coinglassGet("/api/futures/liquidation/coin-list", {}, CACHE_TTL_MEDIUM);
+  const rows = Array.isArray(data) ? data : [];
+  return successResult({ data: rows, count: rows.length, fetchedAt: new Date().toISOString() });
+}
+
+async function handleGetFuturesLiquidationOrders(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
+  const range = (args?.range as string) || "24h";
+  const data = await coinglassGet("/api/futures/liquidation/order", { range });
+  const rows = Array.isArray(data) ? data : [];
+  return successResult({ range, data: rows, count: rows.length, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetOiHistory(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -2232,7 +2963,7 @@ async function handleGetVolumeFootprint(args: Record<string, unknown> | undefine
 }
 
 async function handleGetRsiList(): Promise<CallToolResult> {
-  const data = await coinglassGet("/api/futures/rsi/list");
+  const data = await coinglassGet("/api/futures/indicators/rsi");
   return successResult({ data, fetchedAt: new Date().toISOString() });
 }
 
@@ -2260,27 +2991,32 @@ async function handleGetIndicatorBoll(args: Record<string, unknown> | undefined)
 }
 
 async function handleGetAhr999Index(): Promise<CallToolResult> {
-  const data = await coinglassGet("/api/index/ahr999");
+  const data = await coinglassGet("/api/index/ahr999", {}, CACHE_TTL_MEDIUM);
   return successResult({ data, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetRainbowChart(): Promise<CallToolResult> {
-  const data = await coinglassGet("/api/index/bitcoin/rainbow-chart");
+  const data = await coinglassGet("/api/index/bitcoin/rainbow-chart", {}, CACHE_TTL_LONG);
   return successResult({ data, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetFearGreedIndex(): Promise<CallToolResult> {
-  const data = await coinglassGet("/api/index/fear-greed-history");
+  const data = await coinglassGet("/api/index/fear-greed-history", {}, CACHE_TTL_MEDIUM);
+  return successResult({ data, fetchedAt: new Date().toISOString() });
+}
+
+async function handleGetStockFlowIndex(): Promise<CallToolResult> {
+  const data = await coinglassGet("/api/index/stock-flow", {}, CACHE_TTL_LONG);
   return successResult({ data, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetBubbleIndex(): Promise<CallToolResult> {
-  const data = await coinglassGet("/api/index/bitcoin/bubble-index");
+  const data = await coinglassGet("/api/index/bitcoin/bubble-index", {}, CACHE_TTL_MEDIUM);
   return successResult({ data, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetPuellMultiple(): Promise<CallToolResult> {
-  const data = await coinglassGet("/api/index/puell-multiple");
+  const data = await coinglassGet("/api/index/puell-multiple", {}, CACHE_TTL_MEDIUM);
   return successResult({ data, fetchedAt: new Date().toISOString() });
 }
 
@@ -2295,7 +3031,7 @@ async function handleGetPiCycleIndicator(): Promise<CallToolResult> {
 }
 
 async function handleGetBullMarketIndicators(): Promise<CallToolResult> {
-  const data = await coinglassGet("/api/bull-market-peak-indicator");
+  const data = await coinglassGet("/api/bull-market-peak-indicator", {}, CACHE_TTL_MEDIUM);
   return successResult({ data, fetchedAt: new Date().toISOString() });
 }
 
@@ -2303,19 +3039,25 @@ async function handleGetBtcEtfNetflow(args: Record<string, unknown> | undefined)
   const ticker = args?.ticker as string | undefined;
   const params: Record<string, string | number> = {};
   if (ticker) params.ticker = ticker;
-  const data = await coinglassGet("/api/etf/bitcoin/net-assets/history", params);
+  const data = await coinglassGet("/api/etf/bitcoin/net-assets/history", params, CACHE_TTL_MEDIUM);
   return successResult({ data, fetchedAt: new Date().toISOString() });
+}
+
+async function handleGetBtcEtfList(): Promise<CallToolResult> {
+  const data = await coinglassGet("/api/etf/bitcoin/list", {}, CACHE_TTL_MEDIUM);
+  const rows = Array.isArray(data) ? data : [];
+  return successResult({ data: rows, count: rows.length, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetExchangeBalance(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
   const symbol = await resolveDynamicSymbol(args?.symbol);
-  const data = await coinglassGet("/api/exchange/balance/list", { symbol });
+  const data = await coinglassGet("/api/exchange/balance/list", { symbol }, CACHE_TTL_SHORT);
   return successResult({ symbol, data, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetExchangeBalanceChart(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
   const symbol = await resolveDynamicSymbol(args?.symbol);
-  const data = await coinglassGet("/api/exchange/balance/chart", { symbol });
+  const data = await coinglassGet("/api/exchange/balance/chart", { symbol }, CACHE_TTL_MEDIUM);
   return successResult({ symbol, data, fetchedAt: new Date().toISOString() });
 }
 
@@ -2324,6 +3066,12 @@ async function handleGetSpotCoinsMarkets(args: Record<string, unknown> | undefin
   const per_page = (args?.per_page as number) || 50;
   const data = await coinglassGet("/api/spot/coins-markets", { page, per_page });
   return successResult({ data, fetchedAt: new Date().toISOString() });
+}
+
+async function handleGetSpotSupportedCoins(): Promise<CallToolResult> {
+  const data = await coinglassGet("/api/spot/supported-coins", {}, CACHE_TTL_MEDIUM);
+  const rows = Array.isArray(data) ? data : [];
+  return successResult({ data: rows, count: rows.length, fetchedAt: new Date().toISOString() });
 }
 
 async function handleGetSpotPriceHistory(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
@@ -2353,23 +3101,40 @@ app.use(express.json());
 
 const transports: Record<string, StreamableHTTPServerTransport> = {};
 const verifyContextAuth = createContextMiddleware();
+const mcpAuthMiddleware: RequestHandler = CONTEXT_AUTH_ENABLED
+  ? verifyContextAuth
+  : (_req: Request, _res: Response, next: () => void) => {
+      next();
+    };
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     server: "coinglass-intelligence",
-    version: "1.3.0",
+    version: SERVER_VERSION,
+    contextAuthEnabled: CONTEXT_AUTH_ENABLED,
     configuredPlan: COINGLASS_PLAN,
     endpointPolicy: isHobbyConstrainedPlan(COINGLASS_PLAN)
       ? "hobby-allowlist"
       : "professional",
+    apiAccessProbe:
+      apiAccessProbeCache === null
+        ? { status: "unknown" }
+        : apiAccessProbeCache.accessible
+          ? { status: "ok", checkedAt: new Date(apiAccessProbeCache.checkedAt).toISOString() }
+          : {
+              status: "blocked",
+              endpoint: apiAccessProbeCache.endpoint,
+              reason: apiAccessProbeCache.reason,
+              checkedAt: new Date(apiAccessProbeCache.checkedAt).toISOString(),
+            },
     tier1Tools: TOOLS.filter(t => t.description.startsWith("🧠")).map(t => t.name),
     tier2Tools: TOOLS.filter(t => t.description.startsWith("📊")).map(t => t.name),
     totalTools: TOOLS.length,
   });
 });
 
-app.post("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+app.post("/mcp", mcpAuthMiddleware, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
   let transport: StreamableHTTPServerTransport;
 
@@ -2389,14 +3154,14 @@ app.post("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   await transport.handleRequest(req, res, req.body);
 });
 
-app.get("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+app.get("/mcp", mcpAuthMiddleware, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const transport = transports[sessionId];
   if (transport) await transport.handleRequest(req, res);
   else res.status(400).json({ error: "Invalid session" });
 });
 
-app.delete("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+app.delete("/mcp", mcpAuthMiddleware, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const transport = transports[sessionId];
   if (transport) await transport.handleRequest(req, res);
@@ -2405,9 +3170,13 @@ app.delete("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
 
 const port = Number(process.env.PORT || 4005);
 app.listen(port, () => {
-  console.log("\n🚀 Coinglass Intelligence MCP Server v1.3.0");
+  console.log(`\n🚀 Coinglass Intelligence MCP Server v${SERVER_VERSION}`);
   console.log(`   Crypto derivatives intelligence (${COINGLASS_PLAN} tier)\n`);
-  console.log(`🔒 Context Protocol Security Enabled`);
+  console.log(
+    CONTEXT_AUTH_ENABLED
+      ? "🔒 Context Protocol Security Enabled"
+      : "🧪 Context Protocol Security Disabled (CONTEXT_AUTH_ENABLED=false)"
+  );
   console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health\n`);
   if (isHobbyConstrainedPlan(COINGLASS_PLAN)) {

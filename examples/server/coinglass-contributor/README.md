@@ -1,152 +1,80 @@
 # Coinglass MCP Server
 
-**Comprehensive crypto derivatives intelligence from Coinglass API.**
+Hobby-tier-optimized Coinglass MCP server with an intelligence layer and a raw endpoint layer.
 
-A dual-tier MCP server providing both high-level intelligence tools and raw data access for the Coinglass API.
+## Active Tooling
 
-## Features
+The current server exposes **27 active tools**:
 
-### 🧠 Tier 1: Intelligence Layer (8 Tools)
+- **7 intelligence tools** (composite analysis)
+- **20 raw tools** (direct endpoint access)
 
-High-value composite tools that synthesize multiple data sources:
+### Intelligence tools
 
-| Tool | Description |
-|------|-------------|
-| `calculate_squeeze_probability` | Predict short/long squeeze probability using funding, OI, liquidations |
-| `analyze_market_sentiment` | Cross-market sentiment analysis (Fear & Greed, funding bias, ratios) |
-| `find_funding_arbitrage` | Best funding rate arbitrage opportunities with risk assessment |
-| `get_btc_valuation_score` | Multi-indicator BTC valuation (AHR999, Rainbow, Puell, Bubble) |
-| `detect_liquidation_risk` | Liquidation cascade risk prediction |
-| `analyze_smart_money` | Top trader vs retail positioning analysis |
-| `scan_volume_anomalies` | Unusual volume activity detection across all coins |
-| `get_market_overview` | Complete derivatives dashboard (OI, volume, liquidations) |
+- `analyze_market_sentiment`
+- `get_btc_valuation_score`
+- `get_market_overview`
+- `scan_oi_divergence`
+- `get_oi_batch`
+- `analyze_hobby_market_regime`
+- `analyze_exchange_balance_pressure`
 
-### 📊 Tier 2: Raw Data Layer (35 Tools)
+### Raw tools by domain
 
-Direct access to Coinglass API endpoints:
+- **Futures core:** `get_supported_coins`, `get_supported_exchanges`, `get_exchange_pairs`, `get_futures_pairs_markets`, `get_funding_rates`, `get_oi_by_exchange`
+- **Futures liquidation:** `get_futures_liquidation_exchanges`, `get_futures_liquidation_coins`
+- **Indices:** `get_ahr999_index`, `get_rainbow_chart`, `get_fear_greed_index`, `get_stock_flow_index`, `get_bubble_index`, `get_puell_multiple`, `get_bull_market_indicators`
+- **ETF & exchange:** `get_btc_etf_netflow`, `get_btc_etf_list`, `get_exchange_balance`, `get_exchange_balance_chart`
+- **Spot:** `get_spot_supported_coins`
 
-**Futures Data:**
-- `get_supported_coins`, `get_supported_exchanges`, `get_exchange_pairs`
-- `get_futures_coins_markets`, `get_futures_pairs_markets`
-- `get_price_history`, `get_funding_rates`, `get_funding_rate_history`
-- `get_funding_arbitrage_list`
-- `get_oi_by_exchange`, `get_oi_history`, `get_oi_coin_margin_history`
-- `get_liquidation_history`, `get_aggregated_liquidations`
-- `get_global_long_short_ratio`
-- `get_top_trader_position_ratio`, `get_top_trader_account_ratio`
-- `get_taker_buy_sell_volume`, `get_aggregated_taker_volume`
-- `get_cvd_history`, `get_volume_footprint`
+Premium endpoints are intentionally not exposed on the Hobby-key marketplace build (kept in code, disabled by default) to avoid planners calling tools that return `Upgrade plan`:
+
 - `get_rsi_list`, `get_indicator_ma`, `get_indicator_boll`
-
-**Index Data:**
-- `get_ahr999_index`, `get_rainbow_chart`, `get_fear_greed_index`
-- `get_bubble_index`, `get_puell_multiple`, `get_btc_vs_m2`
-- `get_pi_cycle_indicator`, `get_bull_market_indicators`
-
-**ETF & Exchange:**
-- `get_btc_etf_netflow`, `get_exchange_balance`, `get_exchange_balance_chart`
-
-**Spot & Options:**
-- `get_spot_coins_markets`, `get_spot_price_history`, `get_options_oi_history`
+- `get_whale_index_history`, `get_futures_liquidation_orders`
+- `get_spot_price_history`
 
 ## Setup
 
-### 1. Get API Key
-
-Get your Coinglass API key from [coinglass.com/pricing](https://www.coinglass.com/pricing).
-
-Rate limits vary by plan/key. Set `COINGLASS_RATE_LIMIT` to match your current quota.
-
-### 2. Configure Environment
+1. Copy env file and set your API key:
 
 ```bash
 cp env.example .env
-# Edit .env and add your API key
 ```
 
-### 3. Install & Run
+2. Start server:
 
 ```bash
 pnpm install
-pnpm dev        # Development mode
-pnpm build      # Build for production
-pnpm start      # Production mode
+pnpm dev
 ```
 
 ## API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/mcp` | POST | MCP protocol endpoint |
-| `/mcp` | GET | SSE streaming endpoint |
-| `/mcp` | DELETE | Session termination |
-| `/health` | GET | Health check + tool list |
+- `POST /mcp` MCP protocol endpoint
+- `GET /mcp` SSE transport
+- `DELETE /mcp` session termination
+- `GET /health` health + capability snapshot
 
-## Context Protocol
+## Auth and Testing
 
-This server is secured with Context Protocol JWT verification. All MCP requests require valid Context7 authentication.
+Context middleware auth is on by default.
 
-## Example Usage
+- `CONTEXT_AUTH_ENABLED=true` (default): auth middleware enabled
+- `CONTEXT_AUTH_ENABLED=false`: disable middleware for controlled direct testing
 
-### Intelligence Tools
+Keep auth enabled in normal/production operation.
 
-```typescript
-// Calculate squeeze probability for ETH
-await callTool("calculate_squeeze_probability", { symbol: "ETH" });
+## Plan Guard Behavior
 
-// Get market sentiment analysis
-await callTool("analyze_market_sentiment", {});
-
-// Find funding arbitrage opportunities > 30% APR
-await callTool("find_funding_arbitrage", { minApr: 30, limit: 10 });
-
-// Get BTC valuation score
-await callTool("get_btc_valuation_score", {});
-
-// Detect liquidation cascade risk
-await callTool("detect_liquidation_risk", { symbol: "BTC" });
-```
-
-### Raw Data Tools
-
-```typescript
-// Get current funding rates across exchanges
-await callTool("get_funding_rates", { symbol: "BTC" });
-
-// Get historical open interest
-await callTool("get_oi_history", { 
-  symbol: "BTC", 
-  interval: "1h", 
-  limit: 100 
-});
-
-// Get RSI values for all coins
-await callTool("get_rsi_list", {});
-
-// Get Fear & Greed Index history
-await callTool("get_fear_greed_index", {});
-```
-
-## Rate Limits
-
-The server enforces upstream pacing with:
-
-- Token-bucket limiter (`COINGLASS_RATE_LIMIT`, default `60` req/min)
-- Per-request wait logging (`[coinglass-rate]`) when throttling is applied
-- MCP tool metadata hints (`_meta.rateLimit`) for planner/runtime coordination
-
-If you see frequent throttling logs or `429` responses, lower fan-out and prefer batch tools (`get_oi_batch`, `scan_oi_divergence`), or upgrade your API plan.
+On each tool call, the server probes a small set of Coinglass endpoints and caches the result briefly. If the current key is blocked (for example upstream returns `Upgrade plan`), tools return a structured `PLAN_UPGRADE_REQUIRED` response instead of synthetic fallback data.
 
 ## Environment Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `COINGLASS_API_KEY` | ✅ | - | Your Coinglass API key |
-| `COINGLASS_PLAN` | ❌ | `hobbyist` | Plan guard (`hobbyist` enables endpoint allowlist) |
-| `COINGLASS_RATE_LIMIT` | ❌ | `60` | Upstream requests/minute budget for token bucket |
-| `PORT` | ❌ | `4005` | Server port |
-
-## License
-
-MIT
+| Variable | Default | Description |
+|---|---|---|
+| `COINGLASS_API_KEY` | - | Coinglass API key (required) |
+| `COINGLASS_PLAN` | `hobbyist` | Plan guard (`hobbyist` enforces allowlist) |
+| `COINGLASS_RATE_LIMIT` | `60` | Upstream requests per minute |
+| `PORT` | `4005` | Server port |
+| `CONTEXT_AUTH_ENABLED` | `true` | Toggle Context auth middleware |
 
