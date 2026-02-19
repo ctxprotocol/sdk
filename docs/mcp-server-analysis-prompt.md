@@ -54,9 +54,13 @@ Features:
 - [Additional features as needed]
 
 Try asking:
-- "[Natural language question showcasing a key feature]"
-- "[Question demonstrating a unique capability]"
-- "[Question showing an advanced or powerful use case]"
+- "[Quick start query using a primary tool]"
+- "[Discovery query that maps available entities/data]"
+- "[Comparative query across symbols/venues/timeframes]"
+- "[Deep analysis query with non-default filters/thresholds]"
+- "[Workflow query that chains multiple tools in sequence]"
+- "[Risk/edge-case query (resolved vs live, sparse/no data, ambiguous match)]"
+- "[Power-user query combining ranking + validation + explanation]"
 
 Agent tips:
 - [Best practice for using this tool]
@@ -88,6 +92,20 @@ Agent tips:
 **Banned phrases (do not use in description):**
 - "mdash" or "—"
 - "**" (no bold markdown)
+
+### Try-asking quality bar (required)
+
+When generating the `Try asking` section, use **at least 7 questions** and ensure they cover:
+
+1. Core happy-path query
+2. Discovery/listing query
+3. Comparative query
+4. Advanced filtered query (explicit parameters)
+5. Multi-step workflow query
+6. Edge-case/ambiguity query
+7. Power-user query that demonstrates the server's strongest capability
+
+Questions should be specific enough that an agent can route to the right tools without guessing.
 
 ### 3. Category (required, select one)
 
@@ -152,6 +170,7 @@ When analyzing an MCP server, extract:
    - Document input schemas for each tool
    - Note any `outputSchema` definitions (required for disputes)
    - Note `_meta.contextRequirements` and `_meta.rateLimit` / `_meta.rateLimitHints` metadata
+   - Group tools by capability cluster (discovery, raw data, analytics, workflow/composite)
 
 2. **Data Sources**
    - What APIs or data sources does it connect to?
@@ -175,6 +194,7 @@ When analyzing an MCP server, extract:
    - Example queries and responses
    - Common workflows
    - Edge cases and limitations
+   - Include comprehensive test questions that exercise each capability cluster
 
 ---
 
