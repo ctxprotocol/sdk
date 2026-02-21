@@ -96,7 +96,7 @@ const result = await client.tools.execute({
 console.log(result.session); // methodPrice, spent, remaining, maxSpend, ...
 ```
 
-**Query mode** gives you curated answers — the server handles answer-safe tool discovery, multi-tool orchestration (up to 100 MCP calls per query turn), self-healing retries, completeness checks, model-aware context budgeting, and AI synthesis for one flat fee:
+**Query mode** gives you curated answers — the server handles answer-safe tool discovery, multi-tool orchestration (up to 100 MCP calls per response turn), self-healing retries, completeness checks, model-aware context budgeting, and AI synthesis for one flat fee:
 ```typescript
 const answer = await client.query.run({
   query: "What are the top whale movements on Base?",
@@ -110,6 +110,9 @@ console.log(answer.dataUrl);    // Optional blob URL with full data
 ```
 
 > Mixed listings are first-class: one listing can expose methods to both surfaces. Methods without `_meta.pricing.executeUsd` remain query-only until priced.
+>
+> Compatibility: SDK/API payload fields such as `price` and `pricePerQuery` are retained for backward compatibility. In Query mode, they represent listing-level **price per response turn**.
+> A future major release can add response-named aliases (for example, `pricePerResponse`) before deprecating legacy names.
 
 ## Quick Start
 
@@ -390,7 +393,7 @@ const closed = await client.tools.closeSession("sess_123");
 
 #### `client.query.run(options)`
 
-Run an agentic query. The server discovers answer-safe tools, executes the full pipeline (up to 100 MCP calls per query turn), applies model-aware mediator/data budgeting, and returns an AI-synthesized answer.
+Run an agentic query. The server discovers answer-safe tools, executes the full pipeline (up to 100 MCP calls per response turn), applies model-aware mediator/data budgeting, and returns an AI-synthesized answer.
 
 ```typescript
 // Simple string
@@ -474,7 +477,7 @@ interface Tool {
   id: string;
   name: string;
   description: string;
-  price: string; // listing-level query price metadata
+  price: string; // listing-level response price metadata (legacy field name)
   category?: string;
   isVerified?: boolean;
   mcpTools?: McpTool[];

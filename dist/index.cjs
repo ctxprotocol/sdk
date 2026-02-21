@@ -19,27 +19,36 @@ var Discovery = class {
   constructor(client) {
     this.client = client;
   }
-  /**
-   * Search for tools matching a query string
-   *
-   * @param query - The search query (e.g., "gas prices", "nft metadata")
-   * @param limit - Maximum number of results (1-50, default 10)
-   * @returns Array of matching tools
-   *
-   * @example
-   * ```typescript
-   * const tools = await client.discovery.search("gas prices");
-   * console.log(tools[0].name); // "Gas Price Oracle"
-   * console.log(tools[0].mcpTools); // Available methods
-   * ```
-   */
-  async search(query, limit) {
+  async search(queryOrOptions, limit) {
+    const options = typeof queryOrOptions === "string" ? { query: queryOrOptions, limit } : queryOrOptions;
     const params = new URLSearchParams();
+    const query = options.query ?? "";
     if (query) {
       params.set("q", query);
     }
-    if (limit !== void 0) {
-      params.set("limit", String(limit));
+    if (options.limit !== void 0) {
+      params.set("limit", String(options.limit));
+    }
+    if (options.mode) {
+      params.set("mode", options.mode);
+    }
+    if (options.surface) {
+      params.set("surface", options.surface);
+    }
+    if (options.queryEligible !== void 0) {
+      params.set("queryEligible", String(options.queryEligible));
+    }
+    if (options.requireExecutePricing !== void 0) {
+      params.set(
+        "requireExecutePricing",
+        String(options.requireExecutePricing)
+      );
+    }
+    if (options.excludeLatencyClasses && options.excludeLatencyClasses.length > 0) {
+      params.set("excludeLatency", options.excludeLatencyClasses.join(","));
+    }
+    if (options.excludeSlow !== void 0) {
+      params.set("excludeSlow", String(options.excludeSlow));
     }
     const queryString = params.toString();
     const endpoint = `/api/v1/tools/search${queryString ? `?${queryString}` : ""}`;
@@ -57,8 +66,12 @@ var Discovery = class {
    * const featured = await client.discovery.getFeatured(5);
    * ```
    */
-  async getFeatured(limit) {
-    return this.search("", limit);
+  async getFeatured(limit, options) {
+    return this.search({
+      ...options ?? {},
+      query: "",
+      ...limit !== void 0 ? { limit } : {}
+    });
   }
 };
 
@@ -99,14 +112,31 @@ var Tools = class {
    * ```
    */
   async execute(options) {
-    const { toolId, toolName, args, idempotencyKey } = options;
+    const {
+      toolId,
+      toolName,
+      args,
+      idempotencyKey,
+      mode,
+      sessionId,
+      maxSpendUsd,
+      closeSession
+    } = options;
     const headers = idempotencyKey ? { "Idempotency-Key": idempotencyKey } : void 0;
     const response = await this.client._fetch(
       "/api/v1/tools/execute",
       {
         method: "POST",
         headers,
-        body: JSON.stringify({ toolId, toolName, args })
+        body: JSON.stringify({
+          toolId,
+          toolName,
+          args,
+          mode: mode ?? "execute",
+          sessionId,
+          maxSpendUsd,
+          closeSession
+        })
       }
     );
     if ("error" in response) {
@@ -120,9 +150,75 @@ var Tools = class {
     }
     if (response.success) {
       return {
+        mode: response.mode,
         result: response.result,
         tool: response.tool,
+        method: response.method,
+        session: response.session,
         durationMs: response.durationMs
+      };
+    }
+    throw new ContextError("Unexpected response format from API");
+  }
+  /**
+   * Start an execute session with a max spend budget.
+   */
+  async startSession(options) {
+    const response = await this.client._fetch(
+      "/api/v1/tools/execute/sessions",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          mode: "execute",
+          maxSpendUsd: options.maxSpendUsd
+        })
+      }
+    );
+    return this.resolveSessionLifecycleResponse(response);
+  }
+  /**
+   * Fetch current execute session status by ID.
+   */
+  async getSession(sessionId) {
+    if (!sessionId) {
+      throw new ContextError("sessionId is required");
+    }
+    const encodedSessionId = encodeURIComponent(sessionId);
+    const response = await this.client._fetch(
+      `/api/v1/tools/execute/sessions/${encodedSessionId}`
+    );
+    return this.resolveSessionLifecycleResponse(response);
+  }
+  /**
+   * Close an execute session by ID.
+   */
+  async closeSession(sessionId) {
+    if (!sessionId) {
+      throw new ContextError("sessionId is required");
+    }
+    const encodedSessionId = encodeURIComponent(sessionId);
+    const response = await this.client._fetch(
+      `/api/v1/tools/execute/sessions/${encodedSessionId}/close`,
+      {
+        method: "POST",
+        body: JSON.stringify({ mode: "execute" })
+      }
+    );
+    return this.resolveSessionLifecycleResponse(response);
+  }
+  resolveSessionLifecycleResponse(response) {
+    if ("error" in response) {
+      throw new ContextError(
+        response.error,
+        response.code,
+        void 0,
+        response.helpUrl
+      );
+    }
+    if (response.success) {
+      return {
+        mode: response.mode,
+        session: response.session
       };
     }
     throw new ContextError("Unexpected response format from API");

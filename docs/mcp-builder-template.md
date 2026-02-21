@@ -320,7 +320,7 @@ npm install -D @types/express typescript
 
 ### 2.2 Value Assessment
 
-**What would users pay $0.01-0.05 per query for?**
+**What would users pay $0.01-0.05 per response for?**
 
 ```
 - 

@@ -17,7 +17,7 @@ Generate a JSON object with the following fields, followed by a markdown explana
   "name": "<Tool name - concise, memorable, max 255 chars>",
   "description": "<Rich description - max 5000 chars, see format below>",
   "category": "<One of the allowed categories>",
-  "price": "<Price per query in USDC, 0.00 to 100.00, max 4 decimals>",
+  "price": "<Price per response in USDC, 0.00 to 100.00, max 4 decimals>",
   "endpoint": "<The MCP endpoint URL>"
 }
 ```
@@ -216,7 +216,7 @@ After analysis, provide:
 
 **Category:** [Selected category]
 
-**Price:** $[X.XX] USDC per query
+**Price:** $[X.XX] USDC per response
 
 **Endpoint:** [URL or placeholder if unknown]
 

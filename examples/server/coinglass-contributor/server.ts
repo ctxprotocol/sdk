@@ -1234,16 +1234,35 @@ const TOOLS = [
   // ============================================================================
 ];
 
+const DEFAULT_EXECUTE_PRICE_USD = "0.001";
+const UNPRICED_EXECUTE_METHODS = new Set(["get_spot_supported_coins"]);
+
 const TOOLS_WITH_METADATA = TOOLS.map((tool) => {
   const existingMeta =
     "_meta" in tool && typeof tool._meta === "object" && tool._meta !== null
       ? (tool._meta as Record<string, unknown>)
       : {};
+  const existingPricing =
+    "pricing" in existingMeta &&
+    typeof existingMeta.pricing === "object" &&
+    existingMeta.pricing !== null
+      ? { ...(existingMeta.pricing as Record<string, unknown>) }
+      : {};
+
+  if (UNPRICED_EXECUTE_METHODS.has(tool.name)) {
+    delete existingPricing.executeUsd;
+  } else if (
+    !("executeUsd" in existingPricing) ||
+    typeof existingPricing.executeUsd !== "string"
+  ) {
+    existingPricing.executeUsd = DEFAULT_EXECUTE_PRICE_USD;
+  }
 
   return {
     ...tool,
     _meta: {
       ...existingMeta,
+      pricing: existingPricing,
       rateLimit: buildToolRateLimitMetadata(tool.name),
     },
   };

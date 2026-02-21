@@ -30,7 +30,27 @@ interface McpToolRateLimitHints {
     /** Optional human-readable notes for planning */
     notes?: string;
 }
+type DiscoveryMode = "query" | "execute";
+type McpToolSurface = "answer" | "execute" | "both";
+type McpToolLatencyClass = "instant" | "fast" | "slow" | "streaming";
+interface McpToolPricingMeta {
+    executeUsd?: string;
+    queryUsd?: string;
+    [key: string]: unknown;
+}
 interface McpToolMeta {
+    /** Declared method surface */
+    surface?: McpToolSurface;
+    /** Whether this method can be selected in query mode */
+    queryEligible?: boolean;
+    /** Declared latency class for planner/runtime gating */
+    latencyClass?: McpToolLatencyClass;
+    /** Method-level pricing metadata */
+    pricing?: McpToolPricingMeta;
+    /** Derived discovery flag for execute eligibility */
+    executeEligible?: boolean;
+    /** Derived discovery field for explicit execute pricing visibility */
+    executePriceUsd?: string;
     /** Context injection requirements handled by the Context runtime */
     contextRequirements?: string[];
     /**
@@ -47,6 +67,14 @@ interface McpToolMeta {
     recommendedBatchTools?: string[];
     notes?: string;
     [key: string]: unknown;
+}
+interface StructuredMethodGuidanceHints {
+    /** Suggested call-order sequence extracted from method descriptions */
+    callOrderHints?: string[];
+    /** Parameter usage caveats extracted from method descriptions */
+    parameterCaveats?: string[];
+    /** Edge-case behavior notes extracted from method descriptions */
+    edgeCaseNotes?: string[];
 }
 interface McpTool {
     /** Name of the MCP tool method */
@@ -65,6 +93,14 @@ interface McpTool {
     outputSchema?: Record<string, unknown>;
     /** MCP metadata extensions (context injection, rate-limit hints) */
     _meta?: McpToolMeta;
+    /** Explicit execute eligibility in discovery responses */
+    executeEligible?: boolean;
+    /** Explicit execute price visibility in discovery responses */
+    executePriceUsd?: string | null;
+    /** Whether this method has normalized structured guidance hints */
+    hasStructuredGuidance?: boolean;
+    /** Optional structured guidance hints derived from the method description */
+    structuredGuidance?: StructuredMethodGuidanceHints;
 }
 /**
  * Represents a tool available on the Context Protocol marketplace
@@ -106,6 +142,8 @@ interface Tool {
 interface SearchResponse {
     /** Array of matching tools */
     tools: Tool[];
+    /** Discovery mode used by the server */
+    mode?: DiscoveryMode;
     /** The search query that was used */
     query: string;
     /** Total number of results */
@@ -119,6 +157,18 @@ interface SearchOptions {
     query?: string;
     /** Maximum number of results (1-50, default 10) */
     limit?: number;
+    /** Discovery mode with billing semantics */
+    mode?: DiscoveryMode;
+    /** Optional explicit method surface filter */
+    surface?: McpToolSurface;
+    /** Require methods marked query eligible */
+    queryEligible?: boolean;
+    /** Require explicit method execute pricing */
+    requireExecutePricing?: boolean;
+    /** Exclude methods by latency class */
+    excludeLatencyClasses?: McpToolLatencyClass[];
+    /** Convenience switch to exclude slow methods in query mode */
+    excludeSlow?: boolean;
 }
 /**
  * Options for executing a tool
@@ -135,12 +185,36 @@ interface ExecuteOptions {
      * Reuse the same key when retrying the same logical request.
      */
     idempotencyKey?: string;
+    /** Explicit execute mode label for request clarity */
+    mode?: "execute";
+    /** Optional execute session identifier */
+    sessionId?: string;
+    /** Optional per-session spend budget envelope (USD) */
+    maxSpendUsd?: string;
+    /** Request session closure after this execute call settles */
+    closeSession?: boolean;
+}
+type ExecuteSessionStatus = "open" | "closed" | "expired";
+interface ExecuteSessionSpend {
+    mode: "execute";
+    sessionId: string | null;
+    methodPrice: string;
+    spent: string;
+    remaining: string | null;
+    maxSpend: string | null;
+    /** Optional lifecycle fields when the API returns session state */
+    status?: ExecuteSessionStatus;
+    expiresAt?: string;
+    closeRequested?: boolean;
+    pendingAccruedCount?: number;
+    pendingAccruedUsd?: string;
 }
 /**
  * Successful execution response from the API
  */
 interface ExecuteApiSuccessResponse {
     success: true;
+    mode: "execute";
     /** The result data from the tool execution */
     result: unknown;
     /** Information about the executed tool */
@@ -148,6 +222,13 @@ interface ExecuteApiSuccessResponse {
         id: string;
         name: string;
     };
+    /** Method-level execute pricing used for this call */
+    method: {
+        name: string;
+        executePriceUsd: string;
+    };
+    /** Spend envelope visibility for execute sessions */
+    session: ExecuteSessionSpend;
     /** Execution duration in milliseconds */
     durationMs: number;
 }
@@ -157,19 +238,38 @@ interface ExecuteApiSuccessResponse {
 interface ExecuteApiErrorResponse {
     /** Human-readable error message */
     error: string;
+    /** Explicit mode label for clarity */
+    mode?: "execute";
     /** Error code for programmatic handling */
     code?: ContextErrorCode;
     /** URL to help resolve the issue */
     helpUrl?: string;
+    /** Optional spend envelope context when available */
+    session?: ExecuteSessionSpend;
 }
 /**
  * Raw API response from the execute endpoint
  */
 type ExecuteApiResponse = ExecuteApiSuccessResponse | ExecuteApiErrorResponse;
+interface ExecuteSessionStartOptions {
+    /** Maximum spend budget for the session (USD string) */
+    maxSpendUsd: string;
+}
+interface ExecuteSessionApiSuccessResponse {
+    success: true;
+    mode: "execute";
+    session: ExecuteSessionSpend;
+}
+type ExecuteSessionApiResponse = ExecuteSessionApiSuccessResponse | ExecuteApiErrorResponse;
+interface ExecuteSessionResult {
+    mode: "execute";
+    session: ExecuteSessionSpend;
+}
 /**
  * The resolved result returned to the user after SDK processing
  */
 interface ExecutionResult<T = unknown> {
+    mode: "execute";
     /** The data returned by the tool */
     result: T;
     /** Information about the executed tool */
@@ -177,6 +277,13 @@ interface ExecutionResult<T = unknown> {
         id: string;
         name: string;
     };
+    /** Method-level execute pricing used for this call */
+    method: {
+        name: string;
+        executePriceUsd: string;
+    };
+    /** Spend envelope visibility for execute calls */
+    session: ExecuteSessionSpend;
     /** Execution duration in milliseconds */
     durationMs: number;
 }
@@ -300,7 +407,7 @@ type QueryStreamEvent = QueryStreamToolStatusEvent | QueryStreamTextDeltaEvent |
 /**
  * Specific error codes returned by the Context Protocol API
  */
-type ContextErrorCode = "unauthorized" | "no_wallet" | "insufficient_allowance" | "payment_failed" | "execution_failed" | "query_failed";
+type ContextErrorCode = "unauthorized" | "no_wallet" | "insufficient_allowance" | "payment_failed" | "execution_failed" | "query_failed" | "invalid_tool_method" | "method_not_execute_eligible" | "invalid_max_spend" | "session_not_found" | "session_forbidden" | "session_closed" | "session_expired" | "max_spend_mismatch" | "session_budget_exceeded";
 /**
  * Error thrown by the Context Protocol client
  */
@@ -318,20 +425,14 @@ declare class Discovery {
     private client;
     constructor(client: ContextClient);
     /**
-     * Search for tools matching a query string
+     * Search for tools matching a query string.
      *
-     * @param query - The search query (e.g., "gas prices", "nft metadata")
-     * @param limit - Maximum number of results (1-50, default 10)
-     * @returns Array of matching tools
-     *
-     * @example
-     * ```typescript
-     * const tools = await client.discovery.search("gas prices");
-     * console.log(tools[0].name); // "Gas Price Oracle"
-     * console.log(tools[0].mcpTools); // Available methods
-     * ```
+     * Backward-compatible signatures:
+     * - `search("gas prices", 10)`
+     * - `search({ query: "gas prices", limit: 10, mode: "execute" })`
      */
     search(query: string, limit?: number): Promise<Tool[]>;
+    search(options: SearchOptions): Promise<Tool[]>;
     /**
      * Get featured/popular tools (empty query search)
      *
@@ -343,7 +444,7 @@ declare class Discovery {
      * const featured = await client.discovery.getFeatured(5);
      * ```
      */
-    getFeatured(limit?: number): Promise<Tool[]>;
+    getFeatured(limit?: number, options?: Omit<SearchOptions, "query" | "limit">): Promise<Tool[]>;
 }
 
 /**
@@ -384,6 +485,19 @@ declare class Tools {
      * ```
      */
     execute<T = unknown>(options: ExecuteOptions): Promise<ExecutionResult<T>>;
+    /**
+     * Start an execute session with a max spend budget.
+     */
+    startSession(options: ExecuteSessionStartOptions): Promise<ExecuteSessionResult>;
+    /**
+     * Fetch current execute session status by ID.
+     */
+    getSession(sessionId: string): Promise<ExecuteSessionResult>;
+    /**
+     * Close an execute session by ID.
+     */
+    closeSession(sessionId: string): Promise<ExecuteSessionResult>;
+    private resolveSessionLifecycleResponse;
 }
 
 /**
@@ -539,4 +653,4 @@ declare class ContextClient {
     _fetchRaw(endpoint: string, options?: RequestInit): Promise<Response>;
 }
 
-export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecutionResult, type McpTool, type McpToolMeta, type McpToolRateLimitHints, Query, type QueryApiResponse, type QueryApiSuccessResponse, type QueryCost, type QueryOptions, type QueryResult, type QueryStreamDoneEvent, type QueryStreamEvent, type QueryStreamTextDeltaEvent, type QueryStreamToolStatusEvent, type QueryToolUsage, type SearchOptions, type SearchResponse, type Tool, Tools };
+export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecuteSessionApiResponse, type ExecuteSessionApiSuccessResponse, type ExecuteSessionResult, type ExecuteSessionSpend, type ExecuteSessionStartOptions, type ExecuteSessionStatus, type ExecutionResult, type McpTool, type McpToolMeta, type McpToolRateLimitHints, Query, type QueryApiResponse, type QueryApiSuccessResponse, type QueryCost, type QueryOptions, type QueryResult, type QueryStreamDoneEvent, type QueryStreamEvent, type QueryStreamTextDeltaEvent, type QueryStreamToolStatusEvent, type QueryToolUsage, type SearchOptions, type SearchResponse, type Tool, Tools };
