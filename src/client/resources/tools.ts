@@ -1,6 +1,9 @@
 import type {
   ExecuteOptions,
   ExecuteApiResponse,
+  ExecuteSessionApiResponse,
+  ExecuteSessionResult,
+  ExecuteSessionStartOptions,
   ExecutionResult,
 } from "../types.js";
 import { ContextError } from "../types.js";
@@ -44,7 +47,16 @@ export class Tools {
    * ```
    */
   async execute<T = unknown>(options: ExecuteOptions): Promise<ExecutionResult<T>> {
-    const { toolId, toolName, args, idempotencyKey } = options;
+    const {
+      toolId,
+      toolName,
+      args,
+      idempotencyKey,
+      mode,
+      sessionId,
+      maxSpendUsd,
+      closeSession,
+    } = options;
     const headers = idempotencyKey
       ? { "Idempotency-Key": idempotencyKey }
       : undefined;
@@ -54,7 +66,15 @@ export class Tools {
       {
         method: "POST",
         headers,
-        body: JSON.stringify({ toolId, toolName, args }),
+        body: JSON.stringify({
+          toolId,
+          toolName,
+          args,
+          mode: mode ?? "execute",
+          sessionId,
+          maxSpendUsd,
+          closeSession,
+        }),
       }
     );
 
@@ -71,13 +91,94 @@ export class Tools {
     // Handle success response
     if (response.success) {
       return {
+        mode: response.mode,
         result: response.result as T,
         tool: response.tool,
+        method: response.method,
+        session: response.session,
         durationMs: response.durationMs,
       };
     }
 
     // Fallback - shouldn't reach here with valid API responses
+    throw new ContextError("Unexpected response format from API");
+  }
+
+  /**
+   * Start an execute session with a max spend budget.
+   */
+  async startSession(
+    options: ExecuteSessionStartOptions
+  ): Promise<ExecuteSessionResult> {
+    const response = await this.client._fetch<ExecuteSessionApiResponse>(
+      "/api/v1/tools/execute/sessions",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          mode: "execute",
+          maxSpendUsd: options.maxSpendUsd,
+        }),
+      }
+    );
+
+    return this.resolveSessionLifecycleResponse(response);
+  }
+
+  /**
+   * Fetch current execute session status by ID.
+   */
+  async getSession(sessionId: string): Promise<ExecuteSessionResult> {
+    if (!sessionId) {
+      throw new ContextError("sessionId is required");
+    }
+
+    const encodedSessionId = encodeURIComponent(sessionId);
+    const response = await this.client._fetch<ExecuteSessionApiResponse>(
+      `/api/v1/tools/execute/sessions/${encodedSessionId}`
+    );
+
+    return this.resolveSessionLifecycleResponse(response);
+  }
+
+  /**
+   * Close an execute session by ID.
+   */
+  async closeSession(sessionId: string): Promise<ExecuteSessionResult> {
+    if (!sessionId) {
+      throw new ContextError("sessionId is required");
+    }
+
+    const encodedSessionId = encodeURIComponent(sessionId);
+    const response = await this.client._fetch<ExecuteSessionApiResponse>(
+      `/api/v1/tools/execute/sessions/${encodedSessionId}/close`,
+      {
+        method: "POST",
+        body: JSON.stringify({ mode: "execute" }),
+      }
+    );
+
+    return this.resolveSessionLifecycleResponse(response);
+  }
+
+  private resolveSessionLifecycleResponse(
+    response: ExecuteSessionApiResponse
+  ): ExecuteSessionResult {
+    if ("error" in response) {
+      throw new ContextError(
+        response.error,
+        response.code,
+        undefined,
+        response.helpUrl
+      );
+    }
+
+    if (response.success) {
+      return {
+        mode: response.mode,
+        session: response.session,
+      };
+    }
+
     throw new ContextError("Unexpected response format from API");
   }
 }

@@ -13,18 +13,24 @@ async function main() {
     // ═══════════════════════════════════════════════════════════════════════
     // 1. DISCOVER TOOLS
     // ═══════════════════════════════════════════════════════════════════════
-    console.log("🔍 Searching for gas price tools...\n");
+    console.log("🔍 Searching Query-surface tools (answer-safe)...\n");
 
-    const tools = await client.discovery.search("gas prices");
+    const queryTools = await client.discovery.search({
+      query: "gas prices",
+      mode: "query",
+      surface: "answer",
+      queryEligible: true,
+      excludeSlow: true,
+    });
 
-    if (tools.length === 0) {
+    if (queryTools.length === 0) {
       console.log("No tools found for this query.");
       return;
     }
 
-    console.log(`Found ${tools.length} tool(s):\n`);
+    console.log(`Found ${queryTools.length} query tool(s):\n`);
 
-    tools.forEach((tool, index) => {
+    queryTools.forEach((tool, index) => {
       console.log(`${index + 1}. ${tool.name}`);
       console.log(`   ID: ${tool.id}`);
       console.log(`   Description: ${tool.description}`);
@@ -36,6 +42,18 @@ async function main() {
         console.log(`   Available methods:`);
         tool.mcpTools.forEach((mcpTool) => {
           console.log(`     - ${mcpTool.name}: ${mcpTool.description}`);
+          console.log(
+            `       Surface: ${mcpTool._meta?.surface ?? "both"} | Query eligible: ${String(
+              mcpTool._meta?.queryEligible ?? true
+            )}`
+          );
+          if (mcpTool.executeEligible !== undefined) {
+            console.log(
+              `       Execute eligible: ${String(mcpTool.executeEligible)} | Execute price: ${
+                mcpTool.executePriceUsd ?? mcpTool._meta?.pricing?.executeUsd ?? "N/A"
+              }`
+            );
+          }
 
           // Show schemas if available (useful for LLM integration)
           if (mcpTool.inputSchema) {
@@ -52,7 +70,7 @@ async function main() {
     // ═══════════════════════════════════════════════════════════════════════
     // 2. USE SCHEMAS FOR LLM PROMPT GENERATION
     // ═══════════════════════════════════════════════════════════════════════
-    const selectedTool = tools[0];
+    const selectedTool = queryTools[0];
 
     if (!selectedTool.mcpTools || selectedTool.mcpTools.length === 0) {
       console.log("Selected tool has no available methods.");
@@ -81,21 +99,48 @@ Generate the correct arguments as JSON to get gas prices for Ethereum mainnet.`;
     console.log();
 
     // ═══════════════════════════════════════════════════════════════════════
-    // 3. EXECUTE A TOOL
+    // 3. DISCOVER EXECUTE-ELIGIBLE METHODS + START SESSION
     // ═══════════════════════════════════════════════════════════════════════
-    console.log(`⚡ Executing: ${selectedTool.name} → ${methodToCall.name}\n`);
+    console.log("🔎 Searching Execute-surface tools with explicit pricing...\n");
+
+    const executeTools = await client.discovery.search({
+      query: "gas prices",
+      mode: "execute",
+      surface: "execute",
+      requireExecutePricing: true,
+    });
+
+    if (executeTools.length === 0 || !executeTools[0]?.mcpTools?.length) {
+      console.log("No execute-eligible methods found for this query.");
+      return;
+    }
+
+    const executeTool = executeTools[0];
+    const executeMethod = executeTool.mcpTools[0];
+    const session = await client.tools.startSession({ maxSpendUsd: "1.00" });
+    const sessionId = session.session.sessionId;
+
+    if (!sessionId) {
+      throw new Error("Expected execute session ID from startSession");
+    }
+
+    console.log(`⚡ Executing: ${executeTool.name} → ${executeMethod.name}\n`);
 
     const result = await client.tools.execute({
-      toolId: selectedTool.id,
-      toolName: methodToCall.name,
+      toolId: executeTool.id,
+      toolName: executeMethod.name,
       args: {
         chainId: 1, // Ethereum mainnet
       },
+      sessionId,
+      closeSession: true,
     });
 
     console.log("✅ Execution successful!\n");
     console.log("Tool:", result.tool.name);
+    console.log("Method price (USD):", result.method.executePriceUsd);
     console.log("Result:", JSON.stringify(result.result, null, 2));
+    console.log("Session envelope:", result.session);
     console.log(`\n⏱️  Duration: ${result.durationMs}ms`);
 
     // ═══════════════════════════════════════════════════════════════════════

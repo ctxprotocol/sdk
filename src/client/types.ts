@@ -38,7 +38,35 @@ export interface McpToolRateLimitHints {
   notes?: string;
 }
 
+export type DiscoveryMode = "query" | "execute";
+export type McpToolSurface = "answer" | "execute" | "both";
+export type McpToolLatencyClass = "instant" | "fast" | "slow" | "streaming";
+
+export interface McpToolPricingMeta {
+  executeUsd?: string;
+  queryUsd?: string;
+  [key: string]: unknown;
+}
+
 export interface McpToolMeta {
+  /** Declared method surface */
+  surface?: McpToolSurface;
+
+  /** Whether this method can be selected in query mode */
+  queryEligible?: boolean;
+
+  /** Declared latency class for planner/runtime gating */
+  latencyClass?: McpToolLatencyClass;
+
+  /** Method-level pricing metadata */
+  pricing?: McpToolPricingMeta;
+
+  /** Derived discovery flag for execute eligibility */
+  executeEligible?: boolean;
+
+  /** Derived discovery field for explicit execute pricing visibility */
+  executePriceUsd?: string;
+
   /** Context injection requirements handled by the Context runtime */
   contextRequirements?: string[];
 
@@ -58,6 +86,17 @@ export interface McpToolMeta {
   notes?: string;
 
   [key: string]: unknown;
+}
+
+export interface StructuredMethodGuidanceHints {
+  /** Suggested call-order sequence extracted from method descriptions */
+  callOrderHints?: string[];
+
+  /** Parameter usage caveats extracted from method descriptions */
+  parameterCaveats?: string[];
+
+  /** Edge-case behavior notes extracted from method descriptions */
+  edgeCaseNotes?: string[];
 }
 
 export interface McpTool {
@@ -81,6 +120,18 @@ export interface McpTool {
 
   /** MCP metadata extensions (context injection, rate-limit hints) */
   _meta?: McpToolMeta;
+
+  /** Explicit execute eligibility in discovery responses */
+  executeEligible?: boolean;
+
+  /** Explicit execute price visibility in discovery responses */
+  executePriceUsd?: string | null;
+
+  /** Whether this method has normalized structured guidance hints */
+  hasStructuredGuidance?: boolean;
+
+  /** Optional structured guidance hints derived from the method description */
+  structuredGuidance?: StructuredMethodGuidanceHints;
 }
 
 /**
@@ -138,6 +189,9 @@ export interface SearchResponse {
   /** Array of matching tools */
   tools: Tool[];
 
+  /** Discovery mode used by the server */
+  mode?: DiscoveryMode;
+
   /** The search query that was used */
   query: string;
 
@@ -154,6 +208,24 @@ export interface SearchOptions {
 
   /** Maximum number of results (1-50, default 10) */
   limit?: number;
+
+  /** Discovery mode with billing semantics */
+  mode?: DiscoveryMode;
+
+  /** Optional explicit method surface filter */
+  surface?: McpToolSurface;
+
+  /** Require methods marked query eligible */
+  queryEligible?: boolean;
+
+  /** Require explicit method execute pricing */
+  requireExecutePricing?: boolean;
+
+  /** Exclude methods by latency class */
+  excludeLatencyClasses?: McpToolLatencyClass[];
+
+  /** Convenience switch to exclude slow methods in query mode */
+  excludeSlow?: boolean;
 }
 
 /**
@@ -174,6 +246,36 @@ export interface ExecuteOptions {
    * Reuse the same key when retrying the same logical request.
    */
   idempotencyKey?: string;
+
+  /** Explicit execute mode label for request clarity */
+  mode?: "execute";
+
+  /** Optional execute session identifier */
+  sessionId?: string;
+
+  /** Optional per-session spend budget envelope (USD) */
+  maxSpendUsd?: string;
+
+  /** Request session closure after this execute call settles */
+  closeSession?: boolean;
+}
+
+export type ExecuteSessionStatus = "open" | "closed" | "expired";
+
+export interface ExecuteSessionSpend {
+  mode: "execute";
+  sessionId: string | null;
+  methodPrice: string;
+  spent: string;
+  remaining: string | null;
+  maxSpend: string | null;
+
+  /** Optional lifecycle fields when the API returns session state */
+  status?: ExecuteSessionStatus;
+  expiresAt?: string;
+  closeRequested?: boolean;
+  pendingAccruedCount?: number;
+  pendingAccruedUsd?: string;
 }
 
 /**
@@ -181,6 +283,7 @@ export interface ExecuteOptions {
  */
 export interface ExecuteApiSuccessResponse {
   success: true;
+  mode: "execute";
 
   /** The result data from the tool execution */
   result: unknown;
@@ -190,6 +293,15 @@ export interface ExecuteApiSuccessResponse {
     id: string;
     name: string;
   };
+
+  /** Method-level execute pricing used for this call */
+  method: {
+    name: string;
+    executePriceUsd: string;
+  };
+
+  /** Spend envelope visibility for execute sessions */
+  session: ExecuteSessionSpend;
 
   /** Execution duration in milliseconds */
   durationMs: number;
@@ -202,11 +314,17 @@ export interface ExecuteApiErrorResponse {
   /** Human-readable error message */
   error: string;
 
+  /** Explicit mode label for clarity */
+  mode?: "execute";
+
   /** Error code for programmatic handling */
   code?: ContextErrorCode;
 
   /** URL to help resolve the issue */
   helpUrl?: string;
+
+  /** Optional spend envelope context when available */
+  session?: ExecuteSessionSpend;
 }
 
 /**
@@ -214,10 +332,32 @@ export interface ExecuteApiErrorResponse {
  */
 export type ExecuteApiResponse = ExecuteApiSuccessResponse | ExecuteApiErrorResponse;
 
+export interface ExecuteSessionStartOptions {
+  /** Maximum spend budget for the session (USD string) */
+  maxSpendUsd: string;
+}
+
+export interface ExecuteSessionApiSuccessResponse {
+  success: true;
+  mode: "execute";
+  session: ExecuteSessionSpend;
+}
+
+export type ExecuteSessionApiResponse =
+  | ExecuteSessionApiSuccessResponse
+  | ExecuteApiErrorResponse;
+
+export interface ExecuteSessionResult {
+  mode: "execute";
+  session: ExecuteSessionSpend;
+}
+
 /**
  * The resolved result returned to the user after SDK processing
  */
 export interface ExecutionResult<T = unknown> {
+  mode: "execute";
+
   /** The data returned by the tool */
   result: T;
 
@@ -226,6 +366,15 @@ export interface ExecutionResult<T = unknown> {
     id: string;
     name: string;
   };
+
+  /** Method-level execute pricing used for this call */
+  method: {
+    name: string;
+    executePriceUsd: string;
+  };
+
+  /** Spend envelope visibility for execute calls */
+  session: ExecuteSessionSpend;
 
   /** Execution duration in milliseconds */
   durationMs: number;
@@ -393,7 +542,16 @@ export type ContextErrorCode =
   | "insufficient_allowance"
   | "payment_failed"
   | "execution_failed"
-  | "query_failed";
+  | "query_failed"
+  | "invalid_tool_method"
+  | "method_not_execute_eligible"
+  | "invalid_max_spend"
+  | "session_not_found"
+  | "session_forbidden"
+  | "session_closed"
+  | "session_expired"
+  | "max_spend_mismatch"
+  | "session_budget_exceeded";
 
 /**
  * Error thrown by the Context Protocol client

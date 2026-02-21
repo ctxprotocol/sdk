@@ -28,13 +28,13 @@ We're funding the initial supply of MCP Tools for the Context Marketplace. **Bec
 - **🔌 One Interface, Everything:** Stop integrating APIs one by one. Use a single SDK to access any tool in the marketplace.
 - **🧠 Zero-Ops:** We're a gateway to the best MCP tools. Just send the JSON and get the result.
 - **⚡️ Agentic Discovery:** Your Agent can search the marketplace at runtime to find tools it didn't know it needed.
-- **💸 Pay-Per-Response:** The $500/year subscription? Now $0.01/response. No monthly fees, just results.
+- **💸 Dual-Surface Economics:** Use Query for pay-per-response intelligence or Execute for session-budgeted method calls.
 
 ## Who Is This SDK For?
 
 | Role | What You Use |
 |------|--------------|
-| **AI Agent Developer** | `@ctxprotocol/sdk` — Query marketplace, execute tools, handle payments |
+| **AI Agent Developer** | `@ctxprotocol/sdk` — Query curated answers or Execute with explicit method pricing + sessions |
 | **Tool Contributor (Data Broker)** | `@modelcontextprotocol/sdk` + `@ctxprotocol/sdk` — Standard MCP server + security middleware |
 
 **For AI Agent Developers:** Use this SDK to search the marketplace, execute tools, and handle micro-payments.
@@ -72,21 +72,31 @@ Before using the API, complete setup at [ctxprotocol.com](https://ctxprotocol.co
 
 The SDK offers two payment models to serve different use cases:
 
-| Mode | Method | Payment Model | Use Case |
-|------|--------|---------------|----------|
-| **Execute** | `client.tools.execute()` | Pay-per-request | Simple data fetches, predictable costs, building custom pipelines |
-| **Query** | `client.query.run()` | Pay-per-response | Complex questions, multi-tool synthesis, curated intelligence |
+| Mode | Method | Payment Model | Settlement Shape | Use Case |
+|------|--------|---------------|------------------|----------|
+| **Execute** | `client.tools.execute()` | Per execute call | Session accrual + deferred batch flush | Deterministic pipelines, raw outputs, explicit spend envelopes |
+| **Query** | `client.query.run()` | Pay-per-response | Deferred post-response | Complex questions, multi-tool synthesis, curated intelligence |
 
-**Execute mode** gives you raw data and full control — one tool, one call, one payment:
+**Execute mode** gives you raw data and full control with explicit method pricing and session budgets:
 ```typescript
-const result = await client.tools.execute({
-  toolId: "tool-uuid",
-  toolName: "whale_transactions",
-  args: { chain: "base", limit: 20 },
+const session = await client.tools.startSession({ maxSpendUsd: "2.00" });
+const executeTools = await client.discovery.search({
+  query: "whale transactions",
+  mode: "execute",
+  surface: "execute",
+  requireExecutePricing: true,
 });
+
+const result = await client.tools.execute({
+  toolId: executeTools[0].id,
+  toolName: executeTools[0].mcpTools[0].name,
+  args: { chain: "base", limit: 20 },
+  sessionId: session.session.sessionId ?? undefined,
+});
+console.log(result.session); // methodPrice, spent, remaining, maxSpend, ...
 ```
 
-**Query mode** gives you curated answers — the server handles tool discovery, multi-tool orchestration (up to 100 MCP calls per tool), self-healing retries, completeness checks, model-aware context budgeting, and AI synthesis for one flat fee:
+**Query mode** gives you curated answers — the server handles answer-safe tool discovery, multi-tool orchestration (up to 100 MCP calls per query turn), self-healing retries, completeness checks, model-aware context budgeting, and AI synthesis for one flat fee:
 ```typescript
 const answer = await client.query.run({
   query: "What are the top whale movements on Base?",
@@ -98,6 +108,8 @@ console.log(answer.toolsUsed);  // Which tools were used
 console.log(answer.cost);       // Cost breakdown
 console.log(answer.dataUrl);    // Optional blob URL with full data
 ```
+
+> Mixed listings are first-class: one listing can expose methods to both surfaces. Methods without `_meta.pricing.executeUsd` remain query-only until priced.
 
 ## Quick Start
 
@@ -112,15 +124,24 @@ const client = new ContextClient({
 const answer = await client.query.run("What are the top whale movements on Base?");
 console.log(answer.response);
 
-// Pay-per-request: Execute a specific tool for raw data
-const tools = await client.discovery.search("gas prices");
+// Execute surface: require explicit execute pricing
+const tools = await client.discovery.search({
+  query: "gas prices",
+  mode: "execute",
+  surface: "execute",
+  requireExecutePricing: true,
+});
+const session = await client.tools.startSession({ maxSpendUsd: "1.00" });
 const result = await client.tools.execute({
   toolId: tools[0].id,
   toolName: tools[0].mcpTools[0].name,
   args: { chainId: 1 },
+  sessionId: session.session.sessionId ?? undefined,
 });
 console.log(result.result);
 ```
+
+See the runnable dual-surface example in [`examples/client/src/index.ts`](./examples/client/src/index.ts).
 
 ---
 
@@ -297,40 +318,79 @@ const client = new ContextClient({
 ### Discovery
 
 #### `client.discovery.search(query, limit?)`
+#### `client.discovery.search(options)`
 
-Search for tools matching a query string.
+Search for tools with optional surface-aware filters.
 
 ```typescript
 const tools = await client.discovery.search("ethereum gas", 10);
+
+const executeTools = await client.discovery.search({
+  query: "ethereum gas",
+  mode: "execute",
+  surface: "execute",
+  requireExecutePricing: true,
+});
 ```
 
-#### `client.discovery.getFeatured(limit?)`
+#### `client.discovery.getFeatured(limit?, options?)`
 
 Get featured/popular tools.
 
 ```typescript
 const featured = await client.discovery.getFeatured(5);
+const featuredExecute = await client.discovery.getFeatured(5, {
+  mode: "execute",
+  requireExecutePricing: true,
+});
 ```
 
-### Tools (Pay-Per-Request)
+### Tools (Execute Surface)
+
+Session lifecycle helpers use the canonical execute-scoped API contract:
+`/api/v1/tools/execute/sessions...`
 
 #### `client.tools.execute(options)`
 
-Execute a single tool method. One call, one payment, raw result.
+Execute a single tool method. Execute calls can run inside session budgets.
 
 ```typescript
+const session = await client.tools.startSession({ maxSpendUsd: "2.50" });
+
 const result = await client.tools.execute({
   toolId: "uuid-of-tool",
   toolName: "get_gas_prices",
   args: { chainId: 1 },
+  sessionId: session.session.sessionId ?? undefined,
 });
+
+console.log(result.method.executePriceUsd);
+console.log(result.session);
+```
+
+#### `client.tools.startSession({ maxSpendUsd })`
+
+```typescript
+const started = await client.tools.startSession({ maxSpendUsd: "5.00" });
+```
+
+#### `client.tools.getSession(sessionId)`
+
+```typescript
+const status = await client.tools.getSession("sess_123");
+```
+
+#### `client.tools.closeSession(sessionId)`
+
+```typescript
+const closed = await client.tools.closeSession("sess_123");
 ```
 
 ### Query (Pay-Per-Response)
 
 #### `client.query.run(options)`
 
-Run an agentic query. The server discovers tools, executes the full pipeline (up to 100 MCP calls per tool), applies model-aware mediator/data budgeting, and returns an AI-synthesized answer.
+Run an agentic query. The server discovers answer-safe tools, executes the full pipeline (up to 100 MCP calls per query turn), applies model-aware mediator/data budgeting, and returns an AI-synthesized answer.
 
 ```typescript
 // Simple string
@@ -414,7 +474,7 @@ interface Tool {
   id: string;
   name: string;
   description: string;
-  price: string;
+  price: string; // listing-level query price metadata
   category?: string;
   isVerified?: boolean;
   mcpTools?: McpTool[];
@@ -427,17 +487,35 @@ interface Tool {
 interface McpTool {
   name: string;
   description: string;
-  inputSchema?: Record<string, unknown>;  // JSON Schema for arguments
-  outputSchema?: Record<string, unknown>; // JSON Schema for response
+  inputSchema?: Record<string, unknown>;   // JSON Schema for arguments
+  outputSchema?: Record<string, unknown>;  // JSON Schema for response
+  _meta?: {
+    surface?: "answer" | "execute" | "both";
+    queryEligible?: boolean;
+    latencyClass?: "instant" | "fast" | "slow" | "streaming";
+    pricing?: { executeUsd?: string; queryUsd?: string };
+  };
+  executeEligible?: boolean;
+  executePriceUsd?: string | null;
 }
 ```
 
-### ExecutionResult (Pay-Per-Request)
+### ExecutionResult (Execute Surface)
 
 ```typescript
 interface ExecutionResult<T = unknown> {
+  mode: "execute";
   result: T;
   tool: { id: string; name: string };
+  method: { name: string; executePriceUsd: string };
+  session: {
+    sessionId: string | null;
+    methodPrice: string;
+    spent: string;
+    remaining: string | null;
+    maxSpend: string | null;
+    status?: "open" | "closed" | "expired";
+  };
   durationMs: number;
 }
 ```
@@ -832,13 +910,13 @@ pnpm add -D @types/express
 
 ## Payment Flow
 
-Context uses **deferred settlement** — tools execute first, and payment is settled in the background after the result is returned:
+Context uses surface-aware deferred settlement:
 
-1. Your USDC spending cap (ERC-20 allowance on ContextRouter) is verified
-2. Tool executes and returns results
-3. Payment is settled server-side via the operator wallet (no client-side transactions)
+1. **Query surface** settles after each response turn
+2. **Execute surface** accrues per-call spend into execute sessions, then flushes batches
+3. Your USDC spending cap (ERC-20 allowance on ContextRouter) is still the global ceiling
 4. **90%** goes to the tool developer, **10%** goes to the protocol
-5. If execution fails, tool fees are **waived** — you only pay for successful results
+5. Session responses expose `methodPrice`, `spent`, `remaining`, and `maxSpend` on each execute call
 
 ## Documentation
 
