@@ -205,7 +205,8 @@ See [Agentic Testing Workflow](#agentic-testing-workflow) below for details.
 | **Domain** | `[e.g., Trading, Social, Analytics, Blockchain, etc.]` |
 | **Target Users** | `[Who will use these tools?]` |
 | **Unique Value Prop** | `[What can users do that they couldn't before?]` |
-| **Server Price** | `$[X.XX]` (100 queries included) |
+| **Listing Response Price** | `$[X.XX]` per response (Query surface) |
+| **Execute Price Per Method** | `$[X.XX]` per call (Execute surface, optional) |
 
 ### 1.2 Required Dependencies
 
@@ -467,6 +468,23 @@ Before approving, verify each question passes these tests:
 - [ ] **Actionable**: The answer helps users make decisions, not just see data
 - [ ] **Algorithmic**: Requires domain expertise/logic, not just data aggregation
 
+### 🎯 Surface & Pricing Checkpoint (MANDATORY)
+
+Before proceeding to build, decide which surface(s) your MCP server targets:
+
+- [ ] **Target surface decided**: Query only / Execute only / Both
+- [ ] **Listing response price set**: $X.XX for Query surface (pay-per-response)
+- [ ] **Execute pricing decided**: If targeting Execute surface, each method needs `_meta.pricing.executeUsd` (~1/100 of response price)
+- [ ] **Rate limit hints planned**: If wrapping rate-limited APIs, plan `_meta.rateLimit` values per method
+
+| Decision | Value |
+|----------|-------|
+| **Target surface** | [ ] Query only  [ ] Execute only  [ ] Both |
+| **Listing response price** | $_____ |
+| **Default execute price** | $_____ (or N/A if Query only) |
+
+**⚠️ CRITICAL**: Without `_meta.pricing.executeUsd`, your methods are **invisible** on the Execute surface. SDK consumers cannot discover or call them. If you want Execute revenue, you must set execute pricing.
+
 ### 🔍 Discovery Layer Checklist (MANDATORY)
 
 Before proceeding, verify your MCP has complete enumeration coverage:
@@ -517,20 +535,20 @@ FINAL APPROVAL: [date] - Questions locked, proceeding to build.
 │                           YOUR MCP SERVER                                   │
 │                         [your-mcp-name]                                     │
 │                                                                             │
-│                    💰 SERVER PRICE: $X.XX (100 queries included)            │
+│         💰 RESPONSE PRICE: $X.XX (Query) | EXECUTE: $Y.YY/call (SDK)      │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  ┌───────────────────────────────────────────────────────────────────────┐  │
 │  │                    TIER 1: INTELLIGENCE LAYER                         │  │
-│  │                  (Primary Product — High Value Per Call)              │  │
+│  │            (Query Surface — Curated Intelligence Per Response)        │  │
 │  │                                                                       │  │
 │  │  These tools SYNTHESIZE multiple data sources into actionable        │  │
 │  │  insights. They encode domain expertise and answer complex           │  │
 │  │  questions that raw API calls cannot.                                │  │
 │  │                                                                       │  │
-│  │  Why this matters with 100-query budget:                             │  │
+│  │  Best for Query surface (pay-per-response):                          │  │
 │  │  → 1 intelligence call = complete answer                             │  │
-│  │  → User gets MORE value from their 100 queries                       │  │
+│  │  → Maximizes value per response turn                                  │  │
 │  │                                                                       │  │
 │  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐       │  │
 │  │  │   [tool_1]      │  │   [tool_2]      │  │   [tool_3]      │       │  │
@@ -544,13 +562,13 @@ FINAL APPROVAL: [date] - Questions locked, proceeding to build.
 │                                     ▼                                       │
 │  ┌───────────────────────────────────────────────────────────────────────┐  │
 │  │                    TIER 2: RAW DATA LAYER                             │  │
-│  │                   (Fallback — For Agent Composition)                  │  │
+│  │          (Execute Surface — Normalized Data For SDK Consumers)        │  │
 │  │                                                                       │  │
-│  │  These tools provide direct API access for edge cases where          │  │
-│  │  intelligence tools don't cover the use case. The AI agent           │  │
-│  │  can compose these for custom analysis.                              │  │
+│  │  These tools provide normalized, structured data for agents          │  │
+│  │  and SDK consumers to iterate over programmatically. Ideal           │  │
+│  │  for the Execute surface (pay-per-call with session budgets).        │  │
 │  │                                                                       │  │
-│  │  Trade-off: Uses more of the 100-query budget per answer             │  │
+│  │  Also used as Query fallback for custom agent composition            │  │
 │  │                                                                       │  │
 │  │  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐            │  │
 │  │  │ [raw_1]   │ │ [raw_2]   │ │ [raw_3]   │ │ [raw_4]   │            │  │
@@ -681,7 +699,7 @@ If your tool needs user portfolio data (e.g., positions, balances), declare it u
 | Queries saved vs raw approach | [X] queries |
 | Unique value | [Low/Medium/High] |
 
-> Note: Individual tools don't have prices. The MCP server has ONE price for 100 queries total.
+> Note: The listing has a flat response price for Query surface. Execute pricing is per method call (~1/100 of response price). See [Pricing Guidelines](#section-6-pricing-guidelines).
 ```
 
 ---
@@ -1400,16 +1418,21 @@ Provide both high-level summary and detailed breakdown:
 - [ ] Add proper error handling
 - [ ] Test with MCP inspector
 
-### Phase 6: Context Protocol Compliance & Security
+### Phase 6: Context Protocol Compliance, Metadata & Security
 
 - [ ] Ensure all tools have `outputSchema`
 - [ ] Ensure all responses include `structuredContent`
+- [ ] **Surface metadata**: Set `_meta.surface`, `_meta.queryEligible`, and `_meta.latencyClass` per method
+- [ ] **Execute pricing**: If targeting Execute surface, set `_meta.pricing.executeUsd` per method (or use default execute price in contribute form)
+- [ ] **Rate limit hints**: If wrapping rate-limited APIs, add `_meta.rateLimit` per method (see [Tool Metadata](https://docs.ctxprotocol.com/guides/tool-metadata#rate-limit-hints))
+- [ ] **Context Injection**: For portfolio tools, add `_meta.contextRequirements`
 - [ ] **Security**: Add `createContextMiddleware()` from `@ctxprotocol/sdk`
 - [ ] **Security**: Apply middleware to MCP endpoint (`app.post("/mcp", verifyContextAuth, ...)`)
-- [ ] **Context Injection**: For portfolio tools, add `_meta.contextRequirements` 
 - [ ] Test integration with Context Protocol
 
 > **⚠️ Security Note**: All paid tools MUST use `createContextMiddleware()`. This verifies JWT signatures from the Context platform, ensuring you only execute paid requests. Without it, anyone could curl your endpoint directly.
+
+> **⚠️ Execute Visibility Note**: Methods without `_meta.pricing.executeUsd` are query-only and invisible on the Execute surface. Set execute pricing to unlock SDK-level revenue.
 
 ### Phase 7: Deployment & Listing
 
@@ -1423,62 +1446,126 @@ Provide both high-level summary and detailed breakdown:
 
 ## Section 6: Pricing Guidelines
 
-### Context Protocol Pricing Model
+### Context Protocol Dual-Surface Pricing Model
 
-> **Important**: Context Protocol uses a **per-MCP-server** pricing model, NOT per-tool pricing.
+> **Important**: Context runs **one marketplace with two surfaces**. Your listing has a **response price** (Query surface) and optional **per-method execute pricing** (Execute surface). Both are set at listing time.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     PRICING MODEL                               │
+│                   DUAL-SURFACE PRICING MODEL                    │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
-│   User pays: $X (once per turn)                                │
-│              ↓                                                  │
-│   User gets: 100 queries to ANY tool on your MCP server        │
+│   QUERY SURFACE (Context is the librarian)                     │
+│   ─────────────────────────────────────────────────            │
+│   Used via:  Context app OR client.query.run() in SDK          │
+│   Pays:      $X once per response turn                         │
+│   Gets:      AI-synthesized curated answer                     │
+│   Platform:  Makes up to 100 MCP calls per turn internally     │
+│   Example:   $0.10/response for premium intelligence           │
 │                                                                 │
-│   Example:                                                      │
-│   - MCP Server Price: $0.05                                    │
-│   - Tools available: 10 tools (6 intelligence + 4 raw)         │
-│   - User can call: any combination up to 100 total calls       │
+│   EXECUTE SURFACE (Your app/agent is the librarian)            │
+│   ─────────────────────────────────────────────────            │
+│   Used via:  client.tools.execute() in SDK                     │
+│   Pays:      $Y per method call (session-budgeted)             │
+│   Gets:      Raw structured data, spend envelope visibility    │
+│   Session:   Deferred batch settlement                         │
+│   Example:   $0.001/call for normalized market data            │
+│                                                                 │
+│   ⚠️  EXECUTE GATING RULE:                                     │
+│   Methods WITHOUT _meta.pricing.executeUsd are INVISIBLE       │
+│   on the Execute surface. Query-only until explicitly priced.  │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### Which Surface Are You Building For?
+
+| Building for... | Your methods are... | Set `_meta.pricing.executeUsd`? |
+|-----------------|---------------------|---------------------------------|
+| **Query only** (curated intelligence for the Context app) | Answer-safe, synthesized | Optional (not required) |
+| **Execute only** (raw/normalized data for SDK consumers) | Structured, agent-friendly | **Required** (or invisible to SDK) |
+| **Both surfaces** (mixed listing) | Some curated, some raw | **Required** on execute-eligible methods |
+
+### Pricing Ratio Guidance
+
+Execute pricing should be **~1/100 of your listing response price**. A Query response bundles up to 100 method calls into one flat fee. When developers pay per-call, the per-call price must be proportionally lower.
+
+| Listing Response Price (Query) | Execute Price Per Method | Ratio |
+|-------------------------------|------------------------|-------|
+| $0.01 | $0.0001 | 1/100 |
+| $0.05 | $0.0005 | 1/100 |
+| $0.10 | $0.001 | 1/100 |
+| $0.25 | $0.0025 | 1/100 |
+
+> The ~1/100 ratio is guidance, not a protocol-enforced rule. Adjust based on your API costs and value proposition.
+
 ### What This Means for Tool Design
 
-Since users get 100 queries per payment, the value proposition shifts:
+| Surface | Approach | User Experience | Value Delivered |
+|---------|----------|-----------------|-----------------|
+| **Query** | Giga-brained tools | 1-3 calls = complete insight | High value per response |
+| **Execute** | Normalized data tools | Agent iterates over structured data | Raw data, agent composes |
+| **Both** | Mixed methods | Best of both worlds | Intelligence + raw access |
 
-| Approach | User Experience | Value Delivered |
-|----------|-----------------|-----------------|
-| **Giga-brained tools** | 1-3 calls = complete insight | High value per call |
-| **Raw endpoint tools** | 10-20 calls to compose answer | Agent does the work |
+**Key Insight for Query**: Giga-brained tools deliver MORE value per response, making the user's flat fee go further.
 
-**Key Insight**: Giga-brained tools deliver MORE value per call, making the 100-query budget go further.
+**Key Insight for Execute**: Normalized, well-structured data (e.g., cross-exchange price feeds with consistent schemas) is extremely valuable for SDK consumers even if it's "raw" — the value is in the normalization and reliability.
+
+### Setting Execute Pricing
+
+**Simple path (recommended):** Set one default execute price in the marketplace contribute form. It fans out to every method's `_meta.pricing.executeUsd` automatically.
+
+**Advanced path:** Set `_meta.pricing.executeUsd` per method in your MCP server code. Method-level values take precedence over the default.
+
+```typescript
+const TOOLS = [{
+  name: "get_market_data",
+  description: "Normalized cross-exchange market data",
+  _meta: {
+    surface: "both",
+    queryEligible: true,
+    latencyClass: "instant",
+    pricing: {
+      executeUsd: "0.001",  // Execute surface price per call
+    },
+  },
+  inputSchema: { /* ... */ },
+  outputSchema: { /* ... */ },
+}];
+```
 
 ### Pricing Factors
 
 | Factor | Consider |
 |--------|----------|
-| **API costs** | Your cost to serve 100 queries to external APIs |
+| **API costs** | Your upstream cost per call (for execute) or per ~100 calls (for query response) |
 | **Compute costs** | Processing/intelligence computation |
 | **Unique value** | Can users get this elsewhere? |
-| **Target market** | What will your users pay? |
+| **Surface mix** | Are you targeting Query users, Execute developers, or both? |
 
 ### Pricing Matrix
 
-| MCP Server Type | Description | Suggested Price |
-|-----------------|-------------|-----------------|
-| Basic utility | Simple wrappers, single data source | $0.01-0.02 |
-| Multi-source aggregator | Combines 2-3 APIs | $0.02-0.05 |
-| Intelligence platform | Giga-brained analysis tools | $0.05-0.10 |
-| Premium insights | Unique, high-value alpha | $0.10-0.25 |
+| MCP Server Type | Listing Response Price (Query) | Execute Price Per Method |
+|-----------------|-------------------------------|------------------------|
+| Basic utility | $0.01-0.02 | $0.0001-0.0002 |
+| Multi-source aggregator | $0.02-0.05 | $0.0002-0.0005 |
+| Intelligence platform | $0.05-0.10 | $0.0005-0.001 |
+| Premium insights | $0.10-0.25 | $0.001-0.0025 |
 
 ### Pricing Strategy
 
-1. **Price the SERVER, not individual tools** - All tools share one price
-2. **Consider the 100-query budget** - What can users accomplish with 100 calls?
-3. **Giga-brained = better value** - Users need fewer calls to get answers
-4. **Calculate your costs** - API calls × 100 queries = your floor price
+1. **Set a listing response price** for the Query surface (flat fee per curated response)
+2. **Optionally enable Execute pricing** to make your methods available to SDK consumers
+3. **Use the ~1/100 ratio** as a starting point for execute vs response pricing
+4. **Giga-brained intelligence tools** maximize Query value; **normalized raw data tools** maximize Execute value
+5. **Mixed listings** let you serve both audiences from one MCP server
+
+### Reference Implementation
+
+See the [Coinglass contributor server](https://github.com/ctxprotocol/sdk/tree/main/examples/server/coinglass-contributor) for a production example with:
+- Default execute price (`$0.001`) applied to all methods via `_meta.pricing.executeUsd`
+- Explicit opt-out for query-only methods (`UNPRICED_EXECUTE_METHODS`)
+- Per-method `_meta.rateLimit` hints derived from upstream API tier constraints
 
 ---
 
@@ -1848,6 +1935,15 @@ if (isProtectedMcpMethod(req.body.method)) {
 - [ ] All tools have `outputSchema` defined
 - [ ] All tool responses include `structuredContent`
 
+### 🎯 Surface & Pricing Metadata (CRITICAL)
+- [ ] Target surface decided (Query / Execute / Both)
+- [ ] Listing response price set for Query surface
+- [ ] If targeting Execute: `_meta.pricing.executeUsd` set per method (or default execute price in contribute form)
+- [ ] `_meta.surface` set per method (`"answer"`, `"execute"`, or `"both"`)
+- [ ] `_meta.queryEligible` set per method
+- [ ] `_meta.latencyClass` set per method (`"instant"`, `"fast"`, `"slow"`, or `"streaming"`)
+- [ ] If wrapping rate-limited APIs: `_meta.rateLimit` hints published per method
+
 ### 🔍 Discovery Layer Completeness (CRITICAL)
 - [ ] ALL listing endpoints from API are exposed (`get_all_categories`, `get_all_tags`, etc.)
 - [ ] ALL listing tools have corresponding browse tools (`browse_category`, `browse_by_tag`, etc.)
@@ -1862,7 +1958,8 @@ if (isProtectedMcpMethod(req.body.method)) {
 - [ ] Portfolio tools declare `_meta.contextRequirements` if needed
 
 ### Deployment
-- [ ] Pricing is set for the MCP server
+- [ ] Listing response price set for Query surface
+- [ ] Execute pricing configured (if targeting Execute surface)
 - [ ] Tool descriptions are clear and discoverable
 - [ ] Error handling is implemented
 - [ ] Rate limiting is handled
