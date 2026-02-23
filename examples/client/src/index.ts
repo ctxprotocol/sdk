@@ -13,7 +13,7 @@ async function main() {
     // ═══════════════════════════════════════════════════════════════════════
     // 1. DISCOVER TOOLS
     // ═══════════════════════════════════════════════════════════════════════
-    console.log("🔍 Searching Query-surface tools (answer-safe)...\n");
+    console.log("🔍 Searching Query-mode tools...\n");
 
     const queryTools = await client.discovery.search({
       query: "gas prices",
@@ -43,7 +43,7 @@ async function main() {
         tool.mcpTools.forEach((mcpTool) => {
           console.log(`     - ${mcpTool.name}: ${mcpTool.description}`);
           console.log(
-            `       Surface: ${mcpTool._meta?.surface ?? "both"} | Query eligible: ${String(
+            `       Mode: ${mcpTool._meta?.surface ?? "both"} | Query eligible: ${String(
               mcpTool._meta?.queryEligible ?? true
             )}`
           );
@@ -101,7 +101,7 @@ Generate the correct arguments as JSON to get gas prices for Ethereum mainnet.`;
     // ═══════════════════════════════════════════════════════════════════════
     // 3. DISCOVER EXECUTE-ELIGIBLE METHODS + START SESSION
     // ═══════════════════════════════════════════════════════════════════════
-    console.log("🔎 Searching Execute-surface tools with explicit pricing...\n");
+    console.log("🔎 Searching Execute-mode tools with explicit pricing...\n");
 
     const executeTools = await client.discovery.search({
       query: "gas prices",
@@ -140,7 +140,7 @@ Generate the correct arguments as JSON to get gas prices for Ethereum mainnet.`;
     console.log("Tool:", result.tool.name);
     console.log("Method price (USD):", result.method.executePriceUsd);
     console.log("Result:", JSON.stringify(result.result, null, 2));
-    console.log("Session envelope:", result.session);
+    console.log("Session spending limit:", result.session);
     console.log(`\n⏱️  Duration: ${result.durationMs}ms`);
 
     // ═══════════════════════════════════════════════════════════════════════
