@@ -685,7 +685,13 @@ const TOOLS = [
     inputSchema: {
       type: "object" as const,
       properties: {
-        range: { type: "string", description: "Range window for liquidation snapshots (e.g., 1h, 4h, 24h).", default: "24h" },
+        range: {
+          type: "string",
+          description: "Range window for liquidation snapshots (e.g., 1h, 4h, 24h).",
+          enum: ["1h", "4h", "24h"],
+          default: "24h",
+          examples: ["1h", "24h"],
+        },
       },
       required: [],
     },
