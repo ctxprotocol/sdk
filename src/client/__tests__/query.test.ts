@@ -148,7 +148,7 @@ describe("Query Resource", () => {
       expect(mockFn).toHaveBeenCalledTimes(1);
       const [url, opts] = mockFn.mock.calls[0];
 
-      expect(url).toBe("https://ctxprotocol.com/api/v1/query");
+      expect(url).toBe("https://www.ctxprotocol.com/api/v1/query");
       expect(opts.method).toBe("POST");
       expect(opts.headers.Authorization).toBe(
         "Bearer ctx_test_key_1234567890abcdef12345678",
@@ -193,6 +193,7 @@ describe("Query Resource", () => {
         modelId: "glm-model",
         includeData: true,
         includeDataUrl: true,
+        queryDepth: "auto",
       });
 
       const body = JSON.parse(mockFn.mock.calls[0][1].body);
@@ -202,6 +203,7 @@ describe("Query Resource", () => {
         modelId: "glm-model",
         includeData: true,
         includeDataUrl: true,
+        queryDepth: "auto",
         stream: false,
       });
       expect(result.data).toEqual({ summary: "tool output" });
@@ -433,6 +435,7 @@ describe("Query Resource", () => {
         modelId: "claude-sonnet-model",
         includeData: true,
         includeDataUrl: true,
+        queryDepth: "deep",
       })) {
         events.push(event);
       }
@@ -443,6 +446,7 @@ describe("Query Resource", () => {
       expect(body.modelId).toBe("claude-sonnet-model");
       expect(body.includeData).toBe(true);
       expect(body.includeDataUrl).toBe(true);
+      expect(body.queryDepth).toBe("deep");
     });
 
     it("forwards Idempotency-Key header for stream options", async () => {

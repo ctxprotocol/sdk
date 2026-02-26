@@ -4,6 +4,10 @@ import { Discovery } from "./resources/discovery.js";
 import { Tools } from "./resources/tools.js";
 import { Query } from "./resources/query.js";
 
+const DEFAULT_BASE_URL = "https://www.ctxprotocol.com";
+const DEFAULT_REQUEST_TIMEOUT_MS = 300_000;
+const DEFAULT_STREAM_TIMEOUT_MS = 600_000;
+
 /**
  * The official TypeScript client for the Context Protocol.
  *
@@ -32,6 +36,8 @@ import { Query } from "./resources/query.js";
 export class ContextClient {
   private readonly apiKey: string;
   private readonly baseUrl: string;
+  private readonly requestTimeoutMs: number;
+  private readonly streamTimeoutMs: number;
   private _closed = false;
 
   /**
@@ -58,15 +64,30 @@ export class ContextClient {
    *
    * @param options - Client configuration options
    * @param options.apiKey - Your Context Protocol API key (format: sk_live_...)
-   * @param options.baseUrl - Optional base URL override (defaults to https://ctxprotocol.com)
+   * @param options.baseUrl - Optional base URL override (defaults to https://www.ctxprotocol.com)
+   * @param options.requestTimeoutMs - Optional timeout for non-streaming requests (default 300000ms)
+   * @param options.streamTimeoutMs - Optional timeout for establishing stream requests (default 600000ms)
    */
   constructor(options: ContextClientOptions) {
     if (!options.apiKey) {
       throw new ContextError("API key is required");
     }
 
+    const requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    const streamTimeoutMs = options.streamTimeoutMs ?? DEFAULT_STREAM_TIMEOUT_MS;
+
+    if (!Number.isFinite(requestTimeoutMs) || requestTimeoutMs <= 0) {
+      throw new ContextError("requestTimeoutMs must be a positive number");
+    }
+
+    if (!Number.isFinite(streamTimeoutMs) || streamTimeoutMs <= 0) {
+      throw new ContextError("streamTimeoutMs must be a positive number");
+    }
+
     this.apiKey = options.apiKey;
-    this.baseUrl = (options.baseUrl ?? "https://ctxprotocol.com").replace(/\/$/, "");
+    this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
+    this.requestTimeoutMs = requestTimeoutMs;
+    this.streamTimeoutMs = streamTimeoutMs;
 
     // Initialize resources
     this.discovery = new Discovery(this);
@@ -84,7 +105,7 @@ export class ContextClient {
 
   /**
    * Internal method for making authenticated HTTP requests
-   * Includes timeout (30s) and retry with exponential backoff for transient errors
+   * Includes timeout and retry with exponential backoff for transient errors
    *
    * @internal
    */
@@ -95,7 +116,7 @@ export class ContextClient {
 
     const url = `${this.baseUrl}${endpoint}`;
     const maxRetries = 3;
-    const timeoutMs = 30_000;
+    const timeoutMs = this.requestTimeoutMs;
 
     let lastError: Error | undefined;
 
@@ -187,6 +208,7 @@ export class ContextClient {
   /**
    * Internal method for making authenticated HTTP requests that returns
    * the raw Response object. Used for streaming endpoints (SSE).
+   * Includes a configurable timeout for stream setup.
    *
    * @internal
    */
@@ -196,15 +218,34 @@ export class ContextClient {
     }
 
     const url = `${this.baseUrl}${endpoint}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.streamTimeoutMs);
 
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKey}`,
-        ...options.headers,
-      },
-    });
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
+          ...options.headers,
+        },
+      });
+    } catch (error) {
+      clearTimeout(timeout);
+      const lastError = error instanceof Error ? error : new Error(String(error));
+      if (lastError.name === "AbortError") {
+        throw new ContextError(
+          `Streaming request timed out after ${this.streamTimeoutMs / 1000}s`,
+          undefined,
+          408
+        );
+      }
+      throw new ContextError(lastError.message);
+    }
+
+    clearTimeout(timeout);
 
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;

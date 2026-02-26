@@ -10,9 +10,21 @@ export interface ContextClientOptions {
 
   /**
    * Base URL for the Context Protocol API
-   * @default "https://ctxprotocol.com"
+   * @default "https://www.ctxprotocol.com"
    */
   baseUrl?: string;
+
+  /**
+   * Request timeout for non-streaming API calls in milliseconds.
+   * @default 300000
+   */
+  requestTimeoutMs?: number;
+
+  /**
+   * Request timeout for establishing streaming API calls in milliseconds.
+   * @default 600000
+   */
+  streamTimeoutMs?: number;
 }
 
 /**
@@ -384,6 +396,9 @@ export interface ExecutionResult<T = unknown> {
 // Query types (pay-per-response / agentic mode)
 // ---------------------------------------------------------------------------
 
+/** Supported orchestration depth modes for query execution. */
+export type QueryDepth = "fast" | "auto" | "deep";
+
 /**
  * Options for the agentic query endpoint (pay-per-response).
  *
@@ -420,6 +435,14 @@ export interface QueryOptions {
    * Useful for large payload workflows where inline JSON is not ideal.
    */
   includeDataUrl?: boolean;
+
+  /**
+   * Query orchestration depth mode:
+   * - `fast`: lower-latency path
+   * - `auto`: server decides between fast/deep
+   * - `deep`: full completeness-oriented path
+   */
+  queryDepth?: QueryDepth;
 
   /**
    * Optional idempotency key (UUID recommended).

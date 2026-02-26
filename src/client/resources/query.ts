@@ -70,6 +70,7 @@ export class Query {
           modelId: opts.modelId,
           includeData: opts.includeData,
           includeDataUrl: opts.includeDataUrl,
+          queryDepth: opts.queryDepth,
           stream: false,
         }),
       }
@@ -146,6 +147,7 @@ export class Query {
         modelId: opts.modelId,
         includeData: opts.includeData,
         includeDataUrl: opts.includeDataUrl,
+        queryDepth: opts.queryDepth,
         stream: true,
       }),
     });

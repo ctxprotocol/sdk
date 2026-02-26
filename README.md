@@ -101,6 +101,7 @@ console.log(result.session); // methodPrice, spent, remaining, maxSpend, ...
 const answer = await client.query.run({
   query: "What are the top whale movements on Base?",
   modelId: "glm-model",      // optional: choose a supported model
+  queryDepth: "auto",        // optional: fast | auto | deep
   includeDataUrl: true,      // optional: persist full execution data to blob
 });
 console.log(answer.response);   // AI-synthesized answer
@@ -298,10 +299,12 @@ If you can answer without a tool, just respond normally.`;
 
 ### Client Options
 
-| Option    | Type     | Required | Default                  | Description                    |
-| --------- | -------- | -------- | ------------------------ | ------------------------------ |
-| `apiKey`  | `string` | Yes      | —                        | Your Context Protocol API key  |
-| `baseUrl` | `string` | No       | `https://ctxprotocol.com`| API base URL (for development) |
+| Option             | Type     | Required | Default                        | Description                                   |
+| ------------------ | -------- | -------- | ------------------------------ | --------------------------------------------- |
+| `apiKey`           | `string` | Yes      | —                              | Your Context Protocol API key                 |
+| `baseUrl`          | `string` | No       | `https://www.ctxprotocol.com`  | API base URL (for development)                |
+| `requestTimeoutMs` | `number` | No       | `300000`                       | Timeout for non-streaming API calls           |
+| `streamTimeoutMs`  | `number` | No       | `600000`                       | Timeout for establishing streaming API calls  |
 
 ```typescript
 // Production
@@ -313,6 +316,8 @@ const client = new ContextClient({
 const client = new ContextClient({
   apiKey: "sk_test_...",
   baseUrl: "http://localhost:3000",
+  requestTimeoutMs: 420_000,
+  streamTimeoutMs: 840_000,
 });
 ```
 
@@ -395,6 +400,11 @@ const closed = await client.tools.closeSession("sess_123");
 
 Run an agentic query. The server discovers answer-safe tools, executes the full pipeline (up to 100 MCP calls per response turn), applies model-aware mediator/data budgeting, and returns an AI-synthesized answer.
 
+`queryDepth` controls orchestration depth:
+- `fast`: lower-latency path for simple lookups.
+- `auto`: server routes to either `fast` or `deep` from query intent + selected tool complexity.
+- `deep`: completeness-oriented path (default when omitted).
+
 ```typescript
 // Simple string
 const answer = await client.query.run("What are the top whale movements on Base?");
@@ -404,6 +414,7 @@ const answer = await client.query.run({
   query: "Analyze whale activity on Base",
   tools: ["tool-uuid-1", "tool-uuid-2"],  // optional — auto-discover if omitted
   modelId: "kimi-model-thinking",          // optional
+  queryDepth: "auto",                      // optional: fast | auto | deep
   includeData: true,                       // optional: include execution data inline
   includeDataUrl: true,                    // optional: include blob URL for full data
 });
@@ -416,12 +427,17 @@ console.log(answer.data);         // Optional execution data (when includeData=t
 console.log(answer.dataUrl);      // Optional blob URL (when includeDataUrl=true)
 ```
 
+When retrieval-first synthesis rollout is enabled server-side, full-data or truncation-sensitive query requests can switch to retrieval-first context assembly using private stage artifacts and canonical execution data slices. `includeData` and `includeDataUrl` continue to reference the same canonical dataset used for synthesis.
+
 #### `client.query.stream(options)`
 
 Same as `run()` but streams events in real-time via SSE.
 
 ```typescript
-for await (const event of client.query.stream("What are the top whale movements?")) {
+for await (const event of client.query.stream({
+  query: "What are the top whale movements?",
+  queryDepth: "fast",
+})) {
   switch (event.type) {
     case "tool-status":
       console.log(`Tool ${event.tool.name}: ${event.status}`);
