@@ -1,0 +1,502 @@
+{
+  "generatedAt": "2026-03-01T06:28:42.222Z",
+  "suites": [
+    {
+      "server": "polymarket",
+      "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+      "promptCount": 11,
+      "successCount": 5,
+      "passCount": 5,
+      "failCount": 6,
+      "totals": {
+        "costUsd": 0.168324,
+        "durationMs": 73374,
+        "averageDurationMs": 14675,
+        "retryCount": 3,
+        "selfHealCount": 3,
+        "fallbackCount": 0,
+        "failureCount": 2,
+        "loopCount": 3
+      },
+      "reports": [
+        {
+          "index": 1,
+          "prompt": "What are the top 5 prediction markets by volume right now?",
+          "ok": true,
+          "pass": true,
+          "warnings": [],
+          "failures": [],
+          "durationMs": 10987,
+          "costUsd": "0.033884",
+          "responsePreview": "Based on the most recent data from March 1, 2026, here are the top 5 prediction markets ranked by 24-hour trading volume:\n\n| Rank | Title | 24h Volume | Total Volume | Current Price |\n| :--- | :--- | :--- | :--- | :--- |\n| 1 | Khamenei out as Supreme Leader of Iran by February 28",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 1
+            }
+          ],
+          "totalSkillCalls": 1,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 1,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 5
+          },
+          "dataAgeMs": 4072
+        },
+        {
+          "index": 2,
+          "prompt": "Search for markets related to the 2028 presidential election",
+          "ok": true,
+          "pass": true,
+          "warnings": [],
+          "failures": [],
+          "durationMs": 7132,
+          "costUsd": "0.031491",
+          "responsePreview": "I found 6 markets related to the 2028 US Presidential Election. The markets cover the overall winner, party outcomes, and nomination specifics.\n\n| Market Title | Volume | Liquidity | End Date |\n| :--- | :--- | :--- | :--- |\n| Democratic Presidential Nominee 2028 | 734,019,493.39 ",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 1
+            }
+          ],
+          "totalSkillCalls": 1,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 1,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 5
+          },
+          "dataAgeMs": null
+        },
+        {
+          "index": 3,
+          "prompt": "How efficient is the pricing on the Trump vs Biden market? Is there arbitrage?",
+          "ok": true,
+          "pass": true,
+          "warnings": [],
+          "failures": [],
+          "durationMs": 11426,
+          "costUsd": "0.033546",
+          "responsePreview": "Based on data from a past query regarding the market **\"What nicknames will Trump say by February 28?\"**, the pricing is currently inefficient and there is no arbitrage opportunity.\n\n### Market Efficiency & Pricing\nThe market is flagged as **inefficient** due to an extremely high",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 3
+            }
+          ],
+          "totalSkillCalls": 3,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 3,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 7
+          },
+          "dataAgeMs": 6131
+        },
+        {
+          "index": 4,
+          "prompt": "Analyze whale flow on the Fed rate decision event who are the top holders and what is their cost basis?",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 5,
+          "prompt": "Show me markets between 30-70% probability with high volume that might be mispriced",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 6,
+          "prompt": "Analyze my Polymarket positions which ones have poor exit liquidity?",
+          "ok": true,
+          "pass": true,
+          "warnings": [
+            "retry:3",
+            "self_heal:3",
+            "loop:3"
+          ],
+          "failures": [],
+          "durationMs": 12649,
+          "costUsd": "0.035993",
+          "responsePreview": "Based on the data fetched on March 1, 2026, there are currently no active Polymarket positions to analyze for the wallets provided (`0x6D04...95c8` and `0x6426...c803`).\n\n### Portfolio Summary\n| Metric | Value |\n| :--- | :--- |\n| **Total Positions** | 0 |\n| **Total Value** | 0 |\n",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 3
+            }
+          ],
+          "totalSkillCalls": 3,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 3,
+            "retryCount": 3,
+            "selfHealCount": 3,
+            "fallbackCount": 0,
+            "failureCount": 2,
+            "recoveryCount": 1,
+            "completionChecks": 1,
+            "loopCount": 3,
+            "timelineLength": 9
+          },
+          "dataAgeMs": 2812
+        },
+        {
+          "index": 7,
+          "prompt": "Compare the Polymarket odds vs Kalshi odds on the next Fed meeting outcome",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 8,
+          "prompt": "Find correlated markets where a move in one should predict a move in another",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 9,
+          "prompt": "What are the orderbook depth and spread for all outcomes on event slug 'democratic-presidential-nominee-2028'?",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 10,
+          "prompt": "Browse all markets in the Politics category sorted by recent activity",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 11,
+          "prompt": "Build a high-conviction workflow: find mispriced markets, check whale positioning, then verify liquidity",
+          "ok": true,
+          "pass": true,
+          "warnings": [],
+          "failures": [],
+          "durationMs": 31180,
+          "costUsd": "0.033410",
+          "responsePreview": "Based on the sequential high-conviction analysis performed on March 1, 2026, here are the top-ranked market setups identified by mispricing, volume, and liquidity.\n\n### High-Conviction Market Setups\n\n| Rank | Market | Price | Signal | Score | Key Risks |\n| :--- | :--- | :--- | :-",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 1
+            }
+          ],
+          "totalSkillCalls": 1,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 1,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 5
+          },
+          "dataAgeMs": 6050
+        }
+      ]
+    },
+    {
+      "server": "kalshi",
+      "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
+      "promptCount": 10,
+      "successCount": 2,
+      "passCount": 2,
+      "failCount": 8,
+      "totals": {
+        "costUsd": 0.068413,
+        "durationMs": 90317,
+        "averageDurationMs": 45159,
+        "retryCount": 3,
+        "selfHealCount": 3,
+        "fallbackCount": 0,
+        "failureCount": 3,
+        "loopCount": 3
+      },
+      "reports": [
+        {
+          "index": 1,
+          "prompt": "What are the top 10 most actively traded markets on Kalshi right now?",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 2,
+          "prompt": "Show me all Kalshi categories and how many series each one has",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 3,
+          "prompt": "Find markets where YES is priced between 5 and 15 cents as lottery ticket plays",
+          "ok": true,
+          "pass": true,
+          "warnings": [
+            "retry:3",
+            "self_heal:3",
+            "loop:3"
+          ],
+          "failures": [],
+          "durationMs": 55486,
+          "costUsd": "0.053090",
+          "responsePreview": "Based on the data from a past query (March 1, 2026), there are currently no markets identified where the **YES** price is between 5 and 15 cents.\n\nAll 20 active markets returned in the most recent snapshot show a **yesPrice** of 0 and a **noPrice** of 100. This suggests that thes",
+          "toolsUsed": [
+            {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "Kalshi",
+              "skillCalls": 5
+            }
+          ],
+          "totalSkillCalls": 5,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 5,
+            "retryCount": 3,
+            "selfHealCount": 3,
+            "fallbackCount": 0,
+            "failureCount": 3,
+            "recoveryCount": 0,
+            "completionChecks": 2,
+            "loopCount": 3,
+            "timelineLength": 11
+          },
+          "dataAgeMs": 40115,
+          "dataActivitySource": "derived_from_recent_trades"
+        },
+        {
+          "index": 4,
+          "prompt": "Analyze the orderbook depth and slippage for KXBITCOIN and tell me if I can get $1000 in without moving the price",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 5,
+          "prompt": "Search for 'Fed rate cut' markets, check their efficiency, then compare the best one against Polymarket",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 6,
+          "prompt": "Are there any arbitrage opportunities in Politics markets where YES + NO is under 99 cents?",
+          "ok": true,
+          "pass": true,
+          "warnings": [],
+          "failures": [],
+          "durationMs": 34831,
+          "costUsd": "0.015323",
+          "responsePreview": "I’m sorry, I cannot provide a list of arbitrage opportunities at this time. The data retrieval for political market prices failed during the query, and I do not have current pricing for YES and NO contracts to identify specific opportunities under 99 cents.",
+          "toolsUsed": [
+            {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "Kalshi",
+              "skillCalls": 1
+            }
+          ],
+          "totalSkillCalls": 1,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 0,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 3
+          },
+          "dataAgeMs": null
+        },
+        {
+          "index": 7,
+          "prompt": "What is the sentiment and price trend for the top Trump tariffs market over the last 24 hours?",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 8,
+          "prompt": "Get the daily candlestick chart for a Bitcoin price market over the past 30 days",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 9,
+          "prompt": "Browse the Sports category sorted by volume and cross-reference the top result with Polymarket odds",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        },
+        {
+          "index": 10,
+          "prompt": "Find all settled markets in the Economics category from the past month with their resolution prices",
+          "ok": false,
+          "pass": false,
+          "warnings": [],
+          "failures": [
+            "query_exception"
+          ],
+          "error": {
+            "name": "ContextError",
+            "message": "Insufficient USDC balance. You have $0.0032 but this query costs ~$0.0240.",
+            "code": "insufficient_allowance",
+            "statusCode": 402
+          }
+        }
+      ]
+    }
+  ]
+}

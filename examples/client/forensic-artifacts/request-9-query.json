@@ -1,0 +1,206 @@
+{
+  "request": {
+    "endpoint": "/api/v1/query",
+    "method": "POST",
+    "idempotencyKey": "b5f979d5-a22b-411b-99ed-e3f2bfc52df1",
+    "body": {
+      "query": "Browse the Sports category sorted by volume and cross-reference the top result with Polymarket odds",
+      "queryDepth": "deep",
+      "includeData": true,
+      "includeDeveloperTrace": true,
+      "stream": false,
+      "tools": [
+        "5cc326fb-500d-4c17-bc5f-ade143210636"
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-encoding": "br",
+      "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://cdn.jsdelivr.net ; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://avatar.vercel.sh https://*.public.blob.vercel-storage.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; child-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org; frame-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org https://challenges.cloudflare.com; connect-src 'self' https://auth.privy.io https://*.rpc.privy.systems wss://relay.walletconnect.com wss://relay.walletconnect.org wss://www.walletlink.org https://explorer-api.walletconnect.com https://*.infura.io https://api.developer.coinbase.com https://*.public.blob.vercel-storage.com https://api.moonshot.ai https://generativelanguage.googleapis.com https://api.anthropic.com https://openrouter.ai https://api.hyperliquid.xyz https://data-api.polymarket.com https://clob.polymarket.com https://polygon-rpc.com https://api.open-meteo.com https://geocoding-api.open-meteo.com ; worker-src 'self' https://cdn.jsdelivr.net; manifest-src 'self'",
+      "content-type": "application/json",
+      "date": "Sun, 01 Mar 2026 12:32:15 GMT",
+      "server": "Vercel",
+      "strict-transport-security": "max-age=63072000",
+      "transfer-encoding": "chunked",
+      "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch",
+      "x-matched-path": "/api/v1/query",
+      "x-vercel-cache": "MISS",
+      "x-vercel-id": "hkg1::iad1::6h4ql-1772368326089-670a299af356"
+    },
+    "rawBody": "{\"success\":true,\"response\":\"Based on past query data, the top result in the Sports category by volume is a cross-category multi-team market. Here is the cross-reference between the Kalshi result and its most relevant match on Polymarket.\\n\\n### Market Comparison\\n\\n| Attribute | Kalshi (Top Market) | Polymarket (Closest Match) |\\n| :--- | :--- | :--- |\\n| **Title** | yes Frankfurt, yes Arsenal, yes Fulham, yes Manchester United, yes Milan, yes Roma | English Premier League - Top 4 Finish |\\n| **Ticker/Slug** | KXMVECROSSCATEGORY-S2026D0DED079301-7C9A39FBFFD | english-premier-league-top-4-finish |\\n| **Question** | N/A (Combo Market) | Will Arsenal finish in the top 4 of the EPL 2025–26 standings? |\\n| **Yes Price** | 0¢ | $0.98 |\\n| **No Price** | 100¢ | N/A |\\n| **Volume/Liquidity** | 0 (24h Volume) | $8,007.39 (Volume) / $8,246.31 (Liquidity) |\\n\\n**Note on Comparison:**\\nWhile the Kalshi market bundles several teams (Arsenal, Manchester United, etc.), the Polymarket data provides specific odds for individual outcomes. For instance, Polymarket currently lists Arsenal at a 98% probability ($0.98) to finish in the top 4. Kalshi prices are listed in cents (0-100), while Polymarket uses decimal dollars (0-1.00).\",\"toolsUsed\":[{\"id\":\"5cc326fb-500d-4c17-bc5f-ade143210636\",\"name\":\"Kalshi\",\"skillCalls\":2}],\"cost\":{\"totalCostUsd\":\"0.026070\",\"toolCostUsd\":\"0.000000\",\"modelCostUsd\":\"0.026070\"},\"durationMs\":9327,\"data\":{\"kalshiTopMarket\":{\"title\":\"yes Frankfurt,yes Arsenal,yes Fulham,yes Manchester United,yes Milan,yes Roma\",\"ticker\":\"KXMVECROSSCATEGORY-S2026D0DED079301-7C9A39FBFFD\",\"yesPrice\":0,\"noPrice\":100,\"volume24h\":0,\"url\":\"https://kalshi.com/markets/kxmvecrosscategory\"},\"polymarketMatches\":[{\"title\":\"English Premier League - Top 4 Finish \",\"slug\":\"english-premier-league-top-4-finish\",\"question\":\"Will Arsenal finish in the top 4 of the EPL 2025–26 standings?\",\"yesPrice\":0.98,\"volume\":\"8007.385351\",\"liquidity\":\"8246.30799\",\"url\":\"https://polymarket.com/event/english-premier-league-top-4-finish\",\"matchScore\":0.2,\"rules\":\"This is a polymarket to predict which clubs finish in the top 4 of the English Premier League standings for the 2025–26 season.\\n\\nIf the listed club officially finishes in the top 4 of the English Premier League standings at the end of the season, the market will resolve to \\\"Yes.\\\" Otherwise, it will resolve to \\\"No.\\\"\\n\\nIf two or more clubs are tied on points for a top 4 position, resolution will follow the official English Premier League tiebreaking procedures.\\n\\nIf the 2025–26 English Premier League season is canceled or not completed before October 1, 2026, this market will resolve to \\\"No.\\\"\\n\\nThe primary resolution source will be official information from the English Premier League. A consensus of credible reporting may also be used.\",\"yesOutcomeMeans\":\"The event described in \\\"English Premier League - Top 4 Finish \\\" occurs\",\"noOutcomeMeans\":\"The event described in \\\"English Premier League - Top 4 Finish \\\" does NOT occur\"},{\"title\":\"Carabao Cup Winner \",\"slug\":\"carabao-cup-winner\",\"question\":\"Will Team C win the 2025–26 Carabao Cup?\",\"yesPrice\":0,\"volume\":\"0\",\"liquidity\":\"0\",\"url\":\"https://polymarket.com/event/carabao-cup-winner\",\"matchScore\":0.2,\"rules\":\"This is a polymarket to predict which club will win the 2025–26 Carabao Cup.\\n\\nIf the listed club is officially crowned the winner of the 2025–26 Carabao Cup, this market will resolve to \\\"Yes.\\\" Otherwise, it will resolve to \\\"No.\\\"\\n\\nIf the 2025–26 Carabao Cup is canceled or not completed by June 1, 2026, this market will resolve to \\\"Other.\\\"\\n\\nThe primary resolution source for this market will be official results published by the Carabao Cup / EFL Cup (https://www.efl.com/competitions/carabao-cup/). A consensus of credible reporting may also be used.\",\"yesOutcomeMeans\":\"The event described in \\\"Carabao Cup Winner \\\" occurs\",\"noOutcomeMeans\":\"The event described in \\\"Carabao Cup Winner \\\" does NOT occur\"},{\"title\":\"English Premier League Winner \",\"slug\":\"english-premier-league-winner\",\"question\":\"Will Brentford win the 2025–26 English Premier League?\",\"yesPrice\":0,\"volume\":\"14143548.71053\",\"liquidity\":\"2124770.97591\",\"url\":\"https://polymarket.com/event/english-premier-league-winner\",\"matchScore\":0,\"rules\":\"This is a polymarket on whether the listed club will win the 2025–26 English Premier League.\\n\\nThis market will resolve to \\\"Yes\\\" if the listed club is officially crowned the winner of the 2025–26 English Premier League. Otherwise, it will resolve to \\\"No\\\".\\n\\nIf at any point it becomes impossible for the listed club to win the league (e.g. they are mathematically eliminated), the market will resolve to \\\"No\\\".\\n\\nIf the 2025–26 English Premier League season is canceled or not completed by October 1, 2026, this market will resolve to \\\"Other\\\".\\n\\nThe primary resolution source will be official information from the English Premier League. A consensus of credible reporting may also be used.\",\"yesOutcomeMeans\":\"The listed club is officially crowned the winner of the 2025–26 English Premier League\",\"noOutcomeMeans\":\"The event described in \\\"English Premier League Winner \\\" does NOT occur\"}],\"comparisonNote\":\"⚠️ CROSS-PLATFORM COMPARISON GUIDE:\\n1. Polymarket prices are decimals (0.25 = 25%), Kalshi prices are cents (25 = 25%)\\n2. READ 'yesOutcomeMeans' for each market - they may be INVERTED!\\n3. Example: If Polymarket YES means \\\"Court rules AGAINST\\\" and Kalshi YES means \\\"Court rules IN FAVOR\\\", then Polymarket NO ≈ Kalshi YES\\n4. Only compare prices AFTER confirming outcomes align!\"},\"developerTrace\":{\"summary\":{\"toolCalls\":2,\"retryCount\":0,\"selfHealCount\":0,\"fallbackCount\":0,\"failureCount\":0,\"recoveryCount\":0,\"completionChecks\":0,\"loopCount\":0},\"timeline\":[{\"stepType\":\"orchestration\",\"event\":\"query-start\",\"status\":\"ok\",\"message\":\"Query orchestration started\",\"timestampMs\":1772368335562,\"metadata\":{\"requestId\":\"b5f979d5-a22b-411b-99ed-e3f2bfc52df1\",\"queryDepth\":\"deep\"}},{\"stepType\":\"planning\",\"event\":\"planner-generated-code\",\"status\":\"ok\",\"timestampMs\":1772368335563,\"metadata\":{\"initialCode\":\"import { callMcpSkill } from \\\"@/lib/ai/skills/mcp\\\";\\n\\nexport async function main() {\\n  const toolId = \\\"5cc326fb-500d-4c17-bc5f-ade143210636\\\";\\n\\n  // 1. Browse the Sports category sorted by volume\\n  const browseResult = await callMcpSkill({\\n    toolId,\\n    toolName: \\\"browse_category\\\",\\n    args: {\\n      category: \\\"Sports\\\",\\n      sortBy: \\\"volume\\\",\\n      limit: 5,\\n      status: \\\"open\\\"\\n    }\\n  });\\n\\n  const topMarket = browseResult.markets && browseResult.markets.length > 0 \\n    ? browseResult.markets[0] \\n    : null;\\n\\n  if (!topMarket) {\\n    return {\\n      message: \\\"No active sports markets found.\\\",\\n      browseResult\\n    };\\n  }\\n\\n  // 2. Cross-reference the top result with Polymarket\\n  const crossRefResult = await callMcpSkill({\\n    toolId,\\n    toolName: \\\"kalshi_crossref_polymarket\\\",\\n    args: {\\n      title: topMarket.title,\\n      keywords: topMarket.title,\\n      kalshiTicker: topMarket.ticker,\\n      limit: 3\\n    }\\n  });\\n\\n  return {\\n    kalshiTopMarket: {\\n      title: topMarket.title,\\n      ticker: topMarket.ticker,\\n      yesPrice: topMarket.yesPrice,\\n      noPrice: topMarket.noPrice,\\n      volume24h: topMarket.volume24h,\\n      url: topMarket.url\\n    },\\n    polymarketMatches: crossRefResult.polymarketResults || [],\\n    comparisonNote: crossRefResult.comparisonNote\\n  };\\n}\",\"finalCode\":\"import { callMcpSkill } from \\\"@/lib/ai/skills/mcp\\\";\\n\\nexport async function main() {\\n  const toolId = \\\"5cc326fb-500d-4c17-bc5f-ade143210636\\\";\\n\\n  // 1. Browse the Sports category sorted by volume\\n  const browseResult = await callMcpSkill({\\n    toolId,\\n    toolName: \\\"browse_category\\\",\\n    args: {\\n      category: \\\"Sports\\\",\\n      sortBy: \\\"volume\\\",\\n      limit: 5,\\n      status: \\\"open\\\"\\n    }\\n  });\\n\\n  const topMarket = browseResult.markets && browseResult.markets.length > 0 \\n    ? browseResult.markets[0] \\n    : null;\\n\\n  if (!topMarket) {\\n    return {\\n      message: \\\"No active sports markets found.\\\",\\n      browseResult\\n    };\\n  }\\n\\n  // 2. Cross-reference the top result with Polymarket\\n  const crossRefResult = await callMcpSkill({\\n    toolId,\\n    toolName: \\\"kalshi_crossref_polymarket\\\",\\n    args: {\\n      title: topMarket.title,\\n      keywords: topMarket.title,\\n      kalshiTicker: topMarket.ticker,\\n      limit: 3\\n    }\\n  });\\n\\n  return {\\n    kalshiTopMarket: {\\n      title: topMarket.title,\\n      ticker: topMarket.ticker,\\n      yesPrice: topMarket.yesPrice,\\n      noPrice: topMarket.noPrice,\\n      volume24h: topMarket.volume24h,\\n      url: topMarket.url\\n    },\\n    polymarketMatches: crossRefResult.polymarketResults || [],\\n    comparisonNote: crossRefResult.comparisonNote\\n  };\\n}\"}},{\"stepType\":\"execution-attempt\",\"event\":\"initial\",\"status\":\"success\",\"timestampMs\":1772368335572,\"attempt\":1,\"metadata\":{\"codeSnippet\":\"import { callMcpSkill } from \\\"@/lib/ai/skills/mcp\\\";\\n\\nexport async function main() {\\n  const toolId = \\\"5cc326fb-500d-4c17-bc5f-ade143210636\\\";\\n\\n  // 1. Browse the Sports category sorted by volume\\n  const browseResult = await callMcpSkill({\\n    toolId,\\n    toolName: \\\"browse_category\\\",\\n    args: {\\n      category: \\\"Sports\\\",\\n      sortBy: \\\"volume\\\",\\n      limit: 5,\\n      status: \\\"open\\\"\\n    }\\n  });\\n\\n  const topMarket = browseResult.markets && browseResult.markets.length > 0 \\n    ? browseResult.markets[0] \\n    : null;\\n\\n  if (!topMarket) {\\n    return {\\n      message: \\\"No active sports markets found.\\\",\\n      browseResult\\n    };\\n  }\\n\\n  // 2. Cross-reference the top result with Polymarket\\n  const crossRefResult = await callMcpSkill({\\n    toolId,\\n    toolName: \\\"kalshi_crossref_polymarket\\\",\\n    args: {\\n      title: topMarket.title,\\n      keywords: topMarket.title,\\n      kalshiTicker: topMarket.ticker,\\n      limit: 3\\n    }\\n  });\\n\\n  return {\\n    kalshiTopMarket: {\\n      title: topMarket.title,\\n      ticker: topMarket.ticker,\\n      yesPrice: topMarket.yesPrice,\\n      noPrice: topMarket.noPrice,\\n      volume24h: topMarket.volume24h,\\n      url: topMarket.url\\n    },\\n    polymarketMatches: crossRefResult.polymarketResults || [],\\n    comparisonNote: crossRefResult.comparisonNote\\n  };\\n}\"}},{\"stepType\":\"tool-call\",\"event\":\"tool-call\",\"status\":\"success\",\"timestampMs\":1772368336562,\"tool\":{\"id\":\"5cc326fb-500d-4c17-bc5f-ade143210636\",\"name\":\"browse_category\"},\"metadata\":{\"args\":{\"category\":\"Sports\",\"sortBy\":\"volume\",\"limit\":5,\"status\":\"open\"},\"result\":{\"truncated\":true,\"preview\":\"{\\\"category\\\":\\\"Sports\\\",\\\"markets\\\":[{\\\"title\\\":\\\"yes Frankfurt,yes Arsenal,yes Fulham,yes Manchester United,yes Milan,yes Roma\\\",\\\"ticker\\\":\\\"KXMVECROSSCATEGORY-S2026D0DED079301-7C9A39FBFFD\\\",\\\"eventTicker\\\":\\\"KXMVECROSSCATEGORY-S2026D0DED079301\\\",\\\"url\\\":\\\"https://kalshi.com/markets/kxmvecrosscategory\\\",\\\"yesPrice\\\":0,\\\"noPrice\\\":100,\\\"volume24h\\\":0,\\\"liquidity\\\":0,\\\"closeTime\\\":\\\"2026-03-15T16:30:00Z\\\",\\\"status\\\":\\\"active\\\"},{\\\"title\\\":\\\"yes De'Aaron Fox: 1+,yes De'Aaron Fox: 4+,yes Victor Wembanyama: 2+,yes New York,yes Jalen Brunson: 20+,yes Victor Wembanyama: 20+,yes Mikal Bridges: 2+\\\",\\\"ticker\\\":\\\"KXMVESPORTSMULTIGAMEEXTENDED-S202604CC864BFE0-F8E55309ED2\\\",\\\"eventTicker\\\":\\\"KXMVESPORTSMULTIGAMEEXTENDED-S202604CC864BFE0\\\",\\\"url\\\":\\\"https://kalshi.com/markets/kxmvesportsmultigameextended\\\",\\\"yesPrice\\\":0,\\\"noPrice\\\":100,\\\"volume24h\\\":0,\\\"liqu...[truncated]\"}}},{\"stepType\":\"tool-call\",\"event\":\"tool-call\",\"status\":\"success\",\"timestampMs\":1772368336563,\"tool\":{\"id\":\"5cc326fb-500d-4c17-bc5f-ade143210636\",\"name\":\"kalshi_crossref_polymarket\"},\"metadata\":{\"args\":{\"title\":\"yes Frankfurt,yes Arsenal,yes Fulham,yes Manchester United,yes Milan,yes Roma\",\"keywords\":\"yes Frankfurt,yes Arsenal,yes Fulham,yes Manchester United,yes Milan,yes Roma\",\"kalshiTicker\":\"KXMVECROSSCATEGORY-S2026D0DED079301-7C9A39FBFFD\",\"limit\":3},\"result\":{\"truncated\":true,\"preview\":\"{\\\"searchedFor\\\":{\\\"keywords\\\":\\\"yes frankfurt arsenal fulham manchester\\\",\\\"kalshiTicker\\\":\\\"KXMVECROSSCATEGORY-S2026D0DED079301-7C9A39FBFFD\\\"},\\\"searchMethod\\\":\\\"public-search API\\\",\\\"polymarketResults\\\":[{\\\"title\\\":\\\"English Premier League - Top 4 Finish \\\",\\\"slug\\\":\\\"english-premier-league-top-4-finish\\\",\\\"question\\\":\\\"Will Arsenal finish in the top 4 of the EPL 2025–26 standings?\\\",\\\"yesPrice\\\":0.98,\\\"volume\\\":\\\"8007.385351\\\",\\\"liquidity\\\":\\\"8246.30799\\\",\\\"url\\\":\\\"https://polymarket.com/event/english-premier-league-top-4-finish\\\",\\\"matchScore\\\":0.2,\\\"rules\\\":\\\"This is a polymarket to predict which clubs finish in the top 4 of the English Premier League standings for the 2025–26 season.\\\\n\\\\nIf the listed club officially finishes in the top 4 of the English Premier League standings at the end of the season, the market will resolve to...[truncated]\"}}},{\"stepType\":\"orchestration\",\"event\":\"query-complete\",\"status\":\"success\",\"timestampMs\":1772368337564,\"metadata\":{\"durationMs\":9327,\"executionOk\":true}}],\"requestId\":\"b5f979d5-a22b-411b-99ed-e3f2bfc52df1\",\"query\":\"Browse the Sports category sorted by volume and cross-reference the top result with Polymarket odds\",\"source\":\"backend-runtime\"}}",
+    "parsedBody": {
+      "success": true,
+      "response": "Based on past query data, the top result in the Sports category by volume is a cross-category multi-team market. Here is the cross-reference between the Kalshi result and its most relevant match on Polymarket.\n\n### Market Comparison\n\n| Attribute | Kalshi (Top Market) | Polymarket (Closest Match) |\n| :--- | :--- | :--- |\n| **Title** | yes Frankfurt, yes Arsenal, yes Fulham, yes Manchester United, yes Milan, yes Roma | English Premier League - Top 4 Finish |\n| **Ticker/Slug** | KXMVECROSSCATEGORY-S2026D0DED079301-7C9A39FBFFD | english-premier-league-top-4-finish |\n| **Question** | N/A (Combo Market) | Will Arsenal finish in the top 4 of the EPL 2025–26 standings? |\n| **Yes Price** | 0¢ | $0.98 |\n| **No Price** | 100¢ | N/A |\n| **Volume/Liquidity** | 0 (24h Volume) | $8,007.39 (Volume) / $8,246.31 (Liquidity) |\n\n**Note on Comparison:**\nWhile the Kalshi market bundles several teams (Arsenal, Manchester United, etc.), the Polymarket data provides specific odds for individual outcomes. For instance, Polymarket currently lists Arsenal at a 98% probability ($0.98) to finish in the top 4. Kalshi prices are listed in cents (0-100), while Polymarket uses decimal dollars (0-1.00).",
+      "toolsUsed": [
+        {
+          "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+          "name": "Kalshi",
+          "skillCalls": 2
+        }
+      ],
+      "cost": {
+        "totalCostUsd": "0.026070",
+        "toolCostUsd": "0.000000",
+        "modelCostUsd": "0.026070"
+      },
+      "durationMs": 9327,
+      "data": {
+        "kalshiTopMarket": {
+          "title": "yes Frankfurt,yes Arsenal,yes Fulham,yes Manchester United,yes Milan,yes Roma",
+          "ticker": "KXMVECROSSCATEGORY-S2026D0DED079301-7C9A39FBFFD",
+          "yesPrice": 0,
+          "noPrice": 100,
+          "volume24h": 0,
+          "url": "https://kalshi.com/markets/kxmvecrosscategory"
+        },
+        "polymarketMatches": [
+          {
+            "title": "English Premier League - Top 4 Finish ",
+            "slug": "english-premier-league-top-4-finish",
+            "question": "Will Arsenal finish in the top 4 of the EPL 2025–26 standings?",
+            "yesPrice": 0.98,
+            "volume": "8007.385351",
+            "liquidity": "8246.30799",
+            "url": "https://polymarket.com/event/english-premier-league-top-4-finish",
+            "matchScore": 0.2,
+            "rules": "This is a polymarket to predict which clubs finish in the top 4 of the English Premier League standings for the 2025–26 season.\n\nIf the listed club officially finishes in the top 4 of the English Premier League standings at the end of the season, the market will resolve to \"Yes.\" Otherwise, it will resolve to \"No.\"\n\nIf two or more clubs are tied on points for a top 4 position, resolution will follow the official English Premier League tiebreaking procedures.\n\nIf the 2025–26 English Premier League season is canceled or not completed before October 1, 2026, this market will resolve to \"No.\"\n\nThe primary resolution source will be official information from the English Premier League. A consensus of credible reporting may also be used.",
+            "yesOutcomeMeans": "The event described in \"English Premier League - Top 4 Finish \" occurs",
+            "noOutcomeMeans": "The event described in \"English Premier League - Top 4 Finish \" does NOT occur"
+          },
+          {
+            "title": "Carabao Cup Winner ",
+            "slug": "carabao-cup-winner",
+            "question": "Will Team C win the 2025–26 Carabao Cup?",
+            "yesPrice": 0,
+            "volume": "0",
+            "liquidity": "0",
+            "url": "https://polymarket.com/event/carabao-cup-winner",
+            "matchScore": 0.2,
+            "rules": "This is a polymarket to predict which club will win the 2025–26 Carabao Cup.\n\nIf the listed club is officially crowned the winner of the 2025–26 Carabao Cup, this market will resolve to \"Yes.\" Otherwise, it will resolve to \"No.\"\n\nIf the 2025–26 Carabao Cup is canceled or not completed by June 1, 2026, this market will resolve to \"Other.\"\n\nThe primary resolution source for this market will be official results published by the Carabao Cup / EFL Cup (https://www.efl.com/competitions/carabao-cup/). A consensus of credible reporting may also be used.",
+            "yesOutcomeMeans": "The event described in \"Carabao Cup Winner \" occurs",
+            "noOutcomeMeans": "The event described in \"Carabao Cup Winner \" does NOT occur"
+          },
+          {
+            "title": "English Premier League Winner ",
+            "slug": "english-premier-league-winner",
+            "question": "Will Brentford win the 2025–26 English Premier League?",
+            "yesPrice": 0,
+            "volume": "14143548.71053",
+            "liquidity": "2124770.97591",
+            "url": "https://polymarket.com/event/english-premier-league-winner",
+            "matchScore": 0,
+            "rules": "This is a polymarket on whether the listed club will win the 2025–26 English Premier League.\n\nThis market will resolve to \"Yes\" if the listed club is officially crowned the winner of the 2025–26 English Premier League. Otherwise, it will resolve to \"No\".\n\nIf at any point it becomes impossible for the listed club to win the league (e.g. they are mathematically eliminated), the market will resolve to \"No\".\n\nIf the 2025–26 English Premier League season is canceled or not completed by October 1, 2026, this market will resolve to \"Other\".\n\nThe primary resolution source will be official information from the English Premier League. A consensus of credible reporting may also be used.",
+            "yesOutcomeMeans": "The listed club is officially crowned the winner of the 2025–26 English Premier League",
+            "noOutcomeMeans": "The event described in \"English Premier League Winner \" does NOT occur"
+          }
+        ],
+        "comparisonNote": "⚠️ CROSS-PLATFORM COMPARISON GUIDE:\n1. Polymarket prices are decimals (0.25 = 25%), Kalshi prices are cents (25 = 25%)\n2. READ 'yesOutcomeMeans' for each market - they may be INVERTED!\n3. Example: If Polymarket YES means \"Court rules AGAINST\" and Kalshi YES means \"Court rules IN FAVOR\", then Polymarket NO ≈ Kalshi YES\n4. Only compare prices AFTER confirming outcomes align!"
+      },
+      "developerTrace": {
+        "summary": {
+          "toolCalls": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 0
+        },
+        "timeline": [
+          {
+            "stepType": "orchestration",
+            "event": "query-start",
+            "status": "ok",
+            "message": "Query orchestration started",
+            "timestampMs": 1772368335562,
+            "metadata": {
+              "requestId": "b5f979d5-a22b-411b-99ed-e3f2bfc52df1",
+              "queryDepth": "deep"
+            }
+          },
+          {
+            "stepType": "planning",
+            "event": "planner-generated-code",
+            "status": "ok",
+            "timestampMs": 1772368335563,
+            "metadata": {
+              "initialCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  const toolId = \"5cc326fb-500d-4c17-bc5f-ade143210636\";\n\n  // 1. Browse the Sports category sorted by volume\n  const browseResult = await callMcpSkill({\n    toolId,\n    toolName: \"browse_category\",\n    args: {\n      category: \"Sports\",\n      sortBy: \"volume\",\n      limit: 5,\n      status: \"open\"\n    }\n  });\n\n  const topMarket = browseResult.markets && browseResult.markets.length > 0 \n    ? browseResult.markets[0] \n    : null;\n\n  if (!topMarket) {\n    return {\n      message: \"No active sports markets found.\",\n      browseResult\n    };\n  }\n\n  // 2. Cross-reference the top result with Polymarket\n  const crossRefResult = await callMcpSkill({\n    toolId,\n    toolName: \"kalshi_crossref_polymarket\",\n    args: {\n      title: topMarket.title,\n      keywords: topMarket.title,\n      kalshiTicker: topMarket.ticker,\n      limit: 3\n    }\n  });\n\n  return {\n    kalshiTopMarket: {\n      title: topMarket.title,\n      ticker: topMarket.ticker,\n      yesPrice: topMarket.yesPrice,\n      noPrice: topMarket.noPrice,\n      volume24h: topMarket.volume24h,\n      url: topMarket.url\n    },\n    polymarketMatches: crossRefResult.polymarketResults || [],\n    comparisonNote: crossRefResult.comparisonNote\n  };\n}",
+              "finalCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  const toolId = \"5cc326fb-500d-4c17-bc5f-ade143210636\";\n\n  // 1. Browse the Sports category sorted by volume\n  const browseResult = await callMcpSkill({\n    toolId,\n    toolName: \"browse_category\",\n    args: {\n      category: \"Sports\",\n      sortBy: \"volume\",\n      limit: 5,\n      status: \"open\"\n    }\n  });\n\n  const topMarket = browseResult.markets && browseResult.markets.length > 0 \n    ? browseResult.markets[0] \n    : null;\n\n  if (!topMarket) {\n    return {\n      message: \"No active sports markets found.\",\n      browseResult\n    };\n  }\n\n  // 2. Cross-reference the top result with Polymarket\n  const crossRefResult = await callMcpSkill({\n    toolId,\n    toolName: \"kalshi_crossref_polymarket\",\n    args: {\n      title: topMarket.title,\n      keywords: topMarket.title,\n      kalshiTicker: topMarket.ticker,\n      limit: 3\n    }\n  });\n\n  return {\n    kalshiTopMarket: {\n      title: topMarket.title,\n      ticker: topMarket.ticker,\n      yesPrice: topMarket.yesPrice,\n      noPrice: topMarket.noPrice,\n      volume24h: topMarket.volume24h,\n      url: topMarket.url\n    },\n    polymarketMatches: crossRefResult.polymarketResults || [],\n    comparisonNote: crossRefResult.comparisonNote\n  };\n}"
+            }
+          },
+          {
+            "stepType": "execution-attempt",
+            "event": "initial",
+            "status": "success",
+            "timestampMs": 1772368335572,
+            "attempt": 1,
+            "metadata": {
+              "codeSnippet": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  const toolId = \"5cc326fb-500d-4c17-bc5f-ade143210636\";\n\n  // 1. Browse the Sports category sorted by volume\n  const browseResult = await callMcpSkill({\n    toolId,\n    toolName: \"browse_category\",\n    args: {\n      category: \"Sports\",\n      sortBy: \"volume\",\n      limit: 5,\n      status: \"open\"\n    }\n  });\n\n  const topMarket = browseResult.markets && browseResult.markets.length > 0 \n    ? browseResult.markets[0] \n    : null;\n\n  if (!topMarket) {\n    return {\n      message: \"No active sports markets found.\",\n      browseResult\n    };\n  }\n\n  // 2. Cross-reference the top result with Polymarket\n  const crossRefResult = await callMcpSkill({\n    toolId,\n    toolName: \"kalshi_crossref_polymarket\",\n    args: {\n      title: topMarket.title,\n      keywords: topMarket.title,\n      kalshiTicker: topMarket.ticker,\n      limit: 3\n    }\n  });\n\n  return {\n    kalshiTopMarket: {\n      title: topMarket.title,\n      ticker: topMarket.ticker,\n      yesPrice: topMarket.yesPrice,\n      noPrice: topMarket.noPrice,\n      volume24h: topMarket.volume24h,\n      url: topMarket.url\n    },\n    polymarketMatches: crossRefResult.polymarketResults || [],\n    comparisonNote: crossRefResult.comparisonNote\n  };\n}"
+            }
+          },
+          {
+            "stepType": "tool-call",
+            "event": "tool-call",
+            "status": "success",
+            "timestampMs": 1772368336562,
+            "tool": {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "browse_category"
+            },
+            "metadata": {
+              "args": {
+                "category": "Sports",
+                "sortBy": "volume",
+                "limit": 5,
+                "status": "open"
+              },
+              "result": {
+                "truncated": true,
+                "preview": "{\"category\":\"Sports\",\"markets\":[{\"title\":\"yes Frankfurt,yes Arsenal,yes Fulham,yes Manchester United,yes Milan,yes Roma\",\"ticker\":\"KXMVECROSSCATEGORY-S2026D0DED079301-7C9A39FBFFD\",\"eventTicker\":\"KXMVECROSSCATEGORY-S2026D0DED079301\",\"url\":\"https://kalshi.com/markets/kxmvecrosscategory\",\"yesPrice\":0,\"noPrice\":100,\"volume24h\":0,\"liquidity\":0,\"closeTime\":\"2026-03-15T16:30:00Z\",\"status\":\"active\"},{\"title\":\"yes De'Aaron Fox: 1+,yes De'Aaron Fox: 4+,yes Victor Wembanyama: 2+,yes New York,yes Jalen Brunson: 20+,yes Victor Wembanyama: 20+,yes Mikal Bridges: 2+\",\"ticker\":\"KXMVESPORTSMULTIGAMEEXTENDED-S202604CC864BFE0-F8E55309ED2\",\"eventTicker\":\"KXMVESPORTSMULTIGAMEEXTENDED-S202604CC864BFE0\",\"url\":\"https://kalshi.com/markets/kxmvesportsmultigameextended\",\"yesPrice\":0,\"noPrice\":100,\"volume24h\":0,\"liqu...[truncated]"
+              }
+            }
+          },
+          {
+            "stepType": "tool-call",
+            "event": "tool-call",
+            "status": "success",
+            "timestampMs": 1772368336563,
+            "tool": {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "kalshi_crossref_polymarket"
+            },
+            "metadata": {
+              "args": {
+                "title": "yes Frankfurt,yes Arsenal,yes Fulham,yes Manchester United,yes Milan,yes Roma",
+                "keywords": "yes Frankfurt,yes Arsenal,yes Fulham,yes Manchester United,yes Milan,yes Roma",
+                "kalshiTicker": "KXMVECROSSCATEGORY-S2026D0DED079301-7C9A39FBFFD",
+                "limit": 3
+              },
+              "result": {
+                "truncated": true,
+                "preview": "{\"searchedFor\":{\"keywords\":\"yes frankfurt arsenal fulham manchester\",\"kalshiTicker\":\"KXMVECROSSCATEGORY-S2026D0DED079301-7C9A39FBFFD\"},\"searchMethod\":\"public-search API\",\"polymarketResults\":[{\"title\":\"English Premier League - Top 4 Finish \",\"slug\":\"english-premier-league-top-4-finish\",\"question\":\"Will Arsenal finish in the top 4 of the EPL 2025–26 standings?\",\"yesPrice\":0.98,\"volume\":\"8007.385351\",\"liquidity\":\"8246.30799\",\"url\":\"https://polymarket.com/event/english-premier-league-top-4-finish\",\"matchScore\":0.2,\"rules\":\"This is a polymarket to predict which clubs finish in the top 4 of the English Premier League standings for the 2025–26 season.\\n\\nIf the listed club officially finishes in the top 4 of the English Premier League standings at the end of the season, the market will resolve to...[truncated]"
+              }
+            }
+          },
+          {
+            "stepType": "orchestration",
+            "event": "query-complete",
+            "status": "success",
+            "timestampMs": 1772368337564,
+            "metadata": {
+              "durationMs": 9327,
+              "executionOk": true
+            }
+          }
+        ],
+        "requestId": "b5f979d5-a22b-411b-99ed-e3f2bfc52df1",
+        "query": "Browse the Sports category sorted by volume and cross-reference the top result with Polymarket odds",
+        "source": "backend-runtime"
+      }
+    }
+  }
+}

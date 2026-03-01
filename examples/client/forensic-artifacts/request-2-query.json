@@ -1,0 +1,192 @@
+{
+  "request": {
+    "endpoint": "/api/v1/query",
+    "method": "POST",
+    "idempotencyKey": "2167a61f-8692-41bc-bac8-ac4663c85542",
+    "body": {
+      "query": "What are the top 5 prediction markets by volume right now?",
+      "queryDepth": "deep",
+      "includeData": true,
+      "includeDeveloperTrace": true,
+      "stream": false
+    }
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-encoding": "br",
+      "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://cdn.jsdelivr.net ; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://avatar.vercel.sh https://*.public.blob.vercel-storage.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; child-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org; frame-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org https://challenges.cloudflare.com; connect-src 'self' https://auth.privy.io https://*.rpc.privy.systems wss://relay.walletconnect.com wss://relay.walletconnect.org wss://www.walletlink.org https://explorer-api.walletconnect.com https://*.infura.io https://api.developer.coinbase.com https://*.public.blob.vercel-storage.com https://api.moonshot.ai https://generativelanguage.googleapis.com https://api.anthropic.com https://openrouter.ai https://api.hyperliquid.xyz https://data-api.polymarket.com https://clob.polymarket.com https://polygon-rpc.com https://api.open-meteo.com https://geocoding-api.open-meteo.com ; worker-src 'self' https://cdn.jsdelivr.net; manifest-src 'self'",
+      "content-type": "application/json",
+      "date": "Sun, 01 Mar 2026 12:28:35 GMT",
+      "server": "Vercel",
+      "strict-transport-security": "max-age=63072000",
+      "transfer-encoding": "chunked",
+      "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch",
+      "x-matched-path": "/api/v1/query",
+      "x-vercel-cache": "MISS",
+      "x-vercel-id": "hkg1::iad1::b4shl-1772368100717-3d87871aef77"
+    },
+    "rawBody": "{\"success\":true,\"response\":\"Based on recent 24-hour trading activity, here are the top 5 prediction markets by volume:\\n\\n| Market Title | Platform | 24h Volume (USD) | Current Price |\\n| :--- | :--- | :--- | :--- |\\n| Khamenei out as Supreme Leader of Iran by February 28? | Polymarket | $62,854,217.92 | 99.9¢ |\\n| Khamenei out as Supreme Leader of Iran by March 31? | Polymarket | $30,570,126.80 | 99.9¢ |\\n| 2026 FIFA World Cup Winner | Polymarket | $7,806,679.07 | 14.9¢ |\\n| Who will Trump nominate as Fed Chair? | Polymarket | $7,151,506.21 | 93.3¢ |\\n| Fed decision in March? | Polymarket | $5,747,363.17 | 0.5¢ |\\n\\n*Note: Volume is based on trading activity from the last 24 hours.*\",\"toolsUsed\":[{\"id\":\"294100e8-c648-4e5f-a254-95a14b56e398\",\"name\":\"Polymarket\",\"skillCalls\":1},{\"id\":\"5cc326fb-500d-4c17-bc5f-ade143210636\",\"name\":\"Kalshi\",\"skillCalls\":1}],\"cost\":{\"totalCostUsd\":\"0.046637\",\"toolCostUsd\":\"0.000000\",\"modelCostUsd\":\"0.046637\"},\"durationMs\":14741,\"data\":{\"top_prediction_markets\":[{\"platform\":\"Polymarket\",\"title\":\"Khamenei out as Supreme Leader of Iran by February 28?\",\"volume24h\":62854217.92295744,\"url\":\"https://polymarket.com/event/khamenei-out-as-supreme-leader-of-iran-by-february-28\",\"price\":\"99.9¢\"},{\"platform\":\"Polymarket\",\"title\":\"Khamenei out as Supreme Leader of Iran by March 31?\",\"volume24h\":30570126.801371016,\"url\":\"https://polymarket.com/event/khamenei-out-as-supreme-leader-of-iran-by-march-31\",\"price\":\"99.9¢\"},{\"platform\":\"Polymarket\",\"title\":\"2026 FIFA World Cup Winner \",\"volume24h\":7806679.0710660005,\"url\":\"https://polymarket.com/event/2026-fifa-world-cup-winner-595\",\"price\":\"14.9¢\"},{\"platform\":\"Polymarket\",\"title\":\"Who will Trump nominate as Fed Chair?\",\"volume24h\":7151506.206062996,\"url\":\"https://polymarket.com/event/who-will-trump-nominate-as-fed-chair\",\"price\":\"93.3¢\"},{\"platform\":\"Polymarket\",\"title\":\"Fed decision in March?\",\"volume24h\":5747363.170155005,\"url\":\"https://polymarket.com/event/fed-decision-in-march-885\",\"price\":\"0.5¢\"}],\"note\":\"Volume is based on the last 24 hours of trading activity.\"},\"developerTrace\":{\"summary\":{\"toolCalls\":2,\"retryCount\":0,\"selfHealCount\":0,\"fallbackCount\":0,\"failureCount\":0,\"recoveryCount\":0,\"completionChecks\":0,\"loopCount\":0},\"timeline\":[{\"stepType\":\"orchestration\",\"event\":\"query-start\",\"status\":\"ok\",\"message\":\"Query orchestration started\",\"timestampMs\":1772368115599,\"metadata\":{\"requestId\":\"2167a61f-8692-41bc-bac8-ac4663c85542\",\"queryDepth\":\"deep\"}},{\"stepType\":\"planning\",\"event\":\"planner-generated-code\",\"status\":\"ok\",\"timestampMs\":1772368115600,\"metadata\":{\"initialCode\":\"import { callMcpSkill } from \\\"@/lib/ai/skills/mcp\\\";\\n\\nexport async function main() {\\n  // We'll fetch the top 5 markets by 24h volume from Polymarket and Kalshi\\n  // and then merge them to see the top 5 across both platforms.\\n\\n  const polymarketId = \\\"294100e8-c648-4e5f-a254-95a14b56e398\\\";\\n  const kalshiId = \\\"5cc326fb-500d-4c17-bc5f-ade143210636\\\";\\n\\n  const responses = await Promise.allSettled([\\n    callMcpSkill({\\n      toolId: polymarketId,\\n      toolName: \\\"get_top_markets\\\",\\n      args: { sortBy: \\\"volume\\\", limit: 10 }\\n    }),\\n    callMcpSkill({\\n      toolId: kalshiId,\\n      toolName: \\\"discover_trending_markets\\\",\\n      args: { sortBy: \\\"volume_24h\\\", limit: 10 }\\n    })\\n  ]);\\n\\n  const polyData = responses[0].status === \\\"fulfilled\\\" ? responses[0].value.markets : [];\\n  const kalshiData = responses[1].status === \\\"fulfilled\\\" ? responses[1].value.trendingMarkets : [];\\n\\n  const combined = [\\n    ...polyData.map(m => ({\\n      platform: \\\"Polymarket\\\",\\n      title: m.title,\\n      volume24h: m.volume24h,\\n      url: m.url,\\n      price: m.currentPrice ? (m.currentPrice * 100).toFixed(1) + \\\"¢\\\" : \\\"N/A\\\"\\n    })),\\n    ...kalshiData.map(m => ({\\n      platform: \\\"Kalshi\\\",\\n      title: m.title,\\n      volume24h: m.volume24h,\\n      url: m.url,\\n      price: m.yesPrice ? m.yesPrice + \\\"¢\\\" : \\\"N/A\\\"\\n    }))\\n  ];\\n\\n  // Sort by 24h volume descending and take top 5\\n  const top5 = combined\\n    .filter(m => typeof m.volume24h === 'number')\\n    .sort((a, b) => b.volume24h - a.volume24h)\\n    .slice(0, 5);\\n\\n  return {\\n    top_prediction_markets: top5,\\n    note: \\\"Volume is based on the last 24 hours of trading activity.\\\"\\n  };\\n}\",\"finalCode\":\"import { callMcpSkill } from \\\"@/lib/ai/skills/mcp\\\";\\n\\nexport async function main() {\\n  // We'll fetch the top 5 markets by 24h volume from Polymarket and Kalshi\\n  // and then merge them to see the top 5 across both platforms.\\n\\n  const polymarketId = \\\"294100e8-c648-4e5f-a254-95a14b56e398\\\";\\n  const kalshiId = \\\"5cc326fb-500d-4c17-bc5f-ade143210636\\\";\\n\\n  const responses = await Promise.allSettled([\\n    callMcpSkill({\\n      toolId: polymarketId,\\n      toolName: \\\"get_top_markets\\\",\\n      args: { sortBy: \\\"volume\\\", limit: 10 }\\n    }),\\n    callMcpSkill({\\n      toolId: kalshiId,\\n      toolName: \\\"discover_trending_markets\\\",\\n      args: { sortBy: \\\"volume_24h\\\", limit: 10 }\\n    })\\n  ]);\\n\\n  const polyData = responses[0].status === \\\"fulfilled\\\" ? responses[0].value.markets : [];\\n  const kalshiData = responses[1].status === \\\"fulfilled\\\" ? responses[1].value.trendingMarkets : [];\\n\\n  const combined = [\\n    ...polyData.map(m => ({\\n      platform: \\\"Polymarket\\\",\\n      title: m.title,\\n      volume24h: m.volume24h,\\n      url: m.url,\\n      price: m.currentPrice ? (m.currentPrice * 100).toFixed(1) + \\\"¢\\\" : \\\"N/A\\\"\\n    })),\\n    ...kalshiData.map(m => ({\\n      platform: \\\"Kalshi\\\",\\n      title: m.title,\\n      volume24h: m.volume24h,\\n      url: m.url,\\n      price: m.yesPrice ? m.yesPrice + \\\"¢\\\" : \\\"N/A\\\"\\n    }))\\n  ];\\n\\n  // Sort by 24h volume descending and take top 5\\n  const top5 = combined\\n    .filter(m => typeof m.volume24h === 'number')\\n    .sort((a, b) => b.volume24h - a.volume24h)\\n    .slice(0, 5);\\n\\n  return {\\n    top_prediction_markets: top5,\\n    note: \\\"Volume is based on the last 24 hours of trading activity.\\\"\\n  };\\n}\"}},{\"stepType\":\"execution-attempt\",\"event\":\"initial\",\"status\":\"success\",\"timestampMs\":1772368115609,\"attempt\":1,\"metadata\":{\"codeSnippet\":\"import { callMcpSkill } from \\\"@/lib/ai/skills/mcp\\\";\\n\\nexport async function main() {\\n  // We'll fetch the top 5 markets by 24h volume from Polymarket and Kalshi\\n  // and then merge them to see the top 5 across both platforms.\\n\\n  const polymarketId = \\\"294100e8-c648-4e5f-a254-95a14b56e398\\\";\\n  const kalshiId = \\\"5cc326fb-500d-4c17-bc5f-ade143210636\\\";\\n\\n  const responses = await Promise.allSettled([\\n    callMcpSkill({\\n      toolId: polymarketId,\\n      toolName: \\\"get_top_markets\\\",\\n      args: { sortBy: \\\"volume\\\", limit: 10 }\\n    }),\\n    callMcpSkill({\\n      toolId: kalshiId,\\n      toolName: \\\"discover_trending_markets\\\",\\n      args: { sortBy: \\\"volume_24h\\\", limit: 10 }\\n    })\\n  ]);\\n\\n  const polyData = responses[0].status === \\\"fulfilled\\\" ? responses[0].value.markets : [];\\n  const kalshiData = responses[1].status === \\\"fulfilled\\\" ? responses[1].value.trendingMarkets : [];\\n\\n  const combined = [\\n    ...polyData.map(m => ({\\n      platform: \\\"Polymarket\\\",\\n      title: m.title,\\n      volume24h: m.volume24h,\\n      url: m.url,\\n      price: m.currentPrice ? (m.currentPrice * 100).toFixed(1) + \\\"¢\\\" : \\\"N/A\\\"\\n    })),\\n    ...kalshiData.map(m => ({\\n      platform: \\\"Kalshi\\\",\\n      title: m.title,\\n      volume24h: m.volume24h,\\n      url: m.url,\\n      price: m.yesPrice ? m.yesPrice + \\\"¢\\\" : \\\"N/A\\\"\\n    }))\\n  ];\\n\\n  // Sort by 24h volume descending and take top 5\\n  const top5 = combined\\n    .filter(m => typeof m.volume24h === 'number')\\n    .sort((a, b) => b.volume24h - a.volume24h)\\n    .slice(0, 5);\\n\\n  return {\\n    top_prediction_markets: top5,\\n    note: \\\"Volume is based on the last 24 hours of trading activity.\\\"\\n  };\\n}\"}},{\"stepType\":\"tool-call\",\"event\":\"tool-call\",\"status\":\"success\",\"timestampMs\":1772368116599,\"tool\":{\"id\":\"294100e8-c648-4e5f-a254-95a14b56e398\",\"name\":\"get_top_markets\"},\"metadata\":{\"args\":{\"sortBy\":\"volume\",\"limit\":10},\"result\":{\"truncated\":true,\"preview\":\"{\\\"sortedBy\\\":\\\"volume\\\",\\\"markets\\\":[{\\\"rank\\\":1,\\\"title\\\":\\\"Khamenei out as Supreme Leader of Iran by February 28?\\\",\\\"url\\\":\\\"https://polymarket.com/event/khamenei-out-as-supreme-leader-of-iran-by-february-28\\\",\\\"slug\\\":\\\"khamenei-out-as-supreme-leader-of-iran-by-february-28\\\",\\\"conditionId\\\":\\\"0xd4bbf7f6707c67beb736135ad32a41f6db41f8ae52d3ac4919650de9eeb94ed8\\\",\\\"currentPrice\\\":0.9985,\\\"volume24h\\\":62854217.92295744,\\\"totalVolume\\\":82801019.682194,\\\"liquidity\\\":5572002.35772,\\\"endDate\\\":\\\"2026-02-28T00:00:00Z\\\",\\\"category\\\":\\\"other\\\"},{\\\"rank\\\":2,\\\"title\\\":\\\"Khamenei out as Supreme Leader of Iran by March 31?\\\",\\\"url\\\":\\\"https://polymarket.com/event/khamenei-out-as-supreme-leader-of-iran-by-march-31\\\",\\\"slug\\\":\\\"khamenei-out-as-supreme-leader-of-iran-by-march-31\\\",\\\"conditionId\\\":\\\"0x70909f0ba8256a89c301da58812ae47203df54957a07c7f8b10235e877...[truncated]\"}}},{\"stepType\":\"tool-call\",\"event\":\"tool-call\",\"status\":\"success\",\"timestampMs\":1772368116600,\"tool\":{\"id\":\"5cc326fb-500d-4c17-bc5f-ade143210636\",\"name\":\"discover_trending_markets\"},\"metadata\":{\"args\":{\"sortBy\":\"volume_24h\",\"limit\":10},\"result\":{\"truncated\":true,\"preview\":\"{\\\"marketSummary\\\":\\\"Found 258 active markets. Total 24h volume: $5,770,083.357\\\",\\\"trendingMarkets\\\":[{\\\"rank\\\":1,\\\"title\\\":\\\"Will Shane Lowry win the Cognizant Classic in The Palm Beaches?\\\",\\\"ticker\\\":\\\"KXPGATOUR-COCITPB26-SLOW\\\",\\\"eventTicker\\\":\\\"KXPGATOUR-COCITPB26\\\",\\\"url\\\":\\\"https://kalshi.com/markets/kxpgatour-cocitpb26\\\",\\\"yesPrice\\\":39,\\\"noPrice\\\":62,\\\"volume24h\\\":841908,\\\"volume\\\":1974434,\\\"openInterest\\\":1175980,\\\"liquidity\\\":0,\\\"category\\\":\\\"Unknown\\\",\\\"closeTime\\\":\\\"2026-03-15T00:00:00Z\\\",\\\"status\\\":\\\"active\\\"},{\\\"rank\\\":2,\\\"title\\\":\\\"Zimbabwe vs South Africa Winner?\\\",\\\"ticker\\\":\\\"KXT20MATCH-26MAR01SAZIM-ZIM\\\",\\\"eventTicker\\\":\\\"KXT20MATCH-26MAR01SAZIM\\\",\\\"url\\\":\\\"https://kalshi.com/markets/kxt20match\\\",\\\"yesPrice\\\":5,\\\"noPrice\\\":97,\\\"volume24h\\\":716224,\\\"volume\\\":895202,\\\"openInterest\\\":588675,\\\"liquidity\\\":0,\\\"category\\\":\\\"Unknown\\\",\\\"closeTime\\\":\\\"2026-03-...[truncated]\"}}},{\"stepType\":\"orchestration\",\"event\":\"query-complete\",\"status\":\"success\",\"timestampMs\":1772368117601,\"metadata\":{\"durationMs\":14741,\"executionOk\":true}}],\"requestId\":\"2167a61f-8692-41bc-bac8-ac4663c85542\",\"query\":\"What are the top 5 prediction markets by volume right now?\",\"source\":\"backend-runtime\"}}",
+    "parsedBody": {
+      "success": true,
+      "response": "Based on recent 24-hour trading activity, here are the top 5 prediction markets by volume:\n\n| Market Title | Platform | 24h Volume (USD) | Current Price |\n| :--- | :--- | :--- | :--- |\n| Khamenei out as Supreme Leader of Iran by February 28? | Polymarket | $62,854,217.92 | 99.9¢ |\n| Khamenei out as Supreme Leader of Iran by March 31? | Polymarket | $30,570,126.80 | 99.9¢ |\n| 2026 FIFA World Cup Winner | Polymarket | $7,806,679.07 | 14.9¢ |\n| Who will Trump nominate as Fed Chair? | Polymarket | $7,151,506.21 | 93.3¢ |\n| Fed decision in March? | Polymarket | $5,747,363.17 | 0.5¢ |\n\n*Note: Volume is based on trading activity from the last 24 hours.*",
+      "toolsUsed": [
+        {
+          "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+          "name": "Polymarket",
+          "skillCalls": 1
+        },
+        {
+          "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+          "name": "Kalshi",
+          "skillCalls": 1
+        }
+      ],
+      "cost": {
+        "totalCostUsd": "0.046637",
+        "toolCostUsd": "0.000000",
+        "modelCostUsd": "0.046637"
+      },
+      "durationMs": 14741,
+      "data": {
+        "top_prediction_markets": [
+          {
+            "platform": "Polymarket",
+            "title": "Khamenei out as Supreme Leader of Iran by February 28?",
+            "volume24h": 62854217.92295744,
+            "url": "https://polymarket.com/event/khamenei-out-as-supreme-leader-of-iran-by-february-28",
+            "price": "99.9¢"
+          },
+          {
+            "platform": "Polymarket",
+            "title": "Khamenei out as Supreme Leader of Iran by March 31?",
+            "volume24h": 30570126.801371016,
+            "url": "https://polymarket.com/event/khamenei-out-as-supreme-leader-of-iran-by-march-31",
+            "price": "99.9¢"
+          },
+          {
+            "platform": "Polymarket",
+            "title": "2026 FIFA World Cup Winner ",
+            "volume24h": 7806679.0710660005,
+            "url": "https://polymarket.com/event/2026-fifa-world-cup-winner-595",
+            "price": "14.9¢"
+          },
+          {
+            "platform": "Polymarket",
+            "title": "Who will Trump nominate as Fed Chair?",
+            "volume24h": 7151506.206062996,
+            "url": "https://polymarket.com/event/who-will-trump-nominate-as-fed-chair",
+            "price": "93.3¢"
+          },
+          {
+            "platform": "Polymarket",
+            "title": "Fed decision in March?",
+            "volume24h": 5747363.170155005,
+            "url": "https://polymarket.com/event/fed-decision-in-march-885",
+            "price": "0.5¢"
+          }
+        ],
+        "note": "Volume is based on the last 24 hours of trading activity."
+      },
+      "developerTrace": {
+        "summary": {
+          "toolCalls": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 0
+        },
+        "timeline": [
+          {
+            "stepType": "orchestration",
+            "event": "query-start",
+            "status": "ok",
+            "message": "Query orchestration started",
+            "timestampMs": 1772368115599,
+            "metadata": {
+              "requestId": "2167a61f-8692-41bc-bac8-ac4663c85542",
+              "queryDepth": "deep"
+            }
+          },
+          {
+            "stepType": "planning",
+            "event": "planner-generated-code",
+            "status": "ok",
+            "timestampMs": 1772368115600,
+            "metadata": {
+              "initialCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  // We'll fetch the top 5 markets by 24h volume from Polymarket and Kalshi\n  // and then merge them to see the top 5 across both platforms.\n\n  const polymarketId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n  const kalshiId = \"5cc326fb-500d-4c17-bc5f-ade143210636\";\n\n  const responses = await Promise.allSettled([\n    callMcpSkill({\n      toolId: polymarketId,\n      toolName: \"get_top_markets\",\n      args: { sortBy: \"volume\", limit: 10 }\n    }),\n    callMcpSkill({\n      toolId: kalshiId,\n      toolName: \"discover_trending_markets\",\n      args: { sortBy: \"volume_24h\", limit: 10 }\n    })\n  ]);\n\n  const polyData = responses[0].status === \"fulfilled\" ? responses[0].value.markets : [];\n  const kalshiData = responses[1].status === \"fulfilled\" ? responses[1].value.trendingMarkets : [];\n\n  const combined = [\n    ...polyData.map(m => ({\n      platform: \"Polymarket\",\n      title: m.title,\n      volume24h: m.volume24h,\n      url: m.url,\n      price: m.currentPrice ? (m.currentPrice * 100).toFixed(1) + \"¢\" : \"N/A\"\n    })),\n    ...kalshiData.map(m => ({\n      platform: \"Kalshi\",\n      title: m.title,\n      volume24h: m.volume24h,\n      url: m.url,\n      price: m.yesPrice ? m.yesPrice + \"¢\" : \"N/A\"\n    }))\n  ];\n\n  // Sort by 24h volume descending and take top 5\n  const top5 = combined\n    .filter(m => typeof m.volume24h === 'number')\n    .sort((a, b) => b.volume24h - a.volume24h)\n    .slice(0, 5);\n\n  return {\n    top_prediction_markets: top5,\n    note: \"Volume is based on the last 24 hours of trading activity.\"\n  };\n}",
+              "finalCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  // We'll fetch the top 5 markets by 24h volume from Polymarket and Kalshi\n  // and then merge them to see the top 5 across both platforms.\n\n  const polymarketId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n  const kalshiId = \"5cc326fb-500d-4c17-bc5f-ade143210636\";\n\n  const responses = await Promise.allSettled([\n    callMcpSkill({\n      toolId: polymarketId,\n      toolName: \"get_top_markets\",\n      args: { sortBy: \"volume\", limit: 10 }\n    }),\n    callMcpSkill({\n      toolId: kalshiId,\n      toolName: \"discover_trending_markets\",\n      args: { sortBy: \"volume_24h\", limit: 10 }\n    })\n  ]);\n\n  const polyData = responses[0].status === \"fulfilled\" ? responses[0].value.markets : [];\n  const kalshiData = responses[1].status === \"fulfilled\" ? responses[1].value.trendingMarkets : [];\n\n  const combined = [\n    ...polyData.map(m => ({\n      platform: \"Polymarket\",\n      title: m.title,\n      volume24h: m.volume24h,\n      url: m.url,\n      price: m.currentPrice ? (m.currentPrice * 100).toFixed(1) + \"¢\" : \"N/A\"\n    })),\n    ...kalshiData.map(m => ({\n      platform: \"Kalshi\",\n      title: m.title,\n      volume24h: m.volume24h,\n      url: m.url,\n      price: m.yesPrice ? m.yesPrice + \"¢\" : \"N/A\"\n    }))\n  ];\n\n  // Sort by 24h volume descending and take top 5\n  const top5 = combined\n    .filter(m => typeof m.volume24h === 'number')\n    .sort((a, b) => b.volume24h - a.volume24h)\n    .slice(0, 5);\n\n  return {\n    top_prediction_markets: top5,\n    note: \"Volume is based on the last 24 hours of trading activity.\"\n  };\n}"
+            }
+          },
+          {
+            "stepType": "execution-attempt",
+            "event": "initial",
+            "status": "success",
+            "timestampMs": 1772368115609,
+            "attempt": 1,
+            "metadata": {
+              "codeSnippet": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  // We'll fetch the top 5 markets by 24h volume from Polymarket and Kalshi\n  // and then merge them to see the top 5 across both platforms.\n\n  const polymarketId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n  const kalshiId = \"5cc326fb-500d-4c17-bc5f-ade143210636\";\n\n  const responses = await Promise.allSettled([\n    callMcpSkill({\n      toolId: polymarketId,\n      toolName: \"get_top_markets\",\n      args: { sortBy: \"volume\", limit: 10 }\n    }),\n    callMcpSkill({\n      toolId: kalshiId,\n      toolName: \"discover_trending_markets\",\n      args: { sortBy: \"volume_24h\", limit: 10 }\n    })\n  ]);\n\n  const polyData = responses[0].status === \"fulfilled\" ? responses[0].value.markets : [];\n  const kalshiData = responses[1].status === \"fulfilled\" ? responses[1].value.trendingMarkets : [];\n\n  const combined = [\n    ...polyData.map(m => ({\n      platform: \"Polymarket\",\n      title: m.title,\n      volume24h: m.volume24h,\n      url: m.url,\n      price: m.currentPrice ? (m.currentPrice * 100).toFixed(1) + \"¢\" : \"N/A\"\n    })),\n    ...kalshiData.map(m => ({\n      platform: \"Kalshi\",\n      title: m.title,\n      volume24h: m.volume24h,\n      url: m.url,\n      price: m.yesPrice ? m.yesPrice + \"¢\" : \"N/A\"\n    }))\n  ];\n\n  // Sort by 24h volume descending and take top 5\n  const top5 = combined\n    .filter(m => typeof m.volume24h === 'number')\n    .sort((a, b) => b.volume24h - a.volume24h)\n    .slice(0, 5);\n\n  return {\n    top_prediction_markets: top5,\n    note: \"Volume is based on the last 24 hours of trading activity.\"\n  };\n}"
+            }
+          },
+          {
+            "stepType": "tool-call",
+            "event": "tool-call",
+            "status": "success",
+            "timestampMs": 1772368116599,
+            "tool": {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "get_top_markets"
+            },
+            "metadata": {
+              "args": {
+                "sortBy": "volume",
+                "limit": 10
+              },
+              "result": {
+                "truncated": true,
+                "preview": "{\"sortedBy\":\"volume\",\"markets\":[{\"rank\":1,\"title\":\"Khamenei out as Supreme Leader of Iran by February 28?\",\"url\":\"https://polymarket.com/event/khamenei-out-as-supreme-leader-of-iran-by-february-28\",\"slug\":\"khamenei-out-as-supreme-leader-of-iran-by-february-28\",\"conditionId\":\"0xd4bbf7f6707c67beb736135ad32a41f6db41f8ae52d3ac4919650de9eeb94ed8\",\"currentPrice\":0.9985,\"volume24h\":62854217.92295744,\"totalVolume\":82801019.682194,\"liquidity\":5572002.35772,\"endDate\":\"2026-02-28T00:00:00Z\",\"category\":\"other\"},{\"rank\":2,\"title\":\"Khamenei out as Supreme Leader of Iran by March 31?\",\"url\":\"https://polymarket.com/event/khamenei-out-as-supreme-leader-of-iran-by-march-31\",\"slug\":\"khamenei-out-as-supreme-leader-of-iran-by-march-31\",\"conditionId\":\"0x70909f0ba8256a89c301da58812ae47203df54957a07c7f8b10235e877...[truncated]"
+              }
+            }
+          },
+          {
+            "stepType": "tool-call",
+            "event": "tool-call",
+            "status": "success",
+            "timestampMs": 1772368116600,
+            "tool": {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "discover_trending_markets"
+            },
+            "metadata": {
+              "args": {
+                "sortBy": "volume_24h",
+                "limit": 10
+              },
+              "result": {
+                "truncated": true,
+                "preview": "{\"marketSummary\":\"Found 258 active markets. Total 24h volume: $5,770,083.357\",\"trendingMarkets\":[{\"rank\":1,\"title\":\"Will Shane Lowry win the Cognizant Classic in The Palm Beaches?\",\"ticker\":\"KXPGATOUR-COCITPB26-SLOW\",\"eventTicker\":\"KXPGATOUR-COCITPB26\",\"url\":\"https://kalshi.com/markets/kxpgatour-cocitpb26\",\"yesPrice\":39,\"noPrice\":62,\"volume24h\":841908,\"volume\":1974434,\"openInterest\":1175980,\"liquidity\":0,\"category\":\"Unknown\",\"closeTime\":\"2026-03-15T00:00:00Z\",\"status\":\"active\"},{\"rank\":2,\"title\":\"Zimbabwe vs South Africa Winner?\",\"ticker\":\"KXT20MATCH-26MAR01SAZIM-ZIM\",\"eventTicker\":\"KXT20MATCH-26MAR01SAZIM\",\"url\":\"https://kalshi.com/markets/kxt20match\",\"yesPrice\":5,\"noPrice\":97,\"volume24h\":716224,\"volume\":895202,\"openInterest\":588675,\"liquidity\":0,\"category\":\"Unknown\",\"closeTime\":\"2026-03-...[truncated]"
+              }
+            }
+          },
+          {
+            "stepType": "orchestration",
+            "event": "query-complete",
+            "status": "success",
+            "timestampMs": 1772368117601,
+            "metadata": {
+              "durationMs": 14741,
+              "executionOk": true
+            }
+          }
+        ],
+        "requestId": "2167a61f-8692-41bc-bac8-ac4663c85542",
+        "query": "What are the top 5 prediction markets by volume right now?",
+        "source": "backend-runtime"
+      }
+    }
+  }
+}

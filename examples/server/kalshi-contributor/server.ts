@@ -1679,6 +1679,62 @@ DATA FLOW:
   },
 
   {
+    name: "get_series",
+    description: `📊 DISCOVERY ALIAS: Resolve one series by ticker, or list series with optional filters.
+
+Compatibility method for planners that call "get_series" directly.
+- If seriesTicker is provided: returns exactly one series record when found.
+- Otherwise: behaves like get_all_series with category/tags/limit filters.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        seriesTicker: {
+          type: "string",
+          description: "Exact series ticker to resolve (e.g., 'KXBTCMAXY').",
+        },
+        category: {
+          type: "string",
+          description: "Filter by category when listing series.",
+        },
+        tags: {
+          type: "string",
+          description: "Filter by tags when listing series (comma-separated).",
+        },
+        limit: {
+          type: "number",
+          description: "Max results when listing series (default: 100).",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        series: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              ticker: { type: "string" },
+              title: { type: "string" },
+              category: { type: "string" },
+              tags: { type: "array", items: { type: "string" } },
+              frequency: { type: "string" },
+            },
+          },
+        },
+        totalCount: { type: "number" },
+        warning: {
+          type: "string",
+          description: "Optional non-fatal warning when response is degraded or empty.",
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["series", "totalCount"],
+    },
+  },
+
+  {
     name: "browse_category",
     description: `🔍 BROWSE: Get all markets within a specific category.
 
@@ -1845,6 +1901,7 @@ const RAW_DATA_TOOLS = new Set([
 const DISCOVERY_TOOLS = new Set([
   "get_all_categories",
   "get_all_series",
+  "get_series",
   "browse_category",
   "browse_series",
 ]);
@@ -1858,6 +1915,7 @@ const HEAVY_QUERY_TOOLS = new Set([
   "browse_category",
   "browse_series",
   "get_all_series",
+  "get_series",
 ]);
 
 const EXECUTE_PRICE_DEFAULT = process.env.DEFAULT_EXECUTE_USD || "0.001";
@@ -1985,6 +2043,8 @@ server.setRequestHandler(
           return await handleGetAllCategories(args);
         case "get_all_series":
           return await handleGetAllSeries(args);
+        case "get_series":
+          return await handleGetSeries(args);
         case "browse_category":
           return await handleBrowseCategory(args);
         case "browse_series":
@@ -2337,8 +2397,8 @@ async function handleDiscoverTrendingMarkets(
   const sortBy = (args?.sortBy as string) || "volume_24h";
   const limit = Math.min((args?.limit as number) || 20, 100);
 
-  // Fetch more markets if filtering by category to ensure we have enough after filtering
-  const fetchLimit = category ? limit * 3 : limit;
+  // Fetch a broad pool so ranking/filtering has enough candidates before fallback enrichment.
+  const fetchLimit = Math.min(Math.max(limit * 5, 200), 1000);
   let endpoint = `/markets?limit=${fetchLimit}&status=open`;
   if (category) {
     endpoint += `&category=${encodeURIComponent(category)}`;
@@ -2346,6 +2406,145 @@ async function handleDiscoverTrendingMarkets(
 
   const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
   let markets = response.markets || [];
+
+  // In Kalshi's public elections endpoint, market volume fields can be zeroed even when
+  // there is meaningful live trade flow. When detected, derive "recent activity" from
+  // the global trades feed so "most actively traded right now" stays relevant.
+  type ActivitySnapshot = {
+    contractsTraded: number;
+    notionalUsd: number;
+    lastTradeTime: string;
+  };
+  const activityByTicker = new Map<string, ActivitySnapshot>();
+  const allVolume24hZero = markets.every(
+    (marketItem) => Number(marketItem.volume_24h || 0) <= 0
+  );
+  const allVolumeZero = markets.every(
+    (marketItem) => Number(marketItem.volume || 0) <= 0
+  );
+  const needsTradeFallback =
+    (sortBy === "volume_24h" && allVolume24hZero) ||
+    (sortBy === "volume" && allVolumeZero) ||
+    (sortBy !== "volume_24h" && sortBy !== "volume" && allVolume24hZero && allVolumeZero);
+
+  if (needsTradeFallback) {
+    let cursor: string | undefined;
+    const maxTradePages = 3;
+    const tradePageSize = 500;
+
+    for (let page = 0; page < maxTradePages; page += 1) {
+      let tradesEndpoint = `/markets/trades?status=open&limit=${tradePageSize}`;
+      if (cursor) {
+        tradesEndpoint += `&cursor=${encodeURIComponent(cursor)}`;
+      }
+
+      const tradeResponse = (await fetchKalshi(tradesEndpoint)) as {
+        trades?: KalshiTrade[];
+        cursor?: string;
+        next_cursor?: string;
+      };
+      const trades = Array.isArray(tradeResponse.trades) ? tradeResponse.trades : [];
+      if (trades.length === 0) {
+        break;
+      }
+
+      for (const trade of trades) {
+        if (!trade.ticker) {
+          continue;
+        }
+
+        const contracts = Number(trade.count || 0);
+        const price = Number(
+          trade.price ||
+            trade.yes_price ||
+            trade.no_price ||
+            0
+        );
+        const notionalUsd = contracts > 0 && price > 0 ? (contracts * price) / 100 : 0;
+        const existing = activityByTicker.get(trade.ticker);
+        if (!existing) {
+          activityByTicker.set(trade.ticker, {
+            contractsTraded: contracts,
+            notionalUsd,
+            lastTradeTime: trade.created_time || trade.timestamp?.toString() || "",
+          });
+          continue;
+        }
+
+        existing.contractsTraded += contracts;
+        existing.notionalUsd += notionalUsd;
+        if ((trade.created_time || "") > existing.lastTradeTime) {
+          existing.lastTradeTime = trade.created_time || existing.lastTradeTime;
+        }
+      }
+
+      const nextCursor = tradeResponse.cursor || tradeResponse.next_cursor;
+      if (!nextCursor || nextCursor === cursor) {
+        break;
+      }
+      cursor = nextCursor;
+    }
+
+    if (activityByTicker.size > 0) {
+      const maxTickerHydration = Math.min(Math.max(limit * 6, 60), 240);
+      const topActivityTickers = [...activityByTicker.entries()]
+        .sort(
+          (left, right) =>
+            right[1].notionalUsd - left[1].notionalUsd ||
+            right[1].contractsTraded - left[1].contractsTraded
+        )
+        .slice(0, maxTickerHydration)
+        .map(([ticker]) => ticker);
+
+      const hydratedMarkets: KalshiMarket[] = [];
+      const chunkSize = 25;
+      for (let index = 0; index < topActivityTickers.length; index += chunkSize) {
+        const chunk = topActivityTickers.slice(index, index + chunkSize);
+        if (chunk.length === 0) {
+          continue;
+        }
+
+        try {
+          const byTickersResponse = (await fetchKalshi(
+            `/markets?status=open&limit=${chunk.length}&tickers=${encodeURIComponent(chunk.join(","))}`
+          )) as { markets?: KalshiMarket[] };
+          if (Array.isArray(byTickersResponse.markets)) {
+            hydratedMarkets.push(...byTickersResponse.markets);
+            continue;
+          }
+        } catch {
+          // Fallback below fetches ticker-by-ticker when bulk tickers filter is unavailable.
+        }
+
+        const settled = await Promise.allSettled(
+          chunk.map(async (ticker) => {
+            const marketResponse = (await fetchKalshi(`/markets/${ticker}`)) as {
+              market?: KalshiMarket;
+            };
+            return marketResponse.market;
+          })
+        );
+        for (const item of settled) {
+          if (item.status === "fulfilled" && item.value) {
+            hydratedMarkets.push(item.value);
+          }
+        }
+      }
+
+      if (hydratedMarkets.length > 0) {
+        const mergedByTicker = new Map<string, KalshiMarket>();
+        for (const market of hydratedMarkets) {
+          mergedByTicker.set(market.ticker, market);
+        }
+        for (const market of markets) {
+          if (!mergedByTicker.has(market.ticker)) {
+            mergedByTicker.set(market.ticker, market);
+          }
+        }
+        markets = [...mergedByTicker.values()];
+      }
+    }
+  }
 
   // IMPROVED CATEGORY FILTERING: If category is specified, also filter by keywords
   // This handles cases where Kalshi's category filter doesn't work as expected
@@ -2371,36 +2570,69 @@ async function handleDiscoverTrendingMarkets(
 
   // Sort by the requested metric
   const sorted = markets.sort((a, b) => {
+    const tradeActivityA = activityByTicker.get(a.ticker);
+    const tradeActivityB = activityByTicker.get(b.ticker);
+    const fallbackVolumeA = tradeActivityA?.notionalUsd || 0;
+    const fallbackVolumeB = tradeActivityB?.notionalUsd || 0;
+    const fallbackContractsA = tradeActivityA?.contractsTraded || 0;
+    const fallbackContractsB = tradeActivityB?.contractsTraded || 0;
+    const effectiveVolumeA =
+      Number(a.volume || 0) > 0 ? Number(a.volume || 0) : fallbackVolumeA;
+    const effectiveVolumeB =
+      Number(b.volume || 0) > 0 ? Number(b.volume || 0) : fallbackVolumeB;
+    const effectiveVolume24hA =
+      Number(a.volume_24h || 0) > 0 ? Number(a.volume_24h || 0) : fallbackVolumeA;
+    const effectiveVolume24hB =
+      Number(b.volume_24h || 0) > 0 ? Number(b.volume_24h || 0) : fallbackVolumeB;
+
     switch (sortBy) {
       case "volume":
-        return (b.volume || 0) - (a.volume || 0);
+        return effectiveVolumeB - effectiveVolumeA;
       case "volume_24h":
-        return (b.volume_24h || 0) - (a.volume_24h || 0);
+        return (
+          effectiveVolume24hB - effectiveVolume24hA ||
+          fallbackContractsB - fallbackContractsA
+        );
       case "liquidity":
         return (b.liquidity || 0) - (a.liquidity || 0);
       case "open_interest":
         return (b.open_interest || 0) - (a.open_interest || 0);
       default:
-        return (b.volume_24h || 0) - (a.volume_24h || 0);
+        return (
+          effectiveVolume24hB - effectiveVolume24hA ||
+          fallbackContractsB - fallbackContractsA
+        );
     }
   });
 
-  const trendingMarkets = sorted.map((m, idx) => ({
-    rank: idx + 1,
-    title: m.title || m.yes_sub_title || m.ticker,
-    ticker: m.ticker,
-    eventTicker: m.event_ticker,
-    url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
-    yesPrice: (m.yes_ask || m.last_price || 0),
-    noPrice: (m.no_ask || (100 - (m.yes_ask || m.last_price || 50))),
-    volume24h: m.volume_24h || 0,
-    volume: m.volume || 0,
-    openInterest: m.open_interest || 0,
-    liquidity: m.liquidity || 0,
-    category: m.category || "Unknown",
-    closeTime: m.close_time || "",
-    status: m.status || "open",
-  }));
+  const trendingMarkets = sorted.map((m, idx) => {
+    const tradeActivity = activityByTicker.get(m.ticker);
+    const derivedVolume24h =
+      Number(m.volume_24h || 0) > 0
+        ? Number(m.volume_24h || 0)
+        : Number(tradeActivity?.notionalUsd || 0);
+    const derivedVolume =
+      Number(m.volume || 0) > 0
+        ? Number(m.volume || 0)
+        : Number(tradeActivity?.contractsTraded || 0);
+
+    return {
+      rank: idx + 1,
+      title: m.title || m.yes_sub_title || m.ticker,
+      ticker: m.ticker,
+      eventTicker: m.event_ticker,
+      url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
+      yesPrice: (m.yes_ask || m.last_price || 0),
+      noPrice: (m.no_ask || (100 - (m.yes_ask || m.last_price || 50))),
+      volume24h: derivedVolume24h,
+      volume: derivedVolume,
+      openInterest: m.open_interest || 0,
+      liquidity: m.liquidity || 0,
+      category: m.category || "Unknown",
+      closeTime: m.close_time || "",
+      status: m.status || "open",
+    };
+  });
 
   const totalVolume = trendingMarkets.reduce((sum, m) => sum + m.volume24h, 0);
   const marketSummary = `Found ${trendingMarkets.length} active markets${category ? ` in ${category}` : ""}. Total 24h volume: $${totalVolume.toLocaleString()}`;
@@ -2409,6 +2641,16 @@ async function handleDiscoverTrendingMarkets(
     marketSummary,
     trendingMarkets,
     totalActive: markets.length,
+    activitySource:
+      needsTradeFallback && activityByTicker.size > 0
+        ? "derived_from_recent_trades"
+        : "market_snapshot_fields",
+    tradeSnapshot: {
+      tickersWithRecentTrades: activityByTicker.size,
+      allVolume24hZero,
+      allVolumeZero,
+      usedTradeFallback: needsTradeFallback,
+    },
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -2439,62 +2681,180 @@ async function handleAnalyzeMarketLiquidity(
       throw error;
     }
 
-    const searchResponse = (await fetchKalshi(
-      "/markets?status=open&limit=500"
-    )) as { markets?: KalshiMarket[] };
-    const candidates = Array.isArray(searchResponse.markets)
-      ? searchResponse.markets
-      : [];
     const normalizedTicker = requestedTicker.toLowerCase();
     const tickerWithoutSymbols = normalizedTicker.replace(/[^a-z0-9]/g, "");
     const looksLikeBitcoinAlias =
       normalizedTicker.includes("bitcoin") || normalizedTicker.includes("btc");
 
-    const matching = candidates
-      .filter((marketCandidate) => {
-        const candidateTicker = marketCandidate.ticker.toLowerCase();
-        const candidateSeries = getSeriesTicker(marketCandidate.event_ticker);
-        const candidateEvent = marketCandidate.event_ticker.toLowerCase();
-        const candidateTitle = `${marketCandidate.title || ""} ${
-          marketCandidate.subtitle || ""
-        } ${marketCandidate.yes_sub_title || ""}`.toLowerCase();
-        const candidateTickerCompact = candidateTicker.replace(/[^a-z0-9]/g, "");
-        const candidateSeriesCompact = candidateSeries.replace(/[^a-z0-9]/g, "");
-        const candidateEventCompact = candidateEvent.replace(/[^a-z0-9]/g, "");
+    const scoreMarketCandidate = (marketCandidate: KalshiMarket): number => {
+      const candidateTicker = marketCandidate.ticker.toLowerCase();
+      const candidateSeries = getSeriesTicker(marketCandidate.event_ticker);
+      const candidateEvent = marketCandidate.event_ticker.toLowerCase();
+      const candidateTitle = `${marketCandidate.title || ""} ${
+        marketCandidate.subtitle || ""
+      } ${marketCandidate.yes_sub_title || ""}`.toLowerCase();
+      const candidateTickerCompact = candidateTicker.replace(/[^a-z0-9]/g, "");
+      const candidateSeriesCompact = candidateSeries.replace(/[^a-z0-9]/g, "");
+      const candidateEventCompact = candidateEvent.replace(/[^a-z0-9]/g, "");
 
+      let score = 0;
+      if (candidateTicker === normalizedTicker) {
+        score += 1000;
+      }
+      if (candidateTickerCompact === tickerWithoutSymbols) {
+        score += 850;
+      }
+      if (candidateTickerCompact.startsWith(tickerWithoutSymbols)) {
+        score += 450;
+      }
+      if (candidateTickerCompact.includes(tickerWithoutSymbols)) {
+        score += 350;
+      }
+      if (candidateSeriesCompact.includes(tickerWithoutSymbols)) {
+        score += 300;
+      }
+      if (candidateEventCompact.includes(tickerWithoutSymbols)) {
+        score += 250;
+      }
+      if (
+        tickerWithoutSymbols.length >= 4 &&
+        tickerWithoutSymbols.includes(candidateSeriesCompact)
+      ) {
+        score += 120;
+      }
+
+      if (looksLikeBitcoinAlias) {
+        if (candidateTicker.includes("btc")) {
+          score += 260;
+        }
+        if (candidateTitle.includes("bitcoin") || candidateTitle.includes("btc")) {
+          score += 200;
+        }
+      }
+
+      return score;
+    };
+
+    const matching: Array<{ market: KalshiMarket; score: number }> = [];
+    const maxPages = 25;
+    const pageSize = 200;
+    let foundHighConfidence = false;
+    const statusFilters = ["open", ""] as const;
+
+    for (const statusFilter of statusFilters) {
+      let cursor: string | undefined;
+      for (let page = 0; page < maxPages; page += 1) {
+        let endpoint = `/markets?limit=${pageSize}`;
+        if (statusFilter.length > 0) {
+          endpoint += `&status=${statusFilter}`;
+        }
+        if (cursor) {
+          endpoint += `&cursor=${encodeURIComponent(cursor)}`;
+        }
+        const searchResponse = (await fetchKalshi(endpoint)) as {
+          markets?: KalshiMarket[];
+          cursor?: string;
+          next_cursor?: string;
+        };
+        const candidates = Array.isArray(searchResponse.markets)
+          ? searchResponse.markets
+          : [];
+
+        for (const candidate of candidates) {
+          const score = scoreMarketCandidate(candidate);
+          if (score <= 0) {
+            continue;
+          }
+          matching.push({ market: candidate, score });
+          if (score >= 850) {
+            foundHighConfidence = true;
+          }
+        }
+
+        const nextCursor = searchResponse.next_cursor || searchResponse.cursor;
+        if (!nextCursor || nextCursor === cursor) {
+          break;
+        }
+        cursor = nextCursor;
+
+        if (foundHighConfidence && page >= 2) {
+          break;
+        }
+      }
+
+      if (foundHighConfidence) {
+        break;
+      }
+    }
+
+    matching.sort(
+      (left, right) =>
+        right.score - left.score ||
+        (right.market.volume_24h || 0) - (left.market.volume_24h || 0) ||
+        (right.market.liquidity || 0) - (left.market.liquidity || 0)
+    );
+
+    let resolvedTicker = matching.at(0)?.market.ticker;
+    if (!resolvedTicker) {
+      try {
+        const normalizedRequestedTicker = requestedTicker.toLowerCase();
+        const strippedTickerWord = normalizedRequestedTicker
+          .replace(/^kx/, "")
+          .replace(/[^a-z]/g, "");
+        const queryCandidates = new Set<string>([requestedTicker]);
+        if (strippedTickerWord.length >= 3) {
+          queryCandidates.add(strippedTickerWord);
+        }
         if (
-          candidateTicker === normalizedTicker ||
-          candidateTickerCompact.includes(tickerWithoutSymbols) ||
-          candidateSeriesCompact.includes(tickerWithoutSymbols) ||
-          candidateEventCompact.includes(tickerWithoutSymbols)
+          normalizedRequestedTicker.includes("btc") ||
+          normalizedRequestedTicker.includes("bitcoin")
         ) {
-          return true;
+          queryCandidates.add("bitcoin");
+        }
+        if (
+          normalizedRequestedTicker.includes("eth") ||
+          normalizedRequestedTicker.includes("ethereum")
+        ) {
+          queryCandidates.add("ethereum");
         }
 
-        if (looksLikeBitcoinAlias) {
-          return (
-            candidateTicker.includes("btc") ||
-            candidateTitle.includes("bitcoin") ||
-            candidateTitle.includes("btc")
+        for (const candidateQuery of queryCandidates) {
+          const searchResult = await handleSearchMarkets({
+            query: candidateQuery,
+            status: "open",
+            limit: 20,
+          });
+          if (searchResult.isError) {
+            continue;
+          }
+          const firstTextBlock = searchResult.content.find(
+            (item): item is { type: "text"; text: string } =>
+              item.type === "text"
           );
+          if (!firstTextBlock?.text) {
+            continue;
+          }
+          const parsed = JSON.parse(firstTextBlock.text) as {
+            results?: Array<{ ticker?: unknown }>;
+          };
+          const candidateTicker = parsed.results?.at(0)?.ticker;
+          if (typeof candidateTicker === "string" && candidateTicker.length > 0) {
+            resolvedTicker = candidateTicker;
+            break;
+          }
         }
+      } catch {
+        // Keep the original not-found error if search fallback also fails.
+      }
+    }
 
-        return false;
-      })
-      .sort(
-        (a, b) =>
-          (b.volume_24h || 0) - (a.volume_24h || 0) ||
-          (b.liquidity || 0) - (a.liquidity || 0)
-      );
-
-    const bestMatch = matching.at(0);
-    if (!bestMatch) {
+    if (!resolvedTicker) {
       return errorResult(
         `Market '${requestedTicker}' not found. Use discover_trending_markets or search_markets first, then pass an exact ticker to analyze_market_liquidity.`
       );
     }
 
-    ticker = bestMatch.ticker;
+    ticker = resolvedTicker;
     resolvedFrom = `search:${requestedTicker}->${ticker}`;
     [marketRes, orderbookRes] = await Promise.all([
       fetchKalshi(`/markets/${ticker}`) as Promise<{ market: KalshiMarket }>,
@@ -4497,6 +4857,56 @@ async function handleGetAllSeries(
   });
 }
 
+async function handleGetSeries(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const seriesTickerRaw = args?.seriesTicker ?? args?.series_ticker;
+  const seriesTicker =
+    typeof seriesTickerRaw === "string" ? seriesTickerRaw.trim() : "";
+
+  if (seriesTicker.length > 0) {
+    try {
+      const response = (await fetchKalshi(
+        `/series/${encodeURIComponent(seriesTicker)}`
+      )) as { series?: KalshiSeries };
+      const seriesRecord = response.series;
+      if (!seriesRecord) {
+        return successResult({
+          series: [],
+          totalCount: 0,
+          warning: `Series '${seriesTicker}' was not found.`,
+          fetchedAt: new Date().toISOString(),
+        });
+      }
+
+      return successResult({
+        series: [
+          {
+            ticker: seriesRecord.ticker,
+            title: seriesRecord.title || seriesRecord.ticker,
+            category: seriesRecord.category || "Unknown",
+            tags: seriesRecord.tags || [],
+            frequency: seriesRecord.frequency || "unknown",
+          },
+        ],
+        totalCount: 1,
+        fetchedAt: new Date().toISOString(),
+      });
+    } catch (error) {
+      return successResult({
+        series: [],
+        totalCount: 0,
+        warning: `Series lookup failed for '${seriesTicker}': ${
+          error instanceof Error ? error.message : "unknown error"
+        }`,
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+  }
+
+  return handleGetAllSeries(args);
+}
+
 async function handleBrowseCategory(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
@@ -4666,6 +5076,6 @@ app.listen(PORT, () => {
   console.log("   Tier 1 (Intelligence): 7 tools");
   console.log("   Cross-platform: 1 tool");
   console.log("   Tier 2 (Raw Data): 11 tools (includes get_markets + event candlesticks)");
-  console.log("   Discovery Layer: 4 tools");
+  console.log("   Discovery Layer: 5 tools");
 });
 

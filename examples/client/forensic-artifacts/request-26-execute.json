@@ -1,0 +1,117 @@
+{
+  "request": {
+    "endpoint": "/api/v1/tools/execute",
+    "method": "POST",
+    "idempotencyKey": "75142c35-0215-4feb-906b-0d9c6abdec6f",
+    "body": {
+      "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+      "toolName": "get_top_markets",
+      "args": {
+        "limit": 1
+      },
+      "mode": "execute",
+      "sessionId": "aa8eec9f-f395-4c2c-920d-031565ec1ad4",
+      "closeSession": false
+    }
+  },
+  "sessionBefore": {
+    "mode": "execute",
+    "sessionId": "aa8eec9f-f395-4c2c-920d-031565ec1ad4",
+    "methodPrice": "0",
+    "spent": "0.001000",
+    "remaining": "0.049",
+    "maxSpend": "0.050000",
+    "status": "open",
+    "expiresAt": "2026-03-01T12:58:38.048Z",
+    "closeRequested": false
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "cache-control": "public, max-age=0, must-revalidate",
+      "content-encoding": "br",
+      "content-security-policy-report-only": "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://cdn.jsdelivr.net ; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://avatar.vercel.sh https://*.public.blob.vercel-storage.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; child-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org; frame-src https://auth.privy.io https://verify.walletconnect.com https://verify.walletconnect.org https://challenges.cloudflare.com; connect-src 'self' https://auth.privy.io https://*.rpc.privy.systems wss://relay.walletconnect.com wss://relay.walletconnect.org wss://www.walletlink.org https://explorer-api.walletconnect.com https://*.infura.io https://api.developer.coinbase.com https://*.public.blob.vercel-storage.com https://api.moonshot.ai https://generativelanguage.googleapis.com https://api.anthropic.com https://openrouter.ai https://api.hyperliquid.xyz https://data-api.polymarket.com https://clob.polymarket.com https://polygon-rpc.com https://api.open-meteo.com https://geocoding-api.open-meteo.com ; worker-src 'self' https://cdn.jsdelivr.net; manifest-src 'self'",
+      "content-type": "application/json",
+      "date": "Sun, 01 Mar 2026 12:38:40 GMT",
+      "server": "Vercel",
+      "strict-transport-security": "max-age=63072000",
+      "transfer-encoding": "chunked",
+      "vary": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Next-Router-Segment-Prefetch",
+      "x-matched-path": "/api/v1/tools/execute",
+      "x-vercel-cache": "MISS",
+      "x-vercel-id": "hkg1::iad1::4xhh8-1772368719537-25d2a5bc9bcb"
+    },
+    "rawBody": "{\"success\":true,\"mode\":\"execute\",\"result\":{\"sortedBy\":\"total_volume\",\"markets\":[{\"rank\":1,\"title\":\"Democratic Presidential Nominee 2028\",\"url\":\"https://polymarket.com/event/democratic-presidential-nominee-2028\",\"slug\":\"democratic-presidential-nominee-2028\",\"conditionId\":\"0xc8f1cf5d4f26e0fd9c8fe89f2a7b3263b902cf14fde7bfccef525753bb492e47\",\"currentPrice\":0.0165,\"volume24h\":5100012.608907,\"totalVolume\":736112601.552739,\"liquidity\":38383764.85363,\"endDate\":\"2028-11-07T00:00:00Z\",\"category\":\"other\"}],\"summary\":\"Top 1 markets by ALL-TIME volume. #1: $736.1M. Combined: $736.1M.\",\"pagination\":{\"offset\":0,\"returned\":1,\"hasMore\":true,\"nextOffset\":20,\"scannedToOffset\":20,\"pagesScanned\":1},\"searchExhausted\":false,\"filtersApplied\":{\"includeNearResolved\":true},\"fetchedAt\":\"2026-03-01T12:38:40.367Z\"},\"tool\":{\"id\":\"294100e8-c648-4e5f-a254-95a14b56e398\",\"name\":\"Polymarket\"},\"method\":{\"name\":\"get_top_markets\",\"executePriceUsd\":\"0.001\"},\"session\":{\"mode\":\"execute\",\"sessionId\":\"aa8eec9f-f395-4c2c-920d-031565ec1ad4\",\"methodPrice\":\"0.001\",\"spent\":\"0.002000\",\"remaining\":\"0.048\",\"maxSpend\":\"0.050000\",\"status\":\"open\",\"expiresAt\":\"2026-03-01T12:58:38.048Z\",\"closeRequested\":false,\"pendingAccruedCount\":2,\"pendingAccruedUsd\":\"0.002000\"},\"durationMs\":775}",
+    "parsedBody": {
+      "success": true,
+      "mode": "execute",
+      "result": {
+        "sortedBy": "total_volume",
+        "markets": [
+          {
+            "rank": 1,
+            "title": "Democratic Presidential Nominee 2028",
+            "url": "https://polymarket.com/event/democratic-presidential-nominee-2028",
+            "slug": "democratic-presidential-nominee-2028",
+            "conditionId": "0xc8f1cf5d4f26e0fd9c8fe89f2a7b3263b902cf14fde7bfccef525753bb492e47",
+            "currentPrice": 0.0165,
+            "volume24h": 5100012.608907,
+            "totalVolume": 736112601.552739,
+            "liquidity": 38383764.85363,
+            "endDate": "2028-11-07T00:00:00Z",
+            "category": "other"
+          }
+        ],
+        "summary": "Top 1 markets by ALL-TIME volume. #1: $736.1M. Combined: $736.1M.",
+        "pagination": {
+          "offset": 0,
+          "returned": 1,
+          "hasMore": true,
+          "nextOffset": 20,
+          "scannedToOffset": 20,
+          "pagesScanned": 1
+        },
+        "searchExhausted": false,
+        "filtersApplied": {
+          "includeNearResolved": true
+        },
+        "fetchedAt": "2026-03-01T12:38:40.367Z"
+      },
+      "tool": {
+        "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+        "name": "Polymarket"
+      },
+      "method": {
+        "name": "get_top_markets",
+        "executePriceUsd": "0.001"
+      },
+      "session": {
+        "mode": "execute",
+        "sessionId": "aa8eec9f-f395-4c2c-920d-031565ec1ad4",
+        "methodPrice": "0.001",
+        "spent": "0.002000",
+        "remaining": "0.048",
+        "maxSpend": "0.050000",
+        "status": "open",
+        "expiresAt": "2026-03-01T12:58:38.048Z",
+        "closeRequested": false,
+        "pendingAccruedCount": 2,
+        "pendingAccruedUsd": "0.002000"
+      },
+      "durationMs": 775
+    }
+  },
+  "sessionAfter": {
+    "mode": "execute",
+    "sessionId": "aa8eec9f-f395-4c2c-920d-031565ec1ad4",
+    "methodPrice": "0.001",
+    "spent": "0.002000",
+    "remaining": "0.048",
+    "maxSpend": "0.050000",
+    "status": "open",
+    "expiresAt": "2026-03-01T12:58:38.048Z",
+    "closeRequested": false,
+    "pendingAccruedCount": 2,
+    "pendingAccruedUsd": "0.002000"
+  }
+}

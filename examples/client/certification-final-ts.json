@@ -1,0 +1,1134 @@
+{
+  "generatedAt": "2026-03-01T09:29:19.282Z",
+  "evaluationPolicy": {
+    "overallPassRequires": [
+      "execution_success",
+      "relevance_pass",
+      "freshness_pass",
+      "trace_health_pass"
+    ],
+    "freshnessThresholdMinutes": 30,
+    "traceThresholds": {
+      "retryMax": 1,
+      "selfHealMax": 1,
+      "loopMax": 1
+    }
+  },
+  "suites": [
+    {
+      "server": "Polymarket",
+      "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+      "promptCount": 11,
+      "passCount": 6,
+      "failCount": 5,
+      "checkFailures": {
+        "executionFailCount": 0,
+        "relevanceFailCount": 1,
+        "freshnessFailCount": 0,
+        "traceFailCount": 4
+      },
+      "totals": {
+        "costUsd": 0.49758,
+        "durationMs": 231831,
+        "skillCalls": 41,
+        "retryCount": 14,
+        "selfHealCount": 14,
+        "loopCount": 14,
+        "failureCount": 10,
+        "averageDurationMs": 21076
+      },
+      "reports": [
+        {
+          "index": 1,
+          "prompt": "What are the top 5 prediction markets by volume right now?",
+          "server": "Polymarket",
+          "pass": true,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": 4889,
+              "reason": "fresh_within_30m"
+            },
+            "traceHealth": {
+              "pass": true,
+              "failures": []
+            }
+          },
+          "durationMs": 9173,
+          "costUsd": "0.033662",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 1
+            }
+          ],
+          "totalSkillCalls": 1,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 1,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 5
+          },
+          "dataAgeMs": 4889,
+          "responsePreview": "Based on recent data, here are the top 5 prediction markets ranked by 24-hour trading volume:\n\n| Rank | Market Title | 24h Volume | Total Volume |\n| :--- | :--- | :--- | :--- |\n| 1 | Khamenei out as Supreme Leader of Iran by February 28? | $62,854,217.92 | $79,945,424.77 |\n| 2 | Khamenei out as Supreme Leader of Iran by March 31? | $30,570,126.80 | $50,101,168.57 |\n| 3 | 2026 FIFA World Cup Winner",
+          "polyLiveOverlap": {
+            "overlap": 5,
+            "referenceCount": 5
+          }
+        },
+        {
+          "index": 2,
+          "prompt": "Search for markets related to the 2028 presidential election",
+          "server": "Polymarket",
+          "pass": true,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": null,
+              "reason": "not_time_sensitive_and_no_timestamp"
+            },
+            "traceHealth": {
+              "pass": true,
+              "failures": []
+            }
+          },
+          "durationMs": 10690,
+          "costUsd": "0.041336",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 4
+            }
+          ],
+          "totalSkillCalls": 4,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 4,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 8
+          },
+          "dataAgeMs": null,
+          "responsePreview": "There are several active prediction markets for the 2028 US Presidential Election. Based on the current data, here are the primary markets and the leading candidates:\n\n### **2028 Presidential Election Winner**\nThis market has a total volume of approximately $345.8 million.\n\n| Rank | Candidate | Price | Probability |\n| :--- | :--- | :--- | :--- |\n| 1 | JD Vance | $0.2145 | 21.4% |\n| 2 | Gavin Newso"
+        },
+        {
+          "index": 3,
+          "prompt": "How efficient is the pricing on the Trump vs Biden market? Is there arbitrage?",
+          "server": "Polymarket",
+          "pass": false,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": null,
+              "reason": "not_time_sensitive_and_no_timestamp"
+            },
+            "traceHealth": {
+              "pass": false,
+              "failures": [
+                "retry_gt_1:4",
+                "self_heal_gt_1:4",
+                "loop_gt_1:4"
+              ]
+            }
+          },
+          "durationMs": 33303,
+          "costUsd": "0.063905",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 10
+            }
+          ],
+          "totalSkillCalls": 10,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 10,
+            "retryCount": 4,
+            "selfHealCount": 4,
+            "fallbackCount": 0,
+            "failureCount": 3,
+            "recoveryCount": 1,
+            "completionChecks": 2,
+            "loopCount": 4,
+            "timelineLength": 17
+          },
+          "dataAgeMs": null,
+          "responsePreview": "Based on past query data, the \"Presidential Election Winner 2024\" market is currently **inefficient** and **illiquid** because it has already reached a resolved status. \n\n### Market Efficiency & Pricing\nThe market is no longer actively trading in a normal capacity, as it resolved on **November 5, 2024**, with a final total volume of approximately **$3.69 billion**. \n\n| Metric | Value |\n| :--- | :-"
+        },
+        {
+          "index": 4,
+          "prompt": "Analyze whale flow on the Fed rate decision event who are the top holders and what is their cost basis?",
+          "server": "Polymarket",
+          "pass": true,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": null,
+              "reason": "not_time_sensitive_and_no_timestamp"
+            },
+            "traceHealth": {
+              "pass": true,
+              "failures": []
+            }
+          },
+          "durationMs": 18562,
+          "costUsd": "0.036943",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 3
+            }
+          ],
+          "totalSkillCalls": 3,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 3,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 7
+          },
+          "dataAgeMs": null,
+          "responsePreview": "Based on recent data for the **\"Fed decision in March?\"** event, there is a significant imbalance between \"YES\" and \"NO\" holders. Smart money is currently signaling a high-confidence \"NO\" direction, with approximately $7,994,963 in whale positions backing \"NO\" compared to only $21,193 for \"YES.\"\n\n### Top \"NO\" Holders (Whales)\nThese holders show extreme conviction with a shared estimated cost basis"
+        },
+        {
+          "index": 5,
+          "prompt": "Show me markets between 30-70% probability with high volume that might be mispriced",
+          "server": "Polymarket",
+          "pass": false,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": false,
+              "failures": [
+                "degraded_or_incomplete_answer_text"
+              ]
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": null,
+              "reason": "not_time_sensitive_and_no_timestamp"
+            },
+            "traceHealth": {
+              "pass": true,
+              "failures": []
+            }
+          },
+          "durationMs": 33711,
+          "costUsd": "0.021806",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 1
+            }
+          ],
+          "totalSkillCalls": 1,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 0,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 3
+          },
+          "dataAgeMs": null,
+          "responsePreview": "I'm sorry, I cannot provide a list of mispriced markets at this time. The data retrieval tool encountered an error and was unable to fetch the current market statistics for volume and probability."
+        },
+        {
+          "index": 6,
+          "prompt": "Analyze my Polymarket positions which ones have poor exit liquidity?",
+          "server": "Polymarket",
+          "pass": false,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": 3284,
+              "reason": "fresh_within_30m"
+            },
+            "traceHealth": {
+              "pass": false,
+              "failures": [
+                "retry_gt_1:3",
+                "self_heal_gt_1:3",
+                "loop_gt_1:3"
+              ]
+            }
+          },
+          "durationMs": 13215,
+          "costUsd": "0.036798",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 3
+            }
+          ],
+          "totalSkillCalls": 3,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 3,
+            "retryCount": 3,
+            "selfHealCount": 3,
+            "fallbackCount": 0,
+            "failureCount": 2,
+            "recoveryCount": 1,
+            "completionChecks": 1,
+            "loopCount": 3,
+            "timelineLength": 9
+          },
+          "dataAgeMs": 3284,
+          "responsePreview": "Based on your current portfolio data, you have no active Polymarket positions to analyze as of March 1, 2026. \n\nThe analysis for wallets `0x6D046A9f585541755081f0D424e97A924d8B95c8` and `0x64263BCE411e8D7eDBbe3755B952Ab6F4965c803` shows:\n\n*   **Total Positions:** 0\n*   **Total Portfolio Value:** 0\n*   **Risky Positions:** 0\n\nAs there are no open positions, there are currently no liquidity risks to"
+        },
+        {
+          "index": 7,
+          "prompt": "Compare the Polymarket odds vs Kalshi odds on the next Fed meeting outcome",
+          "server": "Polymarket",
+          "pass": false,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": null,
+              "reason": "not_time_sensitive_and_no_timestamp"
+            },
+            "traceHealth": {
+              "pass": false,
+              "failures": [
+                "retry_gt_1:5",
+                "self_heal_gt_1:5",
+                "loop_gt_1:5"
+              ]
+            }
+          },
+          "durationMs": 29388,
+          "costUsd": "0.075382",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 8
+            }
+          ],
+          "totalSkillCalls": 8,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 8,
+            "retryCount": 5,
+            "selfHealCount": 5,
+            "fallbackCount": 0,
+            "failureCount": 4,
+            "recoveryCount": 1,
+            "completionChecks": 5,
+            "loopCount": 5,
+            "timelineLength": 16
+          },
+          "dataAgeMs": null,
+          "responsePreview": "Based on recent data, here are the probabilities for a Federal Reserve rate cut as seen on Polymarket. While Kalshi tracks target rate event contracts, the current data for specific meeting-by-meeting comparisons was only available for Polymarket at this time.\n\n### Polymarket: Probabilities for a Fed Rate Cut\n| Meeting Month | Probability | Price |\n| :--- | :--- | :--- |\n| September Meeting | 86.5"
+        },
+        {
+          "index": 8,
+          "prompt": "Find correlated markets where a move in one should predict a move in another",
+          "server": "Polymarket",
+          "pass": true,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": 4672,
+              "reason": "fresh_within_30m"
+            },
+            "traceHealth": {
+              "pass": true,
+              "failures": []
+            }
+          },
+          "durationMs": 10270,
+          "costUsd": "0.035465",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 4
+            }
+          ],
+          "totalSkillCalls": 4,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 4,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 8
+          },
+          "dataAgeMs": 4672,
+          "responsePreview": "Based on recent analysis of trending geopolitical markets, several strong correlations have been identified where movements in one market may signal shifts in others. Notable correlations are as follows:\n\n### Top Correlated Markets\n\n| Source Market | Correlated Market | Score | Correlation Type |\n| :--- | :--- | :--- | :--- |\n| Will Reza Pahlavi enter Iran by...? | Israel and Syria normalize relat"
+        },
+        {
+          "index": 9,
+          "prompt": "What are the orderbook depth and spread for all outcomes on event slug 'democratic-presidential-nominee-2028'?",
+          "server": "Polymarket",
+          "pass": true,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": null,
+              "reason": "not_time_sensitive_and_no_timestamp"
+            },
+            "traceHealth": {
+              "pass": true,
+              "failures": []
+            }
+          },
+          "durationMs": 29238,
+          "costUsd": "0.058843",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 2
+            }
+          ],
+          "totalSkillCalls": 2,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 2,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 6
+          },
+          "dataAgeMs": null,
+          "responsePreview": "Here are the orderbook depth and spread details for the outcomes in the **Democratic Presidential Nominee 2028** event. All outcomes currently show a spread of **0.998**.\n\n| Outcome | Price | Bid Depth (USD) | Ask Depth (USD) | Total Top Depth | Spread |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| **Gavin Newsom** | 0.253 | 2,012,691 | 6,004,130 | 8,016,821 | 0.998 |\n| **Alexandria Ocasio-Cortez"
+        },
+        {
+          "index": 10,
+          "prompt": "Browse all markets in the Politics category sorted by recent activity",
+          "server": "Polymarket",
+          "pass": false,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": 7583,
+              "reason": "fresh_within_30m"
+            },
+            "traceHealth": {
+              "pass": false,
+              "failures": [
+                "retry_gt_1:2",
+                "self_heal_gt_1:2",
+                "loop_gt_1:2"
+              ]
+            }
+          },
+          "durationMs": 17842,
+          "costUsd": "0.062185",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 4
+            }
+          ],
+          "totalSkillCalls": 4,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 4,
+            "retryCount": 2,
+            "selfHealCount": 2,
+            "fallbackCount": 0,
+            "failureCount": 1,
+            "recoveryCount": 1,
+            "completionChecks": 2,
+            "loopCount": 2,
+            "timelineLength": 9
+          },
+          "dataAgeMs": 7583,
+          "responsePreview": "Here are the top trending markets in the Politics category as of March 1, 2026, based on recent activity and volume.\n\n| Rank | Title | Current Price | 24h Volume | Total Volume |\n| :--- | :--- | :--- | :--- | :--- |\n| 1 | Democratic Presidential Nominee 2028 | $0.0165 | $5,100,012.61 | $734,871,405.99 |\n| 2 | Who will Trump nominate as Fed Chair? | $0.93 | $7,151,506.21 | $552,278,668.43 |\n| 3 | P"
+        },
+        {
+          "index": 11,
+          "prompt": "Build a high-conviction workflow: find mispriced markets, check whale positioning, then verify liquidity",
+          "server": "Polymarket",
+          "pass": true,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": null,
+              "reason": "not_time_sensitive_and_no_timestamp"
+            },
+            "traceHealth": {
+              "pass": true,
+              "failures": []
+            }
+          },
+          "durationMs": 26439,
+          "costUsd": "0.031255",
+          "toolsUsed": [
+            {
+              "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "name": "Polymarket",
+              "skillCalls": 1
+            }
+          ],
+          "totalSkillCalls": 1,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 1,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 5
+          },
+          "dataAgeMs": null,
+          "responsePreview": "Based on the \"High-Conviction Discovery\" workflow executed on Sunday, March 1, 2026, I have identified 3 top setups from 16 discovered markets. The analysis focused on identifying model edges, whale sentiment, and liquidity across high-impact geopolitical events.\n\n### High-Conviction Market Setups\n\n| Market | Price | Signal | Score | Whale Sentiment | Liquidity |\n| :--- | :--- | :--- | :--- | :---"
+        }
+      ]
+    },
+    {
+      "server": "Kalshi",
+      "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
+      "promptCount": 10,
+      "passCount": 3,
+      "failCount": 7,
+      "checkFailures": {
+        "executionFailCount": 0,
+        "relevanceFailCount": 1,
+        "freshnessFailCount": 2,
+        "traceFailCount": 5
+      },
+      "totals": {
+        "costUsd": 0.393403,
+        "durationMs": 201270,
+        "skillCalls": 34,
+        "retryCount": 13,
+        "selfHealCount": 13,
+        "loopCount": 13,
+        "failureCount": 9,
+        "averageDurationMs": 20127
+      },
+      "reports": [
+        {
+          "index": 1,
+          "prompt": "What are the top 10 most actively traded markets on Kalshi right now?",
+          "server": "Kalshi",
+          "pass": true,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": 6857,
+              "reason": "fresh_within_30m"
+            },
+            "traceHealth": {
+              "pass": true,
+              "failures": []
+            }
+          },
+          "durationMs": 10857,
+          "costUsd": "0.071882",
+          "toolsUsed": [
+            {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "Kalshi",
+              "skillCalls": 1
+            }
+          ],
+          "totalSkillCalls": 1,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 1,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 5
+          },
+          "dataAgeMs": 6857,
+          "responsePreview": "Based on recent trading data from Kalshi, here are the top 10 most actively traded markets ranked by their 24-hour trading volume:\n\n| Rank | Market Title | 24h Volume | Total Volume |\n| :--- | :--- | :--- | :--- |\n| 1 | Will Shane Lowry win the Cognizant Classic in The Palm Beaches? | $827,634 | $1,955,478 |\n| 2 | San Antonio at New York Winner? | $573,836 | $610,694 |\n| 3 | Will Laura Pigossi win"
+        },
+        {
+          "index": 2,
+          "prompt": "Show me all Kalshi categories and how many series each one has",
+          "server": "Kalshi",
+          "pass": true,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": 3375,
+              "reason": "fresh_within_30m"
+            },
+            "traceHealth": {
+              "pass": true,
+              "failures": []
+            }
+          },
+          "durationMs": 7129,
+          "costUsd": "0.021655",
+          "toolsUsed": [
+            {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "Kalshi",
+              "skillCalls": 1
+            }
+          ],
+          "totalSkillCalls": 1,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 1,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 5
+          },
+          "dataAgeMs": 3375,
+          "responsePreview": "Here is the breakdown of Kalshi categories and their corresponding series counts as of March 1, 2026:\n\n| Category | Series Count |\n| :--- | :--- |\n| Politics | 2,542 |\n| Entertainment | 2,129 |\n| Sports | 1,415 |\n| Elections | 409 |\n| Economics | 384 |\n| Companies | 309 |\n| Mentions | 272 |\n| Climate and Weather | 249 |\n| Crypto | 213 |\n| Science and Technology | 190 |\n| Financials | 182 |\n| World"
+        },
+        {
+          "index": 3,
+          "prompt": "Find markets where YES is priced between 5 and 15 cents as lottery ticket plays",
+          "server": "Kalshi",
+          "pass": false,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": null,
+              "reason": "not_time_sensitive_and_no_timestamp"
+            },
+            "traceHealth": {
+              "pass": false,
+              "failures": [
+                "retry_gt_1:3",
+                "self_heal_gt_1:3",
+                "loop_gt_1:3"
+              ]
+            }
+          },
+          "durationMs": 21437,
+          "costUsd": "0.038081",
+          "toolsUsed": [
+            {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "Kalshi",
+              "skillCalls": 3
+            }
+          ],
+          "totalSkillCalls": 3,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 3,
+            "retryCount": 3,
+            "selfHealCount": 3,
+            "fallbackCount": 0,
+            "failureCount": 2,
+            "recoveryCount": 1,
+            "completionChecks": 1,
+            "loopCount": 3,
+            "timelineLength": 9
+          },
+          "dataAgeMs": null,
+          "responsePreview": "Based on recent market data, here are several \"lottery ticket\" plays where the YES price is currently between 5¢ and 15¢. These markets offer high potential returns due to their low implied probability.\n\n| Market Title | YES Price | Potential Return | Implied Probability |\n| :--- | :--- | :--- | :--- |\n| **Stephanos Schinas** win vs Carboni? | 5¢ | 1900% | 5% |\n| **When** will Bitcoin hit $150k? |"
+        },
+        {
+          "index": 4,
+          "prompt": "Analyze the orderbook depth and slippage for KXBITCOIN and tell me if I can get $1000 in without moving the price",
+          "server": "Kalshi",
+          "pass": false,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": false,
+              "failures": [
+                "degraded_or_incomplete_answer_text"
+              ]
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": null,
+              "reason": "not_time_sensitive_and_no_timestamp"
+            },
+            "traceHealth": {
+              "pass": true,
+              "failures": []
+            }
+          },
+          "durationMs": 4863,
+          "costUsd": "0.015745",
+          "toolsUsed": [
+            {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "Kalshi",
+              "skillCalls": 1
+            }
+          ],
+          "totalSkillCalls": 1,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 1,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 1,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 4
+          },
+          "dataAgeMs": null,
+          "responsePreview": "I am unable to analyze the orderbook depth or slippage for **KXBITCOIN** at this time because the market was not found in the database.\n\nTo get an accurate liquidity analysis, I recommend first searching for the correct ticker or exploring trending markets. If you can provide the exact ticker symbol, I can re-run the analysis for you."
+        },
+        {
+          "index": 5,
+          "prompt": "Search for 'Fed rate cut' markets, check their efficiency, then compare the best one against Polymarket",
+          "server": "Kalshi",
+          "pass": true,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": null,
+              "reason": "not_time_sensitive_and_no_timestamp"
+            },
+            "traceHealth": {
+              "pass": true,
+              "failures": []
+            }
+          },
+          "durationMs": 21712,
+          "costUsd": "0.029892",
+          "toolsUsed": [
+            {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "Kalshi",
+              "skillCalls": 5
+            }
+          ],
+          "totalSkillCalls": 5,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 5,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 9
+          },
+          "dataAgeMs": null,
+          "responsePreview": "Based on recent market data, the most prominent Kalshi market for Fed rate cuts is currently inefficient, presenting a potential arbitrage or high-value opportunity compared to related markets on Polymarket.\n\n### **Best Kalshi Market: Performance & Efficiency**\nThe market **\"Will the Federal Reserve cut rates before 2027?\" (KXRATECUT-26DEC31)** is currently rated as having **poor efficiency**.\n\n| "
+        },
+        {
+          "index": 6,
+          "prompt": "Are there any arbitrage opportunities in Politics markets where YES + NO is under 99 cents?",
+          "server": "Kalshi",
+          "pass": false,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": 3584,
+              "reason": "fresh_within_30m"
+            },
+            "traceHealth": {
+              "pass": false,
+              "failures": [
+                "retry_gt_1:3",
+                "self_heal_gt_1:3",
+                "loop_gt_1:3"
+              ]
+            }
+          },
+          "durationMs": 16611,
+          "costUsd": "0.029650",
+          "toolsUsed": [
+            {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "Kalshi",
+              "skillCalls": 4
+            }
+          ],
+          "totalSkillCalls": 4,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 4,
+            "retryCount": 3,
+            "selfHealCount": 3,
+            "fallbackCount": 0,
+            "failureCount": 2,
+            "recoveryCount": 1,
+            "completionChecks": 1,
+            "loopCount": 3,
+            "timelineLength": 10
+          },
+          "dataAgeMs": 3584,
+          "responsePreview": "Based on data from a query performed today, March 1, 2026, there are currently **no arbitrage opportunities** in the politics markets where the combined price of YES and NO is under 99 cents.\n\nThe scan results are summarized below:\n\n| Metric | Value |\n| :--- | :--- |\n| **Total Markets Scanned** | 50 |\n| **Politics Arbitrage Opportunities Found** | 0 |\n| **Trading Opportunities Found** | 0 |\n| **Wi"
+        },
+        {
+          "index": 7,
+          "prompt": "What is the sentiment and price trend for the top Trump tariffs market over the last 24 hours?",
+          "server": "Kalshi",
+          "pass": false,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": 9865,
+              "reason": "fresh_within_30m"
+            },
+            "traceHealth": {
+              "pass": false,
+              "failures": [
+                "retry_gt_1:2",
+                "self_heal_gt_1:2",
+                "loop_gt_1:2"
+              ]
+            }
+          },
+          "durationMs": 40747,
+          "costUsd": "0.031197",
+          "toolsUsed": [
+            {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "Kalshi",
+              "skillCalls": 4
+            }
+          ],
+          "totalSkillCalls": 4,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 4,
+            "retryCount": 2,
+            "selfHealCount": 2,
+            "fallbackCount": 0,
+            "failureCount": 1,
+            "recoveryCount": 1,
+            "completionChecks": 2,
+            "loopCount": 2,
+            "timelineLength": 9
+          },
+          "dataAgeMs": 9865,
+          "responsePreview": "Based on data from a recent market query, the top Trump-related tariffs market is displaying a **bearish** sentiment with downward price momentum.\n\n| Attribute | Details |\n| :--- | :--- |\n| **Market** | Will any legislation imposing new or increased tariffs become law before Jan 1, 2027? |\n| **Ticker** | KXTARIFFBILL-27JAN01 |\n| **Current Price** | 11 |\n| **24h Price Change** | -5 (-31.25%) |\n| **"
+        },
+        {
+          "index": 8,
+          "prompt": "Get the daily candlestick chart for a Bitcoin price market over the past 30 days",
+          "server": "Kalshi",
+          "pass": false,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": false,
+              "ageMs": null,
+              "reason": "no_fetchedAt_for_time_sensitive_prompt"
+            },
+            "traceHealth": {
+              "pass": true,
+              "failures": []
+            }
+          },
+          "durationMs": 21771,
+          "costUsd": "0.045757",
+          "toolsUsed": [
+            {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "Kalshi",
+              "skillCalls": 2
+            }
+          ],
+          "totalSkillCalls": 2,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 2,
+            "retryCount": 0,
+            "selfHealCount": 0,
+            "fallbackCount": 0,
+            "failureCount": 0,
+            "recoveryCount": 0,
+            "completionChecks": 0,
+            "loopCount": 0,
+            "timelineLength": 6
+          },
+          "dataAgeMs": null,
+          "responsePreview": "Based on the data from a past query, here is the daily candlestick chart for the Kalshi market: **\"Will Bitcoin be above $200000 by Jan 1, 2027 at 11:59PM ET?\"** (Ticker: KXBTC2026200-27JAN01-200000).\n\nThe table below shows the \"Yes\" price (in dollars) and volume over the most recent 30-day period provided in the data.\n\n| Day | Open | High | Low | Close | Volume |\n| :--- | :--- | :--- | :--- | :--"
+        },
+        {
+          "index": 9,
+          "prompt": "Browse the Sports category sorted by volume and cross-reference the top result with Polymarket odds",
+          "server": "Kalshi",
+          "pass": false,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": true,
+              "ageMs": 5597,
+              "reason": "fresh_within_30m"
+            },
+            "traceHealth": {
+              "pass": false,
+              "failures": [
+                "retry_gt_1:2",
+                "self_heal_gt_1:2",
+                "loop_gt_1:2"
+              ]
+            }
+          },
+          "durationMs": 18469,
+          "costUsd": "0.038724",
+          "toolsUsed": [
+            {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "Kalshi",
+              "skillCalls": 4
+            }
+          ],
+          "totalSkillCalls": 4,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 4,
+            "retryCount": 2,
+            "selfHealCount": 2,
+            "fallbackCount": 0,
+            "failureCount": 1,
+            "recoveryCount": 1,
+            "completionChecks": 2,
+            "loopCount": 2,
+            "timelineLength": 9
+          },
+          "dataAgeMs": 5597,
+          "responsePreview": "Based on data from a past query, the top result in the Sports category by volume is a multi-event NBA parlay on Kalshi. Here is the cross-reference with related NBA markets on Polymarket:\n\n### Top Market Comparison\n\n| Market Attribute | Kalshi (Top Result) | Polymarket (Related Individual Market) |\n| :--- | :--- | :--- |\n| **Title / Question** | Multi-Game: Jalen Brunson 2+, De'Aaron Fox 2+, Wemba"
+        },
+        {
+          "index": 10,
+          "prompt": "Find all settled markets in the Economics category from the past month with their resolution prices",
+          "server": "Kalshi",
+          "pass": false,
+          "checks": {
+            "execution": {
+              "pass": true
+            },
+            "relevance": {
+              "pass": true,
+              "failures": []
+            },
+            "freshness": {
+              "pass": false,
+              "ageMs": null,
+              "reason": "no_fetchedAt_for_time_sensitive_prompt"
+            },
+            "traceHealth": {
+              "pass": false,
+              "failures": [
+                "retry_gt_1:3",
+                "self_heal_gt_1:3",
+                "loop_gt_1:3"
+              ]
+            }
+          },
+          "durationMs": 37674,
+          "costUsd": "0.070820",
+          "toolsUsed": [
+            {
+              "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+              "name": "Kalshi",
+              "skillCalls": 9
+            }
+          ],
+          "totalSkillCalls": 9,
+          "developerTracePresent": true,
+          "traceSummary": {
+            "toolCalls": 9,
+            "retryCount": 3,
+            "selfHealCount": 3,
+            "fallbackCount": 0,
+            "failureCount": 2,
+            "recoveryCount": 1,
+            "completionChecks": 3,
+            "loopCount": 3,
+            "timelineLength": 15
+          },
+          "dataAgeMs": null,
+          "responsePreview": "Based on data from a past query, here are the settled markets in the Economics category from the past month (all settled on February 20, 2026). All listed markets resolved to a **Yes** result with a final Yes price of **100**.\n\n| Title | Ticker | Result | Final Yes Price | Settled At |\n| :--- | :--- | :--- | :--- | :--- |\n| Will **real GDP** increase by more than 6% in Q4 2025? | KXGDP-26JAN30-T6 "
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "promptTotal": 21,
+    "passTotal": 9,
+    "failTotal": 12,
+    "passRate": 42.9,
+    "totalCostUsd": 0.890983,
+    "failureBreakdown": {
+      "execution": 0,
+      "relevance": 2,
+      "freshness": 2,
+      "traceHealth": 9
+    }
+  }
+}
