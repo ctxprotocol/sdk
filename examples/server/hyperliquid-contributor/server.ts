@@ -1437,6 +1437,501 @@ const TOOLS = [
     },
   },
 
+  {
+    name: "cancel_orders",
+    description:
+      "🔐 WRITE ACTION: Cancel one or more open perpetual orders by order ID (oid) for a coin. Returns a signature request for user approval.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        coin: {
+          type: "string",
+          description: 'Coin symbol (e.g., "ETH", "BTC", "HYPE")',
+        },
+        orderIds: {
+          type: "array",
+          items: { type: "number" },
+          description: "Array of Hyperliquid order IDs (oid) to cancel",
+        },
+      },
+      required: ["coin", "orderIds"],
+    },
+    _meta: {
+      handshakeAction: true,
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        actionPreview: { type: "object" },
+        _meta: { type: "object" },
+      },
+      required: ["status", "message"],
+    },
+  },
+
+  {
+    name: "cancel_orders_by_cloid",
+    description:
+      "🔐 WRITE ACTION: Cancel one or more open perpetual orders by client order ID (cloid). Returns a signature request for user approval.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        coin: {
+          type: "string",
+          description: 'Coin symbol (e.g., "ETH", "BTC", "HYPE")',
+        },
+        cloids: {
+          type: "array",
+          items: { type: "string" },
+          description: "Array of client order IDs (cloid) to cancel",
+        },
+      },
+      required: ["coin", "cloids"],
+    },
+    _meta: {
+      handshakeAction: true,
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        actionPreview: { type: "object" },
+        _meta: { type: "object" },
+      },
+      required: ["status", "message"],
+    },
+  },
+
+  {
+    name: "schedule_cancel",
+    description:
+      "🔐 WRITE ACTION: Set or clear Hyperliquid dead-man's switch (scheduleCancel). Returns a signature request for user approval.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        secondsFromNow: {
+          type: "number",
+          description:
+            "When to auto-cancel all open orders, in seconds from now (default: 300). Ignored if disable=true.",
+        },
+        disable: {
+          type: "boolean",
+          description:
+            "If true, clear existing dead-man's switch instead of setting a new one.",
+        },
+      },
+      required: [],
+    },
+    _meta: {
+      handshakeAction: true,
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        actionPreview: { type: "object" },
+        _meta: { type: "object" },
+      },
+      required: ["status", "message"],
+    },
+  },
+
+  {
+    name: "modify_order",
+    description:
+      "🔐 WRITE ACTION: Modify an existing perpetual order by oid. Returns a signature request for user approval.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        coin: {
+          type: "string",
+          description: 'Coin symbol (e.g., "ETH", "BTC", "HYPE")',
+        },
+        oid: {
+          type: "number",
+          description: "Existing order ID to modify",
+        },
+        isBuy: {
+          type: "boolean",
+          description: "true for buy/long, false for sell/short",
+        },
+        size: {
+          type: "number",
+          description: "New order size in base units",
+        },
+        price: {
+          type: "number",
+          description:
+            "New limit price. Required for limit orders, optional for market order.",
+        },
+        orderType: {
+          type: "string",
+          enum: ["limit", "market", "stop_loss", "take_profit"],
+          description: "Order type (default: limit)",
+        },
+        triggerPrice: {
+          type: "number",
+          description: "Trigger price for stop_loss/take_profit",
+        },
+        reduceOnly: {
+          type: "boolean",
+          description: "If true, only reduces position size",
+        },
+        postOnly: {
+          type: "boolean",
+          description: "If true on limit orders, use maker-only placement",
+        },
+      },
+      required: ["coin", "oid", "isBuy", "size"],
+    },
+    _meta: {
+      handshakeAction: true,
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        actionPreview: { type: "object" },
+        _meta: { type: "object" },
+      },
+      required: ["status", "message"],
+    },
+  },
+
+  {
+    name: "batch_modify_orders",
+    description:
+      "🔐 WRITE ACTION: Modify multiple existing perpetual orders in one action. Returns a signature request for user approval.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        coin: {
+          type: "string",
+          description: 'Coin symbol (e.g., "ETH", "BTC", "HYPE")',
+        },
+        modifications: {
+          type: "array",
+          description:
+            "Array of order modifications (max 20). Each entry must include oid, isBuy, and size.",
+          items: {
+            type: "object",
+            properties: {
+              oid: { type: "number" },
+              isBuy: { type: "boolean" },
+              size: { type: "number" },
+              price: { type: "number" },
+              orderType: {
+                type: "string",
+                enum: ["limit", "market", "stop_loss", "take_profit"],
+              },
+              triggerPrice: { type: "number" },
+              reduceOnly: { type: "boolean" },
+              postOnly: { type: "boolean" },
+            },
+            required: ["oid", "isBuy", "size"],
+          },
+        },
+      },
+      required: ["coin", "modifications"],
+    },
+    _meta: {
+      handshakeAction: true,
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        actionPreview: { type: "object" },
+        _meta: { type: "object" },
+      },
+      required: ["status", "message"],
+    },
+  },
+
+  {
+    name: "update_leverage",
+    description:
+      "🔐 WRITE ACTION: Update leverage settings for a perpetual market. Returns a signature request for user approval.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        coin: {
+          type: "string",
+          description: 'Coin symbol (e.g., "ETH", "BTC", "HYPE")',
+        },
+        leverage: {
+          type: "number",
+          description: "Target leverage (integer)",
+        },
+        marginMode: {
+          type: "string",
+          enum: ["cross", "isolated"],
+          description: "Use cross or isolated margin mode (default: cross)",
+        },
+      },
+      required: ["coin", "leverage"],
+    },
+    _meta: {
+      handshakeAction: true,
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        actionPreview: { type: "object" },
+        _meta: { type: "object" },
+      },
+      required: ["status", "message"],
+    },
+  },
+
+  {
+    name: "update_isolated_margin",
+    description:
+      "🔐 WRITE ACTION: Add or remove isolated margin for a perpetual market. Returns a signature request for user approval.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        coin: {
+          type: "string",
+          description: 'Coin symbol (e.g., "ETH", "BTC", "HYPE")',
+        },
+        usdDelta: {
+          type: "number",
+          description:
+            "USD amount to add (positive) or remove (negative) from isolated margin.",
+        },
+        isBuy: {
+          type: "boolean",
+          description:
+            "Direction selector required by endpoint (currently has no effect; default true).",
+        },
+      },
+      required: ["coin", "usdDelta"],
+    },
+    _meta: {
+      handshakeAction: true,
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        actionPreview: { type: "object" },
+        _meta: { type: "object" },
+      },
+      required: ["status", "message"],
+    },
+  },
+
+  {
+    name: "place_twap_order",
+    description:
+      "🔐 WRITE ACTION: Place a TWAP order on Hyperliquid. Returns a signature request for user approval.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        coin: {
+          type: "string",
+          description: 'Coin symbol (e.g., "ETH", "BTC", "HYPE")',
+        },
+        isBuy: {
+          type: "boolean",
+          description: "true for buy/long, false for sell/short",
+        },
+        size: {
+          type: "number",
+          description: "Total order size in base units",
+        },
+        minutes: {
+          type: "number",
+          description: "TWAP duration in minutes",
+        },
+        reduceOnly: {
+          type: "boolean",
+          description: "If true, only reduce existing positions",
+        },
+        randomize: {
+          type: "boolean",
+          description: "If true, randomize TWAP slice timing",
+        },
+      },
+      required: ["coin", "isBuy", "size", "minutes"],
+    },
+    _meta: {
+      handshakeAction: true,
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        actionPreview: { type: "object" },
+        _meta: { type: "object" },
+      },
+      required: ["status", "message"],
+    },
+  },
+
+  {
+    name: "cancel_twap_order",
+    description:
+      "🔐 WRITE ACTION: Cancel an active TWAP order by TWAP ID. Returns a signature request for user approval.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        coin: {
+          type: "string",
+          description: 'Coin symbol (e.g., "ETH", "BTC", "HYPE")',
+        },
+        twapId: {
+          type: "number",
+          description: "TWAP order ID",
+        },
+      },
+      required: ["coin", "twapId"],
+    },
+    _meta: {
+      handshakeAction: true,
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        actionPreview: { type: "object" },
+        _meta: { type: "object" },
+      },
+      required: ["status", "message"],
+    },
+  },
+
+  {
+    name: "stake_hype",
+    description:
+      "🔐 WRITE ACTION: Stake HYPE into Hyperliquid staking (cDeposit). Returns a signature request for user approval.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        amount: {
+          type: "number",
+          description: "Amount of HYPE to stake",
+        },
+        hyperliquidChain: {
+          type: "string",
+          description: 'Chain name (default: "Mainnet")',
+        },
+        signatureChainId: {
+          type: "string",
+          description: 'Hex chain id used for signing (default: "0xa4b1")',
+        },
+      },
+      required: ["amount"],
+    },
+    _meta: {
+      handshakeAction: true,
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        actionPreview: { type: "object" },
+        _meta: { type: "object" },
+      },
+      required: ["status", "message"],
+    },
+  },
+
+  {
+    name: "unstake_hype",
+    description:
+      "🔐 WRITE ACTION: Unstake HYPE from Hyperliquid staking (cWithdraw). Returns a signature request for user approval.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        amount: {
+          type: "number",
+          description: "Amount of HYPE to unstake",
+        },
+        hyperliquidChain: {
+          type: "string",
+          description: 'Chain name (default: "Mainnet")',
+        },
+        signatureChainId: {
+          type: "string",
+          description: 'Hex chain id used for signing (default: "0xa4b1")',
+        },
+      },
+      required: ["amount"],
+    },
+    _meta: {
+      handshakeAction: true,
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        actionPreview: { type: "object" },
+        _meta: { type: "object" },
+      },
+      required: ["status", "message"],
+    },
+  },
+
+  {
+    name: "delegate_stake",
+    description:
+      "🔐 WRITE ACTION: Delegate or undelegate staked HYPE to a validator (tokenDelegate). Returns a signature request for user approval.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        validator: {
+          type: "string",
+          description: "Validator address (0x...)",
+        },
+        amount: {
+          type: "number",
+          description: "Amount of HYPE to delegate/undelegate",
+        },
+        isUndelegate: {
+          type: "boolean",
+          description: "Set true to undelegate, false to delegate",
+        },
+        hyperliquidChain: {
+          type: "string",
+          description: 'Chain name (default: "Mainnet")',
+        },
+        signatureChainId: {
+          type: "string",
+          description: 'Hex chain id used for signing (default: "0xa4b1")',
+        },
+      },
+      required: ["validator", "amount"],
+    },
+    _meta: {
+      handshakeAction: true,
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        status: { type: "string", enum: ["handshake_required", "error"] },
+        message: { type: "string" },
+        actionPreview: { type: "object" },
+        _meta: { type: "object" },
+      },
+      required: ["status", "message"],
+    },
+  },
+
   // ============================================================================
   // SECURITY VERIFICATION TOOL (Development/Testing Only)
   // Tests client-side signature detection by returning various EIP-712 patterns.
@@ -1474,8 +1969,8 @@ const TOOLS = [
     name: "submit_signed_action",
     description:
       "🔐 INTERNAL: Submit a signed action to Hyperliquid. " +
-      "This tool is called automatically after the user signs an order request. " +
-      "It takes the signature and order details from the handshake flow and submits to Hyperliquid.",
+      "This tool is called automatically after the user signs a handshake request. " +
+      "It takes the signature and action payload from the handshake flow and submits to Hyperliquid.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -1485,22 +1980,20 @@ const TOOLS = [
         },
         action: {
           type: "object",
-          description: "The action to submit (order details from place_order)",
-          properties: {
-            asset: { type: "number", description: "Asset index" },
-            isBuy: { type: "boolean" },
-            limitPx: { type: "number", description: "Limit price in fixed-point" },
-            sz: { type: "number", description: "Size in fixed-point" },
-            reduceOnly: { type: "boolean" },
-            cloid: { type: "string", description: "Client order ID" },
-          },
+          description:
+            "The preformatted Hyperliquid exchange action object (order/cancel/modify/TWAP/leverage/margin/staking/etc).",
+        },
+        nonce: {
+          type: "number",
+          description:
+            "Action nonce in milliseconds. If omitted, server attempts to recover it from handshake metadata.",
         },
         vaultAddress: {
           type: "string",
           description: "Optional vault address if trading for a vault",
         },
       },
-      required: ["signature", "action"],
+      required: ["signature"],
     },
     outputSchema: {
       type: "object" as const,
@@ -1520,6 +2013,191 @@ const TOOLS = [
   },
 ];
 
+type ToolSurface = "answer" | "execute" | "both";
+type ToolLatencyClass = "instant" | "fast" | "slow" | "streaming";
+
+type ToolRateLimitMetadata = {
+  maxRequestsPerMinute: number;
+  maxConcurrency: number;
+  cooldownMs: number;
+  supportsBulk: boolean;
+  recommendedBatchTools: string[];
+  notes: string;
+};
+
+const HYPERLIQUID_DEFAULT_EXECUTE_USD =
+  process.env.HYPERLIQUID_DEFAULT_EXECUTE_USD?.trim() || "0.001";
+
+const HYPERLIQUID_INTELLIGENCE_TOOLS = new Set([
+  "calculate_price_impact",
+  "get_funding_analysis",
+  "get_open_interest_analysis",
+  "analyze_large_order",
+  "analyze_trader_performance",
+  "analyze_spot_markets",
+  "analyze_whale_wallet",
+  "analyze_my_positions",
+  "analyze_vault_exposure",
+  "analyze_full_portfolio",
+]);
+
+const HYPERLIQUID_INTERNAL_TOOLS = new Set([
+  "verify_signature_security",
+  "submit_signed_action",
+]);
+
+const HYPERLIQUID_WRITE_TOOLS = new Set([
+  "place_order",
+  "cancel_orders",
+  "cancel_orders_by_cloid",
+  "schedule_cancel",
+  "modify_order",
+  "batch_modify_orders",
+  "update_leverage",
+  "update_isolated_margin",
+  "place_twap_order",
+  "cancel_twap_order",
+  "stake_hype",
+  "unstake_hype",
+  "delegate_stake",
+]);
+
+function getHyperliquidToolDefaults(toolName: string): {
+  surface: ToolSurface;
+  queryEligible: boolean;
+  latencyClass: ToolLatencyClass;
+  allowExecutePricing: boolean;
+  rateLimit: ToolRateLimitMetadata;
+} {
+  const isIntelligence = HYPERLIQUID_INTELLIGENCE_TOOLS.has(toolName);
+  const isInternal = HYPERLIQUID_INTERNAL_TOOLS.has(toolName);
+  const isWriteAction = HYPERLIQUID_WRITE_TOOLS.has(toolName);
+
+  if (isInternal) {
+    return {
+      surface: "execute",
+      queryEligible: false,
+      latencyClass: "fast",
+      allowExecutePricing: false,
+      rateLimit: {
+        maxRequestsPerMinute: 20,
+        maxConcurrency: 1,
+        cooldownMs: 3_000,
+        supportsBulk: false,
+        recommendedBatchTools: [],
+        notes: "Internal handshake callback. Not intended for direct user invocation.",
+      },
+    };
+  }
+
+  if (isWriteAction) {
+    return {
+      surface: "execute",
+      queryEligible: false,
+      latencyClass: "fast",
+      allowExecutePricing: true,
+      rateLimit: {
+        maxRequestsPerMinute: 30,
+        maxConcurrency: 1,
+        cooldownMs: 2_000,
+        supportsBulk: false,
+        recommendedBatchTools: [],
+        notes: "Write action. Use sparingly and only after explicit user intent.",
+      },
+    };
+  }
+
+  if (isIntelligence) {
+    return {
+      surface: "both",
+      queryEligible: true,
+      latencyClass: "fast",
+      allowExecutePricing: true,
+      rateLimit: {
+        maxRequestsPerMinute: 60,
+        maxConcurrency: 1,
+        cooldownMs: 1_000,
+        supportsBulk: false,
+        recommendedBatchTools: ["list_markets", "get_market_info"],
+        notes:
+          "Composite analysis tool. Prefer narrowing scope first (coin/address filters) for faster responses.",
+      },
+    };
+  }
+
+  return {
+    surface: "both",
+    queryEligible: true,
+    latencyClass: "instant",
+    allowExecutePricing: true,
+    rateLimit: {
+      maxRequestsPerMinute: 120,
+      maxConcurrency: 2,
+      cooldownMs: 500,
+      supportsBulk: false,
+      recommendedBatchTools: [],
+      notes: "Raw data endpoint suitable for iterative Execute workflows.",
+    },
+  };
+}
+
+function resolveExecutePricingMeta(
+  existingMeta: Record<string, unknown>,
+  allowExecutePricing: boolean
+): Record<string, unknown> | undefined {
+  const existingPricing =
+    "pricing" in existingMeta &&
+    typeof existingMeta.pricing === "object" &&
+    existingMeta.pricing !== null
+      ? ({ ...(existingMeta.pricing as Record<string, unknown>) } as Record<
+          string,
+          unknown
+        >)
+      : {};
+
+  const currentExecuteUsd =
+    typeof existingPricing.executeUsd === "string"
+      ? existingPricing.executeUsd.trim()
+      : undefined;
+
+  if (currentExecuteUsd) {
+    existingPricing.executeUsd = currentExecuteUsd;
+    return existingPricing;
+  }
+
+  if (!allowExecutePricing) {
+    return Object.keys(existingPricing).length > 0 ? existingPricing : undefined;
+  }
+
+  existingPricing.executeUsd = HYPERLIQUID_DEFAULT_EXECUTE_USD;
+  return existingPricing;
+}
+
+const TOOLS_WITH_METADATA = TOOLS.map((tool) => {
+  const existingMeta =
+    "_meta" in tool && typeof tool._meta === "object" && tool._meta !== null
+      ? (tool._meta as Record<string, unknown>)
+      : {};
+
+  const defaults = getHyperliquidToolDefaults(tool.name);
+  const pricing = resolveExecutePricingMeta(
+    existingMeta,
+    defaults.allowExecutePricing
+  );
+
+  return {
+    ...tool,
+    _meta: {
+      ...existingMeta,
+      surface: defaults.surface,
+      queryEligible: defaults.queryEligible,
+      latencyClass: defaults.latencyClass,
+      ...(pricing ? { pricing } : {}),
+      rateLimit: defaults.rateLimit,
+    },
+  };
+});
+
 // ============================================================================
 // MCP SERVER SETUP (Standard @modelcontextprotocol/sdk pattern)
 // ============================================================================
@@ -1530,7 +2208,7 @@ const server = new Server(
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: TOOLS,
+  tools: TOOLS_WITH_METADATA,
 }));
 
 server.setRequestHandler(
@@ -1608,6 +2286,30 @@ server.setRequestHandler(
           return await handleAnalyzeFullPortfolio(args);
         case "place_order":
           return await handlePlaceOrder(args);
+        case "cancel_orders":
+          return await handleCancelOrders(args);
+        case "cancel_orders_by_cloid":
+          return await handleCancelOrdersByCloid(args);
+        case "schedule_cancel":
+          return await handleScheduleCancel(args);
+        case "modify_order":
+          return await handleModifyOrder(args);
+        case "batch_modify_orders":
+          return await handleBatchModifyOrders(args);
+        case "update_leverage":
+          return await handleUpdateLeverage(args);
+        case "update_isolated_margin":
+          return await handleUpdateIsolatedMargin(args);
+        case "place_twap_order":
+          return await handlePlaceTwapOrder(args);
+        case "cancel_twap_order":
+          return await handleCancelTwapOrder(args);
+        case "stake_hype":
+          return await handleStakeHype(args);
+        case "unstake_hype":
+          return await handleUnstakeHype(args);
+        case "delegate_stake":
+          return await handleDelegateStake(args);
         case "verify_signature_security":
           return handleVerifySignatureSecurity(args);
         case "submit_signed_action":
@@ -4191,6 +4893,897 @@ function handleVerifySignatureSecurity(args: Record<string, unknown> | undefined
   });
 }
 
+function isValidHexAddress(address: string): boolean {
+  return /^0x[a-fA-F0-9]{40}$/.test(address);
+}
+
+function toHypeWei(amount: number): number {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("amount must be a positive number");
+  }
+
+  const wei = Math.trunc(amount * 100_000_000);
+  if (!Number.isSafeInteger(wei) || wei <= 0) {
+    throw new Error("amount is too large or too small after wei conversion");
+  }
+
+  return wei;
+}
+
+async function resolvePerpAssetMetadata(coin: string): Promise<{
+  coin: string;
+  assetIndex: number;
+  szDecimals: number;
+  currentPrice: number;
+}> {
+  const normalizedCoin = coin.toUpperCase();
+  const metaAndCtx = await fetchMetaAndAssetCtxs();
+  const meta = metaAndCtx[0];
+  const ctxs = metaAndCtx[1];
+  const assetIndex = meta.universe.findIndex(
+    (m) => m.name.toUpperCase() === normalizedCoin
+  );
+  const assetInfo = assetIndex >= 0 ? meta.universe[assetIndex] : undefined;
+
+  if (assetIndex === -1 || !assetInfo) {
+    throw new Error(
+      `Unknown coin: ${normalizedCoin}. Use list_markets to see available markets.`
+    );
+  }
+
+  const currentPrice = Number(ctxs[assetIndex]?.markPx || 0);
+  return {
+    coin: normalizedCoin,
+    assetIndex,
+    szDecimals: assetInfo.szDecimals,
+    currentPrice,
+  };
+}
+
+function createHyperliquidHandshakeRequest(params: {
+  action: Record<string, unknown>;
+  nonce: number;
+  title: string;
+  subtitle: string;
+  description: string;
+  warningLevel?: "info" | "caution";
+}): Record<string, unknown> {
+  const { action, nonce, title, subtitle, description, warningLevel = "info" } =
+    params;
+  const connectionId = createL1ActionHash({
+    action,
+    nonce,
+  });
+
+  return {
+    _action: "signature_request" as const,
+    domain: HYPERLIQUID_AGENT_DOMAIN,
+    types: HYPERLIQUID_AGENT_TYPES,
+    primaryType: "Agent",
+    message: {
+      source: "a",
+      connectionId,
+    },
+    meta: {
+      title,
+      subtitle,
+      description,
+      protocol: "Hyperliquid",
+      warningLevel,
+      // Keep legacy key for compatibility with existing callback plumbing.
+      _orderData: {
+        action,
+        nonce,
+      },
+      _actionData: {
+        action,
+        nonce,
+      },
+    },
+    callbackToolName: "submit_signed_action",
+  };
+}
+
+function buildHandshakeToolResult(params: {
+  message: string;
+  actionPreview: Record<string, unknown>;
+  signatureRequest: Record<string, unknown>;
+}): CallToolResult {
+  const { message, actionPreview, signatureRequest } = params;
+  const payload = {
+    status: "handshake_required",
+    message,
+    actionPreview,
+  };
+
+  return {
+    content: [{ type: "text", text: JSON.stringify(payload, null, 2) }],
+    structuredContent: {
+      ...payload,
+      _meta: {
+        handshakeAction: signatureRequest,
+      },
+    },
+  };
+}
+
+function buildOrderTypeStruct(params: {
+  orderType: "limit" | "market" | "stop_loss" | "take_profit";
+  postOnly: boolean;
+  formattedTriggerPrice?: string;
+}): Record<string, unknown> {
+  const { orderType, postOnly, formattedTriggerPrice } = params;
+
+  if (orderType === "stop_loss" || orderType === "take_profit") {
+    return {
+      trigger: {
+        isMarket: true,
+        triggerPx: formattedTriggerPrice,
+        tpsl: orderType === "stop_loss" ? "sl" : "tp",
+      },
+    };
+  }
+
+  if (orderType === "market") {
+    return { limit: { tif: "Ioc" } };
+  }
+
+  if (postOnly) {
+    return { limit: { tif: "Alo" } };
+  }
+
+  return { limit: { tif: "Gtc" } };
+}
+
+async function handleCancelOrders(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const coin = args?.coin as string;
+  const orderIdsRaw = args?.orderIds;
+
+  if (!coin) return errorResult("coin parameter is required");
+  if (!Array.isArray(orderIdsRaw) || orderIdsRaw.length === 0) {
+    return errorResult("orderIds must be a non-empty array");
+  }
+
+  const orderIds = orderIdsRaw
+    .map((oid) => Number(oid))
+    .filter((oid) => Number.isInteger(oid) && oid > 0);
+
+  if (orderIds.length === 0) {
+    return errorResult("orderIds must contain valid positive integers");
+  }
+
+  const { coin: normalizedCoin, assetIndex } = await resolvePerpAssetMetadata(coin);
+  const action = {
+    type: "cancel",
+    cancels: orderIds.map((oid) => ({ a: assetIndex, o: oid })),
+  };
+  const nonce = Date.now();
+  const signatureRequest = createHyperliquidHandshakeRequest({
+    action,
+    nonce,
+    title: "Cancel Order(s)",
+    subtitle: `Cancel ${orderIds.length} ${normalizedCoin} order${orderIds.length === 1 ? "" : "s"}`,
+    description: `Cancel ${orderIds.length} open order${orderIds.length === 1 ? "" : "s"} on ${normalizedCoin}`,
+  });
+
+  return buildHandshakeToolResult({
+    message: `Please approve cancellation of ${orderIds.length} ${normalizedCoin} order${orderIds.length === 1 ? "" : "s"}.`,
+    actionPreview: {
+      actionType: "cancel",
+      coin: normalizedCoin,
+      assetIndex,
+      cancelCount: orderIds.length,
+      orderIds,
+    },
+    signatureRequest,
+  });
+}
+
+async function handleCancelOrdersByCloid(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const coin = args?.coin as string;
+  const cloidsRaw = args?.cloids;
+
+  if (!coin) return errorResult("coin parameter is required");
+  if (!Array.isArray(cloidsRaw) || cloidsRaw.length === 0) {
+    return errorResult("cloids must be a non-empty array");
+  }
+
+  const cloids = cloidsRaw
+    .map((cloid) => (typeof cloid === "string" ? cloid.trim() : ""))
+    .filter((cloid) => cloid.length > 0);
+
+  if (cloids.length === 0) {
+    return errorResult("cloids must contain valid non-empty strings");
+  }
+
+  const { coin: normalizedCoin, assetIndex } = await resolvePerpAssetMetadata(coin);
+  const action = {
+    type: "cancelByCloid",
+    cancels: cloids.map((cloid) => ({ asset: assetIndex, cloid })),
+  };
+  const nonce = Date.now();
+  const signatureRequest = createHyperliquidHandshakeRequest({
+    action,
+    nonce,
+    title: "Cancel Order(s) by Client ID",
+    subtitle: `Cancel ${cloids.length} ${normalizedCoin} order${cloids.length === 1 ? "" : "s"}`,
+    description: `Cancel ${cloids.length} open order${cloids.length === 1 ? "" : "s"} on ${normalizedCoin} using cloid`,
+  });
+
+  return buildHandshakeToolResult({
+    message: `Please approve cancellation of ${cloids.length} ${normalizedCoin} order${cloids.length === 1 ? "" : "s"} by client ID.`,
+    actionPreview: {
+      actionType: "cancelByCloid",
+      coin: normalizedCoin,
+      assetIndex,
+      cancelCount: cloids.length,
+      cloids,
+    },
+    signatureRequest,
+  });
+}
+
+async function handleScheduleCancel(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const disable = (args?.disable as boolean) ?? false;
+  const secondsFromNowRaw = args?.secondsFromNow as number | undefined;
+
+  let action: Record<string, unknown>;
+  let subtitle: string;
+  let message: string;
+  let actionPreview: Record<string, unknown>;
+
+  if (disable) {
+    action = { type: "scheduleCancel" };
+    subtitle = "Clear dead-man's switch";
+    message = "Please approve clearing the dead-man's switch.";
+    actionPreview = {
+      actionType: "scheduleCancel",
+      mode: "clear",
+    };
+  } else {
+    const secondsFromNow = Math.max(
+      5,
+      Math.min(86_400, Number(secondsFromNowRaw ?? 300))
+    );
+    const scheduledTime = Date.now() + Math.floor(secondsFromNow * 1_000);
+    action = {
+      type: "scheduleCancel",
+      time: scheduledTime,
+    };
+    subtitle = `Set dead-man's switch in ${secondsFromNow}s`;
+    message = `Please approve setting dead-man's switch to trigger in ${secondsFromNow} seconds.`;
+    actionPreview = {
+      actionType: "scheduleCancel",
+      mode: "set",
+      secondsFromNow,
+      triggerTime: new Date(scheduledTime).toISOString(),
+    };
+  }
+
+  const nonce = Date.now();
+  const signatureRequest = createHyperliquidHandshakeRequest({
+    action,
+    nonce,
+    title: "Schedule Cancel",
+    subtitle,
+    description: "Manage dead-man's switch for automatic order cancellation.",
+    warningLevel: "caution",
+  });
+
+  return buildHandshakeToolResult({
+    message,
+    actionPreview,
+    signatureRequest,
+  });
+}
+
+async function handleModifyOrder(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const coin = args?.coin as string;
+  const oid = Number(args?.oid);
+  const isBuy = args?.isBuy as boolean;
+  const size = Number(args?.size);
+  const priceArg = args?.price as number | undefined;
+  const orderType =
+    ((args?.orderType as
+      | "limit"
+      | "market"
+      | "stop_loss"
+      | "take_profit") ?? "limit");
+  const triggerPrice = args?.triggerPrice as number | undefined;
+  let reduceOnly = (args?.reduceOnly as boolean) ?? false;
+  const postOnly = (args?.postOnly as boolean) ?? false;
+
+  if (!coin) return errorResult("coin parameter is required");
+  if (!Number.isInteger(oid) || oid <= 0) return errorResult("oid must be a positive integer");
+  if (typeof isBuy !== "boolean") return errorResult("isBuy parameter is required");
+  if (!Number.isFinite(size) || size <= 0) return errorResult("size must be a positive number");
+
+  if (
+    !["limit", "market", "stop_loss", "take_profit"].includes(orderType)
+  ) {
+    return errorResult("orderType must be one of: limit, market, stop_loss, take_profit");
+  }
+
+  const {
+    coin: normalizedCoin,
+    assetIndex,
+    szDecimals,
+    currentPrice,
+  } = await resolvePerpAssetMetadata(coin);
+
+  if (!Number.isFinite(currentPrice) || currentPrice <= 0) {
+    return errorResult(`Could not get current market price for ${normalizedCoin}`);
+  }
+
+  let executionPrice: number;
+  const MARKET_SLIPPAGE = 0.01;
+  if (orderType === "market") {
+    executionPrice = isBuy
+      ? currentPrice * (1 + MARKET_SLIPPAGE)
+      : currentPrice * (1 - MARKET_SLIPPAGE);
+  } else if (orderType === "stop_loss" || orderType === "take_profit") {
+    if (!Number.isFinite(triggerPrice) || (triggerPrice ?? 0) <= 0) {
+      return errorResult(`triggerPrice is required for ${orderType} orders`);
+    }
+    executionPrice = triggerPrice ?? currentPrice;
+    reduceOnly = true;
+  } else {
+    if (!Number.isFinite(priceArg) || (priceArg ?? 0) <= 0) {
+      return errorResult("price is required for limit orders");
+    }
+    executionPrice = Number(priceArg);
+  }
+
+  const formattedSize = formatSize(size, szDecimals);
+  if (Number(formattedSize) === 0) {
+    return errorResult(
+      `Size ${size} is too small for ${normalizedCoin} (minimum precision: ${Math.pow(10, -szDecimals)})`
+    );
+  }
+
+  const formattedPrice = formatPrice(executionPrice, szDecimals);
+  const formattedTriggerPrice = triggerPrice
+    ? formatPrice(triggerPrice, szDecimals)
+    : undefined;
+  const orderTypeStruct = buildOrderTypeStruct({
+    orderType,
+    postOnly,
+    formattedTriggerPrice,
+  });
+
+  const action = {
+    type: "modify",
+    oid,
+    order: {
+      a: assetIndex,
+      b: isBuy,
+      p: formattedPrice,
+      s: formattedSize,
+      r: reduceOnly,
+      t: orderTypeStruct,
+    },
+  };
+  const nonce = Date.now();
+  const signatureRequest = createHyperliquidHandshakeRequest({
+    action,
+    nonce,
+    title: "Modify Order",
+    subtitle: `${isBuy ? "Buy" : "Sell"} ${formattedSize} ${normalizedCoin} @ ${formattedPrice}`,
+    description: `Modify order ${oid} on ${normalizedCoin}`,
+  });
+
+  return buildHandshakeToolResult({
+    message: `Please approve order modification for ${normalizedCoin} (oid: ${oid}).`,
+    actionPreview: {
+      actionType: "modify",
+      coin: normalizedCoin,
+      oid,
+      side: isBuy ? "buy" : "sell",
+      size: Number(formattedSize),
+      price: Number(formattedPrice),
+      orderType,
+      reduceOnly,
+      postOnly,
+    },
+    signatureRequest,
+  });
+}
+
+async function handleBatchModifyOrders(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const coin = args?.coin as string;
+  const modificationsRaw = args?.modifications;
+
+  if (!coin) return errorResult("coin parameter is required");
+  if (!Array.isArray(modificationsRaw) || modificationsRaw.length === 0) {
+    return errorResult("modifications must be a non-empty array");
+  }
+  if (modificationsRaw.length > 20) {
+    return errorResult("Maximum 20 modifications per request");
+  }
+
+  const {
+    coin: normalizedCoin,
+    assetIndex,
+    szDecimals,
+    currentPrice,
+  } = await resolvePerpAssetMetadata(coin);
+
+  if (!Number.isFinite(currentPrice) || currentPrice <= 0) {
+    return errorResult(`Could not get current market price for ${normalizedCoin}`);
+  }
+
+  const modifies: Array<Record<string, unknown>> = [];
+  for (const modification of modificationsRaw) {
+    if (!modification || typeof modification !== "object") {
+      return errorResult("Each modification must be an object");
+    }
+
+    const payload = modification as Record<string, unknown>;
+    const oid = Number(payload.oid);
+    const isBuy = payload.isBuy as boolean;
+    const size = Number(payload.size);
+    const priceArg = payload.price as number | undefined;
+    const orderType =
+      ((payload.orderType as
+        | "limit"
+        | "market"
+        | "stop_loss"
+        | "take_profit") ?? "limit");
+    const triggerPrice = payload.triggerPrice as number | undefined;
+    let reduceOnly = (payload.reduceOnly as boolean) ?? false;
+    const postOnly = (payload.postOnly as boolean) ?? false;
+
+    if (!Number.isInteger(oid) || oid <= 0) {
+      return errorResult("Each modification.oid must be a positive integer");
+    }
+    if (typeof isBuy !== "boolean") {
+      return errorResult("Each modification.isBuy is required");
+    }
+    if (!Number.isFinite(size) || size <= 0) {
+      return errorResult("Each modification.size must be a positive number");
+    }
+    if (
+      !["limit", "market", "stop_loss", "take_profit"].includes(orderType)
+    ) {
+      return errorResult(
+        "Each modification.orderType must be one of: limit, market, stop_loss, take_profit"
+      );
+    }
+
+    let executionPrice: number;
+    const MARKET_SLIPPAGE = 0.01;
+    if (orderType === "market") {
+      executionPrice = isBuy
+        ? currentPrice * (1 + MARKET_SLIPPAGE)
+        : currentPrice * (1 - MARKET_SLIPPAGE);
+    } else if (orderType === "stop_loss" || orderType === "take_profit") {
+      if (!Number.isFinite(triggerPrice) || (triggerPrice ?? 0) <= 0) {
+        return errorResult(
+          `triggerPrice is required for ${orderType} in modification oid ${oid}`
+        );
+      }
+      executionPrice = triggerPrice ?? currentPrice;
+      reduceOnly = true;
+    } else {
+      if (!Number.isFinite(priceArg) || (priceArg ?? 0) <= 0) {
+        return errorResult(`price is required for limit modification oid ${oid}`);
+      }
+      executionPrice = Number(priceArg);
+    }
+
+    const formattedSize = formatSize(size, szDecimals);
+    if (Number(formattedSize) === 0) {
+      return errorResult(
+        `Modification oid ${oid} has size below ${normalizedCoin} precision`
+      );
+    }
+
+    const formattedPrice = formatPrice(executionPrice, szDecimals);
+    const formattedTriggerPrice = triggerPrice
+      ? formatPrice(triggerPrice, szDecimals)
+      : undefined;
+    const orderTypeStruct = buildOrderTypeStruct({
+      orderType,
+      postOnly,
+      formattedTriggerPrice,
+    });
+
+    modifies.push({
+      oid,
+      order: {
+        a: assetIndex,
+        b: isBuy,
+        p: formattedPrice,
+        s: formattedSize,
+        r: reduceOnly,
+        t: orderTypeStruct,
+      },
+    });
+  }
+
+  const action = {
+    type: "batchModify",
+    modifies,
+  };
+  const nonce = Date.now();
+  const signatureRequest = createHyperliquidHandshakeRequest({
+    action,
+    nonce,
+    title: "Batch Modify Orders",
+    subtitle: `Modify ${modifies.length} ${normalizedCoin} order${modifies.length === 1 ? "" : "s"}`,
+    description: `Batch modify ${modifies.length} open order${modifies.length === 1 ? "" : "s"} on ${normalizedCoin}`,
+  });
+
+  return buildHandshakeToolResult({
+    message: `Please approve batch modification of ${modifies.length} ${normalizedCoin} order${modifies.length === 1 ? "" : "s"}.`,
+    actionPreview: {
+      actionType: "batchModify",
+      coin: normalizedCoin,
+      assetIndex,
+      modifyCount: modifies.length,
+      orderIds: modifies
+        .map((entry) =>
+          typeof entry.oid === "number" ? entry.oid : undefined
+        )
+        .filter((entry): entry is number => typeof entry === "number"),
+    },
+    signatureRequest,
+  });
+}
+
+async function handleUpdateLeverage(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const coin = args?.coin as string;
+  const leverage = Math.round(Number(args?.leverage));
+  const marginMode = ((args?.marginMode as string) ?? "cross").toLowerCase();
+
+  if (!coin) return errorResult("coin parameter is required");
+  if (!Number.isFinite(leverage) || leverage < 1) {
+    return errorResult("leverage must be a positive integer");
+  }
+  if (!["cross", "isolated"].includes(marginMode)) {
+    return errorResult("marginMode must be either 'cross' or 'isolated'");
+  }
+
+  const { coin: normalizedCoin, assetIndex } = await resolvePerpAssetMetadata(coin);
+  const action = {
+    type: "updateLeverage",
+    asset: assetIndex,
+    isCross: marginMode === "cross",
+    leverage,
+  };
+  const nonce = Date.now();
+  const signatureRequest = createHyperliquidHandshakeRequest({
+    action,
+    nonce,
+    title: "Update Leverage",
+    subtitle: `${normalizedCoin} to ${leverage}x (${marginMode})`,
+    description: `Update leverage settings for ${normalizedCoin}`,
+    warningLevel: leverage >= 20 ? "caution" : "info",
+  });
+
+  return buildHandshakeToolResult({
+    message: `Please approve leverage update for ${normalizedCoin} to ${leverage}x (${marginMode}).`,
+    actionPreview: {
+      actionType: "updateLeverage",
+      coin: normalizedCoin,
+      assetIndex,
+      leverage,
+      marginMode,
+    },
+    signatureRequest,
+  });
+}
+
+async function handleUpdateIsolatedMargin(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const coin = args?.coin as string;
+  const usdDelta = Number(args?.usdDelta);
+  const isBuy = (args?.isBuy as boolean) ?? true;
+
+  if (!coin) return errorResult("coin parameter is required");
+  if (!Number.isFinite(usdDelta) || usdDelta === 0) {
+    return errorResult("usdDelta must be a non-zero number");
+  }
+  if (typeof isBuy !== "boolean") {
+    return errorResult("isBuy must be true or false");
+  }
+
+  const ntli = Math.trunc(usdDelta * 1_000_000);
+  if (ntli === 0) {
+    return errorResult("usdDelta is too small after conversion to ntli (1e6 precision)");
+  }
+
+  const { coin: normalizedCoin, assetIndex } = await resolvePerpAssetMetadata(coin);
+  const action = {
+    type: "updateIsolatedMargin",
+    asset: assetIndex,
+    isBuy,
+    ntli,
+  };
+  const nonce = Date.now();
+  const signatureRequest = createHyperliquidHandshakeRequest({
+    action,
+    nonce,
+    title: "Update Isolated Margin",
+    subtitle: `${usdDelta > 0 ? "Add" : "Remove"} $${Math.abs(usdDelta).toFixed(2)} on ${normalizedCoin}`,
+    description: `Adjust isolated margin for ${normalizedCoin}`,
+    warningLevel: "caution",
+  });
+
+  return buildHandshakeToolResult({
+    message: `Please approve isolated margin ${usdDelta > 0 ? "increase" : "decrease"} of $${Math.abs(usdDelta).toFixed(2)} for ${normalizedCoin}.`,
+    actionPreview: {
+      actionType: "updateIsolatedMargin",
+      coin: normalizedCoin,
+      assetIndex,
+      usdDelta: Number(usdDelta.toFixed(2)),
+      ntli,
+      isBuy,
+    },
+    signatureRequest,
+  });
+}
+
+async function handlePlaceTwapOrder(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const coin = args?.coin as string;
+  const isBuy = args?.isBuy as boolean;
+  const size = Number(args?.size);
+  const minutes = Math.round(Number(args?.minutes));
+  const reduceOnly = (args?.reduceOnly as boolean) ?? false;
+  const randomize = (args?.randomize as boolean) ?? true;
+
+  if (!coin) return errorResult("coin parameter is required");
+  if (typeof isBuy !== "boolean") return errorResult("isBuy parameter is required");
+  if (!Number.isFinite(size) || size <= 0) return errorResult("size must be a positive number");
+  if (!Number.isFinite(minutes) || minutes < 1) return errorResult("minutes must be a positive integer");
+  if (typeof reduceOnly !== "boolean" || typeof randomize !== "boolean") {
+    return errorResult("reduceOnly/randomize must be boolean values");
+  }
+
+  const { coin: normalizedCoin, assetIndex, szDecimals } =
+    await resolvePerpAssetMetadata(coin);
+  const formattedSize = formatSize(size, szDecimals);
+  if (Number(formattedSize) === 0) {
+    return errorResult(
+      `Size ${size} is too small for ${normalizedCoin} (minimum precision: ${Math.pow(10, -szDecimals)})`
+    );
+  }
+
+  const action = {
+    type: "twapOrder",
+    twap: {
+      a: assetIndex,
+      b: isBuy,
+      s: formattedSize,
+      r: reduceOnly,
+      m: minutes,
+      t: randomize,
+    },
+  };
+  const nonce = Date.now();
+  const signatureRequest = createHyperliquidHandshakeRequest({
+    action,
+    nonce,
+    title: "Place TWAP Order",
+    subtitle: `${isBuy ? "Buy" : "Sell"} ${formattedSize} ${normalizedCoin} over ${minutes}m`,
+    description: `Place TWAP order on ${normalizedCoin}`,
+    warningLevel: "caution",
+  });
+
+  return buildHandshakeToolResult({
+    message: `Please approve TWAP ${isBuy ? "buy" : "sell"} for ${formattedSize} ${normalizedCoin} over ${minutes} minutes.`,
+    actionPreview: {
+      actionType: "twapOrder",
+      coin: normalizedCoin,
+      assetIndex,
+      side: isBuy ? "buy" : "sell",
+      size: Number(formattedSize),
+      minutes,
+      reduceOnly,
+      randomize,
+    },
+    signatureRequest,
+  });
+}
+
+async function handleCancelTwapOrder(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const coin = args?.coin as string;
+  const twapId = Math.round(Number(args?.twapId));
+
+  if (!coin) return errorResult("coin parameter is required");
+  if (!Number.isFinite(twapId) || twapId < 0) {
+    return errorResult("twapId must be a non-negative integer");
+  }
+
+  const { coin: normalizedCoin, assetIndex } = await resolvePerpAssetMetadata(coin);
+  const action = {
+    type: "twapCancel",
+    a: assetIndex,
+    t: twapId,
+  };
+  const nonce = Date.now();
+  const signatureRequest = createHyperliquidHandshakeRequest({
+    action,
+    nonce,
+    title: "Cancel TWAP Order",
+    subtitle: `${normalizedCoin} TWAP #${twapId}`,
+    description: `Cancel TWAP order ${twapId} on ${normalizedCoin}`,
+  });
+
+  return buildHandshakeToolResult({
+    message: `Please approve cancellation of TWAP order ${twapId} on ${normalizedCoin}.`,
+    actionPreview: {
+      actionType: "twapCancel",
+      coin: normalizedCoin,
+      assetIndex,
+      twapId,
+    },
+    signatureRequest,
+  });
+}
+
+async function handleStakeHype(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const amount = Number(args?.amount);
+  const hyperliquidChain = ((args?.hyperliquidChain as string) ?? "Mainnet").trim();
+  const signatureChainId = ((args?.signatureChainId as string) ?? "0xa4b1").trim();
+
+  let wei: number;
+  try {
+    wei = toHypeWei(amount);
+  } catch (error) {
+    return errorResult(error instanceof Error ? error.message : "Invalid amount");
+  }
+
+  const nonce = Date.now();
+  const action = {
+    type: "cDeposit",
+    hyperliquidChain,
+    signatureChainId,
+    wei,
+    nonce,
+  };
+  const signatureRequest = createHyperliquidHandshakeRequest({
+    action,
+    nonce,
+    title: "Stake HYPE",
+    subtitle: `Stake ${amount} HYPE`,
+    description: `Stake ${amount} HYPE into Hyperliquid staking`,
+    warningLevel: "caution",
+  });
+
+  return buildHandshakeToolResult({
+    message: `Please approve staking of ${amount} HYPE.`,
+    actionPreview: {
+      actionType: "cDeposit",
+      amount,
+      wei,
+      hyperliquidChain,
+      signatureChainId,
+    },
+    signatureRequest,
+  });
+}
+
+async function handleUnstakeHype(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const amount = Number(args?.amount);
+  const hyperliquidChain = ((args?.hyperliquidChain as string) ?? "Mainnet").trim();
+  const signatureChainId = ((args?.signatureChainId as string) ?? "0xa4b1").trim();
+
+  let wei: number;
+  try {
+    wei = toHypeWei(amount);
+  } catch (error) {
+    return errorResult(error instanceof Error ? error.message : "Invalid amount");
+  }
+
+  const nonce = Date.now();
+  const action = {
+    type: "cWithdraw",
+    hyperliquidChain,
+    signatureChainId,
+    wei,
+    nonce,
+  };
+  const signatureRequest = createHyperliquidHandshakeRequest({
+    action,
+    nonce,
+    title: "Unstake HYPE",
+    subtitle: `Unstake ${amount} HYPE`,
+    description: `Withdraw ${amount} HYPE from Hyperliquid staking`,
+    warningLevel: "caution",
+  });
+
+  return buildHandshakeToolResult({
+    message: `Please approve unstaking of ${amount} HYPE.`,
+    actionPreview: {
+      actionType: "cWithdraw",
+      amount,
+      wei,
+      hyperliquidChain,
+      signatureChainId,
+    },
+    signatureRequest,
+  });
+}
+
+async function handleDelegateStake(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const validator = ((args?.validator as string) ?? "").trim();
+  const amount = Number(args?.amount);
+  const isUndelegate = (args?.isUndelegate as boolean) ?? false;
+  const hyperliquidChain = ((args?.hyperliquidChain as string) ?? "Mainnet").trim();
+  const signatureChainId = ((args?.signatureChainId as string) ?? "0xa4b1").trim();
+
+  if (!validator || !isValidHexAddress(validator)) {
+    return errorResult("validator must be a valid 0x-prefixed 42-character address");
+  }
+  if (typeof isUndelegate !== "boolean") {
+    return errorResult("isUndelegate must be true or false");
+  }
+
+  let wei: number;
+  try {
+    wei = toHypeWei(amount);
+  } catch (error) {
+    return errorResult(error instanceof Error ? error.message : "Invalid amount");
+  }
+
+  const nonce = Date.now();
+  const action = {
+    type: "tokenDelegate",
+    hyperliquidChain,
+    signatureChainId,
+    validator: validator.toLowerCase(),
+    isUndelegate,
+    wei,
+    nonce,
+  };
+  const signatureRequest = createHyperliquidHandshakeRequest({
+    action,
+    nonce,
+    title: isUndelegate ? "Undelegate Stake" : "Delegate Stake",
+    subtitle: `${isUndelegate ? "Undelegate" : "Delegate"} ${amount} HYPE`,
+    description: `${isUndelegate ? "Undelegate" : "Delegate"} ${amount} HYPE ${isUndelegate ? "from" : "to"} validator ${validator}`,
+    warningLevel: "caution",
+  });
+
+  return buildHandshakeToolResult({
+    message: `Please approve ${isUndelegate ? "undelegation" : "delegation"} of ${amount} HYPE.`,
+    actionPreview: {
+      actionType: "tokenDelegate",
+      validator: validator.toLowerCase(),
+      amount,
+      wei,
+      isUndelegate,
+      hyperliquidChain,
+      signatureChainId,
+    },
+    signatureRequest,
+  });
+}
+
 async function handlePlaceOrder(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
   // Extract and validate parameters
   const coin = args?.coin as string;
@@ -4431,9 +6024,9 @@ async function handlePlaceOrder(args: Record<string, unknown> | undefined): Prom
     coin,
     orderType,
     side: isBuy ? "buy" : "sell",
-    size: formattedSize,
-    price: formattedPrice,
-    triggerPrice: formattedTriggerPrice,
+    size: Number(formattedSize),
+    price: Number(formattedPrice),
+    triggerPrice: formattedTriggerPrice ? Number(formattedTriggerPrice) : undefined,
     notionalValue: Number(notionalValue.toFixed(2)),
     reduceOnly,
     postOnly,
@@ -4478,20 +6071,15 @@ async function handleSubmitSignedAction(
   args: Record<string, unknown>
 ): Promise<CallToolResult> {
   const signature = args.signature as string;
-  // The action comes pre-formatted from place_order via meta._orderData
-  const action = args.action as {
-    type: "order";
-    orders: Array<{
-      a: number;
-      b: boolean;
-      p: string;
-      s: string;
-      r: boolean;
-      t: { limit: { tif: string } };
-    }>;
-    grouping: string;
-  };
-  const nonce = args.nonce as number;
+  const actionEnvelope =
+    (args._orderData as Record<string, unknown> | undefined) ??
+    (args._actionData as Record<string, unknown> | undefined);
+  const action =
+    (args.action as Record<string, unknown> | undefined) ??
+    (actionEnvelope?.action as Record<string, unknown> | undefined);
+  const rawNonce = args.nonce ?? actionEnvelope?.nonce;
+  const nonce =
+    typeof rawNonce === "number" ? rawNonce : Number(rawNonce);
   const vaultAddress = args.vaultAddress as string | undefined;
 
   if (!signature) {
@@ -4502,7 +6090,7 @@ async function handleSubmitSignedAction(
     return errorResult("Missing action details from handshake");
   }
 
-  if (!nonce) {
+  if (!Number.isFinite(nonce) || nonce <= 0) {
     return errorResult("Missing nonce from handshake");
   }
 
@@ -4529,8 +6117,10 @@ async function handleSubmitSignedAction(
     return errorResult(`Invalid signature length: ${cleanSig.length}, expected 130 hex chars`);
   }
 
+  const actionType =
+    typeof action.type === "string" ? action.type : "unknown";
+
   // Build the exchange API request
-  // The action is already properly formatted by place_order using the SDK parser
   const exchangeRequest = {
     action,
     nonce,
@@ -4553,70 +6143,87 @@ async function handleSubmitSignedAction(
     const responseData = await response.json();
 
     if (!response.ok) {
+      const errorPayload = {
+        status: "error",
+        message: `Exchange API error: ${response.status}`,
+        error: responseData,
+        dataSources: ["https://api.hyperliquid.xyz/exchange"],
+        dataFreshness: "real-time",
+        fetchedAt: new Date().toISOString(),
+      };
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              status: "error",
-              message: `Exchange API error: ${response.status}`,
-              error: responseData,
-              dataSources: ["https://api.hyperliquid.xyz/exchange"],
-              dataFreshness: "real-time",
-              fetchedAt: new Date().toISOString(),
-            }, null, 2),
+            text: JSON.stringify(errorPayload, null, 2),
           },
         ],
+        structuredContent: errorPayload,
         isError: true,
       };
     }
 
     // Check for Hyperliquid-specific errors in response
     if (responseData.status === "err") {
+      const errorPayload = {
+        status: "error",
+        message: responseData.response || "Action rejected by exchange",
+        actionType,
+        error: responseData,
+        dataSources: ["https://api.hyperliquid.xyz/exchange"],
+        dataFreshness: "real-time",
+        fetchedAt: new Date().toISOString(),
+      };
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify({
-              status: "error",
-              message: responseData.response || "Order rejected by exchange",
-              error: responseData,
-              dataSources: ["https://api.hyperliquid.xyz/exchange"],
-              dataFreshness: "real-time",
-              fetchedAt: new Date().toISOString(),
-            }, null, 2),
+            text: JSON.stringify(errorPayload, null, 2),
           },
         ],
+        structuredContent: errorPayload,
         isError: true,
       };
     }
 
-    // Extract order details from the action for the response
-    const order = action.orders[0];
-    
-    // Success!
+    const maybeOrder =
+      actionType === "order" && Array.isArray(action.orders) && action.orders[0]
+        ? (action.orders[0] as Record<string, unknown>)
+        : undefined;
+
+    const successPayload = {
+      status: "success",
+      message: "Action submitted successfully to Hyperliquid",
+      actionType,
+      response: responseData,
+      ...(maybeOrder
+        ? {
+            orderDetails: {
+              asset: maybeOrder.a,
+              side: maybeOrder.b ? "buy" : "sell",
+              price: maybeOrder.p,
+              size: maybeOrder.s,
+              reduceOnly: maybeOrder.r,
+              orderType: maybeOrder.t,
+            },
+          }
+        : {}),
+      actionSummary: {
+        type: actionType,
+        hasVaultAddress: Boolean(vaultAddress),
+      },
+      dataSources: ["https://api.hyperliquid.xyz/exchange"],
+      dataFreshness: "real-time",
+      fetchedAt: new Date().toISOString(),
+    };
     return {
       content: [
         {
           type: "text",
-          text: JSON.stringify({
-            status: "success",
-            message: "Order submitted successfully to Hyperliquid",
-            response: responseData,
-            orderDetails: {
-              asset: order.a,
-              side: order.b ? "buy" : "sell",
-              price: order.p,
-              size: order.s,
-              reduceOnly: order.r,
-              orderType: order.t,
-            },
-            dataSources: ["https://api.hyperliquid.xyz/exchange"],
-            dataFreshness: "real-time",
-            fetchedAt: new Date().toISOString(),
-          }, null, 2),
+          text: JSON.stringify(successPayload, null, 2),
         },
       ],
+      structuredContent: successPayload,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
@@ -5017,25 +6624,44 @@ const transports: Record<string, StreamableHTTPServerTransport> = {};
 
 // Auth middleware using @ctxprotocol/sdk - 1 line!
 const verifyContextAuth = createContextMiddleware();
+const allowUnauthenticatedMcp =
+  process.env.HYPERLIQUID_ALLOW_UNAUTH_MCP === "true";
+const mcpAuthMiddleware = allowUnauthenticatedMcp
+  ? (_req: Request, _res: Response, next: NextFunction) => {
+      next();
+    }
+  : verifyContextAuth;
+
+if (allowUnauthenticatedMcp) {
+  console.warn(
+    "[hyperliquid-auth] HYPERLIQUID_ALLOW_UNAUTH_MCP=true (auth disabled for /mcp; use only for temporary debugging)."
+  );
+}
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     server: "hyperliquid-ultimate",
     version: "2.3.1",
+    contextAuthEnabled: !allowUnauthenticatedMcp,
+    mcpAuthBypassEnabled: allowUnauthenticatedMcp,
     protocol: "2025-11-25",
     transport: "streamable-http",
-    toolCount: TOOLS.length,
-    tools: TOOLS.map((t) => t.name),
-    tier1Tools: TOOLS.filter((t) => t.description.includes("🧠 INTELLIGENCE")).map((t) => t.name),
-    tier2Tools: TOOLS.filter((t) => !t.description.includes("🧠 INTELLIGENCE")).map((t) => t.name),
+    toolCount: TOOLS_WITH_METADATA.length,
+    tools: TOOLS_WITH_METADATA.map((t) => t.name),
+    tier1Tools: TOOLS_WITH_METADATA.filter((t) =>
+      t.description.includes("🧠 INTELLIGENCE")
+    ).map((t) => t.name),
+    tier2Tools: TOOLS_WITH_METADATA.filter(
+      (t) => !t.description.includes("🧠 INTELLIGENCE")
+    ).map((t) => t.name),
     newInV23: ["analyze_vault_exposure", "analyze_full_portfolio"],
     description: "The world's most comprehensive Hyperliquid MCP server",
   });
 });
 
 // Streamable HTTP endpoint - handles all MCP communication
-app.post("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+app.post("/mcp", mcpAuthMiddleware, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
   let transport: StreamableHTTPServerTransport;
 
@@ -5077,7 +6703,7 @@ app.post("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
 });
 
 // Handle GET requests for SSE streaming (optional, for notifications)
-app.get("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+app.get("/mcp", mcpAuthMiddleware, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const transport = transports[sessionId];
 
@@ -5089,7 +6715,7 @@ app.get("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
 });
 
 // Handle DELETE requests for session cleanup
-app.delete("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+app.delete("/mcp", mcpAuthMiddleware, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string;
   const transport = transports[sessionId];
 
@@ -5115,12 +6741,18 @@ app.get("/sse", (_req: Request, res: Response) => {
 
 const port = Number(process.env.PORT || 4002);
 app.listen(port, () => {
-  const tier1 = TOOLS.filter((t) => t.description.includes("🧠 INTELLIGENCE"));
-  const tier2 = TOOLS.filter((t) => !t.description.includes("🧠 INTELLIGENCE"));
+  const tier1 = TOOLS_WITH_METADATA.filter((t) =>
+    t.description.includes("🧠 INTELLIGENCE")
+  );
+  const tier2 = TOOLS_WITH_METADATA.filter(
+    (t) => !t.description.includes("🧠 INTELLIGENCE")
+  );
   
   console.log("\n🚀 Hyperliquid Ultimate MCP Server v2.3.0");
   console.log(`   The world's most comprehensive Hyperliquid MCP`);
-  console.log(`   ${TOOLS.length} tools (${tier1.length} intelligence + ${tier2.length} raw data)\n`);
+  console.log(
+    `   ${TOOLS_WITH_METADATA.length} tools (${tier1.length} intelligence + ${tier2.length} raw data)\n`
+  );
   console.log(`🔒 Context Protocol Security Enabled`);
   console.log(`📡 MCP endpoint: http://localhost:${port}/mcp`);
   console.log(`💚 Health check: http://localhost:${port}/health`);

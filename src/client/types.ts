@@ -437,6 +437,13 @@ export interface QueryOptions {
   includeDataUrl?: boolean;
 
   /**
+   * Include machine-readable developer trace output for this query response.
+   * When enabled, the server may return timeline data describing retries,
+   * fallbacks, loop checks, and intermediate recovery behavior.
+   */
+  includeDeveloperTrace?: boolean;
+
+  /**
    * Query orchestration depth mode:
    * - `fast`: lower-latency path
    * - `auto`: server decides between fast/deep
@@ -449,6 +456,66 @@ export interface QueryOptions {
    * Reuse the same key when retrying the same logical request.
    */
   idempotencyKey?: string;
+}
+
+/**
+ * Tool reference attached to developer trace timeline steps.
+ */
+export interface QueryDeveloperTraceToolRef {
+  id?: string;
+  name?: string;
+  method?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Loop metadata attached to developer trace timeline steps.
+ */
+export interface QueryDeveloperTraceLoopInfo {
+  name?: string;
+  iteration?: number;
+  maxIterations?: number;
+  [key: string]: unknown;
+}
+
+/**
+ * A single developer-trace timeline step.
+ */
+export interface QueryDeveloperTraceStep {
+  stepType?: string;
+  event?: string;
+  status?: string;
+  message?: string;
+  timestampMs?: number;
+  tool?: QueryDeveloperTraceToolRef;
+  attempt?: number;
+  loop?: QueryDeveloperTraceLoopInfo;
+  metadata?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+/**
+ * Aggregate counters that summarize developer-trace behavior.
+ */
+export interface QueryDeveloperTraceSummary {
+  toolCalls?: number;
+  retryCount?: number;
+  selfHealCount?: number;
+  fallbackCount?: number;
+  failureCount?: number;
+  recoveryCount?: number;
+  completionChecks?: number;
+  loopCount?: number;
+  [key: string]: unknown;
+}
+
+/**
+ * Developer Mode trace payload returned per query response (opt-in).
+ */
+export interface QueryDeveloperTrace {
+  summary?: QueryDeveloperTraceSummary;
+  timeline?: QueryDeveloperTraceStep[];
+  [key: string]: unknown;
 }
 
 /**
@@ -501,6 +568,9 @@ export interface QueryResult {
 
   /** Optional blob URL for persisted execution data (when includeDataUrl=true) */
   dataUrl?: string;
+
+  /** Optional machine-readable Developer Mode trace payload */
+  developerTrace?: QueryDeveloperTrace;
 }
 
 /**
@@ -514,6 +584,7 @@ export interface QueryApiSuccessResponse {
   durationMs: number;
   data?: unknown;
   dataUrl?: string;
+  developerTrace?: QueryDeveloperTrace;
 }
 
 /**
@@ -538,6 +609,12 @@ export interface QueryStreamTextDeltaEvent {
   delta: string;
 }
 
+/** Emitted when the server streams developer trace updates/chunks */
+export interface QueryStreamDeveloperTraceEvent {
+  type: "developer-trace";
+  trace: QueryDeveloperTrace;
+}
+
 /** Emitted when the full response is complete */
 export interface QueryStreamDoneEvent {
   type: "done";
@@ -550,6 +627,7 @@ export interface QueryStreamDoneEvent {
 export type QueryStreamEvent =
   | QueryStreamToolStatusEvent
   | QueryStreamTextDeltaEvent
+  | QueryStreamDeveloperTraceEvent
   | QueryStreamDoneEvent;
 
 // ---------------------------------------------------------------------------

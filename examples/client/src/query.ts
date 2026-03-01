@@ -1,4 +1,8 @@
-import { ContextClient, ContextError } from "@ctxprotocol/sdk";
+import {
+  ContextClient,
+  ContextError,
+  type QueryDeveloperTrace,
+} from "@ctxprotocol/sdk";
 
 const apiKey = process.env.CONTEXT_API_KEY;
 if (!apiKey) {
@@ -7,13 +11,40 @@ if (!apiKey) {
 
 const client = new ContextClient({ apiKey });
 
+function summarizeDeveloperTrace(trace: QueryDeveloperTrace | undefined): {
+  retries: number;
+  toolCalls: number;
+  loops: number;
+} {
+  const timeline = trace?.timeline ?? [];
+  const countStep = (stepType: string): number =>
+    timeline.filter(
+      (step) => step.stepType === stepType || step.event === stepType
+    ).length;
+
+  return {
+    retries: trace?.summary?.retryCount ?? countStep("retry"),
+    toolCalls: trace?.summary?.toolCalls ?? countStep("tool-call"),
+    loops: trace?.summary?.loopCount ?? countStep("loop"),
+  };
+}
+
 async function main() {
   try {
-    const answer = await client.query.run("What are the top whale movements on Base?");
+    const answer = await client.query.run({
+      query:
+        "What are the top whale movements on Base, and what confidence checks did you run?",
+      queryDepth: "deep",
+      includeDeveloperTrace: true,
+    });
     console.log("Response:", answer.response);
     console.log("Total cost (USD):", answer.cost.totalCostUsd);
     console.log("Duration (ms):", answer.durationMs);
     console.log("Tools used:", answer.toolsUsed);
+    console.log(
+      "Developer trace summary:",
+      summarizeDeveloperTrace(answer.developerTrace)
+    );
 
     // tools omitted => auto-discovery, tools: ["id"] => manual selected tools, tools: [] => direct synthesis (no tool execution)
     // Manual overload shape: await client.query.run({ query: "Analyze whale activity", tools: ["tool-uuid"] });

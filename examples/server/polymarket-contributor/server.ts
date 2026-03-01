@@ -48,6 +48,9 @@ type ToolRateLimitMetadata = {
   notes: string;
 };
 
+type ToolSurface = "answer" | "execute" | "both";
+type ToolLatencyClass = "instant" | "fast" | "slow" | "streaming";
+
 function getConfiguredInteger(
   name: string,
   fallback: number,
@@ -75,6 +78,8 @@ const POLYMARKET_RETRY_BASE_BACKOFF_MS = getConfiguredInteger(
   100,
   5_000
 );
+const POLYMARKET_DEFAULT_EXECUTE_USD =
+  process.env.POLYMARKET_DEFAULT_EXECUTE_USD?.trim() || "0.001";
 
 const UPSTREAM_RATE_PLANS: Record<UpstreamKey, UpstreamRatePlan> = {
   gamma: {
@@ -127,6 +132,8 @@ const BULK_FIRST_TOOLS = new Set([
   "discover_trending_markets",
   "get_top_markets",
   "search_markets",
+  "get_event_outcomes",
+  "get_batch_orderbooks",
 ]);
 
 const TOOL_BATCH_HINTS: Record<string, string[]> = {
@@ -134,6 +141,8 @@ const TOOL_BATCH_HINTS: Record<string, string[]> = {
   analyze_event_whale_breakdown: ["discover_trending_markets"],
   get_top_holders: ["search_markets", "discover_trending_markets"],
   find_trading_opportunities: ["find_moderate_probability_bets", "get_bets_by_probability"],
+  get_event_outcomes: ["get_batch_orderbooks"],
+  get_event_by_slug: ["get_batch_orderbooks"],
 };
 
 function buildToolRateLimitMetadata(toolName: string): ToolRateLimitMetadata {
@@ -148,6 +157,33 @@ function buildToolRateLimitMetadata(toolName: string): ToolRateLimitMetadata {
       ? "Heavy Polymarket workflow. Call this tool alone and prefer narrower scopes first."
       : "Prefer batch/snapshot tools before fan-out loops when possible.",
   };
+}
+
+function resolveExecutePricingMeta(
+  existingMeta: Record<string, unknown>
+): Record<string, unknown> {
+  const existingPricing =
+    "pricing" in existingMeta &&
+    typeof existingMeta.pricing === "object" &&
+    existingMeta.pricing !== null
+      ? ({ ...(existingMeta.pricing as Record<string, unknown>) } as Record<
+          string,
+          unknown
+        >)
+      : {};
+
+  const currentExecuteUsd =
+    typeof existingPricing.executeUsd === "string"
+      ? existingPricing.executeUsd.trim()
+      : undefined;
+
+  if (currentExecuteUsd) {
+    existingPricing.executeUsd = currentExecuteUsd;
+    return existingPricing;
+  }
+
+  existingPricing.executeUsd = POLYMARKET_DEFAULT_EXECUTE_USD;
+  return existingPricing;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -2027,6 +2063,11 @@ OUTPUT: All outcomes with prices, ready for comparison`,
               pricePercent: { type: "string" },
               volume: { type: "number" },
               conditionId: { type: "string" },
+              tokenId: {
+                type: "string",
+                description:
+                  "Primary YES token ID for this outcome. Use directly with get_batch_orderbooks/get_orderbook/get_prices.",
+              },
             },
           },
         },
@@ -2065,7 +2106,9 @@ Traditional sportsbook APIs (The Odds API) typically only have TEAM championship
 ❌ Cannot compare: "NBA MVP" (Polymarket has PLAYERS, Odds API doesn't have MVP)
 
 NOTE: Automatically filters out placeholder entries (e.g., "Person A", "Person AB") that Polymarket 
-uses as reserved slots for future outcomes. Only ACTIVE outcomes returned.`,
+uses as reserved slots for future outcomes. Only ACTIVE outcomes returned.
+
+Includes tokenId per outcome so you can call get_batch_orderbooks immediately without extra lookup.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -2109,6 +2152,11 @@ uses as reserved slots for future outcomes. Only ACTIVE outcomes returned.`,
               price: { type: "number", description: "Current price (0-1, represents probability)" },
               pricePercent: { type: "string", description: "Price as percentage (e.g., '34.0%')" },
               conditionId: { type: "string" },
+              tokenId: {
+                type: "string",
+                description:
+                  "Primary YES token ID for this outcome. Use directly with get_batch_orderbooks/get_orderbook/get_prices.",
+              },
             },
           },
         },
@@ -2248,15 +2296,18 @@ uses as reserved slots for future outcomes. Only ACTIVE outcomes returned.`,
     description: `Get orderbooks for MULTIPLE tokens in a single request. Much faster than calling get_orderbook multiple times.
 
 USE THIS when comparing prices across multiple markets or scanning for arbitrage.
+Ideal for event-wide depth/spread snapshots after get_event_outcomes.
 
-Returns bids/asks arrays for each token with best prices and depth.`,
+Returns bids/asks arrays for each token with best prices and depth.
+Supports up to 150 token IDs per call.`,
     inputSchema: {
       type: "object" as const,
       properties: {
         tokenIds: {
           type: "array",
           items: { type: "string" },
-          description: "Array of token IDs to get orderbooks for (max 20)",
+          maxItems: 150,
+          description: "Array of token IDs to get orderbooks for (max 150)",
         },
       },
       required: ["tokenIds"],
@@ -3160,11 +3211,21 @@ const TOOLS_WITH_METADATA = TOOLS.map((tool) => {
     "_meta" in tool && typeof tool._meta === "object" && tool._meta !== null
       ? (tool._meta as Record<string, unknown>)
       : {};
+  const latencyClass: ToolLatencyClass = HEAVY_ANALYSIS_TOOLS.has(tool.name)
+    ? "fast"
+    : "instant";
+  const surface: ToolSurface = "both";
+  const queryEligible = true;
+  const pricing = resolveExecutePricingMeta(existingMeta);
 
   return {
     ...tool,
     _meta: {
       ...existingMeta,
+      surface,
+      queryEligible,
+      latencyClass,
+      pricing,
       rateLimit: buildToolRateLimitMetadata(tool.name),
     },
   };
@@ -7997,12 +8058,23 @@ async function handleSearchAndGetOutcomes(
           }
         }
 
+        const tokenIds = Array.isArray(m.tokens)
+          ? m.tokens
+              .map((token) => token.token_id)
+              .filter(
+                (tokenId): tokenId is string =>
+                  typeof tokenId === "string" && tokenId.trim().length > 0
+              )
+          : parseJsonArray(m.clobTokenIds);
+        const tokenId = tokenIds[0] || "";
+
         return {
           name: m.groupItemTitle || m.question || "Unknown",
           price: Number(price.toFixed(4)),
           pricePercent: `${(price * 100).toFixed(1)}%`,
           volume: Number(m.volume || 0),
           conditionId: m.conditionId || "",
+          tokenId,
         };
       })
       .sort((a, b) => b.price - a.price); // Sort by price (probability) descending
@@ -8061,6 +8133,15 @@ async function handleGetEventOutcomes(
   let outcomes = event.markets.map((m) => {
     const prices = parseJsonArray(m.outcomePrices);
     const yesPrice = prices[0] ? parseFloat(prices[0]) : 0;
+    const tokenIds = Array.isArray(m.tokens)
+      ? m.tokens
+          .map((token) => token.token_id)
+          .filter(
+            (tokenId): tokenId is string =>
+              typeof tokenId === "string" && tokenId.trim().length > 0
+          )
+      : parseJsonArray(m.clobTokenIds);
+    const tokenId = tokenIds[0] || "";
     // Volume can be string or number from API
     const volume = typeof m.volume === 'string' ? parseFloat(m.volume) : (m.volume || 0);
     
@@ -8075,6 +8156,7 @@ async function handleGetEventOutcomes(
       price: yesPrice,
       pricePercent: `${(yesPrice * 100).toFixed(1)}%`,
       conditionId: m.conditionId || "",
+      tokenId,
     };
   });
 
@@ -8393,8 +8475,8 @@ async function handleGetBatchOrderbooks(
     return errorResult("tokenIds array is required");
   }
 
-  if (tokenIds.length > 20) {
-    return errorResult("Maximum 20 tokens per batch request");
+  if (tokenIds.length > 150) {
+    return errorResult("Maximum 150 tokens per batch request");
   }
 
   const orderbooks: Record<string, {
@@ -8654,11 +8736,47 @@ async function handleSearchMarkets(
   const status = (args?.status as string) || "live"; // Default to live (tradeable) markets
   const limit = Math.min((args?.limit as number) || 20, 50);
 
+  const normalizedQuery = (query || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ");
+
   // Build query words for matching specific candidates/outcomes in multi-outcome events
   const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by', 'win', 'presidential', 'nomination', 'president', 'democratic', 'republican']);
   const searchQueryWords = query ? query.toLowerCase().split(/\s+/).filter(w => {
     return w.length > 2 && !stopWords.has(w) && !/^\d+$/.test(w);
   }) : [];
+  const rankingStopWords = new Set([
+    "the",
+    "a",
+    "an",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "and",
+    "or",
+    "is",
+    "will",
+    "be",
+    "by",
+    "with",
+    "what",
+    "how",
+    "show",
+    "find",
+    "search",
+    "markets",
+    "market",
+    "prediction",
+    "related",
+  ]);
+  const rankingWords = normalizedQuery
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter(
+      (word) =>
+        word.length > 2 && !rankingStopWords.has(word) && !/^\d+$/.test(word)
+    );
 
   let allEvents: GammaEvent[] = [];
   let searchUsed = false;
@@ -8721,6 +8839,62 @@ async function handleSearchMarkets(
       if (status === "resolved") return isClosed;
       return true;
     });
+  }
+
+  if (query && rankingWords.length > 0) {
+    const tokenizedWordRegex = rankingWords.map(
+      (word) => new RegExp(`\\b${word}\\b`, "i")
+    );
+    const scored = filtered.map((event) => {
+      const eventText = [
+        event.title || "",
+        event.slug || "",
+        event.category || "",
+        ...(event.markets || []).flatMap((market) => [
+          market.question || "",
+          market.title || "",
+        ]),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      const compactText = eventText.replace(/[^a-z0-9]/g, "");
+      const compactQuery = normalizedQuery.replace(/\s+/g, "").replace(/[^a-z0-9]/g, "");
+
+      let score = 0;
+      let exactWordHits = 0;
+      for (let i = 0; i < rankingWords.length; i += 1) {
+        const word = rankingWords[i];
+        if (tokenizedWordRegex[i].test(eventText)) {
+          score += 4;
+          exactWordHits += 1;
+        } else if (eventText.includes(word)) {
+          score += 2;
+        }
+      }
+
+      if (compactQuery.length > 6 && compactText.includes(compactQuery)) {
+        score += 8;
+      }
+      if (exactWordHits === rankingWords.length) {
+        score += 6;
+      }
+      if (
+        rankingWords.length >= 2 &&
+        eventText.includes(`${rankingWords[0]} ${rankingWords[1]}`)
+      ) {
+        score += 3;
+      }
+
+      return { event, score };
+    });
+
+    scored.sort(
+      (a, b) =>
+        b.score - a.score ||
+        Number(b.event.volume || 0) - Number(a.event.volume || 0)
+    );
+    filtered = scored.map((entry) => entry.event);
   }
 
   // Count by status for breakdown

@@ -1,6 +1,7 @@
 import type {
   QueryOptions,
   QueryApiResponse,
+  QueryDeveloperTrace,
   QueryResult,
   QueryStreamEvent,
 } from "../types.js";
@@ -21,6 +22,145 @@ import type { ContextClient } from "../client.js";
  */
 export class Query {
   constructor(private client: ContextClient) {}
+
+  private buildSyntheticTraceFromRunResult(params: {
+    toolsUsed: Array<{ id: string; name: string; skillCalls: number }>;
+    durationMs: number;
+  }): QueryDeveloperTrace {
+    const timeline = params.toolsUsed.map((tool, index) => ({
+      stepType: "tool-call",
+      event: "tool-call",
+      status: "success",
+      timestampMs: index,
+      tool: {
+        id: tool.id,
+        name: tool.name,
+      },
+      metadata: {
+        skillCalls: tool.skillCalls,
+        synthetic: true,
+      },
+    }));
+
+    const toolCalls = params.toolsUsed.reduce(
+      (sum, tool) => sum + Math.max(tool.skillCalls, 0),
+      0
+    );
+
+    return {
+      summary: {
+        toolCalls,
+        retryCount: 0,
+        selfHealCount: 0,
+        fallbackCount: 0,
+        failureCount: 0,
+        recoveryCount: 0,
+        completionChecks: 0,
+        loopCount: 0,
+      },
+      timeline,
+      source: "sdk-fallback",
+      synthetic: true,
+      reason: "backend_trace_missing",
+      durationMs: params.durationMs,
+    };
+  }
+
+  private buildSyntheticTraceFromStreamStatus(params: {
+    statusTimeline: Array<{
+      status: string;
+      tool: { id: string; name: string };
+    }>;
+    toolsUsed: Array<{ id: string; name: string; skillCalls: number }>;
+    durationMs: number;
+  }): QueryDeveloperTrace {
+    const timeline = params.statusTimeline.map((entry, index) => ({
+      stepType: "tool-status",
+      event: "tool-status",
+      status: entry.status,
+      timestampMs: index,
+      tool:
+        entry.tool.name || entry.tool.id
+          ? {
+              id: entry.tool.id || undefined,
+              name: entry.tool.name || undefined,
+            }
+          : undefined,
+      metadata: { synthetic: true },
+    }));
+
+    const toolCallsFromUsage = params.toolsUsed.reduce(
+      (sum, tool) => sum + Math.max(tool.skillCalls, 0),
+      0
+    );
+    const toolCallsFromStatus = params.statusTimeline.filter(
+      (entry) => entry.status === "tool-complete"
+    ).length;
+    const toolCalls = toolCallsFromUsage > 0 ? toolCallsFromUsage : toolCallsFromStatus;
+
+    const retryCount = params.statusTimeline.filter((entry) =>
+      /(retry|fix|reflect|recover)/i.test(entry.status)
+    ).length;
+    const completionChecks = params.statusTimeline.filter((entry) =>
+      /complet/i.test(entry.status)
+    ).length;
+
+    return {
+      summary: {
+        toolCalls,
+        retryCount,
+        selfHealCount: retryCount,
+        fallbackCount: 0,
+        failureCount: 0,
+        recoveryCount: 0,
+        completionChecks,
+        loopCount: retryCount,
+      },
+      timeline,
+      source: "sdk-fallback",
+      synthetic: true,
+      reason: "backend_trace_missing",
+      durationMs: params.durationMs,
+    };
+  }
+
+  private mergeDeveloperTrace(
+    first: QueryDeveloperTrace | undefined,
+    second: QueryDeveloperTrace | undefined
+  ): QueryDeveloperTrace | undefined {
+    if (!first) return second;
+    if (!second) return first;
+
+    const firstTimeline = Array.isArray(first.timeline) ? first.timeline : [];
+    const secondTimeline = Array.isArray(second.timeline) ? second.timeline : [];
+    const mergedTimeline = [...firstTimeline, ...secondTimeline];
+
+    return {
+      ...first,
+      ...second,
+      summary: {
+        ...(typeof first.summary === "object" && first.summary ? first.summary : {}),
+        ...(typeof second.summary === "object" && second.summary
+          ? second.summary
+          : {}),
+      },
+      ...(mergedTimeline.length > 0 ? { timeline: mergedTimeline } : {}),
+    };
+  }
+
+  private parseStreamEvent(rawData: string): QueryStreamEvent | undefined {
+    const parsed = JSON.parse(rawData) as unknown;
+    if (!parsed || typeof parsed !== "object") {
+      return undefined;
+    }
+
+    const event = parsed as QueryStreamEvent;
+    if (typeof (event as { type?: unknown }).type !== "string") {
+      return undefined;
+    }
+
+    return event;
+  }
 
   /**
    * Run an agentic query and wait for the full response.
@@ -70,6 +210,7 @@ export class Query {
           modelId: opts.modelId,
           includeData: opts.includeData,
           includeDataUrl: opts.includeDataUrl,
+          includeDeveloperTrace: opts.includeDeveloperTrace,
           queryDepth: opts.queryDepth,
           stream: false,
         }),
@@ -88,6 +229,14 @@ export class Query {
 
     // Handle success response
     if (response.success) {
+      const developerTrace =
+        response.developerTrace ??
+        (opts.includeDeveloperTrace
+          ? this.buildSyntheticTraceFromRunResult({
+              toolsUsed: response.toolsUsed,
+              durationMs: response.durationMs,
+            })
+          : undefined);
       return {
         response: response.response,
         toolsUsed: response.toolsUsed,
@@ -95,6 +244,7 @@ export class Query {
         durationMs: response.durationMs,
         data: response.data,
         dataUrl: response.dataUrl,
+        developerTrace,
       };
     }
 
@@ -108,6 +258,7 @@ export class Query {
    * Event types:
    * - `tool-status` — A tool started executing or changed status
    * - `text-delta` — A chunk of the AI response text
+   * - `developer-trace` — Runtime trace metadata (when includeDeveloperTrace=true)
    * - `done` — The full response is complete (includes final `QueryResult`)
    *
    * @param options - Query options or a plain string question
@@ -122,6 +273,9 @@ export class Query {
    *       break;
    *     case "text-delta":
    *       process.stdout.write(event.delta);
+   *       break;
+   *     case "developer-trace":
+   *       console.log("Trace summary:", event.trace.summary);
    *       break;
    *     case "done":
    *       console.log("\nCost:", event.result.cost.totalCostUsd);
@@ -147,6 +301,7 @@ export class Query {
         modelId: opts.modelId,
         includeData: opts.includeData,
         includeDataUrl: opts.includeDataUrl,
+        includeDeveloperTrace: opts.includeDeveloperTrace,
         queryDepth: opts.queryDepth,
         stream: true,
       }),
@@ -160,6 +315,55 @@ export class Query {
     const reader = body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
+    let aggregatedTrace: QueryDeveloperTrace | undefined;
+    const statusTimeline: Array<{
+      status: string;
+      tool: { id: string; name: string };
+    }> = [];
+
+    const parseAndHydrateEvent = (
+      rawData: string
+    ): QueryStreamEvent | undefined => {
+      const event = this.parseStreamEvent(rawData);
+      if (!event) {
+        return undefined;
+      }
+
+      if (event.type === "developer-trace") {
+        aggregatedTrace = this.mergeDeveloperTrace(aggregatedTrace, event.trace);
+        return event;
+      }
+
+      if (event.type === "tool-status") {
+        statusTimeline.push({
+          status: event.status,
+          tool: {
+            id: event.tool.id,
+            name: event.tool.name,
+          },
+        });
+        return event;
+      }
+
+      if (event.type === "done") {
+        let mergedTrace = this.mergeDeveloperTrace(
+          aggregatedTrace,
+          event.result.developerTrace
+        );
+        if (!mergedTrace && opts.includeDeveloperTrace) {
+          mergedTrace = this.buildSyntheticTraceFromStreamStatus({
+            statusTimeline,
+            toolsUsed: event.result.toolsUsed,
+            durationMs: event.result.durationMs,
+          });
+        }
+        if (mergedTrace) {
+          event.result.developerTrace = mergedTrace;
+        }
+      }
+
+      return event;
+    };
 
     try {
       while (true) {
@@ -176,7 +380,10 @@ export class Query {
             const data = trimmed.slice(6);
             if (data === "[DONE]") return;
             try {
-              yield JSON.parse(data) as QueryStreamEvent;
+              const event = parseAndHydrateEvent(data);
+              if (event) {
+                yield event;
+              }
             } catch {
               // Skip malformed SSE events
             }
@@ -189,7 +396,10 @@ export class Query {
         const data = buffer.trim().slice(6);
         if (data !== "[DONE]") {
           try {
-            yield JSON.parse(data) as QueryStreamEvent;
+            const event = parseAndHydrateEvent(data);
+            if (event) {
+              yield event;
+            }
           } catch {
             // Skip malformed SSE events
           }

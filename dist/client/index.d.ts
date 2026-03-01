@@ -9,9 +9,19 @@ interface ContextClientOptions {
     apiKey: string;
     /**
      * Base URL for the Context Protocol API
-     * @default "https://ctxprotocol.com"
+     * @default "https://www.ctxprotocol.com"
      */
     baseUrl?: string;
+    /**
+     * Request timeout for non-streaming API calls in milliseconds.
+     * @default 300000
+     */
+    requestTimeoutMs?: number;
+    /**
+     * Request timeout for establishing streaming API calls in milliseconds.
+     * @default 600000
+     */
+    streamTimeoutMs?: number;
 }
 /**
  * An individual MCP tool exposed by a tool listing
@@ -287,6 +297,8 @@ interface ExecutionResult<T = unknown> {
     /** Execution duration in milliseconds */
     durationMs: number;
 }
+/** Supported orchestration depth modes for query execution. */
+type QueryDepth = "fast" | "auto" | "deep";
 /**
  * Options for the agentic query endpoint (pay-per-response).
  *
@@ -320,10 +332,78 @@ interface QueryOptions {
      */
     includeDataUrl?: boolean;
     /**
+     * Include machine-readable developer trace output for this query response.
+     * When enabled, the server may return timeline data describing retries,
+     * fallbacks, loop checks, and intermediate recovery behavior.
+     */
+    includeDeveloperTrace?: boolean;
+    /**
+     * Query orchestration depth mode:
+     * - `fast`: lower-latency path
+     * - `auto`: server decides between fast/deep
+     * - `deep`: full completeness-oriented path
+     */
+    queryDepth?: QueryDepth;
+    /**
      * Optional idempotency key (UUID recommended).
      * Reuse the same key when retrying the same logical request.
      */
     idempotencyKey?: string;
+}
+/**
+ * Tool reference attached to developer trace timeline steps.
+ */
+interface QueryDeveloperTraceToolRef {
+    id?: string;
+    name?: string;
+    method?: string;
+    [key: string]: unknown;
+}
+/**
+ * Loop metadata attached to developer trace timeline steps.
+ */
+interface QueryDeveloperTraceLoopInfo {
+    name?: string;
+    iteration?: number;
+    maxIterations?: number;
+    [key: string]: unknown;
+}
+/**
+ * A single developer-trace timeline step.
+ */
+interface QueryDeveloperTraceStep {
+    stepType?: string;
+    event?: string;
+    status?: string;
+    message?: string;
+    timestampMs?: number;
+    tool?: QueryDeveloperTraceToolRef;
+    attempt?: number;
+    loop?: QueryDeveloperTraceLoopInfo;
+    metadata?: Record<string, unknown>;
+    [key: string]: unknown;
+}
+/**
+ * Aggregate counters that summarize developer-trace behavior.
+ */
+interface QueryDeveloperTraceSummary {
+    toolCalls?: number;
+    retryCount?: number;
+    selfHealCount?: number;
+    fallbackCount?: number;
+    failureCount?: number;
+    recoveryCount?: number;
+    completionChecks?: number;
+    loopCount?: number;
+    [key: string]: unknown;
+}
+/**
+ * Developer Mode trace payload returned per query response (opt-in).
+ */
+interface QueryDeveloperTrace {
+    summary?: QueryDeveloperTraceSummary;
+    timeline?: QueryDeveloperTraceStep[];
+    [key: string]: unknown;
 }
 /**
  * Information about a tool that was used during a query response
@@ -364,6 +444,8 @@ interface QueryResult {
     data?: unknown;
     /** Optional blob URL for persisted execution data (when includeDataUrl=true) */
     dataUrl?: string;
+    /** Optional machine-readable Developer Mode trace payload */
+    developerTrace?: QueryDeveloperTrace;
 }
 /**
  * Successful response from the /api/v1/query endpoint
@@ -376,6 +458,7 @@ interface QueryApiSuccessResponse {
     durationMs: number;
     data?: unknown;
     dataUrl?: string;
+    developerTrace?: QueryDeveloperTrace;
 }
 /**
  * Raw API response from the query endpoint
@@ -395,6 +478,11 @@ interface QueryStreamTextDeltaEvent {
     type: "text-delta";
     delta: string;
 }
+/** Emitted when the server streams developer trace updates/chunks */
+interface QueryStreamDeveloperTraceEvent {
+    type: "developer-trace";
+    trace: QueryDeveloperTrace;
+}
 /** Emitted when the full response is complete */
 interface QueryStreamDoneEvent {
     type: "done";
@@ -403,7 +491,7 @@ interface QueryStreamDoneEvent {
 /**
  * Union of all events emitted during a streaming query
  */
-type QueryStreamEvent = QueryStreamToolStatusEvent | QueryStreamTextDeltaEvent | QueryStreamDoneEvent;
+type QueryStreamEvent = QueryStreamToolStatusEvent | QueryStreamTextDeltaEvent | QueryStreamDeveloperTraceEvent | QueryStreamDoneEvent;
 /**
  * Specific error codes returned by the Context Protocol API
  */
@@ -515,6 +603,10 @@ declare class Tools {
 declare class Query {
     private client;
     constructor(client: ContextClient);
+    private buildSyntheticTraceFromRunResult;
+    private buildSyntheticTraceFromStreamStatus;
+    private mergeDeveloperTrace;
+    private parseStreamEvent;
     /**
      * Run an agentic query and wait for the full response.
      *
@@ -554,6 +646,7 @@ declare class Query {
      * Event types:
      * - `tool-status` — A tool started executing or changed status
      * - `text-delta` — A chunk of the AI response text
+     * - `developer-trace` — Runtime trace metadata (when includeDeveloperTrace=true)
      * - `done` — The full response is complete (includes final `QueryResult`)
      *
      * @param options - Query options or a plain string question
@@ -568,6 +661,9 @@ declare class Query {
      *       break;
      *     case "text-delta":
      *       process.stdout.write(event.delta);
+     *       break;
+     *     case "developer-trace":
+     *       console.log("Trace summary:", event.trace.summary);
      *       break;
      *     case "done":
      *       console.log("\nCost:", event.result.cost.totalCostUsd);
@@ -607,6 +703,8 @@ declare class Query {
 declare class ContextClient {
     private readonly apiKey;
     private readonly baseUrl;
+    private readonly requestTimeoutMs;
+    private readonly streamTimeoutMs;
     private _closed;
     /**
      * Discovery resource for searching tools
@@ -629,7 +727,9 @@ declare class ContextClient {
      *
      * @param options - Client configuration options
      * @param options.apiKey - Your Context Protocol API key (format: sk_live_...)
-     * @param options.baseUrl - Optional base URL override (defaults to https://ctxprotocol.com)
+     * @param options.baseUrl - Optional base URL override (defaults to https://www.ctxprotocol.com)
+     * @param options.requestTimeoutMs - Optional timeout for non-streaming requests (default 300000ms)
+     * @param options.streamTimeoutMs - Optional timeout for establishing stream requests (default 600000ms)
      */
     constructor(options: ContextClientOptions);
     /**
@@ -639,7 +739,7 @@ declare class ContextClient {
     close(): void;
     /**
      * Internal method for making authenticated HTTP requests
-     * Includes timeout (30s) and retry with exponential backoff for transient errors
+     * Includes timeout and retry with exponential backoff for transient errors
      *
      * @internal
      */
@@ -647,10 +747,11 @@ declare class ContextClient {
     /**
      * Internal method for making authenticated HTTP requests that returns
      * the raw Response object. Used for streaming endpoints (SSE).
+     * Includes a configurable timeout for stream setup.
      *
      * @internal
      */
     _fetchRaw(endpoint: string, options?: RequestInit): Promise<Response>;
 }
 
-export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecuteSessionApiResponse, type ExecuteSessionApiSuccessResponse, type ExecuteSessionResult, type ExecuteSessionSpend, type ExecuteSessionStartOptions, type ExecuteSessionStatus, type ExecutionResult, type McpTool, type McpToolMeta, type McpToolRateLimitHints, Query, type QueryApiResponse, type QueryApiSuccessResponse, type QueryCost, type QueryOptions, type QueryResult, type QueryStreamDoneEvent, type QueryStreamEvent, type QueryStreamTextDeltaEvent, type QueryStreamToolStatusEvent, type QueryToolUsage, type SearchOptions, type SearchResponse, type Tool, Tools };
+export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecuteSessionApiResponse, type ExecuteSessionApiSuccessResponse, type ExecuteSessionResult, type ExecuteSessionSpend, type ExecuteSessionStartOptions, type ExecuteSessionStatus, type ExecutionResult, type McpTool, type McpToolMeta, type McpToolRateLimitHints, Query, type QueryApiResponse, type QueryApiSuccessResponse, type QueryCost, type QueryDeveloperTrace, type QueryDeveloperTraceLoopInfo, type QueryDeveloperTraceStep, type QueryDeveloperTraceSummary, type QueryDeveloperTraceToolRef, type QueryOptions, type QueryResult, type QueryStreamDeveloperTraceEvent, type QueryStreamDoneEvent, type QueryStreamEvent, type QueryStreamTextDeltaEvent, type QueryStreamToolStatusEvent, type QueryToolUsage, type SearchOptions, type SearchResponse, type Tool, Tools };

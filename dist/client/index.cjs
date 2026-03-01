@@ -228,6 +228,114 @@ var Query = class {
   constructor(client) {
     this.client = client;
   }
+  buildSyntheticTraceFromRunResult(params) {
+    const timeline = params.toolsUsed.map((tool, index) => ({
+      stepType: "tool-call",
+      event: "tool-call",
+      status: "success",
+      timestampMs: index,
+      tool: {
+        id: tool.id,
+        name: tool.name
+      },
+      metadata: {
+        skillCalls: tool.skillCalls,
+        synthetic: true
+      }
+    }));
+    const toolCalls = params.toolsUsed.reduce(
+      (sum, tool) => sum + Math.max(tool.skillCalls, 0),
+      0
+    );
+    return {
+      summary: {
+        toolCalls,
+        retryCount: 0,
+        selfHealCount: 0,
+        fallbackCount: 0,
+        failureCount: 0,
+        recoveryCount: 0,
+        completionChecks: 0,
+        loopCount: 0
+      },
+      timeline,
+      source: "sdk-fallback",
+      synthetic: true,
+      reason: "backend_trace_missing",
+      durationMs: params.durationMs
+    };
+  }
+  buildSyntheticTraceFromStreamStatus(params) {
+    const timeline = params.statusTimeline.map((entry, index) => ({
+      stepType: "tool-status",
+      event: "tool-status",
+      status: entry.status,
+      timestampMs: index,
+      tool: entry.tool.name || entry.tool.id ? {
+        id: entry.tool.id || void 0,
+        name: entry.tool.name || void 0
+      } : void 0,
+      metadata: { synthetic: true }
+    }));
+    const toolCallsFromUsage = params.toolsUsed.reduce(
+      (sum, tool) => sum + Math.max(tool.skillCalls, 0),
+      0
+    );
+    const toolCallsFromStatus = params.statusTimeline.filter(
+      (entry) => entry.status === "tool-complete"
+    ).length;
+    const toolCalls = toolCallsFromUsage > 0 ? toolCallsFromUsage : toolCallsFromStatus;
+    const retryCount = params.statusTimeline.filter(
+      (entry) => /(retry|fix|reflect|recover)/i.test(entry.status)
+    ).length;
+    const completionChecks = params.statusTimeline.filter(
+      (entry) => /complet/i.test(entry.status)
+    ).length;
+    return {
+      summary: {
+        toolCalls,
+        retryCount,
+        selfHealCount: retryCount,
+        fallbackCount: 0,
+        failureCount: 0,
+        recoveryCount: 0,
+        completionChecks,
+        loopCount: retryCount
+      },
+      timeline,
+      source: "sdk-fallback",
+      synthetic: true,
+      reason: "backend_trace_missing",
+      durationMs: params.durationMs
+    };
+  }
+  mergeDeveloperTrace(first, second) {
+    if (!first) return second;
+    if (!second) return first;
+    const firstTimeline = Array.isArray(first.timeline) ? first.timeline : [];
+    const secondTimeline = Array.isArray(second.timeline) ? second.timeline : [];
+    const mergedTimeline = [...firstTimeline, ...secondTimeline];
+    return {
+      ...first,
+      ...second,
+      summary: {
+        ...typeof first.summary === "object" && first.summary ? first.summary : {},
+        ...typeof second.summary === "object" && second.summary ? second.summary : {}
+      },
+      ...mergedTimeline.length > 0 ? { timeline: mergedTimeline } : {}
+    };
+  }
+  parseStreamEvent(rawData) {
+    const parsed = JSON.parse(rawData);
+    if (!parsed || typeof parsed !== "object") {
+      return void 0;
+    }
+    const event = parsed;
+    if (typeof event.type !== "string") {
+      return void 0;
+    }
+    return event;
+  }
   /**
    * Run an agentic query and wait for the full response.
    *
@@ -273,6 +381,8 @@ var Query = class {
           modelId: opts.modelId,
           includeData: opts.includeData,
           includeDataUrl: opts.includeDataUrl,
+          includeDeveloperTrace: opts.includeDeveloperTrace,
+          queryDepth: opts.queryDepth,
           stream: false
         })
       }
@@ -286,13 +396,18 @@ var Query = class {
       );
     }
     if (response.success) {
+      const developerTrace = response.developerTrace ?? (opts.includeDeveloperTrace ? this.buildSyntheticTraceFromRunResult({
+        toolsUsed: response.toolsUsed,
+        durationMs: response.durationMs
+      }) : void 0);
       return {
         response: response.response,
         toolsUsed: response.toolsUsed,
         cost: response.cost,
         durationMs: response.durationMs,
         data: response.data,
-        dataUrl: response.dataUrl
+        dataUrl: response.dataUrl,
+        developerTrace
       };
     }
     throw new ContextError("Unexpected response format from query API");
@@ -304,6 +419,7 @@ var Query = class {
    * Event types:
    * - `tool-status` — A tool started executing or changed status
    * - `text-delta` — A chunk of the AI response text
+   * - `developer-trace` — Runtime trace metadata (when includeDeveloperTrace=true)
    * - `done` — The full response is complete (includes final `QueryResult`)
    *
    * @param options - Query options or a plain string question
@@ -318,6 +434,9 @@ var Query = class {
    *       break;
    *     case "text-delta":
    *       process.stdout.write(event.delta);
+   *       break;
+   *     case "developer-trace":
+   *       console.log("Trace summary:", event.trace.summary);
    *       break;
    *     case "done":
    *       console.log("\nCost:", event.result.cost.totalCostUsd);
@@ -338,6 +457,8 @@ var Query = class {
         modelId: opts.modelId,
         includeData: opts.includeData,
         includeDataUrl: opts.includeDataUrl,
+        includeDeveloperTrace: opts.includeDeveloperTrace,
+        queryDepth: opts.queryDepth,
         stream: true
       })
     });
@@ -348,6 +469,45 @@ var Query = class {
     const reader = body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
+    let aggregatedTrace;
+    const statusTimeline = [];
+    const parseAndHydrateEvent = (rawData) => {
+      const event = this.parseStreamEvent(rawData);
+      if (!event) {
+        return void 0;
+      }
+      if (event.type === "developer-trace") {
+        aggregatedTrace = this.mergeDeveloperTrace(aggregatedTrace, event.trace);
+        return event;
+      }
+      if (event.type === "tool-status") {
+        statusTimeline.push({
+          status: event.status,
+          tool: {
+            id: event.tool.id,
+            name: event.tool.name
+          }
+        });
+        return event;
+      }
+      if (event.type === "done") {
+        let mergedTrace = this.mergeDeveloperTrace(
+          aggregatedTrace,
+          event.result.developerTrace
+        );
+        if (!mergedTrace && opts.includeDeveloperTrace) {
+          mergedTrace = this.buildSyntheticTraceFromStreamStatus({
+            statusTimeline,
+            toolsUsed: event.result.toolsUsed,
+            durationMs: event.result.durationMs
+          });
+        }
+        if (mergedTrace) {
+          event.result.developerTrace = mergedTrace;
+        }
+      }
+      return event;
+    };
     try {
       while (true) {
         const { done, value } = await reader.read();
@@ -361,7 +521,10 @@ var Query = class {
             const data = trimmed.slice(6);
             if (data === "[DONE]") return;
             try {
-              yield JSON.parse(data);
+              const event = parseAndHydrateEvent(data);
+              if (event) {
+                yield event;
+              }
             } catch {
             }
           }
@@ -371,7 +534,10 @@ var Query = class {
         const data = buffer.trim().slice(6);
         if (data !== "[DONE]") {
           try {
-            yield JSON.parse(data);
+            const event = parseAndHydrateEvent(data);
+            if (event) {
+              yield event;
+            }
           } catch {
           }
         }
@@ -383,9 +549,14 @@ var Query = class {
 };
 
 // src/client/client.ts
+var DEFAULT_BASE_URL = "https://www.ctxprotocol.com";
+var DEFAULT_REQUEST_TIMEOUT_MS = 3e5;
+var DEFAULT_STREAM_TIMEOUT_MS = 6e5;
 var ContextClient = class {
   apiKey;
   baseUrl;
+  requestTimeoutMs;
+  streamTimeoutMs;
   _closed = false;
   /**
    * Discovery resource for searching tools
@@ -408,14 +579,26 @@ var ContextClient = class {
    *
    * @param options - Client configuration options
    * @param options.apiKey - Your Context Protocol API key (format: sk_live_...)
-   * @param options.baseUrl - Optional base URL override (defaults to https://ctxprotocol.com)
+   * @param options.baseUrl - Optional base URL override (defaults to https://www.ctxprotocol.com)
+   * @param options.requestTimeoutMs - Optional timeout for non-streaming requests (default 300000ms)
+   * @param options.streamTimeoutMs - Optional timeout for establishing stream requests (default 600000ms)
    */
   constructor(options) {
     if (!options.apiKey) {
       throw new ContextError("API key is required");
     }
+    const requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    const streamTimeoutMs = options.streamTimeoutMs ?? DEFAULT_STREAM_TIMEOUT_MS;
+    if (!Number.isFinite(requestTimeoutMs) || requestTimeoutMs <= 0) {
+      throw new ContextError("requestTimeoutMs must be a positive number");
+    }
+    if (!Number.isFinite(streamTimeoutMs) || streamTimeoutMs <= 0) {
+      throw new ContextError("streamTimeoutMs must be a positive number");
+    }
     this.apiKey = options.apiKey;
-    this.baseUrl = (options.baseUrl ?? "https://ctxprotocol.com").replace(/\/$/, "");
+    this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
+    this.requestTimeoutMs = requestTimeoutMs;
+    this.streamTimeoutMs = streamTimeoutMs;
     this.discovery = new Discovery(this);
     this.tools = new Tools(this);
     this.query = new Query(this);
@@ -429,7 +612,7 @@ var ContextClient = class {
   }
   /**
    * Internal method for making authenticated HTTP requests
-   * Includes timeout (30s) and retry with exponential backoff for transient errors
+   * Includes timeout and retry with exponential backoff for transient errors
    *
    * @internal
    */
@@ -439,7 +622,7 @@ var ContextClient = class {
     }
     const url = `${this.baseUrl}${endpoint}`;
     const maxRetries = 3;
-    const timeoutMs = 3e4;
+    const timeoutMs = this.requestTimeoutMs;
     let lastError;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       const controller = new AbortController();
@@ -507,6 +690,7 @@ var ContextClient = class {
   /**
    * Internal method for making authenticated HTTP requests that returns
    * the raw Response object. Used for streaming endpoints (SSE).
+   * Includes a configurable timeout for stream setup.
    *
    * @internal
    */
@@ -515,14 +699,32 @@ var ContextClient = class {
       throw new ContextError("Client has been closed");
     }
     const url = `${this.baseUrl}${endpoint}`;
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.apiKey}`,
-        ...options.headers
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.streamTimeoutMs);
+    let response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
+          ...options.headers
+        }
+      });
+    } catch (error) {
+      clearTimeout(timeout);
+      const lastError = error instanceof Error ? error : new Error(String(error));
+      if (lastError.name === "AbortError") {
+        throw new ContextError(
+          `Streaming request timed out after ${this.streamTimeoutMs / 1e3}s`,
+          void 0,
+          408
+        );
       }
-    });
+      throw new ContextError(lastError.message);
+    }
+    clearTimeout(timeout);
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
       let errorCode;

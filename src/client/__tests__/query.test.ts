@@ -3,6 +3,7 @@ import { ContextClient } from "../client.js";
 import { ContextError } from "../types.js";
 import type {
   QueryResult,
+  QueryStreamDeveloperTraceEvent,
   QueryStreamToolStatusEvent,
   QueryStreamTextDeltaEvent,
   QueryStreamDoneEvent,
@@ -92,6 +93,30 @@ const MOCK_SUCCESS_RESPONSE = {
   durationMs: 4200,
 };
 
+const MOCK_DEVELOPER_TRACE = {
+  summary: {
+    toolCalls: 4,
+    retryCount: 2,
+    selfHealCount: 1,
+    fallbackCount: 1,
+    completionChecks: 3,
+    loopCount: 2,
+  },
+  timeline: [
+    {
+      stepType: "tool-call",
+      timestampMs: 120,
+      tool: { id: "tool-uuid-1", name: "Whale Tracker", method: "get_whales" },
+    },
+    {
+      stepType: "retry",
+      timestampMs: 420,
+      attempt: 2,
+      message: "Retrying after transient provider timeout",
+    },
+  ],
+};
+
 const MOCK_SSE_EVENTS = [
   'data: {"type":"tool-status","status":"discovering","tool":{"id":"","name":""}}',
   'data: {"type":"tool-status","status":"discovered","tool":{"id":"tool-uuid-1","name":"Whale Tracker"}}',
@@ -106,6 +131,37 @@ const MOCK_SSE_EVENTS = [
     type: "done",
     result: {
       response: "Based on the latest data, whale activity is up 15%.",
+      toolsUsed: [{ id: "tool-uuid-1", name: "Whale Tracker", skillCalls: 2 }],
+      cost: {
+        totalCostUsd: "0.012000",
+        toolCostUsd: "0.008000",
+        modelCostUsd: "0.004000",
+      },
+      durationMs: 3800,
+    },
+  })}`,
+  "data: [DONE]",
+];
+
+const MOCK_SSE_TRACE_EVENTS = [
+  `data: ${JSON.stringify({
+    type: "developer-trace",
+    trace: {
+      summary: { retryCount: 2, loopCount: 1 },
+      timeline: [{ stepType: "retry", attempt: 2 }],
+    },
+  })}`,
+  `data: ${JSON.stringify({
+    type: "developer-trace",
+    trace: {
+      summary: { fallbackCount: 1, completionChecks: 3 },
+      timeline: [{ stepType: "fallback", message: "Switched to backup branch" }],
+    },
+  })}`,
+  `data: ${JSON.stringify({
+    type: "done",
+    result: {
+      response: "Resolved with fallback branch.",
       toolsUsed: [{ id: "tool-uuid-1", name: "Whale Tracker", skillCalls: 2 }],
       cost: {
         totalCostUsd: "0.012000",
@@ -185,6 +241,7 @@ describe("Query Resource", () => {
         ...MOCK_SUCCESS_RESPONSE,
         data: { summary: "tool output" },
         dataUrl: "https://example.public.blob.vercel-storage.com/data.json",
+        developerTrace: MOCK_DEVELOPER_TRACE,
       });
       globalThis.fetch = mockFn;
 
@@ -193,6 +250,7 @@ describe("Query Resource", () => {
         modelId: "glm-model",
         includeData: true,
         includeDataUrl: true,
+        includeDeveloperTrace: true,
         queryDepth: "auto",
       });
 
@@ -203,6 +261,7 @@ describe("Query Resource", () => {
         modelId: "glm-model",
         includeData: true,
         includeDataUrl: true,
+        includeDeveloperTrace: true,
         queryDepth: "auto",
         stream: false,
       });
@@ -210,6 +269,39 @@ describe("Query Resource", () => {
       expect(result.dataUrl).toBe(
         "https://example.public.blob.vercel-storage.com/data.json",
       );
+      expect(result.developerTrace?.summary?.retryCount).toBe(2);
+    });
+
+    it("includes developerTrace in run() result when present", async () => {
+      globalThis.fetch = mockFetchJson({
+        ...MOCK_SUCCESS_RESPONSE,
+        developerTrace: MOCK_DEVELOPER_TRACE,
+      });
+
+      const result = await client.query.run("test query");
+      expect(result.developerTrace).toEqual(MOCK_DEVELOPER_TRACE);
+    });
+
+    it("returns undefined developerTrace when API omits it", async () => {
+      globalThis.fetch = mockFetchJson(MOCK_SUCCESS_RESPONSE);
+
+      const result = await client.query.run("test query");
+      expect(result.developerTrace).toBeUndefined();
+    });
+
+    it("builds synthetic developerTrace when requested and API omits it", async () => {
+      globalThis.fetch = mockFetchJson(MOCK_SUCCESS_RESPONSE);
+
+      const result = await client.query.run({
+        query: "test query",
+        includeDeveloperTrace: true,
+      });
+
+      expect(result.developerTrace).toBeDefined();
+      expect(result.developerTrace?.synthetic).toBe(true);
+      expect(result.developerTrace?.summary?.toolCalls).toBe(4);
+      expect(result.developerTrace?.summary?.retryCount).toBe(0);
+      expect(result.developerTrace?.timeline?.length).toBe(2);
     });
 
     it("forwards Idempotency-Key header for run options", async () => {
@@ -435,6 +527,7 @@ describe("Query Resource", () => {
         modelId: "claude-sonnet-model",
         includeData: true,
         includeDataUrl: true,
+        includeDeveloperTrace: true,
         queryDepth: "deep",
       })) {
         events.push(event);
@@ -446,7 +539,58 @@ describe("Query Resource", () => {
       expect(body.modelId).toBe("claude-sonnet-model");
       expect(body.includeData).toBe(true);
       expect(body.includeDataUrl).toBe(true);
+      expect(body.includeDeveloperTrace).toBe(true);
       expect(body.queryDepth).toBe("deep");
+    });
+
+    it("handles developer-trace stream events and aggregates final trace", async () => {
+      globalThis.fetch = mockFetchSSE(MOCK_SSE_TRACE_EVENTS);
+
+      const events = [];
+      for await (const event of client.query.stream("test query")) {
+        events.push(event);
+      }
+
+      const traceEvents = events.filter(
+        (e) => e.type === "developer-trace",
+      ) as QueryStreamDeveloperTraceEvent[];
+      expect(traceEvents).toHaveLength(2);
+      expect(traceEvents[0].trace.summary?.retryCount).toBe(2);
+      expect(traceEvents[1].trace.summary?.fallbackCount).toBe(1);
+
+      const doneEvents = events.filter(
+        (e) => e.type === "done",
+      ) as QueryStreamDoneEvent[];
+      expect(doneEvents).toHaveLength(1);
+      expect(doneEvents[0].result.developerTrace?.summary?.retryCount).toBe(2);
+      expect(doneEvents[0].result.developerTrace?.summary?.fallbackCount).toBe(1);
+      expect(doneEvents[0].result.developerTrace?.summary?.completionChecks).toBe(
+        3,
+      );
+      expect(doneEvents[0].result.developerTrace?.timeline).toHaveLength(2);
+    });
+
+    it("builds synthetic done trace from stream status when requested and backend omits trace", async () => {
+      globalThis.fetch = mockFetchSSE(MOCK_SSE_EVENTS);
+
+      const events = [];
+      for await (const event of client.query.stream({
+        query: "test query",
+        includeDeveloperTrace: true,
+      })) {
+        events.push(event);
+      }
+
+      const doneEvents = events.filter(
+        (e) => e.type === "done",
+      ) as QueryStreamDoneEvent[];
+      expect(doneEvents).toHaveLength(1);
+      expect(doneEvents[0].result.developerTrace).toBeDefined();
+      expect(doneEvents[0].result.developerTrace?.synthetic).toBe(true);
+      expect(doneEvents[0].result.developerTrace?.summary?.toolCalls).toBe(2);
+      expect(doneEvents[0].result.developerTrace?.timeline?.length).toBeGreaterThan(
+        0,
+      );
     });
 
     it("forwards Idempotency-Key header for stream options", async () => {

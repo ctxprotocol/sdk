@@ -137,6 +137,15 @@ RETURNS:
       properties: {
         market: { type: "string" },
         ticker: { type: "string" },
+        requestedTicker: {
+          type: "string",
+          description: "Original ticker passed by the caller.",
+        },
+        resolvedFrom: {
+          type: "string",
+          description:
+            "Set when ticker was auto-resolved (for example, search:KXBITCOIN->KXBTCMAXY-26DEC31-109999.99).",
+        },
         currentPrices: {
           type: "object",
           properties: {
@@ -167,9 +176,39 @@ RETURNS:
         slippageSimulation: {
           type: "object",
           properties: {
-            buy100: { type: "object" },
-            buy500: { type: "object" },
-            buy1000: { type: "object" },
+            buy100: {
+              type: "object",
+              properties: {
+                canFill: { type: "boolean" },
+                avgPrice: { type: "string" },
+                worstPrice: { type: "number" },
+                filledUsd: { type: "number" },
+                filledContracts: { type: "number" },
+                slippagePercent: { type: "string" },
+              },
+            },
+            buy500: {
+              type: "object",
+              properties: {
+                canFill: { type: "boolean" },
+                avgPrice: { type: "string" },
+                worstPrice: { type: "number" },
+                filledUsd: { type: "number" },
+                filledContracts: { type: "number" },
+                slippagePercent: { type: "string" },
+              },
+            },
+            buy1000: {
+              type: "object",
+              properties: {
+                canFill: { type: "boolean" },
+                avgPrice: { type: "string" },
+                worstPrice: { type: "number" },
+                filledUsd: { type: "number" },
+                filledContracts: { type: "number" },
+                slippagePercent: { type: "string" },
+              },
+            },
           },
         },
         liquidityScore: {
@@ -463,6 +502,15 @@ OPTIONS:
             avgReturn: { type: "string" },
           },
         },
+        degraded: {
+          type: "boolean",
+          description:
+            "True when fallback sampling was used because the primary snapshot request failed.",
+        },
+        warning: {
+          type: "string",
+          description: "Optional non-fatal warning about data completeness.",
+        },
         fetchedAt: { type: "string" },
       },
       required: ["markets", "summary"],
@@ -641,13 +689,25 @@ Each event has:
           type: "string",
           description: "Filter by series ticker",
         },
+        withNestedMarkets: {
+          type: "boolean",
+          description: "Include nested markets in each event payload (default: false)",
+        },
+        withMilestones: {
+          type: "boolean",
+          description: "Include event milestones when available",
+        },
+        minCloseTs: {
+          type: "number",
+          description: "Return events with at least one market closing after this Unix timestamp",
+        },
         limit: {
           type: "number",
           description: "Number of results (default: 50, max: 200)",
         },
         cursor: {
           type: "string",
-          description: "Pagination cursor",
+          description: "Pagination token from prior response. Pass this back to fetch the next page.",
         },
       },
       required: [],
@@ -668,11 +728,153 @@ Each event has:
             },
           },
         },
-        cursor: { type: "string" },
+        nextCursor: {
+          type: "string",
+          description: "Token for the next page. Empty string means there are no more results.",
+        },
+        cursor: {
+          type: "string",
+          description: "Backwards-compatible alias of nextCursor.",
+        },
         count: { type: "number" },
+        filtersApplied: {
+          type: "object",
+          properties: {
+            status: { type: "string" },
+            seriesTicker: { type: "string" },
+            withNestedMarkets: { type: "boolean" },
+            withMilestones: { type: "boolean" },
+            minCloseTs: { type: "number" },
+          },
+        },
         fetchedAt: { type: "string" },
       },
       required: ["events", "count"],
+    },
+  },
+
+  {
+    name: "get_markets",
+    description: `Get markets directly from Kalshi with API-native filters and pagination.
+
+Use this when you need precise, normalized market retrieval (Execute-friendly).
+Supports status, event/series/category filters, timestamp filters, explicit ticker lists, and pagination.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        status: {
+          type: "string",
+          enum: ["open", "closed", "settled"],
+          description: "Filter by market status (default: open)",
+        },
+        eventTicker: {
+          type: "string",
+          description: "Filter by event ticker",
+        },
+        seriesTicker: {
+          type: "string",
+          description: "Filter by series ticker",
+        },
+        category: {
+          type: "string",
+          description: "Filter by category",
+        },
+        tickers: {
+          type: "array",
+          description: "Optional exact ticker filter list. Server joins this to API's comma format.",
+          items: { type: "string" },
+        },
+        minUpdatedTs: {
+          type: "number",
+          description: "Return markets updated after this Unix timestamp",
+        },
+        minCloseTs: {
+          type: "number",
+          description: "Minimum close timestamp filter",
+        },
+        maxCloseTs: {
+          type: "number",
+          description: "Maximum close timestamp filter",
+        },
+        minCreatedTs: {
+          type: "number",
+          description: "Minimum created timestamp filter",
+        },
+        maxCreatedTs: {
+          type: "number",
+          description: "Maximum created timestamp filter",
+        },
+        minSettledTs: {
+          type: "number",
+          description: "Minimum settled timestamp filter",
+        },
+        maxSettledTs: {
+          type: "number",
+          description: "Maximum settled timestamp filter",
+        },
+        limit: {
+          type: "number",
+          description: "Number of markets per page (default: 50, max: 200)",
+        },
+        cursor: {
+          type: "string",
+          description: "Pagination token from previous get_markets call",
+        },
+      },
+      required: [],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        markets: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              ticker: { type: "string" },
+              eventTicker: { type: "string" },
+              title: { type: "string" },
+              yesPrice: { type: "number" },
+              noPrice: { type: "number" },
+              yesBid: { type: "number" },
+              yesAsk: { type: "number" },
+              noBid: { type: "number" },
+              noAsk: { type: "number" },
+              lastPrice: { type: "number" },
+              volume: { type: "number" },
+              volume24h: { type: "number" },
+              openInterest: { type: "number" },
+              liquidity: { type: "number" },
+              status: { type: "string" },
+              category: { type: "string" },
+              openTime: { type: "string" },
+              closeTime: { type: "string" },
+              url: { type: "string", format: "uri" },
+            },
+          },
+        },
+        nextCursor: {
+          type: "string",
+          description: "Token for next page. Empty string means end of results.",
+        },
+        cursor: {
+          type: "string",
+          description: "Backwards-compatible alias of nextCursor.",
+        },
+        count: { type: "number" },
+        filtersApplied: {
+          type: "object",
+          properties: {
+            status: { type: "string" },
+            eventTicker: { type: "string" },
+            seriesTicker: { type: "string" },
+            category: { type: "string" },
+            tickersCount: { type: "number" },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["markets", "count", "nextCursor"],
     },
   },
 
@@ -1001,6 +1203,10 @@ STATUS OPTIONS:
           type: "number",
           description: "Number of results (default: 20)",
         },
+        maxSeriesScan: {
+          type: "number",
+          description: "Performance guardrail: maximum series records to scan in deep search (default: 600, max: 1200)",
+        },
       },
       required: [],
     },
@@ -1026,6 +1232,13 @@ STATUS OPTIONS:
           },
         },
         count: { type: "number", description: "Number of results returned" },
+        searchBudget: {
+          type: "object",
+          properties: {
+            maxSeriesScan: { type: "number" },
+            topSeriesEvaluated: { type: "number" },
+          },
+        },
         fetchedAt: { type: "string" },
       },
       required: ["results", "count"],
@@ -1049,6 +1262,10 @@ RETURNS: Level 2 orderbook with bids and asks.`,
         depth: {
           type: "number",
           description: "Orderbook depth (default: 10, max: 100)",
+        },
+        preferFixedPoint: {
+          type: "boolean",
+          description: "If true (default), prefer orderbook_fp quantity precision when available.",
         },
       },
       required: ["ticker"],
@@ -1079,6 +1296,11 @@ RETURNS: Level 2 orderbook with bids and asks.`,
         },
         spread: { type: "number" },
         midPrice: { type: "number" },
+        orderbookFpAvailable: { type: "boolean" },
+        quantityPrecision: {
+          type: "string",
+          enum: ["fixed_point", "integer"],
+        },
         fetchedAt: { type: "string" },
       },
       required: ["ticker", "bids", "asks"],
@@ -1111,6 +1333,10 @@ RETURNS: Recent trades with timestamps and details.`,
           type: "number",
           description: "Maximum timestamp (Unix)",
         },
+        cursor: {
+          type: "string",
+          description: "Pagination cursor from previous response",
+        },
       },
       required: ["ticker"],
     },
@@ -1139,6 +1365,14 @@ RETURNS: Recent trades with timestamps and details.`,
             avgPrice: { type: "number" },
           },
         },
+        nextCursor: {
+          type: "string",
+          description: "Token for next page of trades. Empty string means end of results.",
+        },
+        cursor: {
+          type: "string",
+          description: "Backwards-compatible alias of nextCursor.",
+        },
         fetchedAt: { type: "string" },
       },
       required: ["ticker", "trades"],
@@ -1147,17 +1381,20 @@ RETURNS: Recent trades with timestamps and details.`,
 
   {
     name: "get_market_candlesticks",
-    description: `Get historical OHLC candlestick data for a market.
+    description: `Get historical candlestick data for a market.
 
-INPUT: market ticker, series ticker
+Uses Kalshi's batch candlesticks endpoint (/markets/candlesticks) for accuracy with current API shapes.
+seriesTicker is optional and only used as a fallback for legacy endpoint compatibility.
 
-RETURNS: Array of candlesticks with open, high, low, close, volume.`,
+INPUT: market ticker, optional time range and interval
+
+RETURNS: Array of candlesticks with yes_bid, yes_ask, price, volume, open_interest.`,
     inputSchema: {
       type: "object" as const,
       properties: {
         seriesTicker: {
           type: "string",
-          description: "Series ticker containing the market",
+          description: "Optional series ticker for legacy fallback endpoint",
         },
         ticker: {
           type: "string",
@@ -1176,8 +1413,12 @@ RETURNS: Array of candlesticks with open, high, low, close, volume.`,
           enum: [1, 60, 1440],
           description: "Interval: 1 (1min), 60 (1hr), 1440 (1day)",
         },
+        includeLatestBeforeStart: {
+          type: "boolean",
+          description: "If true, prepends synthetic continuity candlestick when available",
+        },
       },
-      required: ["seriesTicker", "ticker"],
+      required: ["ticker"],
     },
     outputSchema: {
       type: "object" as const,
@@ -1188,18 +1429,125 @@ RETURNS: Array of candlesticks with open, high, low, close, volume.`,
           items: {
             type: "object",
             properties: {
-              timestamp: { type: "number" },
-              open: { type: "number" },
-              high: { type: "number" },
-              low: { type: "number" },
-              close: { type: "number" },
+              endPeriodTs: { type: "number" },
+              yesBid: {
+                type: ["object", "null"] as const,
+                properties: {
+                  open: { type: ["number", "null"] as const },
+                  high: { type: ["number", "null"] as const },
+                  low: { type: ["number", "null"] as const },
+                  close: { type: ["number", "null"] as const },
+                  open_dollars: { type: ["string", "null"] as const },
+                  high_dollars: { type: ["string", "null"] as const },
+                  low_dollars: { type: ["string", "null"] as const },
+                  close_dollars: { type: ["string", "null"] as const },
+                },
+                additionalProperties: true,
+              },
+              yesAsk: {
+                type: ["object", "null"] as const,
+                properties: {
+                  open: { type: ["number", "null"] as const },
+                  high: { type: ["number", "null"] as const },
+                  low: { type: ["number", "null"] as const },
+                  close: { type: ["number", "null"] as const },
+                  open_dollars: { type: ["string", "null"] as const },
+                  high_dollars: { type: ["string", "null"] as const },
+                  low_dollars: { type: ["string", "null"] as const },
+                  close_dollars: { type: ["string", "null"] as const },
+                },
+                additionalProperties: true,
+              },
+              price: {
+                type: ["object", "null"] as const,
+                properties: {
+                  open: { type: ["number", "null"] as const },
+                  high: { type: ["number", "null"] as const },
+                  low: { type: ["number", "null"] as const },
+                  close: { type: ["number", "null"] as const },
+                  min: { type: ["number", "null"] as const },
+                  max: { type: ["number", "null"] as const },
+                  mean: { type: ["number", "null"] as const },
+                  previous: { type: ["number", "null"] as const },
+                  open_dollars: { type: ["string", "null"] as const },
+                  high_dollars: { type: ["string", "null"] as const },
+                  low_dollars: { type: ["string", "null"] as const },
+                  close_dollars: { type: ["string", "null"] as const },
+                  min_dollars: { type: ["string", "null"] as const },
+                  max_dollars: { type: ["string", "null"] as const },
+                  mean_dollars: { type: ["string", "null"] as const },
+                  previous_dollars: { type: ["string", "null"] as const },
+                },
+                additionalProperties: true,
+              },
               volume: { type: "number" },
+              openInterest: { type: "number" },
             },
           },
         },
+        sourceEndpoint: { type: "string" },
         fetchedAt: { type: "string" },
       },
       required: ["ticker", "candlesticks"],
+    },
+  },
+
+  {
+    name: "get_event_candlesticks",
+    description: `Get aggregated candlesticks for an event across all of its markets.
+
+Uses Kalshi's event-level candlestick endpoint and returns market_tickers + market_candlesticks arrays.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        seriesTicker: {
+          type: "string",
+          description: "Series ticker for the event",
+        },
+        eventTicker: {
+          type: "string",
+          description: "Event ticker",
+        },
+        startTs: {
+          type: "number",
+          description: "Start timestamp (Unix)",
+        },
+        endTs: {
+          type: "number",
+          description: "End timestamp (Unix)",
+        },
+        periodInterval: {
+          type: "number",
+          enum: [1, 60, 1440],
+          description: "Interval minutes: 1 (1m), 60 (1h), 1440 (1d)",
+        },
+      },
+      required: ["seriesTicker", "eventTicker"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        eventTicker: { type: "string" },
+        seriesTicker: { type: "string" },
+        marketTickers: {
+          type: "array",
+          items: { type: "string" },
+        },
+        marketCandlesticks: {
+          type: "array",
+          description: "Candlestick arrays aligned by index with marketTickers.",
+          items: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: true,
+            },
+          },
+        },
+        adjustedEndTs: { type: "number" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["eventTicker", "seriesTicker", "marketTickers", "marketCandlesticks"],
     },
   },
 
@@ -1240,9 +1588,37 @@ CROSS-PLATFORM:
         },
         totalCategories: { type: "number" },
         totalTags: { type: "number" },
+        seriesCountByCategory: {
+          type: "object",
+          description:
+            "Snapshot count of series grouped by category. Includes categories returned by Kalshi plus any additional categories found in the series dataset.",
+          additionalProperties: {
+            type: "number",
+          },
+        },
+        totalSeries: {
+          type: "number",
+          description: "Total number of series in the snapshot used for seriesCountByCategory.",
+        },
+        seriesCountSource: {
+          type: "string",
+          description: "How seriesCountByCategory was computed.",
+        },
+        seriesCountWarnings: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Non-fatal warnings while computing seriesCountByCategory. Empty array means no issues.",
+        },
+        categoriesWarnings: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Non-fatal warnings while loading category/tag taxonomy. Empty array means no issues.",
+        },
         fetchedAt: { type: "string" },
       },
-      required: ["categories", "categoryList"],
+      required: ["categories", "categoryList", "seriesCountByCategory"],
     },
   },
 
@@ -1292,6 +1668,10 @@ DATA FLOW:
           },
         },
         totalCount: { type: "number" },
+        warning: {
+          type: "string",
+          description: "Optional non-fatal warning when the response is degraded.",
+        },
         fetchedAt: { type: "string" },
       },
       required: ["series"],
@@ -1427,6 +1807,114 @@ Example: browse_series({ seriesTicker: "KXHIGHNY" }) → all NYC high temp event
   },
 ];
 
+type ToolSurface = "answer" | "execute" | "both";
+type ToolLatencyClass = "instant" | "fast" | "slow" | "streaming";
+
+interface ToolRateLimitHints {
+  maxRequestsPerMinute: number;
+  cooldownMs: number;
+  maxConcurrency: number;
+  supportsBulk: boolean;
+  recommendedBatchTools: string[];
+  notes: string;
+}
+
+interface ToolMetadata {
+  surface: ToolSurface;
+  queryEligible: boolean;
+  latencyClass: ToolLatencyClass;
+  pricing: {
+    executeUsd: string;
+  };
+  rateLimit: ToolRateLimitHints;
+}
+
+const RAW_DATA_TOOLS = new Set([
+  "get_events",
+  "get_markets",
+  "get_event",
+  "get_market",
+  "get_market_orderbook",
+  "get_market_trades",
+  "get_market_candlesticks",
+  "get_event_candlesticks",
+  "resolve_slug",
+  "get_event_by_slug",
+]);
+
+const DISCOVERY_TOOLS = new Set([
+  "get_all_categories",
+  "get_all_series",
+  "browse_category",
+  "browse_series",
+]);
+
+const HEAVY_QUERY_TOOLS = new Set([
+  "search_markets",
+  "discover_trending_markets",
+  "find_arbitrage_opportunities",
+  "find_trading_opportunities",
+  "kalshi_crossref_polymarket",
+  "browse_category",
+  "browse_series",
+  "get_all_series",
+]);
+
+const EXECUTE_PRICE_DEFAULT = process.env.DEFAULT_EXECUTE_USD || "0.001";
+const EXECUTE_PRICE_INTELLIGENCE = process.env.INTELLIGENCE_EXECUTE_USD || "0.002";
+const EXECUTE_PRICE_DISCOVERY = process.env.DISCOVERY_EXECUTE_USD || "0.0005";
+
+function buildToolMeta(toolName: string): ToolMetadata {
+  const isRawDataTool = RAW_DATA_TOOLS.has(toolName);
+  const isDiscoveryTool = DISCOVERY_TOOLS.has(toolName);
+  const isHeavyQueryTool = HEAVY_QUERY_TOOLS.has(toolName);
+
+  const executeUsd = isRawDataTool
+    ? EXECUTE_PRICE_DEFAULT
+    : isDiscoveryTool
+      ? EXECUTE_PRICE_DISCOVERY
+      : EXECUTE_PRICE_INTELLIGENCE;
+
+  const latencyClass: ToolLatencyClass = isRawDataTool
+    ? (toolName === "get_market_orderbook" || toolName === "get_market_trades" ? "instant" : "fast")
+    : isHeavyQueryTool
+      ? "slow"
+      : "fast";
+
+  const rateLimit: ToolRateLimitHints = isHeavyQueryTool
+    ? {
+        maxRequestsPerMinute: 20,
+        cooldownMs: 750,
+        maxConcurrency: 1,
+        supportsBulk: false,
+        recommendedBatchTools: ["get_markets", "get_events"],
+        notes: "Fan-out/heavy query path; prefer direct list endpoints when possible.",
+      }
+    : {
+        maxRequestsPerMinute: 90,
+        cooldownMs: 250,
+        maxConcurrency: 2,
+        supportsBulk: true,
+        recommendedBatchTools: ["get_markets", "get_events"],
+        notes: "Optimized for iterative execute-mode access with bounded pacing.",
+      };
+
+  return {
+    surface: "both",
+    queryEligible: true,
+    latencyClass,
+    pricing: {
+      executeUsd,
+    },
+    rateLimit,
+  };
+}
+
+const TOOLS_WITH_METADATA = TOOLS.map((tool) => ({
+  ...tool,
+  _meta: buildToolMeta(tool.name),
+}));
+
 // ============================================================================
 // MCP SERVER SETUP
 // ============================================================================
@@ -1437,7 +1925,7 @@ const server = new Server(
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: TOOLS,
+  tools: TOOLS_WITH_METADATA,
 }));
 
 server.setRequestHandler(
@@ -1471,6 +1959,8 @@ server.setRequestHandler(
         // Tier 2: Raw Data Tools
         case "get_events":
           return await handleGetEvents(args);
+        case "get_markets":
+          return await handleGetMarkets(args);
         case "get_event":
           return await handleGetEvent(args);
         case "resolve_slug":
@@ -1487,6 +1977,8 @@ server.setRequestHandler(
           return await handleGetMarketTrades(args);
         case "get_market_candlesticks":
           return await handleGetMarketCandlesticks(args);
+        case "get_event_candlesticks":
+          return await handleGetEventCandlesticks(args);
 
         // Discovery Layer Tools
         case "get_all_categories":
@@ -1529,23 +2021,60 @@ function successResult(data: Record<string, unknown>): CallToolResult {
 // API FETCH HELPERS
 // ============================================================================
 
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function fetchKalshi(endpoint: string, timeoutMs = 15000): Promise<unknown> {
   const url = `${API_BASE}${endpoint}`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const maxRetries = 3;
 
-  try {
-    const response = await fetch(url, { signal: controller.signal });
+  for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Kalshi API error (${response.status}): ${text.slice(0, 200)}`);
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+
+      if (response.ok) {
+        return response.json();
+      }
+
+      const bodyText = await response.text();
+      const retryableStatus = response.status === 429 || response.status >= 500;
+      if (retryableStatus && attempt < maxRetries) {
+        const retryAfterHeader = response.headers.get("retry-after");
+        const retryAfterSeconds = retryAfterHeader
+          ? Number.parseFloat(retryAfterHeader)
+          : Number.NaN;
+        const retryAfterMs = Number.isFinite(retryAfterSeconds)
+          ? Math.max(retryAfterSeconds, 0) * 1000
+          : Math.min(500 * (2 ** attempt), 4000);
+        const jitterMs = Math.floor(Math.random() * 150);
+        await sleep(retryAfterMs + jitterMs);
+        continue;
+      }
+
+      throw new Error(
+        `Kalshi API error (${response.status}) on ${endpoint}: ${bodyText.slice(0, 200)}`
+      );
+    } catch (error) {
+      const isAbortError =
+        error instanceof Error && error.name === "AbortError";
+      if (isAbortError && attempt < maxRetries) {
+        const backoffMs = Math.min(500 * (2 ** attempt), 4000);
+        const jitterMs = Math.floor(Math.random() * 150);
+        await sleep(backoffMs + jitterMs);
+        continue;
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return response.json();
-  } finally {
-    clearTimeout(timeoutId);
   }
+
+  throw new Error(`Kalshi API request failed after retries: ${endpoint}`);
 }
 
 // ============================================================================
@@ -1778,6 +2307,10 @@ interface KalshiOrderbook {
     yes?: Array<[number, number]>;
     no?: Array<[number, number]>;
   };
+  orderbook_fp?: {
+    yes?: Array<[number, number | string]>;
+    no?: Array<[number, number | string]>;
+  };
 }
 
 interface KalshiTrade {
@@ -1785,9 +2318,12 @@ interface KalshiTrade {
   ticker?: string;
   yes_price?: number;
   no_price?: number;
+  price?: number;
   count?: number;
   taker_side?: string;
   created_time?: string;
+  created_ts?: number;
+  timestamp?: string | number;
 }
 
 // ============================================================================
@@ -1880,16 +2416,91 @@ async function handleDiscoverTrendingMarkets(
 async function handleAnalyzeMarketLiquidity(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
-  const ticker = args?.ticker as string;
-  if (!ticker) {
+  const requestedTicker = args?.ticker as string;
+  if (!requestedTicker) {
     return errorResult("ticker is required");
   }
 
+  let ticker = requestedTicker;
+  let resolvedFrom: string | undefined;
+
   // Fetch market and orderbook
-  const [marketRes, orderbookRes] = await Promise.all([
-    fetchKalshi(`/markets/${ticker}`) as Promise<{ market: KalshiMarket }>,
-    fetchKalshi(`/markets/${ticker}/orderbook?depth=50`) as Promise<KalshiOrderbook>,
-  ]);
+  let marketRes: { market: KalshiMarket };
+  let orderbookRes: KalshiOrderbook;
+  try {
+    [marketRes, orderbookRes] = await Promise.all([
+      fetchKalshi(`/markets/${ticker}`) as Promise<{ market: KalshiMarket }>,
+      fetchKalshi(`/markets/${ticker}/orderbook?depth=50`) as Promise<KalshiOrderbook>,
+    ]);
+  } catch (error) {
+    const isNotFound =
+      error instanceof Error && error.message.includes("Kalshi API error (404)");
+    if (!isNotFound) {
+      throw error;
+    }
+
+    const searchResponse = (await fetchKalshi(
+      "/markets?status=open&limit=500"
+    )) as { markets?: KalshiMarket[] };
+    const candidates = Array.isArray(searchResponse.markets)
+      ? searchResponse.markets
+      : [];
+    const normalizedTicker = requestedTicker.toLowerCase();
+    const tickerWithoutSymbols = normalizedTicker.replace(/[^a-z0-9]/g, "");
+    const looksLikeBitcoinAlias =
+      normalizedTicker.includes("bitcoin") || normalizedTicker.includes("btc");
+
+    const matching = candidates
+      .filter((marketCandidate) => {
+        const candidateTicker = marketCandidate.ticker.toLowerCase();
+        const candidateSeries = getSeriesTicker(marketCandidate.event_ticker);
+        const candidateEvent = marketCandidate.event_ticker.toLowerCase();
+        const candidateTitle = `${marketCandidate.title || ""} ${
+          marketCandidate.subtitle || ""
+        } ${marketCandidate.yes_sub_title || ""}`.toLowerCase();
+        const candidateTickerCompact = candidateTicker.replace(/[^a-z0-9]/g, "");
+        const candidateSeriesCompact = candidateSeries.replace(/[^a-z0-9]/g, "");
+        const candidateEventCompact = candidateEvent.replace(/[^a-z0-9]/g, "");
+
+        if (
+          candidateTicker === normalizedTicker ||
+          candidateTickerCompact.includes(tickerWithoutSymbols) ||
+          candidateSeriesCompact.includes(tickerWithoutSymbols) ||
+          candidateEventCompact.includes(tickerWithoutSymbols)
+        ) {
+          return true;
+        }
+
+        if (looksLikeBitcoinAlias) {
+          return (
+            candidateTicker.includes("btc") ||
+            candidateTitle.includes("bitcoin") ||
+            candidateTitle.includes("btc")
+          );
+        }
+
+        return false;
+      })
+      .sort(
+        (a, b) =>
+          (b.volume_24h || 0) - (a.volume_24h || 0) ||
+          (b.liquidity || 0) - (a.liquidity || 0)
+      );
+
+    const bestMatch = matching.at(0);
+    if (!bestMatch) {
+      return errorResult(
+        `Market '${requestedTicker}' not found. Use discover_trending_markets or search_markets first, then pass an exact ticker to analyze_market_liquidity.`
+      );
+    }
+
+    ticker = bestMatch.ticker;
+    resolvedFrom = `search:${requestedTicker}->${ticker}`;
+    [marketRes, orderbookRes] = await Promise.all([
+      fetchKalshi(`/markets/${ticker}`) as Promise<{ market: KalshiMarket }>,
+      fetchKalshi(`/markets/${ticker}/orderbook?depth=50`) as Promise<KalshiOrderbook>,
+    ]);
+  }
 
   const market = marketRes.market;
   const orderbook = orderbookRes.orderbook || {};
@@ -1899,8 +2510,12 @@ async function handleAnalyzeMarketLiquidity(
   const noBid = market.no_bid || 0;
   const noAsk = market.no_ask || 0;
 
-  const yesBids = orderbook.yes || [];
-  const yesAsks = orderbook.no || []; // In Kalshi, no side is the ask for yes
+  // In Kalshi orderbooks, NO bids imply YES asks at (100 - noPrice).
+  // Normalize both sides into YES-price space for correct slippage/depth math.
+  const yesBids = [...(orderbook.yes || [])].sort((a, b) => b[0] - a[0]);
+  const yesAsks = (orderbook.no || [])
+    .map(([price, qty]) => [100 - price, qty] as [number, number])
+    .sort((a, b) => a[0] - b[0]);
 
   // Calculate depth
   let bidDepthUsd = 0;
@@ -1915,27 +2530,40 @@ async function handleAnalyzeMarketLiquidity(
 
   // Simulate slippage for different order sizes
   const simulateSlippage = (size: number, orders: Array<[number, number]>, isBuy: boolean) => {
-    let remaining = size;
-    let totalCost = 0;
+    let remainingUsd = size;
+    let filledUsd = 0;
+    let filledContracts = 0;
     let worstPrice = 0;
 
     for (const [price, qty] of orders) {
-      const available = (price / 100) * qty;
-      const fill = Math.min(remaining, available);
-      totalCost += fill;
-      remaining -= fill;
+      if (price <= 0 || qty <= 0) {
+        continue;
+      }
+      const levelNotionalUsd = (price / 100) * qty;
+      const usdFilledAtLevel = Math.min(remainingUsd, levelNotionalUsd);
+      const contractsFilledAtLevel = usdFilledAtLevel / (price / 100);
+
+      filledUsd += usdFilledAtLevel;
+      filledContracts += contractsFilledAtLevel;
+      remainingUsd -= usdFilledAtLevel;
       worstPrice = price;
-      if (remaining <= 0) break;
+      if (remainingUsd <= 0) {
+        break;
+      }
     }
 
-    const avgPrice = size > 0 ? (totalCost / size) * 100 : 0;
-    const slippage = isBuy ? avgPrice - yesAsk : yesBid - avgPrice;
+    const avgPrice = filledContracts > 0 ? (filledUsd / filledContracts) * 100 : 0;
+    const referencePrice = isBuy ? yesAsk : yesBid;
+    const slippage = isBuy ? avgPrice - referencePrice : referencePrice - avgPrice;
+    const slippagePercent = referencePrice > 0 ? (slippage / referencePrice) * 100 : 0;
 
     return {
-      canFill: remaining <= 0,
+      canFill: remainingUsd <= 0,
       avgPrice: avgPrice.toFixed(1),
       worstPrice,
-      slippagePercent: ((slippage / yesAsk) * 100).toFixed(2),
+      filledUsd: Number(filledUsd.toFixed(2)),
+      filledContracts: Number(filledContracts.toFixed(2)),
+      slippagePercent: slippagePercent.toFixed(2),
     };
   };
 
@@ -1967,6 +2595,8 @@ async function handleAnalyzeMarketLiquidity(
   return successResult({
     market: market.title || ticker,
     ticker,
+    requestedTicker,
+    resolvedFrom,
     currentPrices: {
       yesBid,
       yesAsk,
@@ -2257,7 +2887,43 @@ async function handleGetMarketsByProbability(
     endpoint += `&category=${encodeURIComponent(category)}`;
   }
 
-  const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
+  let degraded = false;
+  let warning: string | undefined;
+  let response: { markets?: KalshiMarket[] };
+  try {
+    response = (await fetchKalshi(endpoint)) as { markets?: KalshiMarket[] };
+  } catch (primaryError) {
+    degraded = true;
+    warning = `Primary market snapshot failed (${endpoint}). Using reduced fallback sample.`;
+    try {
+      let fallbackEndpoint = `/markets?limit=30&status=open`;
+      if (category) {
+        fallbackEndpoint += `&category=${encodeURIComponent(category)}`;
+      }
+      response = (await fetchKalshi(fallbackEndpoint)) as {
+        markets?: KalshiMarket[];
+      };
+    } catch (fallbackError) {
+      const fallbackMessage =
+        fallbackError instanceof Error ? fallbackError.message : "unknown error";
+      return successResult({
+        markets: [],
+        summary: {
+          probabilityRange: `${minPrice}-${maxPrice}%`,
+          marketsFound: 0,
+          avgReturn: "0%",
+        },
+        degraded: true,
+        warning: `Market snapshot unavailable after fallback: ${fallbackMessage}`,
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+
+    if (primaryError instanceof Error) {
+      warning = `${warning} Primary error: ${primaryError.message.slice(0, 160)}`;
+    }
+  }
+
   let markets = response.markets || [];
 
   // Filter by probability range
@@ -2298,6 +2964,8 @@ async function handleGetMarketsByProbability(
       marketsFound: markets.length,
       avgReturn: `${avgReturn.toFixed(0)}%`,
     },
+    degraded,
+    warning,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -2691,6 +3359,9 @@ async function handleGetEvents(
 ): Promise<CallToolResult> {
   const status = (args?.status as string) || "open";
   const seriesTicker = args?.seriesTicker as string | undefined;
+  const withNestedMarkets = args?.withNestedMarkets === true;
+  const withMilestones = args?.withMilestones === true;
+  const minCloseTs = args?.minCloseTs as number | undefined;
   const limit = Math.min((args?.limit as number) || 50, 200);
   const cursor = args?.cursor as string | undefined;
 
@@ -2698,23 +3369,113 @@ async function handleGetEvents(
   if (seriesTicker) {
     endpoint += `&series_ticker=${encodeURIComponent(seriesTicker)}`;
   }
+  if (withNestedMarkets) {
+    endpoint += "&with_nested_markets=true";
+  }
+  if (withMilestones) {
+    endpoint += "&with_milestones=true";
+  }
+  if (minCloseTs) {
+    endpoint += `&min_close_ts=${minCloseTs}`;
+  }
   if (cursor) {
     endpoint += `&cursor=${encodeURIComponent(cursor)}`;
   }
 
-  const response = await fetchKalshi(endpoint) as { events: KalshiEvent[]; cursor?: string };
+  const response = await fetchKalshi(endpoint) as { events: KalshiEvent[]; cursor?: string; next_cursor?: string };
+  const nextCursor = response.next_cursor || response.cursor || "";
   const events = (response.events || []).map(e => ({
     eventTicker: e.event_ticker,
     title: e.title || e.event_ticker,
     category: e.category || "Unknown",
     status: e.status || "open",
-    marketsCount: e.markets?.length || 0,
+    marketsCount: Array.isArray(e.markets) ? e.markets.length : 0,
   }));
 
   return successResult({
     events,
-    cursor: response.cursor || "",
+    nextCursor,
+    cursor: nextCursor,
     count: events.length,
+    filtersApplied: {
+      status,
+      seriesTicker,
+      withNestedMarkets,
+      withMilestones,
+      minCloseTs,
+    },
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+async function handleGetMarkets(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const status = (args?.status as string) || "open";
+  const eventTicker = args?.eventTicker as string | undefined;
+  const seriesTicker = args?.seriesTicker as string | undefined;
+  const category = args?.category as string | undefined;
+  const tickers = (args?.tickers as string[] | undefined)?.filter(Boolean) || [];
+  const minUpdatedTs = args?.minUpdatedTs as number | undefined;
+  const minCloseTs = args?.minCloseTs as number | undefined;
+  const maxCloseTs = args?.maxCloseTs as number | undefined;
+  const minCreatedTs = args?.minCreatedTs as number | undefined;
+  const maxCreatedTs = args?.maxCreatedTs as number | undefined;
+  const minSettledTs = args?.minSettledTs as number | undefined;
+  const maxSettledTs = args?.maxSettledTs as number | undefined;
+  const limit = Math.min((args?.limit as number) || 50, 200);
+  const cursor = args?.cursor as string | undefined;
+
+  let endpoint = `/markets?limit=${limit}&status=${encodeURIComponent(status)}`;
+  if (eventTicker) endpoint += `&event_ticker=${encodeURIComponent(eventTicker)}`;
+  if (seriesTicker) endpoint += `&series_ticker=${encodeURIComponent(seriesTicker)}`;
+  if (category) endpoint += `&category=${encodeURIComponent(category)}`;
+  if (tickers.length > 0) endpoint += `&tickers=${encodeURIComponent(tickers.join(","))}`;
+  if (minUpdatedTs) endpoint += `&min_updated_ts=${minUpdatedTs}`;
+  if (minCloseTs) endpoint += `&min_close_ts=${minCloseTs}`;
+  if (maxCloseTs) endpoint += `&max_close_ts=${maxCloseTs}`;
+  if (minCreatedTs) endpoint += `&min_created_ts=${minCreatedTs}`;
+  if (maxCreatedTs) endpoint += `&max_created_ts=${maxCreatedTs}`;
+  if (minSettledTs) endpoint += `&min_settled_ts=${minSettledTs}`;
+  if (maxSettledTs) endpoint += `&max_settled_ts=${maxSettledTs}`;
+  if (cursor) endpoint += `&cursor=${encodeURIComponent(cursor)}`;
+
+  const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[]; cursor?: string; next_cursor?: string };
+  const nextCursor = response.next_cursor || response.cursor || "";
+  const markets = (response.markets || []).map((m) => ({
+    ticker: m.ticker,
+    eventTicker: m.event_ticker,
+    title: m.title || m.yes_sub_title || m.ticker,
+    yesPrice: m.yes_ask || m.last_price || 0,
+    noPrice: m.no_ask || (100 - (m.yes_ask || m.last_price || 50)),
+    yesBid: m.yes_bid || 0,
+    yesAsk: m.yes_ask || 0,
+    noBid: m.no_bid || 0,
+    noAsk: m.no_ask || 0,
+    lastPrice: m.last_price || 0,
+    volume: m.volume || 0,
+    volume24h: m.volume_24h || 0,
+    openInterest: m.open_interest || 0,
+    liquidity: m.liquidity || 0,
+    status: m.status || "open",
+    category: m.category || "Unknown",
+    openTime: m.open_time || "",
+    closeTime: m.close_time || "",
+    url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
+  }));
+
+  return successResult({
+    markets,
+    nextCursor,
+    cursor: nextCursor,
+    count: markets.length,
+    filtersApplied: {
+      status,
+      eventTicker,
+      seriesTicker,
+      category,
+      tickersCount: tickers.length,
+    },
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -3024,6 +3785,7 @@ async function handleSearchMarkets(
   const category = args?.category as string | undefined;
   const status = (args?.status as string) || "open";
   const limit = Math.min((args?.limit as number) || 20, 50);
+  const maxSeriesScan = Math.min((args?.maxSeriesScan as number) || 600, 1200);
 
   let markets: KalshiMarket[] = [];
   let matchedSeries: string[] = [];
@@ -3146,7 +3908,7 @@ async function handleSearchMarkets(
       
       // If no tags matched, fall back to category-only or broad search
       if (sortedTags.length === 0) {
-        let seriesEndpoint = '/series?limit=500';
+        let seriesEndpoint = `/series?limit=${maxSeriesScan}`;
         if (detectedCategory) {
           seriesEndpoint += `&category=${encodeURIComponent(detectedCategory)}`;
         }
@@ -3163,7 +3925,7 @@ async function handleSearchMarkets(
       // If still no results, fall back to broader search
       if (allSeries.length === 0) {
         console.log('[Kalshi Search] No results with filters, falling back to broader search');
-        const fallbackResponse = await fetchKalshi('/series?limit=2000') as { series: KalshiSeries[] };
+        const fallbackResponse = await fetchKalshi(`/series?limit=${maxSeriesScan}`) as { series: KalshiSeries[] };
         allSeries = fallbackResponse.series || [];
       }
       
@@ -3183,7 +3945,7 @@ async function handleSearchMarkets(
       initialMatches.sort((a, b) => b.score - a.score);
       
       // Take top candidates (limit to avoid too many event fetches)
-      const topCandidates = initialMatches.slice(0, 30).map(m => m.series);
+      const topCandidates = initialMatches.slice(0, 20).map(m => m.series);
       
       // Fetch event details for better titles and re-rank
       interface EnrichedSeries {
@@ -3197,8 +3959,8 @@ async function handleSearchMarkets(
       
       // Fetch markets for each series, then get event details for better titles
       // Series ticker often != event ticker, so we need to go: series -> markets -> event
-      for (let i = 0; i < topCandidates.length; i += 10) {
-        const batch = topCandidates.slice(i, i + 10);
+      for (let i = 0; i < topCandidates.length; i += 5) {
+        const batch = topCandidates.slice(i, i + 5);
         const eventPromises = batch.map(async (s) => {
           try {
             // First, fetch markets for this series to get event_ticker
@@ -3334,6 +4096,10 @@ async function handleSearchMarkets(
     count: results.length,
     matchedSeries: matchedSeries.slice(0, 10),
     searchMethod: matchedSeries.length > 0 ? "series_search" : "market_listing",
+    searchBudget: {
+      maxSeriesScan,
+      topSeriesEvaluated: matchedSeries.length,
+    },
     hint,
     fetchedAt: new Date().toISOString(),
   });
@@ -3348,11 +4114,29 @@ async function handleGetMarketOrderbook(
   }
 
   const depth = Math.min((args?.depth as number) || 10, 100);
+  const preferFixedPoint = args?.preferFixedPoint !== false;
   const response = await fetchKalshi(`/markets/${ticker}/orderbook?depth=${depth}`) as KalshiOrderbook;
-  const orderbook = response.orderbook || {};
+  const hasOrderbookFp = !!response.orderbook_fp;
 
-  const yesBids = (orderbook.yes || []).map(([price, qty]) => ({ price, quantity: qty }));
-  const yesAsks = (orderbook.no || []).map(([price, qty]) => ({ price: 100 - price, quantity: qty }));
+  const normalizeQty = (qty: number | string): number => {
+    if (typeof qty === "number") {
+      return qty;
+    }
+    const parsed = Number.parseFloat(qty);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const selectedOrderbook =
+    preferFixedPoint && response.orderbook_fp
+      ? response.orderbook_fp
+      : (response.orderbook || response.orderbook_fp || {});
+
+  const yesBids = (selectedOrderbook.yes || [])
+    .map(([price, qty]) => ({ price, quantity: normalizeQty(qty) }))
+    .sort((a, b) => b.price - a.price);
+  const yesAsks = (selectedOrderbook.no || [])
+    .map(([price, qty]) => ({ price: 100 - price, quantity: normalizeQty(qty) }))
+    .sort((a, b) => a.price - b.price);
 
   const bestBid = yesBids.length > 0 ? yesBids[0].price : 0;
   const bestAsk = yesAsks.length > 0 ? yesAsks[0].price : 100;
@@ -3365,6 +4149,8 @@ async function handleGetMarketOrderbook(
     asks: yesAsks,
     spread,
     midPrice,
+    orderbookFpAvailable: hasOrderbookFp,
+    quantityPrecision: preferFixedPoint && hasOrderbookFp ? "fixed_point" : "integer",
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -3380,16 +4166,22 @@ async function handleGetMarketTrades(
   const limit = Math.min((args?.limit as number) || 50, 1000);
   const minTs = args?.minTs as number | undefined;
   const maxTs = args?.maxTs as number | undefined;
+  const cursor = args?.cursor as string | undefined;
 
   let endpoint = `/markets/trades?ticker=${encodeURIComponent(ticker)}&limit=${limit}`;
   if (minTs) endpoint += `&min_ts=${minTs}`;
   if (maxTs) endpoint += `&max_ts=${maxTs}`;
+  if (cursor) endpoint += `&cursor=${encodeURIComponent(cursor)}`;
 
-  const response = await fetchKalshi(endpoint) as { trades: KalshiTrade[] };
+  const response = await fetchKalshi(endpoint) as { trades: KalshiTrade[]; cursor?: string; next_cursor?: string };
   const trades = (response.trades || []).map(t => ({
     tradeId: t.trade_id || "",
-    timestamp: t.created_time || "",
-    price: t.yes_price || 0,
+    timestamp:
+      t.created_time ||
+      (typeof t.timestamp === "string" ? t.timestamp : "") ||
+      (typeof t.timestamp === "number" ? new Date(t.timestamp * 1000).toISOString() : "") ||
+      (typeof t.created_ts === "number" ? new Date(t.created_ts * 1000).toISOString() : ""),
+    price: t.yes_price ?? t.price ?? 0,
     count: t.count || 0,
     takerSide: t.taker_side || "unknown",
   }));
@@ -3398,6 +4190,7 @@ async function handleGetMarketTrades(
   const avgPrice = trades.length > 0
     ? trades.reduce((sum, t) => sum + t.price, 0) / trades.length
     : 0;
+  const nextCursor = response.next_cursor || response.cursor || "";
 
   return successResult({
     ticker,
@@ -3407,6 +4200,8 @@ async function handleGetMarketTrades(
       totalVolume,
       avgPrice: Number(avgPrice.toFixed(2)),
     },
+    nextCursor,
+    cursor: nextCursor,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -3417,37 +4212,160 @@ async function handleGetMarketCandlesticks(
   const seriesTicker = args?.seriesTicker as string;
   const ticker = args?.ticker as string;
 
-  if (!seriesTicker || !ticker) {
-    return errorResult("seriesTicker and ticker are required");
+  if (!ticker) {
+    return errorResult("ticker is required");
+  }
+
+  const startTs = (args?.startTs as number) || Math.floor(Date.now() / 1000) - 86400 * 7;
+  const endTs = (args?.endTs as number) || Math.floor(Date.now() / 1000);
+  const periodInterval = (args?.periodInterval as number) || 60;
+  const includeLatestBeforeStart = args?.includeLatestBeforeStart === true;
+
+  const baseBatchEndpoint = `/markets/candlesticks?market_tickers=${encodeURIComponent(
+    ticker
+  )}&start_ts=${startTs}&end_ts=${endTs}&period_interval=${periodInterval}`;
+  const batchEndpoint = includeLatestBeforeStart
+    ? `${baseBatchEndpoint}&include_latest_before_start=true`
+    : baseBatchEndpoint;
+
+  const normalizeCandleMetric = (value: unknown): Record<string, unknown> | null => {
+    if (value === null || value === undefined) {
+      return null;
+    }
+    if (typeof value === "number") {
+      return { close: value };
+    }
+    if (typeof value !== "object") {
+      return null;
+    }
+    const raw = value as Record<string, unknown>;
+    const pick = (key: string) => raw[key] ?? null;
+    return {
+      open: pick("open"),
+      high: pick("high"),
+      low: pick("low"),
+      close: pick("close"),
+      min: pick("min"),
+      max: pick("max"),
+      mean: pick("mean"),
+      previous: pick("previous"),
+      open_dollars: pick("open_dollars"),
+      high_dollars: pick("high_dollars"),
+      low_dollars: pick("low_dollars"),
+      close_dollars: pick("close_dollars"),
+      min_dollars: pick("min_dollars"),
+      max_dollars: pick("max_dollars"),
+      mean_dollars: pick("mean_dollars"),
+      previous_dollars: pick("previous_dollars"),
+    };
+  };
+
+  try {
+    const response = await fetchKalshi(batchEndpoint) as {
+      markets?: Array<{
+        market_ticker: string;
+        candlesticks?: Array<{
+          end_period_ts: number;
+          yes_bid?: unknown;
+          yes_ask?: unknown;
+          price?: unknown;
+          volume?: number;
+          open_interest?: number;
+        }>;
+      }>;
+    };
+
+    const marketData =
+      response.markets?.find((m) => m.market_ticker === ticker) || response.markets?.[0];
+    const candlesticks = (marketData?.candlesticks || []).map((c) => ({
+      endPeriodTs: c.end_period_ts,
+      yesBid: normalizeCandleMetric(c.yes_bid),
+      yesAsk: normalizeCandleMetric(c.yes_ask),
+      price: normalizeCandleMetric(c.price),
+      volume: c.volume ?? 0,
+      openInterest: c.open_interest ?? 0,
+    }));
+
+    return successResult({
+      ticker,
+      candlesticks,
+      sourceEndpoint: "/markets/candlesticks",
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (batchError) {
+    if (!seriesTicker) {
+      throw batchError;
+    }
+
+    // Legacy fallback for older environments where series-based endpoint is available.
+    const legacyEndpoint = `/series/${encodeURIComponent(
+      seriesTicker
+    )}/markets/${encodeURIComponent(
+      ticker
+    )}/candlesticks?start_ts=${startTs}&end_ts=${endTs}&period_interval=${periodInterval}${
+      includeLatestBeforeStart ? "&include_latest_before_start=true" : ""
+    }`;
+
+    const legacyResponse = await fetchKalshi(legacyEndpoint) as {
+      candlesticks?: Array<{
+        end_period_ts: number;
+        yes_bid?: unknown;
+        yes_ask?: unknown;
+        price?: unknown;
+        volume?: number;
+        open_interest?: number;
+      }>;
+    };
+
+    const candlesticks = (legacyResponse.candlesticks || []).map((c) => ({
+      endPeriodTs: c.end_period_ts,
+      yesBid: normalizeCandleMetric(c.yes_bid),
+      yesAsk: normalizeCandleMetric(c.yes_ask),
+      price: normalizeCandleMetric(c.price),
+      volume: c.volume ?? 0,
+      openInterest: c.open_interest ?? 0,
+    }));
+
+    return successResult({
+      ticker,
+      candlesticks,
+      sourceEndpoint: "/series/{series_ticker}/markets/{ticker}/candlesticks",
+      fetchedAt: new Date().toISOString(),
+    });
+  }
+}
+
+async function handleGetEventCandlesticks(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const seriesTicker = args?.seriesTicker as string;
+  const eventTicker = args?.eventTicker as string;
+  if (!seriesTicker || !eventTicker) {
+    return errorResult("seriesTicker and eventTicker are required");
   }
 
   const startTs = (args?.startTs as number) || Math.floor(Date.now() / 1000) - 86400 * 7;
   const endTs = (args?.endTs as number) || Math.floor(Date.now() / 1000);
   const periodInterval = (args?.periodInterval as number) || 60;
 
-  const endpoint = `/series/${encodeURIComponent(seriesTicker)}/markets/${encodeURIComponent(ticker)}/candlesticks?start_ts=${startTs}&end_ts=${endTs}&period_interval=${periodInterval}`;
-  
-  const response = await fetchKalshi(endpoint) as { 
-    ticker: string;
-    candlesticks: Array<{
-      end_period_ts: number;
-      price?: { open?: number; high?: number; low?: number; close?: number };
-      volume?: number;
-    }>;
+  const endpoint = `/series/${encodeURIComponent(
+    seriesTicker
+  )}/events/${encodeURIComponent(
+    eventTicker
+  )}/candlesticks?start_ts=${startTs}&end_ts=${endTs}&period_interval=${periodInterval}`;
+
+  const response = await fetchKalshi(endpoint) as {
+    market_tickers?: string[];
+    market_candlesticks?: unknown[][];
+    adjusted_end_ts?: number;
   };
 
-  const candlesticks = (response.candlesticks || []).map(c => ({
-    timestamp: c.end_period_ts,
-    open: c.price?.open || 0,
-    high: c.price?.high || 0,
-    low: c.price?.low || 0,
-    close: c.price?.close || 0,
-    volume: c.volume || 0,
-  }));
-
   return successResult({
-    ticker,
-    candlesticks,
+    eventTicker,
+    seriesTicker,
+    marketTickers: response.market_tickers || [],
+    marketCandlesticks: response.market_candlesticks || [],
+    adjustedEndTs: response.adjusted_end_ts || endTs,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -3457,19 +4375,82 @@ async function handleGetMarketCandlesticks(
 async function handleGetAllCategories(
   _args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
-  const response = await fetchKalshi("/search/tags_by_categories") as {
-    tags_by_categories: Record<string, string[]>;
-  };
+  const categoriesWarnings: string[] = [];
+  const categories: Record<string, string[]> = {};
+  try {
+    const response = (await fetchKalshi("/search/tags_by_categories")) as {
+      tags_by_categories?: Record<string, unknown>;
+    };
+    const sourceCategories = response.tags_by_categories || {};
+    for (const [category, rawTags] of Object.entries(sourceCategories)) {
+      const normalizedTags = Array.isArray(rawTags)
+        ? rawTags.filter(
+            (tag): tag is string =>
+              typeof tag === "string" && tag.trim().length > 0
+          )
+        : [];
+      categories[category] = normalizedTags;
+    }
+  } catch (error) {
+    categoriesWarnings.push(
+      `category tag taxonomy unavailable: ${
+        error instanceof Error ? error.message : "unknown error"
+      }`
+    );
+  }
 
-  const categories = response.tags_by_categories || {};
   const categoryList = Object.keys(categories);
-  const totalTags = Object.values(categories).reduce((sum, tags) => sum + tags.length, 0);
+  const totalTags = Object.values(categories).reduce(
+    (sum, tags) => sum + tags.length,
+    0
+  );
+
+  const seriesCountByCategory: Record<string, number> = Object.fromEntries(
+    categoryList.map((category) => [category, 0])
+  );
+  const seriesCountWarnings: string[] = [];
+  let totalSeries = 0;
+
+  try {
+    const seriesResponse = (await fetchKalshi("/series?limit=10000")) as {
+      series?: KalshiSeries[];
+    };
+    const seriesSnapshot = Array.isArray(seriesResponse.series)
+      ? seriesResponse.series
+      : [];
+
+    totalSeries = seriesSnapshot.length;
+    for (const series of seriesSnapshot) {
+      const normalizedCategory =
+        typeof series.category === "string" && series.category.trim().length > 0
+          ? series.category.trim()
+          : "Unknown";
+      if (!(normalizedCategory in categories)) {
+        categories[normalizedCategory] = [];
+      }
+      if (!(normalizedCategory in seriesCountByCategory)) {
+        seriesCountByCategory[normalizedCategory] = 0;
+      }
+      seriesCountByCategory[normalizedCategory] += 1;
+    }
+  } catch (error) {
+    seriesCountWarnings.push(
+      `series count snapshot unavailable: ${
+        error instanceof Error ? error.message : "unknown error"
+      }`
+    );
+  }
 
   return successResult({
     categories,
     categoryList,
     totalCategories: categoryList.length,
     totalTags,
+    seriesCountByCategory,
+    totalSeries,
+    seriesCountSource: "series_snapshot:/series?limit=10000",
+    seriesCountWarnings,
+    categoriesWarnings,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -3489,8 +4470,18 @@ async function handleGetAllSeries(
     endpoint += `&tags=${encodeURIComponent(tags)}`;
   }
 
-  const response = await fetchKalshi(endpoint) as { series: KalshiSeries[] };
-  const series = (response.series || []).map(s => ({
+  let response: { series?: KalshiSeries[] };
+  let warning: string | undefined;
+  try {
+    response = (await fetchKalshi(endpoint)) as { series?: KalshiSeries[] };
+  } catch (error) {
+    warning = `series list unavailable for endpoint ${endpoint}: ${
+      error instanceof Error ? error.message : "unknown error"
+    }`;
+    response = { series: [] };
+  }
+
+  const series = (response.series || []).map((s) => ({
     ticker: s.ticker,
     title: s.title || s.ticker,
     category: s.category || "Unknown",
@@ -3501,6 +4492,7 @@ async function handleGetAllSeries(
   return successResult({
     series,
     totalCount: series.length,
+    warning,
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -3611,6 +4603,9 @@ app.use(express.json());
 
 // Create security middleware
 const verifyContextAuth = createContextMiddleware();
+const disableContextAuth = process.env.DISABLE_CONTEXT_AUTH === "true";
+// Testing-only toggle: set DISABLE_CONTEXT_AUTH=true on isolated test environments.
+const mcpMiddlewares = disableContextAuth ? [] : [verifyContextAuth];
 
 // Health check
 app.get("/health", (_req: Request, res: Response) => {
@@ -3626,7 +4621,7 @@ app.get("/health", (_req: Request, res: Response) => {
 const transports: Map<string, StreamableHTTPServerTransport> = new Map();
 
 // MCP endpoint with security middleware
-app.post("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
+app.post("/mcp", ...mcpMiddlewares, async (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
   let transport: StreamableHTTPServerTransport;
 
@@ -3664,9 +4659,13 @@ app.listen(PORT, () => {
   console.log(`🎯 Kalshi MCP server running on http://localhost:${PORT}`);
   console.log(`📊 Health: http://localhost:${PORT}/health`);
   console.log(`🔌 MCP endpoint: http://localhost:${PORT}/mcp`);
+  if (disableContextAuth) {
+    console.log("⚠️  Context auth middleware is DISABLED (testing only). Re-enable for production.");
+  }
   console.log(`\n📝 ${TOOLS.length} tools available:`);
   console.log("   Tier 1 (Intelligence): 7 tools");
-  console.log("   Tier 2 (Raw Data): 9 tools (includes resolve_slug, get_event_by_slug)");
+  console.log("   Cross-platform: 1 tool");
+  console.log("   Tier 2 (Raw Data): 11 tools (includes get_markets + event candlesticks)");
   console.log("   Discovery Layer: 4 tools");
 });
 

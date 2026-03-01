@@ -101,13 +101,15 @@ console.log(result.session); // methodPrice, spent, remaining, maxSpend, ...
 const answer = await client.query.run({
   query: "What are the top whale movements on Base?",
   modelId: "glm-model",      // optional: choose a supported model
-  queryDepth: "auto",        // optional: fast | auto | deep
+  queryDepth: "deep",        // optional: fast | auto | deep
   includeDataUrl: true,      // optional: persist full execution data to blob
+  includeDeveloperTrace: true, // optional: include machine-readable runtime trace
 });
 console.log(answer.response);   // AI-synthesized answer
 console.log(answer.toolsUsed);  // Which tools were used
 console.log(answer.cost);       // Cost breakdown
 console.log(answer.dataUrl);    // Optional blob URL with full data
+console.log(answer.developerTrace?.summary); // retries/toolCalls/loops summary
 ```
 
 > Mixed listings are first-class: one listing can expose methods to both surfaces. Methods without `_meta.pricing.executeUsd` remain query-only until priced.
@@ -417,6 +419,7 @@ const answer = await client.query.run({
   queryDepth: "auto",                      // optional: fast | auto | deep
   includeData: true,                       // optional: include execution data inline
   includeDataUrl: true,                    // optional: include blob URL for full data
+  includeDeveloperTrace: true,             // optional: include Developer Mode trace
 });
 
 console.log(answer.response);     // AI-synthesized text
@@ -425,6 +428,7 @@ console.log(answer.cost);         // { modelCostUsd, toolCostUsd, totalCostUsd }
 console.log(answer.durationMs);   // Total time
 console.log(answer.data);         // Optional execution data (when includeData=true)
 console.log(answer.dataUrl);      // Optional blob URL (when includeDataUrl=true)
+console.log(answer.developerTrace?.summary); // Optional trace summary (retries/toolCalls/loops)
 ```
 
 When retrieval-first synthesis rollout is enabled server-side, full-data or truncation-sensitive query requests can switch to retrieval-first context assembly using private stage artifacts and canonical execution data slices. `includeData` and `includeDataUrl` continue to reference the same canonical dataset used for synthesis.
@@ -432,6 +436,12 @@ When retrieval-first synthesis rollout is enabled server-side, full-data or trun
 #### `client.query.stream(options)`
 
 Same as `run()` but streams events in real-time via SSE.
+
+Event types:
+- `tool-status`
+- `text-delta`
+- `developer-trace` (when `includeDeveloperTrace=true`)
+- `done`
 
 ```typescript
 for await (const event of client.query.stream({
@@ -472,6 +482,7 @@ import type {
   // Query types (pay-per-response)
   QueryOptions,
   QueryResult,
+  QueryDeveloperTrace,
   QueryCost,
   QueryStreamEvent,
   ContextErrorCode,
@@ -549,6 +560,7 @@ interface QueryResult {
   durationMs: number;
   data?: unknown;                      // Optional execution data (includeData=true)
   dataUrl?: string;                    // Optional blob URL (includeDataUrl=true)
+  developerTrace?: QueryDeveloperTrace; // Optional machine-readable runtime trace
 }
 ```
 
