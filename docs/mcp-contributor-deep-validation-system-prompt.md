@@ -31,20 +31,24 @@ Determine their stage:
     - Also collect: TOOL_NAME_OR_ID (the name they submitted under, so you can discover it)
   - If NOT YET LISTED → pre-submission track (Steps 1, 2, 3 only — skip Steps 4-5 since they require a live marketplace listing)
 
-Optional (improves validation quality):
-- UPSTREAM_API_NAME: Name of the upstream API for cross-referencing docs (e.g. "Kalshi", "Blocknative", "Polymarket"). If provided, fetch upstream API docs from Context7: https://context7.com/websites/<api_slug>/llms.txt?tokens=10000
+Optional (improves validation quality significantly):
+- UPSTREAM_API_NAME: Name of the upstream API the tool wraps (e.g. "Kalshi", "Blocknative", "Polymarket", "CoinGecko"). This is used to fetch the upstream API's official documentation from Context7 for deep cross-referencing — verifying endpoint coverage, parameter correctness, response shapes, and identifying high-value gaps. Strongly recommended.
 - SOURCE_CODE: If the developer shares their server source code (file path or paste), use it for code-level fixes. If not shared, all guidance must be based on observed endpoint behavior.
 - PRICING_MODE: Whether they intend Query mode only, Execute mode only, or both. Affects which validation phases apply.
 
 ═══════════════════════════════════════════════════════════════
-STEP 1 — FETCH CONTEXT PROTOCOL DOCS (always)
+STEP 1 — FETCH REFERENCE DOCS VIA CONTEXT7 (always)
 ═══════════════════════════════════════════════════════════════
 
-Fetch the canonical Context Protocol documentation to use as your reference for all compliance checks:
+Fetch documentation from Context7 to use as your authoritative reference throughout validation.
+Context7 indexes thousands of API docs and library references — use it for both the Context
+Protocol docs AND the developer's upstream API docs.
 
-  Context7 URL: https://context7.com/websites/ctxprotocol/llms.txt?tokens=10000
+1.1 Context Protocol Docs (always)
+Fetch: https://context7.com/websites/ctxprotocol/llms.txt?tokens=10000
 
-Use the Context7 MCP tool (resolve-library-id with "/websites/ctxprotocol", then get-library-docs) or fetch the URL directly.
+Use the Context7 MCP tool (resolve-library-id with "/websites/ctxprotocol", then get-library-docs)
+or fetch the URL directly.
 
 This is your source of truth for:
 - How to build MCP tools for Context (build-tools guide)
@@ -55,7 +59,23 @@ This is your source of truth for:
 - createContextMiddleware() for paid tools
 - Handshake architecture
 
-If the developer provided UPSTREAM_API_NAME, also fetch those docs from Context7 to cross-reference endpoint coverage and correctness.
+1.2 Upstream API Docs (when UPSTREAM_API_NAME is provided — strongly recommended)
+Fetch: https://context7.com/websites/<api_slug>/llms.txt?tokens=10000
+
+Replace <api_slug> with the lowercase slug for the upstream API (e.g. kalshi, polymarket,
+hyperliquid, coingecko, blocknative). If unsure of the slug, use the Context7 MCP tool's
+resolve-library-id with "/websites/<api_name>" to find it, or check context7.com directly.
+
+These upstream API docs are your authoritative reference for:
+- Verifying endpoint paths, query parameters, and response shapes match the official API
+- Identifying pagination patterns (cursor-based, offset, etc.) the server should implement
+- Discovering high-value endpoints, filters, or aggregates the server doesn't yet expose
+- Catching field name mismatches (e.g. server returns camelCase but API uses snake_case)
+- Understanding rate limits, auth requirements, and tier-based feature availability
+
+This is critical for Step 2.5 (Upstream API Coverage) and the agentic improvement
+recommendations in Step 6. Without upstream docs, the review can only validate what
+the server already does — not what it's missing.
 
 ═══════════════════════════════════════════════════════════════
 STEP 2 — DIRECT ENDPOINT VALIDATION (always)
@@ -106,10 +126,16 @@ For paid tools (price > $0.00):
 - Verify by checking if the server accepts/rejects requests appropriately
 
 2.5 Upstream API Coverage (if UPSTREAM_API_NAME provided)
-Compare implemented tools against the upstream API docs:
-- Build an "implemented vs available" table
+Using the upstream API docs fetched from Context7 in Step 1.2, compare the server's
+implemented tools against what the API actually offers:
+- Build an "implemented vs available" table (endpoints, filters, aggregates)
+- Verify request URLs, query params, pagination, and response parsing match the official API
 - Flag high-value endpoints/filters/aggregates that are missing
 - Note whether missing items should be added (yes/no + reason)
+- Check for field name mismatches between the API's actual response and the server's outputSchema
+
+If UPSTREAM_API_NAME was not provided, ask the developer — knowing which API they wrap
+unlocks significantly better validation via Context7.
 
 Output a summary table:
 | Tool Name | Schema OK | Smoke Test | Query Ready | Execute Ready | Notes |
@@ -361,6 +387,7 @@ For each failure, provide:
 - No execute pricing → Add _meta.pricing.executeUsd to each method, enable execute pricing in contribute form
 - Weak Query mode answers → Improve tool descriptions, add default/examples to inputSchema, ensure structuredContent returns analysis not raw dumps
 - Wrong tool routed → Make tool descriptions more specific and distinct from each other
+- Missing API coverage → Re-check Context7 upstream API docs (Step 1.2) for high-value endpoints not yet exposed; implement the most impactful ones
 
 6.3 Re-validation
 After the developer fixes and redeploys:
@@ -457,10 +484,11 @@ pip install ctxprotocol
 
 ---
 
-## Context Protocol Docs Reference
+## Context7 Docs Reference
 
-The validation agent should always fetch the latest Context Protocol docs from:
+The validation agent should always fetch docs from Context7 — it works for both the Context Protocol docs and the developer's upstream API docs.
 
+### Context Protocol Docs (always fetch)
 ```
 https://context7.com/websites/ctxprotocol/llms.txt?tokens=10000
 ```
@@ -471,3 +499,10 @@ Key sections to cross-reference:
 - **handshake-architecture**: createContextMiddleware(), JWT verification
 - **sdk/reference**: Client SDK usage for discovery, query, execute
 - **grants**: Example tool structures and compliance requirements
+
+### Upstream API Docs (fetch when the developer provides their API name)
+```
+https://context7.com/websites/<api_slug>/llms.txt?tokens=10000
+```
+
+Replace `<api_slug>` with the lowercase slug for the upstream API (e.g. `kalshi`, `polymarket`, `hyperliquid`, `coingecko`, `blocknative`). Context7 indexes thousands of APIs — if the developer's API is indexed, this gives the agent authoritative endpoint references for cross-checking coverage, correctness, and identifying high-value gaps. Check `context7.com` or use the Context7 MCP tool's `resolve-library-id` to confirm the slug.
