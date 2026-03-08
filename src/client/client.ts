@@ -117,29 +117,37 @@ export class ContextClient {
     const url = `${this.baseUrl}${endpoint}`;
     const maxRetries = 3;
     const timeoutMs = this.requestTimeoutMs;
+    const method = (options.method ?? "GET").toUpperCase();
+    const requestHeaders = new Headers(options.headers);
+    const canRetryRequest =
+      method === "GET" ||
+      method === "HEAD" ||
+      method === "OPTIONS" ||
+      requestHeaders.has("Idempotency-Key");
 
     let lastError: Error | undefined;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      const mergedHeaders = new Headers(requestHeaders);
+      if (!mergedHeaders.has("Content-Type")) {
+        mergedHeaders.set("Content-Type", "application/json");
+      }
+      mergedHeaders.set("Authorization", `Bearer ${this.apiKey}`);
 
       try {
         const response = await fetch(url, {
           ...options,
           signal: controller.signal,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.apiKey}`,
-            ...options.headers,
-          },
+          headers: mergedHeaders,
         });
 
         clearTimeout(timeout);
 
         if (!response.ok) {
           // Retry on 5xx server errors
-          if (response.status >= 500 && attempt < maxRetries) {
+          if (response.status >= 500 && canRetryRequest && attempt < maxRetries) {
             const delay = Math.min(1000 * 2 ** attempt, 10_000);
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
@@ -163,7 +171,16 @@ export class ContextClient {
           throw new ContextError(errorMessage, errorCode, response.status, helpUrl);
         }
 
-        return response.json() as Promise<T>;
+        try {
+          return (await response.json()) as T;
+        } catch (error) {
+          const parseError = error instanceof Error ? error : new Error(String(error));
+          throw new ContextError(
+            `Failed to parse JSON response: ${parseError.message}`,
+            undefined,
+            response.status
+          );
+        }
       } catch (error) {
         clearTimeout(timeout);
 
@@ -180,7 +197,7 @@ export class ContextClient {
           lastError.message.includes("ECONNRESET") ||
           lastError.message.includes("ETIMEDOUT");
 
-        if (isRetryable && attempt < maxRetries) {
+        if (isRetryable && canRetryRequest && attempt < maxRetries) {
           const delay = Math.min(1000 * 2 ** attempt, 10_000);
           await new Promise((resolve) => setTimeout(resolve, delay));
           continue;

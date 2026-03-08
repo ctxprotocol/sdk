@@ -596,9 +596,14 @@ and want to find the corresponding market on Polymarket for comparison.
 Uses Polymarket's official /public-search API for reliable text search.
 
 WORKFLOW:
-  1. You have a Kalshi market (from get_event_by_slug or search_markets)
-  2. Call: kalshi_crossref_polymarket({ keywords: "supreme court trump tariffs" })
-  3. Returns matching Polymarket markets with prices and rules
+  1. First resolve a SPECIFIC Kalshi market with search_markets, get_event, get_events, or get_event_by_slug
+  2. Then call: kalshi_crossref_polymarket({ keywords: "supreme court trump tariffs" })
+  3. If multiple direct candidates exist, shortlist the best 1-2 BEFORE cross-referencing
+  4. Returns matching Polymarket markets with prices and rules
+
+⚠️ Do NOT use this as a broad discovery tool or fan it out across many weak candidates.
+It is best for late-stage validation after the direct Kalshi market is already known.
+Weak keyword matches can return related proxy markets rather than the exact equivalent contract.
 
 PRICE COMPARISON:
   - Polymarket: decimals (0.28 = 28%)
@@ -1926,6 +1931,7 @@ function buildToolMeta(toolName: string): ToolMetadata {
   const isRawDataTool = RAW_DATA_TOOLS.has(toolName);
   const isDiscoveryTool = DISCOVERY_TOOLS.has(toolName);
   const isHeavyQueryTool = HEAVY_QUERY_TOOLS.has(toolName);
+  const isCrossrefTool = toolName === "kalshi_crossref_polymarket";
 
   const executeUsd = isRawDataTool
     ? EXECUTE_PRICE_DEFAULT
@@ -1939,7 +1945,17 @@ function buildToolMeta(toolName: string): ToolMetadata {
       ? "slow"
       : "fast";
 
-  const rateLimit: ToolRateLimitHints = isHeavyQueryTool
+  const rateLimit: ToolRateLimitHints = isCrossrefTool
+    ? {
+        maxRequestsPerMinute: 8,
+        cooldownMs: 1500,
+        maxConcurrency: 1,
+        supportsBulk: false,
+        recommendedBatchTools: ["search_markets", "get_events", "get_markets"],
+        notes:
+          "Cross-platform matcher; first resolve a direct Kalshi candidate, then use this on at most 1-2 high-confidence markets.",
+      }
+    : isHeavyQueryTool
     ? {
         maxRequestsPerMinute: 20,
         cooldownMs: 750,

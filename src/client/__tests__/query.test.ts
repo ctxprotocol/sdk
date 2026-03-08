@@ -91,6 +91,13 @@ const MOCK_SUCCESS_RESPONSE = {
     modelCostUsd: "0.005400",
   },
   durationMs: 4200,
+  orchestrationMetrics: {
+    parityStage: "candidate",
+    orchestrationMode: "agentic",
+    firstPassSuccess: true,
+    capabilityMissSignaled: false,
+    rediscoveryExecuted: false,
+  },
 };
 
 const MOCK_DEVELOPER_TRACE = {
@@ -206,7 +213,7 @@ describe("Query Resource", () => {
 
       expect(url).toBe("https://www.ctxprotocol.com/api/v1/query");
       expect(opts.method).toBe("POST");
-      expect(opts.headers.Authorization).toBe(
+      expect(new Headers(opts.headers).get("Authorization")).toBe(
         "Bearer ctx_test_key_1234567890abcdef12345678",
       );
 
@@ -252,6 +259,7 @@ describe("Query Resource", () => {
         includeDataUrl: true,
         includeDeveloperTrace: true,
         queryDepth: "auto",
+        debugScoutDeepMode: "deep-light",
       });
 
       const body = JSON.parse(mockFn.mock.calls[0][1].body);
@@ -263,6 +271,7 @@ describe("Query Resource", () => {
         includeDataUrl: true,
         includeDeveloperTrace: true,
         queryDepth: "auto",
+        debugScoutDeepMode: "deep-light",
         stream: false,
       });
       expect(result.data).toEqual({ summary: "tool output" });
@@ -280,6 +289,15 @@ describe("Query Resource", () => {
 
       const result = await client.query.run("test query");
       expect(result.developerTrace).toEqual(MOCK_DEVELOPER_TRACE);
+    });
+
+    it("includes orchestrationMetrics in run() result when present", async () => {
+      globalThis.fetch = mockFetchJson(MOCK_SUCCESS_RESPONSE);
+
+      const result = await client.query.run("test query");
+      expect(result.orchestrationMetrics).toEqual(
+        MOCK_SUCCESS_RESPONSE.orchestrationMetrics,
+      );
     });
 
     it("returns undefined developerTrace when API omits it", async () => {
@@ -315,9 +333,73 @@ describe("Query Resource", () => {
       });
 
       const [, opts] = mockFn.mock.calls[0];
-      expect(opts.headers["Idempotency-Key"]).toBe(
+      expect(new Headers(opts.headers).get("Idempotency-Key")).toBe(
         "f4f14e22-7db1-4a2d-8b95-b5806f3fa677",
       );
+    });
+
+    it("does not retry non-idempotent run() requests after a retryable fetch failure", async () => {
+      const mockFn = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("fetch failed"))
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          json: () => Promise.resolve(MOCK_SUCCESS_RESPONSE),
+          headers: new Headers(),
+        });
+      globalThis.fetch = mockFn;
+
+      await expect(client.query.run("test query")).rejects.toThrow(ContextError);
+      expect(mockFn).toHaveBeenCalledTimes(1);
+    });
+
+    it("retries idempotent run() requests after a retryable fetch failure", async () => {
+      const mockFn = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("fetch failed"))
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          json: () => Promise.resolve(MOCK_SUCCESS_RESPONSE),
+          headers: new Headers(),
+        });
+      globalThis.fetch = mockFn;
+
+      const result = await client.query.run({
+        query: "test query",
+        idempotencyKey: "f4f14e22-7db1-4a2d-8b95-b5806f3fa677",
+      });
+
+      expect(mockFn).toHaveBeenCalledTimes(2);
+      expect(result.response).toBe(MOCK_SUCCESS_RESPONSE.response);
+    });
+
+    it("does not retry run() after a successful response starts but JSON parsing fails", async () => {
+      const mockFn = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          json: () => Promise.reject(new Error("socket hang up")),
+          headers: new Headers(),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          json: () => Promise.resolve(MOCK_SUCCESS_RESPONSE),
+          headers: new Headers(),
+        });
+      globalThis.fetch = mockFn;
+
+      await expect(client.query.run("test query")).rejects.toThrow(
+        "Failed to parse JSON response",
+      );
+      expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
     it("parses success response into QueryResult", async () => {
@@ -338,6 +420,9 @@ describe("Query Resource", () => {
         modelCostUsd: "0.005400",
       });
       expect(result.durationMs).toBe(4200);
+      expect(result.orchestrationMetrics).toEqual(
+        MOCK_SUCCESS_RESPONSE.orchestrationMetrics,
+      );
     });
 
     it("throws ContextError on insufficient_allowance", async () => {
@@ -529,6 +614,7 @@ describe("Query Resource", () => {
         includeDataUrl: true,
         includeDeveloperTrace: true,
         queryDepth: "deep",
+        debugScoutDeepMode: "deep-heavy",
       })) {
         events.push(event);
       }
@@ -541,6 +627,7 @@ describe("Query Resource", () => {
       expect(body.includeDataUrl).toBe(true);
       expect(body.includeDeveloperTrace).toBe(true);
       expect(body.queryDepth).toBe("deep");
+      expect(body.debugScoutDeepMode).toBe("deep-heavy");
     });
 
     it("handles developer-trace stream events and aggregates final trace", async () => {

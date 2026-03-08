@@ -398,6 +398,7 @@ export interface ExecutionResult<T = unknown> {
 
 /** Supported orchestration depth modes for query execution. */
 export type QueryDepth = "fast" | "auto" | "deep";
+export type QueryDeepMode = "deep-light" | "deep-heavy";
 
 /**
  * Options for the agentic query endpoint (pay-per-response).
@@ -450,6 +451,12 @@ export interface QueryOptions {
    * - `deep`: full completeness-oriented path
    */
   queryDepth?: QueryDepth;
+
+  /**
+   * Development/testing only: force the server's internal deep lane.
+   * Ignored by normal production usage and invalid when `queryDepth` is `fast`.
+   */
+  debugScoutDeepMode?: QueryDeepMode;
 
   /**
    * Optional idempotency key (UUID recommended).
@@ -548,6 +555,17 @@ export interface QueryCost {
 }
 
 /**
+ * High-level orchestration outcome metrics returned by the query API.
+ */
+export interface QueryOrchestrationMetrics {
+  parityStage: string;
+  orchestrationMode: string;
+  firstPassSuccess: boolean;
+  capabilityMissSignaled: boolean;
+  rediscoveryExecuted: boolean;
+}
+
+/**
  * The resolved result of a pay-per-response query
  */
 export interface QueryResult {
@@ -571,6 +589,9 @@ export interface QueryResult {
 
   /** Optional machine-readable Developer Mode trace payload */
   developerTrace?: QueryDeveloperTrace;
+
+  /** Optional orchestration outcome metrics for benchmarking and rollout analysis */
+  orchestrationMetrics?: QueryOrchestrationMetrics;
 }
 
 /**
@@ -585,6 +606,7 @@ export interface QueryApiSuccessResponse {
   data?: unknown;
   dataUrl?: string;
   developerTrace?: QueryDeveloperTrace;
+  orchestrationMetrics?: QueryOrchestrationMetrics;
 }
 
 /**
@@ -621,6 +643,15 @@ export interface QueryStreamDoneEvent {
   result: QueryResult;
 }
 
+/** Emitted when the server reports a recoverable or terminal query error */
+export interface QueryStreamErrorEvent {
+  type: "error";
+  error: string;
+  code?: ContextErrorCode | string;
+  scope?: string;
+  reasonCode?: string;
+}
+
 /**
  * Union of all events emitted during a streaming query
  */
@@ -628,7 +659,8 @@ export type QueryStreamEvent =
   | QueryStreamToolStatusEvent
   | QueryStreamTextDeltaEvent
   | QueryStreamDeveloperTraceEvent
-  | QueryStreamDoneEvent;
+  | QueryStreamDoneEvent
+  | QueryStreamErrorEvent;
 
 // ---------------------------------------------------------------------------
 // Error types

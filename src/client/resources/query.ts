@@ -212,6 +212,7 @@ export class Query {
           includeDataUrl: opts.includeDataUrl,
           includeDeveloperTrace: opts.includeDeveloperTrace,
           queryDepth: opts.queryDepth,
+          debugScoutDeepMode: opts.debugScoutDeepMode,
           stream: false,
         }),
       }
@@ -245,6 +246,7 @@ export class Query {
         data: response.data,
         dataUrl: response.dataUrl,
         developerTrace,
+        orchestrationMetrics: response.orchestrationMetrics,
       };
     }
 
@@ -259,6 +261,7 @@ export class Query {
    * - `tool-status` — A tool started executing or changed status
    * - `text-delta` — A chunk of the AI response text
    * - `developer-trace` — Runtime trace metadata (when includeDeveloperTrace=true)
+   * - `error` — A structured query/runtime error emitted before stream completion
    * - `done` — The full response is complete (includes final `QueryResult`)
    *
    * @param options - Query options or a plain string question
@@ -279,6 +282,9 @@ export class Query {
    *       break;
    *     case "done":
    *       console.log("\nCost:", event.result.cost.totalCostUsd);
+   *       break;
+   *     case "error":
+   *       console.error("Stream error:", event.error);
    *       break;
    *   }
    * }
@@ -303,6 +309,7 @@ export class Query {
         includeDataUrl: opts.includeDataUrl,
         includeDeveloperTrace: opts.includeDeveloperTrace,
         queryDepth: opts.queryDepth,
+        debugScoutDeepMode: opts.debugScoutDeepMode,
         stream: true,
       }),
     });

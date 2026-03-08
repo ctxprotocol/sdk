@@ -53,6 +53,7 @@ export type {
   ExecuteSessionApiSuccessResponse,
   ExecuteSessionApiResponse,
   // Query types (pay-per-response)
+  QueryDeepMode,
   QueryOptions,
   QueryResult,
   QueryToolUsage,
@@ -69,6 +70,7 @@ export type {
   QueryStreamTextDeltaEvent,
   QueryStreamDeveloperTraceEvent,
   QueryStreamDoneEvent,
+  QueryStreamErrorEvent,
   ContextErrorCode,
 } from "./client/index.js";
 
