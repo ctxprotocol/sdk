@@ -13,8 +13,8 @@ import type { ContextClient } from "../client.js";
  *
  * Unlike `tools.execute()` which calls a single tool once (pay-per-request),
  * the Query resource sends a natural-language question and lets the server
- * handle tool discovery, multi-tool orchestration, self-healing retries,
- * completeness checks, and AI synthesis — all for one flat fee.
+ * handle discovery-first orchestration (`discover/probe -> plan-from-evidence ->
+ * execute -> bounded fallback`) plus AI synthesis — all for one flat fee.
  *
  * This is the "prepared meal" vs "raw ingredients" distinction:
  * - `tools.execute()` = raw data, full control, predictable cost
@@ -166,7 +166,7 @@ export class Query {
    * Run an agentic query and wait for the full response.
    *
    * The server discovers relevant tools (or uses the ones you specify),
-   * executes the full agentic pipeline (up to 100 MCP calls per tool),
+   * executes the discovery-first pipeline (up to 100 MCP calls per tool),
    * and returns an AI-synthesized answer. Payment is settled after
    * successful execution via deferred settlement.
    *
@@ -195,62 +195,31 @@ export class Query {
    */
   async run(options: QueryOptions | string): Promise<QueryResult> {
     const opts = typeof options === "string" ? { query: options } : options;
-    const headers = opts.idempotencyKey
-      ? { "Idempotency-Key": opts.idempotencyKey }
-      : undefined;
+    let terminalError:
+      | { error: string; code?: string; scope?: string; reasonCode?: string }
+      | undefined;
 
-    const response = await this.client._fetch<QueryApiResponse>(
-      "/api/v1/query",
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          query: opts.query,
-          tools: opts.tools,
-          modelId: opts.modelId,
-          includeData: opts.includeData,
-          includeDataUrl: opts.includeDataUrl,
-          includeDeveloperTrace: opts.includeDeveloperTrace,
-          queryDepth: opts.queryDepth,
-          debugScoutDeepMode: opts.debugScoutDeepMode,
-          stream: false,
-        }),
+    for await (const event of this.stream(opts)) {
+      if (event.type === "error") {
+        terminalError = {
+          error: event.error,
+          ...(event.code ? { code: event.code } : {}),
+          ...(event.scope ? { scope: event.scope } : {}),
+          ...(event.reasonCode ? { reasonCode: event.reasonCode } : {}),
+        };
+        continue;
       }
-    );
 
-    // Handle error response
-    if ("error" in response) {
-      throw new ContextError(
-        response.error,
-        response.code,
-        undefined,
-        response.helpUrl
-      );
+      if (event.type === "done") {
+        return event.result;
+      }
     }
 
-    // Handle success response
-    if (response.success) {
-      const developerTrace =
-        response.developerTrace ??
-        (opts.includeDeveloperTrace
-          ? this.buildSyntheticTraceFromRunResult({
-              toolsUsed: response.toolsUsed,
-              durationMs: response.durationMs,
-            })
-          : undefined);
-      return {
-        response: response.response,
-        toolsUsed: response.toolsUsed,
-        cost: response.cost,
-        durationMs: response.durationMs,
-        data: response.data,
-        dataUrl: response.dataUrl,
-        developerTrace,
-        orchestrationMetrics: response.orchestrationMetrics,
-      };
+    if (terminalError) {
+      throw new ContextError(terminalError.error, terminalError.code);
     }
 
-    throw new ContextError("Unexpected response format from query API");
+    throw new ContextError("Streaming query ended before done event");
   }
 
   /**
@@ -358,11 +327,17 @@ export class Query {
           event.result.developerTrace
         );
         if (!mergedTrace && opts.includeDeveloperTrace) {
-          mergedTrace = this.buildSyntheticTraceFromStreamStatus({
-            statusTimeline,
-            toolsUsed: event.result.toolsUsed,
-            durationMs: event.result.durationMs,
-          });
+          mergedTrace =
+            statusTimeline.length > 0
+              ? this.buildSyntheticTraceFromStreamStatus({
+                  statusTimeline,
+                  toolsUsed: event.result.toolsUsed,
+                  durationMs: event.result.durationMs,
+                })
+              : this.buildSyntheticTraceFromRunResult({
+                  toolsUsed: event.result.toolsUsed,
+                  durationMs: event.result.durationMs,
+                });
         }
         if (mergedTrace) {
           event.result.developerTrace = mergedTrace;

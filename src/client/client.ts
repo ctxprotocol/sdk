@@ -109,7 +109,11 @@ export class ContextClient {
    *
    * @internal
    */
-  async _fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  async _fetch<T>(
+    endpoint: string,
+    options: RequestInit = {},
+    fetchOptions?: { retry?: boolean }
+  ): Promise<T> {
     if (this._closed) {
       throw new ContextError("Client has been closed");
     }
@@ -120,10 +124,12 @@ export class ContextClient {
     const method = (options.method ?? "GET").toUpperCase();
     const requestHeaders = new Headers(options.headers);
     const canRetryRequest =
-      method === "GET" ||
-      method === "HEAD" ||
-      method === "OPTIONS" ||
-      requestHeaders.has("Idempotency-Key");
+      fetchOptions?.retry === false
+        ? false
+        : method === "GET" ||
+            method === "HEAD" ||
+            method === "OPTIONS" ||
+            requestHeaders.has("Idempotency-Key");
 
     let lastError: Error | undefined;
 

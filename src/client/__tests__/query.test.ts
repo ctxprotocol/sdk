@@ -56,6 +56,17 @@ function mockFetchSSE(events: string[]) {
   });
 }
 
+function buildDoneEvent(result: Record<string, unknown>) {
+  return `data: ${JSON.stringify({
+    type: "done",
+    result,
+  })}`;
+}
+
+function mockFetchRunResult(result: Record<string, unknown>) {
+  return mockFetchSSE([buildDoneEvent(result), "data: [DONE]"]);
+}
+
 /**
  * Mock fetch for error responses
  */
@@ -202,7 +213,7 @@ describe("Query Resource", () => {
 
   describe("query.run()", () => {
     it("sends correct request body with string shorthand", async () => {
-      const mockFn = mockFetchJson(MOCK_SUCCESS_RESPONSE);
+      const mockFn = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
       globalThis.fetch = mockFn;
 
       await client.query.run("What are the top whale movements?");
@@ -221,12 +232,12 @@ describe("Query Resource", () => {
       expect(body).toEqual({
         query: "What are the top whale movements?",
         tools: undefined,
-        stream: false,
+        stream: true,
       });
     });
 
     it("sends correct request body with options object", async () => {
-      globalThis.fetch = mockFetchJson(MOCK_SUCCESS_RESPONSE);
+      globalThis.fetch = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
 
       await client.query.run({
         query: "Analyze whale activity",
@@ -239,12 +250,12 @@ describe("Query Resource", () => {
       expect(body).toEqual({
         query: "Analyze whale activity",
         tools: ["tool-uuid-1", "tool-uuid-2"],
-        stream: false,
+        stream: true,
       });
     });
 
     it("forwards model and data options for run()", async () => {
-      const mockFn = mockFetchJson({
+      const mockFn = mockFetchRunResult({
         ...MOCK_SUCCESS_RESPONSE,
         data: { summary: "tool output" },
         dataUrl: "https://example.public.blob.vercel-storage.com/data.json",
@@ -272,7 +283,7 @@ describe("Query Resource", () => {
         includeDeveloperTrace: true,
         queryDepth: "auto",
         debugScoutDeepMode: "deep-light",
-        stream: false,
+        stream: true,
       });
       expect(result.data).toEqual({ summary: "tool output" });
       expect(result.dataUrl).toBe(
@@ -282,7 +293,7 @@ describe("Query Resource", () => {
     });
 
     it("includes developerTrace in run() result when present", async () => {
-      globalThis.fetch = mockFetchJson({
+      globalThis.fetch = mockFetchRunResult({
         ...MOCK_SUCCESS_RESPONSE,
         developerTrace: MOCK_DEVELOPER_TRACE,
       });
@@ -292,7 +303,7 @@ describe("Query Resource", () => {
     });
 
     it("includes orchestrationMetrics in run() result when present", async () => {
-      globalThis.fetch = mockFetchJson(MOCK_SUCCESS_RESPONSE);
+      globalThis.fetch = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
 
       const result = await client.query.run("test query");
       expect(result.orchestrationMetrics).toEqual(
@@ -301,14 +312,14 @@ describe("Query Resource", () => {
     });
 
     it("returns undefined developerTrace when API omits it", async () => {
-      globalThis.fetch = mockFetchJson(MOCK_SUCCESS_RESPONSE);
+      globalThis.fetch = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
 
       const result = await client.query.run("test query");
       expect(result.developerTrace).toBeUndefined();
     });
 
     it("builds synthetic developerTrace when requested and API omits it", async () => {
-      globalThis.fetch = mockFetchJson(MOCK_SUCCESS_RESPONSE);
+      globalThis.fetch = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
 
       const result = await client.query.run({
         query: "test query",
@@ -323,7 +334,7 @@ describe("Query Resource", () => {
     });
 
     it("forwards Idempotency-Key header for run options", async () => {
-      const mockFn = mockFetchJson(MOCK_SUCCESS_RESPONSE);
+      const mockFn = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
       globalThis.fetch = mockFn;
 
       await client.query.run({
@@ -342,68 +353,57 @@ describe("Query Resource", () => {
       const mockFn = vi
         .fn()
         .mockRejectedValueOnce(new Error("fetch failed"))
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          statusText: "OK",
-          json: () => Promise.resolve(MOCK_SUCCESS_RESPONSE),
-          headers: new Headers(),
-        });
+        .mockResolvedValueOnce(mockFetchRunResult(MOCK_SUCCESS_RESPONSE)());
       globalThis.fetch = mockFn;
 
       await expect(client.query.run("test query")).rejects.toThrow(ContextError);
       expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
-    it("retries idempotent run() requests after a retryable fetch failure", async () => {
+    it("does not retry idempotent run() requests after a retryable fetch failure", async () => {
       const mockFn = vi
         .fn()
         .mockRejectedValueOnce(new Error("fetch failed"))
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          statusText: "OK",
-          json: () => Promise.resolve(MOCK_SUCCESS_RESPONSE),
-          headers: new Headers(),
-        });
+        .mockResolvedValueOnce(mockFetchRunResult(MOCK_SUCCESS_RESPONSE)());
       globalThis.fetch = mockFn;
 
-      const result = await client.query.run({
-        query: "test query",
-        idempotencyKey: "f4f14e22-7db1-4a2d-8b95-b5806f3fa677",
-      });
-
-      expect(mockFn).toHaveBeenCalledTimes(2);
-      expect(result.response).toBe(MOCK_SUCCESS_RESPONSE.response);
+      await expect(
+        client.query.run({
+          query: "test query",
+          idempotencyKey: "f4f14e22-7db1-4a2d-8b95-b5806f3fa677",
+        }),
+      ).rejects.toThrow(ContextError);
+      expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
-    it("does not retry run() after a successful response starts but JSON parsing fails", async () => {
+    it("throws if the run() stream ends before a done event", async () => {
       const mockFn = vi
         .fn()
         .mockResolvedValueOnce({
           ok: true,
           status: 200,
           statusText: "OK",
-          json: () => Promise.reject(new Error("socket hang up")),
-          headers: new Headers(),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          statusText: "OK",
-          json: () => Promise.resolve(MOCK_SUCCESS_RESPONSE),
-          headers: new Headers(),
+          headers: new Headers({ "content-type": "text/event-stream" }),
+          body: {
+            getReader: () => ({
+              read: vi
+                .fn()
+                .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode("data: [DONE]\n") })
+                .mockResolvedValueOnce({ done: true, value: undefined }),
+              releaseLock: vi.fn(),
+            }),
+          },
         });
       globalThis.fetch = mockFn;
 
       await expect(client.query.run("test query")).rejects.toThrow(
-        "Failed to parse JSON response",
+        "Streaming query ended before done event",
       );
       expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
     it("parses success response into QueryResult", async () => {
-      globalThis.fetch = mockFetchJson(MOCK_SUCCESS_RESPONSE);
+      globalThis.fetch = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
 
       const result: QueryResult = await client.query.run("test query");
 

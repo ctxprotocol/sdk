@@ -404,8 +404,9 @@ export type QueryDeepMode = "deep-light" | "deep-heavy";
  * Options for the agentic query endpoint (pay-per-response).
  *
  * Unlike `execute()` which calls a single tool once, `query()` sends a
- * natural-language question and lets the server handle tool discovery,
- * multi-tool orchestration, self-healing retries, and AI synthesis.
+ * natural-language question and lets the server handle discovery-first
+ * orchestration (`discover/probe -> plan-from-evidence -> execute ->
+ * bounded fallback`) plus synthesis.
  * One flat fee covers up to 100 MCP skill calls per tool.
  */
 export interface QueryOptions {
@@ -439,8 +440,8 @@ export interface QueryOptions {
 
   /**
    * Include machine-readable developer trace output for this query response.
-   * When enabled, the server may return timeline data describing retries,
-   * fallbacks, loop checks, and intermediate recovery behavior.
+   * When enabled, the server may return summary counters plus diagnostics
+   * for lane selection, scout probe adequacy, and bounded fallback behavior.
    */
   includeDeveloperTrace?: boolean;
 
@@ -486,6 +487,90 @@ export interface QueryDeveloperTraceLoopInfo {
 }
 
 /**
+ * Tool selection metadata attached to discovery/planning diagnostics.
+ */
+export interface QueryDeveloperTraceToolSelection {
+  toolId: string;
+  toolName: string;
+  selectedMethodCount: number;
+  selectedMethods: string[];
+  omittedSelectedMethodCount: number;
+  priceUsd?: string;
+}
+
+/**
+ * Initial planner diagnostic details.
+ */
+export interface QueryPlanningTraceDiagnostic {
+  plannerQuery: string;
+  scoutEvidenceAttached: boolean;
+  scoutEvidencePromptBlock: string | null;
+  allowedModules: string[];
+}
+
+/**
+ * Rediscovery/fallback diagnostic details.
+ */
+export interface QueryRediscoveryTraceDiagnostic {
+  considered: boolean;
+  executed: boolean;
+  skipReason: string | null;
+  missingCapability: string | null;
+  rediscoveryQuery: string | null;
+  capabilityLooksLikeSearchNeed: boolean;
+  allowSearchFallbackOnElapsedCap: boolean;
+  searchFallbackUsed: boolean;
+  preRediscoveryBudgetReasonCode: string | null;
+  candidateSearchResults: QueryDeveloperTraceToolSelection[];
+  selectedAlternatives: QueryDeveloperTraceToolSelection[];
+  mergedTools: QueryDeveloperTraceToolSelection[];
+  usingPaidFallback: boolean;
+  branchPlan: QueryPlanningTraceDiagnostic | null;
+}
+
+/**
+ * Rich developer-trace diagnostics for discovery-first orchestration internals.
+ */
+export interface QueryDeveloperTraceDiagnostics {
+  selection: {
+    selectedDepth: string;
+    deepMode: string | null;
+    debugScoutDeepMode: string | null;
+    plannerReasoningStage: string;
+    scoutEnabled: boolean;
+    preserveFastOneShot: boolean;
+    candidateMethodCount: number;
+    scoutProbeStatus: string;
+    scoutProbeAdequacy: string;
+    scoutProbeConfidence: number;
+    scoutMetadataConfidence: number;
+    scoutProbeShortlistedMethodCount: number;
+    scoutProbeMissingCapability: string | null;
+    scoutEvidenceAttachedToPlanning: boolean;
+    selectedTools: QueryDeveloperTraceToolSelection[];
+  };
+  planning: {
+    initial: QueryPlanningTraceDiagnostic;
+  };
+  cost?: {
+    planningCostUsd: number;
+    initialExecutionCostUsd: number;
+    rediscoveryAdditionalCostUsd: number;
+    synthesisCostUsd: number;
+    totalModelCostUsd: number;
+    toolCostUsd: number;
+    totalChargedUsd: number;
+  };
+  completeness: {
+    evaluations: unknown[];
+    triggerNeedsDifferentTools: boolean;
+    triggerMissingCapability: string | null;
+  };
+  rediscovery: QueryRediscoveryTraceDiagnostic | null;
+  [key: string]: unknown;
+}
+
+/**
  * A single developer-trace timeline step.
  */
 export interface QueryDeveloperTraceStep {
@@ -522,6 +607,10 @@ export interface QueryDeveloperTraceSummary {
 export interface QueryDeveloperTrace {
   summary?: QueryDeveloperTraceSummary;
   timeline?: QueryDeveloperTraceStep[];
+  requestId?: string;
+  query?: string;
+  source?: string;
+  diagnostics?: QueryDeveloperTraceDiagnostics;
   [key: string]: unknown;
 }
 
@@ -560,8 +649,11 @@ export interface QueryCost {
 export interface QueryOrchestrationMetrics {
   parityStage: string;
   orchestrationMode: string;
+  /** Whether the first plan path succeeded without fallback. */
   firstPassSuccess: boolean;
+  /** Whether execution signaled a missing capability on first pass. */
   capabilityMissSignaled: boolean;
+  /** Whether bounded rediscovery/fallback executed. */
   rediscoveryExecuted: boolean;
 }
 

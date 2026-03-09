@@ -96,7 +96,7 @@ const result = await client.tools.execute({
 console.log(result.session); // methodPrice, spent, remaining, maxSpend, ...
 ```
 
-**Query mode** gives you curated answers — the server handles answer-safe tool discovery, multi-tool orchestration (up to 100 MCP calls per response turn), self-healing retries, completeness checks, model-aware context budgeting, and AI synthesis for one flat fee:
+**Query mode** gives you curated answers — the server runs a discovery-first planner contract (`discover/probe -> plan-from-evidence -> execute -> bounded fallback`) with model-aware context budgeting and AI synthesis for one flat fee:
 ```typescript
 const answer = await client.query.run({
   query: "What are the top whale movements on Base?",
@@ -109,7 +109,9 @@ console.log(answer.response);   // AI-synthesized answer
 console.log(answer.toolsUsed);  // Which tools were used
 console.log(answer.cost);       // Cost breakdown
 console.log(answer.dataUrl);    // Optional blob URL with full data
-console.log(answer.developerTrace?.summary); // retries/toolCalls/loops summary
+console.log(answer.developerTrace?.summary); // retries/fallbacks/loops summary
+console.log(answer.developerTrace?.diagnostics?.selection); // lane + scout probe diagnostics
+console.log(answer.orchestrationMetrics); // high-level first-pass / rediscovery metrics
 ```
 
 > Mixed listings are first-class: one listing can expose methods to both surfaces. Methods without `_meta.pricing.executeUsd` remain query-only until priced.
@@ -400,12 +402,17 @@ const closed = await client.tools.closeSession("sess_123");
 
 #### `client.query.run(options)`
 
-Run an agentic query. The server discovers answer-safe tools, executes the full pipeline (up to 100 MCP calls per response turn), applies model-aware mediator/data budgeting, and returns an AI-synthesized answer.
+Run an agentic query. The server applies discovery-first orchestration (`discover/probe -> plan-from-evidence -> execute -> bounded fallback`) with up to 100 MCP calls per response turn, then returns an AI-synthesized answer.
 
 `queryDepth` controls orchestration depth:
 - `fast`: lower-latency path for simple lookups.
 - `auto`: server routes to either `fast` or `deep` from query intent + selected tool complexity.
 - `deep`: completeness-oriented path (default when omitted).
+
+`includeDeveloperTrace` and `orchestrationMetrics` expose optional rollout diagnostics.
+`developerTrace.summary` reports aggregate retry/fallback counters, while
+`developerTrace.diagnostics.selection` exposes runtime lane and scout probe signals
+used by discovery-first planning.
 
 ```typescript
 // Simple string
@@ -428,7 +435,9 @@ console.log(answer.cost);         // { modelCostUsd, toolCostUsd, totalCostUsd }
 console.log(answer.durationMs);   // Total time
 console.log(answer.data);         // Optional execution data (when includeData=true)
 console.log(answer.dataUrl);      // Optional blob URL (when includeDataUrl=true)
-console.log(answer.developerTrace?.summary); // Optional trace summary (retries/toolCalls/loops)
+console.log(answer.developerTrace?.summary); // Optional trace summary (retries/fallbacks/loops)
+console.log(answer.developerTrace?.diagnostics?.selection?.deepMode); // Optional deep lane trace
+console.log(answer.orchestrationMetrics); // Optional high-level first-pass metrics
 ```
 
 When retrieval-first synthesis rollout is enabled server-side, full-data or truncation-sensitive query requests can switch to retrieval-first context assembly using private stage artifacts and canonical execution data slices. `includeData` and `includeDataUrl` continue to reference the same canonical dataset used for synthesis.
@@ -483,6 +492,7 @@ import type {
   QueryOptions,
   QueryResult,
   QueryDeveloperTrace,
+  QueryOrchestrationMetrics,
   QueryCost,
   QueryStreamEvent,
   ContextErrorCode,
@@ -560,7 +570,8 @@ interface QueryResult {
   durationMs: number;
   data?: unknown;                      // Optional execution data (includeData=true)
   dataUrl?: string;                    // Optional blob URL (includeDataUrl=true)
-  developerTrace?: QueryDeveloperTrace; // Optional machine-readable runtime trace
+  developerTrace?: QueryDeveloperTrace; // Optional runtime trace + diagnostics
+  orchestrationMetrics?: QueryOrchestrationMetrics; // Optional first-pass outcome metrics
 }
 ```
 

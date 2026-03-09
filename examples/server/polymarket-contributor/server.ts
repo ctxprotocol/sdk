@@ -126,6 +126,13 @@ const HEAVY_ANALYSIS_TOOLS = new Set([
   "get_top_holders",
 ]);
 
+const UPSTREAM_TIMEOUT_MS = {
+  default: 15_000,
+  heavy: 45_000,
+} as const;
+
+type UpstreamTimeoutProfile = keyof typeof UPSTREAM_TIMEOUT_MS;
+
 const BULK_FIRST_TOOLS = new Set([
   "find_moderate_probability_bets",
   "get_bets_by_probability",
@@ -188,6 +195,16 @@ function resolveExecutePricingMeta(
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function resolveUpstreamTimeoutMs(
+  timeoutMsOrProfile?: number | UpstreamTimeoutProfile
+): number {
+  if (typeof timeoutMsOrProfile === "number") {
+    return timeoutMsOrProfile;
+  }
+
+  return UPSTREAM_TIMEOUT_MS[timeoutMsOrProfile ?? "default"];
 }
 
 async function withUpstreamRateLock<T>(
@@ -286,9 +303,10 @@ async function fetchJsonWithPolicy(options: {
   upstream: UpstreamKey;
   endpoint: string;
   init?: RequestInit;
-  timeoutMs?: number;
+  timeoutMs?: number | UpstreamTimeoutProfile;
 }): Promise<unknown> {
-  const { upstream, endpoint, init, timeoutMs = 15_000 } = options;
+  const { upstream, endpoint, init } = options;
+  const timeoutMs = resolveUpstreamTimeoutMs(options.timeoutMs);
   const baseUrl =
     upstream === "gamma"
       ? GAMMA_API_URL
@@ -3278,7 +3296,7 @@ const TOOLS_WITH_METADATA = TOOLS.map((tool) => {
       ? (tool._meta as Record<string, unknown>)
       : {};
   const latencyClass: ToolLatencyClass = HEAVY_ANALYSIS_TOOLS.has(tool.name)
-    ? "fast"
+    ? "slow"
     : "instant";
   const surface: ToolSurface = "both";
   const queryEligible = true;
@@ -4004,7 +4022,10 @@ async function resolveMarketReference(options: {
   return null;
 }
 
-async function fetchGamma(endpoint: string, timeoutMs = 15000): Promise<unknown> {
+async function fetchGamma(
+  endpoint: string,
+  timeoutMs?: number | UpstreamTimeoutProfile
+): Promise<unknown> {
   return fetchJsonWithPolicy({
     upstream: "gamma",
     endpoint,
@@ -4012,7 +4033,11 @@ async function fetchGamma(endpoint: string, timeoutMs = 15000): Promise<unknown>
   });
 }
 
-async function fetchClob(endpoint: string, options?: RequestInit, timeoutMs = 15000): Promise<unknown> {
+async function fetchClob(
+  endpoint: string,
+  options?: RequestInit,
+  timeoutMs?: number | UpstreamTimeoutProfile
+): Promise<unknown> {
   const headers = normalizeHeaders(options?.headers);
 
   return fetchJsonWithPolicy({
@@ -4029,14 +4054,21 @@ async function fetchClob(endpoint: string, options?: RequestInit, timeoutMs = 15
   });
 }
 
-async function fetchClobPost(endpoint: string, body: unknown): Promise<unknown> {
+async function fetchClobPost(
+  endpoint: string,
+  body: unknown,
+  timeoutMs?: number | UpstreamTimeoutProfile
+): Promise<unknown> {
   return fetchClob(endpoint, {
     method: "POST",
     body: JSON.stringify(body),
-  });
+  }, timeoutMs);
 }
 
-async function fetchDataApi(endpoint: string, timeoutMs = 15000): Promise<unknown> {
+async function fetchDataApi(
+  endpoint: string,
+  timeoutMs?: number | UpstreamTimeoutProfile
+): Promise<unknown> {
   return fetchJsonWithPolicy({
     upstream: "data",
     endpoint,
@@ -9636,6 +9668,9 @@ async function handleGetTopHolders(
   const requestedLimit = (args?.limit as number) || 50;
   // Whether to use deep fetching (multiple API calls with different minBalance tiers)
   const deepFetch = args?.deepFetch !== false; // Default to true for thorough results
+  const upstreamTimeoutProfile: UpstreamTimeoutProfile = deepFetch
+    ? "heavy"
+    : "default";
 
   if (!conditionId) {
     return errorResult("conditionId is required");
@@ -9675,15 +9710,23 @@ async function handleGetTopHolders(
     let noTokenId = "";
     
     try {
-      const market = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
+      const market = (await fetchClob(
+        `/markets/${conditionId}`,
+        undefined,
+        upstreamTimeoutProfile
+      )) as ClobMarket;
       const tokens = market?.tokens;
       if (tokens && tokens.length >= 2) {
         yesTokenId = tokens[0].token_id;
         noTokenId = tokens[1].token_id;
-        const pricesResp = (await fetchClobPost("/prices", [
-          { token_id: tokens[0].token_id, side: "BUY" },
-          { token_id: tokens[1].token_id, side: "BUY" },
-        ])) as Record<string, { BUY?: string } | string>;
+        const pricesResp = (await fetchClobPost(
+          "/prices",
+          [
+            { token_id: tokens[0].token_id, side: "BUY" },
+            { token_id: tokens[1].token_id, side: "BUY" },
+          ],
+          upstreamTimeoutProfile
+        )) as Record<string, { BUY?: string } | string>;
 
         const yesData = pricesResp[tokens[0].token_id];
         const noData = pricesResp[tokens[1].token_id];
@@ -9715,7 +9758,8 @@ async function handleGetTopHolders(
       const batchResults = await Promise.all(
         tierBatch.map((minBal) =>
           (fetchDataApi(
-            `/holders?market=${conditionId}&limit=20&minBalance=${minBal}`
+            `/holders?market=${conditionId}&limit=20&minBalance=${minBal}`,
+            upstreamTimeoutProfile
           ) as Promise<MetaHolder[]>).catch(() => [] as MetaHolder[])
         )
       );
@@ -10133,13 +10177,21 @@ async function handleAnalyzeTopHolders(
   let currentPrice = 0.5;
   let noPrice = 0.5;
   try {
-    const market = (await fetchClob(`/markets/${resolvedConditionId}`)) as ClobMarket;
+    const market = (await fetchClob(
+      `/markets/${resolvedConditionId}`,
+      undefined,
+      "heavy"
+    )) as ClobMarket;
     const tokens = market?.tokens;
     if (tokens && tokens.length >= 2) {
-      const pricesResp = (await fetchClobPost("/prices", [
-        { token_id: tokens[0].token_id, side: "BUY" },
-        { token_id: tokens[1].token_id, side: "BUY" },
-      ])) as Record<string, { BUY?: string } | string>;
+      const pricesResp = (await fetchClobPost(
+        "/prices",
+        [
+          { token_id: tokens[0].token_id, side: "BUY" },
+          { token_id: tokens[1].token_id, side: "BUY" },
+        ],
+        "heavy"
+      )) as Record<string, { BUY?: string } | string>;
 
       const yesData = pricesResp[tokens[0].token_id];
       const noData = pricesResp[tokens[1].token_id];
@@ -10291,7 +10343,7 @@ async function handleAnalyzeEventWhaleBreakdown(
 
   try {
     // Fetch the event with all its markets
-    const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+    const event = (await fetchGamma(`/events/slug/${slug}`, "heavy")) as GammaEvent;
     
     if (!event) {
       return errorResult(`Event not found: ${slug}`);
@@ -10367,12 +10419,18 @@ async function handleAnalyzeEventWhaleBreakdown(
           // Get current price
           let currentPrice = 0.5;
           try {
-            const clobMarket = (await fetchClob(`/markets/${conditionId}`)) as ClobMarket;
+            const clobMarket = (await fetchClob(
+              `/markets/${conditionId}`,
+              undefined,
+              "heavy"
+            )) as ClobMarket;
             const tokens = clobMarket?.tokens;
             if (tokens && tokens.length >= 1) {
-              const pricesResp = (await fetchClobPost("/prices", [
-                { token_id: tokens[0].token_id, side: "BUY" },
-              ])) as Record<string, { BUY?: string } | string>;
+              const pricesResp = (await fetchClobPost(
+                "/prices",
+                [{ token_id: tokens[0].token_id, side: "BUY" }],
+                "heavy"
+              )) as Record<string, { BUY?: string } | string>;
               const yesData = pricesResp[tokens[0].token_id];
               if (yesData) currentPrice = typeof yesData === "object" && yesData.BUY ? Number(yesData.BUY) : Number(yesData);
             }
