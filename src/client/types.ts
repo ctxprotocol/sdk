@@ -546,7 +546,19 @@ export interface QueryDeveloperTraceDiagnostics {
     scoutMetadataConfidence: number;
     scoutProbeShortlistedMethodCount: number;
     scoutProbeMissingCapability: string | null;
+    scoutPrePlanProbeCalls: number;
+    scoutPrePlanProbeBudgetReasonCode: string | null;
+    scoutChangedInitialPlan: boolean;
+    scoutChangedPlannerReasoningStage: boolean;
+    scoutInitialSelectedDepth: string;
+    scoutInitialDeepMode: string | null;
+    scoutInitialPlannerReasoningStage: string;
+    scoutInitialReasonCode: string;
+    scoutFinalReasonCode: string;
     scoutEvidenceAttachedToPlanning: boolean;
+    scoutLlmSelectionUsed: boolean;
+    scoutLlmSelectionFallback: boolean;
+    scoutLlmSelectionLatencyMs: number | null;
     selectedTools: QueryDeveloperTraceToolSelection[];
   };
   planning: {
