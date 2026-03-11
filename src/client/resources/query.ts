@@ -1,6 +1,5 @@
 import type {
   QueryOptions,
-  QueryApiResponse,
   QueryDeveloperTrace,
   QueryResult,
   QueryStreamEvent,

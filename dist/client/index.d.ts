@@ -299,12 +299,14 @@ interface ExecutionResult<T = unknown> {
 }
 /** Supported orchestration depth modes for query execution. */
 type QueryDepth = "fast" | "auto" | "deep";
+type QueryDeepMode = "deep-light" | "deep-heavy";
 /**
  * Options for the agentic query endpoint (pay-per-response).
  *
  * Unlike `execute()` which calls a single tool once, `query()` sends a
- * natural-language question and lets the server handle tool discovery,
- * multi-tool orchestration, self-healing retries, and AI synthesis.
+ * natural-language question and lets the server handle discovery-first
+ * orchestration (`discover/probe -> plan-from-evidence -> execute ->
+ * bounded fallback`) plus synthesis.
  * One flat fee covers up to 100 MCP skill calls per tool.
  */
 interface QueryOptions {
@@ -333,8 +335,8 @@ interface QueryOptions {
     includeDataUrl?: boolean;
     /**
      * Include machine-readable developer trace output for this query response.
-     * When enabled, the server may return timeline data describing retries,
-     * fallbacks, loop checks, and intermediate recovery behavior.
+     * When enabled, the server may return summary counters plus diagnostics
+     * for lane selection, scout probe adequacy, and bounded fallback behavior.
      */
     includeDeveloperTrace?: boolean;
     /**
@@ -344,6 +346,11 @@ interface QueryOptions {
      * - `deep`: full completeness-oriented path
      */
     queryDepth?: QueryDepth;
+    /**
+     * Development/testing only: force the server's internal deep lane.
+     * Ignored by normal production usage and invalid when `queryDepth` is `fast`.
+     */
+    debugScoutDeepMode?: QueryDeepMode;
     /**
      * Optional idempotency key (UUID recommended).
      * Reuse the same key when retrying the same logical request.
@@ -366,6 +373,98 @@ interface QueryDeveloperTraceLoopInfo {
     name?: string;
     iteration?: number;
     maxIterations?: number;
+    [key: string]: unknown;
+}
+/**
+ * Tool selection metadata attached to discovery/planning diagnostics.
+ */
+interface QueryDeveloperTraceToolSelection {
+    toolId: string;
+    toolName: string;
+    selectedMethodCount: number;
+    selectedMethods: string[];
+    omittedSelectedMethodCount: number;
+    priceUsd?: string;
+}
+/**
+ * Initial planner diagnostic details.
+ */
+interface QueryPlanningTraceDiagnostic {
+    plannerQuery: string;
+    scoutEvidenceAttached: boolean;
+    scoutEvidencePromptBlock: string | null;
+    allowedModules: string[];
+}
+/**
+ * Rediscovery/fallback diagnostic details.
+ */
+interface QueryRediscoveryTraceDiagnostic {
+    considered: boolean;
+    executed: boolean;
+    skipReason: string | null;
+    missingCapability: string | null;
+    rediscoveryQuery: string | null;
+    capabilityLooksLikeSearchNeed: boolean;
+    allowSearchFallbackOnElapsedCap: boolean;
+    searchFallbackUsed: boolean;
+    preRediscoveryBudgetReasonCode: string | null;
+    candidateSearchResults: QueryDeveloperTraceToolSelection[];
+    selectedAlternatives: QueryDeveloperTraceToolSelection[];
+    mergedTools: QueryDeveloperTraceToolSelection[];
+    usingPaidFallback: boolean;
+    branchPlan: QueryPlanningTraceDiagnostic | null;
+}
+/**
+ * Rich developer-trace diagnostics for discovery-first orchestration internals.
+ */
+interface QueryDeveloperTraceDiagnostics {
+    selection: {
+        selectedDepth: string;
+        deepMode: string | null;
+        debugScoutDeepMode: string | null;
+        plannerReasoningStage: string;
+        scoutEnabled: boolean;
+        preserveFastOneShot: boolean;
+        candidateMethodCount: number;
+        scoutProbeStatus: string;
+        scoutProbeAdequacy: string;
+        scoutProbeConfidence: number;
+        scoutMetadataConfidence: number;
+        scoutProbeShortlistedMethodCount: number;
+        scoutProbeMissingCapability: string | null;
+        scoutPrePlanProbeCalls: number;
+        scoutPrePlanProbeBudgetReasonCode: string | null;
+        scoutChangedInitialPlan: boolean;
+        scoutChangedPlannerReasoningStage: boolean;
+        scoutInitialSelectedDepth: string;
+        scoutInitialDeepMode: string | null;
+        scoutInitialPlannerReasoningStage: string;
+        scoutInitialReasonCode: string;
+        scoutFinalReasonCode: string;
+        scoutEvidenceAttachedToPlanning: boolean;
+        scoutLlmSelectionUsed: boolean;
+        scoutLlmSelectionFallback: boolean;
+        scoutLlmSelectionLatencyMs: number | null;
+        selectedTools: QueryDeveloperTraceToolSelection[];
+    };
+    planning: {
+        initial: QueryPlanningTraceDiagnostic;
+    };
+    cost?: {
+        planningCostUsd: number;
+        initialExecutionCostUsd: number;
+        rediscoveryAdditionalCostUsd: number;
+        synthesisCostUsd: number;
+        totalModelCostUsd: number;
+        toolCostUsd: number;
+        totalChargedUsd: number;
+    };
+    completeness: {
+        evaluations: unknown[];
+        triggerNeedsDifferentTools: boolean;
+        triggerMissingCapability: string | null;
+    };
+    rediscovery: QueryRediscoveryTraceDiagnostic | null;
     [key: string]: unknown;
 }
 /**
@@ -403,6 +502,10 @@ interface QueryDeveloperTraceSummary {
 interface QueryDeveloperTrace {
     summary?: QueryDeveloperTraceSummary;
     timeline?: QueryDeveloperTraceStep[];
+    requestId?: string;
+    query?: string;
+    source?: string;
+    diagnostics?: QueryDeveloperTraceDiagnostics;
     [key: string]: unknown;
 }
 /**
@@ -429,6 +532,19 @@ interface QueryCost {
     totalCostUsd: string;
 }
 /**
+ * High-level orchestration outcome metrics returned by the query API.
+ */
+interface QueryOrchestrationMetrics {
+    parityStage: string;
+    orchestrationMode: string;
+    /** Whether the first plan path succeeded without fallback. */
+    firstPassSuccess: boolean;
+    /** Whether execution signaled a missing capability on first pass. */
+    capabilityMissSignaled: boolean;
+    /** Whether bounded rediscovery/fallback executed. */
+    rediscoveryExecuted: boolean;
+}
+/**
  * The resolved result of a pay-per-response query
  */
 interface QueryResult {
@@ -446,6 +562,8 @@ interface QueryResult {
     dataUrl?: string;
     /** Optional machine-readable Developer Mode trace payload */
     developerTrace?: QueryDeveloperTrace;
+    /** Optional orchestration outcome metrics for benchmarking and rollout analysis */
+    orchestrationMetrics?: QueryOrchestrationMetrics;
 }
 /**
  * Successful response from the /api/v1/query endpoint
@@ -459,6 +577,7 @@ interface QueryApiSuccessResponse {
     data?: unknown;
     dataUrl?: string;
     developerTrace?: QueryDeveloperTrace;
+    orchestrationMetrics?: QueryOrchestrationMetrics;
 }
 /**
  * Raw API response from the query endpoint
@@ -488,10 +607,18 @@ interface QueryStreamDoneEvent {
     type: "done";
     result: QueryResult;
 }
+/** Emitted when the server reports a recoverable or terminal query error */
+interface QueryStreamErrorEvent {
+    type: "error";
+    error: string;
+    code?: ContextErrorCode | string;
+    scope?: string;
+    reasonCode?: string;
+}
 /**
  * Union of all events emitted during a streaming query
  */
-type QueryStreamEvent = QueryStreamToolStatusEvent | QueryStreamTextDeltaEvent | QueryStreamDeveloperTraceEvent | QueryStreamDoneEvent;
+type QueryStreamEvent = QueryStreamToolStatusEvent | QueryStreamTextDeltaEvent | QueryStreamDeveloperTraceEvent | QueryStreamDoneEvent | QueryStreamErrorEvent;
 /**
  * Specific error codes returned by the Context Protocol API
  */
@@ -593,8 +720,8 @@ declare class Tools {
  *
  * Unlike `tools.execute()` which calls a single tool once (pay-per-request),
  * the Query resource sends a natural-language question and lets the server
- * handle tool discovery, multi-tool orchestration, self-healing retries,
- * completeness checks, and AI synthesis — all for one flat fee.
+ * handle discovery-first orchestration (`discover/probe -> plan-from-evidence ->
+ * execute -> bounded fallback`) plus AI synthesis — all for one flat fee.
  *
  * This is the "prepared meal" vs "raw ingredients" distinction:
  * - `tools.execute()` = raw data, full control, predictable cost
@@ -611,7 +738,7 @@ declare class Query {
      * Run an agentic query and wait for the full response.
      *
      * The server discovers relevant tools (or uses the ones you specify),
-     * executes the full agentic pipeline (up to 100 MCP calls per tool),
+     * executes the discovery-first pipeline (up to 100 MCP calls per tool),
      * and returns an AI-synthesized answer. Payment is settled after
      * successful execution via deferred settlement.
      *
@@ -647,6 +774,7 @@ declare class Query {
      * - `tool-status` — A tool started executing or changed status
      * - `text-delta` — A chunk of the AI response text
      * - `developer-trace` — Runtime trace metadata (when includeDeveloperTrace=true)
+     * - `error` — A structured query/runtime error emitted before stream completion
      * - `done` — The full response is complete (includes final `QueryResult`)
      *
      * @param options - Query options or a plain string question
@@ -667,6 +795,9 @@ declare class Query {
      *       break;
      *     case "done":
      *       console.log("\nCost:", event.result.cost.totalCostUsd);
+     *       break;
+     *     case "error":
+     *       console.error("Stream error:", event.error);
      *       break;
      *   }
      * }
@@ -743,7 +874,9 @@ declare class ContextClient {
      *
      * @internal
      */
-    _fetch<T>(endpoint: string, options?: RequestInit): Promise<T>;
+    _fetch<T>(endpoint: string, options?: RequestInit, fetchOptions?: {
+        retry?: boolean;
+    }): Promise<T>;
     /**
      * Internal method for making authenticated HTTP requests that returns
      * the raw Response object. Used for streaming endpoints (SSE).
@@ -754,4 +887,4 @@ declare class ContextClient {
     _fetchRaw(endpoint: string, options?: RequestInit): Promise<Response>;
 }
 
-export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecuteSessionApiResponse, type ExecuteSessionApiSuccessResponse, type ExecuteSessionResult, type ExecuteSessionSpend, type ExecuteSessionStartOptions, type ExecuteSessionStatus, type ExecutionResult, type McpTool, type McpToolMeta, type McpToolRateLimitHints, Query, type QueryApiResponse, type QueryApiSuccessResponse, type QueryCost, type QueryDeveloperTrace, type QueryDeveloperTraceLoopInfo, type QueryDeveloperTraceStep, type QueryDeveloperTraceSummary, type QueryDeveloperTraceToolRef, type QueryOptions, type QueryResult, type QueryStreamDeveloperTraceEvent, type QueryStreamDoneEvent, type QueryStreamEvent, type QueryStreamTextDeltaEvent, type QueryStreamToolStatusEvent, type QueryToolUsage, type SearchOptions, type SearchResponse, type Tool, Tools };
+export { ContextClient, type ContextClientOptions, ContextError, type ContextErrorCode, Discovery, type ExecuteApiErrorResponse, type ExecuteApiResponse, type ExecuteApiSuccessResponse, type ExecuteOptions, type ExecuteSessionApiResponse, type ExecuteSessionApiSuccessResponse, type ExecuteSessionResult, type ExecuteSessionSpend, type ExecuteSessionStartOptions, type ExecuteSessionStatus, type ExecutionResult, type McpTool, type McpToolMeta, type McpToolRateLimitHints, Query, type QueryApiResponse, type QueryApiSuccessResponse, type QueryCost, type QueryDeepMode, type QueryDeveloperTrace, type QueryDeveloperTraceLoopInfo, type QueryDeveloperTraceStep, type QueryDeveloperTraceSummary, type QueryDeveloperTraceToolRef, type QueryOptions, type QueryResult, type QueryStreamDeveloperTraceEvent, type QueryStreamDoneEvent, type QueryStreamErrorEvent, type QueryStreamEvent, type QueryStreamTextDeltaEvent, type QueryStreamToolStatusEvent, type QueryToolUsage, type SearchOptions, type SearchResponse, type Tool, Tools };

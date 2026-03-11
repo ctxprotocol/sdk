@@ -340,7 +340,7 @@ var Query = class {
    * Run an agentic query and wait for the full response.
    *
    * The server discovers relevant tools (or uses the ones you specify),
-   * executes the full agentic pipeline (up to 100 MCP calls per tool),
+   * executes the discovery-first pipeline (up to 100 MCP calls per tool),
    * and returns an AI-synthesized answer. Payment is settled after
    * successful execution via deferred settlement.
    *
@@ -369,48 +369,25 @@ var Query = class {
    */
   async run(options) {
     const opts = typeof options === "string" ? { query: options } : options;
-    const headers = opts.idempotencyKey ? { "Idempotency-Key": opts.idempotencyKey } : void 0;
-    const response = await this.client._fetch(
-      "/api/v1/query",
-      {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          query: opts.query,
-          tools: opts.tools,
-          modelId: opts.modelId,
-          includeData: opts.includeData,
-          includeDataUrl: opts.includeDataUrl,
-          includeDeveloperTrace: opts.includeDeveloperTrace,
-          queryDepth: opts.queryDepth,
-          stream: false
-        })
+    let terminalError;
+    for await (const event of this.stream(opts)) {
+      if (event.type === "error") {
+        terminalError = {
+          error: event.error,
+          ...event.code ? { code: event.code } : {},
+          ...event.scope ? { scope: event.scope } : {},
+          ...event.reasonCode ? { reasonCode: event.reasonCode } : {}
+        };
+        continue;
       }
-    );
-    if ("error" in response) {
-      throw new ContextError(
-        response.error,
-        response.code,
-        void 0,
-        response.helpUrl
-      );
+      if (event.type === "done") {
+        return event.result;
+      }
     }
-    if (response.success) {
-      const developerTrace = response.developerTrace ?? (opts.includeDeveloperTrace ? this.buildSyntheticTraceFromRunResult({
-        toolsUsed: response.toolsUsed,
-        durationMs: response.durationMs
-      }) : void 0);
-      return {
-        response: response.response,
-        toolsUsed: response.toolsUsed,
-        cost: response.cost,
-        durationMs: response.durationMs,
-        data: response.data,
-        dataUrl: response.dataUrl,
-        developerTrace
-      };
+    if (terminalError) {
+      throw new ContextError(terminalError.error, terminalError.code);
     }
-    throw new ContextError("Unexpected response format from query API");
+    throw new ContextError("Streaming query ended before done event");
   }
   /**
    * Run an agentic query with streaming. Returns an async iterable that
@@ -420,6 +397,7 @@ var Query = class {
    * - `tool-status` — A tool started executing or changed status
    * - `text-delta` — A chunk of the AI response text
    * - `developer-trace` — Runtime trace metadata (when includeDeveloperTrace=true)
+   * - `error` — A structured query/runtime error emitted before stream completion
    * - `done` — The full response is complete (includes final `QueryResult`)
    *
    * @param options - Query options or a plain string question
@@ -441,6 +419,9 @@ var Query = class {
    *     case "done":
    *       console.log("\nCost:", event.result.cost.totalCostUsd);
    *       break;
+   *     case "error":
+   *       console.error("Stream error:", event.error);
+   *       break;
    *   }
    * }
    * ```
@@ -459,6 +440,7 @@ var Query = class {
         includeDataUrl: opts.includeDataUrl,
         includeDeveloperTrace: opts.includeDeveloperTrace,
         queryDepth: opts.queryDepth,
+        debugScoutDeepMode: opts.debugScoutDeepMode,
         stream: true
       })
     });
@@ -496,8 +478,11 @@ var Query = class {
           event.result.developerTrace
         );
         if (!mergedTrace && opts.includeDeveloperTrace) {
-          mergedTrace = this.buildSyntheticTraceFromStreamStatus({
+          mergedTrace = statusTimeline.length > 0 ? this.buildSyntheticTraceFromStreamStatus({
             statusTimeline,
+            toolsUsed: event.result.toolsUsed,
+            durationMs: event.result.durationMs
+          }) : this.buildSyntheticTraceFromRunResult({
             toolsUsed: event.result.toolsUsed,
             durationMs: event.result.durationMs
           });
@@ -616,30 +601,34 @@ var ContextClient = class {
    *
    * @internal
    */
-  async _fetch(endpoint, options = {}) {
+  async _fetch(endpoint, options = {}, fetchOptions) {
     if (this._closed) {
       throw new ContextError("Client has been closed");
     }
     const url = `${this.baseUrl}${endpoint}`;
     const maxRetries = 3;
     const timeoutMs = this.requestTimeoutMs;
+    const method = (options.method ?? "GET").toUpperCase();
+    const requestHeaders = new Headers(options.headers);
+    const canRetryRequest = fetchOptions?.retry === false ? false : method === "GET" || method === "HEAD" || method === "OPTIONS" || requestHeaders.has("Idempotency-Key");
     let lastError;
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      const mergedHeaders = new Headers(requestHeaders);
+      if (!mergedHeaders.has("Content-Type")) {
+        mergedHeaders.set("Content-Type", "application/json");
+      }
+      mergedHeaders.set("Authorization", `Bearer ${this.apiKey}`);
       try {
         const response = await fetch(url, {
           ...options,
           signal: controller.signal,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${this.apiKey}`,
-            ...options.headers
-          }
+          headers: mergedHeaders
         });
         clearTimeout(timeout);
         if (!response.ok) {
-          if (response.status >= 500 && attempt < maxRetries) {
+          if (response.status >= 500 && canRetryRequest && attempt < maxRetries) {
             const delay = Math.min(1e3 * 2 ** attempt, 1e4);
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
@@ -658,7 +647,16 @@ var ContextClient = class {
           }
           throw new ContextError(errorMessage, errorCode, response.status, helpUrl);
         }
-        return response.json();
+        try {
+          return await response.json();
+        } catch (error) {
+          const parseError = error instanceof Error ? error : new Error(String(error));
+          throw new ContextError(
+            `Failed to parse JSON response: ${parseError.message}`,
+            void 0,
+            response.status
+          );
+        }
       } catch (error) {
         clearTimeout(timeout);
         if (error instanceof ContextError) {
@@ -666,7 +664,7 @@ var ContextClient = class {
         }
         lastError = error instanceof Error ? error : new Error(String(error));
         const isRetryable = lastError.name === "AbortError" || lastError.message.includes("fetch failed") || lastError.message.includes("ECONNRESET") || lastError.message.includes("ETIMEDOUT");
-        if (isRetryable && attempt < maxRetries) {
+        if (isRetryable && canRetryRequest && attempt < maxRetries) {
           const delay = Math.min(1e3 * 2 ** attempt, 1e4);
           await new Promise((resolve) => setTimeout(resolve, delay));
           continue;
