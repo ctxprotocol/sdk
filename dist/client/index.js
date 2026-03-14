@@ -15,6 +15,14 @@ var Discovery = class {
   constructor(client) {
     this.client = client;
   }
+  /**
+   * Fetch a single marketplace tool by its unique ID.
+   */
+  async get(toolId) {
+    return this.client._fetch(
+      `/api/v1/tools/${encodeURIComponent(toolId)}`
+    );
+  }
   async search(queryOrOptions, limit) {
     const options = typeof queryOrOptions === "string" ? { query: queryOrOptions, limit } : queryOrOptions;
     const params = new URLSearchParams();

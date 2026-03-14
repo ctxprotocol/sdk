@@ -640,6 +640,10 @@ declare class Discovery {
     private client;
     constructor(client: ContextClient);
     /**
+     * Fetch a single marketplace tool by its unique ID.
+     */
+    get(toolId: string): Promise<Tool>;
+    /**
      * Search for tools matching a query string.
      *
      * Backward-compatible signatures:

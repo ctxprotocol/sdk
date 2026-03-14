@@ -24,6 +24,41 @@ describe("Discovery Resource", () => {
     client.close();
   });
 
+  it("fetches a single tool by ID", async () => {
+    const mockTool = {
+      id: "abc-123",
+      name: "Test Tool",
+      description: "A tool",
+      price: "0.01",
+    };
+    const mockFn = mockFetchJson(mockTool);
+    globalThis.fetch = mockFn;
+
+    const tool = await client.discovery.get("abc-123");
+
+    const [rawUrl] = mockFn.mock.calls[0];
+    const url = new URL(rawUrl);
+    expect(url.pathname).toBe("/api/v1/tools/abc-123");
+    expect(tool.id).toBe("abc-123");
+    expect(tool.name).toBe("Test Tool");
+  });
+
+  it("encodes tool IDs in request paths", async () => {
+    const mockFn = mockFetchJson({
+      id: "a/b",
+      name: "Encoded Tool",
+      description: "A tool",
+      price: "0.01",
+    });
+    globalThis.fetch = mockFn;
+
+    await client.discovery.get("a/b");
+
+    const [rawUrl] = mockFn.mock.calls[0];
+    const url = new URL(rawUrl);
+    expect(url.pathname).toBe("/api/v1/tools/a%2Fb");
+  });
+
   it("supports legacy string search signature", async () => {
     const mockFn = mockFetchJson({
       tools: [],

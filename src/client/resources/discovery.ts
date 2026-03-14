@@ -8,6 +8,15 @@ export class Discovery {
   constructor(private client: ContextClient) {}
 
   /**
+   * Fetch a single marketplace tool by its unique ID.
+   */
+  async get(toolId: string): Promise<Tool> {
+    return this.client._fetch<Tool>(
+      `/api/v1/tools/${encodeURIComponent(toolId)}`
+    );
+  }
+
+  /**
    * Search for tools matching a query string.
    *
    * Backward-compatible signatures:
