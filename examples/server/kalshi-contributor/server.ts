@@ -224,9 +224,12 @@ RETURNS:
 
   {
     name: "check_market_efficiency",
-    description: `Check if a market is efficiently priced. Calculates the "vig" (YES + NO should = 100¢), identifies pricing inefficiencies.
+    description: `Check if a market or full event is efficiently priced. Calculates the "vig" (YES + NO should = 100¢) and identifies pricing inefficiencies.
 
-For multi-outcome events, checks if all outcomes sum to 100%.
+Use this for prompts like:
+- "Check whether KXHIGHNY-26MAR19 is efficiently priced across all outcome buckets"
+- "Is this event overround or underround?"
+- "Do all YES prices add up to 100 cents?"
 
 INPUT: market ticker OR event ticker
 
@@ -446,9 +449,13 @@ CROSS-PLATFORM: Results include tickers for comparison with Polymarket.`,
 
   {
     name: "get_markets_by_probability",
-    description: `🎯 Simple tool to filter markets by win probability.
+    description: `🎯 Filter open Kalshi markets by win probability with optional liquidity thresholds.
 
 ⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent markets or construct URLs. Each result includes a real 'url' field - use ONLY those URLs.
+
+Use this for prompts like:
+- "Find open Kalshi markets between 15% and 35% probability"
+- "Find open Kalshi markets between 15% and 35% probability with at least 1000 liquidity"
 
 OPTIONS:
 - very_unlikely: 1-15% (lottery tickets, 6-100x return)
@@ -467,6 +474,10 @@ OPTIONS:
         category: {
           type: "string",
           description: "Filter by category",
+        },
+        minLiquidity: {
+          type: "number",
+          description: "Optional minimum liquidity in USD. Use this when you need actionable markets, not thin contracts.",
         },
         limit: {
           type: "number",
@@ -489,7 +500,9 @@ OPTIONS:
               yesPrice: { type: "number" },
               impliedProbability: { type: "string" },
               potentialReturn: { type: "string" },
+              liquidity: { type: "number" },
               volume24h: { type: "number" },
+              closeTime: { type: "string" },
               category: { type: "string" },
             },
           },
@@ -499,6 +512,7 @@ OPTIONS:
           properties: {
             probabilityRange: { type: "string" },
             marketsFound: { type: "number" },
+            minLiquidityApplied: { type: "number" },
             avgReturn: { type: "string" },
           },
         },
@@ -519,16 +533,20 @@ OPTIONS:
 
   {
     name: "analyze_market_sentiment",
-    description: `Analyze market sentiment by looking at price history and volume trends.
+    description: `Analyze market sentiment using current prices, recent trades, and recent candlesticks.
 
-Answers: "Is this market trending up or down? What's the conviction?"
+Use this for prompts like:
+- "Show recent trades and 1h candlesticks, then summarize sentiment"
+- "Is this market trending up or down?"
+- "What's the conviction behind the latest move?"
 
 INPUT: market ticker
 
 RETURNS:
-- Price trend (24h, 7d)
+- Price trend over the requested window
 - Volume trend
-- Momentum indicators
+- Recent tape summary from trades
+- Recent candlestick closes and volume
 - Sentiment classification (bullish/bearish/neutral)`,
     inputSchema: {
       type: "object" as const,
@@ -540,6 +558,15 @@ RETURNS:
         periodHours: {
           type: "number",
           description: "Analysis period in hours (default: 24)",
+        },
+        tradeLimit: {
+          type: "number",
+          description: "How many recent trades to include (default: 5, max: 20)",
+        },
+        candlestickInterval: {
+          type: "number",
+          enum: [1, 60, 1440],
+          description: "Candlestick interval in minutes. Default: 60 (1h)",
         },
       },
       required: ["ticker"],
@@ -567,6 +594,41 @@ RETURNS:
             isAboveAverage: { type: "boolean" },
           },
         },
+        recentTrades: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              timestamp: { type: "string" },
+              price: { type: "number" },
+              count: { type: "number" },
+              takerSide: { type: "string" },
+            },
+          },
+        },
+        recentCandlesticks: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              endPeriodTs: { type: "number" },
+              closePrice: { type: ["number", "null"] as const },
+              volume: { type: "number" },
+              openInterest: { type: "number" },
+            },
+          },
+        },
+        candlestickSummary: {
+          type: "object",
+          properties: {
+            intervalMinutes: { type: "number" },
+            candlesReturned: { type: "number" },
+            latestClose: { type: ["number", "null"] as const },
+            highClose: { type: ["number", "null"] as const },
+            lowClose: { type: ["number", "null"] as const },
+            volumeTotal: { type: "number" },
+          },
+        },
         sentiment: {
           type: "string",
           enum: ["strongly_bullish", "bullish", "neutral", "bearish", "strongly_bearish"],
@@ -576,6 +638,11 @@ RETURNS:
           enum: ["high", "medium", "low"],
         },
         recommendation: { type: "string" },
+        limitations: {
+          type: "array",
+          items: { type: "string" },
+          description: "Non-fatal warnings when secondary data like trades or candlesticks could not be loaded.",
+        },
         fetchedAt: { type: "string" },
       },
       required: ["ticker", "sentiment", "confidence"],
@@ -1038,7 +1105,8 @@ EXAMPLE OUTPUT:
   - For this example: get_market({ ticker: "KXDJTVOSTARIFFS" })
   - DO NOT modify the ticker (no adding -001, -01, or any suffix)
 
-This is the RECOMMENDED method when working with Kalshi URLs.`,
+This is the RECOMMENDED method when working with Kalshi URLs.
+It returns the event plus per-market rules, detailed rules text, and direct URLs so agents can answer "fetch the full event with market rules" in one call.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -1098,7 +1166,11 @@ This is the RECOMMENDED method when working with Kalshi URLs.`,
 
   {
     name: "get_market",
-    description: `Get detailed information about a specific market.
+    description: `Get the canonical snapshot for a specific Kalshi market.
+
+Use this for prompts like:
+- "Get the exact market snapshot for KXHIGHNY-26MAR19-B47.5"
+- "Show me this market's current yes/no prices, status, close time, and rules"
 
 ⚠️ CRITICAL: Use EXACT ticker values from API responses. DO NOT construct or guess tickers!
 
@@ -1116,6 +1188,7 @@ EXAMPLE - WRONG (DO NOT DO THIS):
   get_market({ "ticker": "kxdjtvostariffs" })      ❌ Wrong case
 
 The ticker field from API responses is the EXACT string to use. Copy it exactly, don't modify it.
+This method is the best single-call source for current market state, resolution rules, and canonical URLs.
 
 🆕 FALLBACK: If a ticker fails, this tool will auto-attempt to fix common mistakes.`,
     inputSchema: {
@@ -1817,9 +1890,10 @@ CROSS-PLATFORM:
 
 INPUT: series_ticker from get_all_series
 
-RETURNS: All events and markets in the series with direct URLs.
+RETURNS: All events and markets in the series with direct URLs, current yes prices, 24h volume, and close times.
 
-Example: browse_series({ seriesTicker: "KXHIGHNY" }) → all NYC high temp events`,
+Example: browse_series({ seriesTicker: "KXHIGHNY" }) → all NYC high temp events
+Use this for prompts like "List open markets in the KXHIGHNY series with tickers, current yes prices, and close times."`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -1916,6 +1990,7 @@ const HEAVY_QUERY_TOOLS = new Set([
   "discover_trending_markets",
   "find_arbitrage_opportunities",
   "find_trading_opportunities",
+  "analyze_market_sentiment",
   "kalshi_crossref_polymarket",
   "browse_category",
   "browse_series",
@@ -2101,6 +2176,320 @@ async function sleep(ms: number): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function parseFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
+  const parsed = Number.parseFloat(trimmed);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function dollarsToCents(value: unknown): number | undefined {
+  const dollars = parseFiniteNumber(value);
+  if (dollars === undefined) {
+    return undefined;
+  }
+
+  return Number((dollars * 100).toFixed(4));
+}
+
+function normalizeKalshiCandleMetric(record: Record<string, unknown>): Record<string, unknown> {
+  const normalized = { ...record };
+  const mappings: Array<[string, string]> = [
+    ["open_dollars", "open"],
+    ["high_dollars", "high"],
+    ["low_dollars", "low"],
+    ["close_dollars", "close"],
+    ["min_dollars", "min"],
+    ["max_dollars", "max"],
+    ["mean_dollars", "mean"],
+    ["previous_dollars", "previous"],
+  ];
+
+  for (const [sourceKey, targetKey] of mappings) {
+    if (normalized[targetKey] !== undefined) {
+      continue;
+    }
+    const cents = dollarsToCents(normalized[sourceKey]);
+    if (cents !== undefined) {
+      normalized[targetKey] = cents;
+    }
+  }
+
+  return normalized;
+}
+
+function normalizeKalshiCandleRecord(record: Record<string, unknown>): Record<string, unknown> {
+  const normalized = { ...record };
+
+  if (isRecord(normalized.yes_bid)) {
+    normalized.yes_bid = normalizeKalshiCandleMetric(normalized.yes_bid);
+  }
+  if (isRecord(normalized.yes_ask)) {
+    normalized.yes_ask = normalizeKalshiCandleMetric(normalized.yes_ask);
+  }
+  if (isRecord(normalized.price)) {
+    normalized.price = normalizeKalshiCandleMetric(normalized.price);
+  }
+
+  if (normalized.volume === undefined) {
+    const volume = parseFiniteNumber(normalized.volume_fp);
+    if (volume !== undefined) {
+      normalized.volume = volume;
+    }
+  }
+
+  if (normalized.open_interest === undefined) {
+    const openInterest = parseFiniteNumber(normalized.open_interest_fp);
+    if (openInterest !== undefined) {
+      normalized.open_interest = openInterest;
+    }
+  }
+
+  return normalized;
+}
+
+function normalizeOrderbookLevels(
+  rawLevels: unknown,
+  priceUnit: "cents" | "dollars"
+): Array<[number, number]> {
+  if (!Array.isArray(rawLevels)) {
+    return [];
+  }
+
+  const normalizedLevels: Array<[number, number]> = [];
+  for (const level of rawLevels) {
+    if (!Array.isArray(level) || level.length < 2) {
+      continue;
+    }
+
+    const price =
+      priceUnit === "dollars"
+        ? dollarsToCents(level[0])
+        : parseFiniteNumber(level[0]);
+    const quantity = parseFiniteNumber(level[1]);
+
+    if (price === undefined || quantity === undefined) {
+      continue;
+    }
+
+    normalizedLevels.push([price, quantity]);
+  }
+
+  return normalizedLevels;
+}
+
+function normalizeKalshiOrderbookRecord(record: Record<string, unknown>): Record<string, unknown> {
+  const normalized = { ...record };
+  const rawOrderbook = isRecord(normalized.orderbook) ? normalized.orderbook : {};
+  const rawOrderbookFp = isRecord(normalized.orderbook_fp) ? normalized.orderbook_fp : {};
+
+  const normalizedYes =
+    rawOrderbookFp.yes_dollars !== undefined
+      ? normalizeOrderbookLevels(rawOrderbookFp.yes_dollars, "dollars")
+      : rawOrderbookFp.yes !== undefined
+        ? normalizeOrderbookLevels(rawOrderbookFp.yes, "cents")
+        : normalizeOrderbookLevels(rawOrderbook.yes, "cents");
+  const normalizedNo =
+    rawOrderbookFp.no_dollars !== undefined
+      ? normalizeOrderbookLevels(rawOrderbookFp.no_dollars, "dollars")
+      : rawOrderbookFp.no !== undefined
+        ? normalizeOrderbookLevels(rawOrderbookFp.no, "cents")
+        : normalizeOrderbookLevels(rawOrderbook.no, "cents");
+
+  normalized.orderbook = {
+    ...rawOrderbook,
+    yes: normalizedYes,
+    no: normalizedNo,
+  };
+  normalized.orderbook_fp = {
+    ...rawOrderbookFp,
+    yes: normalizedYes,
+    no: normalizedNo,
+  };
+
+  return normalized;
+}
+
+function normalizeKalshiTradeRecord(record: Record<string, unknown>): Record<string, unknown> {
+  const normalized = { ...record };
+
+  if (normalized.ticker === undefined && typeof normalized.market_ticker === "string") {
+    normalized.ticker = normalized.market_ticker;
+  }
+
+  if (normalized.yes_price === undefined) {
+    const yesPrice = dollarsToCents(normalized.yes_price_dollars);
+    if (yesPrice !== undefined) {
+      normalized.yes_price = yesPrice;
+    }
+  }
+
+  if (normalized.no_price === undefined) {
+    const noPrice = dollarsToCents(normalized.no_price_dollars);
+    if (noPrice !== undefined) {
+      normalized.no_price = noPrice;
+    }
+  }
+
+  if (normalized.price === undefined) {
+    const derivedPrice =
+      dollarsToCents(normalized.price_dollars) ??
+      (typeof normalized.yes_price === "number" ? normalized.yes_price : undefined);
+    if (derivedPrice !== undefined) {
+      normalized.price = derivedPrice;
+    }
+  }
+
+  if (normalized.count === undefined) {
+    const count = parseFiniteNumber(normalized.count_fp);
+    if (count !== undefined) {
+      normalized.count = count;
+    }
+  }
+
+  if (normalized.created_ts === undefined && typeof normalized.ts === "number") {
+    normalized.created_ts = normalized.ts;
+  }
+
+  return normalized;
+}
+
+function normalizeKalshiMarketRecord(record: Record<string, unknown>): Record<string, unknown> {
+  const normalized = { ...record };
+
+  const centMappings: Array<[string, string]> = [
+    ["yes_bid_dollars", "yes_bid"],
+    ["yes_ask_dollars", "yes_ask"],
+    ["no_bid_dollars", "no_bid"],
+    ["no_ask_dollars", "no_ask"],
+    ["last_price_dollars", "last_price"],
+    ["previous_price_dollars", "previous_price"],
+  ];
+  for (const [sourceKey, targetKey] of centMappings) {
+    if (normalized[targetKey] !== undefined) {
+      continue;
+    }
+    const cents = dollarsToCents(normalized[sourceKey]);
+    if (cents !== undefined) {
+      normalized[targetKey] = cents;
+    }
+  }
+
+  const fixedPointMappings: Array<[string, string]> = [
+    ["volume_fp", "volume"],
+    ["volume_24h_fp", "volume_24h"],
+    ["open_interest_fp", "open_interest"],
+  ];
+  for (const [sourceKey, targetKey] of fixedPointMappings) {
+    if (normalized[targetKey] !== undefined) {
+      continue;
+    }
+    const parsed = parseFiniteNumber(normalized[sourceKey]);
+    if (parsed !== undefined) {
+      normalized[targetKey] = parsed;
+    }
+  }
+
+  if (normalized.liquidity === undefined) {
+    const liquidity = parseFiniteNumber(normalized.liquidity_dollars);
+    if (liquidity !== undefined) {
+      normalized.liquidity = liquidity;
+    }
+  }
+
+  return normalized;
+}
+
+function looksLikeKalshiCandleMetric(record: Record<string, unknown>): boolean {
+  return [
+    "open_dollars",
+    "high_dollars",
+    "low_dollars",
+    "close_dollars",
+    "mean_dollars",
+    "previous_dollars",
+  ].some((key) => key in record);
+}
+
+function looksLikeKalshiCandleRecord(record: Record<string, unknown>): boolean {
+  return "end_period_ts" in record && (
+    "volume_fp" in record ||
+    "open_interest_fp" in record ||
+    "yes_bid" in record ||
+    "yes_ask" in record ||
+    "price" in record
+  );
+}
+
+function looksLikeKalshiOrderbookRecord(record: Record<string, unknown>): boolean {
+  return "orderbook" in record || "orderbook_fp" in record;
+}
+
+function looksLikeKalshiTradeRecord(record: Record<string, unknown>): boolean {
+  return "trade_id" in record && (
+    "count_fp" in record ||
+    "yes_price_dollars" in record ||
+    "market_ticker" in record
+  );
+}
+
+function looksLikeKalshiMarketRecord(record: Record<string, unknown>): boolean {
+  return typeof record.ticker === "string" && (
+    "event_ticker" in record ||
+    "yes_ask_dollars" in record ||
+    "yes_bid_dollars" in record ||
+    "no_ask_dollars" in record ||
+    "volume_fp" in record ||
+    "open_interest_fp" in record
+  );
+}
+
+function normalizeKalshiPayload(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeKalshiPayload(item));
+  }
+  if (!isRecord(value)) {
+    return value;
+  }
+
+  let normalized: Record<string, unknown> = {};
+  for (const [key, childValue] of Object.entries(value)) {
+    normalized[key] = normalizeKalshiPayload(childValue);
+  }
+
+  if (looksLikeKalshiCandleMetric(normalized)) {
+    normalized = normalizeKalshiCandleMetric(normalized);
+  }
+  if (looksLikeKalshiCandleRecord(normalized)) {
+    normalized = normalizeKalshiCandleRecord(normalized);
+  }
+  if (looksLikeKalshiOrderbookRecord(normalized)) {
+    normalized = normalizeKalshiOrderbookRecord(normalized);
+  }
+  if (looksLikeKalshiTradeRecord(normalized)) {
+    normalized = normalizeKalshiTradeRecord(normalized);
+  }
+  if (looksLikeKalshiMarketRecord(normalized)) {
+    normalized = normalizeKalshiMarketRecord(normalized);
+  }
+
+  return normalized;
+}
+
 async function fetchKalshi(endpoint: string, timeoutMs = 15000): Promise<unknown> {
   const url = `${API_BASE}${endpoint}`;
   const maxRetries = 3;
@@ -2113,7 +2502,8 @@ async function fetchKalshi(endpoint: string, timeoutMs = 15000): Promise<unknown
       const response = await fetch(url, { signal: controller.signal });
 
       if (response.ok) {
-        return response.json();
+        const payload = await response.json();
+        return normalizeKalshiPayload(payload);
       }
 
       const bodyText = await response.text();
@@ -2621,7 +3011,7 @@ async function handleDiscoverTrendingMarkets(
     }
   });
 
-  const trendingMarkets = sorted.map((m, idx) => {
+  const trendingMarkets = sorted.slice(0, limit).map((m, idx) => {
     const tradeActivity = activityByTicker.get(m.ticker);
     const derivedVolume24h =
       Number(m.volume_24h || 0) > 0
@@ -2651,7 +3041,10 @@ async function handleDiscoverTrendingMarkets(
   });
 
   const totalVolume = trendingMarkets.reduce((sum, m) => sum + m.volume24h, 0);
-  const marketSummary = `Found ${trendingMarkets.length} active markets${category ? ` in ${category}` : ""}. Total 24h volume: $${totalVolume.toLocaleString()}`;
+  const formattedVolume = Number(totalVolume.toFixed(2)).toLocaleString();
+  const marketSummary = `Showing ${trendingMarkets.length} of ${markets.length} active markets${
+    category ? ` in ${category}` : ""
+  }. Combined 24h contract volume: ${formattedVolume}`;
 
   return successResult({
     marketSummary,
@@ -3246,7 +3639,14 @@ async function handleGetMarketsByProbability(
   }
 
   const category = args?.category as string | undefined;
+  const rawMinLiquidity = args?.minLiquidity as number | undefined;
   const limit = Math.min((args?.limit as number) || 10, 30);
+  const minLiquidityApplied =
+    typeof rawMinLiquidity === "number" &&
+    Number.isFinite(rawMinLiquidity) &&
+    rawMinLiquidity > 0
+      ? rawMinLiquidity
+      : 0;
 
   const ranges: Record<string, [number, number]> = {
     very_unlikely: [1, 15],
@@ -3257,6 +3657,50 @@ async function handleGetMarketsByProbability(
   };
 
   const [minPrice, maxPrice] = ranges[probability] || [0, 100];
+  const estimateLiquidityFromOrderbook = async (
+    marketTicker: string
+  ): Promise<number> => {
+    const orderbookResponse = (await fetchKalshi(
+      `/markets/${marketTicker}/orderbook?depth=25`
+    )) as KalshiOrderbook;
+
+    const selectedOrderbook =
+      orderbookResponse.orderbook_fp ||
+      orderbookResponse.orderbook || {
+        yes: [],
+        no: [],
+      };
+
+    const yesBids = Array.isArray(selectedOrderbook.yes)
+      ? selectedOrderbook.yes
+      : [];
+    const rawYesAsks = Array.isArray(selectedOrderbook.no)
+      ? selectedOrderbook.no
+      : [];
+
+    const bidDepthUsd = yesBids.reduce((sum, level) => {
+      if (!Array.isArray(level) || level.length < 2) {
+        return sum;
+      }
+
+      const price = parseFiniteNumber(level[0]) || 0;
+      const quantity = parseFiniteNumber(level[1]) || 0;
+      return sum + (price * quantity) / 100;
+    }, 0);
+
+    const askDepthUsd = rawYesAsks.reduce((sum, level) => {
+      if (!Array.isArray(level) || level.length < 2) {
+        return sum;
+      }
+
+      const noPrice = parseFiniteNumber(level[0]) || 0;
+      const quantity = parseFiniteNumber(level[1]) || 0;
+      const yesAskPrice = 100 - noPrice;
+      return sum + (yesAskPrice * quantity) / 100;
+    }, 0);
+
+    return Math.round(bidDepthUsd + askDepthUsd);
+  };
 
   let endpoint = `/markets?limit=100&status=open`;
   if (category) {
@@ -3287,6 +3731,7 @@ async function handleGetMarketsByProbability(
         summary: {
           probabilityRange: `${minPrice}-${maxPrice}%`,
           marketsFound: 0,
+          minLiquidityApplied,
           avgReturn: "0%",
         },
         degraded: true,
@@ -3308,6 +3753,35 @@ async function handleGetMarketsByProbability(
     return price >= minPrice && price <= maxPrice;
   });
 
+  if (minLiquidityApplied > 0) {
+    const liquidityCandidates = markets
+      .slice()
+      .sort((a, b) => (b.volume_24h || 0) - (a.volume_24h || 0))
+      .slice(0, Math.max(limit * 5, 20));
+    const liquidityQualified: KalshiMarket[] = [];
+
+    for (const market of liquidityCandidates) {
+      let effectiveLiquidity = market.liquidity || 0;
+
+      if (effectiveLiquidity <= 0) {
+        try {
+          effectiveLiquidity = await estimateLiquidityFromOrderbook(market.ticker);
+        } catch {
+          effectiveLiquidity = 0;
+        }
+      }
+
+      if (effectiveLiquidity >= minLiquidityApplied) {
+        liquidityQualified.push({
+          ...market,
+          liquidity: effectiveLiquidity,
+        });
+      }
+    }
+
+    markets = liquidityQualified;
+  }
+
   // Sort by volume and take top results
   markets.sort((a, b) => (b.volume_24h || 0) - (a.volume_24h || 0));
   markets = markets.slice(0, limit);
@@ -3328,7 +3802,9 @@ async function handleGetMarketsByProbability(
       yesPrice: price,
       impliedProbability: `${price}%`,
       potentialReturn: `${potentialReturn.toFixed(0)}%`,
+      liquidity: m.liquidity || 0,
       volume24h: m.volume_24h || 0,
+      closeTime: m.close_time || "",
       category: m.category || "Unknown",
     };
   });
@@ -3338,10 +3814,15 @@ async function handleGetMarketsByProbability(
     summary: {
       probabilityRange: `${minPrice}-${maxPrice}%`,
       marketsFound: markets.length,
+      minLiquidityApplied,
       avgReturn: `${avgReturn.toFixed(0)}%`,
     },
     degraded,
-    warning,
+    warning:
+      warning ||
+      (minLiquidityApplied > 0 && markets.length === 0
+        ? "No markets met the requested probability range plus liquidity threshold based on current orderbook depth."
+        : undefined),
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -3354,15 +3835,160 @@ async function handleAnalyzeMarketSentiment(
     return errorResult("ticker is required");
   }
 
+  const periodHours = Math.min(
+    Math.max((args?.periodHours as number) || 24, 1),
+    24 * 14
+  );
+  const tradeLimit = Math.min(
+    Math.max((args?.tradeLimit as number) || 5, 1),
+    20
+  );
+  const rawCandlestickInterval = args?.candlestickInterval as number | undefined;
+  const candlestickInterval =
+    rawCandlestickInterval === 1 ||
+    rawCandlestickInterval === 60 ||
+    rawCandlestickInterval === 1440
+      ? rawCandlestickInterval
+      : 60;
+
   const marketRes = await fetchKalshi(`/markets/${ticker}`) as { market: KalshiMarket };
   const market = marketRes.market;
 
-  const currentPrice = market.yes_ask || market.last_price || 50;
-  const previousPrice = market.previous_price || currentPrice;
-  const change24h = currentPrice - previousPrice;
-  const changePercent = previousPrice > 0 ? ((change24h / previousPrice) * 100) : 0;
+  const limitations: string[] = [];
+  const endTs = Math.floor(Date.now() / 1000);
+  const startTs = endTs - periodHours * 60 * 60;
 
-  const volume24h = market.volume_24h || 0;
+  const extractClosePrice = (value: unknown): number | null => {
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+    if (!isRecord(value)) {
+      return null;
+    }
+    const close = parseFiniteNumber(value.close);
+    return close === undefined ? null : close;
+  };
+
+  let recentTrades: Array<{
+    timestamp: string;
+    price: number;
+    count: number;
+    takerSide: string;
+  }> = [];
+  try {
+    const tradesResponse = (await fetchKalshi(
+      `/markets/trades?ticker=${encodeURIComponent(ticker)}&limit=${tradeLimit}`
+    )) as {
+      trades?: KalshiTrade[];
+    };
+    recentTrades = (tradesResponse.trades || []).map((trade) => ({
+      timestamp:
+        trade.created_time ||
+        (typeof trade.timestamp === "string"
+          ? trade.timestamp
+          : typeof trade.timestamp === "number"
+            ? new Date(trade.timestamp * 1000).toISOString()
+            : typeof trade.created_ts === "number"
+              ? new Date(trade.created_ts * 1000).toISOString()
+              : ""),
+      price: trade.yes_price ?? trade.price ?? 0,
+      count: trade.count || 0,
+      takerSide: trade.taker_side || "unknown",
+    }));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "unknown error";
+    limitations.push(`Recent trades unavailable: ${message}`);
+  }
+
+  let recentCandlesticks: Array<{
+    endPeriodTs: number;
+    closePrice: number | null;
+    volume: number;
+    openInterest: number;
+  }> = [];
+  let candlestickSummary: {
+    intervalMinutes: number;
+    candlesReturned: number;
+    latestClose: number | null;
+    highClose: number | null;
+    lowClose: number | null;
+    volumeTotal: number;
+  } = {
+    intervalMinutes: candlestickInterval,
+    candlesReturned: 0,
+    latestClose: null,
+    highClose: null,
+    lowClose: null,
+    volumeTotal: 0,
+  };
+
+  try {
+    const candlestickResponse = (await fetchKalshi(
+      `/markets/candlesticks?market_tickers=${encodeURIComponent(
+        ticker
+      )}&start_ts=${startTs}&end_ts=${endTs}&period_interval=${candlestickInterval}`
+    )) as {
+      markets?: Array<{
+        market_ticker: string;
+        candlesticks?: Array<{
+          end_period_ts: number;
+          price?: unknown;
+          volume?: number;
+          open_interest?: number;
+        }>;
+      }>;
+    };
+
+    const marketCandles =
+      candlestickResponse.markets?.find((entry) => entry.market_ticker === ticker)
+        ?.candlesticks || candlestickResponse.markets?.at(0)?.candlesticks || [];
+
+    recentCandlesticks = marketCandles.slice(-8).map((candle) => ({
+      endPeriodTs: candle.end_period_ts,
+      closePrice: extractClosePrice(candle.price),
+      volume: candle.volume ?? 0,
+      openInterest: candle.open_interest ?? 0,
+    }));
+
+    const closePrices = recentCandlesticks
+      .map((candle) => candle.closePrice)
+      .filter((price): price is number => price !== null);
+
+    candlestickSummary = {
+      intervalMinutes: candlestickInterval,
+      candlesReturned: marketCandles.length,
+      latestClose:
+        recentCandlesticks.length > 0
+          ? recentCandlesticks.at(-1)?.closePrice ?? null
+          : null,
+      highClose:
+        closePrices.length > 0 ? Math.max(...closePrices) : null,
+      lowClose:
+        closePrices.length > 0 ? Math.min(...closePrices) : null,
+      volumeTotal: recentCandlesticks.reduce(
+        (sum, candle) => sum + candle.volume,
+        0
+      ),
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "unknown error";
+    limitations.push(`Candlesticks unavailable: ${message}`);
+  }
+
+  const currentPrice =
+    candlestickSummary.latestClose ?? market.yes_ask ?? market.last_price ?? 50;
+  const previousPrice =
+    recentCandlesticks.find((candle) => candle.closePrice !== null)?.closePrice ??
+    market.previous_price ??
+    currentPrice;
+  const change24h = currentPrice - previousPrice;
+  const changePercent =
+    previousPrice > 0 ? ((change24h / previousPrice) * 100) : 0;
+
+  const volume24h =
+    candlestickSummary.volumeTotal > 0
+      ? candlestickSummary.volumeTotal
+      : market.volume_24h || 0;
   const avgVolume = (market.volume || 0) / 7; // Rough daily average
   const isAboveAverage = volume24h > avgVolume;
 
@@ -3388,10 +4014,10 @@ async function handleAnalyzeMarketSentiment(
   }
 
   const recommendation = sentiment.includes("bullish")
-    ? "Positive momentum - price is trending up"
+    ? "Positive momentum - recent tape and pricing are leaning upward"
     : sentiment.includes("bearish")
-    ? "Negative momentum - price is trending down"
-    : "Sideways movement - wait for clearer signal";
+    ? "Negative momentum - recent tape and pricing are leaning downward"
+    : "Sideways movement - tape is mixed, wait for clearer signal";
 
   return successResult({
     market: market.title || ticker,
@@ -3408,9 +4034,13 @@ async function handleAnalyzeMarketSentiment(
       volumeChange: isAboveAverage ? "Above average" : "Below average",
       isAboveAverage,
     },
+    recentTrades,
+    recentCandlesticks,
+    candlestickSummary,
     sentiment,
     confidence,
     recommendation,
+    limitations,
     fetchedAt: new Date().toISOString(),
   });
 }

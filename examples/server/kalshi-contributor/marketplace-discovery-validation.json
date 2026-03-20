@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-03-19T13:22:50.709Z",
+  "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
+  "toolName": "Kalshi",
+  "listing": {
+    "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+    "name": "Kalshi",
+    "description": "Real-time prediction market intelligence for Kalshi covering politics, economics, sports, climate, and financials with 23 tools for discovery, analysis, and cross-platform arbitrage detection.\r\n\r\nFeatures:\r\n- Discover trending markets ranked by volume, liquidity, or open interest with direct Kalshi URLs\r\n- Analyze orderbook depth and simulate slippage for $100/$500/$1000 positions before trading\r\n- Detect arbitrage opportunities where YES + NO prices sum below 100 cents for risk-free profit\r\n- Cross-reference Kalshi markets against Polymarket to find pricing discrepancies across platforms\r\n- Filter markets by probability tier (lottery tickets at 1-15% through near-certain at 85-95%)\r\n- Historical candlestick data at 1-minute, hourly, and daily intervals for price trend analysis\r\n- Full taxonomy browsing through categories, series, events, and individual markets with pagination\r\n- Sentiment analysis combining price momentum, volume trends, and conviction scoring\r\n- Market efficiency scoring that calculates vig, true implied probabilities, and exploitability ratings\r\n- Slug resolution for Kalshi URLs so users can paste links directly for instant lookups\r\n- API-native market filtering by status, event, series, category, timestamps, and ticker lists\r\n\r\nTry asking:\r\n- \"What are the top 10 most actively traded markets on Kalshi right now?\"\r\n- \"Show me all Kalshi categories and how many series each one has\"\r\n- \"Find markets where YES is priced between 5 and 15 cents as lottery ticket plays\"\r\n- \"Analyze the orderbook depth and slippage for KXBITCOIN and tell me if I can get $1000 in without moving the price\"\r\n- \"Search for 'Fed rate cut' markets, check their efficiency, then compare the best one against Polymarket\"\r\n- \"Are there any arbitrage opportunities in Politics markets where YES + NO is under 99 cents?\"\r\n- \"What is the sentiment and price trend for the top Trump tariffs market over the last 24 hours?\"\r\n- \"Get the daily candlestick chart for a Bitcoin price market over the past 30 days\"\r\n- \"Browse the Sports category sorted by volume and cross-reference the top result with Polymarket odds\"\r\n- \"Find all settled markets in the Economics category from the past month with their resolution prices\"\r\n\r\nAgent tips:\r\n- Call discover_trending_markets or search_markets first to get valid tickers before using analysis tools\r\n- Always use ticker values exactly as returned by the API; never modify or construct tickers manually\r\n- For Kalshi URLs, extract the slug (first path segment after /markets/) and pass to get_event_by_slug\r\n- Chain discovery workflows: get_all_categories -> get_all_series -> get_events -> get_market for full drill-down\r\n- Use kalshi_crossref_polymarket to compare prices across platforms, but always verify resolution rules match before calculating arbitrage\r\n- Pagination is supported on get_events, get_markets, and get_market_trades via the cursor parameter; pass the returned nextCursor to fetch subsequent pages\r\n- Use get_markets with timestamp filters (minCloseTs, maxCloseTs) for time-scoped queries instead of filtering client-side",
+    "mcpMethodCount": 24
+  },
+  "directListingParity": {
+    "directCount": 24,
+    "listingCount": 24,
+    "missingInListing": [],
+    "missingInDirect": [],
+    "surfaceCounts": {
+      "queryCount": 24,
+      "executeCount": 24
+    }
+  },
+  "unauthenticatedCallContract": {
+    "passed": true,
+    "message": "Unauthenticated tools/call was rejected as expected.",
+    "error": {
+      "name": "Error",
+      "message": "Streamable HTTP error: Error POSTing to endpoint: {\"error\":\"Unauthorized\"}"
+    }
+  }
+}

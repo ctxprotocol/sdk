@@ -84,6 +84,7 @@ interface PolymarketContext {
 | Tool | Question Answered |
 |------|------------------|
 | `analyze_market_liquidity` | "Can I exit this position? What's the whale cost?" |
+| `analyze_event_outcome_liquidity` | "For a multi-outcome event, which outcomes are actually liquid enough to exit?" |
 | `check_market_efficiency` | "Is this market efficiently priced? What's the vig?" |
 | `analyze_whale_flow` | "What's smart money doing? Any retail/whale divergence?" |
 | `find_correlated_markets` | "What markets can I use to hedge this position?" |
@@ -206,6 +207,23 @@ This is intended for short-lived debugging on isolated environments. Keep it `fa
 - `marketQuery` resolution searches both **active** and **resolved** markets
 - Matching is deterministic and price-target aware (e.g., `$100k` will not auto-match `$150k`)
 - If no exact market exists, the tool returns a clear unresolved error instead of silently drifting to a different target
+
+### Analyze Multi-Outcome Event Liquidity
+
+```json
+{
+  "name": "analyze_event_outcome_liquidity",
+  "arguments": {
+    "eventQuery": "2026 FIFA World Cup winner",
+    "limit": 4
+  }
+}
+```
+
+**Behavior notes:**
+- Designed for tournaments, elections, awards, and other categorical markets
+- If no specific outcomes are provided, it analyzes the top outcomes by volume instead of arbitrarily picking one "YES side"
+- Returns per-outcome spreads, depth, and $1k/$5k/$10k exit-slippage estimates
 
 ### Find Arbitrage Opportunities
 

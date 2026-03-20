@@ -1,0 +1,270 @@
+{
+  "generatedAt": "2026-03-19T17:25:59.800Z",
+  "serverName": "polymarket-contributor",
+  "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+  "endpoint": "https://mcp.ctxprotocol.com/polymarket/mcp",
+  "deployment": {
+    "polymarketOnlyDeploy": true,
+    "remoteHealthPassed": true,
+    "directSmokePassed": true,
+    "authRestored": true,
+    "authContractPassed": true
+  },
+  "listingRefresh": {
+    "previousCount": 43,
+    "freshCount": 44,
+    "changed": true,
+    "newTools": [
+      "summarize_live_market_activity"
+    ]
+  },
+  "directEndpointSmoke": {
+    "publicToolCount": 44,
+    "hasNewTool": true,
+    "marketQueryLiquidityPassed": true,
+    "eventOutcomeQuotesPassed": true,
+    "eventBySlugPassed": true,
+    "discoverTrendingPassed": true,
+    "activitySummaryGracefulNoResults": true
+  },
+  "focusedRetest": {
+    "caseCount": 8,
+    "passedHeuristicCount": 5,
+    "failedHeuristicCount": 3,
+    "reports": [
+      {
+        "mode": "auto",
+        "prompt": "What categories and tags are most active on Polymarket right now, and which markets inside them have the best liquidity?",
+        "durationMs": 28101,
+        "usedTargetTool": true,
+        "genericFailure": false,
+        "toolCalls": 2,
+        "passHeuristic": true
+      },
+      {
+        "mode": "auto",
+        "prompt": "Show me whale flow and top holders for a live single-outcome politics market on Polymarket.",
+        "durationMs": 114845,
+        "usedTargetTool": true,
+        "genericFailure": false,
+        "toolCalls": 6,
+        "passHeuristic": true
+      },
+      {
+        "mode": "pinned",
+        "prompt": "Compare the current implied odds and spreads for Spain, Brazil, and France in the 2026 FIFA World Cup winner market.",
+        "durationMs": 18045,
+        "usedTargetTool": true,
+        "genericFailure": false,
+        "toolCalls": 1,
+        "passHeuristic": true
+      },
+      {
+        "mode": "pinned",
+        "prompt": "Analyze liquidity for the YES side of the current World Cup winner market and estimate slippage for $1k, $5k, and $10k exits.",
+        "durationMs": 50247,
+        "usedTargetTool": true,
+        "genericFailure": true,
+        "toolCalls": 0,
+        "passHeuristic": false,
+        "failureNote": "Timed out while trying to resolve the exact outcome or contract IDs for the YES-side liquidity analysis."
+      },
+      {
+        "mode": "pinned",
+        "prompt": "Show me whale flow and top holders for a live single-outcome politics market.",
+        "durationMs": 75704,
+        "usedTargetTool": true,
+        "genericFailure": true,
+        "toolCalls": 0,
+        "passHeuristic": false,
+        "failureNote": "Timed out before returning live whale flow and holder data for a politics market."
+      },
+      {
+        "mode": "pinned",
+        "prompt": "For the current World Cup winner market, return all outcomes with token IDs and flag the widest raw direct-book spreads.",
+        "durationMs": 57315,
+        "usedTargetTool": true,
+        "genericFailure": false,
+        "toolCalls": 3,
+        "passHeuristic": true
+      },
+      {
+        "mode": "pinned",
+        "prompt": "What categories and tags are most active on Polymarket right now, and which markets inside them have the best liquidity?",
+        "durationMs": 42500,
+        "usedTargetTool": true,
+        "genericFailure": true,
+        "toolCalls": 0,
+        "passHeuristic": false,
+        "failureNote": "Timed out without issuing MCP method calls despite selecting Polymarket."
+      },
+      {
+        "mode": "pinned",
+        "prompt": "Show me recent trades and open interest for a live market ending this week.",
+        "durationMs": 25299,
+        "usedTargetTool": true,
+        "genericFailure": false,
+        "toolCalls": 3,
+        "passHeuristic": true
+      }
+    ]
+  },
+  "localhostMatchedModelTraceReruns": {
+    "baseUrl": "http://localhost:3000",
+    "modelId": "kimi-model-thinking",
+    "includeDeveloperTrace": true,
+    "caseCount": 4,
+    "reports": [
+      {
+        "mode": "auto",
+        "prompt": "What categories and tags are most active on Polymarket right now, and which markets inside them have the best liquidity?",
+        "requestId": "de84dd44-8417-4584-ab11-b104a2f22478",
+        "durationMs": 252738,
+        "toolCalls": 1,
+        "retryCount": 0,
+        "executionPassed": true,
+        "northStarVerdict": "borderline",
+        "qualityVerdict": "useful_but_convenience_tier",
+        "valueVsFreeBaseline": "Better structured than free web search because it returns concrete tag counts and top-liquid markets grouped by category, but similar directional insight is available from free analytics sites and the Polymarket UI."
+      },
+      {
+        "mode": "pinned",
+        "prompt": "What categories and tags are most active on Polymarket right now, and which markets inside them have the best liquidity?",
+        "requestId": "a0912708-bb9d-448d-aa3d-ef93bfd632a3",
+        "durationMs": 147929,
+        "toolCalls": 1,
+        "retryCount": 0,
+        "executionPassed": true,
+        "northStarVerdict": "borderline",
+        "qualityVerdict": "useful_but_convenience_tier",
+        "valueVsFreeBaseline": "The paid answer is cleaner and more actionable than a generic web-search summary, but it does not create a large moat over free Polymarket analytics pages."
+      },
+      {
+        "mode": "auto",
+        "prompt": "Analyze liquidity for the YES side of the current World Cup winner market and estimate slippage for $1k, $5k, and $10k exits.",
+        "requestId": "655e4ddc-299d-4608-844c-09bfe4b70b09",
+        "durationMs": 436338,
+        "toolCalls": 2,
+        "retryCount": 1,
+        "executionPassed": true,
+        "northStarVerdict": "fail",
+        "qualityVerdict": "executed_but_semantically_ambiguous",
+        "valueVsFreeBaseline": "The slippage and exit-feasibility analysis is more specific than free web results, but the answer picked Peru from a 43-outcome market without verifying which team the user meant.",
+        "diagnosticNote": "Auto mode surfaced 'Need Probe-first branch' after the multi-outcome ambiguity."
+      },
+      {
+        "mode": "pinned",
+        "prompt": "Analyze liquidity for the YES side of the current World Cup winner market and estimate slippage for $1k, $5k, and $10k exits.",
+        "requestId": "6eda976c-ee74-4a6d-b9a5-0475ba775e99",
+        "durationMs": 394584,
+        "toolCalls": 2,
+        "retryCount": 0,
+        "executionPassed": true,
+        "northStarVerdict": "fail",
+        "qualityVerdict": "executed_but_semantically_ambiguous",
+        "valueVsFreeBaseline": "The response contains genuinely differentiated liquidity/slippage data, but it is still not a must-win paid answer because it defaulted to the Peru outcome instead of disambiguating the categorical event."
+      }
+    ]
+  },
+  "northStarReview": {
+    "queryPriceUsd": 0.1,
+    "categoriesPrompt": {
+      "verdict": "borderline",
+      "why": "Useful and more structured than generic web search, but still mostly convenience value versus free Polymarket analytics and UI filters."
+    },
+    "worldCupLiquidityPrompt": {
+      "verdict": "fail",
+      "why": "The prompt is valuable because free baselines do not provide slippage sizing, but the current answer quality fails the marketplace bar when it arbitrarily analyzes one outcome in a multi-outcome event."
+    }
+  },
+  "postHelperProdValidation": {
+    "generatedAt": "2026-03-19T17:47:54.594Z",
+    "listingRefreshedToMethodCount": 45,
+    "newTools": [
+      "analyze_event_outcome_liquidity"
+    ],
+    "reports": [
+      {
+        "mode": "auto",
+        "prompt": "Analyze liquidity for the YES side of the current World Cup winner market and estimate slippage for $1k, $5k, and $10k exits.",
+        "requestId": "24934226-a8bc-462e-b37f-fe211a612778",
+        "durationMs": 49322,
+        "toolCalls": 5,
+        "retryCount": 2,
+        "executionPassed": true,
+        "northStarVerdict": "fail",
+        "qualityVerdict": "still_ambiguous_single_outcome_pick",
+        "valueVsFreeBaseline": "The answer now contains real slippage data, but it still picked Norway as the implied YES side of a multi-outcome event. That remains too ambiguous for a paid marketplace answer."
+      },
+      {
+        "mode": "pinned",
+        "prompt": "Analyze liquidity for the YES side of the current World Cup winner market and estimate slippage for $1k, $5k, and $10k exits.",
+        "requestId": "c20de409-cab8-411e-9f61-f979fcfcdcb8",
+        "durationMs": 49505,
+        "toolCalls": 0,
+        "retryCount": 0,
+        "executionPassed": false,
+        "northStarVerdict": "fail",
+        "qualityVerdict": "generic_timeout_failure",
+        "valueVsFreeBaseline": "Still unusable. Pinned Query returned a timeout/apology with no MCP method calls."
+      },
+      {
+        "mode": "pinned",
+        "prompt": "For the current World Cup winner market, which outcomes are actually liquid enough to exit at $5k size? Include spreads, depth, and slippage for the top liquid outcomes.",
+        "requestId": "620c6fff-7c7b-4cdc-9569-bd8ae009bec7",
+        "durationMs": 36733,
+        "toolCalls": 2,
+        "retryCount": 2,
+        "executionPassed": true,
+        "northStarVerdict": "pass",
+        "qualityVerdict": "differentiated_paid_answer",
+        "valueVsFreeBaseline": "This is a strong paid answer. It surfaces cross-outcome exit quality, sized slippage, and depth comparisons that are not available from normal web search and are tedious to derive manually from the UI."
+      }
+    ]
+  },
+  "postPromptabilityValidation": {
+    "generatedAt": "2026-03-19T18:06:35.456Z",
+    "descriptionTuningDeployed": true,
+    "listingRefreshedWithDescriptionChanges": true,
+    "reports": [
+      {
+        "mode": "auto",
+        "prompt": "Analyze liquidity for the YES side of the current World Cup winner market and estimate slippage for $1k, $5k, and $10k exits.",
+        "requestId": "06472e6d-2dbe-40d9-928f-432e7372a4b3",
+        "durationMs": 64897,
+        "toolCalls": 5,
+        "retryCount": 1,
+        "executionPassed": true,
+        "northStarVerdict": "fail",
+        "qualityVerdict": "probe_first_but_still_wrong_outcome_cluster",
+        "valueVsFreeBaseline": "The answer now explicitly acknowledges that the event has many outcomes and triggers probe-first rediscovery, but it still centered low-probability longshots instead of the primary favorites the user likely meant."
+      },
+      {
+        "mode": "pinned",
+        "prompt": "Analyze liquidity for the YES side of the current World Cup winner market and estimate slippage for $1k, $5k, and $10k exits.",
+        "requestId": "5e714063-1850-4801-938e-6074b6ae9d22",
+        "durationMs": 53088,
+        "toolCalls": 0,
+        "retryCount": 0,
+        "executionPassed": false,
+        "northStarVerdict": "fail",
+        "qualityVerdict": "generic_timeout_failure",
+        "valueVsFreeBaseline": "Pinned Query still returns a timeout/apology without MCP execution, so this path remains below the marketplace bar."
+      }
+    ]
+  },
+  "residualDiagnosis": {
+    "oldZeroToolCallConclusionStillHolds": false,
+    "preferredFixLayer": "contributor-first generic multi-outcome liquidity helper, then /context probe-first refinement if needed",
+    "why": [
+      "Matched localhost /api/v1/query reruns with Kimi no longer reproduce the old zero-MCP-call failure for the categories or World Cup prompts.",
+      "The contributor already has explicit multi-outcome whale guidance, but it lacks an equivalent generic event-level liquidity helper for tournament or election markets.",
+      "The current multi-step chain is brittle because search_and_get_outcomes sorts outcomes by price, which can make an ambiguous prompt default to the highest-priced outcome rather than the user's intended one or the most liquid one."
+    ]
+  },
+  "assessment": {
+    "summary": "The contributor now has a real generic multi-outcome liquidity helper and stronger promptability guidance. Production Query can produce a strong paid answer when the ask explicitly requests top liquid outcomes inside the event.",
+    "remainingRisk": "The original ambiguous World Cup prompt still is not solved end-to-end. Auto mode improved from arbitrary single-outcome selection to a probe-first retry, but it still chose the wrong outcome cluster; pinned mode still timed out with zero MCP calls.",
+    "northStar": "The contributor-side changes created a genuine must-win answer shape for explicit event-liquidity prompts, but the old ambiguous prompt still needs `/context`-side disambiguation or planner/runtime fixes before it meets the marketplace bar."
+  }
+}

@@ -1,0 +1,350 @@
+{
+  "runType": "full-enhancement",
+  "marketplaceStage": "post-submission",
+  "codeChanged": true,
+  "promptPoolRegenerated": true,
+  "autoQueryValidationRun": true,
+  "formFields": {
+    "name": "Kalshi Intelligence",
+    "description": "Kalshi prediction-market intelligence for discovering active markets, analyzing liquidity, tracking trades and candlesticks, checking pricing efficiency, and cross-referencing related contracts.\n\nFeatures:\n- Discover active Kalshi markets by category, series, event, probability range, and slug with direct tickers and URLs\n- Analyze orderbook depth, bid-ask spread, slippage, and market efficiency using normalized current Kalshi fixed-point data\n- Pull raw market, event, trade, orderbook, and candlestick snapshots for execute-mode pipelines\n- Resolve Kalshi slugs and series relationships so agents can move from human URLs to exact event and market tickers\n- Cross-reference Kalshi markets with Polymarket to compare related contracts and explain likely mismatches\n\nTry asking:\n- What are the hottest Kalshi markets right now in Climate and Weather?\n- List open markets in the KXHIGHNY series with tickers, current yes prices, and close times.\n- Compare the top NYC high-temperature markets by current yes price and 24h contract volume.\n- Find open Kalshi markets between 15% and 35% probability with at least 1000 liquidity.\n- Analyze liquidity for KXHIGHNY-26MAR19-B47.5 and estimate slippage for a 500 dollar yes buy.\n- Check whether the KXHIGHNY-26MAR19 event is efficiently priced across all outcome buckets.\n- Resolve the slug for the NYC high temperature market and fetch the full event with market rules.\n- Show recent trades and 1h candlesticks for KXHIGHNY-26MAR19-B47.5, then summarize sentiment.\n- Cross-reference the closest Polymarket market to KXHIGHNY-26MAR19-B47.5 and explain whether the outcomes really match.\n\nAgent tips:\n- Use discovery tools first when you only know a category, series, or slug, then pass returned tickers into raw or analysis tools.\n- Market prices are normalized to cent-style numbers for compatibility, while volume fields reflect Kalshi fixed-point contract volume.\n- For deterministic execution pipelines, combine get_market, get_market_orderbook, get_market_trades, and get_market_candlesticks.",
+    "category": "Financial Markets",
+    "price": "0.10",
+    "endpoint": "https://mcp.ctxprotocol.com/kalshi/mcp"
+  },
+  "generatedDescription": "Kalshi prediction-market intelligence for discovering active markets, analyzing liquidity, tracking trades and candlesticks, checking pricing efficiency, and cross-referencing related contracts.\n\nFeatures:\n- Discover active Kalshi markets by category, series, event, probability range, and slug with direct tickers and URLs\n- Analyze orderbook depth, bid-ask spread, slippage, and market efficiency using normalized current Kalshi fixed-point data\n- Pull raw market, event, trade, orderbook, and candlestick snapshots for execute-mode pipelines\n- Resolve Kalshi slugs and series relationships so agents can move from human URLs to exact event and market tickers\n- Cross-reference Kalshi markets with Polymarket to compare related contracts and explain likely mismatches\n\nTry asking:\n- What are the hottest Kalshi markets right now in Climate and Weather?\n- List open markets in the KXHIGHNY series with tickers, current yes prices, and close times.\n- Compare the top NYC high-temperature markets by current yes price and 24h contract volume.\n- Find open Kalshi markets between 15% and 35% probability with at least 1000 liquidity.\n- Analyze liquidity for KXHIGHNY-26MAR19-B47.5 and estimate slippage for a 500 dollar yes buy.\n- Check whether the KXHIGHNY-26MAR19 event is efficiently priced across all outcome buckets.\n- Resolve the slug for the NYC high temperature market and fetch the full event with market rules.\n- Show recent trades and 1h candlesticks for KXHIGHNY-26MAR19-B47.5, then summarize sentiment.\n- Cross-reference the closest Polymarket market to KXHIGHNY-26MAR19-B47.5 and explain whether the outcomes really match.\n\nAgent tips:\n- Use discovery tools first when you only know a category, series, or slug, then pass returned tickers into raw or analysis tools.\n- Market prices are normalized to cent-style numbers for compatibility, while volume fields reflect Kalshi fixed-point contract volume.\n- For deterministic execution pipelines, combine get_market, get_market_orderbook, get_market_trades, and get_market_candlesticks.",
+  "markdownSubmissionBlock": "## Tool Submission Details\n\n### Form Fields\n\n**Name:** Kalshi Intelligence\n\n**Description:**\nKalshi prediction-market intelligence for discovering active markets, analyzing liquidity, tracking trades and candlesticks, checking pricing efficiency, and cross-referencing related contracts.\n\nFeatures:\n- Discover active Kalshi markets by category, series, event, probability range, and slug with direct tickers and URLs\n- Analyze orderbook depth, bid-ask spread, slippage, and market efficiency using normalized current Kalshi fixed-point data\n- Pull raw market, event, trade, orderbook, and candlestick snapshots for execute-mode pipelines\n- Resolve Kalshi slugs and series relationships so agents can move from human URLs to exact event and market tickers\n- Cross-reference Kalshi markets with Polymarket to compare related contracts and explain likely mismatches\n\nTry asking:\n- What are the hottest Kalshi markets right now in Climate and Weather?\n- List open markets in the KXHIGHNY series with tickers, current yes prices, and close times.\n- Compare the top NYC high-temperature markets by current yes price and 24h contract volume.\n- Find open Kalshi markets between 15% and 35% probability with at least 1000 liquidity.\n- Analyze liquidity for KXHIGHNY-26MAR19-B47.5 and estimate slippage for a 500 dollar yes buy.\n- Check whether the KXHIGHNY-26MAR19 event is efficiently priced across all outcome buckets.\n- Resolve the slug for the NYC high temperature market and fetch the full event with market rules.\n- Show recent trades and 1h candlesticks for KXHIGHNY-26MAR19-B47.5, then summarize sentiment.\n- Cross-reference the closest Polymarket market to KXHIGHNY-26MAR19-B47.5 and explain whether the outcomes really match.\n\nAgent tips:\n- Use discovery tools first when you only know a category, series, or slug, then pass returned tickers into raw or analysis tools.\n- Market prices are normalized to cent-style numbers for compatibility, while volume fields reflect Kalshi fixed-point contract volume.\n- For deterministic execution pipelines, combine get_market, get_market_orderbook, get_market_trades, and get_market_candlesticks.\n\n**Category:** Financial Markets\n\n**Price:** $0.10 USDC per response\n\n**Endpoint:** https://mcp.ctxprotocol.com/kalshi/mcp\n\n### Rationale\n\n**Why this name:** It matches the server's thesis: curated Kalshi market intelligence plus deterministic market data access.\n\n**Why this category:** Kalshi is a regulated prediction-markets venue with strong macro, climate, and sports relevance, so Financial Markets fits better than crypto-specific categories.\n\n**Why this price:** The listing exposes premium, fresh market intelligence in Query mode while retaining ~1/100 execute pricing on the methods, which aligns with the current Context guidance.\n\n### Discovered Skills\n\n| Tool Name | Description | Key Parameters |\n|-----------|-------------|----------------|\n| discover_trending_markets | Rank active markets by activity and category | category, sortBy, limit |\n| analyze_market_liquidity | Estimate spread, depth, and slippage | ticker |\n| check_market_efficiency | Evaluate vig and outcome-price consistency | ticker, eventTicker |\n| find_trading_opportunities | Screen markets by strategy profile | strategy, category, minLiquidity |\n| get_markets | Return normalized market snapshots | status, eventTicker, seriesTicker, category, tickers |\n| get_market_orderbook | Return normalized orderbook bids and asks | ticker, depth, preferFixedPoint |\n| get_market_trades | Return recent trades with cursors | ticker, limit, minTs, maxTs |\n| get_market_candlesticks | Return price, bid, ask, volume, and open interest candles | ticker, startTs, endTs, periodInterval |\n| resolve_slug | Convert human Kalshi URLs into exact event and series tickers | slug |\n| kalshi_crossref_polymarket | Compare likely matching markets across Kalshi and Polymarket | title, keywords, limit |\n\n### Notes for Developer\n\n- The current contributor is best as a mixed listing: Query for curated market analysis and Execute for deterministic market data retrieval.\n- Fixed-point and dollar-field normalization is now handled in the fetch layer so existing higher-level tools remain stable across Kalshi API migrations.\n- Websocket coverage was intentionally deferred because the current thesis is snapshot/query intelligence rather than authenticated real-time streaming.",
+  "surfaceClassification": "mixed",
+  "surfaceTable": [
+    { "method_name": "discover_trending_markets", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.002", "latencyClass": "slow", "contextRequirements": [] },
+    { "method_name": "analyze_market_liquidity", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.002", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "check_market_efficiency", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.002", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "find_arbitrage_opportunities", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.002", "latencyClass": "slow", "contextRequirements": [] },
+    { "method_name": "find_trading_opportunities", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.002", "latencyClass": "slow", "contextRequirements": [] },
+    { "method_name": "get_markets_by_probability", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.002", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "analyze_market_sentiment", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.002", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "kalshi_crossref_polymarket", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.002", "latencyClass": "slow", "contextRequirements": [] },
+    { "method_name": "get_events", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.001", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "get_markets", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.001", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "get_event", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.001", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "resolve_slug", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.001", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "get_event_by_slug", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.001", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "get_market", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.001", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "search_markets", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.002", "latencyClass": "slow", "contextRequirements": [] },
+    { "method_name": "get_market_orderbook", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.001", "latencyClass": "instant", "contextRequirements": [] },
+    { "method_name": "get_market_trades", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.001", "latencyClass": "instant", "contextRequirements": [] },
+    { "method_name": "get_market_candlesticks", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.001", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "get_event_candlesticks", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.001", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "get_all_categories", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.0005", "latencyClass": "fast", "contextRequirements": [] },
+    { "method_name": "get_all_series", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.0005", "latencyClass": "slow", "contextRequirements": [] },
+    { "method_name": "get_series", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.0005", "latencyClass": "slow", "contextRequirements": [] },
+    { "method_name": "browse_category", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.0005", "latencyClass": "slow", "contextRequirements": [] },
+    { "method_name": "browse_series", "surface": "both", "queryEligible": true, "pricing.executeUsd": "0.0005", "latencyClass": "slow", "contextRequirements": [] }
+  ],
+  "candidatePromptPool": [
+    "What are the hottest Kalshi markets right now in Climate and Weather?",
+    "List open markets in the KXHIGHNY series with tickers, current yes prices, and close times.",
+    "Compare the top NYC high-temperature markets by current yes price and 24h contract volume.",
+    "Find open Kalshi markets between 15% and 35% probability with at least 1000 liquidity.",
+    "Analyze liquidity for KXHIGHNY-26MAR19-B47.5 and estimate slippage for a 500 dollar yes buy.",
+    "Check whether the KXHIGHNY-26MAR19 event is efficiently priced across all outcome buckets.",
+    "Resolve the slug for the NYC high temperature market and fetch the full event with market rules.",
+    "Show recent trades and 1h candlesticks for KXHIGHNY-26MAR19-B47.5, then summarize sentiment.",
+    "Cross-reference the closest Polymarket market to KXHIGHNY-26MAR19-B47.5 and explain whether the outcomes really match.",
+    "Get the exact market snapshot for KXHIGHNY-26MAR19-B47.5.",
+    "Get the orderbook for KXHIGHNY-26MAR19-B47.5 with depth 5.",
+    "Show the last 3 trades for KXHIGHNY-26MAR19-B47.5.",
+    "Get 1h candlesticks for KXHIGHNY-26MAR19-B47.5 for the last day."
+  ],
+  "promptSets": {
+    "showcasePrompts": [
+      "What are the hottest Kalshi markets right now in Climate and Weather?",
+      "List open markets in the KXHIGHNY series with tickers, current yes prices, and close times.",
+      "Compare the top NYC high-temperature markets by current yes price and 24h contract volume.",
+      "Find open Kalshi markets between 15% and 35% probability with at least 1000 liquidity.",
+      "Analyze liquidity for KXHIGHNY-26MAR19-B47.5 and estimate slippage for a 500 dollar yes buy.",
+      "Check whether the KXHIGHNY-26MAR19 event is efficiently priced across all outcome buckets.",
+      "Resolve the slug for the NYC high temperature market and fetch the full event with market rules.",
+      "Show recent trades and 1h candlesticks for KXHIGHNY-26MAR19-B47.5, then summarize sentiment."
+    ],
+    "regressionPrompts": [
+      "What are the hottest Kalshi markets right now in Climate and Weather?",
+      "List open markets in the KXHIGHNY series with tickers, current yes prices, and close times.",
+      "Compare the top NYC high-temperature markets by current yes price and 24h contract volume.",
+      "Find open Kalshi markets between 15% and 35% probability with at least 1000 liquidity.",
+      "Get the exact market snapshot for KXHIGHNY-26MAR19-B47.5.",
+      "Get the orderbook for KXHIGHNY-26MAR19-B47.5 with depth 5.",
+      "Show the last 3 trades for KXHIGHNY-26MAR19-B47.5.",
+      "Get 1h candlesticks for KXHIGHNY-26MAR19-B47.5 for the last day.",
+      "Analyze liquidity for KXHIGHNY-26MAR19-B47.5 and estimate slippage for a 500 dollar yes buy.",
+      "Check whether the KXHIGHNY-26MAR19 event is efficiently priced across all outcome buckets.",
+      "Resolve the slug for the NYC high temperature market and fetch the full event with market rules.",
+      "Show recent trades and 1h candlesticks for KXHIGHNY-26MAR19-B47.5, then summarize sentiment.",
+      "Cross-reference the closest Polymarket market to KXHIGHNY-26MAR19-B47.5 and explain whether the outcomes really match."
+    ]
+  },
+  "questionMarketFit": {
+    "mustWinQuestions": [
+      {
+        "question": "What are the hottest Kalshi markets right now in a target category?",
+        "whyUsersCare": "Traders need a fast ranked view of where activity is concentrated before they drill into specific contracts.",
+        "baselineWeakness": "Generic web search mostly surfaces category landing pages or stale articles, not current ranked market snapshots.",
+        "status": "supported"
+      },
+      {
+        "question": "Can I enter KXHIGHNY-26MAR19-B47.5 without moving the market too much?",
+        "whyUsersCare": "Liquidity and slippage determine whether an idea is actionable.",
+        "baselineWeakness": "Web search does not expose live orderbook depth or bid-ask spread for an exact contract.",
+        "status": "supported"
+      },
+      {
+        "question": "Is this Kalshi event efficiently priced across all outcomes?",
+        "whyUsersCare": "Outcome-sum checks reveal overround, underround, and possible mispricings.",
+        "baselineWeakness": "Manual browsing of each outcome is slow and error-prone without structured market snapshots.",
+        "status": "supported"
+      },
+      {
+        "question": "What has recent sentiment looked like for this contract based on trades and candlesticks?",
+        "whyUsersCare": "Short-horizon traders want fresh price-action context, not only the current quote.",
+        "baselineWeakness": "Search results do not return structured trade and candlestick histories that an agent can compare or summarize reliably.",
+        "status": "supported"
+      },
+      {
+        "question": "Does the closest Polymarket contract actually match this Kalshi contract?",
+        "whyUsersCare": "Cross-platform comparisons are only useful if the resolution criteria genuinely line up.",
+        "baselineWeakness": "Generic web search finds comparison sites, but not a deterministic workflow from an exact Kalshi market to a likely matching external contract plus rules context.",
+        "status": "supported"
+      }
+    ],
+    "willingnessToPay": {
+      "verdict": "PASS",
+      "notes": [
+        "The strongest paid prompts save time on live discovery, exact ticker resolution, orderbook analysis, and cross-platform contract checking.",
+        "Free substitutes are materially weaker for exact liquidity, trade history, and candle retrieval on a named Kalshi contract.",
+        "Query price 0.10 is reasonable because execute methods remain available at 0.001 to 0.002 for deterministic pipelines."
+      ]
+    }
+  },
+  "validationEvidence": {
+    "docsFetched": {
+      "contextProtocol": "/websites/ctxprotocol",
+      "upstreamRest": "/websites/kalshi",
+      "upstreamWebsockets": "/websites/kalshi_websockets"
+    },
+    "apiCoverageReview": {
+      "implementedNow": [
+        "Markets, events, series, and category discovery snapshots",
+        "Market orderbooks, trades, and both market-level and event-level candlesticks",
+        "Composite intelligence for trending markets, liquidity, efficiency, trading opportunities, and Kalshi to Polymarket cross-reference"
+      ],
+      "deferred": [
+        {
+          "capability": "Authenticated portfolio, balance, order, and position endpoints",
+          "reason": "The contributor thesis is public market intelligence, not per-user trading or account management."
+        },
+        {
+          "capability": "Realtime websocket subscriptions such as ticker, orderbook_delta, trade, and market_lifecycle_v2",
+          "reason": "They are auth-gated streaming surfaces and would be a separate real-time product track from the current snapshot/query tool."
+        },
+        {
+          "capability": "Milestones and incentive-program endpoints",
+          "reason": "Low relevance to the current market intelligence and contract analysis workflow."
+        }
+      ]
+    },
+    "localBuild": {
+      "passed": true,
+      "command": "npm run build"
+    },
+    "localDirectSmoke": {
+      "passed": true,
+      "endpoint": "http://localhost:4017/mcp",
+      "toolsListCount": 24,
+      "checks": {
+        "get_all_categories": { "passed": true, "totalCategories": 14 },
+        "discover_trending_markets": { "passed": true, "returned": 3 },
+        "get_market": { "passed": true, "yesPrice": 17, "volume24h": 3446 },
+        "get_market_orderbook": { "passed": true, "bestBid": 16, "bestAsk": 17, "orderbookFpAvailable": true },
+        "get_market_trades": { "passed": true, "tradeCount": 3, "avgPrice": 16 },
+        "get_market_candlesticks": { "passed": true, "candles": 18, "firstVolume": 51, "firstOpenInterest": 45 },
+        "analyze_market_liquidity": { "passed": true, "liquidityScore": "moderate", "spread": 1 }
+      }
+    },
+    "localAuthContract": {
+      "passed": true,
+      "endpoint": "http://localhost:4018/mcp",
+      "initializeStatus": 200,
+      "toolsListStatus": 200,
+      "toolsCallStatus": 401
+    },
+    "remoteDeploy": {
+      "passed": true,
+      "deployScript": "context-sdk/examples/server/deploy.sh",
+      "remote": "ubuntu@62.72.22.174",
+      "remoteBase": "~/mcp-servers",
+      "setupScript": "setup-servers.sh",
+      "pm2Name": "mcp-kalshi",
+      "port": 4007
+    },
+    "remoteDirectSmoke": {
+      "passed": true,
+      "endpoint": "http://localhost:4007/mcp",
+      "toolsListCount": 24,
+      "checks": {
+        "get_all_categories": { "passed": true, "totalCategories": 14 },
+        "discover_trending_markets": { "passed": true, "returned": 3 },
+        "get_market": { "passed": true, "yesPrice": 17, "volume24h": 3446 },
+        "get_market_orderbook": { "passed": true, "bestBid": 16, "bestAsk": 17, "orderbookFpAvailable": true },
+        "analyze_market_liquidity": { "passed": true, "liquidityScore": "moderate", "spread": 1 },
+        "get_market_candlesticks": { "passed": true, "candles": 18, "firstVolume": 51 }
+      }
+    },
+    "publicAuthContract": {
+      "passed": true,
+      "healthUrl": "https://mcp.ctxprotocol.com/kalshi/health",
+      "endpoint": "https://mcp.ctxprotocol.com/kalshi/mcp",
+      "initializeStatus": 200,
+      "toolsListStatus": 200,
+      "toolsCallStatus": 401
+    },
+    "codeChangesSummary": [
+      "Added liquidity-aware filtering and close-time/liquidity output fields for get_markets_by_probability.",
+      "Extended analyze_market_sentiment to return live recent trades, recent candlesticks, structured candlestick summaries, and limitation notes.",
+      "Tightened planner-facing method descriptions for high-value Kalshi methods such as check_market_efficiency, get_event_by_slug, get_market, and browse_series.",
+      "Patched /context callMcpSkill() to use method-aware MCP timeouts and retry transient abort-style failures instead of hard-failing on the old flat 30-second inner timeout."
+    ],
+    "marketplaceFiles": {
+      "discovery": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/marketplace-discovery-validation.json",
+      "autoQuery": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/marketplace-auto-query-validation.json",
+      "pinnedQuery": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/marketplace-query-validation.json",
+      "execute": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/marketplace-execute-validation.json",
+      "manualSummary": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/marketplace-manual-validation-summary.json"
+    },
+    "marketplaceListingParity": {
+      "liveName": "Kalshi",
+      "artifactName": "Kalshi Intelligence",
+      "nameMatchesArtifact": false,
+      "descriptionExactMatch": false,
+      "liveMethodCount": 24,
+      "surfaceCounts": {
+        "queryCount": 24,
+        "executeCount": 24
+      }
+    },
+    "marketplaceAutoQueryValidation": {
+      "automatedSummary": {
+        "promptCount": 5,
+        "passedCount": 3,
+        "failedCount": 2,
+        "averageQueryRank": 1.2
+      },
+      "manualSummary": {
+        "promptCount": 5,
+        "passedCount": 2,
+        "failedCount": 3
+      },
+      "notes": [
+        "Discovery ranking stayed strong, but the climate-and-weather discovery answer still ranked global sports and tech markets instead of actual climate-weather leaders.",
+        "The KXHIGHNY series listing and 15-35% probability screens still collapsed into generic timeout or interrupted-connection apologies with zero tool calls.",
+        "The strongest surviving auto-mode passes were the NYC high-temperature comparison and the direct liquidity/slippage analysis."
+      ]
+    },
+    "marketplaceQueryValidation": {
+      "automatedSummary": {
+        "promptCount": 12,
+        "passedCount": 6,
+        "failedCount": 6,
+        "expectedToolUsedCount": 12
+      },
+      "manualSummary": {
+        "promptCount": 12,
+        "passedCount": 6,
+        "failedCount": 6
+      },
+      "notes": [
+        "Live pinned validation improved to 6/12 passes, but the other six prompts still failed with generic abort/apology output and zero tool calls.",
+        "The KXHIGHNY series prompt still failed in the batch validator even though an earlier isolated pinned replay succeeded, which points to non-deterministic /context query-runtime instability rather than a deterministic contributor bug.",
+        "The 15-35% probability/liquidity prompt now passes in the batch validator even though it previously failed in an isolated replay, which reinforces the flakiness diagnosis.",
+        "A local preview rerun against the patched /context runtime later turned the six historical pinned failures into tool-backed completions, so the remaining live FAIL now looks like deployment lag or environment drift rather than a remaining Kalshi contributor gap."
+      ]
+    },
+    "patchedContextPreviewQueryValidation": {
+      "environment": "http://localhost:3000",
+      "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
+      "modelId": "kimi-model-thinking",
+      "historicalFailureReplayCount": 6,
+      "completedCount": 6,
+      "notes": [
+        "After restarting the local /context dev server with the MCP timeout and abort-retry patch, all six prompts that had been failing in live pinned validation reached real Kalshi tool calls and completed with non-empty answers.",
+        "The replay exercised browse_series, analyze_market_liquidity, check_market_efficiency, kalshi_crossref_polymarket, get_market_orderbook, and get_market_candlesticks. Declared slow methods now logged the intended 90-second inner MCP budgets instead of the old flat 30-second limit.",
+        "This is strong confirmation that the blocker is /context runtime behavior, but it is not yet a production sign-off because the replay targeted a local baseUrl and had to force modelId kimi-model-thinking after the local default gemini-flash-model was unavailable in-region."
+      ]
+    },
+    "marketplaceExecuteValidation": {
+      "attemptedCount": 10,
+      "passedCount": 10,
+      "failedCount": 0,
+      "argumentValidationPassed": true,
+      "transientIssuesCount": 0,
+      "notes": [
+        "The latest live execute validator passed all 10 representative calls, including browse_series plus the patched get_markets_by_probability, analyze_market_sentiment, check_market_efficiency, and get_event_by_slug methods.",
+        "Isolated execute timings for browse_series and get_markets_by_probability stayed around 2 seconds, well below the previous fixed 30-second inner MCP timeout."
+      ]
+    },
+    "marketplaceDescriptionSync": {
+      "dryRunAttempted": true,
+      "dryRunPassed": true,
+      "applyAttempted": false,
+      "browserAdminAccess": false,
+      "notes": [
+        "After expanding showcasePrompts to 8, the official sync script completed a dry-run successfully and confirmed the live Kalshi description would change.",
+        "Apply was intentionally not run because qualityGatesPassed is still false in the artifact.",
+        "The remaining sync blocker is release quality, not database connectivity."
+      ]
+    }
+  },
+  "qualityGates": {
+    "apiValueExtraction": "PASS",
+    "queryModeAlignment": "PASS",
+    "executeModeAlignment": "PASS",
+    "directEndpointValidation": "PASS",
+    "authContract": "PASS",
+    "marketplaceQueryValidation": "FAIL",
+    "marketplaceExecuteValidation": "PASS",
+    "descriptionSync": "BLOCKED",
+    "passed": false
+  },
+  "signoff": {
+    "apiValueExtraction": "PASS",
+    "queryModeAlignment": "PASS",
+    "executeModeAlignment": "PASS",
+    "Direct endpoint validation": "PASS",
+    "Auth contract": "PASS",
+    "Marketplace Query validation": "FAIL",
+    "Marketplace Execute validation": "PASS",
+    "Description sync": "BLOCKED",
+    "Overall release status": "BLOCKED",
+    "notes": [
+      "Direct contributor smoke, public auth contract, marketplace listing parity, and live execute validation all passed.",
+      "Live production query remains unstable: 6 of 12 pinned prompts still fail with generic abort/apology output and zero tool calls.",
+      "The KXHIGHNY series prompt succeeded in isolated replay while failing in the batch validator, and direct execute timings remained around 2 seconds, which points to a /context query-runtime issue rather than a contributor capability gap.",
+      "A local preview replay against the patched /context runtime turned the six historical pinned failures into tool-backed completions, which materially strengthens the runtime diagnosis.",
+      "The /context MCP timeout and abort-retry fix is now patched locally and locally validated, but live query validation has not yet been rerun against a shared deployment containing that fix.",
+      "Description sync dry-run now succeeds, but apply remains intentionally blocked until live query quality gates pass."
+    ],
+    "Progress frontier": {
+      "completedStages": [
+        "Context7 and upstream API review",
+        "Contributor capability and metadata patching",
+        "Remote deploy and public auth contract validation",
+        "Live marketplace listing refresh and schema parity checks",
+        "Auto-query, pinned-query, and execute validation",
+        "Local /context MCP timeout and abort-retry patch",
+        "Local preview query replay against the patched /context runtime",
+        "Description sync dry-run"
+      ],
+      "highestCompletedStage": "Post-submission validation plus local preview confirmation of the /context runtime fix",
+      "firstIncompleteStage": "Deploy the /context MCP timeout/retry fix to a shared preview or production environment and rerun the full 12-prompt marketplace query validator there",
+      "stopReason": "The local patched runtime now answers the historical failure set, but the marketplace validator has not yet been rerun against a shared deployment that contains that fix, so live query quality and description apply remain gated."
+    }
+  }
+}

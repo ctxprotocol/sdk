@@ -575,9 +575,14 @@ and want to find the corresponding market on Polymarket for comparison.
 Uses Polymarket's official /public-search API for reliable text search.
 
 WORKFLOW:
-  1. You have a Kalshi market (from get_event_by_slug or search_markets)
-  2. Call: kalshi_crossref_polymarket({ keywords: "supreme court trump tariffs" })
-  3. Returns matching Polymarket markets with prices and rules
+  1. First resolve a SPECIFIC Kalshi market with search_markets, get_event, get_events, or get_event_by_slug
+  2. Then call: kalshi_crossref_polymarket({ keywords: "supreme court trump tariffs" })
+  3. If multiple direct candidates exist, shortlist the best 1-2 BEFORE cross-referencing
+  4. Returns matching Polymarket markets with prices and rules
+
+⚠️ Do NOT use this as a broad discovery tool or fan it out across many weak candidates.
+It is best for late-stage validation after the direct Kalshi market is already known.
+Weak keyword matches can return related proxy markets rather than the exact equivalent contract.
 
 PRICE COMPARISON:
   - Polymarket: decimals (0.28 = 28%)
@@ -1857,6 +1862,7 @@ function buildToolMeta(toolName) {
     const isRawDataTool = RAW_DATA_TOOLS.has(toolName);
     const isDiscoveryTool = DISCOVERY_TOOLS.has(toolName);
     const isHeavyQueryTool = HEAVY_QUERY_TOOLS.has(toolName);
+    const isCrossrefTool = toolName === "kalshi_crossref_polymarket";
     const executeUsd = isRawDataTool
         ? EXECUTE_PRICE_DEFAULT
         : isDiscoveryTool
@@ -1867,23 +1873,32 @@ function buildToolMeta(toolName) {
         : isHeavyQueryTool
             ? "slow"
             : "fast";
-    const rateLimit = isHeavyQueryTool
+    const rateLimit = isCrossrefTool
         ? {
-            maxRequestsPerMinute: 20,
-            cooldownMs: 750,
+            maxRequestsPerMinute: 8,
+            cooldownMs: 1500,
             maxConcurrency: 1,
             supportsBulk: false,
-            recommendedBatchTools: ["get_markets", "get_events"],
-            notes: "Fan-out/heavy query path; prefer direct list endpoints when possible.",
+            recommendedBatchTools: ["search_markets", "get_events", "get_markets"],
+            notes: "Cross-platform matcher; first resolve a direct Kalshi candidate, then use this on at most 1-2 high-confidence markets.",
         }
-        : {
-            maxRequestsPerMinute: 90,
-            cooldownMs: 250,
-            maxConcurrency: 2,
-            supportsBulk: true,
-            recommendedBatchTools: ["get_markets", "get_events"],
-            notes: "Optimized for iterative execute-mode access with bounded pacing.",
-        };
+        : isHeavyQueryTool
+            ? {
+                maxRequestsPerMinute: 20,
+                cooldownMs: 750,
+                maxConcurrency: 1,
+                supportsBulk: false,
+                recommendedBatchTools: ["get_markets", "get_events"],
+                notes: "Fan-out/heavy query path; prefer direct list endpoints when possible.",
+            }
+            : {
+                maxRequestsPerMinute: 90,
+                cooldownMs: 250,
+                maxConcurrency: 2,
+                supportsBulk: true,
+                recommendedBatchTools: ["get_markets", "get_events"],
+                notes: "Optimized for iterative execute-mode access with bounded pacing.",
+            };
     return {
         surface: "both",
         queryEligible: true,
@@ -1991,6 +2006,261 @@ function successResult(data) {
 async function sleep(ms) {
     await new Promise((resolve) => setTimeout(resolve, ms));
 }
+function isRecord(value) {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function parseFiniteNumber(value) {
+    if (typeof value === "number" && Number.isFinite(value)) {
+        return value;
+    }
+    if (typeof value !== "string") {
+        return undefined;
+    }
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+        return undefined;
+    }
+    const parsed = Number.parseFloat(trimmed);
+    return Number.isFinite(parsed) ? parsed : undefined;
+}
+function dollarsToCents(value) {
+    const dollars = parseFiniteNumber(value);
+    if (dollars === undefined) {
+        return undefined;
+    }
+    return Number((dollars * 100).toFixed(4));
+}
+function normalizeKalshiCandleMetric(record) {
+    const normalized = { ...record };
+    const mappings = [
+        ["open_dollars", "open"],
+        ["high_dollars", "high"],
+        ["low_dollars", "low"],
+        ["close_dollars", "close"],
+        ["min_dollars", "min"],
+        ["max_dollars", "max"],
+        ["mean_dollars", "mean"],
+        ["previous_dollars", "previous"],
+    ];
+    for (const [sourceKey, targetKey] of mappings) {
+        if (normalized[targetKey] !== undefined) {
+            continue;
+        }
+        const cents = dollarsToCents(normalized[sourceKey]);
+        if (cents !== undefined) {
+            normalized[targetKey] = cents;
+        }
+    }
+    return normalized;
+}
+function normalizeKalshiCandleRecord(record) {
+    const normalized = { ...record };
+    if (isRecord(normalized.yes_bid)) {
+        normalized.yes_bid = normalizeKalshiCandleMetric(normalized.yes_bid);
+    }
+    if (isRecord(normalized.yes_ask)) {
+        normalized.yes_ask = normalizeKalshiCandleMetric(normalized.yes_ask);
+    }
+    if (isRecord(normalized.price)) {
+        normalized.price = normalizeKalshiCandleMetric(normalized.price);
+    }
+    if (normalized.volume === undefined) {
+        const volume = parseFiniteNumber(normalized.volume_fp);
+        if (volume !== undefined) {
+            normalized.volume = volume;
+        }
+    }
+    if (normalized.open_interest === undefined) {
+        const openInterest = parseFiniteNumber(normalized.open_interest_fp);
+        if (openInterest !== undefined) {
+            normalized.open_interest = openInterest;
+        }
+    }
+    return normalized;
+}
+function normalizeOrderbookLevels(rawLevels, priceUnit) {
+    if (!Array.isArray(rawLevels)) {
+        return [];
+    }
+    const normalizedLevels = [];
+    for (const level of rawLevels) {
+        if (!Array.isArray(level) || level.length < 2) {
+            continue;
+        }
+        const price = priceUnit === "dollars"
+            ? dollarsToCents(level[0])
+            : parseFiniteNumber(level[0]);
+        const quantity = parseFiniteNumber(level[1]);
+        if (price === undefined || quantity === undefined) {
+            continue;
+        }
+        normalizedLevels.push([price, quantity]);
+    }
+    return normalizedLevels;
+}
+function normalizeKalshiOrderbookRecord(record) {
+    const normalized = { ...record };
+    const rawOrderbook = isRecord(normalized.orderbook) ? normalized.orderbook : {};
+    const rawOrderbookFp = isRecord(normalized.orderbook_fp) ? normalized.orderbook_fp : {};
+    const normalizedYes = rawOrderbookFp.yes_dollars !== undefined
+        ? normalizeOrderbookLevels(rawOrderbookFp.yes_dollars, "dollars")
+        : rawOrderbookFp.yes !== undefined
+            ? normalizeOrderbookLevels(rawOrderbookFp.yes, "cents")
+            : normalizeOrderbookLevels(rawOrderbook.yes, "cents");
+    const normalizedNo = rawOrderbookFp.no_dollars !== undefined
+        ? normalizeOrderbookLevels(rawOrderbookFp.no_dollars, "dollars")
+        : rawOrderbookFp.no !== undefined
+            ? normalizeOrderbookLevels(rawOrderbookFp.no, "cents")
+            : normalizeOrderbookLevels(rawOrderbook.no, "cents");
+    normalized.orderbook = {
+        ...rawOrderbook,
+        yes: normalizedYes,
+        no: normalizedNo,
+    };
+    normalized.orderbook_fp = {
+        ...rawOrderbookFp,
+        yes: normalizedYes,
+        no: normalizedNo,
+    };
+    return normalized;
+}
+function normalizeKalshiTradeRecord(record) {
+    const normalized = { ...record };
+    if (normalized.ticker === undefined && typeof normalized.market_ticker === "string") {
+        normalized.ticker = normalized.market_ticker;
+    }
+    if (normalized.yes_price === undefined) {
+        const yesPrice = dollarsToCents(normalized.yes_price_dollars);
+        if (yesPrice !== undefined) {
+            normalized.yes_price = yesPrice;
+        }
+    }
+    if (normalized.no_price === undefined) {
+        const noPrice = dollarsToCents(normalized.no_price_dollars);
+        if (noPrice !== undefined) {
+            normalized.no_price = noPrice;
+        }
+    }
+    if (normalized.price === undefined) {
+        const derivedPrice = dollarsToCents(normalized.price_dollars) ??
+            (typeof normalized.yes_price === "number" ? normalized.yes_price : undefined);
+        if (derivedPrice !== undefined) {
+            normalized.price = derivedPrice;
+        }
+    }
+    if (normalized.count === undefined) {
+        const count = parseFiniteNumber(normalized.count_fp);
+        if (count !== undefined) {
+            normalized.count = count;
+        }
+    }
+    if (normalized.created_ts === undefined && typeof normalized.ts === "number") {
+        normalized.created_ts = normalized.ts;
+    }
+    return normalized;
+}
+function normalizeKalshiMarketRecord(record) {
+    const normalized = { ...record };
+    const centMappings = [
+        ["yes_bid_dollars", "yes_bid"],
+        ["yes_ask_dollars", "yes_ask"],
+        ["no_bid_dollars", "no_bid"],
+        ["no_ask_dollars", "no_ask"],
+        ["last_price_dollars", "last_price"],
+        ["previous_price_dollars", "previous_price"],
+    ];
+    for (const [sourceKey, targetKey] of centMappings) {
+        if (normalized[targetKey] !== undefined) {
+            continue;
+        }
+        const cents = dollarsToCents(normalized[sourceKey]);
+        if (cents !== undefined) {
+            normalized[targetKey] = cents;
+        }
+    }
+    const fixedPointMappings = [
+        ["volume_fp", "volume"],
+        ["volume_24h_fp", "volume_24h"],
+        ["open_interest_fp", "open_interest"],
+    ];
+    for (const [sourceKey, targetKey] of fixedPointMappings) {
+        if (normalized[targetKey] !== undefined) {
+            continue;
+        }
+        const parsed = parseFiniteNumber(normalized[sourceKey]);
+        if (parsed !== undefined) {
+            normalized[targetKey] = parsed;
+        }
+    }
+    if (normalized.liquidity === undefined) {
+        const liquidity = parseFiniteNumber(normalized.liquidity_dollars);
+        if (liquidity !== undefined) {
+            normalized.liquidity = liquidity;
+        }
+    }
+    return normalized;
+}
+function looksLikeKalshiCandleMetric(record) {
+    return [
+        "open_dollars",
+        "high_dollars",
+        "low_dollars",
+        "close_dollars",
+        "mean_dollars",
+        "previous_dollars",
+    ].some((key) => key in record);
+}
+function looksLikeKalshiCandleRecord(record) {
+    return "end_period_ts" in record && ("volume_fp" in record ||
+        "open_interest_fp" in record ||
+        "yes_bid" in record ||
+        "yes_ask" in record ||
+        "price" in record);
+}
+function looksLikeKalshiOrderbookRecord(record) {
+    return "orderbook" in record || "orderbook_fp" in record;
+}
+function looksLikeKalshiTradeRecord(record) {
+    return "trade_id" in record && ("count_fp" in record ||
+        "yes_price_dollars" in record ||
+        "market_ticker" in record);
+}
+function looksLikeKalshiMarketRecord(record) {
+    return typeof record.ticker === "string" && ("event_ticker" in record ||
+        "yes_ask_dollars" in record ||
+        "yes_bid_dollars" in record ||
+        "no_ask_dollars" in record ||
+        "volume_fp" in record ||
+        "open_interest_fp" in record);
+}
+function normalizeKalshiPayload(value) {
+    if (Array.isArray(value)) {
+        return value.map((item) => normalizeKalshiPayload(item));
+    }
+    if (!isRecord(value)) {
+        return value;
+    }
+    let normalized = {};
+    for (const [key, childValue] of Object.entries(value)) {
+        normalized[key] = normalizeKalshiPayload(childValue);
+    }
+    if (looksLikeKalshiCandleMetric(normalized)) {
+        normalized = normalizeKalshiCandleMetric(normalized);
+    }
+    if (looksLikeKalshiCandleRecord(normalized)) {
+        normalized = normalizeKalshiCandleRecord(normalized);
+    }
+    if (looksLikeKalshiOrderbookRecord(normalized)) {
+        normalized = normalizeKalshiOrderbookRecord(normalized);
+    }
+    if (looksLikeKalshiTradeRecord(normalized)) {
+        normalized = normalizeKalshiTradeRecord(normalized);
+    }
+    if (looksLikeKalshiMarketRecord(normalized)) {
+        normalized = normalizeKalshiMarketRecord(normalized);
+    }
+    return normalized;
+}
 async function fetchKalshi(endpoint, timeoutMs = 15000) {
     const url = `${API_BASE}${endpoint}`;
     const maxRetries = 3;
@@ -2000,7 +2270,8 @@ async function fetchKalshi(endpoint, timeoutMs = 15000) {
         try {
             const response = await fetch(url, { signal: controller.signal });
             if (response.ok) {
-                return response.json();
+                const payload = await response.json();
+                return normalizeKalshiPayload(payload);
             }
             const bodyText = await response.text();
             const retryableStatus = response.status === 429 || response.status >= 500;
@@ -2351,7 +2622,7 @@ async function handleDiscoverTrendingMarkets(args) {
                     fallbackContractsB - fallbackContractsA);
         }
     });
-    const trendingMarkets = sorted.map((m, idx) => {
+    const trendingMarkets = sorted.slice(0, limit).map((m, idx) => {
         const tradeActivity = activityByTicker.get(m.ticker);
         const derivedVolume24h = Number(m.volume_24h || 0) > 0
             ? Number(m.volume_24h || 0)
@@ -2377,7 +2648,8 @@ async function handleDiscoverTrendingMarkets(args) {
         };
     });
     const totalVolume = trendingMarkets.reduce((sum, m) => sum + m.volume24h, 0);
-    const marketSummary = `Found ${trendingMarkets.length} active markets${category ? ` in ${category}` : ""}. Total 24h volume: $${totalVolume.toLocaleString()}`;
+    const formattedVolume = Number(totalVolume.toFixed(2)).toLocaleString();
+    const marketSummary = `Showing ${trendingMarkets.length} of ${markets.length} active markets${category ? ` in ${category}` : ""}. Combined 24h contract volume: ${formattedVolume}`;
     return successResult({
         marketSummary,
         trendingMarkets,

@@ -1,0 +1,213 @@
+{
+  "generatedAt": "2026-03-19T15:31:45Z",
+  "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
+  "toolName": "Kalshi",
+  "listingParity": {
+    "sourcePath": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/marketplace-discovery-validation.json",
+    "liveName": "Kalshi",
+    "artifactName": "Kalshi Intelligence",
+    "nameMatchesArtifact": false,
+    "descriptionExactMatch": false,
+    "liveMethodCount": 24,
+    "surfaceCounts": {
+      "queryCount": 24,
+      "executeCount": 24
+    },
+    "notes": [
+      "The live marketplace listing is still discoverable and mixed-surface.",
+      "The live public name and description do not match the regenerated artifact output, but the official sync dry-run now confirms the description delta cleanly."
+    ]
+  },
+  "browserAccess": {
+    "authenticated": false,
+    "developerToolsAccessible": false,
+    "kalshiListingVisible": "unknown",
+    "refreshControlVisible": "unknown",
+    "editControlVisible": "unknown",
+    "blockers": [
+      "Visiting https://www.ctxprotocol.com/developer/tools redirects to /login.",
+      "The current browser session is not authenticated.",
+      "The login flow requires wallet authentication through Privy, so no listing-admin controls could be inspected."
+    ]
+  },
+  "autoQueryManualReview": {
+    "sourcePath": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/marketplace-auto-query-validation.json",
+    "automatedSummary": {
+      "promptCount": 5,
+      "passedCount": 3,
+      "failedCount": 2,
+      "averageQueryRank": 1.2
+    },
+    "manualSummary": {
+      "promptCount": 5,
+      "passedCount": 2,
+      "failedCount": 3
+    },
+    "cases": [
+      {
+        "prompt": "What are the hottest Kalshi markets right now in Climate and Weather?",
+        "manualPass": false,
+        "reason": "It acknowledged the category but then ranked unrelated sports and tech contracts instead of actual climate-and-weather leaders."
+      },
+      {
+        "prompt": "List open markets in the KXHIGHNY series with tickers, current yes prices, and close times.",
+        "manualPass": false,
+        "reason": "Returned a generic timeout apology with zero tool calls and no market list."
+      },
+      {
+        "prompt": "Compare the top NYC high-temperature markets by current yes price and 24h contract volume.",
+        "manualPass": true,
+        "reason": "Returned the NYC temperature buckets with yes prices and 24-hour contract volume in a usable ranked comparison."
+      },
+      {
+        "prompt": "Find open Kalshi markets between 15% and 35% probability with at least 1000 liquidity.",
+        "manualPass": false,
+        "reason": "Returned an interrupted-connection apology with zero tool calls instead of a filtered Kalshi result set."
+      },
+      {
+        "prompt": "Analyze liquidity for KXHIGHNY-26MAR19-B47.5 and estimate slippage for a 500 dollar yes buy.",
+        "manualPass": true,
+        "reason": "Returned a concrete market-specific slippage estimate with bid/ask levels, spread, and fill-price guidance."
+      }
+    ],
+    "failureClusters": [
+      "Auto-mode discovery ranking stayed strong, but one surviving answer still drifted from the requested climate-and-weather scope.",
+      "The KXHIGHNY series listing and 15-35% probability screens failed with generic apologies and zero tool calls, indicating upstream query-runtime instability rather than a routing miss.",
+      "The best auto-mode answers remain the deterministic comparison and liquidity-analysis prompts."
+    ]
+  },
+  "pinnedQueryManualReview": {
+    "sourcePath": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/marketplace-query-validation.json",
+    "automatedSummary": {
+      "promptCount": 12,
+      "passedCount": 6,
+      "failedCount": 6,
+      "expectedToolUsedCount": 12
+    },
+    "manualSummary": {
+      "promptCount": 12,
+      "passedCount": 6,
+      "failedCount": 6
+    },
+    "cases": [
+      {
+        "prompt": "What are the hottest Kalshi markets right now in Climate and Weather?",
+        "manualPass": true,
+        "reason": "Returned concrete climate-and-weather contracts with tickers, yes prices, and volume after multiple internal retries."
+      },
+      {
+        "prompt": "List open markets in the KXHIGHNY series with tickers, current yes prices, and close times.",
+        "manualPass": false,
+        "reason": "Returned an abort/apology response with zero tool calls instead of the open-series market table."
+      },
+      {
+        "prompt": "Compare the top NYC high-temperature markets by current yes price and 24h contract volume.",
+        "manualPass": true,
+        "reason": "Returned a clean, correctly scoped NYC market comparison with yes prices and daily volume."
+      },
+      {
+        "prompt": "Find open Kalshi markets between 15% and 35% probability with at least 1000 liquidity.",
+        "manualPass": true,
+        "reason": "Returned a correctly filtered result set with liquidity values, close times, and the applied threshold."
+      },
+      {
+        "prompt": "Analyze liquidity for KXHIGHNY-26MAR19-B47.5 and estimate slippage for a 500 dollar yes buy.",
+        "manualPass": false,
+        "reason": "Returned a generic abort explanation with no orderbook data or slippage analysis."
+      },
+      {
+        "prompt": "Check whether the KXHIGHNY-26MAR19 event is efficiently priced across all outcome buckets.",
+        "manualPass": false,
+        "reason": "Returned an AbortError apology instead of outcome prices, vig, and efficiency analysis."
+      },
+      {
+        "prompt": "Resolve the slug for the NYC high temperature market and fetch the full event with market rules.",
+        "manualPass": true,
+        "reason": "Resolved the event correctly and returned market rules plus a useful event-level market table."
+      },
+      {
+        "prompt": "Show recent trades and 1h candlesticks for KXHIGHNY-26MAR19-B47.5, then summarize sentiment.",
+        "manualPass": true,
+        "reason": "Returned recent trades, hourly candles, and a concrete sentiment summary for the requested contract."
+      },
+      {
+        "prompt": "Cross-reference the closest Polymarket market to KXHIGHNY-26MAR19-B47.5 and explain whether the outcomes really match.",
+        "manualPass": false,
+        "reason": "Returned an abort/apology response with no actual Kalshi-to-Polymarket comparison."
+      },
+      {
+        "prompt": "Get the exact market snapshot for KXHIGHNY-26MAR19-B47.5.",
+        "manualPass": true,
+        "reason": "Returned a usable market snapshot with prices, volume, close time, and resolution rules."
+      },
+      {
+        "prompt": "Get the orderbook for KXHIGHNY-26MAR19-B47.5 with depth 5.",
+        "manualPass": false,
+        "reason": "Returned only an abort apology and no bid/ask depth."
+      },
+      {
+        "prompt": "Get 1h candlesticks for KXHIGHNY-26MAR19-B47.5 for the last day.",
+        "manualPass": false,
+        "reason": "Returned only an aborted-execution apology and no candlestick series."
+      }
+    ],
+    "failureClusters": [
+      "Exactly half of the pinned prompts still failed with generic abort/apology responses and zero tool calls.",
+      "The failures cluster around queries that should have been simple single-tool reads as well as some multi-step composites, so the issue is not limited to one contributor capability family.",
+      "The surviving passes show the contributor itself can answer discovery, comparison, sentiment, event-resolution, and snapshot prompts when the live query runtime actually reaches the tool."
+    ]
+  },
+  "isolatedReplayComparison": {
+    "observations": [
+      "An earlier isolated pinned replay of the KXHIGHNY series prompt succeeded with browse_series, even though the later batch validator still failed that same prompt with zero tool calls.",
+      "An earlier isolated replay of the 15-35% probability/liquidity prompt failed with AbortError before any tool calls, but the later batch validator produced a successful answer for that same prompt.",
+      "Direct execute timings for browse_series and get_markets_by_probability were both around 2 seconds, far below the old fixed 30-second inner MCP timeout.",
+      "A later local preview rerun against the patched /context runtime turned the six historical pinned failures into tool-backed completions, which sharply reduces the likelihood of a remaining deterministic Kalshi contributor bug."
+    ],
+    "inference": "The remaining live marketplace query failures are more consistent with non-deterministic /context-side query-runtime behavior than with a deterministic Kalshi contributor defect."
+  },
+  "patchedContextPreviewReplay": {
+    "environment": "http://localhost:3000",
+    "modelId": "kimi-model-thinking",
+    "replayedHistoricalFailures": 6,
+    "completedCount": 6,
+    "notes": [
+      "After restarting the local /context dev server with the MCP timeout and abort-retry patch, the six prompts that had been failing in live pinned validation all reached real Kalshi tool calls and completed with non-empty answers.",
+      "The replay covered browse_series, analyze_market_liquidity, check_market_efficiency, kalshi_crossref_polymarket, get_market_orderbook, and get_market_candlesticks.",
+      "Slow methods such as browse_series and kalshi_crossref_polymarket logged 90-second inner MCP budgets on the patched runtime instead of the old fixed 30-second cap.",
+      "This preview replay is strong evidence for the runtime diagnosis, but it does not replace a shared-deployment rerun because it targeted a local baseUrl and needed an explicit model override after the local default gemini-flash-model was unavailable in-region."
+    ]
+  },
+  "executeValidation": {
+    "sourcePath": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/marketplace-execute-validation.json",
+    "summary": {
+      "attemptedCount": 10,
+      "passedCount": 10,
+      "failedCount": 0,
+      "argumentValidationPassed": true,
+      "transientIssuesCount": 0
+    },
+    "notes": [
+      "The latest live execute validator passed all 10 representative calls, including browse_series plus the patched get_markets_by_probability, analyze_market_sentiment, check_market_efficiency, and get_event_by_slug methods.",
+      "Those execute passes, together with the isolated ~2-second timings, make the contributor-side performance case look healthy."
+    ]
+  },
+  "descriptionSync": {
+    "dryRunAttempted": true,
+    "dryRunPassed": true,
+    "applyAttempted": false,
+    "notes": [
+      "After expanding showcasePrompts to 8, the official sync script completed a dry-run successfully and confirmed the live Kalshi description would change.",
+      "Apply was intentionally not run because the artifact quality gates are still false.",
+      "The remaining sync blocker is release quality, not database connectivity."
+    ]
+  },
+  "finalAssessment": {
+    "surfaceClassification": "mixed",
+    "marketplaceQueryValidation": "FAIL",
+    "marketplaceExecuteValidation": "PASS",
+    "descriptionSync": "BLOCKED",
+    "overallReleaseStatus": "BLOCKED",
+    "stopReason": "Direct contributor validation, live execute validation, and local preview replay of the six historical query failures are all green, but live production query quality is still scored from the old runtime and description apply must remain gated off until the full marketplace validator is rerun against a shared deployment that contains the /context MCP timeout/retry fix."
+  }
+}

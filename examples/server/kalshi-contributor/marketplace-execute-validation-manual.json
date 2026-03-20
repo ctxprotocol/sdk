@@ -1,0 +1,299 @@
+{
+  "generatedAt": "2026-03-19T10:13:55.270Z",
+  "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
+  "notes": [
+    "Validator updated for marketplace result shapes: get_market_orderbook returns top-level bids/asks, get_market_candlesticks returns candlesticks, and check_market_efficiency nests metrics under efficiency.",
+    "analyze_market_liquidity returned an intermittent insufficient_allowance error inside one longer execute session, but passed immediately in a fresh isolated session; treat that as a wallet/session stability risk rather than a method-level regression."
+  ],
+  "cases": [
+    {
+      "toolName": "get_all_categories",
+      "args": {},
+      "durationMs": 3222,
+      "pass": true,
+      "method": {
+        "name": "get_all_categories",
+        "executePriceUsd": "0.0005"
+      },
+      "session": {
+        "mode": "execute",
+        "sessionId": "39a18a16-1d40-4b27-8536-3bf8512b5bff",
+        "methodPrice": "0.0005",
+        "spent": "0.000500",
+        "remaining": "0.4995",
+        "maxSpend": "0.500000",
+        "status": "open",
+        "expiresAt": "2026-03-19T10:33:56.327Z",
+        "closeRequested": false,
+        "pendingAccruedCount": 1,
+        "pendingAccruedUsd": "0.000500"
+      },
+      "resultSummary": {
+        "totalCategories": 14,
+        "totalTags": 81
+      }
+    },
+    {
+      "toolName": "discover_trending_markets",
+      "args": {
+        "category": "Climate and Weather",
+        "limit": 3
+      },
+      "durationMs": 2264,
+      "pass": true,
+      "method": {
+        "name": "discover_trending_markets",
+        "executePriceUsd": "0.002"
+      },
+      "session": {
+        "mode": "execute",
+        "sessionId": "39a18a16-1d40-4b27-8536-3bf8512b5bff",
+        "methodPrice": "0.002",
+        "spent": "0.002500",
+        "remaining": "0.4975",
+        "maxSpend": "0.500000",
+        "status": "open",
+        "expiresAt": "2026-03-19T10:33:56.327Z",
+        "closeRequested": false,
+        "pendingAccruedCount": 2,
+        "pendingAccruedUsd": "0.002500"
+      },
+      "resultSummary": {
+        "returned": 3,
+        "summary": "Showing 3 of 259 active markets in Climate and Weather. Combined 24h contract volume: 1,717,054"
+      }
+    },
+    {
+      "toolName": "get_market",
+      "args": {
+        "ticker": "KXHIGHNY-26MAR19-B47.5"
+      },
+      "durationMs": 1230,
+      "pass": true,
+      "method": {
+        "name": "get_market",
+        "executePriceUsd": "0.001"
+      },
+      "session": {
+        "mode": "execute",
+        "sessionId": "39a18a16-1d40-4b27-8536-3bf8512b5bff",
+        "methodPrice": "0.001",
+        "spent": "0.003500",
+        "remaining": "0.4965",
+        "maxSpend": "0.500000",
+        "status": "open",
+        "expiresAt": "2026-03-19T10:33:56.327Z",
+        "closeRequested": false,
+        "pendingAccruedCount": 3,
+        "pendingAccruedUsd": "0.003500"
+      },
+      "resultSummary": {
+        "ticker": "KXHIGHNY-26MAR19-B47.5",
+        "yesPrice": 19,
+        "volume24h": 3955
+      }
+    },
+    {
+      "toolName": "get_market_orderbook",
+      "args": {
+        "ticker": "KXHIGHNY-26MAR19-B47.5",
+        "depth": 5
+      },
+      "durationMs": 1028,
+      "pass": true,
+      "method": {
+        "name": "get_market_orderbook",
+        "executePriceUsd": "0.001"
+      },
+      "session": {
+        "mode": "execute",
+        "sessionId": "39a18a16-1d40-4b27-8536-3bf8512b5bff",
+        "methodPrice": "0.001",
+        "spent": "0.004500",
+        "remaining": "0.4955",
+        "maxSpend": "0.500000",
+        "status": "open",
+        "expiresAt": "2026-03-19T10:33:56.327Z",
+        "closeRequested": false,
+        "pendingAccruedCount": 4,
+        "pendingAccruedUsd": "0.004500"
+      },
+      "resultSummary": {
+        "bestBid": 18,
+        "bestAsk": 19,
+        "spread": 1
+      }
+    },
+    {
+      "toolName": "get_market_trades",
+      "args": {
+        "ticker": "KXHIGHNY-26MAR19-B47.5",
+        "limit": 3
+      },
+      "durationMs": 1026,
+      "pass": true,
+      "method": {
+        "name": "get_market_trades",
+        "executePriceUsd": "0.001"
+      },
+      "session": {
+        "mode": "execute",
+        "sessionId": "39a18a16-1d40-4b27-8536-3bf8512b5bff",
+        "methodPrice": "0.001",
+        "spent": "0.005500",
+        "remaining": "0.4945",
+        "maxSpend": "0.500000",
+        "status": "open",
+        "expiresAt": "2026-03-19T10:33:56.327Z",
+        "closeRequested": false,
+        "pendingAccruedCount": 5,
+        "pendingAccruedUsd": "0.005500"
+      },
+      "resultSummary": {
+        "tradeCount": 3,
+        "firstTradePrice": 17
+      }
+    },
+    {
+      "toolName": "get_market_candlesticks",
+      "args": {
+        "ticker": "KXHIGHNY-26MAR19-B47.5",
+        "startTs": 1773828835,
+        "endTs": 1773915235,
+        "periodInterval": 60
+      },
+      "durationMs": 1399,
+      "pass": true,
+      "method": {
+        "name": "get_market_candlesticks",
+        "executePriceUsd": "0.001"
+      },
+      "session": {
+        "mode": "execute",
+        "sessionId": "39a18a16-1d40-4b27-8536-3bf8512b5bff",
+        "methodPrice": "0.001",
+        "spent": "0.006500",
+        "remaining": "0.4935",
+        "maxSpend": "0.500000",
+        "status": "open",
+        "expiresAt": "2026-03-19T10:33:56.327Z",
+        "closeRequested": false,
+        "pendingAccruedCount": 6,
+        "pendingAccruedUsd": "0.006500"
+      },
+      "resultSummary": {
+        "candleCount": 19,
+        "firstClose": 16,
+        "firstVolume": 51
+      }
+    },
+    {
+      "toolName": "analyze_market_liquidity",
+      "args": {
+        "ticker": "KXHIGHNY-26MAR19-B47.5"
+      },
+      "durationMs": 1596,
+      "pass": true,
+      "transientErrorObserved": {
+        "name": "ContextError",
+        "message": "Failed to check allowance. Please try again.",
+        "code": "insufficient_allowance",
+        "statusCode": 400,
+        "helpUrl": "https://ctxprotocol.com/settings"
+      },
+      "isolatedRetest": {
+        "passed": true,
+        "sessionMethodPrice": "0.002",
+        "liquidityScore": "moderate",
+        "spread": {
+          "yesCents": 1,
+          "yesPercent": 5.56,
+          "noCents": 1,
+          "noPercent": 1.23
+        }
+      }
+    },
+    {
+      "toolName": "check_market_efficiency",
+      "args": {
+        "eventTicker": "KXHIGHNY-26MAR19"
+      },
+      "durationMs": 3076,
+      "pass": true,
+      "method": {
+        "name": "check_market_efficiency",
+        "executePriceUsd": "0.002"
+      },
+      "session": {
+        "mode": "execute",
+        "sessionId": "39a18a16-1d40-4b27-8536-3bf8512b5bff",
+        "methodPrice": "0.002",
+        "spent": "0.008500",
+        "remaining": "0.4915",
+        "maxSpend": "0.500000",
+        "status": "open",
+        "expiresAt": "2026-03-19T10:33:56.327Z",
+        "closeRequested": false,
+        "pendingAccruedCount": 7,
+        "pendingAccruedUsd": "0.008500"
+      },
+      "resultSummary": {
+        "vig": 11,
+        "rating": "exploitable",
+        "outcomes": 6
+      }
+    }
+  ],
+  "sessionStart": {
+    "mode": "execute",
+    "sessionId": "39a18a16-1d40-4b27-8536-3bf8512b5bff",
+    "methodPrice": "0",
+    "spent": "0.000000",
+    "remaining": "0.5",
+    "maxSpend": "0.500000",
+    "status": "open",
+    "expiresAt": "2026-03-19T10:33:56.327Z",
+    "closeRequested": false
+  },
+  "argumentValidation": {
+    "durationMs": 955,
+    "pass": true,
+    "error": {
+      "name": "ContextError",
+      "message": "Tool execution failed: {\"error\":\"ticker is required\"}",
+      "code": "execution_failed",
+      "statusCode": 500
+    }
+  },
+  "sessionBeforeClose": {
+    "mode": "execute",
+    "sessionId": "39a18a16-1d40-4b27-8536-3bf8512b5bff",
+    "methodPrice": "0",
+    "spent": "0.008500",
+    "remaining": "0.4915",
+    "maxSpend": "0.500000",
+    "status": "open",
+    "expiresAt": "2026-03-19T10:33:56.327Z",
+    "closeRequested": false
+  },
+  "sessionClose": {
+    "mode": "execute",
+    "sessionId": "39a18a16-1d40-4b27-8536-3bf8512b5bff",
+    "methodPrice": "0",
+    "spent": "0.008500",
+    "remaining": "0.4915",
+    "maxSpend": "0.500000",
+    "status": "closed",
+    "expiresAt": "2026-03-19T10:33:56.327Z",
+    "closeRequested": true,
+    "pendingAccruedCount": 0,
+    "pendingAccruedUsd": "0"
+  },
+  "summary": {
+    "attemptedCount": 8,
+    "passedCount": 8,
+    "failedCount": 0,
+    "argumentValidationPassed": true,
+    "transientIssuesCount": 1
+  }
+}
