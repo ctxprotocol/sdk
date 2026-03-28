@@ -23,6 +23,52 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import express, { type Request, type Response } from "express";
 import { createContextMiddleware } from "@ctxprotocol/sdk";
+import type {
+  ContributorSearchJudge,
+  ContributorSearchJudgeResult,
+  ContributorSearchResolution,
+  SearchCandidate,
+} from "../../../dist/contrib/search/index.js";
+
+type ContributorSearchModule = typeof import("../../../dist/contrib/search/index.js");
+
+const contributorSearchModuleSpecifiers = [
+  "@ctxprotocol/sdk/contrib/search",
+  import.meta.url.includes("/dist/")
+    ? "../../../../dist/contrib/search/index.js"
+    : "../../../dist/contrib/search/index.js",
+] as const;
+
+async function loadContributorSearchModule(): Promise<
+  Pick<
+    ContributorSearchModule,
+    "attachContributorSearchMetadata" | "createSearchIntent" | "resolveContributorSearch"
+  >
+> {
+  let lastError: unknown = null;
+  for (const specifier of contributorSearchModuleSpecifiers) {
+    try {
+      return (specifier.startsWith("@")
+        ? await import(specifier)
+        : await import(new URL(specifier, import.meta.url).href)) as Pick<
+        ContributorSearchModule,
+        "attachContributorSearchMetadata" | "createSearchIntent" | "resolveContributorSearch"
+      >;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Failed to load contributor search helper module.");
+}
+
+const {
+  attachContributorSearchMetadata,
+  createSearchIntent,
+  resolveContributorSearch,
+} = await loadContributorSearchModule();
 
 // ============================================================================
 // API CONFIGURATION
@@ -30,6 +76,73 @@ import { createContextMiddleware } from "@ctxprotocol/sdk";
 
 const KALSHI_API_BASE = process.env.KALSHI_API_BASE_URL || "https://api.elections.kalshi.com";
 const API_BASE = `${KALSHI_API_BASE}/trade-api/v2`;
+const CONTRIBUTOR_SEARCH_METADATA_OUTPUT_SCHEMA = {
+  type: "object" as const,
+  description:
+    "Compact contributor search helper diagnostics, shortlist provenance, and judge metadata.",
+};
+const OPENROUTER_CHAT_COMPLETIONS_URL =
+  "https://openrouter.ai/api/v1/chat/completions";
+
+function getConfiguredInteger(
+  name: string,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  const raw = process.env[name];
+  if (!raw) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(min, parsed));
+}
+
+function normalizeOptionalString(value: string | undefined): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+const KALSHI_SEARCH_JUDGE_API_KEY =
+  normalizeOptionalString(process.env.KALSHI_OPENROUTER_API_KEY) ??
+  normalizeOptionalString(process.env.OPENROUTER_API_KEY);
+const KALSHI_SEARCH_JUDGE_MODEL =
+  normalizeOptionalString(process.env.KALSHI_SEARCH_JUDGE_MODEL) ??
+  "openai/gpt-4o-mini";
+const KALSHI_SEARCH_JUDGE_DISABLE =
+  process.env.KALSHI_DISABLE_SEARCH_JUDGE === "true";
+const KALSHI_SEARCH_JUDGE_TIMEOUT_MS = getConfiguredInteger(
+  "KALSHI_SEARCH_JUDGE_TIMEOUT_MS",
+  4500,
+  250,
+  30000
+);
+const KALSHI_SEARCH_JUDGE_MAX_SHORTLIST = getConfiguredInteger(
+  "KALSHI_SEARCH_JUDGE_MAX_SHORTLIST",
+  6,
+  1,
+  10
+);
+const KALSHI_SEARCH_JUDGE_BUDGET_USD =
+  normalizeOptionalString(process.env.KALSHI_SEARCH_JUDGE_BUDGET_USD) ??
+  "0.010";
+const KALSHI_SEARCH_JUDGE_REFERER =
+  normalizeOptionalString(process.env.KALSHI_SEARCH_JUDGE_REFERER) ??
+  "https://ctxprotocol.com";
+const KALSHI_SEARCH_JUDGE_TITLE =
+  normalizeOptionalString(process.env.KALSHI_SEARCH_JUDGE_TITLE) ??
+  "Context Kalshi Contributor Search Judge";
+const KALSHI_SEARCH_JUDGE_INSTRUCTIONS =
+  "Select the single Kalshi contract that best matches the user's request. Prefer exact ticker/title/category grounding and keep nearby series, broader market families, or only tariff-adjacent contracts in related or rejected buckets. Return a null primaryCandidateId when the shortlist remains genuinely ambiguous.";
 
 // ============================================================================
 // TOOL DEFINITIONS
@@ -1317,6 +1430,7 @@ STATUS OPTIONS:
             topSeriesEvaluated: { type: "number" },
           },
         },
+        searchMetadata: CONTRIBUTOR_SEARCH_METADATA_OUTPUT_SCHEMA,
         fetchedAt: { type: "string" },
       },
       required: ["results", "count"],
@@ -2165,6 +2279,318 @@ function successResult(data: Record<string, unknown>): CallToolResult {
   return {
     content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
     structuredContent: data,
+  };
+}
+
+function getNonEmptyString(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function getFiniteNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim();
+  if (normalized.length === 0) {
+    return null;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function extractTextFromOpenRouterContent(content: unknown): string {
+  if (typeof content === "string") {
+    return content.trim();
+  }
+
+  if (!Array.isArray(content)) {
+    return "";
+  }
+
+  const fragments: string[] = [];
+  for (const item of content) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+
+    if ("text" in item && typeof item.text === "string") {
+      fragments.push(item.text);
+      continue;
+    }
+
+    if ("content" in item && typeof item.content === "string") {
+      fragments.push(item.content);
+    }
+  }
+
+  return fragments.join("\n").trim();
+}
+
+function extractJsonObjectText(rawText: string): string {
+  const fencedMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fencedMatch?.[1]) {
+    return fencedMatch[1].trim();
+  }
+
+  const start = rawText.indexOf("{");
+  const end = rawText.lastIndexOf("}");
+  if (start >= 0 && end > start) {
+    return rawText.slice(start, end + 1).trim();
+  }
+
+  return rawText.trim();
+}
+
+function normalizeJudgeCandidateIds(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const normalizedIds: string[] = [];
+  const seen = new Set<string>();
+  for (const entry of value) {
+    if (typeof entry !== "string") {
+      continue;
+    }
+    const normalized = entry.trim();
+    if (normalized.length === 0 || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    normalizedIds.push(normalized);
+  }
+
+  return normalizedIds;
+}
+
+function normalizeJudgeConfidence(
+  value: unknown
+): ContributorSearchJudgeResult["confidence"] {
+  if (value === "high" || value === "medium" || value === "low") {
+    return value;
+  }
+  return "low";
+}
+
+function parseContributorSearchJudgeResult(
+  rawText: string
+): ContributorSearchJudgeResult {
+  const parsed = JSON.parse(extractJsonObjectText(rawText)) as Record<
+    string,
+    unknown
+  >;
+
+  return {
+    primaryCandidateId:
+      typeof parsed.primaryCandidateId === "string"
+        ? parsed.primaryCandidateId.trim() || null
+        : null,
+    relatedCandidateIds: normalizeJudgeCandidateIds(parsed.relatedCandidateIds),
+    rejectedCandidateIds: normalizeJudgeCandidateIds(parsed.rejectedCandidateIds),
+    confidence: normalizeJudgeConfidence(parsed.confidence),
+    reason:
+      typeof parsed.reason === "string" && parsed.reason.trim().length > 0
+        ? parsed.reason.trim()
+        : "OpenRouter judge selected a candidate.",
+  };
+}
+
+function createKalshiOpenRouterJudge(): ContributorSearchJudge | null {
+  if (!KALSHI_SEARCH_JUDGE_API_KEY || KALSHI_SEARCH_JUDGE_DISABLE) {
+    return null;
+  }
+
+  return {
+    async evaluate(input, context) {
+      const shortlist = input.shortlist.candidates.map((candidate, index) => ({
+        rank: index + 1,
+        candidateId: candidate.candidateId,
+        title: candidate.title,
+        description: candidate.description ?? null,
+        rawIds: candidate.rawIds ?? {},
+        rankFeatures: candidate.rankFeatures ?? {},
+        metadata: candidate.metadata ?? {},
+        provenance: candidate.provenance.map((provenance) => ({
+          source: provenance.source,
+          query: provenance.query,
+          rank: provenance.rank,
+        })),
+      }));
+
+      const response = await fetch(OPENROUTER_CHAT_COMPLETIONS_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${KALSHI_SEARCH_JUDGE_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": KALSHI_SEARCH_JUDGE_REFERER,
+          "X-Title": KALSHI_SEARCH_JUDGE_TITLE,
+        },
+        body: JSON.stringify({
+          model: context.model ?? KALSHI_SEARCH_JUDGE_MODEL,
+          temperature: 0,
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a contributor-side Kalshi search judge. Return exactly one JSON object with keys primaryCandidateId, relatedCandidateIds, rejectedCandidateIds, confidence, and reason. Never invent candidate ids that are not present in the shortlist.",
+            },
+            {
+              role: "user",
+              content: JSON.stringify(
+                {
+                  rawRequest: input.rawRequest,
+                  intents: input.intents,
+                  instructions:
+                    input.instructions ?? KALSHI_SEARCH_JUDGE_INSTRUCTIONS,
+                  traceLabel: context.traceLabel,
+                  shortlist,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `OpenRouter judge request failed with ${response.status} ${response.statusText}`
+        );
+      }
+
+      const payload = (await response.json()) as Record<string, unknown>;
+      const choices = Array.isArray(payload.choices) ? payload.choices : [];
+      const firstChoice =
+        choices[0] && typeof choices[0] === "object"
+          ? (choices[0] as Record<string, unknown>)
+          : null;
+      const message =
+        firstChoice &&
+        typeof firstChoice.message === "object" &&
+        firstChoice.message !== null
+          ? (firstChoice.message as Record<string, unknown>)
+          : null;
+      const rawText = extractTextFromOpenRouterContent(message?.content);
+
+      if (rawText.length === 0) {
+        throw new Error("OpenRouter judge returned empty content.");
+      }
+
+      const result = parseContributorSearchJudgeResult(rawText);
+      const usage =
+        typeof payload.usage === "object" && payload.usage !== null
+          ? (payload.usage as Record<string, unknown>)
+          : null;
+
+      if (usage) {
+        result.usage = {
+          promptTokens: getFiniteNumber(usage.prompt_tokens) ?? undefined,
+          completionTokens: getFiniteNumber(usage.completion_tokens) ?? undefined,
+          totalTokens: getFiniteNumber(usage.total_tokens) ?? undefined,
+          costUsd: getNonEmptyString(usage.cost),
+          latencyMs: getFiniteNumber(usage.latency_ms),
+        };
+      }
+
+      return result;
+    },
+  };
+}
+
+async function resolveKalshiContributorSearch(params: {
+  rawRequest: string;
+  intentQuery: string;
+  traceLabel: string;
+  candidates: SearchCandidate[];
+}): Promise<ContributorSearchResolution | null> {
+  if (params.candidates.length === 0) {
+    return null;
+  }
+
+  const judge = createKalshiOpenRouterJudge();
+  return await resolveContributorSearch({
+    rawRequest: params.rawRequest,
+    intents: [
+      createSearchIntent({
+        rawRequest: params.rawRequest,
+        query: params.intentQuery,
+        clause: "kalshi contributor search resolution",
+      }),
+    ],
+    candidates: params.candidates,
+    ...(judge ? { judge } : {}),
+    contributorConfig: {
+      provider: "openrouter",
+      model: KALSHI_SEARCH_JUDGE_MODEL,
+      timeoutMs: KALSHI_SEARCH_JUDGE_TIMEOUT_MS,
+      budgetUsd: KALSHI_SEARCH_JUDGE_BUDGET_USD,
+      disableJudge: KALSHI_SEARCH_JUDGE_DISABLE,
+      degradedOutcomePolicy: "allow_low_confidence_selected",
+      maxShortlistSize: judge ? KALSHI_SEARCH_JUDGE_MAX_SHORTLIST : 1,
+    },
+    instructions: KALSHI_SEARCH_JUDGE_INSTRUCTIONS,
+    traceLabel: params.traceLabel,
+  });
+}
+
+function buildKalshiResultSearchCandidate(params: {
+  query: string;
+  rank: number;
+  source: string;
+  result: Record<string, unknown>;
+}): SearchCandidate {
+  const title = getNonEmptyString(params.result.title) ?? params.query;
+  const ticker = getNonEmptyString(params.result.ticker);
+  const eventTicker = getNonEmptyString(params.result.eventTicker);
+  const closeTime = getNonEmptyString(params.result.closeTime);
+  const yesPrice = getFiniteNumber(params.result.yesPrice);
+
+  return {
+    candidateId:
+      ticker || `${params.rank}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    title,
+    description: closeTime ? `Closes ${closeTime}` : null,
+    rawIds: {
+      ...(ticker ? { ticker } : {}),
+      ...(eventTicker ? { eventTicker } : {}),
+    },
+    rankFeatures: {
+      rank: params.rank,
+      yesPrice,
+      volume24h: getFiniteNumber(params.result.volume24h),
+      status: getNonEmptyString(params.result.status),
+      category: getNonEmptyString(params.result.category),
+    },
+    provenance: [
+      {
+        source: params.source,
+        query: params.query,
+        rank: params.rank,
+        fetchedAt: new Date().toISOString(),
+        metadata: {
+          ticker,
+          eventTicker,
+        },
+      },
+    ],
+    metadata: {
+      category: getNonEmptyString(params.result.category),
+      status: getNonEmptyString(params.result.status),
+      closeTime,
+    },
   };
 }
 
@@ -5097,7 +5523,24 @@ async function handleSearchMarkets(
       ? `✅ Found ${results.length} markets via series search. Matched series: ${matchedSeries.slice(0, 5).join(', ')}`
       : `Found ${results.length} markets matching "${query || 'all'}".`;
 
-  return successResult({
+  const searchResolution =
+    query && results.length > 0
+      ? await resolveKalshiContributorSearch({
+          rawRequest: query,
+          intentQuery: query,
+          traceLabel: "kalshi:search_markets",
+          candidates: results.map((result, index) =>
+            buildKalshiResultSearchCandidate({
+              query,
+              rank: index + 1,
+              source: matchedSeries.length > 0 ? "series_search" : "market_listing",
+              result,
+            })
+          ),
+        })
+      : null;
+
+  const responseData = {
     results,
     count: results.length,
     matchedSeries: matchedSeries.slice(0, 10),
@@ -5108,7 +5551,13 @@ async function handleSearchMarkets(
     },
     hint,
     fetchedAt: new Date().toISOString(),
-  });
+  };
+
+  return successResult(
+    searchResolution
+      ? attachContributorSearchMetadata(responseData, searchResolution)
+      : responseData
+  );
 }
 
 async function handleGetMarketOrderbook(

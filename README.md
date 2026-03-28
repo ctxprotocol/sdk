@@ -96,16 +96,19 @@ const result = await client.tools.execute({
 console.log(result.session); // methodPrice, spent, remaining, maxSpend, ...
 ```
 
-**Query mode** gives you curated answers — the server runs a discovery-first planner contract (`discover/probe -> plan-from-evidence -> execute -> bounded fallback`) with model-aware context budgeting and AI synthesis for one flat fee:
+**Query mode** gives you a managed librarian contract — the server runs a discovery-first planner contract (`discover/probe -> plan-from-evidence -> execute -> bounded fallback`) with model-aware context budgeting and can return plain answers or structured evidence packages for one flat fee:
 ```typescript
 const answer = await client.query.run({
   query: "What are the top whale movements on Base?",
-  modelId: "glm-model",      // optional: choose a supported model
+  answerModelId: "glm-model", // optional: choose the final synthesis model
+  responseShape: "answer_with_evidence", // optional: answer | answer_with_evidence | evidence_only
   queryDepth: "deep",        // optional: fast | auto | deep
   includeDataUrl: true,      // optional: persist full execution data to blob
   includeDeveloperTrace: true, // optional: include machine-readable runtime trace
 });
-console.log(answer.response);   // AI-synthesized answer
+console.log(answer.response);   // response text or summary
+console.log(answer.summary);    // short machine-friendly summary
+console.log(answer.evidence);   // structured evidence package
 console.log(answer.toolsUsed);  // Which tools were used
 console.log(answer.cost);       // Cost breakdown
 console.log(answer.dataUrl);    // Optional blob URL with full data
@@ -113,6 +116,14 @@ console.log(answer.developerTrace?.summary); // retries/fallbacks/loops summary
 console.log(answer.developerTrace?.diagnostics?.selection); // lane + scout probe diagnostics
 console.log(answer.orchestrationMetrics); // high-level first-pass / rediscovery metrics
 ```
+
+`responseShape` options:
+
+- `answer`: backward-compatible prose answer
+- `answer_with_evidence`: prose plus `summary`, `evidence`, `artifacts`, `freshness`, `confidence`, and `usage`
+- `evidence_only`: machine-friendly summary plus the same evidence package for downstream agents
+
+The first-party chat app uses the same Query contract and defaults to `answer_with_evidence`.
 
 > Mixed listings are first-class: one listing can expose methods to both surfaces. Methods without `_meta.pricing.executeUsd` remain query-only until priced.
 >
@@ -128,8 +139,11 @@ const client = new ContextClient({
   apiKey: "sk_live_...",
 });
 
-// Pay-per-response: Ask a question, get a curated answer
-const answer = await client.query.run("What are the top whale movements on Base?");
+// Pay-per-response: Ask a question, get a managed answer package
+const answer = await client.query.run({
+  query: "What are the top whale movements on Base?",
+  responseShape: "answer_with_evidence",
+});
 console.log(answer.response);
 
 // Execute surface: require explicit execute pricing
@@ -402,7 +416,7 @@ const closed = await client.tools.closeSession("sess_123");
 
 #### `client.query.run(options)`
 
-Run an agentic query. The server applies discovery-first orchestration (`discover/probe -> plan-from-evidence -> execute -> bounded fallback`) with up to 100 MCP calls per response turn, then returns an AI-synthesized answer.
+Run an agentic query. The server applies discovery-first orchestration (`discover/probe -> plan-from-evidence -> execute -> bounded fallback`) with up to 100 MCP calls per response turn, then returns the selected Query response contract (`answer`, `answer_with_evidence`, or `evidence_only`).
 
 `queryDepth` controls orchestration depth:
 - `fast`: lower-latency path for simple lookups.
@@ -422,14 +436,14 @@ const answer = await client.query.run("What are the top whale movements on Base?
 const answer = await client.query.run({
   query: "Analyze whale activity on Base",
   tools: ["tool-uuid-1", "tool-uuid-2"],  // optional — auto-discover if omitted
-  modelId: "kimi-model-thinking",          // optional
+  answerModelId: "kimi-model-thinking",    // optional final synthesis model
   queryDepth: "auto",                      // optional: fast | auto | deep
   includeData: true,                       // optional: include execution data inline
   includeDataUrl: true,                    // optional: include blob URL for full data
   includeDeveloperTrace: true,             // optional: include Developer Mode trace
 });
 
-console.log(answer.response);     // AI-synthesized text
+console.log(answer.response);     // response text or summary
 console.log(answer.toolsUsed);    // [{ id, name, skillCalls }]
 console.log(answer.cost);         // { modelCostUsd, toolCostUsd, totalCostUsd }
 console.log(answer.durationMs);   // Total time
@@ -564,7 +578,7 @@ interface ExecutionResult<T = unknown> {
 
 ```typescript
 interface QueryResult {
-  response: string;                    // AI-synthesized answer
+  response: string;                    // response text or summary
   toolsUsed: QueryToolUsage[];         // Tools used: { id, name, skillCalls }
   cost: QueryCost;                     // { modelCostUsd, toolCostUsd, totalCostUsd }
   durationMs: number;

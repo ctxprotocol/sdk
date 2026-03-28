@@ -1,0 +1,267 @@
+{
+  "outcomeType": "answer",
+  "durationMs": 161563,
+  "querySession": {
+    "sessionId": "89e6419f-f1f1-4d70-b402-165de64c0bed",
+    "attemptId": "8c009c11-f6f1-499a-9320-7b755ad75144",
+    "parentAttemptId": null,
+    "rootAttemptId": "8c009c11-f6f1-499a-9320-7b755ad75144",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "completed",
+    "checkpoint": {
+      "currentStage": "execution",
+      "latestCheckpointArtifactId": "1763ff6f-14b4-4e70-91ce-7952d4bef5b0:22",
+      "canonicalDatasetId": "1763ff6f-14b4-4e70-91ce-7952d4bef5b0:canonical-execution",
+      "executionProgramCurrentRevisionId": "rev-1"
+    }
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "manual_selected_tools",
+    "firstPassSuccess": true,
+    "capabilityMissSignaled": false,
+    "rediscoveryExecuted": false
+  },
+  "traceSummary": {
+    "toolCalls": 1,
+    "retryCount": 1,
+    "selfHealCount": 1,
+    "fallbackCount": 0,
+    "failureCount": 1,
+    "recoveryCount": 0,
+    "completionChecks": 1,
+    "loopCount": 1
+  },
+  "selection": {
+    "selectedDepth": "deep",
+    "deepMode": "deep",
+    "debugScoutDeepMode": null,
+    "plannerReasoningStage": "full",
+    "scoutEnabled": false,
+    "preserveFastOneShot": false,
+    "candidateMethodCount": 45,
+    "scoutProbeStatus": "ready",
+    "scoutProbeAdequacy": "adequate",
+    "scoutProbeConfidence": 0.9885,
+    "scoutMetadataConfidence": 0.9538,
+    "scoutProbeQuerySafeCandidateCount": 38,
+    "scoutProbeRankedMethodCount": 38,
+    "scoutProbeAmbiguityPoolCount": 10,
+    "scoutProbeShortlistedMethodCount": 11,
+    "scoutProbeMissingCapability": null,
+    "scoutPrePlanProbeCalls": 0,
+    "scoutPrePlanProbeBudgetReasonCode": null,
+    "scoutChangedInitialPlan": false,
+    "scoutChangedPlannerReasoningStage": false,
+    "scoutInitialSelectedDepth": "deep",
+    "scoutInitialDeepMode": "deep",
+    "scoutInitialPlannerReasoningStage": "full",
+    "scoutInitialReasonCode": "explicit_override",
+    "scoutFinalReasonCode": "explicit_override",
+    "scoutEvidenceAttachedToPlanning": true,
+    "scoutLlmSelectionUsed": true,
+    "scoutLlmSelectionFallback": false,
+    "scoutLlmSelectionLatencyMs": 9527,
+    "selectedTools": [
+      {
+        "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+        "toolName": "Polymarket",
+        "priceUsd": "0.000000",
+        "selectedMethodCount": 45,
+        "selectedMethods": [
+          "analyze_market_liquidity",
+          "check_market_efficiency",
+          "analyze_whale_flow",
+          "analyze_top_holders",
+          "analyze_event_whale_breakdown",
+          "analyze_event_outcome_liquidity",
+          "find_correlated_markets",
+          "check_market_rules",
+          "find_arbitrage_opportunities",
+          "find_trading_opportunities",
+          "build_high_conviction_workflow",
+          "analyze_single_market_whales"
+        ],
+        "omittedSelectedMethodCount": 33
+      }
+    ]
+  },
+  "clarification": {
+    "orchestrationMode": "manual_selected_tools",
+    "rolloutStage": "enabled",
+    "shadowMode": false,
+    "policy": "auto",
+    "outcomeType": "clarification_required",
+    "triggered": true,
+    "optionCount": 3,
+    "candidateCount": 38,
+    "viableCandidateCount": 3,
+    "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes",
+    "recommendedOptionReason": "Your request depends on which specific Polymarket event/outcome you mean by “US or allied boots on the ground in Iran” (US-only vs US-or-allied vs separate legs). Different grounded interpretations would lead to different sets of markets,…",
+    "autoResolved": true,
+    "autoSelectEnabled": true,
+    "assumptionMade": {
+      "mode": "auto",
+      "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes",
+      "label": "🔍 SEARCH + GET OUTCOMES in ONE CALL",
+      "reason": "Your request depends on which specific Polymarket event/outcome you mean by “US or allied boots on the ground in Iran” (US-only vs US-or-allied vs separate legs). Different grounded interpretations would lead to different sets of markets,…"
+    },
+    "missingCapability": null,
+    "decisionReasonCode": "semantic_scope_ambiguity",
+    "decisionSignals": [
+      "llm_judge"
+    ],
+    "evidenceSources": {
+      "usesMethodSchemas": true,
+      "usesProbeArgs": true,
+      "usesMethodMetadata": true,
+      "usesToolSelectionContext": false,
+      "usesLlmSelection": true
+    },
+    "comparedOptionIds": [
+      "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+      "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+      "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes"
+    ],
+    "decisionStrategy": "llm_primary",
+    "judgeAttempted": true,
+    "judgeApplied": true,
+    "judgeOutcomeType": "clarification_required",
+    "judgeConfidence": 0.42,
+    "judgeReason": "Your request depends on which specific Polymarket event/outcome you mean by “US or allied boots on the ground in Iran” (US-only vs US-or-allied vs separate legs). Different grounded interpretations would lead to different sets of markets,…",
+    "judgeError": null,
+    "validatorReason": null,
+    "fallbackReason": null,
+    "copyStrategy": "deterministic",
+    "rewriteAttempted": false,
+    "rewriteApplied": false,
+    "rewriteError": null,
+    "candidateSummaries": [
+      {
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+        "fitScore": 21.55,
+        "llmRelevanceScore": 0.62,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [
+          "title"
+        ],
+        "inputFieldNames": [
+          "limit",
+          "title",
+          "keywords",
+          "polymarketSlug"
+        ],
+        "outputKeys": [
+          "hint",
+          "fetchedAt",
+          "searchedFor",
+          "sourcesTried",
+          "kalshiResults",
+          "comparisonNote"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "comparison",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "instant",
+        "executePriceUsd": null,
+        "queryEligible": true
+      },
+      {
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:get_event_outcomes",
+        "fitScore": 16.55,
+        "llmRelevanceScore": 0.58,
+        "requiredParams": [
+          "slug"
+        ],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [
+          "slug"
+        ],
+        "inputFieldNames": [
+          "slug",
+          "limit",
+          "sortBy",
+          "includeInactive"
+        ],
+        "outputKeys": [
+          "url",
+          "outcomes",
+          "sortedBy",
+          "eventSlug",
+          "fetchedAt",
+          "eventTitle"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "comparison",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "instant",
+        "executePriceUsd": "0.001",
+        "queryEligible": true
+      },
+      {
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:discover_trending_markets",
+        "fitScore": 15.55,
+        "llmRelevanceScore": null,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [],
+        "inputFieldNames": [
+          "limit",
+          "sortBy",
+          "category"
+        ],
+        "outputKeys": [
+          "topTags",
+          "fetchedAt",
+          "categories",
+          "totalActive",
+          "marketSummary",
+          "trendingMarkets"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "multiple",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "instant",
+        "executePriceUsd": null,
+        "queryEligible": true
+      }
+    ],
+    "modelTelemetry": {
+      "modelId": "gpt-5.4-nano-model",
+      "runtimeModelId": "openai/gpt-5.4-nano",
+      "judgeUsage": {
+        "inputTokens": "[REDACTED]",
+        "outputTokens": "[REDACTED]",
+        "totalTokens": "[REDACTED]",
+        "promptTokens": "[REDACTED]",
+        "completionTokens": "[REDACTED]"
+      },
+      "judgeActualCostUsd": 0.004278099999999999,
+      "rewriteUsage": null,
+      "rewriteActualCostUsd": null,
+      "totalActualCostUsd": 0.004278099999999999
+    }
+  },
+  "completeness": {
+    "evaluations": [
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "repairEvents": [
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "triggerNeedsDifferentTools": false,
+    "triggerMissingCapability": null
+  },
+  "responsePreview": "Based on current market data, there are no sufficiently relevant or liquid Polymarket contracts specifically tracking US or allied \"boots on the ground\" in Iran. While 40 possible market candidates were evaluated, none met the criteria for active, liquid trading on this specific scenario as of March 27, 2026.\n\n**Remaining Gaps:**\n*   **Active Market Data:** No current prices or implied odds exist for direct ground intervention in Iran.\n*   **Resolution Dates:** There are no active markets with upcoming resolution dates for this event.\n\n**Risk-Off Positioning Note:**\nBecause there are no direct \"boots on the ground\" markets currently trading, it is not possible to use these specific implied odds to inform broader risk-off positioning. Investors typically look for proxies in energy markets or broader regional conflict contracts (such as \"Israel-Iran conflict\" escalations) when direct ground-intervention markets are unavailable. However, those proxies were not captured in this specific data retrieval."
+}

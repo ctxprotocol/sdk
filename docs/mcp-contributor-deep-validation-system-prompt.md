@@ -158,6 +158,10 @@ _meta), plus TOOL_PURPOSE and any upstream API docs from Step 1:
 - Group tools by capability cluster (discovery, raw data, analytics, workflow/composite)
 - Identify the primary value proposition
 - Note any unique capabilities vs competitors
+- Infer the exact premium feature or normalized primitive being sold
+- Infer the target paying user, why they pay, and why free substitutes fail
+- Infer the intended surface contract: `Query`, `Execute`, or `both`
+- List the expected evidence fields (Query) or normalized schema fields (Execute)
 
 3.2 Generate Submission Fields
 Produce a JSON object:
@@ -197,6 +201,8 @@ Banned in description: "mdash", "—", "**" (no bold markdown).
 The "Try asking" questions serve a dual purpose:
 1. They appear in the marketplace listing to help users understand the tool
 2. They become the CANONICAL TEST PROMPTS for Query mode validation in Step 4
+
+Treat them as **must-win prompts**, not filler examples.
 
 Generate at least 7 questions covering ALL of these categories:
 1. Core happy-path query (primary use case)
@@ -262,7 +268,7 @@ from Step 2 smoke testing), add them to the suite now.
 The final prompt suite should have at least 7-10 prompts.
 
 4.3 Execute Query Mode Tests
-For each prompt in the suite, run:
+For each prompt in the suite, run Query validation against the same answer contract used by first-party chat and external agents:
 
 TypeScript:
 ```typescript
@@ -270,6 +276,7 @@ const answer = await client.query.run({
   query: prompt,
   tools: [toolId],  // Pin to the developer's tool
   queryDepth: "deep",
+  responseShape: "answer_with_evidence",
   includeDeveloperTrace: true,
 });
 ```
@@ -280,13 +287,25 @@ answer = await client.query.run(
     query=prompt,
     tools=[tool_id],
     query_depth="deep",
+    response_shape="answer_with_evidence",
     include_developer_trace=True,
 )
 ```
 
+Then rerun the same prompt with `responseShape: "evidence_only"` / `response_shape="evidence_only"` for tools that are meant to support downstream agents. Confirm the structured evidence package is still useful without prose synthesis.
+
+If validation targets a local or preview runtime on the developer's machine, prefer `answerModelId: "glm-turbo-model"` for replay runs unless a deliberate model comparison is requested.
+
 Record per prompt:
 - Pass/Fail (meaningful answer vs generic error/apology)
 - Response text quality (specific data, not vague)
+- Envelope quality when structured shapes are used:
+  - `summary`
+  - `evidence`
+  - `artifacts`
+  - `freshness`
+  - `confidence`
+  - `usage`
 - Cost (answer.cost.totalCostUsd)
 - Duration (answer.durationMs)
 - Tools used (answer.toolsUsed — confirm the right tool was invoked)
@@ -314,6 +333,7 @@ A prompt FAILS if:
 - The response doesn't use the target tool (wrong tool routed)
 - Developer trace shows >3 retries or self-healing loops
 - The answer is factually wrong or missing key data the tool should provide
+- `answer_with_evidence` or `evidence_only` is missing the evidence fields the tool claims to support
 
 If any prompt fails, the tool enters the fix loop (Step 6) before re-validation.
 

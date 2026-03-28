@@ -1,0 +1,157 @@
+{
+  "version": "ctx-contributor-search-validation/v1",
+  "generatedAt": "2026-03-28T12:00:00.000Z",
+  "caseId": "still-ambiguous-shortlist",
+  "caseKind": "still_ambiguous",
+  "rawRequest": "Find the best trade-policy market to inspect without assuming the scope.",
+  "intents": [
+    {
+      "intentId": "trade-policy-outlook",
+      "rawRequest": "Find the best trade-policy market to inspect without assuming the scope.",
+      "query": "trade policy outlook",
+      "clause": "scope remains ambiguous across candidate families"
+    }
+  ],
+  "candidates": [
+    {
+      "candidateId": "ambiguous-scotus-case",
+      "title": "Supreme Court tariff ruling in 2026",
+      "description": "A court-case contract.",
+      "rawIds": {
+        "marketId": "ambiguous-1"
+      },
+      "rankFeatures": {
+        "exactPhraseMatch": false,
+        "semanticScore": 0.72
+      },
+      "provenance": [
+        {
+          "source": "website-search-v2",
+          "query": "trade policy outlook",
+          "rank": 1,
+          "fetchedAt": "2026-03-28T12:00:00.000Z",
+          "metadata": {
+            "fixture": true
+          }
+        }
+      ],
+      "metadata": {}
+    },
+    {
+      "candidateId": "ambiguous-policy-basket",
+      "title": "Broader trade policy outlook in 2026",
+      "description": "A macro policy basket.",
+      "rawIds": {
+        "marketId": "ambiguous-2"
+      },
+      "rankFeatures": {
+        "exactPhraseMatch": false,
+        "semanticScore": 0.71
+      },
+      "provenance": [
+        {
+          "source": "website-search-v2",
+          "query": "trade policy outlook",
+          "rank": 2,
+          "fetchedAt": "2026-03-28T12:00:00.000Z",
+          "metadata": {
+            "fixture": true
+          }
+        }
+      ],
+      "metadata": {}
+    },
+    {
+      "candidateId": "ambiguous-tariff-revenue",
+      "title": "Tariff revenue benchmark in 2026",
+      "description": "A metric-style contract instead of the user-facing market choice.",
+      "rawIds": {
+        "marketId": "ambiguous-3"
+      },
+      "rankFeatures": {
+        "exactPhraseMatch": false,
+        "semanticScore": 0.55
+      },
+      "provenance": [
+        {
+          "source": "website-search-v2",
+          "query": "trade policy outlook",
+          "rank": 3,
+          "fetchedAt": "2026-03-28T12:00:00.000Z",
+          "metadata": {
+            "fixture": true
+          }
+        }
+      ],
+      "metadata": {}
+    }
+  ],
+  "resolution": {
+    "outcome": "shortlist_only",
+    "selectedCandidateId": null,
+    "shortlistCandidateIds": [
+      "ambiguous-scotus-case",
+      "ambiguous-policy-basket",
+      "ambiguous-tariff-revenue"
+    ],
+    "relatedCandidateIds": [],
+    "rejectedCandidateIds": [],
+    "confidence": "low",
+    "reason": "The shortlist still splits between an exact court-case scope and a broader policy scope, so the helper should preserve ambiguity instead of inventing certainty.",
+    "degradedReasonCode": "ambiguous_shortlist"
+  },
+  "searchMetadata": {
+    "version": "ctx-contributor-search/v1",
+    "outcome": "shortlist_only",
+    "confidence": "low",
+    "selectedCandidateId": null,
+    "shortlistCandidateIds": [
+      "ambiguous-scotus-case",
+      "ambiguous-policy-basket",
+      "ambiguous-tariff-revenue"
+    ],
+    "relatedCandidateIds": [],
+    "rejectedCandidateIds": [],
+    "candidateCount": 3,
+    "shortlistCount": 3,
+    "intentQueries": [
+      "trade policy outlook"
+    ],
+    "degraded": {
+      "reasonCode": "ambiguous_shortlist",
+      "message": "The shortlist still splits between an exact court-case scope and a broader policy scope, so the helper should preserve ambiguity instead of inventing certainty."
+    },
+    "judge": {
+      "provider": "openrouter",
+      "model": "glm-turbo-model",
+      "timeoutMs": 1000,
+      "budgetUsd": "0.002000",
+      "disabled": false,
+      "applied": true,
+      "usage": {
+        "promptTokens": 165,
+        "completionTokens": 61,
+        "totalTokens": 226,
+        "costUsd": "0.000390",
+        "latencyMs": 149
+      }
+    },
+    "provenance": [
+      {
+        "source": "website-search-v2",
+        "query": "trade policy outlook",
+        "candidateCount": 3
+      }
+    ],
+    "trace": {
+      "usedDeterministicFallback": true,
+      "validatorStatus": "accepted",
+      "validatorReasonCode": null,
+      "validatorReason": null
+    }
+  },
+  "expectation": {
+    "outcome": "shortlist_only",
+    "degradedReasonCode": "ambiguous_shortlist"
+  }
+}

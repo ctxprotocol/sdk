@@ -1,0 +1,1649 @@
+{
+  "generatedAt": "2026-03-27T17:12:25.200Z",
+  "summary": {
+    "label": "pinned",
+    "prompt": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?",
+    "baseUrl": "http://localhost:3000",
+    "outcomeType": "answer",
+    "durationMs": 200923,
+    "toolsUsed": [
+      {
+        "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+        "name": "Polymarket",
+        "skillCalls": 11
+      }
+    ],
+    "orchestrationMetrics": {
+      "parityStage": "enabled",
+      "orchestrationMode": "manual_selected_tools",
+      "firstPassSuccess": false,
+      "capabilityMissSignaled": false,
+      "rediscoveryExecuted": false
+    },
+    "traceSummary": {
+      "toolCalls": 11,
+      "retryCount": 0,
+      "selfHealCount": 0,
+      "fallbackCount": 0,
+      "failureCount": 0,
+      "recoveryCount": 0,
+      "completionChecks": 0,
+      "loopCount": 0
+    },
+    "clarification": {
+      "orchestrationMode": "manual_selected_tools",
+      "rolloutStage": "enabled",
+      "shadowMode": false,
+      "policy": "auto",
+      "outcomeType": "clarification_required",
+      "triggered": true,
+      "optionCount": 3,
+      "candidateCount": 38,
+      "viableCandidateCount": 3,
+      "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes",
+      "recommendedOptionReason": "The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…",
+      "autoResolved": true,
+      "autoSelectEnabled": true,
+      "assumptionMade": {
+        "mode": "auto",
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes",
+        "label": "🔍 SEARCH + GET OUTCOMES in ONE CALL",
+        "reason": "The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…"
+      },
+      "missingCapability": null,
+      "decisionReasonCode": "semantic_scope_ambiguity",
+      "decisionSignals": [
+        "llm_judge"
+      ],
+      "evidenceSources": {
+        "usesMethodSchemas": true,
+        "usesProbeArgs": true,
+        "usesMethodMetadata": true,
+        "usesToolSelectionContext": false,
+        "usesLlmSelection": true
+      },
+      "comparedOptionIds": [
+        "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+        "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+        "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes"
+      ],
+      "decisionStrategy": "llm_primary",
+      "judgeAttempted": true,
+      "judgeApplied": true,
+      "judgeOutcomeType": "clarification_required",
+      "judgeConfidence": 0.62,
+      "judgeReason": "The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…",
+      "judgeError": null,
+      "validatorReason": null,
+      "fallbackReason": null,
+      "copyStrategy": "deterministic",
+      "rewriteAttempted": false,
+      "rewriteApplied": false,
+      "rewriteError": null,
+      "candidateSummaries": [
+        {
+          "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+          "fitScore": 21.55,
+          "llmRelevanceScore": null,
+          "requiredParams": [],
+          "unresolvedRequiredParams": [],
+          "probeArgKeys": [],
+          "inputFieldNames": [
+            "limit",
+            "title",
+            "keywords",
+            "polymarketSlug"
+          ],
+          "outputKeys": [
+            "hint",
+            "fetchedAt",
+            "searchedFor",
+            "sourcesTried",
+            "kalshiResults",
+            "comparisonNote"
+          ],
+          "semanticScope": "event-wide",
+          "semanticEntityGranularity": "event",
+          "semanticRequiresNamedEntity": false,
+          "semanticVenueSpecificity": "tool-bound",
+          "semanticOutputCardinality": "comparison",
+          "semanticProfileConfidence": 0.95,
+          "latencyClass": "instant",
+          "executePriceUsd": null,
+          "queryEligible": true
+        },
+        {
+          "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:get_event_outcomes",
+          "fitScore": 16.55,
+          "llmRelevanceScore": 0.78,
+          "requiredParams": [
+            "slug"
+          ],
+          "unresolvedRequiredParams": [],
+          "probeArgKeys": [
+            "includeInactive",
+            "limit",
+            "slug",
+            "sortBy"
+          ],
+          "inputFieldNames": [
+            "slug",
+            "limit",
+            "sortBy",
+            "includeInactive"
+          ],
+          "outputKeys": [
+            "url",
+            "outcomes",
+            "sortedBy",
+            "eventSlug",
+            "fetchedAt",
+            "eventTitle"
+          ],
+          "semanticScope": "event-wide",
+          "semanticEntityGranularity": "event",
+          "semanticRequiresNamedEntity": false,
+          "semanticVenueSpecificity": "tool-bound",
+          "semanticOutputCardinality": "comparison",
+          "semanticProfileConfidence": 0.95,
+          "latencyClass": "instant",
+          "executePriceUsd": "0.001",
+          "queryEligible": true
+        },
+        {
+          "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:discover_trending_markets",
+          "fitScore": 15.55,
+          "llmRelevanceScore": null,
+          "requiredParams": [],
+          "unresolvedRequiredParams": [],
+          "probeArgKeys": [],
+          "inputFieldNames": [
+            "limit",
+            "sortBy",
+            "category"
+          ],
+          "outputKeys": [
+            "topTags",
+            "fetchedAt",
+            "categories",
+            "totalActive",
+            "marketSummary",
+            "trendingMarkets"
+          ],
+          "semanticScope": "event-wide",
+          "semanticEntityGranularity": "event",
+          "semanticRequiresNamedEntity": false,
+          "semanticVenueSpecificity": "tool-bound",
+          "semanticOutputCardinality": "multiple",
+          "semanticProfileConfidence": 0.95,
+          "latencyClass": "instant",
+          "executePriceUsd": null,
+          "queryEligible": true
+        }
+      ],
+      "modelTelemetry": {
+        "modelId": "gpt-5.4-nano-model",
+        "runtimeModelId": "openai/gpt-5.4-nano",
+        "judgeUsage": {
+          "inputTokens": "[REDACTED]",
+          "outputTokens": "[REDACTED]",
+          "totalTokens": "[REDACTED]",
+          "promptTokens": "[REDACTED]",
+          "completionTokens": "[REDACTED]"
+        },
+        "judgeActualCostUsd": 0.00411605,
+        "rewriteUsage": null,
+        "rewriteActualCostUsd": null,
+        "totalActualCostUsd": 0.00411605
+      }
+    },
+    "selection": {
+      "selectedDepth": "deep",
+      "deepMode": "deep",
+      "debugScoutDeepMode": null,
+      "plannerReasoningStage": "full",
+      "scoutEnabled": false,
+      "preserveFastOneShot": false,
+      "candidateMethodCount": 45,
+      "scoutProbeStatus": "ready",
+      "scoutProbeAdequacy": "adequate",
+      "scoutProbeConfidence": 0.9885,
+      "scoutMetadataConfidence": 0.9538,
+      "scoutProbeQuerySafeCandidateCount": 38,
+      "scoutProbeRankedMethodCount": 38,
+      "scoutProbeAmbiguityPoolCount": 10,
+      "scoutProbeShortlistedMethodCount": 9,
+      "scoutProbeMissingCapability": null,
+      "scoutPrePlanProbeCalls": 0,
+      "scoutPrePlanProbeBudgetReasonCode": null,
+      "scoutChangedInitialPlan": false,
+      "scoutChangedPlannerReasoningStage": false,
+      "scoutInitialSelectedDepth": "deep",
+      "scoutInitialDeepMode": "deep",
+      "scoutInitialPlannerReasoningStage": "full",
+      "scoutInitialReasonCode": "explicit_override",
+      "scoutFinalReasonCode": "explicit_override",
+      "scoutEvidenceAttachedToPlanning": true,
+      "scoutLlmSelectionUsed": true,
+      "scoutLlmSelectionFallback": false,
+      "scoutLlmSelectionLatencyMs": 8741,
+      "selectedTools": [
+        {
+          "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+          "toolName": "Polymarket",
+          "priceUsd": "0.000000",
+          "selectedMethodCount": 45,
+          "selectedMethods": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "find_correlated_markets",
+            "check_market_rules",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "build_high_conviction_workflow",
+            "analyze_single_market_whales"
+          ],
+          "omittedSelectedMethodCount": 33
+        }
+      ]
+    },
+    "completeness": {
+      "evaluations": [],
+      "repairEvents": [],
+      "triggerNeedsDifferentTools": false,
+      "triggerMissingCapability": null
+    },
+    "executionProgramLineage": {
+      "baseRevisionId": "rev-1",
+      "currentRevisionId": "rev-1",
+      "revisionCount": 1,
+      "patchCount": 0,
+      "replanCount": 0,
+      "deterministicChangeCount": 0,
+      "revisions": [
+        {
+          "revisionId": "rev-1",
+          "parentRevisionId": null,
+          "attempt": 0,
+          "action": "initial",
+          "reason": "initial",
+          "summary": "Planner base program",
+          "codeHash": "a599dc9e075f9f7d3117a9a0020016bb2bd467f615d1847c2bf60421faa5dd04",
+          "codeLength": 7124,
+          "changedLineCount": 0,
+          "diffPreview": null,
+          "editCount": null,
+          "preservesPriorLogic": true
+        }
+      ]
+    },
+    "repairTracePreview": [],
+    "searchMethods": [
+      "website-search-v2"
+    ],
+    "websiteSearchV2Seen": true,
+    "responsePreview": "Based on current Polymarket data, the implied probability of US military personnel entering Iranian territory by April 30, 2026, is significantly elevated, while the probability of allied (E.U.) kinetic strikes remains low.\n\n### Key Markets and Implied Odds\n\n| Market Title | Matched Outcome/Target | Price (Implied Probability) | Volume | Resolution Date |\n| :--- | :--- | :--- | :--- | :--- |\n| **US forces enter Iran by..?** | April 30 | **$0.585 (58.5%)** | $37,626,342 | April 30, 2026 |\n| **Which countries will strike Iran?** | Any E.U. Country | **$0.06 (6.0%)** | $79,528 | April 30, 2026 |\n| **What will Iran strike?** | Dimona (Nuclear Center) | **$0.09 (9.0%)** | $48,811 | April 30, 2026 |\n| **Iran military action against...** | Afghanistan | **$0.027 (2.7%)** | $79,343 | April 30, 2026 |\n\n### Critical Market Rules & Resolution Criteria\nTo accurately assess risk-off positioning, note these specific resolution constraints from the market rules:\n\n*   **US Ground Entry:** Resolution requires active US military personnel to physically enter **terrestrial territory**.\n    *   **Qualifies:** Special Operations Forces (SOF) and regular military.\n    *   **Excludes:** Intelligence oper...",
+    "dataUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/33852523-0716-47cb-b906-ba18519b3f4a-api_query_execution_28f10f6b-47b6-440b-a679-cc7e57385410_1774631543423.json"
+  },
+  "result": {
+    "success": true,
+    "response": "Based on current Polymarket data, the implied probability of US military personnel entering Iranian territory by April 30, 2026, is significantly elevated, while the probability of allied (E.U.) kinetic strikes remains low.\n\n### Key Markets and Implied Odds\n\n| Market Title | Matched Outcome/Target | Price (Implied Probability) | Volume | Resolution Date |\n| :--- | :--- | :--- | :--- | :--- |\n| **US forces enter Iran by..?** | April 30 | **$0.585 (58.5%)** | $37,626,342 | April 30, 2026 |\n| **Which countries will strike Iran?** | Any E.U. Country | **$0.06 (6.0%)** | $79,528 | April 30, 2026 |\n| **What will Iran strike?** | Dimona (Nuclear Center) | **$0.09 (9.0%)** | $48,811 | April 30, 2026 |\n| **Iran military action against...** | Afghanistan | **$0.027 (2.7%)** | $79,343 | April 30, 2026 |\n\n### Critical Market Rules & Resolution Criteria\nTo accurately assess risk-off positioning, note these specific resolution constraints from the market rules:\n\n*   **US Ground Entry:** Resolution requires active US military personnel to physically enter **terrestrial territory**.\n    *   **Qualifies:** Special Operations Forces (SOF) and regular military.\n    *   **Excludes:** Intelligence operatives, military contractors, advisors, and diplomatic entourages.\n    *   **Excludes:** Maritime or aerial territory entry (no \"boots on the ground\" if only ships or planes are used).\n*   **Allied Strikes:** The \"Any E.U. Country\" market defines a strike as drone, missile, or air strikes impacting Iranian soil or embassies. It specifically **excludes** ground incursions or naval shelling.\n\n### Analysis for Risk-Off Positioning\nThe market for US forces entering Iran is currently the high-conviction \"tell\" for regional escalation. \n*   **Probability Threshold:** A **58.5%** probability for a ground entry within the next 30 days suggests that the market is pricing in a likely escalation beyond mere \"tit-for-tat\" aerial exchanges. \n*   **Divergence:** There is a notable gap between the high probability of US ground entry (58.5%) and the low probability of E.U. participation (6%). This suggests a potential unilateral or US-led coalition action rather than a broad multilateral allied strike.\n*   **Positioning:** Because the US ground entry market has high liquidity ($37M+), its price changes are highly sensitive to real-world developments. Monitoring the **$0.50 level** is critical; staying above this suggests the market views a ground encounter as the \"base case\" scenario rather than a tail risk.\n\n*Data is based on past tool results from March 27, 2026.*",
+    "toolsUsed": [
+      {
+        "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+        "name": "Polymarket",
+        "skillCalls": 11
+      }
+    ],
+    "cost": {
+      "totalCostUsd": "0.174381",
+      "toolCostUsd": "0.000000",
+      "modelCostUsd": "0.174381"
+    },
+    "durationMs": 200923,
+    "outcomeType": "answer",
+    "querySession": {
+      "sessionId": "55bd6af9-368a-4b17-b00b-03ef7ddea25b",
+      "attemptId": "dff917e7-5563-416a-aaff-b1e5c8270563",
+      "parentAttemptId": null,
+      "rootAttemptId": "dff917e7-5563-416a-aaff-b1e5c8270563",
+      "mode": "initial",
+      "origin": "initial_request",
+      "status": "completed",
+      "checkpoint": {
+        "currentStage": "execution",
+        "latestCheckpointArtifactId": "28f10f6b-47b6-440b-a679-cc7e57385410:22",
+        "canonicalDatasetId": "28f10f6b-47b6-440b-a679-cc7e57385410:canonical-execution",
+        "executionProgramCurrentRevisionId": "rev-1"
+      }
+    },
+    "data": [
+      {
+        "tool": "search_markets",
+        "result": {
+          "results": [
+            {
+              "title": "US forces enter Iran by..?",
+              "url": "https://polymarket.com/event/us-forces-enter-iran-by",
+              "slug": "us-forces-enter-iran-by",
+              "status": "live",
+              "conditionId": "0x6d0e09d0f04572d9b1adad84703458b0297bc5603b69dccbde93147ee4443246",
+              "matchedOutcome": "April 30",
+              "outcomePrice": "0.595",
+              "volume": 37626342.35615241,
+              "liquidity": 759024.8764,
+              "score": 499
+            },
+            {
+              "title": "What will Iran conduct military action against by April 30?",
+              "url": "https://polymarket.com/event/what-will-iran-conduct-military-action-against-by-april-30",
+              "slug": "what-will-iran-conduct-military-action-against-by-april-30",
+              "status": "live",
+              "conditionId": "0x4e17f3846c38119d3dbff86e941fc0ab731da419b53a2902f2d8437c1a96996a",
+              "matchedOutcome": "Dimona (Shimon Peres Negev Nuclear Research Center)",
+              "outcomePrice": "0.085",
+              "volume": 48811.89832400001,
+              "liquidity": 91253.2577,
+              "endDate": "2026-04-30T00:00:00Z",
+              "score": 490.35919863632824
+            },
+            {
+              "title": "Hezbollah military action against Israel on...?",
+              "url": "https://polymarket.com/event/hezbollah-military-action-against-israel-on",
+              "slug": "hezbollah-military-action-against-israel-on",
+              "status": "live",
+              "conditionId": "0x9dd53abf4c8b6b25961ebcf61c5413900ece7b3cc08a9511d0c61b3ef9e5a6e3",
+              "matchedOutcome": "March 22",
+              "outcomePrice": "0.447",
+              "volume": 296285.8472559999,
+              "liquidity": 55468.05556,
+              "endDate": "2026-03-31T00:00:00Z",
+              "score": 482.62715527957744
+            },
+            {
+              "title": "Iran military action against ___ by April 30?",
+              "url": "https://polymarket.com/event/iran-military-action-against-by-april-30",
+              "slug": "iran-military-action-against-by-april-30",
+              "status": "live",
+              "conditionId": "0xeae88eea8b1f8ed3a5fdca58dc30a17cdb5846e63f97b9b4865a85d7c43351d6",
+              "matchedOutcome": "Afghanistan",
+              "outcomePrice": "0.027",
+              "volume": 79343.37945200001,
+              "liquidity": 296933.05346,
+              "endDate": "2026-04-30T00:00:00Z",
+              "score": 481.35379142209086
+            },
+            {
+              "title": "Which countries will conduct military action against Iran by April 30?",
+              "url": "https://polymarket.com/event/which-countries-will-conduct-military-action-against-iran-by-april-30",
+              "slug": "which-countries-will-conduct-military-action-against-iran-by-april-30",
+              "status": "live",
+              "conditionId": "0x814ecf7cff5c5aaaeb9d7f60388d03bd7106d94be31e60b02ac2ca01715843c6",
+              "matchedOutcome": "Any E.U. Country",
+              "outcomePrice": "0.06",
+              "volume": 79528.828073,
+              "liquidity": 237969.13899,
+              "endDate": "2026-04-30T00:00:00Z",
+              "score": 479.58530525554534
+            }
+          ],
+          "count": 5,
+          "searchMethod": "website-search-v2",
+          "statusBreakdown": {
+            "live": 5,
+            "resolved": 0
+          },
+          "hint": "✅ Website-backed Polymarket search used. Found 5 results for \"boots on the ground Iran ground invasion US troops allied forces military strike war\". Showing LIVE markets only (open for trading).",
+          "fetchedAt": "2026-03-27T17:11:25.230Z"
+        }
+      },
+      {
+        "tool": "check_market_efficiency",
+        "result": {
+          "market": "US forces enter Iran by April 30?",
+          "conditionId": "0x6d0e09d0f04572d9b1adad84703458b0297bc5603b69dccbde93147ee4443246",
+          "outcomes": [
+            {
+              "name": "YES",
+              "tokenId": "2916184120206223749839849644877707470354946028257066951797428049170871002238",
+              "price": 0.585,
+              "impliedProbability": 0.585,
+              "impliedProbabilityPercent": 58.5
+            },
+            {
+              "name": "NO",
+              "tokenId": "76533108781962275310651165149634079251899733930834190485860627580128626747247",
+              "price": 0.415,
+              "impliedProbability": 0.415,
+              "impliedProbabilityPercent": 41.5
+            }
+          ],
+          "marketEfficiency": {
+            "sumOfOutcomes": 1,
+            "vig": 0,
+            "vigBps": 0,
+            "isEfficient": true,
+            "efficiency": "excellent"
+          },
+          "spreadInfo": {
+            "bidAskSpread": 0.01,
+            "spreadCents": 1
+          },
+          "trueProbabilities": {
+            "YES": 0.585,
+            "NO": 0.415
+          },
+          "trueProbabilitiesPercent": {
+            "YES": 58.5,
+            "NO": 41.5
+          },
+          "recommendation": "Market is efficiently priced. Edge must come from superior information.",
+          "fetchedAt": "2026-03-27T17:11:32.016Z"
+        }
+      },
+      {
+        "tool": "check_market_rules",
+        "result": {
+          "market": "US forces enter Iran by..?",
+          "description": "This market will resolve to “Yes” if active US military personnel physically enter Iran at any point by the listed date (ET). Otherwise, this market will resolve to \"No\".\n\nMilitary special operation forces will qualify, however intelligence operatives will not count.\n\nUS military personnel must physically enter the terrestrial territory of Iran to qualify. Entering Iran's maritime or aerial territory will not count.\n\nMilitary contractors, military advisors, or high-ranking US service members entering Iran for diplomatic purposes (and their accompanying entourage) will not qualify.\n\nThe resolution source will be a consensus of credible reporting.",
+          "resolutionSource": "Not specified",
+          "endDate": "Not specified",
+          "rulesSummary": {
+            "primaryCondition": "US forces enter Iran by..?",
+            "resolvesYesIf": "Condition in title is met",
+            "resolvesNoIf": "Condition in title is not met by end date",
+            "potentialGotchas": [
+              "Time-sensitive resolution - check exact deadline in description",
+              "Strict conditions required for YES resolution"
+            ],
+            "ambiguities": []
+          },
+          "riskFactors": [
+            "Multiple gotchas identified - read rules carefully",
+            "Resolution source not clearly specified"
+          ],
+          "fetchedAt": "2026-03-27T17:11:36.921Z"
+        }
+      },
+      {
+        "tool": "check_market_efficiency",
+        "result": {
+          "market": "Will Iran strike Afghanistan by April 30, 2026?",
+          "conditionId": "0xeae88eea8b1f8ed3a5fdca58dc30a17cdb5846e63f97b9b4865a85d7c43351d6",
+          "outcomes": [
+            {
+              "name": "YES",
+              "tokenId": "12941187885102056014992527226970646554870670047806607027586797858583024222162",
+              "price": 0.027,
+              "impliedProbability": 0.027,
+              "impliedProbabilityPercent": 2.7
+            },
+            {
+              "name": "NO",
+              "tokenId": "15493126194178905012284208720551441997508190924257808012174244831086988215002",
+              "price": 0.973,
+              "impliedProbability": 0.973,
+              "impliedProbabilityPercent": 97.3
+            }
+          ],
+          "marketEfficiency": {
+            "sumOfOutcomes": 1,
+            "vig": 0,
+            "vigBps": 0,
+            "isEfficient": true,
+            "efficiency": "excellent"
+          },
+          "spreadInfo": {
+            "bidAskSpread": 0.028,
+            "spreadCents": 2.8
+          },
+          "trueProbabilities": {
+            "YES": 0.027,
+            "NO": 0.973
+          },
+          "trueProbabilitiesPercent": {
+            "YES": 2.7,
+            "NO": 97.3
+          },
+          "recommendation": "Market is efficiently priced. Edge must come from superior information.",
+          "fetchedAt": "2026-03-27T17:11:41.778Z"
+        }
+      },
+      {
+        "tool": "check_market_rules",
+        "result": {
+          "market": "Iran military action against ___ by April 30?",
+          "description": "This market will resolve to \"Yes\" if Iran initiates a drone, missile, or air strike on the listed country's soil or any official embassy or consulate of the listed country between market creation and April 30, 2026, 11:59 PM (ET). Otherwise, this market will resolve to \"No\".\n\nFor the purposes of this market, a qualifying \"strike\" is defined as the use of aerial bombs, drones or missiles (including cruise or ballistic missiles) launched by Iranian military forces that impact a listed country's ground territory or any official embassy or consulate of that country (e.g., if a weapons depot on a listed country soil is hit by an Iranian missile, this market will resolve to \"Yes\").\n\nMissiles or drones which are intercepted and surface-to-air missile strikes will not be sufficient for a \"Yes\" resolution regardless of whether they land on a listed country's territory or cause damage.\n\nStrikes within the West Bank or the Gaza Strip, will be counted as Israel.\n\nOnly military actions by Iranian f...",
+          "resolutionSource": "Not specified",
+          "endDate": "2026-04-30T00:00:00Z",
+          "rulesSummary": {
+            "primaryCondition": "Iran military action against ___ by April 30?",
+            "resolvesYesIf": "Condition in title is met",
+            "resolvesNoIf": "Condition in title is not met by end date",
+            "potentialGotchas": [
+              "Time-sensitive resolution - check exact deadline in description",
+              "Requires official source/announcement - unofficial reports may not count"
+            ],
+            "ambiguities": []
+          },
+          "riskFactors": [
+            "Multiple gotchas identified - read rules carefully",
+            "Resolution source not clearly specified"
+          ],
+          "fetchedAt": "2026-03-27T17:11:45.419Z"
+        }
+      },
+      {
+        "tool": "check_market_efficiency",
+        "result": {
+          "market": "Will any E.U. country strike Iran by April 30?",
+          "conditionId": "0x814ecf7cff5c5aaaeb9d7f60388d03bd7106d94be31e60b02ac2ca01715843c6",
+          "outcomes": [
+            {
+              "name": "YES",
+              "tokenId": "59311361914943784006723196945422711292404265494797352133012864904332193475816",
+              "price": 0.060000000000000005,
+              "impliedProbability": 0.06,
+              "impliedProbabilityPercent": 6
+            },
+            {
+              "name": "NO",
+              "tokenId": "113341305739062856596216623375621730584698858562528191302371921319897252978886",
+              "price": 0.94,
+              "impliedProbability": 0.94,
+              "impliedProbabilityPercent": 94
+            }
+          ],
+          "marketEfficiency": {
+            "sumOfOutcomes": 1,
+            "vig": 0,
+            "vigBps": 0,
+            "isEfficient": true,
+            "efficiency": "excellent"
+          },
+          "spreadInfo": {
+            "bidAskSpread": 0.02,
+            "spreadCents": 2
+          },
+          "trueProbabilities": {
+            "YES": 0.06,
+            "NO": 0.94
+          },
+          "trueProbabilitiesPercent": {
+            "YES": 6,
+            "NO": 94
+          },
+          "recommendation": "Market is efficiently priced. Edge must come from superior information.",
+          "fetchedAt": "2026-03-27T17:11:50.471Z"
+        }
+      },
+      {
+        "tool": "check_market_rules",
+        "result": {
+          "market": "Which countries will conduct military action against Iran by April 30?",
+          "description": "This market will resolve to \"Yes\" if the listed country initiates a drone, missile, or air strike on Iranian soil or any official Iranian embassy or consulate between market creation and April 30, 2026, 11:59 PM ET. Otherwise, this market will resolve to \"No\".\n\nFor the purposes of this market, a qualifying \"strike\" is defined as the use of aerial bombs, drones, or missiles (including cruise or ballistic missiles) launched by the listed country's military forces that impact Iranian ground territory or any official Iranian embassy or consulate (e.g., if a weapons depot on Iranian soil is hit by a missile launched by the listed country, this market will resolve to \"Yes\").\n\nMissiles or drones that are intercepted and surface-to-air missile strikes will not be sufficient for a \"Yes\" resolution, regardless of whether they land on Iranian territory or cause damage.\n\nActions such as artillery fire, small arms fire, FPV or ATGM strikes directly, ground incursions, naval shelling, cyberattacks, ...",
+          "resolutionSource": "Not specified",
+          "endDate": "2026-04-30T00:00:00Z",
+          "rulesSummary": {
+            "primaryCondition": "Which countries will conduct military action against Iran by April 30?",
+            "resolvesYesIf": "Condition in title is met",
+            "resolvesNoIf": "Condition in title is not met by end date",
+            "potentialGotchas": [
+              "Time-sensitive resolution - check exact deadline in description",
+              "Requires official source/announcement - unofficial reports may not count"
+            ],
+            "ambiguities": []
+          },
+          "riskFactors": [
+            "Multiple gotchas identified - read rules carefully",
+            "Resolution source not clearly specified"
+          ],
+          "fetchedAt": "2026-03-27T17:11:53.868Z"
+        }
+      },
+      {
+        "tool": "check_market_efficiency",
+        "result": {
+          "market": "Will Iran strike Dimona by April 30?",
+          "conditionId": "0x4e17f3846c38119d3dbff86e941fc0ab731da419b53a2902f2d8437c1a96996a",
+          "outcomes": [
+            {
+              "name": "YES",
+              "tokenId": "100740706980971223958335573811419967561338461716694787529676458702596020035672",
+              "price": 0.09,
+              "impliedProbability": 0.09,
+              "impliedProbabilityPercent": 9
+            },
+            {
+              "name": "NO",
+              "tokenId": "47693008910364101608073058244327400854644539639601309376678882343364495995690",
+              "price": 0.91,
+              "impliedProbability": 0.91,
+              "impliedProbabilityPercent": 91
+            }
+          ],
+          "marketEfficiency": {
+            "sumOfOutcomes": 1,
+            "vig": 0,
+            "vigBps": 0,
+            "isEfficient": true,
+            "efficiency": "excellent"
+          },
+          "spreadInfo": {
+            "bidAskSpread": 0.02,
+            "spreadCents": 2
+          },
+          "trueProbabilities": {
+            "YES": 0.09,
+            "NO": 0.91
+          },
+          "trueProbabilitiesPercent": {
+            "YES": 9,
+            "NO": 91
+          },
+          "recommendation": "Market is efficiently priced. Edge must come from superior information.",
+          "fetchedAt": "2026-03-27T17:11:59.072Z"
+        }
+      },
+      {
+        "tool": "check_market_rules",
+        "result": {
+          "market": "What will Iran conduct military action against by April 30?",
+          "description": "This market will resolve to \"Yes\" if Iran carries out a kinetic military strike on the listed facility between market creation and April 30, 2026, 11:59 PM ET. Otherwise, this market will resolve to “No”.\n\nThis includes, but is not limited to, drone and missile strikes, aerial bombings. Cyber attacks, sanctions, or diplomatic actions will not count towards the resolution of this market.\n\nFor the purposes of this market, only strikes that cause physical damage to the infrastructure of the facility will be considered. Missile and drone strikes that are shot down or miss their targets, or make contact in open spaces or around the facility, will not qualify for a \"Yes\" resolution.\n\nOnly military actions by Iranian forces explicitly claimed by the Islamic Republic of Iran, or confirmed to have originated from Iranian territory, will count toward the resolution of this market. Attacks by proxy forces (i.e., Hezbollah, Houthis, etc.) will not count toward the resolution of this market.\n\nThe r...",
+          "resolutionSource": "Not specified",
+          "endDate": "2026-04-30T00:00:00Z",
+          "rulesSummary": {
+            "primaryCondition": "What will Iran conduct military action against by April 30?",
+            "resolvesYesIf": "Condition in title is met",
+            "resolvesNoIf": "Condition in title is not met by end date",
+            "potentialGotchas": [
+              "Time-sensitive resolution - check exact deadline in description"
+            ],
+            "ambiguities": []
+          },
+          "riskFactors": [
+            "Multiple gotchas identified - read rules carefully",
+            "Resolution source not clearly specified"
+          ],
+          "fetchedAt": "2026-03-27T17:12:02.575Z"
+        }
+      },
+      {
+        "tool": "check_market_efficiency",
+        "result": {
+          "market": "Will Hezbollah conduct military action against Israel on March 22, 2026?",
+          "conditionId": "0x9dd53abf4c8b6b25961ebcf61c5413900ece7b3cc08a9511d0c61b3ef9e5a6e3",
+          "outcomes": [
+            {
+              "name": "YES",
+              "tokenId": "91523368486307636301558919826796206290396157816039484090987185914414311533817",
+              "price": 0.497,
+              "impliedProbability": 0.497,
+              "impliedProbabilityPercent": 49.7
+            },
+            {
+              "name": "NO",
+              "tokenId": "69582315277348966140496870675562301712956342336751156424187974949673268809192",
+              "price": 0.503,
+              "impliedProbability": 0.503,
+              "impliedProbabilityPercent": 50.3
+            }
+          ],
+          "marketEfficiency": {
+            "sumOfOutcomes": 1,
+            "vig": 0,
+            "vigBps": 0,
+            "isEfficient": true,
+            "efficiency": "excellent"
+          },
+          "spreadInfo": {
+            "bidAskSpread": 0.004,
+            "spreadCents": 0.4
+          },
+          "trueProbabilities": {
+            "YES": 0.497,
+            "NO": 0.503
+          },
+          "trueProbabilitiesPercent": {
+            "YES": 49.7,
+            "NO": 50.3
+          },
+          "recommendation": "Market is efficiently priced. Edge must come from superior information.",
+          "fetchedAt": "2026-03-27T17:12:07.468Z"
+        }
+      },
+      {
+        "tool": "check_market_rules",
+        "result": {
+          "market": "Hezbollah military action against Israel on...?",
+          "description": "This market will resolve to \"Yes\" if Hezbollah initiates a drone, missile, or air strike that impacts Israeli ground territory on the specified date, Israel Standard Time (UTC+2). Otherwise, this market will resolve to \"No\".\n\nFor the purposes of this market, a qualifying \"military action\" is defined as the use of aerial bombs, drones, or missiles (including cruise or ballistic missiles) launched by Hezbollah forces that physically impact land under Israeli control.\n\nIsraeli ground territory, for the purposes of this market, refers to land internationally recognized as part of the State of Israel, including all territory under de facto Israeli government administration as of market creation. This includes the Israeli-controlled Golan Heights and East Jerusalem, but excludes the West Bank and Gaza Strip.\n\nMissiles or drones that are intercepted before reaching the ground, or surface-to-air missile strikes, will not qualify for a \"Yes\" resolution, regardless of whether debris lands on Isr...",
+          "resolutionSource": "Not specified",
+          "endDate": "2026-03-31T00:00:00Z",
+          "rulesSummary": {
+            "primaryCondition": "Hezbollah military action against Israel on...?",
+            "resolvesYesIf": "Condition in title is met",
+            "resolvesNoIf": "Condition in title is not met by end date",
+            "potentialGotchas": [
+              "Time-sensitive resolution - check exact deadline in description"
+            ],
+            "ambiguities": []
+          },
+          "riskFactors": [
+            "Multiple gotchas identified - read rules carefully",
+            "Resolution source not clearly specified",
+            "Only 4 days remaining until resolution"
+          ],
+          "fetchedAt": "2026-03-27T17:12:10.960Z"
+        }
+      }
+    ],
+    "dataUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/33852523-0716-47cb-b906-ba18519b3f4a-api_query_execution_28f10f6b-47b6-440b-a679-cc7e57385410_1774631543423.json",
+    "developerTrace": {
+      "summary": "[OMITTED:CIRCULAR_REFERENCE]",
+      "timeline": [
+        {
+          "stepType": "orchestration",
+          "event": "query-start",
+          "status": "ok",
+          "message": "Query orchestration started",
+          "timestampMs": 1774631545189,
+          "metadata": {
+            "requestId": "28f10f6b-47b6-440b-a679-cc7e57385410",
+            "queryDepth": "deep"
+          }
+        },
+        {
+          "stepType": "selection",
+          "event": "selected-tools",
+          "status": "ok",
+          "timestampMs": 1774631545190,
+          "metadata": {
+            "selectedDepth": "deep",
+            "deepMode": "deep",
+            "debugScoutDeepMode": null,
+            "plannerReasoningStage": "full",
+            "scoutEnabled": false,
+            "preserveFastOneShot": false,
+            "candidateMethodCount": 45,
+            "scoutProbeStatus": "ready",
+            "scoutProbeAdequacy": "adequate",
+            "scoutProbeConfidence": 0.9885,
+            "scoutMetadataConfidence": 0.9538,
+            "scoutProbeQuerySafeCandidateCount": 38,
+            "scoutProbeRankedMethodCount": 38,
+            "scoutProbeAmbiguityPoolCount": 10,
+            "scoutProbeShortlistedMethodCount": 9,
+            "scoutProbeMissingCapability": null,
+            "scoutPrePlanProbeCalls": 0,
+            "scoutPrePlanProbeBudgetReasonCode": null,
+            "scoutChangedInitialPlan": false,
+            "scoutChangedPlannerReasoningStage": false,
+            "scoutInitialSelectedDepth": "deep",
+            "scoutInitialDeepMode": "deep",
+            "scoutInitialPlannerReasoningStage": "full",
+            "scoutInitialReasonCode": "explicit_override",
+            "scoutFinalReasonCode": "explicit_override",
+            "scoutEvidenceAttachedToPlanning": true,
+            "selectedTools": [
+              {
+                "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+                "toolName": "Polymarket",
+                "priceUsd": "0.000000",
+                "selectedMethodCount": 45,
+                "selectedMethods": [
+                  "analyze_market_liquidity",
+                  "check_market_efficiency",
+                  "analyze_whale_flow",
+                  "analyze_top_holders",
+                  "analyze_event_whale_breakdown",
+                  "analyze_event_outcome_liquidity",
+                  "find_correlated_markets",
+                  "check_market_rules",
+                  "find_arbitrage_opportunities",
+                  "find_trading_opportunities",
+                  "build_high_conviction_workflow",
+                  "analyze_single_market_whales"
+                ],
+                "omittedSelectedMethodCount": 33
+              }
+            ],
+            "clarification": {
+              "truncated": true,
+              "preview": "{\"orchestrationMode\":\"manual_selected_tools\",\"rolloutStage\":\"enabled\",\"shadowMode\":false,\"policy\":\"auto\",\"outcomeType\":\"clarification_required\",\"triggered\":true,\"optionCount\":3,\"candidateCount\":38,\"viableCandidateCount\":3,\"recommendedOptionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes\",\"recommendedOptionReason\":\"The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…\",\"autoResolved\":true,\"autoSelectEnabled\":true,\"assumptionMade\":{\"mode\":\"auto\",\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes\",\"label\":\"🔍 SEARCH + GET OUTCOMES in ONE CALL\",\"reason\":\"The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…\"},\"missingCapability\":null,\"decisionReasonCode\":\"semantic_scope_ambiguity\",\"decisionSignals\":[\"llm_judge\"],\"evidenceSources\":{\"usesMethodSchemas\":true,\"usesProbeArgs\":true,\"usesMethodMetadata\":true,\"usesToolSelectionContext\":false,\"usesLlmSelection\":true},\"comparedOptionIds\":[\"294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi\",\"294100e8-c648-4e5f-a254-95a14b56e398:search_markets\",\"294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes\"],\"decisionStrategy\":\"llm_primary\",\"judgeAttempted\":true,\"judgeApplied\":true,\"judgeOutcomeType\":\"clarification_required\",\"judgeConfidence\":0.62,\"judgeReason\":\"The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…\",\"judgeError\":null,\"validatorReason\":null,\"fallbackReason\":null,\"copyStrategy\":\"deterministic\",\"rewriteAttempted\":false,\"rewriteApplied\":false,\"rewriteError\":null,\"candidateSummaries\":[{\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi\",\"fitScore\":21.55,\"llmRelevanceScore\":null,\"requiredParams\":[],\"unresolvedRequiredParams\":[],\"probeArgKeys\":[],\"inputFieldNames\":[\"limit\",\"title\",\"keywords\",\"polymarketSlug\"],\"outputKeys\":[\"hint\",\"fetchedAt\",\"searchedFor\",\"sourcesTried\",\"kalshiResults\",\"comparisonNote\"],\"semanticScope\":\"event-wide\",\"semanticEntityGranularity\":\"event\",\"semanticRequiresNamedEntity\":false,\"semanticVenueSpecificity\":\"tool-bound\",\"semanticOutputCardinality\":\"comparison\",\"semanticProfileConfidence\":0.95,\"latencyClass\":\"instant\",\"executePriceUsd\":null,\"queryEligible\":true},{\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:get_event_outcomes\",\"fitScore\":16.55,\"llmRelevanceScore\":0.78,\"requiredParams\":[\"slug\"],\"unresolvedRequiredParams\":[],\"probeArgKeys\":[\"includeInactive\",\"limit\",\"slug\",\"sortBy\"],\"inputFieldNames\":[\"slug\",\"limit\",\"sortBy\",\"includeInactive\"],\"outputKeys\":[\"url\",\"outcomes\",\"sortedBy\",\"eventSlug\",\"fetchedAt\",\"eventTitle\"],\"semanticScope\":\"event-wide\",\"semanticEntityGranularity\":\"event\",\"semanticRequiresNamedEntity\":false,\"semanticVenueSpecificity\":\"tool-bound\",\"semanticOutputCardinality\":\"comparison\",\"semanticProfileConfidence\":0.95,\"latencyClass\":\"instant\",\"executePriceUsd\":\"0.001\",\"queryEligible\":true},{\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:discover_trending_markets\",\"fitScore\":15.55,\"llmRelevanceScore\":null,\"requiredParams\":[],\"unresolvedRequiredParams\":[],\"probeArgKeys\":[],\"inputFieldNames\":[\"limit\",\"sortBy\",\"category\"],\"outputKeys\":[\"topTags\",\"fetchedAt\",\"categories\",\"totalActive\",\"marketSummary\",\"trendingMarkets\"],\"semanticScope\":\"event-wide\",\"semanticEntityGranularity\":\"event\",\"semanticRequiresNamedEntity\":false,\"semanticVenueSpecificity\":\"tool-bound\",\"semanticOutputCardinality\":\"multiple\",\"semanticProfileConfidence\":0.95,\"latencyClass\":\"instant\",\"executePriceUsd\":null,\"queryEligible\":true}],\"modelTelemetry\":{\"model...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "planning",
+          "event": "planner-generated-code",
+          "status": "ok",
+          "timestampMs": 1774631545191,
+          "metadata": {
+            "initialCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nconst POLY = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\nexport async function main() {\n  // Step 1: Single broad discovery call to avoid same-endpoint parallel spray\n  const discovery = await callMcpSkill({\n    toolId: POLY,\n    toolName: \"search_markets\",\n    args: { query: \"boots on the ground Iran ground invasion US troops allied forces military strike war\", status: \"live\", limit: 50 }\n  });\n\n  const candidates = Array.isArray(discovery?.results) ? discovery.results : [];\n\n  if (candidates.length === 0) {\n    return {\n      summary: { totalMarketsFound: 0, directGroundWarMarkets: 0, broaderIranMilitaryMarkets: 0 },\n      directGroundWarMarkets: [],\n      broaderIranMilitaryMarkets: [],\n      riskOffFramework: { coreInsight: \"No live Iran military markets found on Polymarket.\", howToThinkAboutIt: [], hedgingImplications: [] },\n      fetchedAt: new Date().toISOString()\n    };\n  }\n\n  // Step 2: Deterministic semantic targeting — rank into two legs\n  const directLeg = pickTopSemanticCandidates({\n    target: \"US or allied boots on the ground in Iran — ground invasion, ground troops, military occupation\",\n    candidates,\n    requiredTerms: [\"boots\", \"ground\", \"invasion\", \"troops\", \"iran\"],\n    avoidTerms: [\"airstrike\", \"strike only\", \"bombing\", \"cyber\", \"sanctions\", \"negotiate\", \"diplomatic\", \"nuclear deal\"],\n    limit: 10\n  });\n\n  const broaderLeg = pickTopSemanticCandidates({\n    target: \"Broader Iran military escalation short of ground invasion — strikes, attacks, war, conflict\",\n    candidates,\n    requiredTerms: [\"iran\", \"strike\", \"attack\", \"war\", \"military\", \"conflict\"],\n    avoidTerms: [\"boots on the ground\", \"ground invasion\", \"ground troops\", \"nuclear deal\", \"sanctions\", \"diplomatic\"],\n    limit: 8\n  });\n\n  // Deduplicate broader against direct\n  const directIds = new Set(directLeg.map(m => m.conditionId || m.title));\n  const broad...[truncated]",
+            "finalCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nconst POLY = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\nexport async function main() {\n  // Step 1: Single broad discovery call to avoid same-endpoint parallel spray\n  const discovery = await callMcpSkill({\n    toolId: POLY,\n    toolName: \"search_markets\",\n    args: { query: \"boots on the ground Iran ground invasion US troops allied forces military strike war\", status: \"live\", limit: 50 }\n  });\n\n  const candidates = Array.isArray(discovery?.results) ? discovery.results : [];\n\n  if (candidates.length === 0) {\n    return {\n      summary: { totalMarketsFound: 0, directGroundWarMarkets: 0, broaderIranMilitaryMarkets: 0 },\n      directGroundWarMarkets: [],\n      broaderIranMilitaryMarkets: [],\n      riskOffFramework: { coreInsight: \"No live Iran military markets found on Polymarket.\", howToThinkAboutIt: [], hedgingImplications: [] },\n      fetchedAt: new Date().toISOString()\n    };\n  }\n\n  // Step 2: Deterministic semantic targeting — rank into two legs\n  const directLeg = pickTopSemanticCandidates({\n    target: \"US or allied boots on the ground in Iran — ground invasion, ground troops, military occupation\",\n    candidates,\n    requiredTerms: [\"boots\", \"ground\", \"invasion\", \"troops\", \"iran\"],\n    avoidTerms: [\"airstrike\", \"strike only\", \"bombing\", \"cyber\", \"sanctions\", \"negotiate\", \"diplomatic\", \"nuclear deal\"],\n    limit: 10\n  });\n\n  const broaderLeg = pickTopSemanticCandidates({\n    target: \"Broader Iran military escalation short of ground invasion — strikes, attacks, war, conflict\",\n    candidates,\n    requiredTerms: [\"iran\", \"strike\", \"attack\", \"war\", \"military\", \"conflict\"],\n    avoidTerms: [\"boots on the ground\", \"ground invasion\", \"ground troops\", \"nuclear deal\", \"sanctions\", \"diplomatic\"],\n    limit: 8\n  });\n\n  // Deduplicate broader against direct\n  const directIds = new Set(directLeg.map(m => m.conditionId || m.title));\n  const broad...[truncated]",
+            "plannerQuery": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?\n\n[AUTO CLARIFICATION SELECTION]\nPreferred interpretation: 🔍 SEARCH + GET OUTCOMES in ONE CALL\nReason: The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…\nContinue with this interpretation unless execution proves it incompatible.",
+            "scoutEvidenceAttached": false,
+            "scoutEvidencePromptBlock": null,
+            "allowedModules": [
+              "@/lib/ai/skills/mcp",
+              "@/lib/ai/skills/semantic-targeting"
+            ]
+          }
+        },
+        {
+          "stepType": "execution-program",
+          "event": "execution-program-lineage",
+          "status": "ok",
+          "timestampMs": 1774631545192,
+          "metadata": {
+            "executionProgram": "[OMITTED:CIRCULAR_REFERENCE]"
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546189,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "search_markets"
+          },
+          "metadata": {
+            "args": {
+              "query": "boots on the ground Iran ground invasion US troops allied forces military strike war",
+              "status": "live",
+              "limit": 50
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"results\":[{\"title\":\"US forces enter Iran by..?\",\"url\":\"https://polymarket.com/event/us-forces-enter-iran-by\",\"slug\":\"us-forces-enter-iran-by\",\"status\":\"live\",\"conditionId\":\"0x6d0e09d0f04572d9b1adad84703458b0297bc5603b69dccbde93147ee4443246\",\"matchedOutcome\":\"April 30\",\"outcomePrice\":\"0.595\",\"volume\":37626342.35615241,\"liquidity\":759024.8764,\"score\":499},{\"title\":\"What will Iran conduct military action against by April 30?\",\"url\":\"https://polymarket.com/event/what-will-iran-conduct-military-action-against-by-april-30\",\"slug\":\"what-will-iran-conduct-military-action-against-by-april-30\",\"status\":\"live\",\"conditionId\":\"0x4e17f3846c38119d3dbff86e941fc0ab731da419b53a2902f2d8437c1a96996a\",\"matchedOutcome\":\"Dimona (Shimon Peres Negev Nuclear Research Center)\",\"outcomePrice\":\"0.085\",\"volume\":48811...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546190,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_efficiency"
+          },
+          "metadata": {
+            "args": {
+              "conditionId": "0x6d0e09d0f04572d9b1adad84703458b0297bc5603b69dccbde93147ee4443246"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"US forces enter Iran by April 30?\",\"conditionId\":\"0x6d0e09d0f04572d9b1adad84703458b0297bc5603b69dccbde93147ee4443246\",\"outcomes\":[{\"name\":\"YES\",\"tokenId\":\"2916184120206223749839849644877707470354946028257066951797428049170871002238\",\"price\":0.585,\"impliedProbability\":0.585,\"impliedProbabilityPercent\":58.5},{\"name\":\"NO\",\"tokenId\":\"76533108781962275310651165149634079251899733930834190485860627580128626747247\",\"price\":0.415,\"impliedProbability\":0.415,\"impliedProbabilityPercent\":41.5}],\"marketEfficiency\":{\"sumOfOutcomes\":1,\"vig\":0,\"vigBps\":0,\"isEfficient\":true,\"efficiency\":\"excellent\"},\"spreadInfo\":{\"bidAskSpread\":0.01,\"spreadCents\":1},\"trueProbabilities\":{\"YES\":0.585,\"NO\":0.415},\"trueProbabilitiesPercent\":{\"YES\":58.5,\"NO\":41.5},\"recommendation\":\"Market is efficiently priced. Edge m...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546191,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_rules"
+          },
+          "metadata": {
+            "args": {
+              "slug": "us-forces-enter-iran-by"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"US forces enter Iran by..?\",\"description\":\"This market will resolve to “Yes” if active US military personnel physically enter Iran at any point by the listed date (ET). Otherwise, this market will resolve to \\\"No\\\".\\n\\nMilitary special operation forces will qualify, however intelligence operatives will not count.\\n\\nUS military personnel must physically enter the terrestrial territory of Iran to qualify. Entering Iran's maritime or aerial territory will not count.\\n\\nMilitary contractors, military advisors, or high-ranking US service members entering Iran for diplomatic purposes (and their accompanying entourage) will not qualify.\\n\\nThe resolution source will be a consensus of credible reporting.\",\"resolutionSource\":\"Not specified\",\"endDate\":\"Not specified\",\"rulesSummary\":{\"pri...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546192,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_efficiency"
+          },
+          "metadata": {
+            "args": {
+              "conditionId": "0xeae88eea8b1f8ed3a5fdca58dc30a17cdb5846e63f97b9b4865a85d7c43351d6"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Will Iran strike Afghanistan by April 30, 2026?\",\"conditionId\":\"0xeae88eea8b1f8ed3a5fdca58dc30a17cdb5846e63f97b9b4865a85d7c43351d6\",\"outcomes\":[{\"name\":\"YES\",\"tokenId\":\"12941187885102056014992527226970646554870670047806607027586797858583024222162\",\"price\":0.027,\"impliedProbability\":0.027,\"impliedProbabilityPercent\":2.7},{\"name\":\"NO\",\"tokenId\":\"15493126194178905012284208720551441997508190924257808012174244831086988215002\",\"price\":0.973,\"impliedProbability\":0.973,\"impliedProbabilityPercent\":97.3}],\"marketEfficiency\":{\"sumOfOutcomes\":1,\"vig\":0,\"vigBps\":0,\"isEfficient\":true,\"efficiency\":\"excellent\"},\"spreadInfo\":{\"bidAskSpread\":0.028,\"spreadCents\":2.8},\"trueProbabilities\":{\"YES\":0.027,\"NO\":0.973},\"trueProbabilitiesPercent\":{\"YES\":2.7,\"NO\":97.3},\"recommendation\":\"Market is efficientl...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546193,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_rules"
+          },
+          "metadata": {
+            "args": {
+              "slug": "iran-military-action-against-by-april-30"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Iran military action against ___ by April 30?\",\"description\":\"This market will resolve to \\\"Yes\\\" if Iran initiates a drone, missile, or air strike on the listed country's soil or any official embassy or consulate of the listed country between market creation and April 30, 2026, 11:59 PM (ET). Otherwise, this market will resolve to \\\"No\\\".\\n\\nFor the purposes of this market, a qualifying \\\"strike\\\" is defined as the use of aerial bombs, drones or missiles (including cruise or ballistic missiles) launched by Iranian military forces that impact a listed country's ground territory or any official embassy or consulate of that country (e.g., if a weapons depot on a listed country soil is hit by an Iranian missile, this market will resolve to \\\"Yes\\\").\\n\\nMissiles or drones which are ...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546194,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_efficiency"
+          },
+          "metadata": {
+            "args": {
+              "conditionId": "0x814ecf7cff5c5aaaeb9d7f60388d03bd7106d94be31e60b02ac2ca01715843c6"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Will any E.U. country strike Iran by April 30?\",\"conditionId\":\"0x814ecf7cff5c5aaaeb9d7f60388d03bd7106d94be31e60b02ac2ca01715843c6\",\"outcomes\":[{\"name\":\"YES\",\"tokenId\":\"59311361914943784006723196945422711292404265494797352133012864904332193475816\",\"price\":0.060000000000000005,\"impliedProbability\":0.06,\"impliedProbabilityPercent\":6},{\"name\":\"NO\",\"tokenId\":\"113341305739062856596216623375621730584698858562528191302371921319897252978886\",\"price\":0.94,\"impliedProbability\":0.94,\"impliedProbabilityPercent\":94}],\"marketEfficiency\":{\"sumOfOutcomes\":1,\"vig\":0,\"vigBps\":0,\"isEfficient\":true,\"efficiency\":\"excellent\"},\"spreadInfo\":{\"bidAskSpread\":0.02,\"spreadCents\":2},\"trueProbabilities\":{\"YES\":0.06,\"NO\":0.94},\"trueProbabilitiesPercent\":{\"YES\":6,\"NO\":94},\"recommendation\":\"Market is efficiently...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546195,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_rules"
+          },
+          "metadata": {
+            "args": {
+              "slug": "which-countries-will-conduct-military-action-against-iran-by-april-30"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Which countries will conduct military action against Iran by April 30?\",\"description\":\"This market will resolve to \\\"Yes\\\" if the listed country initiates a drone, missile, or air strike on Iranian soil or any official Iranian embassy or consulate between market creation and April 30, 2026, 11:59 PM ET. Otherwise, this market will resolve to \\\"No\\\".\\n\\nFor the purposes of this market, a qualifying \\\"strike\\\" is defined as the use of aerial bombs, drones, or missiles (including cruise or ballistic missiles) launched by the listed country's military forces that impact Iranian ground territory or any official Iranian embassy or consulate (e.g., if a weapons depot on Iranian soil is hit by a missile launched by the listed country, this market will resolve to \\\"Yes\\\").\\n\\nMissiles or...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546196,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_efficiency"
+          },
+          "metadata": {
+            "args": {
+              "conditionId": "0x4e17f3846c38119d3dbff86e941fc0ab731da419b53a2902f2d8437c1a96996a"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Will Iran strike Dimona by April 30?\",\"conditionId\":\"0x4e17f3846c38119d3dbff86e941fc0ab731da419b53a2902f2d8437c1a96996a\",\"outcomes\":[{\"name\":\"YES\",\"tokenId\":\"100740706980971223958335573811419967561338461716694787529676458702596020035672\",\"price\":0.09,\"impliedProbability\":0.09,\"impliedProbabilityPercent\":9},{\"name\":\"NO\",\"tokenId\":\"47693008910364101608073058244327400854644539639601309376678882343364495995690\",\"price\":0.91,\"impliedProbability\":0.91,\"impliedProbabilityPercent\":91}],\"marketEfficiency\":{\"sumOfOutcomes\":1,\"vig\":0,\"vigBps\":0,\"isEfficient\":true,\"efficiency\":\"excellent\"},\"spreadInfo\":{\"bidAskSpread\":0.02,\"spreadCents\":2},\"trueProbabilities\":{\"YES\":0.09,\"NO\":0.91},\"trueProbabilitiesPercent\":{\"YES\":9,\"NO\":91},\"recommendation\":\"Market is efficiently priced. Edge must come fr...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546197,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_rules"
+          },
+          "metadata": {
+            "args": {
+              "slug": "what-will-iran-conduct-military-action-against-by-april-30"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"What will Iran conduct military action against by April 30?\",\"description\":\"This market will resolve to \\\"Yes\\\" if Iran carries out a kinetic military strike on the listed facility between market creation and April 30, 2026, 11:59 PM ET. Otherwise, this market will resolve to “No”.\\n\\nThis includes, but is not limited to, drone and missile strikes, aerial bombings. Cyber attacks, sanctions, or diplomatic actions will not count towards the resolution of this market.\\n\\nFor the purposes of this market, only strikes that cause physical damage to the infrastructure of the facility will be considered. Missile and drone strikes that are shot down or miss their targets, or make contact in open spaces or around the facility, will not qualify for a \\\"Yes\\\" resolution.\\n\\nOnly military ac...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546198,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_efficiency"
+          },
+          "metadata": {
+            "args": {
+              "conditionId": "0x9dd53abf4c8b6b25961ebcf61c5413900ece7b3cc08a9511d0c61b3ef9e5a6e3"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Will Hezbollah conduct military action against Israel on March 22, 2026?\",\"conditionId\":\"0x9dd53abf4c8b6b25961ebcf61c5413900ece7b3cc08a9511d0c61b3ef9e5a6e3\",\"outcomes\":[{\"name\":\"YES\",\"tokenId\":\"91523368486307636301558919826796206290396157816039484090987185914414311533817\",\"price\":0.497,\"impliedProbability\":0.497,\"impliedProbabilityPercent\":49.7},{\"name\":\"NO\",\"tokenId\":\"69582315277348966140496870675562301712956342336751156424187974949673268809192\",\"price\":0.503,\"impliedProbability\":0.503,\"impliedProbabilityPercent\":50.3}],\"marketEfficiency\":{\"sumOfOutcomes\":1,\"vig\":0,\"vigBps\":0,\"isEfficient\":true,\"efficiency\":\"excellent\"},\"spreadInfo\":{\"bidAskSpread\":0.004,\"spreadCents\":0.4},\"trueProbabilities\":{\"YES\":0.497,\"NO\":0.503},\"trueProbabilitiesPercent\":{\"YES\":49.7,\"NO\":50.3},\"recommenda...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546199,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_rules"
+          },
+          "metadata": {
+            "args": {
+              "slug": "hezbollah-military-action-against-israel-on"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Hezbollah military action against Israel on...?\",\"description\":\"This market will resolve to \\\"Yes\\\" if Hezbollah initiates a drone, missile, or air strike that impacts Israeli ground territory on the specified date, Israel Standard Time (UTC+2). Otherwise, this market will resolve to \\\"No\\\".\\n\\nFor the purposes of this market, a qualifying \\\"military action\\\" is defined as the use of aerial bombs, drones, or missiles (including cruise or ballistic missiles) launched by Hezbollah forces that physically impact land under Israeli control.\\n\\nIsraeli ground territory, for the purposes of this market, refers to land internationally recognized as part of the State of Israel, including all territory under de facto Israeli government administration as of market creation. This includes t...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "orchestration",
+          "event": "query-complete",
+          "status": "failed",
+          "timestampMs": 1774631547200,
+          "metadata": {
+            "durationMs": 200923,
+            "executionOk": false
+          }
+        },
+        {
+          "stepType": "orchestration",
+          "event": "query-start",
+          "status": "ok",
+          "message": "Query orchestration started",
+          "timestampMs": 1774631545189,
+          "metadata": {
+            "requestId": "28f10f6b-47b6-440b-a679-cc7e57385410",
+            "queryDepth": "deep"
+          }
+        },
+        {
+          "stepType": "selection",
+          "event": "selected-tools",
+          "status": "ok",
+          "timestampMs": 1774631545190,
+          "metadata": {
+            "selectedDepth": "deep",
+            "deepMode": "deep",
+            "debugScoutDeepMode": null,
+            "plannerReasoningStage": "full",
+            "scoutEnabled": false,
+            "preserveFastOneShot": false,
+            "candidateMethodCount": 45,
+            "scoutProbeStatus": "ready",
+            "scoutProbeAdequacy": "adequate",
+            "scoutProbeConfidence": 0.9885,
+            "scoutMetadataConfidence": 0.9538,
+            "scoutProbeQuerySafeCandidateCount": 38,
+            "scoutProbeRankedMethodCount": 38,
+            "scoutProbeAmbiguityPoolCount": 10,
+            "scoutProbeShortlistedMethodCount": 9,
+            "scoutProbeMissingCapability": null,
+            "scoutPrePlanProbeCalls": 0,
+            "scoutPrePlanProbeBudgetReasonCode": null,
+            "scoutChangedInitialPlan": false,
+            "scoutChangedPlannerReasoningStage": false,
+            "scoutInitialSelectedDepth": "deep",
+            "scoutInitialDeepMode": "deep",
+            "scoutInitialPlannerReasoningStage": "full",
+            "scoutInitialReasonCode": "explicit_override",
+            "scoutFinalReasonCode": "explicit_override",
+            "scoutEvidenceAttachedToPlanning": true,
+            "selectedTools": [
+              {
+                "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+                "toolName": "Polymarket",
+                "priceUsd": "0.000000",
+                "selectedMethodCount": 45,
+                "selectedMethods": [
+                  "analyze_market_liquidity",
+                  "check_market_efficiency",
+                  "analyze_whale_flow",
+                  "analyze_top_holders",
+                  "analyze_event_whale_breakdown",
+                  "analyze_event_outcome_liquidity",
+                  "find_correlated_markets",
+                  "check_market_rules",
+                  "find_arbitrage_opportunities",
+                  "find_trading_opportunities",
+                  "build_high_conviction_workflow",
+                  "analyze_single_market_whales"
+                ],
+                "omittedSelectedMethodCount": 33
+              }
+            ],
+            "clarification": {
+              "truncated": true,
+              "preview": "{\"orchestrationMode\":\"manual_selected_tools\",\"rolloutStage\":\"enabled\",\"shadowMode\":false,\"policy\":\"auto\",\"outcomeType\":\"clarification_required\",\"triggered\":true,\"optionCount\":3,\"candidateCount\":38,\"viableCandidateCount\":3,\"recommendedOptionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes\",\"recommendedOptionReason\":\"The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…\",\"autoResolved\":true,\"autoSelectEnabled\":true,\"assumptionMade\":{\"mode\":\"auto\",\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes\",\"label\":\"🔍 SEARCH + GET OUTCOMES in ONE CALL\",\"reason\":\"The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…\"},\"missingCapability\":null,\"decisionReasonCode\":\"semantic_scope_ambiguity\",\"decisionSignals\":[\"llm_judge\"],\"evidenceSources\":{\"usesMethodSchemas\":true,\"usesProbeArgs\":true,\"usesMethodMetadata\":true,\"usesToolSelectionContext\":false,\"usesLlmSelection\":true},\"comparedOptionIds\":[\"294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi\",\"294100e8-c648-4e5f-a254-95a14b56e398:search_markets\",\"294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes\"],\"decisionStrategy\":\"llm_primary\",\"judgeAttempted\":true,\"judgeApplied\":true,\"judgeOutcomeType\":\"clarification_required\",\"judgeConfidence\":0.62,\"judgeReason\":\"The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…\",\"judgeError\":null,\"validatorReason\":null,\"fallbackReason\":null,\"copyStrategy\":\"deterministic\",\"rewriteAttempted\":false,\"rewriteApplied\":false,\"rewriteError\":null,\"candidateSummaries\":[{\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi\",\"fitScore\":21.55,\"llmRelevanceScore\":null,\"requiredParams\":[],\"unresolvedRequiredParams\":[],\"probeArgKeys\":[],\"inputFieldNames\":[\"limit\",\"title\",\"keywords\",\"polymarketSlug\"],\"outputKeys\":[\"hint\",\"fetchedAt\",\"searchedFor\",\"sourcesTried\",\"kalshiResults\",\"comparisonNote\"],\"semanticScope\":\"event-wide\",\"semanticEntityGranularity\":\"event\",\"semanticRequiresNamedEntity\":false,\"semanticVenueSpecificity\":\"tool-bound\",\"semanticOutputCardinality\":\"comparison\",\"semanticProfileConfidence\":0.95,\"latencyClass\":\"instant\",\"executePriceUsd\":null,\"queryEligible\":true},{\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:get_event_outcomes\",\"fitScore\":16.55,\"llmRelevanceScore\":0.78,\"requiredParams\":[\"slug\"],\"unresolvedRequiredParams\":[],\"probeArgKeys\":[\"includeInactive\",\"limit\",\"slug\",\"sortBy\"],\"inputFieldNames\":[\"slug\",\"limit\",\"sortBy\",\"includeInactive\"],\"outputKeys\":[\"url\",\"outcomes\",\"sortedBy\",\"eventSlug\",\"fetchedAt\",\"eventTitle\"],\"semanticScope\":\"event-wide\",\"semanticEntityGranularity\":\"event\",\"semanticRequiresNamedEntity\":false,\"semanticVenueSpecificity\":\"tool-bound\",\"semanticOutputCardinality\":\"comparison\",\"semanticProfileConfidence\":0.95,\"latencyClass\":\"instant\",\"executePriceUsd\":\"0.001\",\"queryEligible\":true},{\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:discover_trending_markets\",\"fitScore\":15.55,\"llmRelevanceScore\":null,\"requiredParams\":[],\"unresolvedRequiredParams\":[],\"probeArgKeys\":[],\"inputFieldNames\":[\"limit\",\"sortBy\",\"category\"],\"outputKeys\":[\"topTags\",\"fetchedAt\",\"categories\",\"totalActive\",\"marketSummary\",\"trendingMarkets\"],\"semanticScope\":\"event-wide\",\"semanticEntityGranularity\":\"event\",\"semanticRequiresNamedEntity\":false,\"semanticVenueSpecificity\":\"tool-bound\",\"semanticOutputCardinality\":\"multiple\",\"semanticProfileConfidence\":0.95,\"latencyClass\":\"instant\",\"executePriceUsd\":null,\"queryEligible\":true}],\"modelTelemetry\":{\"model...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "planning",
+          "event": "planner-generated-code",
+          "status": "ok",
+          "timestampMs": 1774631545191,
+          "metadata": {
+            "initialCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nconst POLY = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\nexport async function main() {\n  // Step 1: Single broad discovery call to avoid same-endpoint parallel spray\n  const discovery = await callMcpSkill({\n    toolId: POLY,\n    toolName: \"search_markets\",\n    args: { query: \"boots on the ground Iran ground invasion US troops allied forces military strike war\", status: \"live\", limit: 50 }\n  });\n\n  const candidates = Array.isArray(discovery?.results) ? discovery.results : [];\n\n  if (candidates.length === 0) {\n    return {\n      summary: { totalMarketsFound: 0, directGroundWarMarkets: 0, broaderIranMilitaryMarkets: 0 },\n      directGroundWarMarkets: [],\n      broaderIranMilitaryMarkets: [],\n      riskOffFramework: { coreInsight: \"No live Iran military markets found on Polymarket.\", howToThinkAboutIt: [], hedgingImplications: [] },\n      fetchedAt: new Date().toISOString()\n    };\n  }\n\n  // Step 2: Deterministic semantic targeting — rank into two legs\n  const directLeg = pickTopSemanticCandidates({\n    target: \"US or allied boots on the ground in Iran — ground invasion, ground troops, military occupation\",\n    candidates,\n    requiredTerms: [\"boots\", \"ground\", \"invasion\", \"troops\", \"iran\"],\n    avoidTerms: [\"airstrike\", \"strike only\", \"bombing\", \"cyber\", \"sanctions\", \"negotiate\", \"diplomatic\", \"nuclear deal\"],\n    limit: 10\n  });\n\n  const broaderLeg = pickTopSemanticCandidates({\n    target: \"Broader Iran military escalation short of ground invasion — strikes, attacks, war, conflict\",\n    candidates,\n    requiredTerms: [\"iran\", \"strike\", \"attack\", \"war\", \"military\", \"conflict\"],\n    avoidTerms: [\"boots on the ground\", \"ground invasion\", \"ground troops\", \"nuclear deal\", \"sanctions\", \"diplomatic\"],\n    limit: 8\n  });\n\n  // Deduplicate broader against direct\n  const directIds = new Set(directLeg.map(m => m.conditionId || m.title));\n  const broad...[truncated]",
+            "finalCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nconst POLY = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\nexport async function main() {\n  // Step 1: Single broad discovery call to avoid same-endpoint parallel spray\n  const discovery = await callMcpSkill({\n    toolId: POLY,\n    toolName: \"search_markets\",\n    args: { query: \"boots on the ground Iran ground invasion US troops allied forces military strike war\", status: \"live\", limit: 50 }\n  });\n\n  const candidates = Array.isArray(discovery?.results) ? discovery.results : [];\n\n  if (candidates.length === 0) {\n    return {\n      summary: { totalMarketsFound: 0, directGroundWarMarkets: 0, broaderIranMilitaryMarkets: 0 },\n      directGroundWarMarkets: [],\n      broaderIranMilitaryMarkets: [],\n      riskOffFramework: { coreInsight: \"No live Iran military markets found on Polymarket.\", howToThinkAboutIt: [], hedgingImplications: [] },\n      fetchedAt: new Date().toISOString()\n    };\n  }\n\n  // Step 2: Deterministic semantic targeting — rank into two legs\n  const directLeg = pickTopSemanticCandidates({\n    target: \"US or allied boots on the ground in Iran — ground invasion, ground troops, military occupation\",\n    candidates,\n    requiredTerms: [\"boots\", \"ground\", \"invasion\", \"troops\", \"iran\"],\n    avoidTerms: [\"airstrike\", \"strike only\", \"bombing\", \"cyber\", \"sanctions\", \"negotiate\", \"diplomatic\", \"nuclear deal\"],\n    limit: 10\n  });\n\n  const broaderLeg = pickTopSemanticCandidates({\n    target: \"Broader Iran military escalation short of ground invasion — strikes, attacks, war, conflict\",\n    candidates,\n    requiredTerms: [\"iran\", \"strike\", \"attack\", \"war\", \"military\", \"conflict\"],\n    avoidTerms: [\"boots on the ground\", \"ground invasion\", \"ground troops\", \"nuclear deal\", \"sanctions\", \"diplomatic\"],\n    limit: 8\n  });\n\n  // Deduplicate broader against direct\n  const directIds = new Set(directLeg.map(m => m.conditionId || m.title));\n  const broad...[truncated]",
+            "plannerQuery": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?\n\n[AUTO CLARIFICATION SELECTION]\nPreferred interpretation: 🔍 SEARCH + GET OUTCOMES in ONE CALL\nReason: The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…\nContinue with this interpretation unless execution proves it incompatible.",
+            "scoutEvidenceAttached": false,
+            "scoutEvidencePromptBlock": null,
+            "allowedModules": [
+              "@/lib/ai/skills/mcp",
+              "@/lib/ai/skills/semantic-targeting"
+            ]
+          }
+        },
+        {
+          "stepType": "execution-program",
+          "event": "execution-program-lineage",
+          "status": "ok",
+          "timestampMs": 1774631545192,
+          "metadata": {
+            "executionProgram": {
+              "baseRevisionId": "rev-1",
+              "currentRevisionId": "rev-1",
+              "revisionCount": 1,
+              "patchCount": 0,
+              "replanCount": 0,
+              "deterministicChangeCount": 0,
+              "revisions": [
+                {
+                  "revisionId": "rev-1",
+                  "parentRevisionId": null,
+                  "attempt": 0,
+                  "action": "initial",
+                  "reason": "initial",
+                  "summary": "Planner base program",
+                  "codeHash": "a599dc9e075f9f7d3117a9a0020016bb2bd467f615d1847c2bf60421faa5dd04",
+                  "codeLength": 7124,
+                  "changedLineCount": 0,
+                  "diffPreview": null,
+                  "editCount": null,
+                  "preservesPriorLogic": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546189,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "search_markets"
+          },
+          "metadata": {
+            "args": {
+              "query": "boots on the ground Iran ground invasion US troops allied forces military strike war",
+              "status": "live",
+              "limit": 50
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"results\":[{\"title\":\"US forces enter Iran by..?\",\"url\":\"https://polymarket.com/event/us-forces-enter-iran-by\",\"slug\":\"us-forces-enter-iran-by\",\"status\":\"live\",\"conditionId\":\"0x6d0e09d0f04572d9b1adad84703458b0297bc5603b69dccbde93147ee4443246\",\"matchedOutcome\":\"April 30\",\"outcomePrice\":\"0.595\",\"volume\":37626342.35615241,\"liquidity\":759024.8764,\"score\":499},{\"title\":\"What will Iran conduct military action against by April 30?\",\"url\":\"https://polymarket.com/event/what-will-iran-conduct-military-action-against-by-april-30\",\"slug\":\"what-will-iran-conduct-military-action-against-by-april-30\",\"status\":\"live\",\"conditionId\":\"0x4e17f3846c38119d3dbff86e941fc0ab731da419b53a2902f2d8437c1a96996a\",\"matchedOutcome\":\"Dimona (Shimon Peres Negev Nuclear Research Center)\",\"outcomePrice\":\"0.085\",\"volume\":48811...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546190,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_efficiency"
+          },
+          "metadata": {
+            "args": {
+              "conditionId": "0x6d0e09d0f04572d9b1adad84703458b0297bc5603b69dccbde93147ee4443246"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"US forces enter Iran by April 30?\",\"conditionId\":\"0x6d0e09d0f04572d9b1adad84703458b0297bc5603b69dccbde93147ee4443246\",\"outcomes\":[{\"name\":\"YES\",\"tokenId\":\"2916184120206223749839849644877707470354946028257066951797428049170871002238\",\"price\":0.585,\"impliedProbability\":0.585,\"impliedProbabilityPercent\":58.5},{\"name\":\"NO\",\"tokenId\":\"76533108781962275310651165149634079251899733930834190485860627580128626747247\",\"price\":0.415,\"impliedProbability\":0.415,\"impliedProbabilityPercent\":41.5}],\"marketEfficiency\":{\"sumOfOutcomes\":1,\"vig\":0,\"vigBps\":0,\"isEfficient\":true,\"efficiency\":\"excellent\"},\"spreadInfo\":{\"bidAskSpread\":0.01,\"spreadCents\":1},\"trueProbabilities\":{\"YES\":0.585,\"NO\":0.415},\"trueProbabilitiesPercent\":{\"YES\":58.5,\"NO\":41.5},\"recommendation\":\"Market is efficiently priced. Edge m...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546191,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_rules"
+          },
+          "metadata": {
+            "args": {
+              "slug": "us-forces-enter-iran-by"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"US forces enter Iran by..?\",\"description\":\"This market will resolve to “Yes” if active US military personnel physically enter Iran at any point by the listed date (ET). Otherwise, this market will resolve to \\\"No\\\".\\n\\nMilitary special operation forces will qualify, however intelligence operatives will not count.\\n\\nUS military personnel must physically enter the terrestrial territory of Iran to qualify. Entering Iran's maritime or aerial territory will not count.\\n\\nMilitary contractors, military advisors, or high-ranking US service members entering Iran for diplomatic purposes (and their accompanying entourage) will not qualify.\\n\\nThe resolution source will be a consensus of credible reporting.\",\"resolutionSource\":\"Not specified\",\"endDate\":\"Not specified\",\"rulesSummary\":{\"pri...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546192,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_efficiency"
+          },
+          "metadata": {
+            "args": {
+              "conditionId": "0xeae88eea8b1f8ed3a5fdca58dc30a17cdb5846e63f97b9b4865a85d7c43351d6"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Will Iran strike Afghanistan by April 30, 2026?\",\"conditionId\":\"0xeae88eea8b1f8ed3a5fdca58dc30a17cdb5846e63f97b9b4865a85d7c43351d6\",\"outcomes\":[{\"name\":\"YES\",\"tokenId\":\"12941187885102056014992527226970646554870670047806607027586797858583024222162\",\"price\":0.027,\"impliedProbability\":0.027,\"impliedProbabilityPercent\":2.7},{\"name\":\"NO\",\"tokenId\":\"15493126194178905012284208720551441997508190924257808012174244831086988215002\",\"price\":0.973,\"impliedProbability\":0.973,\"impliedProbabilityPercent\":97.3}],\"marketEfficiency\":{\"sumOfOutcomes\":1,\"vig\":0,\"vigBps\":0,\"isEfficient\":true,\"efficiency\":\"excellent\"},\"spreadInfo\":{\"bidAskSpread\":0.028,\"spreadCents\":2.8},\"trueProbabilities\":{\"YES\":0.027,\"NO\":0.973},\"trueProbabilitiesPercent\":{\"YES\":2.7,\"NO\":97.3},\"recommendation\":\"Market is efficientl...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546193,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_rules"
+          },
+          "metadata": {
+            "args": {
+              "slug": "iran-military-action-against-by-april-30"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Iran military action against ___ by April 30?\",\"description\":\"This market will resolve to \\\"Yes\\\" if Iran initiates a drone, missile, or air strike on the listed country's soil or any official embassy or consulate of the listed country between market creation and April 30, 2026, 11:59 PM (ET). Otherwise, this market will resolve to \\\"No\\\".\\n\\nFor the purposes of this market, a qualifying \\\"strike\\\" is defined as the use of aerial bombs, drones or missiles (including cruise or ballistic missiles) launched by Iranian military forces that impact a listed country's ground territory or any official embassy or consulate of that country (e.g., if a weapons depot on a listed country soil is hit by an Iranian missile, this market will resolve to \\\"Yes\\\").\\n\\nMissiles or drones which are ...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546194,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_efficiency"
+          },
+          "metadata": {
+            "args": {
+              "conditionId": "0x814ecf7cff5c5aaaeb9d7f60388d03bd7106d94be31e60b02ac2ca01715843c6"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Will any E.U. country strike Iran by April 30?\",\"conditionId\":\"0x814ecf7cff5c5aaaeb9d7f60388d03bd7106d94be31e60b02ac2ca01715843c6\",\"outcomes\":[{\"name\":\"YES\",\"tokenId\":\"59311361914943784006723196945422711292404265494797352133012864904332193475816\",\"price\":0.060000000000000005,\"impliedProbability\":0.06,\"impliedProbabilityPercent\":6},{\"name\":\"NO\",\"tokenId\":\"113341305739062856596216623375621730584698858562528191302371921319897252978886\",\"price\":0.94,\"impliedProbability\":0.94,\"impliedProbabilityPercent\":94}],\"marketEfficiency\":{\"sumOfOutcomes\":1,\"vig\":0,\"vigBps\":0,\"isEfficient\":true,\"efficiency\":\"excellent\"},\"spreadInfo\":{\"bidAskSpread\":0.02,\"spreadCents\":2},\"trueProbabilities\":{\"YES\":0.06,\"NO\":0.94},\"trueProbabilitiesPercent\":{\"YES\":6,\"NO\":94},\"recommendation\":\"Market is efficiently...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546195,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_rules"
+          },
+          "metadata": {
+            "args": {
+              "slug": "which-countries-will-conduct-military-action-against-iran-by-april-30"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Which countries will conduct military action against Iran by April 30?\",\"description\":\"This market will resolve to \\\"Yes\\\" if the listed country initiates a drone, missile, or air strike on Iranian soil or any official Iranian embassy or consulate between market creation and April 30, 2026, 11:59 PM ET. Otherwise, this market will resolve to \\\"No\\\".\\n\\nFor the purposes of this market, a qualifying \\\"strike\\\" is defined as the use of aerial bombs, drones, or missiles (including cruise or ballistic missiles) launched by the listed country's military forces that impact Iranian ground territory or any official Iranian embassy or consulate (e.g., if a weapons depot on Iranian soil is hit by a missile launched by the listed country, this market will resolve to \\\"Yes\\\").\\n\\nMissiles or...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546196,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_efficiency"
+          },
+          "metadata": {
+            "args": {
+              "conditionId": "0x4e17f3846c38119d3dbff86e941fc0ab731da419b53a2902f2d8437c1a96996a"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Will Iran strike Dimona by April 30?\",\"conditionId\":\"0x4e17f3846c38119d3dbff86e941fc0ab731da419b53a2902f2d8437c1a96996a\",\"outcomes\":[{\"name\":\"YES\",\"tokenId\":\"100740706980971223958335573811419967561338461716694787529676458702596020035672\",\"price\":0.09,\"impliedProbability\":0.09,\"impliedProbabilityPercent\":9},{\"name\":\"NO\",\"tokenId\":\"47693008910364101608073058244327400854644539639601309376678882343364495995690\",\"price\":0.91,\"impliedProbability\":0.91,\"impliedProbabilityPercent\":91}],\"marketEfficiency\":{\"sumOfOutcomes\":1,\"vig\":0,\"vigBps\":0,\"isEfficient\":true,\"efficiency\":\"excellent\"},\"spreadInfo\":{\"bidAskSpread\":0.02,\"spreadCents\":2},\"trueProbabilities\":{\"YES\":0.09,\"NO\":0.91},\"trueProbabilitiesPercent\":{\"YES\":9,\"NO\":91},\"recommendation\":\"Market is efficiently priced. Edge must come fr...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546197,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_rules"
+          },
+          "metadata": {
+            "args": {
+              "slug": "what-will-iran-conduct-military-action-against-by-april-30"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"What will Iran conduct military action against by April 30?\",\"description\":\"This market will resolve to \\\"Yes\\\" if Iran carries out a kinetic military strike on the listed facility between market creation and April 30, 2026, 11:59 PM ET. Otherwise, this market will resolve to “No”.\\n\\nThis includes, but is not limited to, drone and missile strikes, aerial bombings. Cyber attacks, sanctions, or diplomatic actions will not count towards the resolution of this market.\\n\\nFor the purposes of this market, only strikes that cause physical damage to the infrastructure of the facility will be considered. Missile and drone strikes that are shot down or miss their targets, or make contact in open spaces or around the facility, will not qualify for a \\\"Yes\\\" resolution.\\n\\nOnly military ac...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546198,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_efficiency"
+          },
+          "metadata": {
+            "args": {
+              "conditionId": "0x9dd53abf4c8b6b25961ebcf61c5413900ece7b3cc08a9511d0c61b3ef9e5a6e3"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Will Hezbollah conduct military action against Israel on March 22, 2026?\",\"conditionId\":\"0x9dd53abf4c8b6b25961ebcf61c5413900ece7b3cc08a9511d0c61b3ef9e5a6e3\",\"outcomes\":[{\"name\":\"YES\",\"tokenId\":\"91523368486307636301558919826796206290396157816039484090987185914414311533817\",\"price\":0.497,\"impliedProbability\":0.497,\"impliedProbabilityPercent\":49.7},{\"name\":\"NO\",\"tokenId\":\"69582315277348966140496870675562301712956342336751156424187974949673268809192\",\"price\":0.503,\"impliedProbability\":0.503,\"impliedProbabilityPercent\":50.3}],\"marketEfficiency\":{\"sumOfOutcomes\":1,\"vig\":0,\"vigBps\":0,\"isEfficient\":true,\"efficiency\":\"excellent\"},\"spreadInfo\":{\"bidAskSpread\":0.004,\"spreadCents\":0.4},\"trueProbabilities\":{\"YES\":0.497,\"NO\":0.503},\"trueProbabilitiesPercent\":{\"YES\":49.7,\"NO\":50.3},\"recommenda...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774631546199,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "check_market_rules"
+          },
+          "metadata": {
+            "args": {
+              "slug": "hezbollah-military-action-against-israel-on"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"market\":\"Hezbollah military action against Israel on...?\",\"description\":\"This market will resolve to \\\"Yes\\\" if Hezbollah initiates a drone, missile, or air strike that impacts Israeli ground territory on the specified date, Israel Standard Time (UTC+2). Otherwise, this market will resolve to \\\"No\\\".\\n\\nFor the purposes of this market, a qualifying \\\"military action\\\" is defined as the use of aerial bombs, drones, or missiles (including cruise or ballistic missiles) launched by Hezbollah forces that physically impact land under Israeli control.\\n\\nIsraeli ground territory, for the purposes of this market, refers to land internationally recognized as part of the State of Israel, including all territory under de facto Israeli government administration as of market creation. This includes t...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "orchestration",
+          "event": "query-complete",
+          "status": "failed",
+          "timestampMs": 1774631547200,
+          "metadata": {
+            "durationMs": 200923,
+            "executionOk": false
+          }
+        }
+      ],
+      "requestId": "28f10f6b-47b6-440b-a679-cc7e57385410",
+      "query": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?",
+      "source": "backend-runtime",
+      "diagnostics": {
+        "selection": "[OMITTED:CIRCULAR_REFERENCE]",
+        "planning": {
+          "initial": {
+            "plannerQuery": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?\n\n[AUTO CLARIFICATION SELECTION]\nPreferred interpretation: 🔍 SEARCH + GET OUTCOMES in ONE CALL\nReason: The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…\nContinue with this interpretation unless execution proves it incompatible.",
+            "scoutEvidenceAttached": false,
+            "scoutEvidencePromptBlock": null,
+            "allowedModules": [
+              "@/lib/ai/skills/mcp",
+              "@/lib/ai/skills/semantic-targeting"
+            ],
+            "intentContract": {
+              "strictValidation": true,
+              "namedVenues": [
+                "Polymarket"
+              ],
+              "requiresCrossVenueCoverage": false,
+              "requiresDirectInstruments": true,
+              "requiresHedge": false,
+              "requiresPortfolioConstruction": false,
+              "requiresRepresentativeOutcomeSelection": false,
+              "primaryScenario": null,
+              "hedgeScenario": null
+            },
+            "validation": {
+              "applied": true,
+              "passed": false,
+              "issues": [
+                "Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities."
+              ],
+              "rewriteAttempted": true,
+              "rewriteAccepted": true,
+              "rewriteGuidance": "Import pickTopSemanticCandidates from \"@/lib/ai/skills/semantic-targeting\" and rank candidate sets against explicit target legs before selecting."
+            }
+          }
+        },
+        "cost": {
+          "planningCostUsd": 0.15559239999999996,
+          "initialExecutionCostUsd": 0,
+          "rediscoveryAdditionalCostUsd": 0,
+          "synthesisCostUsd": 0.0120755,
+          "totalModelCostUsd": 0.17438119999999996,
+          "toolCostUsd": 0,
+          "totalChargedUsd": 0.17438119999999996
+        },
+        "completeness": "[OMITTED:CIRCULAR_REFERENCE]",
+        "rediscovery": {
+          "considered": false,
+          "executed": false,
+          "skipReason": "rediscovery_precheck_elapsed_budget_partial_answer",
+          "missingCapability": null,
+          "rediscoveryQuery": null,
+          "capabilityLooksLikeSearchNeed": false,
+          "allowSearchFallbackOnElapsedCap": false,
+          "searchFallbackUsed": false,
+          "preRediscoveryBudgetReasonCode": "elapsed_cap_exceeded",
+          "candidateSearchResults": [],
+          "selectedAlternatives": [],
+          "mergedTools": [],
+          "usingPaidFallback": false,
+          "branchPlan": null
+        },
+        "clarification": "[OMITTED:CIRCULAR_REFERENCE]",
+        "models": {
+          "overrideMode": "none",
+          "stages": [
+            {
+              "stageKey": "scout-llm-selection",
+              "stageKind": "stage",
+              "stage": "scout-llm-selection",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gpt-5.4-nano-model",
+              "requestedModelId": "gpt-5.4-nano-model",
+              "resolvedModelId": "gpt-5.4-nano-model",
+              "resolvedRuntimeModelId": "openai/gpt-5.4-nano",
+              "effectiveModelId": "gpt-5.4-nano-model",
+              "effectiveRuntimeModelId": "openai/gpt-5.4-nano",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.0025972499999999997,
+              "usage": null
+            },
+            {
+              "stageKey": "clarification-judge",
+              "stageKind": "stage",
+              "stage": "clarification-judge",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gpt-5.4-nano-model",
+              "requestedModelId": "gpt-5.4-nano-model",
+              "resolvedModelId": "gpt-5.4-nano-model",
+              "resolvedRuntimeModelId": "openai/gpt-5.4-nano",
+              "effectiveModelId": "gpt-5.4-nano-model",
+              "effectiveRuntimeModelId": "openai/gpt-5.4-nano",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.00411605,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]"
+              }
+            },
+            {
+              "stageKey": "planning",
+              "stageKind": "stage",
+              "stage": "planning",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "glm-turbo-model",
+              "requestedModelId": "glm-turbo-model",
+              "resolvedModelId": "glm-turbo-model",
+              "resolvedRuntimeModelId": "z-ai/glm-5-turbo",
+              "effectiveModelId": "glm-turbo-model",
+              "effectiveRuntimeModelId": "z-ai/glm-5-turbo",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.15559239999999996,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]",
+                "reasoningTokens": "[REDACTED]",
+                "cachedInputTokens": "[REDACTED]"
+              }
+            },
+            {
+              "stageKey": "planning-validation",
+              "stageKind": "stage",
+              "stage": "planning",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "glm-turbo-model",
+              "requestedModelId": "glm-turbo-model",
+              "resolvedModelId": "glm-turbo-model",
+              "resolvedRuntimeModelId": "z-ai/glm-5-turbo",
+              "effectiveModelId": "glm-turbo-model",
+              "effectiveRuntimeModelId": "z-ai/glm-5-turbo",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": 34638,
+              "actualCostUsd": 0.0080956,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]",
+                "reasoningTokens": "[REDACTED]",
+                "cachedInputTokens": "[REDACTED]"
+              }
+            },
+            {
+              "stageKey": "final-synthesis",
+              "stageKind": "final-synthesis",
+              "stage": "final-synthesis",
+              "surface": "query",
+              "responseShape": "answer",
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gemini-flash-model",
+              "requestedModelId": "gemini-flash-model",
+              "resolvedModelId": "gemini-flash-model",
+              "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+              "effectiveModelId": "gemini-flash-model",
+              "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.0120755,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]",
+                "reasoningTokens": "[REDACTED]",
+                "cachedInputTokens": "[REDACTED]"
+              }
+            }
+          ]
+        }
+      },
+      "governance": {
+        "policyVersion": "2026-03-05.query-data-governance.v1",
+        "redactionCount": 23,
+        "omittedSensitiveFieldsCount": 0,
+        "exposure": {
+          "runtimeArtifacts": "internal_runtime_only",
+          "durableAudit": "internal_ops_only",
+          "developerTrace": "explicit_opt_in_redacted",
+          "publicDataUrl": "explicit_request_opt_in"
+        },
+        "retention": {
+          "runtimeTtlMs": 900000,
+          "durableAuditDays": 30,
+          "publicDataUrl": "until_deleted"
+        }
+      }
+    },
+    "orchestrationMetrics": "[OMITTED:CIRCULAR_REFERENCE]",
+    "assumptionMade": {
+      "mode": "auto",
+      "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes",
+      "label": "🔍 SEARCH + GET OUTCOMES in ONE CALL",
+      "reason": "The request requires mapping multiple Polymarket markets/outcomes to “boots on the ground” and interpreting implied odds by resolution date and current price. Different grounded methods either enumerate all matches or focus on a limited/tr…"
+    }
+  }
+}

@@ -23,6 +23,52 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import express, { type Request, type Response, type NextFunction } from "express";
 import { createContextMiddleware, type PolymarketContext, type PolymarketPosition } from "@ctxprotocol/sdk";
+import type {
+  ContributorSearchJudge,
+  ContributorSearchJudgeResult,
+  ContributorSearchResolution,
+  SearchCandidate,
+} from "../../../dist/contrib/search/index.js";
+
+type ContributorSearchModule = typeof import("../../../dist/contrib/search/index.js");
+
+const contributorSearchModuleSpecifiers = [
+  "@ctxprotocol/sdk/contrib/search",
+  import.meta.url.includes("/dist/")
+    ? "../../../../dist/contrib/search/index.js"
+    : "../../../dist/contrib/search/index.js",
+] as const;
+
+async function loadContributorSearchModule(): Promise<
+  Pick<
+    ContributorSearchModule,
+    "attachContributorSearchMetadata" | "createSearchIntent" | "resolveContributorSearch"
+  >
+> {
+  let lastError: unknown = null;
+  for (const specifier of contributorSearchModuleSpecifiers) {
+    try {
+      return (specifier.startsWith("@")
+        ? await import(specifier)
+        : await import(new URL(specifier, import.meta.url).href)) as Pick<
+        ContributorSearchModule,
+        "attachContributorSearchMetadata" | "createSearchIntent" | "resolveContributorSearch"
+      >;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Failed to load contributor search helper module.");
+}
+
+const {
+  attachContributorSearchMetadata,
+  createSearchIntent,
+  resolveContributorSearch,
+} = await loadContributorSearchModule();
 
 // ============================================================================
 // API ENDPOINTS
@@ -64,6 +110,15 @@ function getConfiguredInteger(
   if (!Number.isFinite(parsed)) return fallback;
 
   return Math.min(max, Math.max(min, parsed));
+}
+
+function normalizeOptionalString(value: string | undefined): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
 }
 
 const POLYMARKET_RETRY_ATTEMPTS = getConfiguredInteger(
@@ -176,6 +231,48 @@ const DISCOVER_TRENDING_STALE_IF_ERROR_TTL_MS = getConfiguredInteger(
   180_000,
   0,
   900_000
+);
+const ACTIVE_EVENT_SEARCH_INDEX_CACHE_TTL_MS = getConfiguredInteger(
+  "POLYMARKET_ACTIVE_EVENT_SEARCH_INDEX_CACHE_TTL_MS",
+  60_000,
+  1_000,
+  900_000
+);
+const ACTIVE_EVENT_SEARCH_INDEX_STALE_IF_ERROR_TTL_MS = getConfiguredInteger(
+  "POLYMARKET_ACTIVE_EVENT_SEARCH_INDEX_STALE_IF_ERROR_TTL_MS",
+  300_000,
+  0,
+  3_600_000
+);
+const ACTIVE_EVENT_SEARCH_INDEX_PAGE_SIZE = getConfiguredInteger(
+  "POLYMARKET_ACTIVE_EVENT_SEARCH_INDEX_PAGE_SIZE",
+  100,
+  20,
+  200
+);
+const ACTIVE_EVENT_SEARCH_INDEX_MAX_PAGES = getConfiguredInteger(
+  "POLYMARKET_ACTIVE_EVENT_SEARCH_INDEX_MAX_PAGES",
+  2,
+  1,
+  6
+);
+const WEBSITE_SEARCH_V2_PAGE_SIZE = getConfiguredInteger(
+  "POLYMARKET_WEBSITE_SEARCH_V2_PAGE_SIZE",
+  50,
+  10,
+  50
+);
+const WEBSITE_SEARCH_V2_ACTIVE_MAX_PAGES = getConfiguredInteger(
+  "POLYMARKET_WEBSITE_SEARCH_V2_ACTIVE_MAX_PAGES",
+  2,
+  1,
+  4
+);
+const WEBSITE_SEARCH_V2_CLOSED_MAX_PAGES = getConfiguredInteger(
+  "POLYMARKET_WEBSITE_SEARCH_V2_CLOSED_MAX_PAGES",
+  2,
+  1,
+  4
 );
 
 const upstreamGetCache = new Map<
@@ -638,6 +735,44 @@ const enum PolymarketSide {
 
 // Collateral token decimals (USDC.e has 6 decimals)
 const COLLATERAL_DECIMALS = 6;
+const CONTRIBUTOR_SEARCH_METADATA_OUTPUT_SCHEMA = {
+  type: "object" as const,
+  description:
+    "Compact contributor search helper diagnostics, shortlist provenance, and judge metadata.",
+};
+const OPENROUTER_CHAT_COMPLETIONS_URL =
+  "https://openrouter.ai/api/v1/chat/completions";
+const POLYMARKET_SEARCH_JUDGE_API_KEY =
+  normalizeOptionalString(process.env.POLYMARKET_OPENROUTER_API_KEY) ??
+  normalizeOptionalString(process.env.OPENROUTER_API_KEY);
+const POLYMARKET_SEARCH_JUDGE_MODEL =
+  normalizeOptionalString(process.env.POLYMARKET_SEARCH_JUDGE_MODEL) ??
+  "openai/gpt-4o-mini";
+const POLYMARKET_SEARCH_JUDGE_DISABLE =
+  process.env.POLYMARKET_DISABLE_SEARCH_JUDGE === "true";
+const POLYMARKET_SEARCH_JUDGE_TIMEOUT_MS = getConfiguredInteger(
+  "POLYMARKET_SEARCH_JUDGE_TIMEOUT_MS",
+  4500,
+  250,
+  30000
+);
+const POLYMARKET_SEARCH_JUDGE_MAX_SHORTLIST = getConfiguredInteger(
+  "POLYMARKET_SEARCH_JUDGE_MAX_SHORTLIST",
+  6,
+  1,
+  10
+);
+const POLYMARKET_SEARCH_JUDGE_BUDGET_USD =
+  normalizeOptionalString(process.env.POLYMARKET_SEARCH_JUDGE_BUDGET_USD) ??
+  "0.010";
+const POLYMARKET_SEARCH_JUDGE_REFERER =
+  normalizeOptionalString(process.env.POLYMARKET_SEARCH_JUDGE_REFERER) ??
+  "https://ctxprotocol.com";
+const POLYMARKET_SEARCH_JUDGE_TITLE =
+  normalizeOptionalString(process.env.POLYMARKET_SEARCH_JUDGE_TITLE) ??
+  "Context Polymarket Contributor Search Judge";
+const POLYMARKET_SEARCH_JUDGE_INSTRUCTIONS =
+  "Select the single Polymarket market or event that best grounds the user's request. Prefer exact outcome/entity matching, exact venue scope, and precise resolution timing. Keep broader macro proxies, adjacent escalation markets, and merely related outcomes in related or rejected buckets instead of promoting them to primary. Return a null primaryCandidateId when the shortlist remains genuinely ambiguous.";
 
 // ============================================================================
 // TOOL DEFINITIONS
@@ -732,6 +867,7 @@ const TOOLS = [
           enum: ["excellent", "good", "moderate", "poor", "illiquid"],
         },
         recommendation: { type: "string" },
+        searchMetadata: CONTRIBUTOR_SEARCH_METADATA_OUTPUT_SCHEMA,
         fetchedAt: { type: "string" },
       },
       required: [
@@ -2635,12 +2771,12 @@ NEXT STEPS after finding match:
     name: "search_and_get_outcomes",
     description: `🔍 SEARCH + GET OUTCOMES in ONE CALL. Finds a market and returns all its outcomes immediately.
 
-✅ Uses Polymarket's official /public-search API for reliable server-side text search.
+✅ Uses Polymarket's website-backed /search-v2 discovery surface first, with local reranking and fallback search if needed.
 
 ⚠️ USE THIS INSTEAD OF: search_markets → get_event_outcomes (which requires chaining calls)
 
 This tool:
-1. Searches for the most relevant market matching your query (using /public-search API)
+1. Searches for the most relevant market matching your query (using Polymarket's website-backed search surface)
 2. Automatically fetches all outcomes for that market
 3. Returns everything in one response
 
@@ -2697,8 +2833,12 @@ OUTPUT: All outcomes with prices, ready for comparison`,
           },
         },
         searchQuery: { type: "string" },
-        searchMethod: { type: "string", enum: ["public-search", "events-fallback"], description: "Which search method was used" },
+        searchMethod: {
+          type: "string",
+          description: "Which discovery surface or fallback path found the winning market",
+        },
         matchConfidence: { type: "string", enum: ["exact", "high", "medium", "low"] },
+        searchMetadata: CONTRIBUTOR_SEARCH_METADATA_OUTPUT_SCHEMA,
         fetchedAt: { type: "string" },
       },
       required: ["eventTitle", "outcomes"],
@@ -3218,7 +3358,7 @@ Useful for identifying liquid vs illiquid markets. Wide spreads (>0.05) indicate
     name: "search_markets",
     description: `Search for Polymarket prediction markets by keyword or category.
 
-✅ Uses Polymarket's official /public-search API for reliable server-side text search.
+✅ Uses Polymarket's website-backed /search-v2 discovery surface first, with local reranking and fallback search if needed.
 
 MARKET STATUS:
 - LIVE markets: Still trading, outcome not yet determined
@@ -3284,6 +3424,7 @@ Each result includes:
             resolved: { type: "number", description: "Count of resolved/finished markets" },
           },
         },
+        searchMetadata: CONTRIBUTOR_SEARCH_METADATA_OUTPUT_SCHEMA,
         fetchedAt: { type: "string" },
       },
       required: ["results", "count"],
@@ -4156,6 +4297,397 @@ function successResult(data: Record<string, unknown>): CallToolResult {
   };
 }
 
+function getNonEmptyString(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function getFiniteNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim();
+  if (normalized.length === 0) {
+    return null;
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function extractTextFromOpenRouterContent(content: unknown): string {
+  if (typeof content === "string") {
+    return content.trim();
+  }
+
+  if (!Array.isArray(content)) {
+    return "";
+  }
+
+  const fragments: string[] = [];
+  for (const item of content) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
+
+    if ("text" in item && typeof item.text === "string") {
+      fragments.push(item.text);
+      continue;
+    }
+
+    if ("content" in item && typeof item.content === "string") {
+      fragments.push(item.content);
+    }
+  }
+
+  return fragments.join("\n").trim();
+}
+
+function extractJsonObjectText(rawText: string): string {
+  const fencedMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fencedMatch?.[1]) {
+    return fencedMatch[1].trim();
+  }
+
+  const start = rawText.indexOf("{");
+  const end = rawText.lastIndexOf("}");
+  if (start >= 0 && end > start) {
+    return rawText.slice(start, end + 1).trim();
+  }
+
+  return rawText.trim();
+}
+
+function normalizeJudgeCandidateIds(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const normalizedIds: string[] = [];
+  const seen = new Set<string>();
+  for (const entry of value) {
+    if (typeof entry !== "string") {
+      continue;
+    }
+    const normalized = entry.trim();
+    if (normalized.length === 0 || seen.has(normalized)) {
+      continue;
+    }
+    seen.add(normalized);
+    normalizedIds.push(normalized);
+  }
+
+  return normalizedIds;
+}
+
+function normalizeJudgeConfidence(
+  value: unknown
+): ContributorSearchJudgeResult["confidence"] {
+  if (value === "high" || value === "medium" || value === "low") {
+    return value;
+  }
+  return "low";
+}
+
+function parseContributorSearchJudgeResult(
+  rawText: string
+): ContributorSearchJudgeResult {
+  const parsed = JSON.parse(extractJsonObjectText(rawText)) as Record<
+    string,
+    unknown
+  >;
+
+  return {
+    primaryCandidateId:
+      typeof parsed.primaryCandidateId === "string"
+        ? parsed.primaryCandidateId.trim() || null
+        : null,
+    relatedCandidateIds: normalizeJudgeCandidateIds(parsed.relatedCandidateIds),
+    rejectedCandidateIds: normalizeJudgeCandidateIds(parsed.rejectedCandidateIds),
+    confidence: normalizeJudgeConfidence(parsed.confidence),
+    reason:
+      typeof parsed.reason === "string" && parsed.reason.trim().length > 0
+        ? parsed.reason.trim()
+        : "OpenRouter judge selected a candidate.",
+  };
+}
+
+function createPolymarketOpenRouterJudge(): ContributorSearchJudge | null {
+  if (!POLYMARKET_SEARCH_JUDGE_API_KEY || POLYMARKET_SEARCH_JUDGE_DISABLE) {
+    return null;
+  }
+
+  return {
+    async evaluate(input, context) {
+      const shortlist = input.shortlist.candidates.map((candidate, index) => ({
+        rank: index + 1,
+        candidateId: candidate.candidateId,
+        title: candidate.title,
+        description: candidate.description ?? null,
+        rawIds: candidate.rawIds ?? {},
+        rankFeatures: candidate.rankFeatures ?? {},
+        metadata: candidate.metadata ?? {},
+        provenance: candidate.provenance.map((provenance) => ({
+          source: provenance.source,
+          query: provenance.query,
+          rank: provenance.rank,
+        })),
+      }));
+
+      const response = await fetch(OPENROUTER_CHAT_COMPLETIONS_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${POLYMARKET_SEARCH_JUDGE_API_KEY}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": POLYMARKET_SEARCH_JUDGE_REFERER,
+          "X-Title": POLYMARKET_SEARCH_JUDGE_TITLE,
+        },
+        body: JSON.stringify({
+          model: context.model ?? POLYMARKET_SEARCH_JUDGE_MODEL,
+          temperature: 0,
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a contributor-side Polymarket search judge. Return exactly one JSON object with keys primaryCandidateId, relatedCandidateIds, rejectedCandidateIds, confidence, and reason. Never invent candidate ids that are not present in the shortlist.",
+            },
+            {
+              role: "user",
+              content: JSON.stringify(
+                {
+                  rawRequest: input.rawRequest,
+                  intents: input.intents,
+                  instructions:
+                    input.instructions ?? POLYMARKET_SEARCH_JUDGE_INSTRUCTIONS,
+                  traceLabel: context.traceLabel,
+                  shortlist,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `OpenRouter judge request failed with ${response.status} ${response.statusText}`
+        );
+      }
+
+      const payload = (await response.json()) as Record<string, unknown>;
+      const choices = Array.isArray(payload.choices) ? payload.choices : [];
+      const firstChoice =
+        choices[0] && typeof choices[0] === "object"
+          ? (choices[0] as Record<string, unknown>)
+          : null;
+      const message =
+        firstChoice &&
+        typeof firstChoice.message === "object" &&
+        firstChoice.message !== null
+          ? (firstChoice.message as Record<string, unknown>)
+          : null;
+      const rawText = extractTextFromOpenRouterContent(message?.content);
+
+      if (rawText.length === 0) {
+        throw new Error("OpenRouter judge returned empty content.");
+      }
+
+      const result = parseContributorSearchJudgeResult(rawText);
+      const usage =
+        typeof payload.usage === "object" && payload.usage !== null
+          ? (payload.usage as Record<string, unknown>)
+          : null;
+
+      if (usage) {
+        result.usage = {
+          promptTokens: getFiniteNumber(usage.prompt_tokens) ?? undefined,
+          completionTokens: getFiniteNumber(usage.completion_tokens) ?? undefined,
+          totalTokens: getFiniteNumber(usage.total_tokens) ?? undefined,
+          costUsd: getNonEmptyString(usage.cost),
+          latencyMs: getFiniteNumber(usage.latency_ms),
+        };
+      }
+
+      return result;
+    },
+  };
+}
+
+async function resolvePolymarketContributorSearch(params: {
+  rawRequest: string;
+  intentQuery: string;
+  traceLabel: string;
+  candidates: SearchCandidate[];
+  instructions?: string;
+}): Promise<ContributorSearchResolution | null> {
+  if (params.candidates.length === 0) {
+    return null;
+  }
+
+  const judge = createPolymarketOpenRouterJudge();
+  return await resolveContributorSearch({
+    rawRequest: params.rawRequest,
+    intents: [
+      createSearchIntent({
+        rawRequest: params.rawRequest,
+        query: params.intentQuery,
+        clause: "polymarket contributor search resolution",
+      }),
+    ],
+    candidates: params.candidates,
+    ...(judge ? { judge } : {}),
+    contributorConfig: {
+      provider: "openrouter",
+      model: POLYMARKET_SEARCH_JUDGE_MODEL,
+      timeoutMs: POLYMARKET_SEARCH_JUDGE_TIMEOUT_MS,
+      budgetUsd: POLYMARKET_SEARCH_JUDGE_BUDGET_USD,
+      disableJudge: POLYMARKET_SEARCH_JUDGE_DISABLE,
+      degradedOutcomePolicy: "allow_low_confidence_selected",
+      maxShortlistSize: judge ? POLYMARKET_SEARCH_JUDGE_MAX_SHORTLIST : 1,
+    },
+    instructions:
+      params.instructions ?? POLYMARKET_SEARCH_JUDGE_INSTRUCTIONS,
+    traceLabel: params.traceLabel,
+  });
+}
+
+function buildPolymarketEventSearchCandidate(params: {
+  query: string;
+  rank: number;
+  source: string;
+  score: number;
+  event: GammaEvent;
+  matchedMarket?: GammaMarket;
+}): SearchCandidate {
+  const matchedOutcome =
+    params.matchedMarket?.groupItemTitle ||
+    params.matchedMarket?.question ||
+    params.matchedMarket?.title ||
+    null;
+  const candidateId =
+    params.event.slug ||
+    params.matchedMarket?.conditionId ||
+    params.event.conditionId ||
+    params.event.id ||
+    `${params.rank}-${normalizeMarketQueryText(
+      params.event.title || params.query
+    )}`;
+  const endDate = params.event.endDate || params.event.endDateIso || null;
+  const descriptionParts = [matchedOutcome, endDate ? `Resolves ${endDate}` : null]
+    .filter((part): part is string => typeof part === "string" && part.length > 0);
+
+  return {
+    candidateId,
+    title: params.event.title || matchedOutcome || params.query,
+    description:
+      descriptionParts.length > 0 ? descriptionParts.join(" | ") : null,
+    rawIds: {
+      ...(params.event.slug ? { slug: params.event.slug } : {}),
+      ...(params.matchedMarket?.conditionId
+        ? { conditionId: params.matchedMarket.conditionId }
+        : params.event.conditionId
+          ? { conditionId: params.event.conditionId }
+          : {}),
+    },
+    rankFeatures: {
+      rank: params.rank,
+      score: Number(params.score.toFixed(2)),
+      volume: Number(params.event.volume || 0),
+      liquidity: Number(params.event.liquidity || 0),
+      closed: params.event.closed === true,
+      matchedOutcome,
+    },
+    provenance: [
+      {
+        source: params.source,
+        query: params.query,
+        rank: params.rank,
+        fetchedAt: new Date().toISOString(),
+        metadata: {
+          slug: params.event.slug ?? null,
+          matchedOutcome,
+        },
+      },
+    ],
+    metadata: {
+      category: params.event.category ?? null,
+      resolutionDate: endDate,
+      closed: params.event.closed === true,
+      matchedOutcome,
+    },
+  };
+}
+
+function buildPolymarketResultSearchCandidate(params: {
+  query: string;
+  rank: number;
+  source: string;
+  result: Record<string, unknown>;
+}): SearchCandidate {
+  const title = getNonEmptyString(params.result.title) ?? params.query;
+  const slug = getNonEmptyString(params.result.slug);
+  const conditionId = getNonEmptyString(params.result.conditionId);
+  const matchedOutcome = getNonEmptyString(params.result.matchedOutcome);
+  const endDate = getNonEmptyString(params.result.endDate);
+  const score = getFiniteNumber(params.result.score) ?? 0;
+
+  return {
+    candidateId:
+      slug ||
+      conditionId ||
+      `${params.rank}-${normalizeMarketQueryText(title)}`,
+    title,
+    description:
+      matchedOutcome || endDate
+        ? [matchedOutcome, endDate ? `Resolves ${endDate}` : null]
+            .filter((part): part is string => Boolean(part))
+            .join(" | ")
+        : null,
+    rawIds: {
+      ...(slug ? { slug } : {}),
+      ...(conditionId ? { conditionId } : {}),
+    },
+    rankFeatures: {
+      rank: params.rank,
+      score: Number(score.toFixed(2)),
+      volume: getFiniteNumber(params.result.volume),
+      liquidity: getFiniteNumber(params.result.liquidity),
+      status: getNonEmptyString(params.result.status),
+      matchedOutcome,
+    },
+    provenance: [
+      {
+        source: params.source,
+        query: params.query,
+        rank: params.rank,
+        fetchedAt: new Date().toISOString(),
+        metadata: {
+          slug,
+          matchedOutcome,
+        },
+      },
+    ],
+    metadata: {
+      category: getNonEmptyString(params.result.category),
+      resolutionDate: endDate,
+      status: getNonEmptyString(params.result.status),
+      matchedOutcome,
+    },
+  };
+}
+
 // ============================================================================
 // API FETCH HELPERS
 // ============================================================================
@@ -4208,6 +4740,33 @@ type MarketResolveCandidate = {
   volume: number;
   source: string;
 };
+type ActiveEventSearchIndex = {
+  events: GammaEvent[];
+  builtAt: string;
+  tagSlug?: string;
+  sourceOrders: string[];
+};
+type StructuredMarketSearchContext = {
+  normalizedQuery: string;
+  compactQuery: string;
+  namedTokens: string[];
+  scoringTokens: string[];
+  queryTargets: number[];
+  categoryTagSlug?: string;
+};
+type IndexedActiveEventCandidate = MarketResolveCandidate & {
+  event: GammaEvent;
+  market: GammaMarket;
+};
+
+const activeEventSearchIndexCache = new Map<
+  string,
+  {
+    value: ActiveEventSearchIndex;
+    expiresAt: number;
+    staleIfErrorUntil: number;
+  }
+>();
 
 const MARKET_QUERY_STOP_WORDS = new Set([
   "the",
@@ -4230,13 +4789,183 @@ const MARKET_QUERY_STOP_WORDS = new Set([
   "polymarket",
   "who",
   "what",
+  "which",
+  "how",
   "when",
   "where",
+  "whether",
+  "should",
+  "would",
+  "could",
+  "about",
+  "including",
+  "that",
+  "than",
+  "into",
+  "now",
+  "off",
+  "show",
 ]);
 
+const MARKET_QUERY_VARIANT_STOP_WORDS = new Set([
+  "analyze",
+  "analysis",
+  "answer",
+  "answers",
+  "around",
+  "better",
+  "broader",
+  "current",
+  "compare",
+  "dates",
+  "explain",
+  "focus",
+  "focused",
+  "help",
+  "how",
+  "including",
+  "implied",
+  "into",
+  "levels",
+  "live",
+  "matter",
+  "matters",
+  "market",
+  "markets",
+  "odds",
+  "position",
+  "positioning",
+  "price",
+  "prices",
+  "resolution",
+  "resolutions",
+  "results",
+  "right",
+  "risk",
+  "pricing",
+  "show",
+  "should",
+  "specific",
+  "that",
+  "than",
+  "today",
+  "think",
+  "understand",
+  "whether",
+  "which",
+  "would",
+  "now",
+]);
+
+const MARKET_QUERY_NAMED_TOKEN_STOP_WORDS = new Set([
+  ...MARKET_QUERY_STOP_WORDS,
+  "how",
+  "polymarket",
+  "which",
+  "why",
+]);
+const DISCOVERY_CATEGORY_TAG_ALIASES: Record<string, string[]> = {
+  politics: ["politics", "elections", "political"],
+  sports: [
+    "sports",
+    "nfl",
+    "nba",
+    "mlb",
+    "soccer",
+    "football",
+    "basketball",
+    "baseball",
+    "tennis",
+    "mma",
+    "ufc",
+    "golf",
+    "hockey",
+  ],
+  crypto: ["crypto", "bitcoin", "ethereum", "cryptocurrency", "defi", "solana"],
+  "pop-culture": [
+    "pop culture",
+    "pop-culture",
+    "culture",
+    "movies",
+    "entertainment",
+    "hollywood",
+    "music",
+    "awards",
+  ],
+  science: ["science", "tech", "technology", "ai", "space"],
+  business: ["business", "economics", "finance", "fed", "inflation", "stocks"],
+};
+const POLITICS_DISCOVERY_HINT_TERMS = [
+  "geopolitics",
+  "geopolitical",
+  "iran",
+  "israel",
+  "gaza",
+  "ukraine",
+  "russia",
+  "china",
+  "taiwan",
+  "ceasefire",
+  "troop",
+  "troops",
+  "military",
+  "missile",
+  "missiles",
+  "sanction",
+  "sanctions",
+  "tariff",
+  "tariffs",
+  "strike",
+  "strikes",
+  "war",
+  "attack",
+  "attacks",
+  "invasion",
+  "ally",
+  "allied",
+  "allies",
+  "boots on the ground",
+];
+const DISCOVERY_QUERY_SYNONYM_GROUPS = [
+  [
+    "boots",
+    "ground",
+    "troop",
+    "troops",
+    "enter",
+    "enters",
+    "entered",
+    "invade",
+    "invades",
+    "invaded",
+    "invasion",
+  ],
+  ["military", "operation", "operations", "strike", "strikes", "attack", "attacks", "offensive"],
+  ["ceasefire", "truce", "deescalation", "peace"],
+];
+const ACTIVE_EVENT_SEARCH_ORDER_PLAN = [
+  {
+    order: "volume24hr",
+    pages: ACTIVE_EVENT_SEARCH_INDEX_MAX_PAGES,
+  },
+  {
+    order: "liquidity",
+    pages: ACTIVE_EVENT_SEARCH_INDEX_MAX_PAGES,
+  },
+  {
+    order: "startDate",
+    pages: 1,
+  },
+] as const;
+
 function normalizeMarketQueryText(value: string): string {
-  return value
+  const withCollapsedInitialisms = value.replace(
+    /\b(?:[A-Za-z]\.){2,}[A-Za-z]?\.?/g,
+    (match) => match.replace(/\./g, "")
+  );
+  return withCollapsedInitialisms
     .toLowerCase()
+    .replace(/'s\b/g, "")
     .replace(/,/g, "")
     .replace(/[^a-z0-9$\s]/g, " ")
     .replace(/\s+/g, " ")
@@ -4258,6 +4987,245 @@ function extractMarketQueryTokens(value: string): string[] {
     );
 
   return Array.from(new Set(tokens));
+}
+
+function extractNamedMarketQueryTokens(value: string): string[] {
+  const matches =
+    value.match(
+      /\b(?:[A-Z]\.){2,}[A-Z]?\.?|\b[A-Z]{2,}(?:[-/][A-Z]{2,})*|\b[A-Z][a-z]+(?:[-'][A-Za-z]+)*/g
+    ) ?? [];
+  const deduped: string[] = [];
+  const seen = new Set<string>();
+
+  for (const match of matches) {
+    const cleaned = match.trim();
+    const normalized = normalizeMarketQueryText(cleaned);
+    if (
+      normalized.length < 2 ||
+      MARKET_QUERY_NAMED_TOKEN_STOP_WORDS.has(normalized) ||
+      seen.has(normalized)
+    ) {
+      continue;
+    }
+
+    seen.add(normalized);
+    deduped.push(cleaned);
+  }
+
+  return deduped;
+}
+
+function buildMarketQueryScoringTokens(value: string): string[] {
+  const tokens: string[] = [];
+  const seen = new Set<string>();
+
+  const addToken = (rawToken: string) => {
+    const normalized = normalizeMarketQueryText(rawToken);
+    if (
+      normalized.length < 2 ||
+      MARKET_QUERY_VARIANT_STOP_WORDS.has(normalized) ||
+      seen.has(normalized)
+    ) {
+      return;
+    }
+
+    seen.add(normalized);
+    tokens.push(normalized);
+  };
+
+  for (const token of extractNamedMarketQueryTokens(value)) {
+    addToken(token);
+  }
+
+  for (const token of extractMarketQueryTokens(value)) {
+    addToken(token);
+  }
+
+  return tokens;
+}
+
+function buildMarketSearchQueries(value: string): string[] {
+  const trimmed = value.trim();
+  const normalized = normalizeMarketQueryText(trimmed);
+  if (trimmed.length === 0 || normalized.length === 0) {
+    return [];
+  }
+
+  const variants: string[] = [];
+  const seen = new Set<string>();
+
+  const addVariant = (variant: string | undefined) => {
+    if (!variant) {
+      return;
+    }
+
+    const cleaned = variant.replace(/\s+/g, " ").trim();
+    const normalizedVariant = normalizeMarketQueryText(cleaned);
+    if (
+      cleaned.length < 3 ||
+      normalizedVariant.length < 3 ||
+      seen.has(normalizedVariant)
+    ) {
+      return;
+    }
+
+    seen.add(normalizedVariant);
+    variants.push(cleaned);
+  };
+
+  addVariant(trimmed);
+
+  const namedTokens = extractNamedMarketQueryTokens(trimmed).filter((token) => {
+    const normalizedToken = normalizeMarketQueryText(token);
+    return !MARKET_QUERY_VARIANT_STOP_WORDS.has(normalizedToken);
+  });
+  const searchTokens = extractMarketQueryTokens(trimmed).filter(
+    (token) => !MARKET_QUERY_VARIANT_STOP_WORDS.has(token)
+  );
+
+  if (namedTokens.length > 0) {
+    addVariant(namedTokens.slice(0, 3).join(" "));
+    addVariant(namedTokens.at(-1));
+  }
+
+  if (searchTokens.length > 0) {
+    addVariant(searchTokens.slice(0, 3).join(" "));
+    addVariant(searchTokens.at(-1));
+    if (searchTokens.length > 1) {
+      addVariant(`${searchTokens[0]} ${searchTokens.at(-1)}`);
+    }
+  }
+
+  return variants.slice(0, 5);
+}
+
+async function searchGammaEventsByVariants(params: {
+  query: string;
+  limitPerType: number;
+  eventsStatus?: "active" | "closed";
+  includeClosed?: boolean;
+}): Promise<GammaEvent[]> {
+  const queries = buildMarketSearchQueries(params.query);
+  if (queries.length === 0) {
+    return [];
+  }
+
+  const eventsByKey = new Map<string, GammaEvent>();
+  const cappedLimitPerType = Math.min(Math.max(params.limitPerType, 1), 24);
+
+  for (const searchQuery of queries) {
+    let endpoint =
+      `/public-search?q=${encodeURIComponent(searchQuery)}` +
+      `&limit_per_type=${cappedLimitPerType}` +
+      "&search_tags=false&search_profiles=false&optimized=true";
+    if (params.eventsStatus) {
+      endpoint += `&events_status=${params.eventsStatus}`;
+    }
+    if (params.includeClosed) {
+      endpoint += "&keep_closed_markets=1";
+    }
+
+    const searchData = (await fetchJsonWithPolicy({
+      upstream: "gamma",
+      endpoint,
+      timeoutMs: 8_000,
+      init: {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "Polymarket-MCP-Server/1.0",
+        },
+      },
+    })) as {
+      events?: GammaEvent[];
+    };
+
+    const events = Array.isArray(searchData.events) ? searchData.events : [];
+    for (const event of events) {
+      const key = event.slug || event.id || event.title || "";
+      if (key.length === 0 || eventsByKey.has(key)) {
+        continue;
+      }
+      eventsByKey.set(key, event);
+    }
+
+    if (eventsByKey.size >= cappedLimitPerType * 2) {
+      break;
+    }
+  }
+
+  return [...eventsByKey.values()];
+}
+
+async function searchGammaEventsByWebsiteSearch(params: {
+  query: string;
+  limitPerType: number;
+  eventsStatus?: "active" | "closed";
+  maxPages?: number;
+}): Promise<GammaEvent[]> {
+  const trimmedQuery = params.query.trim();
+  if (trimmedQuery.length === 0) {
+    return [];
+  }
+
+  const cappedLimitPerType = Math.min(
+    Math.max(params.limitPerType, 1),
+    WEBSITE_SEARCH_V2_PAGE_SIZE
+  );
+  const maxPages = Math.min(
+    Math.max(
+      params.maxPages ??
+        (params.eventsStatus === "closed"
+          ? WEBSITE_SEARCH_V2_CLOSED_MAX_PAGES
+          : WEBSITE_SEARCH_V2_ACTIVE_MAX_PAGES),
+      1
+    ),
+    6
+  );
+  const eventsByKey = new Map<string, GammaEvent>();
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    let endpoint =
+      `/search-v2?q=${encodeURIComponent(trimmedQuery)}` +
+      `&page=${page}` +
+      `&limit_per_type=${cappedLimitPerType}` +
+      "&type=events&optimized=false";
+    if (params.eventsStatus) {
+      endpoint += `&events_status=${params.eventsStatus}`;
+    }
+
+    const searchData = (await fetchJsonWithPolicy({
+      upstream: "gamma",
+      endpoint,
+      timeoutMs: 8_000,
+      init: {
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "Polymarket-MCP-Server/1.0",
+        },
+      },
+    })) as {
+      events?: GammaEvent[];
+      pagination?: {
+        hasMore?: boolean;
+        totalResults?: number;
+      };
+    };
+
+    const events = Array.isArray(searchData.events) ? searchData.events : [];
+    for (const event of events) {
+      const key = event.slug || event.id || event.title || "";
+      if (key.length === 0 || eventsByKey.has(key)) {
+        continue;
+      }
+      eventsByKey.set(key, event);
+    }
+
+    if (searchData.pagination?.hasMore !== true || events.length < cappedLimitPerType) {
+      break;
+    }
+  }
+
+  return [...eventsByKey.values()];
 }
 
 function extractPriceTargets(value: string): number[] {
@@ -4286,6 +5254,643 @@ function extractPriceTargets(value: string): number[] {
   }
 
   return Array.from(targets).sort((a, b) => a - b);
+}
+
+function normalizeDiscoveryCategoryTagSlug(
+  value: string | undefined
+): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const normalized = normalizeMarketQueryText(value).replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  for (const [tagSlug, aliases] of Object.entries(DISCOVERY_CATEGORY_TAG_ALIASES)) {
+    if (
+      aliases.some(
+        (alias) => normalized === alias || normalized.includes(alias)
+      )
+    ) {
+      return tagSlug;
+    }
+  }
+
+  return normalized.replace(/\s+/g, "-");
+}
+
+function inferDiscoveryCategoryTagSlug(value: string): string | undefined {
+  const normalized = normalizeMarketQueryText(value);
+  if (!normalized) {
+    return undefined;
+  }
+
+  const queryText = ` ${normalized} `;
+  const hasAliasMatch = (aliases: string[]): boolean =>
+    aliases.some(
+      (alias) =>
+        queryText.includes(` ${alias} `) || normalized.includes(alias)
+    );
+
+  if (
+    hasAliasMatch(DISCOVERY_CATEGORY_TAG_ALIASES.politics) ||
+    POLITICS_DISCOVERY_HINT_TERMS.some(
+      (term) => queryText.includes(` ${term} `) || normalized.includes(term)
+    )
+  ) {
+    return "politics";
+  }
+  if (hasAliasMatch(DISCOVERY_CATEGORY_TAG_ALIASES.crypto)) {
+    return "crypto";
+  }
+  if (hasAliasMatch(DISCOVERY_CATEGORY_TAG_ALIASES.sports)) {
+    return "sports";
+  }
+  if (hasAliasMatch(DISCOVERY_CATEGORY_TAG_ALIASES.business)) {
+    return "business";
+  }
+  if (hasAliasMatch(DISCOVERY_CATEGORY_TAG_ALIASES.science)) {
+    return "science";
+  }
+  if (hasAliasMatch(DISCOVERY_CATEGORY_TAG_ALIASES["pop-culture"])) {
+    return "pop-culture";
+  }
+
+  return undefined;
+}
+
+function resolveDiscoveryCategoryTagSlug(params: {
+  category?: string;
+  query?: string;
+}): string | undefined {
+  return (
+    normalizeDiscoveryCategoryTagSlug(params.category) ??
+    (params.query ? inferDiscoveryCategoryTagSlug(params.query) : undefined)
+  );
+}
+
+function expandStructuredSearchTokens(
+  normalizedQuery: string,
+  baseTokens: string[]
+): string[] {
+  const expanded = new Set(baseTokens);
+  const queryText = ` ${normalizedQuery} `;
+
+  for (const group of DISCOVERY_QUERY_SYNONYM_GROUPS) {
+    if (!group.some((token) => queryText.includes(` ${token} `))) {
+      continue;
+    }
+    for (const token of group) {
+      if (
+        token.length >= 3 &&
+        !MARKET_QUERY_VARIANT_STOP_WORDS.has(token)
+      ) {
+        expanded.add(token);
+      }
+    }
+  }
+
+  return [...expanded];
+}
+
+function buildStructuredMarketSearchContext(params: {
+  query: string;
+  category?: string;
+}): StructuredMarketSearchContext {
+  const normalizedQuery = normalizeMarketQueryText(params.query);
+  const scoringTokens = expandStructuredSearchTokens(
+    normalizedQuery,
+    buildMarketQueryScoringTokens(params.query)
+  );
+  return {
+    normalizedQuery,
+    compactQuery: normalizedQuery.replace(/[^a-z0-9]/g, ""),
+    namedTokens: extractNamedMarketQueryTokens(params.query).map((token) =>
+      normalizeMarketQueryText(token)
+    ),
+    scoringTokens,
+    queryTargets: extractPriceTargets(params.query),
+    categoryTagSlug: resolveDiscoveryCategoryTagSlug(params),
+  };
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function hasWordBoundaryMatch(text: string, token: string): boolean {
+  if (!token) {
+    return false;
+  }
+
+  return new RegExp(`\\b${escapeRegExp(token)}\\b`, "i").test(text);
+}
+
+function getEventTagSearchText(event: GammaEvent): string {
+  return (event.tags ?? [])
+    .flatMap((tag) => [tag.slug ?? "", tag.label ?? ""])
+    .join(" ");
+}
+
+function eventMatchesDiscoveryCategoryTagSlug(
+  event: GammaEvent,
+  tagSlug: string | undefined
+): boolean {
+  const normalizedTagSlug = normalizeDiscoveryCategoryTagSlug(tagSlug);
+  if (!normalizedTagSlug) {
+    return true;
+  }
+
+  if (normalizeDiscoveryCategoryTagSlug(event.category) === normalizedTagSlug) {
+    return true;
+  }
+
+  const normalizedTagSearchText = normalizeMarketQueryText(getEventTagSearchText(event));
+  if (!normalizedTagSearchText) {
+    return false;
+  }
+
+  const aliases = DISCOVERY_CATEGORY_TAG_ALIASES[normalizedTagSlug] ?? [
+    normalizedTagSlug.replace(/-/g, " "),
+  ];
+
+  return aliases.some((alias) => {
+    const normalizedAlias = normalizeMarketQueryText(alias);
+    return (
+      normalizedAlias.length > 0 &&
+      (hasWordBoundaryMatch(normalizedTagSearchText, normalizedAlias) ||
+        normalizedTagSearchText.includes(normalizedAlias))
+    );
+  });
+}
+
+function filterEventsByStructuredSearchContext(params: {
+  events: GammaEvent[];
+  context: StructuredMarketSearchContext;
+}): GammaEvent[] {
+  if (!params.context.categoryTagSlug) {
+    return params.events;
+  }
+
+  const filtered = params.events.filter((event) =>
+    eventMatchesDiscoveryCategoryTagSlug(event, params.context.categoryTagSlug)
+  );
+
+  return filtered.length > 0 ? filtered : params.events;
+}
+
+function buildActiveEventCandidateText(
+  event: GammaEvent,
+  market: GammaMarket
+): string {
+  return [
+    event.title || "",
+    event.slug || "",
+    event.category || "",
+    getEventTagSearchText(event),
+    market.groupItemTitle || "",
+    market.question || "",
+    market.title || "",
+  ].join(" ");
+}
+
+function getActiveEventIndexCacheKey(params: { tagSlug?: string }): string {
+  return JSON.stringify({
+    tagSlug: params.tagSlug?.trim().toLowerCase() || "",
+  });
+}
+
+function readActiveEventIndexCache(
+  cacheKey: string,
+  options?: { allowStaleOnError?: boolean }
+): ActiveEventSearchIndex | null {
+  const cached = activeEventSearchIndexCache.get(cacheKey);
+  if (!cached) {
+    return null;
+  }
+
+  const now = Date.now();
+  if (cached.expiresAt > now) {
+    return cloneCachedPayload(cached.value);
+  }
+  if (options?.allowStaleOnError && cached.staleIfErrorUntil > now) {
+    return cloneCachedPayload(cached.value);
+  }
+  if (cached.staleIfErrorUntil <= now) {
+    activeEventSearchIndexCache.delete(cacheKey);
+  }
+
+  return null;
+}
+
+function writeActiveEventIndexCache(
+  cacheKey: string,
+  value: ActiveEventSearchIndex
+): void {
+  const now = Date.now();
+  activeEventSearchIndexCache.set(cacheKey, {
+    value: cloneCachedPayload(value),
+    expiresAt: now + ACTIVE_EVENT_SEARCH_INDEX_CACHE_TTL_MS,
+    staleIfErrorUntil: now + ACTIVE_EVENT_SEARCH_INDEX_STALE_IF_ERROR_TTL_MS,
+  });
+}
+
+async function buildActiveEventSearchIndex(params: {
+  tagSlug?: string;
+}): Promise<ActiveEventSearchIndex> {
+  const eventsByKey = new Map<string, GammaEvent>();
+  const sourceOrders: string[] = [];
+
+  for (const plan of ACTIVE_EVENT_SEARCH_ORDER_PLAN) {
+    for (let page = 0; page < plan.pages; page += 1) {
+      const eventParams = new URLSearchParams({
+        active: "true",
+        closed: "false",
+        limit: String(ACTIVE_EVENT_SEARCH_INDEX_PAGE_SIZE),
+        offset: String(page * ACTIVE_EVENT_SEARCH_INDEX_PAGE_SIZE),
+        order: plan.order,
+        ascending: "false",
+      });
+      if (params.tagSlug) {
+        eventParams.set("tag_slug", params.tagSlug);
+      }
+
+      const events = (await fetchGamma(
+        `/events?${eventParams.toString()}`,
+        10_000,
+        2
+      )) as GammaEvent[];
+      sourceOrders.push(`${plan.order}:${page}`);
+
+      for (const event of Array.isArray(events) ? events : []) {
+        const key = event.slug || event.id || "";
+        if (!key || eventsByKey.has(key)) {
+          continue;
+        }
+        eventsByKey.set(key, event);
+      }
+
+      if (!Array.isArray(events) || events.length < ACTIVE_EVENT_SEARCH_INDEX_PAGE_SIZE) {
+        break;
+      }
+    }
+  }
+
+  return {
+    events: [...eventsByKey.values()],
+    builtAt: new Date().toISOString(),
+    tagSlug: params.tagSlug,
+    sourceOrders,
+  };
+}
+
+async function getActiveEventSearchIndex(params: {
+  tagSlug?: string;
+}): Promise<ActiveEventSearchIndex> {
+  const cacheKey = getActiveEventIndexCacheKey(params);
+  const cached = readActiveEventIndexCache(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  try {
+    const fresh = await buildActiveEventSearchIndex(params);
+    writeActiveEventIndexCache(cacheKey, fresh);
+    return cloneCachedPayload(fresh);
+  } catch (error) {
+    const stale = readActiveEventIndexCache(cacheKey, {
+      allowStaleOnError: true,
+    });
+    if (stale) {
+      console.warn("[polymarket-active-index] serving stale cache", {
+        tagSlug: params.tagSlug ?? null,
+        error:
+          error instanceof Error
+            ? error.message.slice(0, 160)
+            : String(error).slice(0, 160),
+      });
+      return stale;
+    }
+    throw error;
+  }
+}
+
+function scoreIndexedActiveEventCandidate(params: {
+  context: StructuredMarketSearchContext;
+  event: GammaEvent;
+  market: GammaMarket;
+}): number {
+  const { context, event, market } = params;
+  const normalizedCandidateText = normalizeMarketQueryText(
+    buildActiveEventCandidateText(event, market)
+  );
+  if (!normalizedCandidateText) {
+    return 0;
+  }
+
+  const compactCandidateText = normalizedCandidateText.replace(/[^a-z0-9]/g, "");
+  const normalizedCategoryText = normalizeMarketQueryText(
+    `${event.category || ""} ${getEventTagSearchText(event)}`
+  );
+
+  let score = 0;
+  if (
+    context.normalizedQuery &&
+    normalizedCandidateText.includes(context.normalizedQuery)
+  ) {
+    score += 260;
+  }
+  if (
+    context.compactQuery.length >= 8 &&
+    compactCandidateText.includes(context.compactQuery)
+  ) {
+    score += 45;
+  }
+
+  let namedMatches = 0;
+  for (const token of context.namedTokens) {
+    if (hasWordBoundaryMatch(normalizedCandidateText, token)) {
+      namedMatches += 1;
+      score += 80;
+      continue;
+    }
+    if (normalizedCandidateText.includes(token)) {
+      namedMatches += 1;
+      score += 45;
+    }
+  }
+
+  let tokenMatches = 0;
+  for (const token of context.scoringTokens) {
+    if (context.namedTokens.includes(token)) {
+      continue;
+    }
+    if (hasWordBoundaryMatch(normalizedCandidateText, token)) {
+      tokenMatches += 1;
+      score += 24;
+      continue;
+    }
+    if (normalizedCandidateText.includes(token)) {
+      tokenMatches += 1;
+      score += 12;
+    }
+  }
+
+  if (context.namedTokens.length > 0) {
+    if (namedMatches === 0) {
+      score -= 120;
+    } else if (namedMatches === context.namedTokens.length) {
+      score += 90;
+    }
+  }
+  if (context.namedTokens.length >= 2) {
+    const [firstToken, secondToken] = context.namedTokens;
+    const firstIndex = normalizedCandidateText.indexOf(firstToken);
+    const secondIndex =
+      firstIndex >= 0
+        ? normalizedCandidateText.indexOf(secondToken, firstIndex + firstToken.length)
+        : -1;
+    if (firstIndex >= 0 && secondIndex > firstIndex) {
+      score += 45;
+    }
+  }
+
+  if (context.scoringTokens.length >= 2) {
+    for (let i = 0; i < context.scoringTokens.length - 1; i += 1) {
+      const phrase = `${context.scoringTokens[i]} ${context.scoringTokens[i + 1]}`;
+      if (normalizedCandidateText.includes(phrase)) {
+        score += 12;
+        break;
+      }
+    }
+  }
+
+  if (
+    context.categoryTagSlug &&
+    normalizedCategoryText.includes(context.categoryTagSlug)
+  ) {
+    score += 55;
+  }
+
+  if (context.queryTargets.length > 0) {
+    const candidateTargets = extractPriceTargets(normalizedCandidateText);
+    let targetOverlap = 0;
+    for (const queryTarget of context.queryTargets) {
+      const matched = candidateTargets.some((candidateTarget) => {
+        const tolerance = Math.max(1000, Math.round(queryTarget * 0.02));
+        return Math.abs(candidateTarget - queryTarget) <= tolerance;
+      });
+      if (matched) {
+        targetOverlap += 1;
+      }
+    }
+    if (targetOverlap > 0) {
+      score += targetOverlap * 120;
+    }
+  }
+
+  const volumeSignal = Number(
+    event.volume24hr || event.volume || market.volume24hr || market.volume || 0
+  );
+  if (Number.isFinite(volumeSignal) && volumeSignal > 0) {
+    score += Math.min(24, Math.log10(volumeSignal + 1) * 4);
+  }
+
+  return score + tokenMatches;
+}
+
+function rankIndexedActiveEventCandidates(params: {
+  events: GammaEvent[];
+  context: StructuredMarketSearchContext;
+  limit: number;
+  source: string;
+  includeClosed?: boolean;
+}): IndexedActiveEventCandidate[] {
+  const candidates: IndexedActiveEventCandidate[] = [];
+
+  for (const event of params.events) {
+    for (const market of event.markets ?? []) {
+      if (
+        !market.conditionId &&
+        !market.slug &&
+        !event.slug
+      ) {
+        continue;
+      }
+      const marketIsClosed =
+        event.closed === true || market.closed === true || market.active === false;
+      if (!params.includeClosed && marketIsClosed) {
+        continue;
+      }
+
+      const score = scoreIndexedActiveEventCandidate({
+        context: params.context,
+        event,
+        market,
+      });
+      if (score <= 0) {
+        continue;
+      }
+
+      candidates.push({
+        conditionId: market.conditionId,
+        marketTitle:
+          market.groupItemTitle ||
+          market.question ||
+          market.title ||
+          event.title ||
+          params.context.normalizedQuery,
+        slug: market.slug || event.slug,
+        eventSlug: event.slug,
+        score,
+        closed: marketIsClosed,
+        volume: Number(event.volume24hr || event.volume || market.volume || 0),
+        source: params.source,
+        event,
+        market,
+      });
+    }
+  }
+
+  return candidates
+    .sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
+      if (b.volume !== a.volume) {
+        return b.volume - a.volume;
+      }
+      return a.marketTitle.localeCompare(b.marketTitle);
+    })
+    .slice(0, params.limit);
+}
+
+async function searchIndexedActiveEventCandidates(params: {
+  query: string;
+  category?: string;
+  limit: number;
+}): Promise<{
+  candidates: IndexedActiveEventCandidate[];
+  searchIndex: ActiveEventSearchIndex;
+  source: string;
+}> {
+  const context = buildStructuredMarketSearchContext({
+    query: params.query,
+    category: params.category,
+  });
+  const tagSlug = context.categoryTagSlug;
+  const primaryIndex = await getActiveEventSearchIndex({
+    tagSlug,
+  });
+
+  let candidates = rankIndexedActiveEventCandidates({
+    events: primaryIndex.events,
+    context,
+    limit: params.limit,
+    source: tagSlug ? `active-events-index:${tagSlug}` : "active-events-index",
+  });
+  let source = tagSlug ? `active-events-index:${tagSlug}` : "active-events-index";
+  let searchIndex = primaryIndex;
+
+  if (candidates.length === 0 && tagSlug && !params.category) {
+    const broadIndex = await getActiveEventSearchIndex({});
+    candidates = rankIndexedActiveEventCandidates({
+      events: broadIndex.events,
+      context: {
+        ...context,
+        categoryTagSlug: undefined,
+      },
+      limit: params.limit,
+      source: "active-events-index:broad-fallback",
+    });
+    source = "active-events-index:broad-fallback";
+    searchIndex = broadIndex;
+  }
+
+  return {
+    candidates,
+    searchIndex,
+    source,
+  };
+}
+
+async function searchGammaWebsiteEventCandidates(params: {
+  query: string;
+  category?: string;
+  limit: number;
+  eventsStatus: "active" | "closed";
+  maxPages?: number;
+}): Promise<{
+  candidates: IndexedActiveEventCandidate[];
+  events: GammaEvent[];
+  source: string;
+}> {
+  const context = buildStructuredMarketSearchContext({
+    query: params.query,
+    category: params.category,
+  });
+  const events = filterEventsByStructuredSearchContext({
+    events: await searchGammaEventsByWebsiteSearch({
+      query: params.query,
+      limitPerType: WEBSITE_SEARCH_V2_PAGE_SIZE,
+      eventsStatus: params.eventsStatus,
+      maxPages: params.maxPages,
+    }),
+    context,
+  });
+  const source =
+    params.eventsStatus === "closed" ? "website-search-v2:closed" : "website-search-v2";
+
+  return {
+    candidates: rankIndexedActiveEventCandidates({
+      events,
+      context,
+      limit: params.limit,
+      source,
+      includeClosed: params.eventsStatus === "closed",
+    }),
+    events,
+    source,
+  };
+}
+
+function getIndexedCandidateEventKey(
+  candidate: IndexedActiveEventCandidate
+): string {
+  return (
+    candidate.event.slug ||
+    candidate.event.id ||
+    candidate.eventSlug ||
+    candidate.slug ||
+    candidate.conditionId ||
+    candidate.marketTitle
+  );
+}
+
+function pickTopIndexedCandidatesByEvent(
+  candidates: IndexedActiveEventCandidate[],
+  limit: number
+): IndexedActiveEventCandidate[] {
+  const bestByEvent = new Map<string, IndexedActiveEventCandidate>();
+
+  for (const candidate of candidates) {
+    const key = getIndexedCandidateEventKey(candidate);
+    if (!bestByEvent.has(key)) {
+      bestByEvent.set(key, candidate);
+    }
+    if (bestByEvent.size >= limit) {
+      break;
+    }
+  }
+
+  return [...bestByEvent.values()];
+}
+
+function getPrimaryOutcomePrice(market: GammaMarket): string | null {
+  const prices = parseJsonArray(market.outcomePrices);
+  return prices[0] ?? null;
 }
 
 function scoreMarketCandidate(params: {
@@ -4508,10 +6113,81 @@ async function resolveMarketReference(options: {
       return null;
     }
 
-    const queryTokens = extractMarketQueryTokens(trimmedQuery);
+    const queryTokens = buildMarketQueryScoringTokens(trimmedQuery);
     const queryTargets = extractPriceTargets(trimmedQuery);
     const strictThreshold = queryTargets.length > 0 ? 120 : 70;
     const fallbackThreshold = queryTargets.length > 0 ? 80 : 50;
+    const indexedStrictThreshold = queryTargets.length > 0 ? 170 : 110;
+    const indexedFallbackThreshold = queryTargets.length > 0 ? 120 : 75;
+    let websiteActiveBest: MarketResolveCandidate | null = null;
+    let activeIndexBest: MarketResolveCandidate | null = null;
+
+    try {
+      const websiteSearch = await searchGammaWebsiteEventCandidates({
+        query: trimmedQuery,
+        limit: 24,
+        eventsStatus: "active",
+      });
+      websiteActiveBest = pickBestMarketCandidate(websiteSearch.candidates);
+      console.info("[polymarket-resolve] phase", {
+        query: trimmedQuery.slice(0, 120),
+        phase: websiteSearch.source,
+        candidates: websiteSearch.candidates.length,
+        bestScore: websiteActiveBest?.score ?? null,
+        selectedConditionId: websiteActiveBest?.conditionId ?? null,
+      });
+
+      if (websiteActiveBest && websiteActiveBest.score >= indexedStrictThreshold) {
+        const resolvedFromWebsiteSearch =
+          await resolveCandidateConditionId(websiteActiveBest);
+        if (resolvedFromWebsiteSearch) {
+          return resolvedFromWebsiteSearch;
+        }
+      }
+    } catch (error) {
+      console.warn("[polymarket-resolve] phase_failed", {
+        query: trimmedQuery.slice(0, 120),
+        phase: "website-search-v2",
+        error:
+          error instanceof Error
+            ? error.message.slice(0, 160)
+            : String(error).slice(0, 160),
+      });
+    }
+
+    try {
+      const indexedSearch = await searchIndexedActiveEventCandidates({
+        query: trimmedQuery,
+        limit: 24,
+      });
+      activeIndexBest = pickBestMarketCandidate(indexedSearch.candidates);
+      console.info("[polymarket-resolve] phase", {
+        query: trimmedQuery.slice(0, 120),
+        phase: indexedSearch.source,
+        candidates: indexedSearch.candidates.length,
+        indexSize: indexedSearch.searchIndex.events.length,
+        tagSlug: indexedSearch.searchIndex.tagSlug ?? null,
+        bestScore: activeIndexBest?.score ?? null,
+        selectedConditionId: activeIndexBest?.conditionId ?? null,
+      });
+
+      if (activeIndexBest && activeIndexBest.score >= indexedStrictThreshold) {
+        const resolvedFromActiveIndex =
+          await resolveCandidateConditionId(activeIndexBest);
+        if (resolvedFromActiveIndex) {
+          return resolvedFromActiveIndex;
+        }
+      }
+    } catch (error) {
+      console.warn("[polymarket-resolve] phase_failed", {
+        query: trimmedQuery.slice(0, 120),
+        phase: "active-events-index",
+        error:
+          error instanceof Error
+            ? error.message.slice(0, 160)
+            : String(error).slice(0, 160),
+      });
+    }
 
     const tryPublicSearch = async (params: {
       phase: string;
@@ -4519,19 +6195,12 @@ async function resolveMarketReference(options: {
       includeClosed: boolean;
     }): Promise<MarketResolveCandidate | null> => {
       try {
-        const path = `/public-search?q=${encoded}&limit_per_type=20&search_tags=false&search_profiles=false&optimized=true&events_status=${params.eventsStatus}${params.includeClosed ? "&keep_closed_markets=1" : ""}`;
-        const search = (await fetchJsonWithPolicy({
-          upstream: "gamma",
-          endpoint: path,
-          timeoutMs: 10_000,
-          init: {
-            headers: {
-              Accept: "application/json",
-              "User-Agent": "Polymarket-MCP-Server/1.0",
-            },
-          },
-        })) as { events?: GammaEvent[] };
-        const events = Array.isArray(search?.events) ? search.events : [];
+        const events = await searchGammaEventsByVariants({
+          query: trimmedQuery,
+          limitPerType: 20,
+          eventsStatus: params.eventsStatus,
+          includeClosed: params.includeClosed,
+        });
         const candidates: MarketResolveCandidate[] = [];
 
         for (const event of events) {
@@ -4595,6 +6264,39 @@ async function resolveMarketReference(options: {
       }
     }
 
+    let websiteResolvedBest: MarketResolveCandidate | null = null;
+    try {
+      const websiteSearch = await searchGammaWebsiteEventCandidates({
+        query: trimmedQuery,
+        limit: 24,
+        eventsStatus: "closed",
+      });
+      websiteResolvedBest = pickBestMarketCandidate(websiteSearch.candidates);
+      console.info("[polymarket-resolve] phase", {
+        query: trimmedQuery.slice(0, 120),
+        phase: websiteSearch.source,
+        candidates: websiteSearch.candidates.length,
+        bestScore: websiteResolvedBest?.score ?? null,
+        selectedConditionId: websiteResolvedBest?.conditionId ?? null,
+      });
+      if (websiteResolvedBest && websiteResolvedBest.score >= indexedStrictThreshold) {
+        const resolvedFromWebsiteClosed =
+          await resolveCandidateConditionId(websiteResolvedBest);
+        if (resolvedFromWebsiteClosed) {
+          return resolvedFromWebsiteClosed;
+        }
+      }
+    } catch (error) {
+      console.warn("[polymarket-resolve] phase_failed", {
+        query: trimmedQuery.slice(0, 120),
+        phase: "website-search-v2:closed",
+        error:
+          error instanceof Error
+            ? error.message.slice(0, 160)
+            : String(error).slice(0, 160),
+      });
+    }
+
     const resolvedBest = await tryPublicSearch({
       phase: "public-search-closed",
       eventsStatus: "closed",
@@ -4608,11 +6310,25 @@ async function resolveMarketReference(options: {
     }
 
     const searchFallbackBest = pickBestMarketCandidate(
-      [activeBest, resolvedBest].filter(
+      [
+        websiteActiveBest,
+        activeIndexBest,
+        activeBest,
+        websiteResolvedBest,
+        resolvedBest,
+      ].filter(
         (candidate): candidate is MarketResolveCandidate => candidate !== null
       )
     );
-    if (searchFallbackBest && searchFallbackBest.score >= fallbackThreshold) {
+    if (
+      searchFallbackBest &&
+      searchFallbackBest.score >=
+        (searchFallbackBest === websiteActiveBest ||
+        searchFallbackBest === activeIndexBest ||
+        searchFallbackBest === websiteResolvedBest
+          ? indexedFallbackThreshold
+          : fallbackThreshold)
+    ) {
       const resolvedFromSearchFallback =
         await resolveCandidateConditionId(searchFallbackBest);
       if (resolvedFromSearchFallback) {
@@ -4702,11 +6418,17 @@ async function resolveMarketReference(options: {
     }
 
     const finalBest = pickBestMarketCandidate(
-      [liveListBest, resolvedListBest].filter(
+      [activeIndexBest, liveListBest, resolvedListBest].filter(
         (candidate): candidate is MarketResolveCandidate => candidate !== null
       )
     );
-    if (finalBest && finalBest.score >= fallbackThreshold) {
+    if (
+      finalBest &&
+      finalBest.score >=
+        (finalBest === activeIndexBest
+          ? indexedFallbackThreshold
+          : fallbackThreshold)
+    ) {
       const resolvedFromFinal = await resolveCandidateConditionId(finalBest);
       if (resolvedFromFinal) {
         return resolvedFromFinal;
@@ -10049,7 +11771,8 @@ async function handleGetEventBySlug(
  * Search for a market AND return its outcomes in one call.
  * Avoids the chained search → get_event_outcomes flow that's error-prone.
  * 
- * Uses /public-search endpoint for reliable server-side text search.
+ * Uses Polymarket's website-backed /search-v2 endpoint first, then local
+ * reranking and fallbacks if needed.
  */
 async function handleSearchAndGetOutcomes(
   args: Record<string, unknown> | undefined
@@ -10062,41 +11785,78 @@ async function handleSearchAndGetOutcomes(
   }
 
   try {
-    interface GammaEventResult {
-      id?: string;
-      title?: string;
-      slug?: string;
-      conditionId?: string;
-      volume?: string | number;
-      liquidity?: string | number;
-      outcomes?: string;
-      outcomePrices?: string;
-      endDate?: string;
-      closed?: boolean;
-      markets?: GammaMarket[];
+    const normalizedQuery = normalizeMarketQueryText(query);
+    const queryTokens = buildMarketQueryScoringTokens(query);
+    const queryTargets = extractPriceTargets(query);
+    const categoryTagSlug = resolveDiscoveryCategoryTagSlug({
+      category,
+      query,
+    });
+
+    let searchResults: GammaEvent[] = [];
+    let searchMethod = "website-search-v2";
+    let bestSearchCandidate: IndexedActiveEventCandidate | null = null;
+
+    try {
+      const websiteSearch = await searchGammaWebsiteEventCandidates({
+        query,
+        category,
+        limit: 24,
+        eventsStatus: "active",
+      });
+      if (websiteSearch.candidates.length > 0) {
+        const topCandidates = pickTopIndexedCandidatesByEvent(
+          websiteSearch.candidates,
+          12
+        );
+        searchResults = topCandidates.map((candidate) => candidate.event);
+        bestSearchCandidate = topCandidates[0] ?? null;
+        searchMethod = websiteSearch.source;
+      }
+    } catch (err) {
+      console.error("Website-backed search failed, falling back:", err);
     }
 
-    let searchResults: GammaEventResult[] = [];
-    let searchMethod = "public-search";
-
-    // PRIMARY: Use /public-search endpoint for server-side text search
-    // This is the official Polymarket search API - no auth/cookies required
     try {
-      const searchData = (await fetchGamma(
-        `/public-search?q=${encodeURIComponent(query)}&limit_per_type=12&events_status=active&search_tags=false&search_profiles=false&optimized=true`,
-        8_000
-      )) as {
-        events?: GammaEventResult[];
-      };
+      if (searchResults.length === 0) {
+        const indexedSearch = await searchIndexedActiveEventCandidates({
+          query,
+          category,
+          limit: 24,
+        });
+        if (indexedSearch.candidates.length > 0) {
+          const topCandidates = pickTopIndexedCandidatesByEvent(
+            indexedSearch.candidates,
+            12
+          );
+          searchResults = topCandidates.map((candidate) => candidate.event);
+          bestSearchCandidate = topCandidates[0] ?? null;
+          searchMethod = indexedSearch.source;
+        }
+      }
+    } catch (err) {
+      console.error("Active events index search failed, falling back:", err);
+    }
 
-      if (Array.isArray(searchData.events) && searchData.events.length > 0) {
-        searchResults = searchData.events;
+    // FALLBACK 1: Use /public-search endpoint for server-side text search.
+    try {
+      if (searchResults.length === 0) {
+        const searchEvents = await searchGammaEventsByVariants({
+          query,
+          limitPerType: 12,
+          eventsStatus: "active",
+        });
+
+        if (searchEvents.length > 0) {
+          searchResults = searchEvents;
+          searchMethod = "public-search";
+        }
       }
     } catch (err) {
       console.error('Public search failed, falling back to events listing:', err);
     }
 
-    // FALLBACK: Use /events endpoint with client-side filtering if search fails
+    // FALLBACK 2: Use /events endpoint with client-side filtering if search fails
     if (searchResults.length === 0) {
       searchMethod = "events-fallback";
       const eventParams = new URLSearchParams({
@@ -10105,12 +11865,11 @@ async function handleSearchAndGetOutcomes(
         limit: "30",
       });
       
-      // Add tag filter if category provided
-      if (category) {
-        eventParams.set("tag", category);
+      if (categoryTagSlug) {
+        eventParams.set("tag_slug", categoryTagSlug);
       }
 
-      const events = (await fetchGamma(`/events?${eventParams.toString()}`)) as GammaEventResult[];
+      const events = (await fetchGamma(`/events?${eventParams.toString()}`)) as GammaEvent[];
       
       if (Array.isArray(events) && events.length > 0) {
         // Filter events by query terms client-side
@@ -10127,37 +11886,137 @@ async function handleSearchAndGetOutcomes(
       return errorResult(`No markets found for query: "${query}". Try a different search term or check spelling.`);
     }
 
-    // Find the best match - prefer exact title matches, then highest volume
-    let bestMatch = searchResults[0];
-    let matchConfidence: "exact" | "high" | "medium" | "low" = "medium";
+    const scoredMatches = searchResults.map((result) => {
+      const candidateText = [
+        result.title || "",
+        result.slug || "",
+        ...(Array.isArray(result.markets)
+          ? result.markets.flatMap((market) => [
+              market.question || "",
+              market.title || "",
+            ])
+          : []),
+      ].join(" ");
+      const score = scoreMarketCandidate({
+        queryText: normalizedQuery,
+        queryTokens,
+        queryTargets,
+        candidateText,
+      });
 
-    const queryLower = query.toLowerCase();
-    for (const result of searchResults) {
-      const titleLower = (result.title || "").toLowerCase();
-      
-      // Exact match
-      if (titleLower === queryLower || titleLower.includes(queryLower)) {
-        bestMatch = result;
-        matchConfidence = "exact";
-        break;
+      return { result, score };
+    });
+
+    scoredMatches.sort(
+      (a, b) =>
+        b.score - a.score ||
+        Number(b.result.volume || 0) - Number(a.result.volume || 0)
+    );
+
+    const orderedSearchEntries: Array<{
+      candidateId: string;
+      event: GammaEvent;
+      score: number;
+      source: string;
+      matchedMarket?: GammaMarket;
+    }> = [];
+    const seenCandidateIds = new Set<string>();
+    const pushOrderedSearchEntry = (entry: {
+      event: GammaEvent;
+      score: number;
+      source: string;
+      matchedMarket?: GammaMarket;
+    }) => {
+      const candidateId =
+        entry.event.slug ||
+        entry.matchedMarket?.conditionId ||
+        entry.event.conditionId ||
+        entry.event.id ||
+        normalizeMarketQueryText(entry.event.title || query);
+      if (!candidateId || seenCandidateIds.has(candidateId)) {
+        return;
       }
-      
-      // Check for key terms
-      const queryTerms = queryLower.split(/\s+/);
-      const matchedTerms = queryTerms.filter(term => titleLower.includes(term));
-      if (matchedTerms.length >= queryTerms.length * 0.7) {
-        bestMatch = result;
-        matchConfidence = "high";
-      }
+      seenCandidateIds.add(candidateId);
+      orderedSearchEntries.push({
+        candidateId,
+        event: entry.event,
+        score: entry.score,
+        source: entry.source,
+        matchedMarket: entry.matchedMarket,
+      });
+    };
+
+    if (bestSearchCandidate) {
+      pushOrderedSearchEntry({
+        event: bestSearchCandidate.event,
+        score: bestSearchCandidate.score,
+        source: searchMethod,
+        matchedMarket: bestSearchCandidate.market,
+      });
     }
 
-    const slug = bestMatch.slug;
+    for (const match of scoredMatches) {
+      pushOrderedSearchEntry({
+        event: match.result,
+        score: match.score,
+        source: searchMethod,
+      });
+    }
+
+    const searchResolution = await resolvePolymarketContributorSearch({
+      rawRequest: query,
+      intentQuery: normalizedQuery,
+      traceLabel: "polymarket:search_and_get_outcomes",
+      instructions:
+        "Pick the exact Polymarket market family the user is asking about before returning all its outcomes. Prefer direct ground-entry or invasion contracts over broader ceasefire, strike, or macro-risk proxies when the query is specifically about boots on the ground.",
+      candidates: orderedSearchEntries.map((entry, index) =>
+        buildPolymarketEventSearchCandidate({
+          query,
+          rank: index + 1,
+          source: entry.source,
+          score: entry.score,
+          event: entry.event,
+          matchedMarket: entry.matchedMarket,
+        })
+      ),
+    });
+    const resolvedCandidateId = searchResolution?.selectedCandidate?.candidateId ?? null;
+    const resolvedSearchEntry =
+      resolvedCandidateId === null
+        ? null
+        : orderedSearchEntries.find(
+            (entry) => entry.candidateId === resolvedCandidateId
+          ) ?? null;
+    const bestMatch =
+      resolvedSearchEntry?.event ??
+      bestSearchCandidate?.event ??
+      scoredMatches[0]?.result ??
+      searchResults[0];
+    const bestScore =
+      resolvedSearchEntry?.score ??
+      bestSearchCandidate?.score ??
+      scoredMatches[0]?.score ??
+      0;
+    const matchConfidence: "exact" | "high" | "medium" | "low" =
+      bestScore >= (queryTargets.length > 0 ? 140 : 90)
+        ? "exact"
+        : bestScore >= (queryTargets.length > 0 ? 100 : 55)
+          ? "high"
+          : bestScore >= (queryTargets.length > 0 ? 60 : 25)
+            ? "medium"
+            : "low";
+
+    const slug = resolvedSearchEntry?.event.slug || bestMatch.slug;
     if (!slug) {
       return errorResult(`Found market "${bestMatch.title}" but it has no slug for fetching outcomes.`);
     }
 
-    // Step 2: Fetch the event with all its outcomes
-    const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+    // Step 2: Fetch the event with all its outcomes if the indexed event payload
+    // didn't already include them.
+    let event = resolvedSearchEntry?.event ?? bestMatch;
+    if (!event || !Array.isArray(event.markets) || event.markets.length === 0) {
+      event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+    }
 
     if (!event) {
       return errorResult(`Could not fetch event details for slug: ${slug}`);
@@ -10217,7 +12076,7 @@ async function handleSearchAndGetOutcomes(
 
     const totalVolume = outcomes.reduce((sum, o) => sum + o.volume, 0);
 
-    return successResult({
+    const responseData = {
       eventTitle: event.title || slug,
       eventSlug: slug,
       eventUrl: `https://polymarket.com/event/${slug}`,
@@ -10225,7 +12084,7 @@ async function handleSearchAndGetOutcomes(
       totalOutcomes: outcomes.length,
       outcomes,
       searchQuery: query,
-      searchMethod,
+      searchMethod: resolvedSearchEntry?.source ?? searchMethod,
       matchConfidence,
       note: matchConfidence === "exact" 
         ? "Found exact match for your search query."
@@ -10233,7 +12092,13 @@ async function handleSearchAndGetOutcomes(
         ? "Found high-confidence match. Verify this is the market you wanted."
         : "Best match found. If this isn't the right market, try a different query.",
       fetchedAt: new Date().toISOString(),
-    });
+    };
+
+    return successResult(
+      searchResolution
+        ? attachContributorSearchMetadata(responseData, searchResolution)
+        : responseData
+    );
   } catch (error) {
     return errorResult(`Search and get outcomes failed: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
@@ -10875,75 +12740,133 @@ async function handleSearchMarkets(
   const category = args?.category as string;
   const status = (args?.status as string) || "live"; // Default to live (tradeable) markets
   const limit = Math.min((args?.limit as number) || 12, 40);
+  const categoryTagSlug = resolveDiscoveryCategoryTagSlug({
+    category,
+    query,
+  });
 
   const normalizedQuery = (query || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ");
 
-  // Build query words for matching specific candidates/outcomes in multi-outcome events
-  const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'will', 'be', 'by', 'win', 'presidential', 'nomination', 'president', 'democratic', 'republican']);
-  const searchQueryWords = query ? query.toLowerCase().split(/\s+/).filter(w => {
-    return w.length > 2 && !stopWords.has(w) && !/^\d+$/.test(w);
-  }) : [];
-  const rankingStopWords = new Set([
-    "the",
-    "a",
-    "an",
-    "in",
-    "on",
-    "at",
-    "to",
-    "for",
-    "of",
-    "and",
-    "or",
-    "is",
-    "will",
-    "be",
-    "by",
-    "with",
-    "what",
-    "how",
-    "show",
-    "find",
-    "search",
-    "markets",
-    "market",
-    "prediction",
-    "related",
-  ]);
-  const rankingWords = normalizedQuery
-    .split(/\s+/)
-    .map((word) => word.trim())
-    .filter(
-      (word) =>
-        word.length > 2 && !rankingStopWords.has(word) && !/^\d+$/.test(word)
-    );
+  // Build query words for matching specific candidates/outcomes in multi-outcome events.
+  // Use the same trimmed scoring vocabulary as the market resolver so long natural-language
+  // prompts can degrade to entity-focused search without rewriting the original intent.
+  const searchQueryWords = query
+    ? buildMarketQueryScoringTokens(query).filter(
+        (word) => word.length > 2 || word === "us"
+      )
+    : [];
+  const rankingWords = query ? buildMarketQueryScoringTokens(query) : [];
 
   let allEvents: GammaEvent[] = [];
   let searchUsed = false;
+  let searchMethod = "events listing";
+  let rankedCandidates: IndexedActiveEventCandidate[] = [];
+  let activeIndexBuiltAt: string | undefined;
 
-  // PRIMARY STRATEGY: Use the /public-search endpoint for server-side text search
-  // This is the proper Polymarket search API that actually works!
+  // PRIMARY STRATEGY: Use the same website-backed search surface the live UI hits,
+  // then locally rerank the returned candidates.
   if (query) {
     try {
-      const searchEndpoint = `/public-search?q=${encodeURIComponent(query)}&limit_per_type=${Math.min(limit * 2, 24)}&search_tags=false&search_profiles=false&optimized=true${status === 'resolved' ? '&events_status=closed&keep_closed_markets=1' : status === 'live' ? '&events_status=active' : ''}`;
-      const searchData = (await fetchJsonWithPolicy({
-        upstream: "gamma",
-        endpoint: searchEndpoint,
-        timeoutMs: 8_000,
-        init: {
-          headers: {
-            Accept: "application/json",
-            "User-Agent": "Polymarket-MCP-Server/1.0",
-          },
-        },
-      })) as {
-        events?: GammaEvent[];
-        pagination?: { totalResults: number; hasMore: boolean };
-      };
+      if (status === "all") {
+        const [activeWebsiteSearch, closedWebsiteSearch] = await Promise.all([
+          searchGammaWebsiteEventCandidates({
+            query,
+            category,
+            limit: Math.min(limit * 4, 40),
+            eventsStatus: "active",
+          }),
+          searchGammaWebsiteEventCandidates({
+            query,
+            category,
+            limit: Math.min(limit * 4, 40),
+            eventsStatus: "closed",
+          }),
+        ]);
+        const combinedCandidates = [
+          ...activeWebsiteSearch.candidates,
+          ...closedWebsiteSearch.candidates,
+        ].sort((a, b) => {
+          if (b.score !== a.score) {
+            return b.score - a.score;
+          }
+          if (b.volume !== a.volume) {
+            return b.volume - a.volume;
+          }
+          return a.marketTitle.localeCompare(b.marketTitle);
+        });
+        if (combinedCandidates.length > 0) {
+          rankedCandidates = pickTopIndexedCandidatesByEvent(
+            combinedCandidates,
+            Math.min(limit * 2, 24)
+          );
+          allEvents = rankedCandidates.map((candidate) => candidate.event);
+          searchUsed = true;
+          searchMethod = "website-search-v2";
+        }
+      } else {
+        const websiteSearch = await searchGammaWebsiteEventCandidates({
+          query,
+          category,
+          limit: Math.min(limit * 4, 40),
+          eventsStatus: status === "resolved" ? "closed" : "active",
+        });
+        if (websiteSearch.candidates.length > 0) {
+          rankedCandidates = pickTopIndexedCandidatesByEvent(
+            websiteSearch.candidates,
+            Math.min(limit * 2, 24)
+          );
+          allEvents = rankedCandidates.map((candidate) => candidate.event);
+          searchUsed = true;
+          searchMethod = websiteSearch.source;
+        }
+      }
+    } catch (err) {
+      console.error("Website-backed search failed, falling back:", err);
+    }
+  }
 
-      if (searchData.events && searchData.events.length > 0) {
-        allEvents = searchData.events;
+  // FALLBACK 1: Search the locally ranked active events index for live queries.
+  if (!searchUsed && query && status === "live") {
+    try {
+      const indexedSearch = await searchIndexedActiveEventCandidates({
+        query,
+        category,
+        limit: Math.min(limit * 4, 24),
+      });
+      if (indexedSearch.candidates.length > 0) {
+        rankedCandidates = pickTopIndexedCandidatesByEvent(
+          indexedSearch.candidates,
+          Math.min(limit * 2, 24)
+        );
+        allEvents = rankedCandidates.map((candidate) => candidate.event);
         searchUsed = true;
+        searchMethod = indexedSearch.source;
+        activeIndexBuiltAt = indexedSearch.searchIndex.builtAt;
+      }
+    } catch (err) {
+      console.error("Active events index search failed, falling back:", err);
+    }
+  }
+
+  // FALLBACK 2: Use the /public-search endpoint for server-side text search.
+  if (!searchUsed && query) {
+    try {
+      const searchEvents = await searchGammaEventsByVariants({
+        query,
+        limitPerType: Math.min(limit * 2, 24),
+        eventsStatus:
+          status === "resolved"
+            ? "closed"
+            : status === "live"
+              ? "active"
+              : undefined,
+        includeClosed: status === "resolved",
+      });
+
+      if (searchEvents.length > 0) {
+        allEvents = searchEvents;
+        searchUsed = true;
+        searchMethod = "public-search API";
       }
     } catch (err) {
       // Fall through to events listing if search fails
@@ -10951,21 +12874,24 @@ async function handleSearchMarkets(
     }
   }
 
-  // FALLBACK: Use events listing only if search wasn't used or returned nothing
+  // FALLBACK 3: Use events listing only if search wasn't used or returned nothing.
   if (!searchUsed) {
     const fetchLimit = Math.min(limit * 4, 60);
     const orderParams = "&order=volume&ascending=false";
+    const categoryParams = categoryTagSlug
+      ? `&tag_slug=${encodeURIComponent(categoryTagSlug)}`
+      : "";
     
     if (status === "all") {
       const [liveEvents, resolvedEvents] = await Promise.all([
-        fetchGamma(`/events?closed=false&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
-        fetchGamma(`/events?closed=true&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`) as Promise<GammaEvent[]>,
+        fetchGamma(`/events?closed=false&limit=${fetchLimit}${orderParams}${categoryParams}`) as Promise<GammaEvent[]>,
+        fetchGamma(`/events?closed=true&limit=${fetchLimit}${orderParams}${categoryParams}`) as Promise<GammaEvent[]>,
       ]);
       allEvents = [...(liveEvents || []), ...(resolvedEvents || [])];
     } else if (status === "resolved") {
-      allEvents = (await fetchGamma(`/events?closed=true&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`)) as GammaEvent[];
+      allEvents = (await fetchGamma(`/events?closed=true&limit=${fetchLimit}${orderParams}${categoryParams}`)) as GammaEvent[];
     } else {
-      allEvents = (await fetchGamma(`/events?closed=false&limit=${fetchLimit}${orderParams}${category ? `&category=${category}` : ""}`)) as GammaEvent[];
+      allEvents = (await fetchGamma(`/events?closed=false&limit=${fetchLimit}${orderParams}${categoryParams}`)) as GammaEvent[];
     }
   }
 
@@ -10981,7 +12907,7 @@ async function handleSearchMarkets(
     });
   }
 
-  if (query && rankingWords.length > 0) {
+  if (query && rankingWords.length > 0 && rankedCandidates.length === 0) {
     const tokenizedWordRegex = rankingWords.map(
       (word) => new RegExp(`\\b${word}\\b`, "i")
     );
@@ -11040,62 +12966,97 @@ async function handleSearchMarkets(
   // Count by status for breakdown
   let liveCount = 0;
   let resolvedCount = 0;
-  
-  const results = filtered
-    .slice(0, limit)
-    .map((e) => {
-      const isResolved = e.closed === true;
-      const marketStatus = isResolved ? "resolved" : "live";
-      
-      if (isResolved) {
-        resolvedCount++;
-      } else {
-        liveCount++;
-      }
+ 
+  const results =
+    rankedCandidates.length > 0
+      ? rankedCandidates.slice(0, limit).map((candidate) => {
+          const isResolved = candidate.event.closed === true;
+          const marketStatus = isResolved ? "resolved" : "live";
 
-      // Find the specific market matching the search query (e.g., "Gavin Newsom")
-      let matchedMarket = e.markets?.[0]; // Default to first market
-      let matchedOutcomePrice: string | null = null;
-      
-      if (searchQueryWords.length > 0 && e.markets && e.markets.length > 1) {
-        for (const market of e.markets) {
-          const marketText = ((market.question || '') + ' ' + (market.title || '')).toLowerCase();
-          const matches = searchQueryWords.some(word => marketText.includes(word));
-          if (matches) {
-            matchedMarket = market;
-            if (market.outcomePrices) {
-              try {
-                const prices = typeof market.outcomePrices === 'string' 
-                  ? JSON.parse(market.outcomePrices) 
-                  : market.outcomePrices;
-                matchedOutcomePrice = prices[0];
-              } catch {}
-            }
-            break;
+          if (isResolved) {
+            resolvedCount++;
+          } else {
+            liveCount++;
           }
-        }
-      }
 
-      return {
-        title: e.title,
-        url: `https://polymarket.com/event/${e.slug}`,
-        slug: e.slug,
-        status: marketStatus,
-        category: e.category,
-        conditionId: matchedMarket?.conditionId,
-        matchedOutcome: matchedMarket?.question || matchedMarket?.title,
-        outcomePrice: matchedOutcomePrice,
-        volume: e.volume,
-        liquidity: e.liquidity,
-        endDate: e.endDate || e.endDateIso,
-      };
-    });
+          return {
+            title: candidate.event.title,
+            url: getPolymarketUrl(candidate.event.slug, candidate.conditionId),
+            slug: candidate.event.slug,
+            status: marketStatus,
+            category: candidate.event.category,
+            conditionId: candidate.conditionId,
+            matchedOutcome:
+              candidate.market.groupItemTitle ||
+              candidate.market.question ||
+              candidate.market.title,
+            outcomePrice: getPrimaryOutcomePrice(candidate.market),
+            volume: candidate.event.volume,
+            liquidity: candidate.event.liquidity,
+            endDate: candidate.event.endDate || candidate.event.endDateIso,
+            score: candidate.score,
+          };
+        })
+      : filtered
+          .slice(0, limit)
+          .map((e) => {
+            const isResolved = e.closed === true;
+            const marketStatus = isResolved ? "resolved" : "live";
+            
+            if (isResolved) {
+              resolvedCount++;
+            } else {
+              liveCount++;
+            }
 
-  const hint = searchUsed
-    ? `✅ Server-side search used. Found ${results.length} results for "${query}".`
-    : (query 
-        ? `⚠️ Search fallback: browsing events listing. Results may not be comprehensive.`
-        : `Browsing ${status} markets by volume.`);
+            // Find the specific market matching the search query (e.g., "Gavin Newsom")
+            let matchedMarket = e.markets?.[0]; // Default to first market
+            let matchedOutcomePrice: string | null = null;
+            
+            if (searchQueryWords.length > 0 && e.markets && e.markets.length > 1) {
+              for (const market of e.markets) {
+                const marketText = ((market.question || '') + ' ' + (market.title || '')).toLowerCase();
+                const matches = searchQueryWords.some(word => marketText.includes(word));
+                if (matches) {
+                  matchedMarket = market;
+                  if (market.outcomePrices) {
+                    try {
+                      const prices = typeof market.outcomePrices === 'string' 
+                        ? JSON.parse(market.outcomePrices) 
+                        : market.outcomePrices;
+                      matchedOutcomePrice = prices[0];
+                    } catch {}
+                  }
+                  break;
+                }
+              }
+            }
+
+            return {
+              title: e.title,
+              url: `https://polymarket.com/event/${e.slug}`,
+              slug: e.slug,
+              status: marketStatus,
+              category: e.category,
+              conditionId: matchedMarket?.conditionId,
+              matchedOutcome: matchedMarket?.question || matchedMarket?.title,
+              outcomePrice: matchedOutcomePrice,
+              volume: e.volume,
+              liquidity: e.liquidity,
+              endDate: e.endDate || e.endDateIso,
+            };
+          });
+
+  const hint =
+    rankedCandidates.length > 0 && searchMethod.startsWith("website-search-v2")
+      ? `✅ Website-backed Polymarket search used. Found ${results.length} results for "${query}".`
+      : rankedCandidates.length > 0
+        ? `✅ Active events index fallback used. Found ${results.length} results for "${query}".`
+      : searchUsed
+        ? `✅ Server-side search used. Found ${results.length} results for "${query}".`
+        : (query 
+            ? `⚠️ Search fallback: browsing events listing. Results may not be comprehensive.`
+            : `Browsing ${status} markets by volume.`);
   
   const statusHint = status === "live"
     ? " Showing LIVE markets only (open for trading)."
@@ -11103,17 +13064,41 @@ async function handleSearchMarkets(
       ? " Showing RESOLVED markets only (already finished)."
       : " Showing ALL markets (both live and resolved).";
 
-  return successResult({
+  const searchResolution =
+    query && results.length > 0
+      ? await resolvePolymarketContributorSearch({
+          rawRequest: query,
+          intentQuery: normalizedQuery,
+          traceLabel: "polymarket:search_markets",
+          candidates: results.map((result, index) =>
+            buildPolymarketResultSearchCandidate({
+              query,
+              rank: index + 1,
+              source: searchMethod,
+              result,
+            })
+          ),
+        })
+      : null;
+
+  const responseData = {
     results,
     count: results.length,
-    searchMethod: searchUsed ? "public-search API" : "events listing",
+    searchMethod,
     statusBreakdown: {
       live: liveCount,
       resolved: resolvedCount,
     },
     hint: hint + statusHint,
+    indexBuiltAt: activeIndexBuiltAt,
     fetchedAt: new Date().toISOString(),
-  });
+  };
+
+  return successResult(
+    searchResolution
+      ? attachContributorSearchMetadata(responseData, searchResolution)
+      : responseData
+  );
 }
 
 // ============================================================================
@@ -11861,36 +13846,19 @@ async function handleBrowseCategory(
   try {
     const closed = includeResolved ? "true" : "false";
     const orderField = sortBy === "endDate" ? "endDate" : sortBy === "liquidity" ? "liquidity" : "volume";
-    
-    // IMPORTANT: The Gamma API's ?category= parameter is BROKEN and returns wrong results.
-    // Instead, we fetch more events and filter CLIENT-SIDE by checking the tags array.
-    // Each event has a tags[] array with objects like {slug: "politics", label: "Politics"}
-    const fetchLimit = limit * 10; // Fetch more to ensure enough matches after filtering
-    const events = await fetchGamma(
-      `/events?closed=${closed}&limit=${fetchLimit}&order=${orderField}&ascending=false`
-    ) as GammaEvent[];
-
-    // Normalize category for matching (lowercase, handle common aliases)
-    const categoryLower = category.toLowerCase();
-    const categoryAliases: Record<string, string[]> = {
-      'politics': ['politics', 'elections', 'political'],
-      'sports': ['sports', 'nfl', 'nba', 'mlb', 'soccer', 'football', 'basketball', 'baseball'],
-      'crypto': ['crypto', 'bitcoin', 'ethereum', 'cryptocurrency'],
-      'pop-culture': ['pop-culture', 'culture', 'movies', 'entertainment', 'hollywood'],
-      'science': ['science', 'tech', 'technology'],
-      'business': ['business', 'economics', 'finance'],
-    };
-    const matchingSlugs = categoryAliases[categoryLower] || [categoryLower];
-
-    // Filter events by checking if any tag matches the requested category
-    const filteredEvents = (events || []).filter((e) => {
-      if (!e.tags || !Array.isArray(e.tags)) return false;
-      return e.tags.some((tag: { slug?: string; label?: string }) => {
-        const tagSlug = (tag.slug || '').toLowerCase();
-        const tagLabel = (tag.label || '').toLowerCase();
-        return matchingSlugs.some(s => tagSlug === s || tagLabel === s || tagSlug.includes(s) || tagLabel.includes(s));
-      });
+    const tagSlug =
+      normalizeDiscoveryCategoryTagSlug(category) ??
+      normalizeMarketQueryText(category).replace(/\s+/g, "-");
+    const eventParams = new URLSearchParams({
+      closed,
+      limit: String(limit),
+      order: orderField,
+      ascending: "false",
+      tag_slug: tagSlug,
     });
+    const filteredEvents = (await fetchGamma(
+      `/events?${eventParams.toString()}`
+    )) as GammaEvent[];
 
     const formatted = filteredEvents
       .filter((e) => e.slug)
@@ -11914,7 +13882,7 @@ async function handleBrowseCategory(
       });
 
     return successResult({
-      category,
+      category: tagSlug,
       events: formatted,
       totalCount: formatted.length,
       fetchedAt: new Date().toISOString(),

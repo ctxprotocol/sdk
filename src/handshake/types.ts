@@ -12,6 +12,10 @@
  * of their MCP response. The Context platform intercepts these and
  * presents the appropriate UI to the user.
  *
+ * These helpers define the contributor-side MCP response contract.
+ * They do not create a headless Query API approval/resume flow; completing
+ * a handshake currently requires the Context chat app UI.
+ *
  * ## Action Types
  *
  * - `signature_request`: For EIP-712 signatures (Hyperliquid, Polymarket, etc.)
@@ -286,6 +290,9 @@ export function createAuthRequired(
  *
  * MCP tools should return handshake actions in `_meta.handshakeAction` to prevent
  * the MCP SDK from stripping unknown fields.
+ * Headless Query clients may observe raw internal handshake markers in
+ * execution data, but they cannot submit approval results through the
+ * Query API today.
  *
  * @example
  * ```typescript

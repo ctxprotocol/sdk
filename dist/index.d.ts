@@ -1,4 +1,5 @@
-export { ContextClient, ContextClientOptions, ContextError, ContextErrorCode, Discovery, ExecuteApiErrorResponse, ExecuteApiResponse, ExecuteApiSuccessResponse, ExecuteOptions, ExecuteSessionApiResponse, ExecuteSessionApiSuccessResponse, ExecuteSessionResult, ExecuteSessionSpend, ExecuteSessionStartOptions, ExecuteSessionStatus, ExecutionResult, McpTool, McpToolMeta, McpToolRateLimitHints, Query, QueryApiResponse, QueryApiSuccessResponse, QueryCost, QueryDeepMode, QueryDeveloperTrace, QueryDeveloperTraceLoopInfo, QueryDeveloperTraceStep, QueryDeveloperTraceSummary, QueryDeveloperTraceToolRef, QueryOptions, QueryResult, QueryStreamDeveloperTraceEvent, QueryStreamDoneEvent, QueryStreamErrorEvent, QueryStreamEvent, QueryStreamTextDeltaEvent, QueryStreamToolStatusEvent, QueryToolUsage, SearchOptions, SearchResponse, Tool, Tools } from './client/index.js';
+export { ContextClient, Discovery, Query, Tools } from './client/index.js';
+export { D as ContextClientOptions, B as ContextError, aj as ContextErrorCode, U as ExecuteApiErrorResponse, V as ExecuteApiResponse, P as ExecuteApiSuccessResponse, I as ExecuteOptions, X as ExecuteSessionApiResponse, W as ExecuteSessionApiSuccessResponse, N as ExecuteSessionResult, L as ExecuteSessionSpend, J as ExecuteSessionStartOptions, K as ExecuteSessionStatus, O as ExecutionResult, M as McpTool, E as McpToolMeta, F as McpToolRateLimitHints, ac as QueryApiResponse, ab as QueryApiSuccessResponse, Z as QueryAttemptForkReason, _ as QueryAttemptReference, a5 as QueryCompletenessRepairEvent, a4 as QueryCost, Y as QueryDeepMode, Q as QueryDeveloperTrace, a6 as QueryDeveloperTraceDiagnostics, aa as QueryDeveloperTraceLoopInfo, a8 as QueryDeveloperTraceStep, a7 as QueryDeveloperTraceSummary, a9 as QueryDeveloperTraceToolRef, $ as QueryForkReference, a0 as QueryOptions, a1 as QueryResult, a2 as QuerySessionState, ag as QueryStreamDeveloperTraceEvent, ah as QueryStreamDoneEvent, ai as QueryStreamErrorEvent, ad as QueryStreamEvent, af as QueryStreamTextDeltaEvent, ae as QueryStreamToolStatusEvent, a3 as QueryToolUsage, H as SearchOptions, G as SearchResponse, T as Tool } from './types-Bgjq3OBR.js';
 import { JWTPayload } from 'jose';
 
 /**
@@ -461,6 +462,10 @@ declare function createContextMiddleware(options?: CreateContextMiddlewareOption
  * of their MCP response. The Context platform intercepts these and
  * presents the appropriate UI to the user.
  *
+ * These helpers define the contributor-side MCP response contract.
+ * They do not create a headless Query API approval/resume flow; completing
+ * a handshake currently requires the Context chat app UI.
+ *
  * ## Action Types
  *
  * - `signature_request`: For EIP-712 signatures (Hyperliquid, Polymarket, etc.)
@@ -661,6 +666,9 @@ declare function createAuthRequired(params: Omit<AuthRequired, "_action">): Auth
  *
  * MCP tools should return handshake actions in `_meta.handshakeAction` to prevent
  * the MCP SDK from stripping unknown fields.
+ * Headless Query clients may observe raw internal handshake markers in
+ * execution data, but they cannot submit approval results through the
+ * Query API today.
  *
  * @example
  * ```typescript

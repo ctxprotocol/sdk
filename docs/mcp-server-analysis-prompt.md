@@ -26,6 +26,15 @@ Generate a JSON object with the following fields, followed by a markdown explana
 
 ## Field Requirements
 
+Before generating the form fields, infer the product contract:
+
+- the exact premium feature or normalized primitive being shipped
+- the target paying user
+- why free substitutes or direct APIs are insufficient
+- the ideal output surface: `Query`, `Execute`, or `both`
+- the must-win prompts that prove the tool is worth paying for
+- the expected evidence fields (Query) or normalized schema fields (Execute)
+
 ### 1. Name (required, max 255 chars)
 
 - **Format**: `[Provider/Protocol] [Function]`
@@ -106,6 +115,7 @@ When generating the `Try asking` section, use **at least 7 questions** and ensur
 7. Power-user query that demonstrates the server's strongest capability
 
 Questions should be specific enough that an agent can route to the right tools without guessing.
+Treat them as **must-win prompts**, not filler examples.
 
 ### 3. Category (required, select one)
 
@@ -182,6 +192,8 @@ When analyzing an MCP server, extract:
    - What makes this tool different from alternatives?
    - What specific problems does it solve?
    - Who is the target user (traders, researchers, developers)?
+   - Which free substitutes fail for the must-win prompts?
+   - Is the strongest contract `Query`, `Execute`, or `both`?
 
 ### From README/Documentation
 
@@ -194,7 +206,7 @@ When analyzing an MCP server, extract:
    - Example queries and responses
    - Common workflows
    - Edge cases and limitations
-   - Include comprehensive test questions that exercise each capability cluster
+   - Include comprehensive must-win questions that exercise each capability cluster
 
 ---
 

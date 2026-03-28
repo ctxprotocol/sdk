@@ -1,0 +1,423 @@
+{
+  "outcomeType": "answer",
+  "durationMs": 320113,
+  "querySession": {
+    "sessionId": "44ec2d2d-29fd-456e-9212-250ce1bb52fa",
+    "attemptId": "e0b7b1c3-1bb6-450f-b95b-aeb3abfa9a49",
+    "parentAttemptId": null,
+    "rootAttemptId": "e0b7b1c3-1bb6-450f-b95b-aeb3abfa9a49",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "completed",
+    "checkpoint": {
+      "currentStage": "execution",
+      "latestCheckpointArtifactId": "fbb52a0f-4b01-4e76-afd3-1ce32753da1b:23",
+      "canonicalDatasetId": "fbb52a0f-4b01-4e76-afd3-1ce32753da1b:canonical-execution",
+      "executionProgramCurrentRevisionId": "rev-2"
+    }
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "manual_selected_tools",
+    "firstPassSuccess": true,
+    "capabilityMissSignaled": false,
+    "rediscoveryExecuted": false
+  },
+  "traceSummary": {
+    "toolCalls": 9,
+    "retryCount": 1,
+    "selfHealCount": 1,
+    "fallbackCount": 0,
+    "failureCount": 1,
+    "recoveryCount": 0,
+    "completionChecks": 1,
+    "loopCount": 1
+  },
+  "clarification": {
+    "orchestrationMode": "manual_selected_tools",
+    "rolloutStage": "enabled",
+    "shadowMode": false,
+    "policy": "auto",
+    "outcomeType": "clarification_required",
+    "triggered": true,
+    "optionCount": 3,
+    "candidateCount": 38,
+    "viableCandidateCount": 3,
+    "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes",
+    "recommendedOptionReason": "User’s phrase “boots on the ground in Iran” is likely mapped to multiple materially different Polymarket market definitions/time buckets; at least two grounded workflows (direct search+outcomes vs broad keyword enumeration vs trending-firs…",
+    "autoResolved": true,
+    "autoSelectEnabled": true,
+    "assumptionMade": {
+      "mode": "auto",
+      "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes",
+      "label": "🔍 SEARCH + GET OUTCOMES in ONE CALL",
+      "reason": "User’s phrase “boots on the ground in Iran” is likely mapped to multiple materially different Polymarket market definitions/time buckets; at least two grounded workflows (direct search+outcomes vs broad keyword enumeration vs trending-firs…"
+    },
+    "missingCapability": null,
+    "decisionReasonCode": "semantic_scope_ambiguity",
+    "decisionSignals": [
+      "llm_judge"
+    ],
+    "evidenceSources": {
+      "usesMethodSchemas": true,
+      "usesProbeArgs": true,
+      "usesMethodMetadata": true,
+      "usesToolSelectionContext": false,
+      "usesLlmSelection": true
+    },
+    "comparedOptionIds": [
+      "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+      "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+      "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes"
+    ],
+    "decisionStrategy": "llm_primary",
+    "judgeAttempted": true,
+    "judgeApplied": true,
+    "judgeOutcomeType": "clarification_required",
+    "judgeConfidence": 0.58,
+    "judgeReason": "User’s phrase “boots on the ground in Iran” is likely mapped to multiple materially different Polymarket market definitions/time buckets; at least two grounded workflows (direct search+outcomes vs broad keyword enumeration vs trending-firs…",
+    "judgeError": null,
+    "validatorReason": null,
+    "fallbackReason": null,
+    "copyStrategy": "deterministic",
+    "rewriteAttempted": false,
+    "rewriteApplied": false,
+    "rewriteError": null,
+    "candidateSummaries": [
+      {
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+        "fitScore": 21.55,
+        "llmRelevanceScore": null,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [],
+        "inputFieldNames": [
+          "limit",
+          "title",
+          "keywords",
+          "polymarketSlug"
+        ],
+        "outputKeys": [
+          "hint",
+          "fetchedAt",
+          "searchedFor",
+          "sourcesTried",
+          "kalshiResults",
+          "comparisonNote"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "comparison",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "instant",
+        "executePriceUsd": null,
+        "queryEligible": true
+      },
+      {
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:get_event_outcomes",
+        "fitScore": 16.55,
+        "llmRelevanceScore": 0.69,
+        "requiredParams": [
+          "slug"
+        ],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [
+          "slug"
+        ],
+        "inputFieldNames": [
+          "slug",
+          "limit",
+          "sortBy",
+          "includeInactive"
+        ],
+        "outputKeys": [
+          "url",
+          "outcomes",
+          "sortedBy",
+          "eventSlug",
+          "fetchedAt",
+          "eventTitle"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "comparison",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "instant",
+        "executePriceUsd": "0.001",
+        "queryEligible": true
+      },
+      {
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:discover_trending_markets",
+        "fitScore": 15.55,
+        "llmRelevanceScore": null,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [],
+        "inputFieldNames": [
+          "limit",
+          "sortBy",
+          "category"
+        ],
+        "outputKeys": [
+          "topTags",
+          "fetchedAt",
+          "categories",
+          "totalActive",
+          "marketSummary",
+          "trendingMarkets"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "multiple",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "instant",
+        "executePriceUsd": null,
+        "queryEligible": true
+      }
+    ],
+    "modelTelemetry": {
+      "modelId": "gpt-5.4-nano-model",
+      "runtimeModelId": "openai/gpt-5.4-nano",
+      "judgeUsage": {
+        "inputTokens": "[REDACTED]",
+        "outputTokens": "[REDACTED]",
+        "totalTokens": "[REDACTED]",
+        "promptTokens": "[REDACTED]",
+        "completionTokens": "[REDACTED]"
+      },
+      "judgeActualCostUsd": 0.0039622,
+      "rewriteUsage": null,
+      "rewriteActualCostUsd": null,
+      "totalActualCostUsd": 0.0039622
+    }
+  },
+  "completeness": {
+    "evaluations": [
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "repairEvents": [
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "triggerNeedsDifferentTools": false,
+    "triggerMissingCapability": null
+  },
+  "executionProgram": {
+    "executionProgram": {
+      "baseRevisionId": "rev-1",
+      "currentRevisionId": "rev-2",
+      "revisionCount": 2,
+      "patchCount": 1,
+      "replanCount": 0,
+      "deterministicChangeCount": 0,
+      "revisions": [
+        {
+          "revisionId": "rev-1",
+          "parentRevisionId": null,
+          "attempt": 0,
+          "action": "initial",
+          "reason": "initial",
+          "summary": "Planner base program",
+          "codeHash": "1ce0ff4c506303be8ee560b8bc4aa23f398b3b9710e58cf62da11497c221d458",
+          "codeLength": 8166,
+          "changedLineCount": 0,
+          "diffPreview": null,
+          "editCount": null,
+          "preservesPriorLogic": true
+        },
+        {
+          "revisionId": "rev-2",
+          "parentRevisionId": "rev-1",
+          "attempt": 1,
+          "action": "llm_patch",
+          "reason": "completeness_gap",
+          "summary": "Insert targeted search and efficiency checks for ground-invasion specific slugs (will-the-us-invade-iran-in-2025, will-the-us-officially-declare-war-on-iran-by, plus a fresh 'us forces enter iran' search), then add a dedicated groundInvasio...",
+          "codeHash": "f115e4ec7fcb951ace15b9e4ba3bc8ad5df08118a62d2a19ac765f228ded6a28",
+          "codeLength": 10166,
+          "changedLineCount": 148,
+          "diffPreview": "Before:\n  // Step 4: Sequentially check efficiency on top live Polymarket markets (same endpoint)\n  var liveMarkets = ranked.filter(function (m) { return m.status === \"live\"; });\n  var efficiencyResults = [];\n\nAfter:\n  // Step 3b: Targeted fetch for ground-invasion specific markets (boots on the ground)\n  var groundInvasionSlugs = [\"will-the-us-invade-iran-in-2025\", \"will-the-us-officially-declare-war-on-iran-by\"];\n  try {\n    var giSearch = await callMcpSkill({\n[diff preview truncated]",
+          "editCount": 2,
+          "preservesPriorLogic": true
+        }
+      ]
+    }
+  },
+  "repairTracePreview": [
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 1,
+      "metadata": {
+        "codeSnippet": "import { callMcpSkill, callMcpSkillsParallel } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nexport async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\n  // Step 1: ONE broad Polymarket discovery + Kalshi crossref in parallel (different toolNames)\n  const discovery = await callMcpSkillsParallel({\n    label: \"iran-crossvenue-discovery\",\n    calls: [\n      {\n        key: \"poly-broad\",\n        toolId,\n        toolName: \"search_markets\",\n        args: { query: \"Iran US military invasion ground troops boots war strike attack 2025 2026\", limit: 50, status: \"all\" },\n      },\n      {\n        key: \"kalshi-iran\",\n        toolId,\n        toolName: \"polymarket_crossref_kalshi\",\n        args: { keywords: \"Iran US military invasion ground troops war 2025 2026\", limit: 10 },\n      },\n    ],\n  });\n\n  // Extract Polymarket search results\n  var polyRaw = [];\n  var polyEntry = discovery.results.find(function (e) { return e.key === \"poly-broad\"; });\n  if (polyEntry && polyEntry.status === \"fulfilled\" && Array.isArray(polyEntry.value?.results)) {\n    polyRaw = polyEntry.value.results;\n  }\n\n  // Extract Kalshi crossref results\n  var kalshiRaw = [];\n  var kalshiEntry = discovery.results.find(function (e) { return e.key === \"kalshi-iran\"; });\n  if (kalshiEntry && kalshiEntry.status === \"fulfilled\" && Array.isArray(kalshiEntry.value?.kalshiResults)) {\n    kalshiRaw = kalshiEntry.value.kalshiResults;\n  }\n\n  // Step 2: If Polymarket pool is thin, one sequential follow-up search (same endpoint)\n  if (polyRaw.length < 8) {\n    try {\n      var followUp = await callMcpSkill({\n        toolId,\n        toolName: \"search_markets\",\n        args: { query: \"Iran allied forces Israel ground war troops escalation conflict\", limit: 20, status: \"all\" },\n      });\n      if (Array.isArray(followUp?.results)) {\n        var seen = new Set(polyRaw.map(function (m) { return m.conditionId || m.title; }));\n        for (var fm of followUp.results) {\n          var fk = fm.conditionId || fm.title;\n          if (!seen.has(fk)) { seen.add(fk); polyRaw.push(fm); }\n        }\n      }\n    } catch (e) { /* bounded fallback: proceed with what we have */ }\n  }\n\n  // Step 3: Deterministic semantic targeting on merged Polymarket candidates\n  var ranked = pickTopSemanticCandidates({\n    target: \"US or allied boots on the ground in Iran — ground invasion, troop deployment, or ground war involving Iran directly\",\n    candidates: polyRaw,\n    requiredTerms: [\"iran\", \"ground\", \"boots\", \"invasion\", \"troops\", \"military\", \"war\", \"allied\", \"forces\", \"strike\", \"attack\"],\n    avoidTerms: [\"iraq\", \"syria\", \"lebanon\", \"yemen\", \"gaza\", \"ukraine\", \"russia\", \"china\", \"north korea\", \"tariff\", \"crypto\", \"bitcoin\", \"sanctions only\", \"diplomatic\", \"nuclear deal\"],\n    limit: 10,\n  });\n\n  // Also semantically rank Kalshi results for the same scenario\n  var kalshiRanked = [];\n  if (kalshiRaw.length > 0) {\n    kalshiRanked = pickTopSemanticCandidates({\n      target: \"US or allied boots on the ground in Iran — ground invasion, troop deployment, or ground war\",\n      candidates: kalshiRaw.map(function (k) { return { ...k, title: k.title }; }),\n      requiredTerms: [\"iran\", \"ground\", \"invasion\", \"troops\", \"military\", \"war\", \"strike\", \"attack\", \"boots\"],\n      avoidTerms: [\"iraq\", \"syria\", \"lebanon\", \"yemen\", \"ukraine\", \"russia\", \"tariff\", \"crypto\"],\n      limit: 5,\n    });\n  }\n\n  // Step 4: Sequentially check efficiency on top live Polymarket markets (same endpoint)\n  var liveMarkets = ranked.filter(function (m) { return m.status === \"live\"; });\n  var efficiencyResults = [];\n\n  for (var i = 0; i < Math.min(liveMarkets.length, 5); i++) {\n    var market = liveMarkets[i];\n    try {\n      var eff = await callMcpSkill({\n        toolId,\n        toolName: \"check_market_efficiency\",\n        args: { slug: market.slug || undefined, conditionId: market.conditionId || undefined },\n      });\n      efficiencyResults.push(eff);\n    } catch (e) {\n      efficiencyResults.push({ error: e.message, market: market.title });\n    }\n  }\n\n  // Step 5: Sequential risk-off proxy searches on Polymarket (same endpoint)\n  var riskOffMarkets = [];\n  try {\n    var oilSearch = await callMcpSkill({\n      toolId,\n      toolName: \"search_markets\",\n      args: { query: \"oil price spike crude brent 2025 2026\", limit: 5, status: \"live\" },\n    });\n    if (Array.isArray(oilSearch?.results)) {\n      riskOffMarkets = oilSearch.results.map(function (m) {\n        return { title: m.title, url: m.url, status: m.status, endDate: m.endDate, liquidity: m.liquidity, volume: m.volume };\n      });\n    }\n  } catch (e) { /* bounded */ }\n\n  try {\n    var spSearch = await callMcpSkill({\n      toolId,\n      toolName: \"search_markets\",\n      args: { query: \"S&P 500 crash recession risk-off 2025 2026\", limit: 5, status: \"live\" },\n    });\n    if (Array.isArray(spSearch?.results)) {\n      for (var rm of spSearch.results) {\n        riskOffMarkets.push({ title: rm.ti",
+        "completenessCheck": {
+          "isComplete": false,
+          "missingParts": [
+            "Implied odds (prices) and specific outcome data for the most direct 'boots on the ground' markets (e.g., 'US forces enter Iran by..?' and 'Will the U.S. invade Iran in 2025?')",
+            "Analysis of the specific price levels for ground invasion targets, as the current efficiency checks focused almost exclusively on strike/missile exchange markets (Iran vs Israel, UK/UAE vs Iran) rather than the requested ground troop escalation."
+          ],
+          "suggestedFix": "The initial search identified the correct markets (e.g., slugs 'us-forces-enter-iran-by' and 'will-the-us-invade-iran-in-2025'), but they were not passed to the data-fetching tools. Execute 'search_and_get_outcomes' or 'get_event_outcomes' for these specific slugs to retrieve the actual price levels and implied odds. Then, run 'check_market_efficiency' on those specific ground-invasion markets to fulfill the user's request for odds and price levels.",
+          "canRetryWithSameTools": true,
+          "needsDifferentTools": false,
+          "missingCapability": null,
+          "capabilityConstrained": false,
+          "outcome": "retry_same_tools",
+          "parseFailed": false,
+          "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"Implied odds (prices) and specific outcome data for the most direct 'boots on the ground' markets (e.g., 'US forces enter Iran by..?' and 'Will the U.S. invade Iran in 2025?')\",\n    \"Analysis of the specific price levels for ground invasion targets, as the current efficiency checks focused almost exclusively on strike/missile exchange markets (Iran vs Israel, UK/UAE vs Iran) rather than the requested ground troop escalation.\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The initial search identified the correct markets (e.g., slugs 'us-forces-enter-iran-by' and 'will-the-us-invade-iran-in-2025'), but they were not passed to the data-fetching tools. Execute 'search_and_get_outcomes' or 'get_event_outcomes' for these specific slugs to retrieve the actual price levels and implied odds. Then, run 'check_market_efficiency' on those specific ground-invasion markets to fulfill the user's request for odds and price levels.\",\n  \"missingCapability\": null\n}"
+        },
+        "completenessRepairEvents": [
+          {
+            "attempt": 1,
+            "outcome": "attempted",
+            "semanticRetryCount": 1,
+            "maxSemanticRetries": 1,
+            "strategy": null,
+            "summary": null,
+            "failReason": null,
+            "requestedReplan": false,
+            "hadSyntaxFix": false,
+            "editCount": null,
+            "skipReason": null,
+            "boundedAnswerReason": null,
+            "blockingDiagnostics": []
+          },
+          {
+            "attempt": 1,
+            "outcome": "patched",
+            "semanticRetryCount": 1,
+            "maxSemanticRetries": 1,
+            "strategy": "patch",
+            "summary": "Insert targeted search and efficiency checks for ground-invasion specific slugs (will-the-us-invade-iran-in-2025, will-the-us-officially-declare-war-on-iran-by, plus a fresh 'us forces enter iran' search), then add a dedicated groundInvasio...",
+            "failReason": null,
+            "requestedReplan": false,
+            "hadSyntaxFix": false,
+            "editCount": 2,
+            "skipReason": null,
+            "boundedAnswerReason": null,
+            "blockingDiagnostics": []
+          },
+          {
+            "attempt": 1,
+            "outcome": "skipped_by_guardrail",
+            "semanticRetryCount": 1,
+            "maxSemanticRetries": 1,
+            "strategy": "patch",
+            "summary": "Repair generated a same-endpoint fanout flow blocked by guardrail",
+            "failReason": null,
+            "requestedReplan": false,
+            "hadSyntaxFix": false,
+            "editCount": 2,
+            "skipReason": "same_endpoint_fanout_guardrail",
+            "boundedAnswerReason": "retry_guardrail_same_endpoint_fanout",
+            "blockingDiagnostics": [
+              {
+                "code": "same_endpoint_discovery_fanout",
+                "severity": "warning",
+                "message": "Detected excessive same-tool discovery fanout; use one broad discovery/batch call, build a shortlist, then run at most 1-2 sequential follow-ups."
+              }
+            ]
+          }
+        ],
+        "programRevision": {
+          "revisionId": "rev-1",
+          "action": "initial",
+          "reason": "initial",
+          "preservesPriorLogic": true,
+          "summary": "Planner base program"
+        }
+      }
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 1,
+      "metadata": {
+        "codeSnippet": "import { callMcpSkill, callMcpSkillsParallel } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nexport async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\n  // Step 1: ONE broad Polymarket discovery + Kalshi crossref in parallel (different toolNames)\n  const discovery = await callMcpSkillsParallel({\n    label: \"iran-crossvenue-discovery\",\n    calls: [\n      {\n        key: \"poly-broad\",\n        toolId,\n        toolName: \"search_markets\",\n        args: { query: \"Iran US military invasion ground troops boots war strike attack 2025 2026\", limit: 50, status: \"all\" },\n      },\n      {\n        key: \"kalshi-iran\",\n        toolId,\n        toolName: \"polymarket_crossref_kalshi\",\n        args: { keywords: \"Iran US military invasion ground troops war 2025 2026\", limit: 10 },\n      },\n    ],\n  });\n\n  // Extract Polymarket search results\n  var polyRaw = [];\n  var polyEntry = discovery.results.find(function (e) { return e.key === \"poly-broad\"; });\n  if (polyEntry && polyEntry.status === \"fulfilled\" && Array.isArray(polyEntry.value?.results)) {\n    polyRaw = polyEntry.value.results;\n  }\n\n  // Extract Kalshi crossref results\n  var kalshiRaw = [];\n  var kalshiEntry = discovery.results.find(function (e) { return e.key === \"kalshi-iran\"; });\n  if (kalshiEntry && kalshiEntry.status === \"fulfilled\" && Array.isArray(kalshiEntry.value?.kalshiResults)) {\n    kalshiRaw = kalshiEntry.value.kalshiResults;\n  }\n\n  // Step 2: If Polymarket pool is thin, one sequential follow-up search (same endpoint)\n  if (polyRaw.length < 8) {\n    try {\n      var followUp = await callMcpSkill({\n        toolId,\n        toolName: \"search_markets\",\n        args: { query: \"Iran allied forces Israel ground war troops escalation conflict\", limit: 20, status: \"all\" },\n      });\n      if (Array.isArray(followUp?.results)) {\n        var seen = new Set(polyRaw.map(function (m) { return m.conditionId || m.title; }));\n        for (var fm of followUp.results) {\n          var fk = fm.conditionId || fm.title;\n          if (!seen.has(fk)) { seen.add(fk); polyRaw.push(fm); }\n        }\n      }\n    } catch (e) { /* bounded fallback: proceed with what we have */ }\n  }\n\n  // Step 3: Deterministic semantic targeting on merged Polymarket candidates\n  var ranked = pickTopSemanticCandidates({\n    target: \"US or allied boots on the ground in Iran — ground invasion, troop deployment, or ground war involving Iran directly\",\n    candidates: polyRaw,\n    requiredTerms: [\"iran\", \"ground\", \"boots\", \"invasion\", \"troops\", \"military\", \"war\", \"allied\", \"forces\", \"strike\", \"attack\"],\n    avoidTerms: [\"iraq\", \"syria\", \"lebanon\", \"yemen\", \"gaza\", \"ukraine\", \"russia\", \"china\", \"north korea\", \"tariff\", \"crypto\", \"bitcoin\", \"sanctions only\", \"diplomatic\", \"nuclear deal\"],\n    limit: 10,\n  });\n\n  // Also semantically rank Kalshi results for the same scenario\n  var kalshiRanked = [];\n  if (kalshiRaw.length > 0) {\n    kalshiRanked = pickTopSemanticCandidates({\n      target: \"US or allied boots on the ground in Iran — ground invasion, troop deployment, or ground war\",\n      candidates: kalshiRaw.map(function (k) { return { ...k, title: k.title }; }),\n      requiredTerms: [\"iran\", \"ground\", \"invasion\", \"troops\", \"military\", \"war\", \"strike\", \"attack\", \"boots\"],\n      avoidTerms: [\"iraq\", \"syria\", \"lebanon\", \"yemen\", \"ukraine\", \"russia\", \"tariff\", \"crypto\"],\n      limit: 5,\n    });\n  }\n\n  // Step 4: Sequentially check efficiency on top live Polymarket markets (same endpoint)\n  var liveMarkets = ranked.filter(function (m) { return m.status === \"live\"; });\n  var efficiencyResults = [];\n\n  for (var i = 0; i < Math.min(liveMarkets.length, 5); i++) {\n    var market = liveMarkets[i];\n    try {\n      var eff = await callMcpSkill({\n        toolId,\n        toolName: \"check_market_efficiency\",\n        args: { slug: market.slug || undefined, conditionId: market.conditionId || undefined },\n      });\n      efficiencyResults.push(eff);\n    } catch (e) {\n      efficiencyResults.push({ error: e.message, market: market.title });\n    }\n  }\n\n  // Step 5: Sequential risk-off proxy searches on Polymarket (same endpoint)\n  var riskOffMarkets = [];\n  try {\n    var oilSearch = await callMcpSkill({\n      toolId,\n      toolName: \"search_markets\",\n      args: { query: \"oil price spike crude brent 2025 2026\", limit: 5, status: \"live\" },\n    });\n    if (Array.isArray(oilSearch?.results)) {\n      riskOffMarkets = oilSearch.results.map(function (m) {\n        return { title: m.title, url: m.url, status: m.status, endDate: m.endDate, liquidity: m.liquidity, volume: m.volume };\n      });\n    }\n  } catch (e) { /* bounded */ }\n\n  try {\n    var spSearch = await callMcpSkill({\n      toolId,\n      toolName: \"search_markets\",\n      args: { query: \"S&P 500 crash recession risk-off 2025 2026\", limit: 5, status: \"live\" },\n    });\n    if (Array.isArray(spSearch?.results)) {\n      for (var rm of spSearch.results) {\n        riskOffMarkets.push({ title: rm.ti",
+        "completenessCheck": {
+          "isComplete": false,
+          "missingParts": [
+            "Implied odds (prices) and specific outcome data for the most direct 'boots on the ground' markets (e.g., 'US forces enter Iran by..?' and 'Will the U.S. invade Iran in 2025?')",
+            "Analysis of the specific price levels for ground invasion targets, as the current efficiency checks focused almost exclusively on strike/missile exchange markets (Iran vs Israel, UK/UAE vs Iran) rather than the requested ground troop escalation."
+          ],
+          "suggestedFix": "The initial search identified the correct markets (e.g., slugs 'us-forces-enter-iran-by' and 'will-the-us-invade-iran-in-2025'), but they were not passed to the data-fetching tools. Execute 'search_and_get_outcomes' or 'get_event_outcomes' for these specific slugs to retrieve the actual price levels and implied odds. Then, run 'check_market_efficiency' on those specific ground-invasion markets to fulfill the user's request for odds and price levels.",
+          "canRetryWithSameTools": true,
+          "needsDifferentTools": false,
+          "missingCapability": null,
+          "capabilityConstrained": false,
+          "outcome": "retry_same_tools",
+          "parseFailed": false,
+          "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"Implied odds (prices) and specific outcome data for the most direct 'boots on the ground' markets (e.g., 'US forces enter Iran by..?' and 'Will the U.S. invade Iran in 2025?')\",\n    \"Analysis of the specific price levels for ground invasion targets, as the current efficiency checks focused almost exclusively on strike/missile exchange markets (Iran vs Israel, UK/UAE vs Iran) rather than the requested ground troop escalation.\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The initial search identified the correct markets (e.g., slugs 'us-forces-enter-iran-by' and 'will-the-us-invade-iran-in-2025'), but they were not passed to the data-fetching tools. Execute 'search_and_get_outcomes' or 'get_event_outcomes' for these specific slugs to retrieve the actual price levels and implied odds. Then, run 'check_market_efficiency' on those specific ground-invasion markets to fulfill the user's request for odds and price levels.\",\n  \"missingCapability\": null\n}"
+        },
+        "completenessRepairEvents": [
+          {
+            "attempt": 1,
+            "outcome": "attempted",
+            "semanticRetryCount": 1,
+            "maxSemanticRetries": 1,
+            "strategy": null,
+            "summary": null,
+            "failReason": null,
+            "requestedReplan": false,
+            "hadSyntaxFix": false,
+            "editCount": null,
+            "skipReason": null,
+            "boundedAnswerReason": null,
+            "blockingDiagnostics": []
+          },
+          {
+            "attempt": 1,
+            "outcome": "patched",
+            "semanticRetryCount": 1,
+            "maxSemanticRetries": 1,
+            "strategy": "patch",
+            "summary": "Insert targeted search and efficiency checks for ground-invasion specific slugs (will-the-us-invade-iran-in-2025, will-the-us-officially-declare-war-on-iran-by, plus a fresh 'us forces enter iran' search), then add a dedicated groundInvasio...",
+            "failReason": null,
+            "requestedReplan": false,
+            "hadSyntaxFix": false,
+            "editCount": 2,
+            "skipReason": null,
+            "boundedAnswerReason": null,
+            "blockingDiagnostics": []
+          },
+          {
+            "attempt": 1,
+            "outcome": "skipped_by_guardrail",
+            "semanticRetryCount": 1,
+            "maxSemanticRetries": 1,
+            "strategy": "patch",
+            "summary": "Repair generated a same-endpoint fanout flow blocked by guardrail",
+            "failReason": null,
+            "requestedReplan": false,
+            "hadSyntaxFix": false,
+            "editCount": 2,
+            "skipReason": "same_endpoint_fanout_guardrail",
+            "boundedAnswerReason": "retry_guardrail_same_endpoint_fanout",
+            "blockingDiagnostics": [
+              {
+                "code": "same_endpoint_discovery_fanout",
+                "severity": "warning",
+                "message": "Detected excessive same-tool discovery fanout; use one broad discovery/batch call, build a shortlist, then run at most 1-2 sequential follow-ups."
+              }
+            ]
+          }
+        ],
+        "programRevision": {
+          "revisionId": "rev-1",
+          "action": "initial",
+          "reason": "initial",
+          "preservesPriorLogic": true,
+          "summary": "Planner base program"
+        }
+      }
+    }
+  ],
+  "responsePreview": "Based on recent Polymarket data, several markets track escalation risks involving Iran. While specific \"boots on the ground\" markets have been identified, the current data provides implied odds primarily for military strikes rather than ground invasions.\n\n### **Implied Odds for Iran Military Action**\nThe following markets have been analyzed for efficiency and current pricing levels:\n\n| Market Title | Implied Probability (YES) | Resolution Date | Status |\n| :--- | :--- | :--- | :--- |\n| Will Iran strike Safaniya Field by April 30? | 20% | April 30, 2026 | Live |\n| Will UK strike Iran by April 30? | 6.5% | April 30, 2026 | Live |\n| Will UAE strike Iran by March 31? | 5.5% | March 31, 2026 | Live |\n| Will Iran strike Israel by April 30, 2026? | 100% (High Vig)* | April 30, 2026 | Live |\n| Will Iran strike Israel in March? | 100% (High Vig)* | March 31, 2026 | Live |\n\n*\\*Note: Markets with 100% implied probability and 50% \"NO\" prices indicate poor efficiency and high vig (50%); these may not accurately reflect real-world probability.*\n\n### **Direct \"Boots on the Ground\" Markets Identified**\nThe following markets directly track ground escalation, though current price levels were not inc"
+}

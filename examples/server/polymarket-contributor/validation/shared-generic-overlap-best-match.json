@@ -1,0 +1,162 @@
+{
+  "version": "ctx-contributor-search-validation/v1",
+  "generatedAt": "2026-03-28T12:00:00.000Z",
+  "caseId": "generic-overlap-best-match",
+  "caseKind": "generic_overlap",
+  "rawRequest": "Which exact tariffs market should I inspect for the Supreme Court case?",
+  "intents": [
+    {
+      "intentId": "supreme-court-tariffs-case",
+      "rawRequest": "Which exact tariffs market should I inspect for the Supreme Court case?",
+      "query": "supreme court tariffs case",
+      "clause": "exact market selection"
+    }
+  ],
+  "candidates": [
+    {
+      "candidateId": "generic-scotus-tariffs",
+      "title": "Supreme Court tariff ruling in 2026",
+      "description": "The exact court-case market family.",
+      "rawIds": {
+        "marketId": "market-1"
+      },
+      "rankFeatures": {
+        "exactPhraseMatch": true,
+        "semanticScore": 0.94
+      },
+      "provenance": [
+        {
+          "source": "website-search-v2",
+          "query": "supreme court tariffs case",
+          "rank": 1,
+          "fetchedAt": "2026-03-28T12:00:00.000Z",
+          "metadata": {
+            "fixture": true
+          }
+        }
+      ],
+      "metadata": {}
+    },
+    {
+      "candidateId": "generic-trade-policy-outlook",
+      "title": "Broader tariff policy outlook",
+      "description": "A broader policy proxy with overlapping language.",
+      "rawIds": {
+        "marketId": "market-2"
+      },
+      "rankFeatures": {
+        "exactPhraseMatch": false,
+        "semanticScore": 0.78
+      },
+      "provenance": [
+        {
+          "source": "website-search-v2",
+          "query": "supreme court tariffs case",
+          "rank": 2,
+          "fetchedAt": "2026-03-28T12:00:00.000Z",
+          "metadata": {
+            "fixture": true
+          }
+        }
+      ],
+      "metadata": {}
+    },
+    {
+      "candidateId": "generic-tariff-revenue-benchmark",
+      "title": "Tariff revenue benchmark in 2026",
+      "description": "Tariff-adjacent but not the exact court-case resolution.",
+      "rawIds": {
+        "marketId": "market-3"
+      },
+      "rankFeatures": {
+        "exactPhraseMatch": false,
+        "semanticScore": 0.51
+      },
+      "provenance": [
+        {
+          "source": "website-search-v2",
+          "query": "supreme court tariffs case",
+          "rank": 3,
+          "fetchedAt": "2026-03-28T12:00:00.000Z",
+          "metadata": {
+            "fixture": true
+          }
+        }
+      ],
+      "metadata": {}
+    }
+  ],
+  "resolution": {
+    "outcome": "selected",
+    "selectedCandidateId": "generic-scotus-tariffs",
+    "shortlistCandidateIds": [
+      "generic-scotus-tariffs",
+      "generic-trade-policy-outlook",
+      "generic-tariff-revenue-benchmark"
+    ],
+    "relatedCandidateIds": [
+      "generic-trade-policy-outlook"
+    ],
+    "rejectedCandidateIds": [
+      "generic-tariff-revenue-benchmark"
+    ],
+    "confidence": "high",
+    "reason": "The court-case candidate is the exact clause-level match, while the broader policy and revenue contracts should stay secondary.",
+    "degradedReasonCode": null
+  },
+  "searchMetadata": {
+    "version": "ctx-contributor-search/v1",
+    "outcome": "selected",
+    "confidence": "high",
+    "selectedCandidateId": "generic-scotus-tariffs",
+    "shortlistCandidateIds": [
+      "generic-scotus-tariffs",
+      "generic-trade-policy-outlook",
+      "generic-tariff-revenue-benchmark"
+    ],
+    "relatedCandidateIds": [
+      "generic-trade-policy-outlook"
+    ],
+    "rejectedCandidateIds": [
+      "generic-tariff-revenue-benchmark"
+    ],
+    "candidateCount": 3,
+    "shortlistCount": 3,
+    "intentQueries": [
+      "supreme court tariffs case"
+    ],
+    "degraded": null,
+    "judge": {
+      "provider": "openrouter",
+      "model": "glm-turbo-model",
+      "timeoutMs": 900,
+      "budgetUsd": "0.002500",
+      "disabled": false,
+      "applied": true,
+      "usage": {
+        "promptTokens": 180,
+        "completionTokens": 48,
+        "totalTokens": 228,
+        "costUsd": "0.000410",
+        "latencyMs": 133
+      }
+    },
+    "provenance": [
+      {
+        "source": "website-search-v2",
+        "query": "supreme court tariffs case",
+        "candidateCount": 3
+      }
+    ],
+    "trace": {
+      "usedDeterministicFallback": false,
+      "validatorStatus": "accepted",
+      "validatorReasonCode": null,
+      "validatorReason": null
+    }
+  },
+  "expectation": {
+    "outcome": "selected",
+    "selectedCandidateId": "generic-scotus-tariffs"
+  }
+}

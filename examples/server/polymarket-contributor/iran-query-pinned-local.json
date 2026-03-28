@@ -1,0 +1,346 @@
+{
+  "mode": "pinned-local",
+  "prompt": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?",
+  "outcomeType": "answer",
+  "assumptionMade": {
+    "mode": "auto",
+    "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes",
+    "label": "🔍 SEARCH + GET OUTCOMES in ONE CALL",
+    "reason": "The request requires mapping your concept to the exact Polymarket market/outcome(s), which can be implemented either as a single matched event (then implied odds come from that event’s outcomes) or as a basket of multiple related events/ma…"
+  },
+  "durationMs": 618706,
+  "toolsUsed": [
+    {
+      "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+      "name": "Polymarket",
+      "skillCalls": 18
+    }
+  ],
+  "querySession": {
+    "sessionId": "829ed6ec-ae4e-42a6-9e09-dc3619bab1ec",
+    "attemptId": "f2f2d266-ebbb-4021-8e0e-5933e4df7e5a",
+    "parentAttemptId": null,
+    "rootAttemptId": "f2f2d266-ebbb-4021-8e0e-5933e4df7e5a",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "completed",
+    "checkpoint": {
+      "currentStage": "execution",
+      "latestCheckpointArtifactId": "0fb8ff19-c59c-4ed7-969d-db2e226a710a:23",
+      "canonicalDatasetId": "0fb8ff19-c59c-4ed7-969d-db2e226a710a:canonical-execution",
+      "executionProgramCurrentRevisionId": "rev-2"
+    }
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "manual_selected_tools",
+    "firstPassSuccess": true,
+    "capabilityMissSignaled": false,
+    "rediscoveryExecuted": false
+  },
+  "traceSummary": {
+    "toolCalls": 18,
+    "retryCount": 2,
+    "selfHealCount": 2,
+    "fallbackCount": 0,
+    "failureCount": 1,
+    "recoveryCount": 1,
+    "completionChecks": 2,
+    "loopCount": 2
+  },
+  "completenessDiagnostics": {
+    "evaluations": [
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "repairEvents": [
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "triggerNeedsDifferentTools": false,
+    "triggerMissingCapability": null
+  },
+  "selectionDiagnostics": {
+    "selectedDepth": "deep",
+    "deepMode": "deep",
+    "debugScoutDeepMode": null,
+    "plannerReasoningStage": "full",
+    "scoutEnabled": false,
+    "preserveFastOneShot": false,
+    "candidateMethodCount": 45,
+    "scoutProbeStatus": "ready",
+    "scoutProbeAdequacy": "adequate",
+    "scoutProbeConfidence": 0.9885,
+    "scoutMetadataConfidence": 0.9538,
+    "scoutProbeQuerySafeCandidateCount": 38,
+    "scoutProbeRankedMethodCount": 40,
+    "scoutProbeAmbiguityPoolCount": 10,
+    "scoutProbeShortlistedMethodCount": 8,
+    "scoutProbeMissingCapability": null,
+    "scoutPrePlanProbeCalls": 0,
+    "scoutPrePlanProbeBudgetReasonCode": null,
+    "scoutChangedInitialPlan": false,
+    "scoutChangedPlannerReasoningStage": false,
+    "scoutInitialSelectedDepth": "deep",
+    "scoutInitialDeepMode": "deep",
+    "scoutInitialPlannerReasoningStage": "full",
+    "scoutInitialReasonCode": "explicit_override",
+    "scoutFinalReasonCode": "explicit_override",
+    "scoutEvidenceAttachedToPlanning": true,
+    "scoutLlmSelectionUsed": true,
+    "scoutLlmSelectionFallback": false,
+    "scoutLlmSelectionLatencyMs": 8393,
+    "selectedTools": [
+      {
+        "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+        "toolName": "Polymarket",
+        "priceUsd": "0.000000",
+        "selectedMethodCount": 45,
+        "selectedMethods": [
+          "analyze_market_liquidity",
+          "check_market_efficiency",
+          "analyze_whale_flow",
+          "analyze_top_holders",
+          "analyze_event_whale_breakdown",
+          "analyze_event_outcome_liquidity",
+          "find_correlated_markets",
+          "check_market_rules",
+          "find_arbitrage_opportunities",
+          "find_trading_opportunities",
+          "build_high_conviction_workflow",
+          "analyze_single_market_whales"
+        ],
+        "omittedSelectedMethodCount": 33
+      }
+    ]
+  },
+  "executionProgram": {
+    "executionProgram": {
+      "baseRevisionId": "rev-1",
+      "currentRevisionId": "rev-2",
+      "revisionCount": 2,
+      "patchCount": 0,
+      "replanCount": 1,
+      "deterministicChangeCount": 0,
+      "revisions": [
+        {
+          "revisionId": "rev-1",
+          "parentRevisionId": null,
+          "attempt": 0,
+          "action": "initial",
+          "reason": "initial",
+          "summary": "Planner base program",
+          "codeHash": "5a82ceb9b454c02262eac9a2a368da6adb1931576f9cfbdd32aa1bed19776be9",
+          "codeLength": 7731,
+          "changedLineCount": 0,
+          "diffPreview": null,
+          "editCount": null,
+          "preservesPriorLogic": true
+        },
+        {
+          "revisionId": "rev-2",
+          "parentRevisionId": "rev-1",
+          "attempt": 1,
+          "action": "llm_replan",
+          "reason": "completeness_gap",
+          "summary": "Escalated completeness_gap repair to bounded replan",
+          "codeHash": "bb115dc282e1fea5c1866021790fc02a65ee4df4d842982307fbaea5c9bfa120",
+          "codeLength": 10239,
+          "changedLineCount": 202,
+          "diffPreview": "Before:\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nexport async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\nAfter:\n\nexport async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\n[diff preview truncated]",
+          "editCount": null,
+          "preservesPriorLogic": false
+        }
+      ]
+    }
+  },
+  "repairTracePreview": [
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 1,
+      "metadata": {
+        "codeSnippet": "import { callMcpSkill, callMcpSkillsParallel } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nexport async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\n  // Step 1: Sequential discovery on same endpoint — two broad Iran military searches\n  const search1 = await callMcpSkill({\n    toolId,\n    toolName: \"search_markets\",\n    args: { query: \"Iran boots ground US military invasion troops\", status: \"live\", limit: 20 }\n  });\n\n  const search2 = await callMcpSkill({\n    toolId,\n    toolName: \"search_markets\",\n    args: { query: \"Israel Iran strike attack war 2025 2026\", status: \"live\", limit: 20 }\n  });\n\n  // Merge and deduplicate by conditionId\n  const seen = new Set();\n  const allIranCandidates = [];\n  for (const r of [...(search1?.results || []), ...(search2?.results || [])]) {\n    if (r.conditionId && !seen.has(r.conditionId) && r.status === \"live\") {\n      seen.add(r.conditionId);\n      allIranCandidates.push(r);\n    }\n  }\n\n  // Step 2: Deterministic semantic targeting for direct Iran military instruments\n  const iranRanked = pickTopSemanticCandidates({\n    target: \"US or allied boots on the ground in Iran, military invasion, ground troop deployment, direct strike\",\n    candidates: allIranCandidates,\n    requiredTerms: [\"iran\"],\n    avoidTerms: [\"sanctions\", \"nuclear deal\", \"diplomatic\", \"negotiation\", \"election\", \"protest\"],\n    limit: 4\n  });\n\n  if (iranRanked.length === 0) {\n    return {\n      note: \"No live markets found matching Iran military action criteria after semantic targeting.\",\n      allIranCandidates: allIranCandidates.map(m => ({ title: m.title, url: m.url })),\n      suggestion: \"Try broader queries or check different phrasing.\"\n    };\n  }\n\n  // Step 3: Parallel batch — Iran detail analysis (different toolNames) + risk-off discovery (different toolNames)\n  // Harness serializes same-endpoint calls internally\n  const parallelCalls = [];\n\n  // Iran market details: rules + efficiency for each\n  iranRanked.forEach((m, i) => {\n    parallelCalls.push({ key: \"rules_\" + i, toolId, toolName: \"check_market_rules\", args: { conditionId: m.conditionId } });\n    parallelCalls.push({ key: \"eff_\" + i, toolId, toolName: \"check_market_efficiency\", args: { conditionId: m.conditionId } });\n  });\n\n  // Risk-off / safe-haven discovery searches (different toolName from detail calls)\n  parallelCalls.push(\n    { key: \"rf_sp500\", toolId, toolName: \"search_markets\", args: { query: \"S&P 500 crash drop correction bear market 2025 2026\", status: \"live\", limit: 15 } },\n    { key: \"rf_vix\", toolId, toolName: \"search_markets\", args: { query: \"VIX volatility spike above 30 40 50\", status: \"live\", limit: 15 } },\n    { key: \"rf_oil\", toolId, toolName: \"search_markets\", args: { query: \"Brent crude oil above $100 $120 $150 price\", status: \"live\", limit: 15 } },\n    { key: \"rf_gold\", toolId, toolName: \"search_markets\", args: { query: \"gold price above $3000 $3500 record high\", status: \"live\", limit: 15 } }\n  );\n\n  const batch = await callMcpSkillsParallel({\n    label: \"iran-details-plus-riskoff-discovery\",\n    calls: parallelCalls\n  });\n\n  // Step 4: Assemble Iran military market details\n  const iranMarkets = iranRanked.map((m, i) => {\n    const rules = batch.results.find(r => r.key === \"rules_\" + i);\n    const eff = batch.results.find(r => r.key === \"eff_\" + i);\n    return {\n      title: m.title,\n      url: m.url,\n      conditionId: m.conditionId,\n      endDate: m.endDate,\n      volume: m.volume,\n      liquidity: m.liquidity,\n      rules: rules?.status === \"fulfilled\" ? rules.value : null,\n      efficiency: eff?.status === \"fulfilled\" ? eff.value : null\n    };\n  });\n\n  // Step 5: Collect risk-off candidates from discovery results\n  const riskOffCandidates = [];\n  for (const key of [\"rf_sp500\", \"rf_vix\", \"rf_oil\", \"rf_gold\"]) {\n    const entry = batch.results.find(r => r.key === key);\n    if (entry?.status === \"fulfilled\" && Array.isArray(entry.value?.results)) {\n      for (const r of entry.value.results) {\n        if (r.status === \"live\" && r.conditionId && !seen.has(r.conditionId)) {\n          seen.add(r.conditionId);\n          riskOffCandidates.push(r);\n        }\n      }\n    }\n  }\n\n  // Step 6: Deterministic semantic targeting for risk-off hedge instruments\n  const riskOffRanked = pickTopSemanticCandidates({\n    target: \"risk-off safe-haven hedge: equity market crash, volatility spike, oil price surge, gold price surge\",\n    candidates: riskOffCandidates,\n    requiredTerms: [],\n    avoidTerms: [\"iran\", \"military\", \"strike\", \"invasion\", \"troop\", \"boots\", \"ground war\"],\n    limit: 4\n  });\n\n  // Step 7: Sequential efficiency checks on selected risk-off instruments (same endpoint)\n  const riskOffDetails = [];\n  for (const m of riskOffRanked) {\n    const eff = await callMcpSkill({ toolId, toolName: \"check_market_efficiency\", args: { conditionId: m.conditionId } });\n    riskOffDetails.push({\n      title: m.title,\n      url: m.url,\n      conditio",
+        "completenessCheck": {
+          "isComplete": false,
+          "missingParts": [
+            "Specific markets for 'US forces enter Iran' and 'Israel ground operation in Iran' were found in search results but were excluded from the final candidate list",
+            "Implied odds (prices) for the identified 'US forces/ground operation' markets",
+            "Detailed resolution dates and rules for these specific entries",
+            "Analysis of these odds in the context of broader risk-off positioning"
+          ],
+          "suggestedFix": "The search results actually contained highly relevant markets (e.g., 'us-forces-enter-iran-by', 'israel-ground-operation-in-iran-confirmed-by') that were erroneously filtered out. Use a probe-first retry: (1) Use get_event_by_slug or get_prices on those specific slugs to retrieve current odds and resolution dates, (2) use check_market_rules to confirm the 'boots on the ground' definitions, and (3) synthesize the risk-off positioning analysis from the resulting data. Do not rely on keyword-matching logic that returns an empty list when relevant slugs are present in search results.",
+          "canRetryWithSameTools": true,
+          "needsDifferentTools": false,
+          "missingCapability": null,
+          "capabilityConstrained": false,
+          "outcome": "retry_same_tools",
+          "parseFailed": false,
+          "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"Specific markets for 'US forces enter Iran' and 'Israel ground operation in Iran' were found in search results but were excluded from the final candidate list\",\n    \"Implied odds (prices) for the identified 'US forces/ground operation' markets\",\n    \"Detailed resolution dates and rules for these specific entries\",\n    \"Analysis of these odds in the context of broader risk-off positioning\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The search results actually contained highly relevant markets (e.g., 'us-forces-enter-iran-by', 'israel-ground-operation-in-iran-confirmed-by') that were erroneously filtered out. Use a probe-first retry: (1) Use get_event_by_slug or get_prices on those specific slugs to retrieve current odds and resolution dates, (2) use check_market_rules to confirm the 'boots on the ground' definitions, and (3) synthesize the risk-off positioning analysis from the resulting data. Do not rely on keyword-matching logic that returns an empty list when relevant slugs are present in search results.\",\n  \"missingCapability\": null\n}"
+        },
+        "completenessRepairEvents": [
+          {
+            "attempt": 1,
+            "outcome": "attempted",
+            "semanticRetryCount": 1,
+            "maxSemanticRetries": 1,
+            "strategy": null,
+            "summary": null,
+            "failReason": null,
+            "requestedReplan": false,
+            "hadSyntaxFix": false,
+            "editCount": null,
+            "skipReason": null,
+            "boundedAnswerReason": null,
+            "blockingDiagnostics": []
+          },
+          {
+            "attempt": 1,
+            "outcome": "replanned",
+            "semanticRetryCount": 1,
+            "maxSemanticRetries": 1,
+            "strategy": "replan",
+            "summary": "Escalated completeness_gap repair to bounded replan",
+            "failReason": null,
+            "requestedReplan": true,
+            "hadSyntaxFix": false,
+            "editCount": null,
+            "skipReason": null,
+            "boundedAnswerReason": null,
+            "blockingDiagnostics": []
+          }
+        ],
+        "programRevision": {
+          "revisionId": "rev-1",
+          "action": "initial",
+          "reason": "initial",
+          "preservesPriorLogic": true,
+          "summary": "Planner base program"
+        }
+      }
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "success",
+      "attempt": 2,
+      "metadata": {
+        "codeSnippet": "import { callMcpSkill, callMcpSkillsParallel } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\n  // Step 1: Search for Iran military markets (two broad queries)\n  const search1 = await callMcpSkill({\n    toolId,\n    toolName: \"search_markets\",\n    args: { query: \"Iran boots ground US military invasion troops\", status: \"live\", limit: 20 }\n  });\n\n  const search2 = await callMcpSkill({\n    toolId,\n    toolName: \"search_markets\",\n    args: { query: \"Israel Iran strike attack war 2025 2026\", status: \"live\", limit: 20 }\n  });\n\n  // Merge and deduplicate by SLUG (search results do NOT include conditionId)\n  const seenSlugs = new Set();\n  const allIranCandidates = [];\n  for (const r of [...(search1?.results || []), ...(search2?.results || [])]) {\n    if (r.slug && !seenSlugs.has(r.slug) && r.status === \"live\") {\n      seenSlugs.add(r.slug);\n      allIranCandidates.push(r);\n    }\n  }\n\n  // Step 2: Probe-first — directly target the specific slugs found in search results\n  // that match \"boots on the ground\" / \"ground operation\" criteria, bypassing\n  // keyword-matching semantic targeting that can erroneously filter them out.\n  const targetSlugs = [\n    \"us-forces-enter-iran-by\",\n    \"israel-ground-operation-in-iran-confirmed-by\",\n    \"will-the-us-officially-declare-war-on-iran-by\"\n  ];\n\n  const probedMarkets = [];\n  for (const slug of targetSlugs) {\n    const found = allIranCandidates.find(m => m.slug === slug);\n    if (found) {\n      probedMarkets.push(found);\n    }\n  }\n\n  // Fallback: if direct slug matching found nothing (slug format changed),\n  // secondary title-based match as safety net\n  if (probedMarkets.length === 0) {\n    const titlePatterns = [\n      \"us forces enter iran\",\n      \"ground operation in iran\",\n      \"declare war on iran\"\n    ];\n    for (const m of allIranCandidates) {\n      const titleLower = (m.title || \"\").toLowerCase();\n      if (titlePatterns.some(p => titleLower.includes(p))) {\n        if (!probedMarkets.find(pm => pm.slug === m.slug)) {\n          probedMarkets.push(m);\n        }\n      }\n    }\n  }\n\n  if (probedMarkets.length === 0) {\n    return {\n      note: \"No live markets found matching Iran military action criteria.\",\n      allIranCandidates: allIranCandidates.map(m => ({ title: m.title, url: m.url, slug: m.slug, outcomePrice: m.outcomePrice })),\n      suggestion: \"Try broader queries or check different phrasing.\"\n    };\n  }\n\n  // Step 3: Parallel batch — rules + efficiency for each probed market (using slug)\n  // plus risk-off discovery searches\n  const parallelCalls = [];\n\n  probedMarkets.forEach((m, i) => {\n    // Use slug since conditionId is not available from search_markets results\n    parallelCalls.push({\n      key: \"rules_\" + i,\n      toolId,\n      toolName: \"check_market_rules\",\n      args: { slug: m.slug }\n    });\n    parallelCalls.push({\n      key: \"eff_\" + i,\n      toolId,\n      toolName: \"check_market_efficiency\",\n      args: { slug: m.slug }\n    });\n  });\n\n  // Risk-off / safe-haven discovery searches\n  parallelCalls.push(\n    { key: \"rf_sp500\", toolId, toolName: \"search_markets\", args: { query: \"S&P 500 crash drop correction bear market 2025 2026\", status: \"live\", limit: 15 } },\n    { key: \"rf_vix\", toolId, toolName: \"search_markets\", args: { query: \"VIX volatility spike above 30 40 50\", status: \"live\", limit: 15 } },\n    { key: \"rf_oil\", toolId, toolName: \"search_markets\", args: { query: \"Brent crude oil above $100 $120 $150 price\", status: \"live\", limit: 15 } },\n    { key: \"rf_gold\", toolId, toolName: \"search_markets\", args: { query: \"gold price above $3000 $3500 record high\", status: \"live\", limit: 15 } }\n  );\n\n  const batch = await callMcpSkillsParallel({\n    label: \"iran-details-plus-riskoff-discovery\",\n    calls: parallelCalls\n  });\n\n  // Step 4: Assemble Iran military market details\n  const iranMarkets = probedMarkets.map((m, i) => {\n    const rules = batch.results.find(r => r.key === \"rules_\" + i);\n    const eff = batch.results.find(r => r.key === \"eff_\" + i);\n    return {\n      title: m.title,\n      url: m.url,\n      slug: m.slug,\n      endDate: m.endDate,\n      outcomePrice: m.outcomePrice,\n      matchedOutcome: m.matchedOutcome,\n      rules: rules?.status === \"fulfilled\" ? rules.value : null,\n      efficiency: eff?.status === \"fulfilled\" ? eff.value : null\n    };\n  });\n\n  // Step 5: Collect risk-off candidates from discovery results (dedup by slug)\n  const riskOffSeen = new Set();\n  const riskOffCandidates = [];\n  for (const key of [\"rf_sp500\", \"rf_vix\", \"rf_oil\", \"rf_gold\"]) {\n    const entry = batch.results.find(r => r.key === key);\n    if (entry?.status === \"fulfilled\" && Array.isArray(entry.value?.results)) {\n      for (const r of entry.value.results) {\n        if (r.status === \"live\" && r.slug && !riskOffSeen.has(r.slug) && !seenSlugs.has(r.slug)) {\n          riskOffSeen.add(r.slug);\n          riskOffCandidates.push(r);\n        }\n      }\n    }\n  }\n\n  // Step 6: Filter risk-off instrum",
+        "completenessCheck": {
+          "isComplete": true,
+          "missingParts": [],
+          "suggestedFix": null,
+          "canRetryWithSameTools": false,
+          "needsDifferentTools": false,
+          "missingCapability": null,
+          "capabilityConstrained": false,
+          "outcome": "complete",
+          "parseFailed": false,
+          "rawDecisionText": "{\n  \"isComplete\": true,\n  \"missingParts\": [],\n  \"canRetryWithSameTools\": false,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": null,\n  \"missingCapability\": null\n}"
+        },
+        "programRevision": {
+          "revisionId": "rev-2",
+          "action": "llm_replan",
+          "reason": "completeness_gap",
+          "preservesPriorLogic": false,
+          "summary": "Escalated completeness_gap repair to bounded replan"
+        }
+      }
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 1,
+      "metadata": {
+        "codeSnippet": "import { callMcpSkill, callMcpSkillsParallel } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nexport async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\n  // Step 1: Sequential discovery on same endpoint — two broad Iran military searches\n  const search1 = await callMcpSkill({\n    toolId,\n    toolName: \"search_markets\",\n    args: { query: \"Iran boots ground US military invasion troops\", status: \"live\", limit: 20 }\n  });\n\n  const search2 = await callMcpSkill({\n    toolId,\n    toolName: \"search_markets\",\n    args: { query: \"Israel Iran strike attack war 2025 2026\", status: \"live\", limit: 20 }\n  });\n\n  // Merge and deduplicate by conditionId\n  const seen = new Set();\n  const allIranCandidates = [];\n  for (const r of [...(search1?.results || []), ...(search2?.results || [])]) {\n    if (r.conditionId && !seen.has(r.conditionId) && r.status === \"live\") {\n      seen.add(r.conditionId);\n      allIranCandidates.push(r);\n    }\n  }\n\n  // Step 2: Deterministic semantic targeting for direct Iran military instruments\n  const iranRanked = pickTopSemanticCandidates({\n    target: \"US or allied boots on the ground in Iran, military invasion, ground troop deployment, direct strike\",\n    candidates: allIranCandidates,\n    requiredTerms: [\"iran\"],\n    avoidTerms: [\"sanctions\", \"nuclear deal\", \"diplomatic\", \"negotiation\", \"election\", \"protest\"],\n    limit: 4\n  });\n\n  if (iranRanked.length === 0) {\n    return {\n      note: \"No live markets found matching Iran military action criteria after semantic targeting.\",\n      allIranCandidates: allIranCandidates.map(m => ({ title: m.title, url: m.url })),\n      suggestion: \"Try broader queries or check different phrasing.\"\n    };\n  }\n\n  // Step 3: Parallel batch — Iran detail analysis (different toolNames) + risk-off discovery (different toolNames)\n  // Harness serializes same-endpoint calls internally\n  const parallelCalls = [];\n\n  // Iran market details: rules + efficiency for each\n  iranRanked.forEach((m, i) => {\n    parallelCalls.push({ key: \"rules_\" + i, toolId, toolName: \"check_market_rules\", args: { conditionId: m.conditionId } });\n    parallelCalls.push({ key: \"eff_\" + i, toolId, toolName: \"check_market_efficiency\", args: { conditionId: m.conditionId } });\n  });\n\n  // Risk-off / safe-haven discovery searches (different toolName from detail calls)\n  parallelCalls.push(\n    { key: \"rf_sp500\", toolId, toolName: \"search_markets\", args: { query: \"S&P 500 crash drop correction bear market 2025 2026\", status: \"live\", limit: 15 } },\n    { key: \"rf_vix\", toolId, toolName: \"search_markets\", args: { query: \"VIX volatility spike above 30 40 50\", status: \"live\", limit: 15 } },\n    { key: \"rf_oil\", toolId, toolName: \"search_markets\", args: { query: \"Brent crude oil above $100 $120 $150 price\", status: \"live\", limit: 15 } },\n    { key: \"rf_gold\", toolId, toolName: \"search_markets\", args: { query: \"gold price above $3000 $3500 record high\", status: \"live\", limit: 15 } }\n  );\n\n  const batch = await callMcpSkillsParallel({\n    label: \"iran-details-plus-riskoff-discovery\",\n    calls: parallelCalls\n  });\n\n  // Step 4: Assemble Iran military market details\n  const iranMarkets = iranRanked.map((m, i) => {\n    const rules = batch.results.find(r => r.key === \"rules_\" + i);\n    const eff = batch.results.find(r => r.key === \"eff_\" + i);\n    return {\n      title: m.title,\n      url: m.url,\n      conditionId: m.conditionId,\n      endDate: m.endDate,\n      volume: m.volume,\n      liquidity: m.liquidity,\n      rules: rules?.status === \"fulfilled\" ? rules.value : null,\n      efficiency: eff?.status === \"fulfilled\" ? eff.value : null\n    };\n  });\n\n  // Step 5: Collect risk-off candidates from discovery results\n  const riskOffCandidates = [];\n  for (const key of [\"rf_sp500\", \"rf_vix\", \"rf_oil\", \"rf_gold\"]) {\n    const entry = batch.results.find(r => r.key === key);\n    if (entry?.status === \"fulfilled\" && Array.isArray(entry.value?.results)) {\n      for (const r of entry.value.results) {\n        if (r.status === \"live\" && r.conditionId && !seen.has(r.conditionId)) {\n          seen.add(r.conditionId);\n          riskOffCandidates.push(r);\n        }\n      }\n    }\n  }\n\n  // Step 6: Deterministic semantic targeting for risk-off hedge instruments\n  const riskOffRanked = pickTopSemanticCandidates({\n    target: \"risk-off safe-haven hedge: equity market crash, volatility spike, oil price surge, gold price surge\",\n    candidates: riskOffCandidates,\n    requiredTerms: [],\n    avoidTerms: [\"iran\", \"military\", \"strike\", \"invasion\", \"troop\", \"boots\", \"ground war\"],\n    limit: 4\n  });\n\n  // Step 7: Sequential efficiency checks on selected risk-off instruments (same endpoint)\n  const riskOffDetails = [];\n  for (const m of riskOffRanked) {\n    const eff = await callMcpSkill({ toolId, toolName: \"check_market_efficiency\", args: { conditionId: m.conditionId } });\n    riskOffDetails.push({\n      title: m.title,\n      url: m.url,\n      conditio",
+        "completenessCheck": {
+          "isComplete": false,
+          "missingParts": [
+            "Specific markets for 'US forces enter Iran' and 'Israel ground operation in Iran' were found in search results but were excluded from the final candidate list",
+            "Implied odds (prices) for the identified 'US forces/ground operation' markets",
+            "Detailed resolution dates and rules for these specific entries",
+            "Analysis of these odds in the context of broader risk-off positioning"
+          ],
+          "suggestedFix": "The search results actually contained highly relevant markets (e.g., 'us-forces-enter-iran-by', 'israel-ground-operation-in-iran-confirmed-by') that were erroneously filtered out. Use a probe-first retry: (1) Use get_event_by_slug or get_prices on those specific slugs to retrieve current odds and resolution dates, (2) use check_market_rules to confirm the 'boots on the ground' definitions, and (3) synthesize the risk-off positioning analysis from the resulting data. Do not rely on keyword-matching logic that returns an empty list when relevant slugs are present in search results.",
+          "canRetryWithSameTools": true,
+          "needsDifferentTools": false,
+          "missingCapability": null,
+          "capabilityConstrained": false,
+          "outcome": "retry_same_tools",
+          "parseFailed": false,
+          "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"Specific markets for 'US forces enter Iran' and 'Israel ground operation in Iran' were found in search results but were excluded from the final candidate list\",\n    \"Implied odds (prices) for the identified 'US forces/ground operation' markets\",\n    \"Detailed resolution dates and rules for these specific entries\",\n    \"Analysis of these odds in the context of broader risk-off positioning\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The search results actually contained highly relevant markets (e.g., 'us-forces-enter-iran-by', 'israel-ground-operation-in-iran-confirmed-by') that were erroneously filtered out. Use a probe-first retry: (1) Use get_event_by_slug or get_prices on those specific slugs to retrieve current odds and resolution dates, (2) use check_market_rules to confirm the 'boots on the ground' definitions, and (3) synthesize the risk-off positioning analysis from the resulting data. Do not rely on keyword-matching logic that returns an empty list when relevant slugs are present in search results.\",\n  \"missingCapability\": null\n}"
+        },
+        "completenessRepairEvents": [
+          {
+            "attempt": 1,
+            "outcome": "attempted",
+            "semanticRetryCount": 1,
+            "maxSemanticRetries": 1,
+            "strategy": null,
+            "summary": null,
+            "failReason": null,
+            "requestedReplan": false,
+            "hadSyntaxFix": false,
+            "editCount": null,
+            "skipReason": null,
+            "boundedAnswerReason": null,
+            "blockingDiagnostics": []
+          },
+          {
+            "attempt": 1,
+            "outcome": "replanned",
+            "semanticRetryCount": 1,
+            "maxSemanticRetries": 1,
+            "strategy": "replan",
+            "summary": "Escalated completeness_gap repair to bounded replan",
+            "failReason": null,
+            "requestedReplan": true,
+            "hadSyntaxFix": false,
+            "editCount": null,
+            "skipReason": null,
+            "boundedAnswerReason": null,
+            "blockingDiagnostics": []
+          }
+        ],
+        "programRevision": {
+          "revisionId": "rev-1",
+          "action": "initial",
+          "reason": "initial",
+          "preservesPriorLogic": true,
+          "summary": "Planner base program"
+        }
+      }
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "success",
+      "attempt": 2,
+      "metadata": {
+        "codeSnippet": "import { callMcpSkill, callMcpSkillsParallel } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\n  // Step 1: Search for Iran military markets (two broad queries)\n  const search1 = await callMcpSkill({\n    toolId,\n    toolName: \"search_markets\",\n    args: { query: \"Iran boots ground US military invasion troops\", status: \"live\", limit: 20 }\n  });\n\n  const search2 = await callMcpSkill({\n    toolId,\n    toolName: \"search_markets\",\n    args: { query: \"Israel Iran strike attack war 2025 2026\", status: \"live\", limit: 20 }\n  });\n\n  // Merge and deduplicate by SLUG (search results do NOT include conditionId)\n  const seenSlugs = new Set();\n  const allIranCandidates = [];\n  for (const r of [...(search1?.results || []), ...(search2?.results || [])]) {\n    if (r.slug && !seenSlugs.has(r.slug) && r.status === \"live\") {\n      seenSlugs.add(r.slug);\n      allIranCandidates.push(r);\n    }\n  }\n\n  // Step 2: Probe-first — directly target the specific slugs found in search results\n  // that match \"boots on the ground\" / \"ground operation\" criteria, bypassing\n  // keyword-matching semantic targeting that can erroneously filter them out.\n  const targetSlugs = [\n    \"us-forces-enter-iran-by\",\n    \"israel-ground-operation-in-iran-confirmed-by\",\n    \"will-the-us-officially-declare-war-on-iran-by\"\n  ];\n\n  const probedMarkets = [];\n  for (const slug of targetSlugs) {\n    const found = allIranCandidates.find(m => m.slug === slug);\n    if (found) {\n      probedMarkets.push(found);\n    }\n  }\n\n  // Fallback: if direct slug matching found nothing (slug format changed),\n  // secondary title-based match as safety net\n  if (probedMarkets.length === 0) {\n    const titlePatterns = [\n      \"us forces enter iran\",\n      \"ground operation in iran\",\n      \"declare war on iran\"\n    ];\n    for (const m of allIranCandidates) {\n      const titleLower = (m.title || \"\").toLowerCase();\n      if (titlePatterns.some(p => titleLower.includes(p))) {\n        if (!probedMarkets.find(pm => pm.slug === m.slug)) {\n          probedMarkets.push(m);\n        }\n      }\n    }\n  }\n\n  if (probedMarkets.length === 0) {\n    return {\n      note: \"No live markets found matching Iran military action criteria.\",\n      allIranCandidates: allIranCandidates.map(m => ({ title: m.title, url: m.url, slug: m.slug, outcomePrice: m.outcomePrice })),\n      suggestion: \"Try broader queries or check different phrasing.\"\n    };\n  }\n\n  // Step 3: Parallel batch — rules + efficiency for each probed market (using slug)\n  // plus risk-off discovery searches\n  const parallelCalls = [];\n\n  probedMarkets.forEach((m, i) => {\n    // Use slug since conditionId is not available from search_markets results\n    parallelCalls.push({\n      key: \"rules_\" + i,\n      toolId,\n      toolName: \"check_market_rules\",\n      args: { slug: m.slug }\n    });\n    parallelCalls.push({\n      key: \"eff_\" + i,\n      toolId,\n      toolName: \"check_market_efficiency\",\n      args: { slug: m.slug }\n    });\n  });\n\n  // Risk-off / safe-haven discovery searches\n  parallelCalls.push(\n    { key: \"rf_sp500\", toolId, toolName: \"search_markets\", args: { query: \"S&P 500 crash drop correction bear market 2025 2026\", status: \"live\", limit: 15 } },\n    { key: \"rf_vix\", toolId, toolName: \"search_markets\", args: { query: \"VIX volatility spike above 30 40 50\", status: \"live\", limit: 15 } },\n    { key: \"rf_oil\", toolId, toolName: \"search_markets\", args: { query: \"Brent crude oil above $100 $120 $150 price\", status: \"live\", limit: 15 } },\n    { key: \"rf_gold\", toolId, toolName: \"search_markets\", args: { query: \"gold price above $3000 $3500 record high\", status: \"live\", limit: 15 } }\n  );\n\n  const batch = await callMcpSkillsParallel({\n    label: \"iran-details-plus-riskoff-discovery\",\n    calls: parallelCalls\n  });\n\n  // Step 4: Assemble Iran military market details\n  const iranMarkets = probedMarkets.map((m, i) => {\n    const rules = batch.results.find(r => r.key === \"rules_\" + i);\n    const eff = batch.results.find(r => r.key === \"eff_\" + i);\n    return {\n      title: m.title,\n      url: m.url,\n      slug: m.slug,\n      endDate: m.endDate,\n      outcomePrice: m.outcomePrice,\n      matchedOutcome: m.matchedOutcome,\n      rules: rules?.status === \"fulfilled\" ? rules.value : null,\n      efficiency: eff?.status === \"fulfilled\" ? eff.value : null\n    };\n  });\n\n  // Step 5: Collect risk-off candidates from discovery results (dedup by slug)\n  const riskOffSeen = new Set();\n  const riskOffCandidates = [];\n  for (const key of [\"rf_sp500\", \"rf_vix\", \"rf_oil\", \"rf_gold\"]) {\n    const entry = batch.results.find(r => r.key === key);\n    if (entry?.status === \"fulfilled\" && Array.isArray(entry.value?.results)) {\n      for (const r of entry.value.results) {\n        if (r.status === \"live\" && r.slug && !riskOffSeen.has(r.slug) && !seenSlugs.has(r.slug)) {\n          riskOffSeen.add(r.slug);\n          riskOffCandidates.push(r);\n        }\n      }\n    }\n  }\n\n  // Step 6: Filter risk-off instrum",
+        "completenessCheck": {
+          "isComplete": true,
+          "missingParts": [],
+          "suggestedFix": null,
+          "canRetryWithSameTools": false,
+          "needsDifferentTools": false,
+          "missingCapability": null,
+          "capabilityConstrained": false,
+          "outcome": "complete",
+          "parseFailed": false,
+          "rawDecisionText": "{\n  \"isComplete\": true,\n  \"missingParts\": [],\n  \"canRetryWithSameTools\": false,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": null,\n  \"missingCapability\": null\n}"
+        },
+        "programRevision": {
+          "revisionId": "rev-2",
+          "action": "llm_replan",
+          "reason": "completeness_gap",
+          "preservesPriorLogic": false,
+          "summary": "Escalated completeness_gap repair to bounded replan"
+        }
+      }
+    }
+  ],
+  "responsePreview": "Here are the specific Polymarket markets pricing US/allied boots-on-the-ground risk in Iran, based on data from a past query:\n\n## Active Iran Military Markets\n\n| Market | Resolution Date | Implied Probability | Price | Key Rules |\n|--------|----------------|---------------------|-------|-----------|\n| **Israel ground operation in Iran confirmed by...?** (Allied boots) | April 30, 2026 | **4.5%** | 4.5¢ | Requires Israeli ground forces conducting operations within **terrestrial territory** of Iran. Aerial/maritime operations do not qualify. Must be confirmed by Israeli military or overwhelming consensus of credible reporting. |\n| **Will the US officially declare war on Iran by...?** | Dec 31, 2026 | **9.5%** | 9.5¢ | Requires formal declaration of war by Congress (Article I, Section 8). AUMFs, executive orders, or military actions without formal declaration do **not** qualify. |\n| **US forces enter Iran by..?** | (Market closed/expired) | 0% (resolved No) | 0¢ | Required active US military personnel to physically enter **terrestrial** Iran (not maritime/aerial). Excluded contractors, advisors, and diplomatic entries. This market appears to have resolved \"No\" for the January 31, 2026 deadline. |\n\n**Critical distinction:** These markets specifically require **boots on the ground**—a materially higher bar than airstrikes (which are already occurring and priced separately).\n\n## Risk-Off Positioning Framework\n\n**Current Signal:** At 4.5¢ for Israeli ground operations, the crowd is pricing extreme tail risk (~22:1 payout if YES resolves). This suggests broader risk-off instruments (oil spikes, VIX, equity drawdowns) are likely also depressed.\n\n**Layered Hedge Approach:**\n1. **Direct exposure:** The Israel ground operation market (4.5¢) offers the tightest correlation to the specific escalation event with maximum convexity\n2. **Secondary hedges:** S&P 500 performance markets (currently pricing 97.9% probability of negative Q1 2026 performance) and Bitcoin/Gold vs. S&P 500 markets provide broader market stress exposure\n\n**Key Watch Level:** Monitor for a sustained move above **15¢** on the Israel ground operation or US forces markets. A break above that level would signal the crowd is repricing escalation risk, with likely follow-through in oil, VIX, and equity crash markets within hours.\n\n**Rules Warning:** Ensure your hedge resolution criteria align with the specific scenario—airstrikes will not resolve these \"boots on the ground\" markets to YES, even if major co"
+}

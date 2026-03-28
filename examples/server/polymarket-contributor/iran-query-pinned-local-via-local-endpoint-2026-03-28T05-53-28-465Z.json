@@ -1,0 +1,1290 @@
+{
+  "generatedAt": "2026-03-28T05:56:10.685Z",
+  "summary": {
+    "label": "pinned",
+    "prompt": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?",
+    "baseUrl": "http://localhost:3000",
+    "outcomeType": "answer",
+    "durationMs": 157307,
+    "toolsUsed": null,
+    "orchestrationMetrics": {
+      "parityStage": "enabled",
+      "orchestrationMode": "manual_selected_tools",
+      "firstPassSuccess": false,
+      "capabilityMissSignaled": false,
+      "rediscoveryExecuted": false
+    },
+    "traceSummary": {
+      "toolCalls": 1,
+      "retryCount": 0,
+      "selfHealCount": 0,
+      "fallbackCount": 0,
+      "failureCount": 0,
+      "recoveryCount": 0,
+      "completionChecks": 0,
+      "loopCount": 0
+    },
+    "clarification": {
+      "orchestrationMode": "manual_selected_tools",
+      "rolloutStage": "enabled",
+      "shadowMode": false,
+      "policy": "auto",
+      "outcomeType": "clarification_required",
+      "triggered": true,
+      "optionCount": 3,
+      "candidateCount": 38,
+      "viableCandidateCount": 3,
+      "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+      "recommendedOptionReason": "Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…",
+      "autoResolved": true,
+      "autoSelectEnabled": true,
+      "assumptionMade": {
+        "mode": "auto",
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+        "label": "Search for Polymarket prediction markets by keyword or category",
+        "reason": "Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…"
+      },
+      "missingCapability": null,
+      "decisionReasonCode": "semantic_scope_ambiguity",
+      "decisionSignals": [
+        "llm_judge"
+      ],
+      "evidenceSources": {
+        "usesMethodSchemas": true,
+        "usesProbeArgs": false,
+        "usesMethodMetadata": true,
+        "usesToolSelectionContext": false,
+        "usesLlmSelection": true
+      },
+      "comparedOptionIds": [
+        "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+        "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+        "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes"
+      ],
+      "decisionStrategy": "llm_primary",
+      "judgeAttempted": true,
+      "judgeApplied": true,
+      "judgeOutcomeType": "clarification_required",
+      "judgeConfidence": 0.62,
+      "judgeReason": "Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…",
+      "judgeError": null,
+      "validatorReason": null,
+      "fallbackReason": null,
+      "copyStrategy": "deterministic",
+      "rewriteAttempted": false,
+      "rewriteApplied": false,
+      "rewriteError": null,
+      "candidateSummaries": [
+        {
+          "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+          "fitScore": 21.55,
+          "llmRelevanceScore": null,
+          "requiredParams": [],
+          "unresolvedRequiredParams": [],
+          "probeArgKeys": [],
+          "inputFieldNames": [
+            "limit",
+            "title",
+            "keywords",
+            "polymarketSlug"
+          ],
+          "outputKeys": [
+            "hint",
+            "fetchedAt",
+            "searchedFor",
+            "sourcesTried",
+            "kalshiResults",
+            "comparisonNote"
+          ],
+          "semanticScope": "event-wide",
+          "semanticEntityGranularity": "event",
+          "semanticRequiresNamedEntity": false,
+          "semanticVenueSpecificity": "tool-bound",
+          "semanticOutputCardinality": "comparison",
+          "semanticProfileConfidence": 0.95,
+          "latencyClass": "instant",
+          "executePriceUsd": null,
+          "queryEligible": true
+        },
+        {
+          "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:get_event_outcomes",
+          "fitScore": 16.55,
+          "llmRelevanceScore": null,
+          "requiredParams": [
+            "slug"
+          ],
+          "unresolvedRequiredParams": [
+            "slug"
+          ],
+          "probeArgKeys": [],
+          "inputFieldNames": [
+            "slug",
+            "limit",
+            "sortBy",
+            "includeInactive"
+          ],
+          "outputKeys": [
+            "url",
+            "outcomes",
+            "sortedBy",
+            "eventSlug",
+            "fetchedAt",
+            "eventTitle"
+          ],
+          "semanticScope": "event-wide",
+          "semanticEntityGranularity": "event",
+          "semanticRequiresNamedEntity": false,
+          "semanticVenueSpecificity": "tool-bound",
+          "semanticOutputCardinality": "comparison",
+          "semanticProfileConfidence": 0.95,
+          "latencyClass": "instant",
+          "executePriceUsd": "0.001",
+          "queryEligible": true
+        },
+        {
+          "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:discover_trending_markets",
+          "fitScore": 15.55,
+          "llmRelevanceScore": null,
+          "requiredParams": [],
+          "unresolvedRequiredParams": [],
+          "probeArgKeys": [],
+          "inputFieldNames": [
+            "limit",
+            "sortBy",
+            "category"
+          ],
+          "outputKeys": [
+            "topTags",
+            "fetchedAt",
+            "categories",
+            "totalActive",
+            "marketSummary",
+            "trendingMarkets"
+          ],
+          "semanticScope": "event-wide",
+          "semanticEntityGranularity": "event",
+          "semanticRequiresNamedEntity": false,
+          "semanticVenueSpecificity": "tool-bound",
+          "semanticOutputCardinality": "multiple",
+          "semanticProfileConfidence": 0.95,
+          "latencyClass": "instant",
+          "executePriceUsd": null,
+          "queryEligible": true
+        }
+      ],
+      "modelTelemetry": {
+        "modelId": "gpt-5.4-nano-model",
+        "runtimeModelId": "openai/gpt-5.4-nano",
+        "judgeUsage": {
+          "inputTokens": "[REDACTED]",
+          "outputTokens": "[REDACTED]",
+          "totalTokens": "[REDACTED]",
+          "promptTokens": "[REDACTED]",
+          "completionTokens": "[REDACTED]"
+        },
+        "judgeActualCostUsd": 0.00437945,
+        "rewriteUsage": null,
+        "rewriteActualCostUsd": null,
+        "totalActualCostUsd": 0.00437945
+      }
+    },
+    "selection": {
+      "selectedDepth": "deep",
+      "deepMode": "deep",
+      "debugScoutDeepMode": null,
+      "plannerReasoningStage": "full",
+      "scoutEnabled": false,
+      "preserveFastOneShot": false,
+      "candidateMethodCount": 45,
+      "scoutProbeStatus": "ready",
+      "scoutProbeAdequacy": "adequate",
+      "scoutProbeConfidence": 0.9885,
+      "scoutMetadataConfidence": 0.9538,
+      "scoutProbeQuerySafeCandidateCount": 38,
+      "scoutProbeRankedMethodCount": 38,
+      "scoutProbeAmbiguityPoolCount": 10,
+      "scoutProbeShortlistedMethodCount": 8,
+      "scoutProbeMissingCapability": null,
+      "scoutPrePlanProbeCalls": 0,
+      "scoutPrePlanProbeBudgetReasonCode": null,
+      "scoutChangedInitialPlan": false,
+      "scoutChangedPlannerReasoningStage": false,
+      "scoutInitialSelectedDepth": "deep",
+      "scoutInitialDeepMode": "deep",
+      "scoutInitialPlannerReasoningStage": "full",
+      "scoutInitialReasonCode": "explicit_override",
+      "scoutFinalReasonCode": "explicit_override",
+      "scoutEvidenceAttachedToPlanning": true,
+      "scoutLlmSelectionUsed": true,
+      "scoutLlmSelectionFallback": false,
+      "scoutLlmSelectionLatencyMs": 7965,
+      "selectedTools": [
+        {
+          "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+          "toolName": "Polymarket",
+          "priceUsd": "0.000000",
+          "selectedMethodCount": 45,
+          "selectedMethods": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "find_correlated_markets",
+            "check_market_rules",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "build_high_conviction_workflow",
+            "analyze_single_market_whales"
+          ],
+          "omittedSelectedMethodCount": 33
+        }
+      ]
+    },
+    "responsePreview": "Based on data from a recent query of Polymarket (as of March 28, 2026), the current implied odds for ground operations or allied military action against Iran are centered around the following specific markets and price levels:\n\n### Key Markets and Implied Odds\n\n| Market Title | Matched Outcome | Outcome Price | Implied Odds | Resolution Date |\n| :--- | :--- | :--- | :--- | :--- |\n| **Israel ground operation in Iran confirmed by...?** | April 30 | 0.245 | **24.5%** | April 30, 2026 |\n| **Which countries will conduct military action against Iran by April 30?** | Any E.U. Country | 0.06 | **6%** | April 30, 2026 |\n| **What will Iran conduct military action against by April 30?** | Dimona (Nuclear Center) | 0.1 | **10%** | April 30, 2026 |\n\n### Analysis of Risk-Off Positioning\n*   **Proxy for Allied Involvement:** While a specific \"US Army Invasion\" market was not the primary result, the **24.5% chance** of an Israeli ground operation by late April is the most direct indicator of \"boots on..."
+  },
+  "result": {
+    "success": true,
+    "response": "Based on data from a recent query of Polymarket (as of March 28, 2026), the current implied odds for ground operations or allied military action against Iran are centered around the following specific markets and price levels:\n\n### Key Markets and Implied Odds\n\n| Market Title | Matched Outcome | Outcome Price | Implied Odds | Resolution Date |\n| :--- | :--- | :--- | :--- | :--- |\n| **Israel ground operation in Iran confirmed by...?** | April 30 | 0.245 | **24.5%** | April 30, 2026 |\n| **Which countries will conduct military action against Iran by April 30?** | Any E.U. Country | 0.06 | **6%** | April 30, 2026 |\n| **What will Iran conduct military action against by April 30?** | Dimona (Nuclear Center) | 0.1 | **10%** | April 30, 2026 |\n\n### Analysis of Risk-Off Positioning\n*   **Proxy for Allied Involvement:** While a specific \"US Army Invasion\" market was not the primary result, the **24.5% chance** of an Israeli ground operation by late April is the most direct indicator of \"boots on the ground\" risk in the region. Historically, an Israeli ground entry into Iran would significantly increase the probability of US support or direct involvement. \n*   **Resolution Horizon:** The concentration of markets ending on **April 30, 2026**, suggests the market perceives the next 30 days as a high-volatility window.\n*   **Low \"Allied\" Probability:** Currently, the market for \"Any E.U. Country\" conducting military action remains low (6%), suggesting that while regional ground operations are a concern, a broader multinational coalition is currently viewed as unlikely.\n\nFor risk-off positioning, these prices suggest that while a full-scale invasion is not yet the \"base case\" (which usually requires prices > 0.50), a nearly 1-in-4 chance of ground operations represents a significant tail risk that could trigger sudden spikes in oil prices and safe-haven assets (Gold/USD) if the price of the \"Israel ground operation\" market trends upward.",
+    "toolsUsed": [
+      {
+        "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+        "name": "Polymarket",
+        "skillCalls": 1
+      }
+    ],
+    "cost": {
+      "totalCostUsd": "0.157284",
+      "toolCostUsd": "0.000000",
+      "modelCostUsd": "0.157284"
+    },
+    "durationMs": 157307,
+    "outcomeType": "answer",
+    "querySession": {
+      "sessionId": "b4b74d8c-e566-4efd-acdc-eb148921fbbf",
+      "attemptId": "89979e56-9eae-4d0c-8eb1-58d971e40687",
+      "parentAttemptId": null,
+      "rootAttemptId": "89979e56-9eae-4d0c-8eb1-58d971e40687",
+      "mode": "initial",
+      "origin": "initial_request",
+      "status": "completed",
+      "checkpoint": {
+        "currentStage": "execution",
+        "latestCheckpointArtifactId": "a57ea72a-f6e0-4df0-989b-500f7ef1abaf:22",
+        "canonicalDatasetId": "a57ea72a-f6e0-4df0-989b-500f7ef1abaf:canonical-execution",
+        "executionProgramCurrentRevisionId": "rev-1"
+      }
+    },
+    "data": [
+      {
+        "tool": "search_markets",
+        "result": {
+          "results": [
+            {
+              "title": "What will Iran conduct military action against by April 30?",
+              "url": "https://polymarket.com/event/what-will-iran-conduct-military-action-against-by-april-30",
+              "slug": "what-will-iran-conduct-military-action-against-by-april-30",
+              "status": "live",
+              "conditionId": "0x4e17f3846c38119d3dbff86e941fc0ab731da419b53a2902f2d8437c1a96996a",
+              "matchedOutcome": "Dimona (Shimon Peres Negev Nuclear Research Center)",
+              "outcomePrice": "0.1",
+              "volume": 52526.95965300001,
+              "liquidity": 105968.4167,
+              "endDate": "2026-04-30T00:00:00Z",
+              "score": 490.2669477119827
+            },
+            {
+              "title": "Hezbollah military action against Israel on...?",
+              "url": "https://polymarket.com/event/hezbollah-military-action-against-israel-on",
+              "slug": "hezbollah-military-action-against-israel-on",
+              "status": "live",
+              "conditionId": "0x9dd53abf4c8b6b25961ebcf61c5413900ece7b3cc08a9511d0c61b3ef9e5a6e3",
+              "matchedOutcome": "March 22",
+              "outcomePrice": "0.849",
+              "volume": 406463.25481800106,
+              "liquidity": 62422.81482,
+              "endDate": "2026-03-31T00:00:00Z",
+              "score": 482.73102048941405
+            },
+            {
+              "title": "Iran military action against ___ by April 30?",
+              "url": "https://polymarket.com/event/iran-military-action-against-by-april-30",
+              "slug": "iran-military-action-against-by-april-30",
+              "status": "live",
+              "conditionId": "0xeae88eea8b1f8ed3a5fdca58dc30a17cdb5846e63f97b9b4865a85d7c43351d6",
+              "matchedOutcome": "Afghanistan",
+              "outcomePrice": "0.026",
+              "volume": 99435.676607,
+              "liquidity": 161910.03302,
+              "endDate": "2026-04-30T00:00:00Z",
+              "score": 481.6582216608136
+            },
+            {
+              "title": "Which countries will conduct military action against Iran by April 30?",
+              "url": "https://polymarket.com/event/which-countries-will-conduct-military-action-against-iran-by-april-30",
+              "slug": "which-countries-will-conduct-military-action-against-iran-by-april-30",
+              "status": "live",
+              "conditionId": "0x814ecf7cff5c5aaaeb9d7f60388d03bd7106d94be31e60b02ac2ca01715843c6",
+              "matchedOutcome": "Any E.U. Country",
+              "outcomePrice": "0.06",
+              "volume": 84494.792905,
+              "liquidity": 217719.10078,
+              "endDate": "2026-04-30T00:00:00Z",
+              "score": 478.8337428247719
+            },
+            {
+              "title": "What will Karoline Leavitt say during the next White House press briefing?",
+              "url": "https://polymarket.com/event/what-will-karoline-leavitt-say-during-the-next-white-house-press-briefing-331",
+              "slug": "what-will-karoline-leavitt-say-during-the-next-white-house-press-briefing-331",
+              "status": "resolved",
+              "conditionId": "0x52aa413180de25bd5acb3e25458f922e917b5f95230f842892c4a7db6721e3b5",
+              "matchedOutcome": "Make Iran Great Again",
+              "outcomePrice": "0",
+              "endDate": "2026-03-25T00:00:00Z",
+              "score": 315
+            },
+            {
+              "title": "Israel ground operation in Iran confirmed by...?",
+              "url": "https://polymarket.com/event/israel-ground-operation-in-iran-confirmed-by",
+              "slug": "israel-ground-operation-in-iran-confirmed-by",
+              "status": "live",
+              "conditionId": "0x0b99844286b27cd3eca1764d1699d72be941500be9930450faff1d6f25d0eda0",
+              "matchedOutcome": "April 30",
+              "outcomePrice": "0.245",
+              "volume": 198678.5748659999,
+              "liquidity": 38842.5942,
+              "endDate": "2026-04-30T00:00:00Z",
+              "score": 202.6166411255982
+            }
+          ],
+          "count": 6,
+          "searchMethod": "website-search-v2",
+          "statusBreakdown": {
+            "live": 5,
+            "resolved": 1
+          },
+          "hint": "✅ Website-backed Polymarket search used. Found 6 results for \"Iran boots ground troops US military invasion war allied\". Showing ALL markets (both live and resolved).",
+          "fetchedAt": "2026-03-28T05:55:53.605Z",
+          "searchMetadata": {
+            "version": "ctx-contributor-search/v1",
+            "outcome": "selected",
+            "confidence": "low",
+            "selectedCandidateId": "what-will-iran-conduct-military-action-against-by-april-30",
+            "shortlistCandidateIds": [
+              "what-will-iran-conduct-military-action-against-by-april-30"
+            ],
+            "relatedCandidateIds": [],
+            "rejectedCandidateIds": [],
+            "candidateCount": 6,
+            "shortlistCount": 1,
+            "intentQueries": [
+              "iran boots ground troops us military invasion war allied"
+            ],
+            "degraded": {
+              "reasonCode": "judge_missing",
+              "message": "No contributor search judge was configured for this resolution."
+            },
+            "judge": {
+              "provider": "openrouter",
+              "model": "openai/gpt-4o-mini",
+              "timeoutMs": 4500,
+              "budgetUsd": "0.010",
+              "disabled": false,
+              "applied": false,
+              "usage": null
+            },
+            "provenance": [
+              {
+                "source": "website-search-v2",
+                "query": "Iran boots ground troops US military invasion war allied",
+                "candidateCount": 6
+              }
+            ],
+            "trace": {
+              "usedDeterministicFallback": true,
+              "validatorStatus": "not_run",
+              "validatorReasonCode": null,
+              "validatorReason": null
+            }
+          }
+        }
+      }
+    ],
+    "dataUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/6f902065-fd02-4d48-b727-e2ae1804ee44-api_query_execution_a57ea72a-f6e0-4df0-989b-500f7ef1abaf_1774677364967.json",
+    "developerTrace": {
+      "summary": {
+        "toolCalls": 1,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "fallbackCount": 0,
+        "failureCount": 0,
+        "recoveryCount": 0,
+        "completionChecks": 0,
+        "loopCount": 0
+      },
+      "timeline": [
+        {
+          "stepType": "orchestration",
+          "event": "query-start",
+          "status": "ok",
+          "message": "Query orchestration started",
+          "timestampMs": 1774677366969,
+          "metadata": {
+            "requestId": "a57ea72a-f6e0-4df0-989b-500f7ef1abaf",
+            "queryDepth": "deep"
+          }
+        },
+        {
+          "stepType": "selection",
+          "event": "selected-tools",
+          "status": "ok",
+          "timestampMs": 1774677366970,
+          "metadata": {
+            "selectedDepth": "deep",
+            "deepMode": "deep",
+            "debugScoutDeepMode": null,
+            "plannerReasoningStage": "full",
+            "scoutEnabled": false,
+            "preserveFastOneShot": false,
+            "candidateMethodCount": 45,
+            "scoutProbeStatus": "ready",
+            "scoutProbeAdequacy": "adequate",
+            "scoutProbeConfidence": 0.9885,
+            "scoutMetadataConfidence": 0.9538,
+            "scoutProbeQuerySafeCandidateCount": 38,
+            "scoutProbeRankedMethodCount": 38,
+            "scoutProbeAmbiguityPoolCount": 10,
+            "scoutProbeShortlistedMethodCount": 8,
+            "scoutProbeMissingCapability": null,
+            "scoutPrePlanProbeCalls": 0,
+            "scoutPrePlanProbeBudgetReasonCode": null,
+            "scoutChangedInitialPlan": false,
+            "scoutChangedPlannerReasoningStage": false,
+            "scoutInitialSelectedDepth": "deep",
+            "scoutInitialDeepMode": "deep",
+            "scoutInitialPlannerReasoningStage": "full",
+            "scoutInitialReasonCode": "explicit_override",
+            "scoutFinalReasonCode": "explicit_override",
+            "scoutEvidenceAttachedToPlanning": true,
+            "selectedTools": [
+              {
+                "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+                "toolName": "Polymarket",
+                "priceUsd": "0.000000",
+                "selectedMethodCount": 45,
+                "selectedMethods": [
+                  "analyze_market_liquidity",
+                  "check_market_efficiency",
+                  "analyze_whale_flow",
+                  "analyze_top_holders",
+                  "analyze_event_whale_breakdown",
+                  "analyze_event_outcome_liquidity",
+                  "find_correlated_markets",
+                  "check_market_rules",
+                  "find_arbitrage_opportunities",
+                  "find_trading_opportunities",
+                  "build_high_conviction_workflow",
+                  "analyze_single_market_whales"
+                ],
+                "omittedSelectedMethodCount": 33
+              }
+            ],
+            "clarification": {
+              "truncated": true,
+              "preview": "{\"orchestrationMode\":\"manual_selected_tools\",\"rolloutStage\":\"enabled\",\"shadowMode\":false,\"policy\":\"auto\",\"outcomeType\":\"clarification_required\",\"triggered\":true,\"optionCount\":3,\"candidateCount\":38,\"viableCandidateCount\":3,\"recommendedOptionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:search_markets\",\"recommendedOptionReason\":\"Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…\",\"autoResolved\":true,\"autoSelectEnabled\":true,\"assumptionMade\":{\"mode\":\"auto\",\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:search_markets\",\"label\":\"Search for Polymarket prediction markets by keyword or category\",\"reason\":\"Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…\"},\"missingCapability\":null,\"decisionReasonCode\":\"semantic_scope_ambiguity\",\"decisionSignals\":[\"llm_judge\"],\"evidenceSources\":{\"usesMethodSchemas\":true,\"usesProbeArgs\":false,\"usesMethodMetadata\":true,\"usesToolSelectionContext\":false,\"usesLlmSelection\":true},\"comparedOptionIds\":[\"294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi\",\"294100e8-c648-4e5f-a254-95a14b56e398:search_markets\",\"294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes\"],\"decisionStrategy\":\"llm_primary\",\"judgeAttempted\":true,\"judgeApplied\":true,\"judgeOutcomeType\":\"clarification_required\",\"judgeConfidence\":0.62,\"judgeReason\":\"Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…\",\"judgeError\":null,\"validatorReason\":null,\"fallbackReason\":null,\"copyStrategy\":\"deterministic\",\"rewriteAttempted\":false,\"rewriteApplied\":false,\"rewriteError\":null,\"candidateSummaries\":[{\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi\",\"fitScore\":21.55,\"llmRelevanceScore\":null,\"requiredParams\":[],\"unresolvedRequiredParams\":[],\"probeArgKeys\":[],\"inputFieldNames\":[\"limit\",\"title\",\"keywords\",\"polymarketSlug\"],\"outputKeys\":[\"hint\",\"fetchedAt\",\"searchedFor\",\"sourcesTried\",\"kalshiResults\",\"comparisonNote\"],\"semanticScope\":\"event-wide\",\"semanticEntityGranularity\":\"event\",\"semanticRequiresNamedEntity\":false,\"semanticVenueSpecificity\":\"tool-bound\",\"semanticOutputCardinality\":\"comparison\",\"semanticProfileConfidence\":0.95,\"latencyClass\":\"instant\",\"executePriceUsd\":null,\"queryEligible\":true},{\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:get_event_outcomes\",\"fitScore\":16.55,\"llmRelevanceScore\":null,\"requiredParams\":[\"slug\"],\"unresolvedRequiredParams\":[\"slug\"],\"probeArgKeys\":[],\"inputFieldNames\":[\"slug\",\"limit\",\"sortBy\",\"includeInactive\"],\"outputKeys\":[\"url\",\"outcomes\",\"sortedBy\",\"eventSlug\",\"fetchedAt\",\"eventTitle\"],\"semanticScope\":\"event-wide\",\"semanticEntityGranularity\":\"event\",\"semanticRequiresNamedEntity\":false,\"semanticVenueSpecificity\":\"tool-bound\",\"semanticOutputCardinality\":\"comparison\",\"semanticProfileConfidence\":0.95,\"latencyClass\":\"instant\",\"executePriceUsd\":\"0.001\",\"queryEligible\":true},{\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:discover_trending_markets\",\"fitScore\":15.55,\"llmRelevanceScore\":null,\"requiredParams\":[],\"unresolvedRequiredParams\":[],\"probeArgKeys\":[],\"inputFieldNames\":[\"limit\",\"sortBy\",\"category\"],\"outputKeys\":[\"topTags\",\"fetchedAt\",\"categories\",\"totalActive\",\"marketSummary\",\"trendingMarkets\"],\"semanticScope\":\"event-wide\",\"semanticEntityGranularity\":\"event\",\"semanticRequiresNamedEntity\":false,\"semanticVenueSpecificity\":\"tool-bound\",\"semanticOutputCardinality\":\"multiple\",\"semanticProfileConfidence\":0.95,\"latencyClass\":\"instant\",\"executePriceUsd\":null,\"queryEligible\":true}],\"modelTelemetry\":{\"modelId\":\"gpt-5.4-nano-model\",...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "planning",
+          "event": "planner-generated-code",
+          "status": "ok",
+          "timestampMs": 1774677366971,
+          "metadata": {
+            "initialCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nexport async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\n  // Step 1: Single broad discovery call (shortlist-first, no parallel same-endpoint)\n  const search = await callMcpSkill({\n    toolId,\n    toolName: \"search_markets\",\n    args: { query: \"Iran boots ground troops US military invasion war allied\", limit: 50, status: \"all\" }\n  });\n\n  const candidates = Array.isArray(search?.results) ? search.results : [];\n\n  // Step 2: Deterministic semantic targeting — rank against explicit legs\n  // Leg A: Direct instrument — boots on ground / ground troop intervention\n  const directLeg = pickTopSemanticCandidates({\n    target: \"US or allied boots on the ground military intervention in Iran\",\n    candidates,\n    requiredTerms: [\"iran\", \"ground\", \"boots\", \"troops\", \"invasion\", \"military intervention\"],\n    avoidTerms: [\"airstrike\", \"strike only\", \"bombing only\", \"missile\", \"sanctions\", \"nuclear deal\"],\n    limit: 5,\n  });\n\n  // Leg B: Related escalation markets (broader Iran military conflict, as context for risk-off)\n  const escalationLeg = pickTopSemanticCandidates({\n    target: \"Iran broader military conflict escalation US involvement\",\n    candidates,\n    requiredTerms: [\"iran\", \"war\", \"military\", \"conflict\", \"attack\"],\n    avoidTerms: [\"sanctions\", \"diplomatic\", \"nuclear deal\", \"election\", \"protest\"],\n    limit: 5,\n  });\n\n  // Deduplicate: remove any escalation markets already in direct leg\n  const directIds = new Set(directLeg.map(m => m.conditionId || m.title));\n  const escalationFiltered = escalationLeg.filter(m => !(m.conditionId || m.title) || !directIds.has(m.conditionId || m.title));\n\n  // Step 3: Sequential detail fetch on shortlisted direct-leg markets\n  const detailedDirect = [];\n  const slugSeen = new Set();\n\n  for (const m of directLeg) {\n    const slug = m.slug;\n    if (!slug || slugSeen.has(slug))...[truncated]",
+            "finalCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nexport async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\n  // Step 1: Single broad discovery call (shortlist-first, no parallel same-endpoint)\n  const search = await callMcpSkill({\n    toolId,\n    toolName: \"search_markets\",\n    args: { query: \"Iran boots ground troops US military invasion war allied\", limit: 50, status: \"all\" }\n  });\n\n  const candidates = Array.isArray(search?.results) ? search.results : [];\n\n  // Step 2: Deterministic semantic targeting — rank against explicit legs\n  // Leg A: Direct instrument — boots on ground / ground troop intervention\n  const directLeg = pickTopSemanticCandidates({\n    target: \"US or allied boots on the ground military intervention in Iran\",\n    candidates,\n    requiredTerms: [\"iran\", \"ground\", \"boots\", \"troops\", \"invasion\", \"military intervention\"],\n    avoidTerms: [\"airstrike\", \"strike only\", \"bombing only\", \"missile\", \"sanctions\", \"nuclear deal\"],\n    limit: 5,\n  });\n\n  // Leg B: Related escalation markets (broader Iran military conflict, as context for risk-off)\n  const escalationLeg = pickTopSemanticCandidates({\n    target: \"Iran broader military conflict escalation US involvement\",\n    candidates,\n    requiredTerms: [\"iran\", \"war\", \"military\", \"conflict\", \"attack\"],\n    avoidTerms: [\"sanctions\", \"diplomatic\", \"nuclear deal\", \"election\", \"protest\"],\n    limit: 5,\n  });\n\n  // Deduplicate: remove any escalation markets already in direct leg\n  const directIds = new Set(directLeg.map(m => m.conditionId || m.title));\n  const escalationFiltered = escalationLeg.filter(m => !(m.conditionId || m.title) || !directIds.has(m.conditionId || m.title));\n\n  // Step 3: Sequential detail fetch on shortlisted direct-leg markets\n  const detailedDirect = [];\n  const slugSeen = new Set();\n\n  for (const m of directLeg) {\n    const slug = m.slug;\n    if (!slug || slugSeen.has(slug))...[truncated]",
+            "plannerQuery": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?\n\n[AUTO CLARIFICATION SELECTION]\nPreferred interpretation: Search for Polymarket prediction markets by keyword or category\nReason: Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…\nContinue with this interpretation unless execution proves it incompatible.",
+            "scoutEvidenceAttached": false,
+            "scoutEvidencePromptBlock": null,
+            "allowedModules": [
+              "@/lib/ai/skills/mcp",
+              "@/lib/ai/skills/semantic-targeting"
+            ]
+          }
+        },
+        {
+          "stepType": "execution-program",
+          "event": "execution-program-lineage",
+          "status": "ok",
+          "timestampMs": 1774677366972,
+          "metadata": {
+            "executionProgram": {
+              "baseRevisionId": "rev-1",
+              "currentRevisionId": "rev-1",
+              "revisionCount": 1,
+              "patchCount": 0,
+              "replanCount": 0,
+              "deterministicChangeCount": 0,
+              "revisions": [
+                {
+                  "revisionId": "rev-1",
+                  "parentRevisionId": null,
+                  "attempt": 0,
+                  "action": "initial",
+                  "reason": "initial",
+                  "summary": "Planner base program",
+                  "codeHash": "8ae1db1510ea972637ef26b5a4d029db3082c73ea0173794e14d2beb17cf01af",
+                  "codeLength": 5647,
+                  "changedLineCount": 0,
+                  "diffPreview": null,
+                  "editCount": null,
+                  "preservesPriorLogic": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774677367969,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "search_markets"
+          },
+          "metadata": {
+            "args": {
+              "query": "Iran boots ground troops US military invasion war allied",
+              "limit": 50,
+              "status": "all"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"results\":[{\"title\":\"What will Iran conduct military action against by April 30?\",\"url\":\"https://polymarket.com/event/what-will-iran-conduct-military-action-against-by-april-30\",\"slug\":\"what-will-iran-conduct-military-action-against-by-april-30\",\"status\":\"live\",\"conditionId\":\"0x4e17f3846c38119d3dbff86e941fc0ab731da419b53a2902f2d8437c1a96996a\",\"matchedOutcome\":\"Dimona (Shimon Peres Negev Nuclear Research Center)\",\"outcomePrice\":\"0.1\",\"volume\":52526.95965300001,\"liquidity\":105968.4167,\"endDate\":\"2026-04-30T00:00:00Z\",\"score\":490.2669477119827},{\"title\":\"Hezbollah military action against Israel on...?\",\"url\":\"https://polymarket.com/event/hezbollah-military-action-against-israel-on\",\"slug\":\"hezbollah-military-action-against-israel-on\",\"status\":\"live\",\"conditionId\":\"0x9dd53abf4c8b6b25961ebcf61...[truncated]"
+            },
+            "contributorSearch": {
+              "version": "ctx-contributor-search/v1",
+              "outcome": "selected",
+              "confidence": "low",
+              "selectedCandidateId": "what-will-iran-conduct-military-action-against-by-april-30",
+              "shortlistCandidateIds": [
+                "what-will-iran-conduct-military-action-against-by-april-30"
+              ],
+              "relatedCandidateIds": [],
+              "rejectedCandidateIds": [],
+              "candidateCount": 6,
+              "shortlistCount": 1,
+              "intentQueries": [
+                "iran boots ground troops us military invasion war allied"
+              ],
+              "degraded": {
+                "reasonCode": "judge_missing",
+                "message": "No contributor search judge was configured for this resolution."
+              },
+              "judge": {
+                "provider": "openrouter",
+                "model": "openai/gpt-4o-mini",
+                "timeoutMs": 4500,
+                "budgetUsd": "0.010",
+                "disabled": false,
+                "applied": false,
+                "usage": null
+              },
+              "provenance": [
+                {
+                  "source": "website-search-v2",
+                  "query": "Iran boots ground troops US military invasion war allied",
+                  "candidateCount": 6
+                }
+              ],
+              "trace": {
+                "usedDeterministicFallback": true,
+                "validatorStatus": "not_run",
+                "validatorReasonCode": null,
+                "validatorReason": null
+              }
+            }
+          }
+        },
+        {
+          "stepType": "orchestration",
+          "event": "query-complete",
+          "status": "failed",
+          "timestampMs": 1774677368970,
+          "metadata": {
+            "durationMs": 157307,
+            "executionOk": false
+          }
+        },
+        {
+          "stepType": "orchestration",
+          "event": "query-start",
+          "status": "ok",
+          "message": "Query orchestration started",
+          "timestampMs": 1774677366969,
+          "metadata": {
+            "requestId": "a57ea72a-f6e0-4df0-989b-500f7ef1abaf",
+            "queryDepth": "deep"
+          }
+        },
+        {
+          "stepType": "selection",
+          "event": "selected-tools",
+          "status": "ok",
+          "timestampMs": 1774677366970,
+          "metadata": {
+            "selectedDepth": "deep",
+            "deepMode": "deep",
+            "debugScoutDeepMode": null,
+            "plannerReasoningStage": "full",
+            "scoutEnabled": false,
+            "preserveFastOneShot": false,
+            "candidateMethodCount": 45,
+            "scoutProbeStatus": "ready",
+            "scoutProbeAdequacy": "adequate",
+            "scoutProbeConfidence": 0.9885,
+            "scoutMetadataConfidence": 0.9538,
+            "scoutProbeQuerySafeCandidateCount": 38,
+            "scoutProbeRankedMethodCount": 38,
+            "scoutProbeAmbiguityPoolCount": 10,
+            "scoutProbeShortlistedMethodCount": 8,
+            "scoutProbeMissingCapability": null,
+            "scoutPrePlanProbeCalls": 0,
+            "scoutPrePlanProbeBudgetReasonCode": null,
+            "scoutChangedInitialPlan": false,
+            "scoutChangedPlannerReasoningStage": false,
+            "scoutInitialSelectedDepth": "deep",
+            "scoutInitialDeepMode": "deep",
+            "scoutInitialPlannerReasoningStage": "full",
+            "scoutInitialReasonCode": "explicit_override",
+            "scoutFinalReasonCode": "explicit_override",
+            "scoutEvidenceAttachedToPlanning": true,
+            "selectedTools": [
+              {
+                "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+                "toolName": "Polymarket",
+                "priceUsd": "0.000000",
+                "selectedMethodCount": 45,
+                "selectedMethods": [
+                  "analyze_market_liquidity",
+                  "check_market_efficiency",
+                  "analyze_whale_flow",
+                  "analyze_top_holders",
+                  "analyze_event_whale_breakdown",
+                  "analyze_event_outcome_liquidity",
+                  "find_correlated_markets",
+                  "check_market_rules",
+                  "find_arbitrage_opportunities",
+                  "find_trading_opportunities",
+                  "build_high_conviction_workflow",
+                  "analyze_single_market_whales"
+                ],
+                "omittedSelectedMethodCount": 33
+              }
+            ],
+            "clarification": {
+              "truncated": true,
+              "preview": "{\"orchestrationMode\":\"manual_selected_tools\",\"rolloutStage\":\"enabled\",\"shadowMode\":false,\"policy\":\"auto\",\"outcomeType\":\"clarification_required\",\"triggered\":true,\"optionCount\":3,\"candidateCount\":38,\"viableCandidateCount\":3,\"recommendedOptionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:search_markets\",\"recommendedOptionReason\":\"Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…\",\"autoResolved\":true,\"autoSelectEnabled\":true,\"assumptionMade\":{\"mode\":\"auto\",\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:search_markets\",\"label\":\"Search for Polymarket prediction markets by keyword or category\",\"reason\":\"Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…\"},\"missingCapability\":null,\"decisionReasonCode\":\"semantic_scope_ambiguity\",\"decisionSignals\":[\"llm_judge\"],\"evidenceSources\":{\"usesMethodSchemas\":true,\"usesProbeArgs\":false,\"usesMethodMetadata\":true,\"usesToolSelectionContext\":false,\"usesLlmSelection\":true},\"comparedOptionIds\":[\"294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi\",\"294100e8-c648-4e5f-a254-95a14b56e398:search_markets\",\"294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes\"],\"decisionStrategy\":\"llm_primary\",\"judgeAttempted\":true,\"judgeApplied\":true,\"judgeOutcomeType\":\"clarification_required\",\"judgeConfidence\":0.62,\"judgeReason\":\"Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…\",\"judgeError\":null,\"validatorReason\":null,\"fallbackReason\":null,\"copyStrategy\":\"deterministic\",\"rewriteAttempted\":false,\"rewriteApplied\":false,\"rewriteError\":null,\"candidateSummaries\":[{\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi\",\"fitScore\":21.55,\"llmRelevanceScore\":null,\"requiredParams\":[],\"unresolvedRequiredParams\":[],\"probeArgKeys\":[],\"inputFieldNames\":[\"limit\",\"title\",\"keywords\",\"polymarketSlug\"],\"outputKeys\":[\"hint\",\"fetchedAt\",\"searchedFor\",\"sourcesTried\",\"kalshiResults\",\"comparisonNote\"],\"semanticScope\":\"event-wide\",\"semanticEntityGranularity\":\"event\",\"semanticRequiresNamedEntity\":false,\"semanticVenueSpecificity\":\"tool-bound\",\"semanticOutputCardinality\":\"comparison\",\"semanticProfileConfidence\":0.95,\"latencyClass\":\"instant\",\"executePriceUsd\":null,\"queryEligible\":true},{\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:get_event_outcomes\",\"fitScore\":16.55,\"llmRelevanceScore\":null,\"requiredParams\":[\"slug\"],\"unresolvedRequiredParams\":[\"slug\"],\"probeArgKeys\":[],\"inputFieldNames\":[\"slug\",\"limit\",\"sortBy\",\"includeInactive\"],\"outputKeys\":[\"url\",\"outcomes\",\"sortedBy\",\"eventSlug\",\"fetchedAt\",\"eventTitle\"],\"semanticScope\":\"event-wide\",\"semanticEntityGranularity\":\"event\",\"semanticRequiresNamedEntity\":false,\"semanticVenueSpecificity\":\"tool-bound\",\"semanticOutputCardinality\":\"comparison\",\"semanticProfileConfidence\":0.95,\"latencyClass\":\"instant\",\"executePriceUsd\":\"0.001\",\"queryEligible\":true},{\"optionId\":\"294100e8-c648-4e5f-a254-95a14b56e398:discover_trending_markets\",\"fitScore\":15.55,\"llmRelevanceScore\":null,\"requiredParams\":[],\"unresolvedRequiredParams\":[],\"probeArgKeys\":[],\"inputFieldNames\":[\"limit\",\"sortBy\",\"category\"],\"outputKeys\":[\"topTags\",\"fetchedAt\",\"categories\",\"totalActive\",\"marketSummary\",\"trendingMarkets\"],\"semanticScope\":\"event-wide\",\"semanticEntityGranularity\":\"event\",\"semanticRequiresNamedEntity\":false,\"semanticVenueSpecificity\":\"tool-bound\",\"semanticOutputCardinality\":\"multiple\",\"semanticProfileConfidence\":0.95,\"latencyClass\":\"instant\",\"executePriceUsd\":null,\"queryEligible\":true}],\"modelTelemetry\":{\"modelId\":\"gpt-5.4-nano-model\",...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "planning",
+          "event": "planner-generated-code",
+          "status": "ok",
+          "timestampMs": 1774677366971,
+          "metadata": {
+            "initialCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nexport async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\n  // Step 1: Single broad discovery call (shortlist-first, no parallel same-endpoint)\n  const search = await callMcpSkill({\n    toolId,\n    toolName: \"search_markets\",\n    args: { query: \"Iran boots ground troops US military invasion war allied\", limit: 50, status: \"all\" }\n  });\n\n  const candidates = Array.isArray(search?.results) ? search.results : [];\n\n  // Step 2: Deterministic semantic targeting — rank against explicit legs\n  // Leg A: Direct instrument — boots on ground / ground troop intervention\n  const directLeg = pickTopSemanticCandidates({\n    target: \"US or allied boots on the ground military intervention in Iran\",\n    candidates,\n    requiredTerms: [\"iran\", \"ground\", \"boots\", \"troops\", \"invasion\", \"military intervention\"],\n    avoidTerms: [\"airstrike\", \"strike only\", \"bombing only\", \"missile\", \"sanctions\", \"nuclear deal\"],\n    limit: 5,\n  });\n\n  // Leg B: Related escalation markets (broader Iran military conflict, as context for risk-off)\n  const escalationLeg = pickTopSemanticCandidates({\n    target: \"Iran broader military conflict escalation US involvement\",\n    candidates,\n    requiredTerms: [\"iran\", \"war\", \"military\", \"conflict\", \"attack\"],\n    avoidTerms: [\"sanctions\", \"diplomatic\", \"nuclear deal\", \"election\", \"protest\"],\n    limit: 5,\n  });\n\n  // Deduplicate: remove any escalation markets already in direct leg\n  const directIds = new Set(directLeg.map(m => m.conditionId || m.title));\n  const escalationFiltered = escalationLeg.filter(m => !(m.conditionId || m.title) || !directIds.has(m.conditionId || m.title));\n\n  // Step 3: Sequential detail fetch on shortlisted direct-leg markets\n  const detailedDirect = [];\n  const slugSeen = new Set();\n\n  for (const m of directLeg) {\n    const slug = m.slug;\n    if (!slug || slugSeen.has(slug))...[truncated]",
+            "finalCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";\n\nexport async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\n  // Step 1: Single broad discovery call (shortlist-first, no parallel same-endpoint)\n  const search = await callMcpSkill({\n    toolId,\n    toolName: \"search_markets\",\n    args: { query: \"Iran boots ground troops US military invasion war allied\", limit: 50, status: \"all\" }\n  });\n\n  const candidates = Array.isArray(search?.results) ? search.results : [];\n\n  // Step 2: Deterministic semantic targeting — rank against explicit legs\n  // Leg A: Direct instrument — boots on ground / ground troop intervention\n  const directLeg = pickTopSemanticCandidates({\n    target: \"US or allied boots on the ground military intervention in Iran\",\n    candidates,\n    requiredTerms: [\"iran\", \"ground\", \"boots\", \"troops\", \"invasion\", \"military intervention\"],\n    avoidTerms: [\"airstrike\", \"strike only\", \"bombing only\", \"missile\", \"sanctions\", \"nuclear deal\"],\n    limit: 5,\n  });\n\n  // Leg B: Related escalation markets (broader Iran military conflict, as context for risk-off)\n  const escalationLeg = pickTopSemanticCandidates({\n    target: \"Iran broader military conflict escalation US involvement\",\n    candidates,\n    requiredTerms: [\"iran\", \"war\", \"military\", \"conflict\", \"attack\"],\n    avoidTerms: [\"sanctions\", \"diplomatic\", \"nuclear deal\", \"election\", \"protest\"],\n    limit: 5,\n  });\n\n  // Deduplicate: remove any escalation markets already in direct leg\n  const directIds = new Set(directLeg.map(m => m.conditionId || m.title));\n  const escalationFiltered = escalationLeg.filter(m => !(m.conditionId || m.title) || !directIds.has(m.conditionId || m.title));\n\n  // Step 3: Sequential detail fetch on shortlisted direct-leg markets\n  const detailedDirect = [];\n  const slugSeen = new Set();\n\n  for (const m of directLeg) {\n    const slug = m.slug;\n    if (!slug || slugSeen.has(slug))...[truncated]",
+            "plannerQuery": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?\n\n[AUTO CLARIFICATION SELECTION]\nPreferred interpretation: Search for Polymarket prediction markets by keyword or category\nReason: Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…\nContinue with this interpretation unless execution proves it incompatible.",
+            "scoutEvidenceAttached": false,
+            "scoutEvidencePromptBlock": null,
+            "allowedModules": [
+              "@/lib/ai/skills/mcp",
+              "@/lib/ai/skills/semantic-targeting"
+            ]
+          }
+        },
+        {
+          "stepType": "execution-program",
+          "event": "execution-program-lineage",
+          "status": "ok",
+          "timestampMs": 1774677366972,
+          "metadata": {
+            "executionProgram": {
+              "baseRevisionId": "rev-1",
+              "currentRevisionId": "rev-1",
+              "revisionCount": 1,
+              "patchCount": 0,
+              "replanCount": 0,
+              "deterministicChangeCount": 0,
+              "revisions": [
+                {
+                  "revisionId": "rev-1",
+                  "parentRevisionId": null,
+                  "attempt": 0,
+                  "action": "initial",
+                  "reason": "initial",
+                  "summary": "Planner base program",
+                  "codeHash": "8ae1db1510ea972637ef26b5a4d029db3082c73ea0173794e14d2beb17cf01af",
+                  "codeLength": 5647,
+                  "changedLineCount": 0,
+                  "diffPreview": null,
+                  "editCount": null,
+                  "preservesPriorLogic": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1774677367969,
+          "tool": {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "search_markets"
+          },
+          "metadata": {
+            "args": {
+              "query": "Iran boots ground troops US military invasion war allied",
+              "limit": 50,
+              "status": "all"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"results\":[{\"title\":\"What will Iran conduct military action against by April 30?\",\"url\":\"https://polymarket.com/event/what-will-iran-conduct-military-action-against-by-april-30\",\"slug\":\"what-will-iran-conduct-military-action-against-by-april-30\",\"status\":\"live\",\"conditionId\":\"0x4e17f3846c38119d3dbff86e941fc0ab731da419b53a2902f2d8437c1a96996a\",\"matchedOutcome\":\"Dimona (Shimon Peres Negev Nuclear Research Center)\",\"outcomePrice\":\"0.1\",\"volume\":52526.95965300001,\"liquidity\":105968.4167,\"endDate\":\"2026-04-30T00:00:00Z\",\"score\":490.2669477119827},{\"title\":\"Hezbollah military action against Israel on...?\",\"url\":\"https://polymarket.com/event/hezbollah-military-action-against-israel-on\",\"slug\":\"hezbollah-military-action-against-israel-on\",\"status\":\"live\",\"conditionId\":\"0x9dd53abf4c8b6b25961ebcf61...[truncated]"
+            },
+            "contributorSearch": {
+              "version": "ctx-contributor-search/v1",
+              "outcome": "selected",
+              "confidence": "low",
+              "selectedCandidateId": "what-will-iran-conduct-military-action-against-by-april-30",
+              "shortlistCandidateIds": [
+                "what-will-iran-conduct-military-action-against-by-april-30"
+              ],
+              "relatedCandidateIds": [],
+              "rejectedCandidateIds": [],
+              "candidateCount": 6,
+              "shortlistCount": 1,
+              "intentQueries": [
+                "iran boots ground troops us military invasion war allied"
+              ],
+              "degraded": {
+                "reasonCode": "judge_missing",
+                "message": "No contributor search judge was configured for this resolution."
+              },
+              "judge": {
+                "provider": "openrouter",
+                "model": "openai/gpt-4o-mini",
+                "timeoutMs": 4500,
+                "budgetUsd": "0.010",
+                "disabled": false,
+                "applied": false,
+                "usage": null
+              },
+              "provenance": [
+                {
+                  "source": "website-search-v2",
+                  "query": "Iran boots ground troops US military invasion war allied",
+                  "candidateCount": 6
+                }
+              ],
+              "trace": {
+                "usedDeterministicFallback": true,
+                "validatorStatus": "not_run",
+                "validatorReasonCode": null,
+                "validatorReason": null
+              }
+            }
+          }
+        },
+        {
+          "stepType": "orchestration",
+          "event": "query-complete",
+          "status": "failed",
+          "timestampMs": 1774677368970,
+          "metadata": {
+            "durationMs": 157307,
+            "executionOk": false
+          }
+        }
+      ],
+      "requestId": "a57ea72a-f6e0-4df0-989b-500f7ef1abaf",
+      "query": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?",
+      "source": "backend-runtime",
+      "diagnostics": {
+        "selection": {
+          "selectedDepth": "deep",
+          "deepMode": "deep",
+          "debugScoutDeepMode": null,
+          "plannerReasoningStage": "full",
+          "scoutEnabled": false,
+          "preserveFastOneShot": false,
+          "candidateMethodCount": 45,
+          "scoutProbeStatus": "ready",
+          "scoutProbeAdequacy": "adequate",
+          "scoutProbeConfidence": 0.9885,
+          "scoutMetadataConfidence": 0.9538,
+          "scoutProbeQuerySafeCandidateCount": 38,
+          "scoutProbeRankedMethodCount": 38,
+          "scoutProbeAmbiguityPoolCount": 10,
+          "scoutProbeShortlistedMethodCount": 8,
+          "scoutProbeMissingCapability": null,
+          "scoutPrePlanProbeCalls": 0,
+          "scoutPrePlanProbeBudgetReasonCode": null,
+          "scoutChangedInitialPlan": false,
+          "scoutChangedPlannerReasoningStage": false,
+          "scoutInitialSelectedDepth": "deep",
+          "scoutInitialDeepMode": "deep",
+          "scoutInitialPlannerReasoningStage": "full",
+          "scoutInitialReasonCode": "explicit_override",
+          "scoutFinalReasonCode": "explicit_override",
+          "scoutEvidenceAttachedToPlanning": true,
+          "scoutLlmSelectionUsed": true,
+          "scoutLlmSelectionFallback": false,
+          "scoutLlmSelectionLatencyMs": 7965,
+          "selectedTools": [
+            {
+              "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+              "toolName": "Polymarket",
+              "priceUsd": "0.000000",
+              "selectedMethodCount": 45,
+              "selectedMethods": [
+                "analyze_market_liquidity",
+                "check_market_efficiency",
+                "analyze_whale_flow",
+                "analyze_top_holders",
+                "analyze_event_whale_breakdown",
+                "analyze_event_outcome_liquidity",
+                "find_correlated_markets",
+                "check_market_rules",
+                "find_arbitrage_opportunities",
+                "find_trading_opportunities",
+                "build_high_conviction_workflow",
+                "analyze_single_market_whales"
+              ],
+              "omittedSelectedMethodCount": 33
+            }
+          ]
+        },
+        "planning": {
+          "initial": {
+            "plannerQuery": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?\n\n[AUTO CLARIFICATION SELECTION]\nPreferred interpretation: Search for Polymarket prediction markets by keyword or category\nReason: Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…\nContinue with this interpretation unless execution proves it incompatible.",
+            "scoutEvidenceAttached": false,
+            "scoutEvidencePromptBlock": null,
+            "allowedModules": [
+              "@/lib/ai/skills/mcp",
+              "@/lib/ai/skills/semantic-targeting"
+            ],
+            "intentContract": {
+              "strictValidation": true,
+              "namedVenues": [
+                "Polymarket"
+              ],
+              "requiresCrossVenueCoverage": true,
+              "requiresDirectInstruments": true,
+              "requiresHedge": false,
+              "requiresPortfolioConstruction": false,
+              "requiresRepresentativeOutcomeSelection": false,
+              "primaryScenario": null,
+              "hedgeScenario": null
+            },
+            "validation": {
+              "applied": true,
+              "passed": false,
+              "issues": [
+                "Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities."
+              ],
+              "rewriteAttempted": true,
+              "rewriteAccepted": true,
+              "rewriteGuidance": "Import pickTopSemanticCandidates from \"@/lib/ai/skills/semantic-targeting\" and rank candidate sets against explicit target legs before selecting."
+            }
+          }
+        },
+        "cost": {
+          "planningCostUsd": 0.1409344,
+          "initialExecutionCostUsd": 0,
+          "rediscoveryAdditionalCostUsd": 0,
+          "synthesisCostUsd": 0.009803,
+          "totalModelCostUsd": 0.15728395,
+          "toolCostUsd": 0,
+          "totalChargedUsd": 0.15728395
+        },
+        "completeness": {
+          "evaluations": [],
+          "repairEvents": [],
+          "triggerNeedsDifferentTools": false,
+          "triggerMissingCapability": null
+        },
+        "rediscovery": {
+          "considered": false,
+          "executed": false,
+          "skipReason": "rediscovery_precheck_elapsed_budget_partial_answer",
+          "missingCapability": null,
+          "rediscoveryQuery": null,
+          "capabilityLooksLikeSearchNeed": false,
+          "allowSearchFallbackOnElapsedCap": false,
+          "searchFallbackUsed": false,
+          "preRediscoveryBudgetReasonCode": "elapsed_cap_exceeded",
+          "candidateSearchResults": [],
+          "selectedAlternatives": [],
+          "mergedTools": [],
+          "usingPaidFallback": false,
+          "branchPlan": null
+        },
+        "clarification": {
+          "orchestrationMode": "manual_selected_tools",
+          "rolloutStage": "enabled",
+          "shadowMode": false,
+          "policy": "auto",
+          "outcomeType": "clarification_required",
+          "triggered": true,
+          "optionCount": 3,
+          "candidateCount": 38,
+          "viableCandidateCount": 3,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+          "recommendedOptionReason": "Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…",
+          "autoResolved": true,
+          "autoSelectEnabled": true,
+          "assumptionMade": {
+            "mode": "auto",
+            "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+            "label": "Search for Polymarket prediction markets by keyword or category",
+            "reason": "Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…"
+          },
+          "missingCapability": null,
+          "decisionReasonCode": "semantic_scope_ambiguity",
+          "decisionSignals": [
+            "llm_judge"
+          ],
+          "evidenceSources": {
+            "usesMethodSchemas": true,
+            "usesProbeArgs": false,
+            "usesMethodMetadata": true,
+            "usesToolSelectionContext": false,
+            "usesLlmSelection": true
+          },
+          "comparedOptionIds": [
+            "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+            "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+            "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes"
+          ],
+          "decisionStrategy": "llm_primary",
+          "judgeAttempted": true,
+          "judgeApplied": true,
+          "judgeOutcomeType": "clarification_required",
+          "judgeConfidence": 0.62,
+          "judgeReason": "Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…",
+          "judgeError": null,
+          "validatorReason": null,
+          "fallbackReason": null,
+          "copyStrategy": "deterministic",
+          "rewriteAttempted": false,
+          "rewriteApplied": false,
+          "rewriteError": null,
+          "candidateSummaries": [
+            {
+              "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+              "fitScore": 21.55,
+              "llmRelevanceScore": null,
+              "requiredParams": [],
+              "unresolvedRequiredParams": [],
+              "probeArgKeys": [],
+              "inputFieldNames": [
+                "limit",
+                "title",
+                "keywords",
+                "polymarketSlug"
+              ],
+              "outputKeys": [
+                "hint",
+                "fetchedAt",
+                "searchedFor",
+                "sourcesTried",
+                "kalshiResults",
+                "comparisonNote"
+              ],
+              "semanticScope": "event-wide",
+              "semanticEntityGranularity": "event",
+              "semanticRequiresNamedEntity": false,
+              "semanticVenueSpecificity": "tool-bound",
+              "semanticOutputCardinality": "comparison",
+              "semanticProfileConfidence": 0.95,
+              "latencyClass": "instant",
+              "executePriceUsd": null,
+              "queryEligible": true
+            },
+            {
+              "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:get_event_outcomes",
+              "fitScore": 16.55,
+              "llmRelevanceScore": null,
+              "requiredParams": [
+                "slug"
+              ],
+              "unresolvedRequiredParams": [
+                "slug"
+              ],
+              "probeArgKeys": [],
+              "inputFieldNames": [
+                "slug",
+                "limit",
+                "sortBy",
+                "includeInactive"
+              ],
+              "outputKeys": [
+                "url",
+                "outcomes",
+                "sortedBy",
+                "eventSlug",
+                "fetchedAt",
+                "eventTitle"
+              ],
+              "semanticScope": "event-wide",
+              "semanticEntityGranularity": "event",
+              "semanticRequiresNamedEntity": false,
+              "semanticVenueSpecificity": "tool-bound",
+              "semanticOutputCardinality": "comparison",
+              "semanticProfileConfidence": 0.95,
+              "latencyClass": "instant",
+              "executePriceUsd": "0.001",
+              "queryEligible": true
+            },
+            {
+              "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:discover_trending_markets",
+              "fitScore": 15.55,
+              "llmRelevanceScore": null,
+              "requiredParams": [],
+              "unresolvedRequiredParams": [],
+              "probeArgKeys": [],
+              "inputFieldNames": [
+                "limit",
+                "sortBy",
+                "category"
+              ],
+              "outputKeys": [
+                "topTags",
+                "fetchedAt",
+                "categories",
+                "totalActive",
+                "marketSummary",
+                "trendingMarkets"
+              ],
+              "semanticScope": "event-wide",
+              "semanticEntityGranularity": "event",
+              "semanticRequiresNamedEntity": false,
+              "semanticVenueSpecificity": "tool-bound",
+              "semanticOutputCardinality": "multiple",
+              "semanticProfileConfidence": 0.95,
+              "latencyClass": "instant",
+              "executePriceUsd": null,
+              "queryEligible": true
+            }
+          ],
+          "modelTelemetry": {
+            "modelId": "gpt-5.4-nano-model",
+            "runtimeModelId": "openai/gpt-5.4-nano",
+            "judgeUsage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]",
+              "promptTokens": "[REDACTED]",
+              "completionTokens": "[REDACTED]"
+            },
+            "judgeActualCostUsd": 0.00437945,
+            "rewriteUsage": null,
+            "rewriteActualCostUsd": null,
+            "totalActualCostUsd": 0.00437945
+          }
+        },
+        "contributorSearches": [
+          {
+            "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "toolName": "search_markets",
+            "timestampMs": 1774677367969,
+            "searchMetadata": "[OMITTED:CIRCULAR_REFERENCE]"
+          }
+        ],
+        "models": {
+          "overrideMode": "none",
+          "stages": [
+            {
+              "stageKey": "scout-llm-selection",
+              "stageKind": "stage",
+              "stage": "scout-llm-selection",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gpt-5.4-nano-model",
+              "requestedModelId": "gpt-5.4-nano-model",
+              "resolvedModelId": "gpt-5.4-nano-model",
+              "resolvedRuntimeModelId": "openai/gpt-5.4-nano",
+              "effectiveModelId": "gpt-5.4-nano-model",
+              "effectiveRuntimeModelId": "openai/gpt-5.4-nano",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.0021671,
+              "usage": null
+            },
+            {
+              "stageKey": "clarification-judge",
+              "stageKind": "stage",
+              "stage": "clarification-judge",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gpt-5.4-nano-model",
+              "requestedModelId": "gpt-5.4-nano-model",
+              "resolvedModelId": "gpt-5.4-nano-model",
+              "resolvedRuntimeModelId": "openai/gpt-5.4-nano",
+              "effectiveModelId": "gpt-5.4-nano-model",
+              "effectiveRuntimeModelId": "openai/gpt-5.4-nano",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.00437945,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]"
+              }
+            },
+            {
+              "stageKey": "planning",
+              "stageKind": "stage",
+              "stage": "planning",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "glm-turbo-model",
+              "requestedModelId": "glm-turbo-model",
+              "resolvedModelId": "glm-turbo-model",
+              "resolvedRuntimeModelId": "z-ai/glm-5-turbo",
+              "effectiveModelId": "glm-turbo-model",
+              "effectiveRuntimeModelId": "z-ai/glm-5-turbo",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.1409344,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]",
+                "reasoningTokens": "[REDACTED]",
+                "cachedInputTokens": "[REDACTED]"
+              }
+            },
+            {
+              "stageKey": "planning-validation",
+              "stageKind": "stage",
+              "stage": "planning",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "glm-turbo-model",
+              "requestedModelId": "glm-turbo-model",
+              "resolvedModelId": "glm-turbo-model",
+              "resolvedRuntimeModelId": "z-ai/glm-5-turbo",
+              "effectiveModelId": "glm-turbo-model",
+              "effectiveRuntimeModelId": "z-ai/glm-5-turbo",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": 45267,
+              "actualCostUsd": 0.0086004,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]",
+                "reasoningTokens": "[REDACTED]",
+                "cachedInputTokens": "[REDACTED]"
+              }
+            },
+            {
+              "stageKey": "final-synthesis",
+              "stageKind": "final-synthesis",
+              "stage": "final-synthesis",
+              "surface": "query",
+              "responseShape": "answer",
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gemini-flash-model",
+              "requestedModelId": "gemini-flash-model",
+              "resolvedModelId": "gemini-flash-model",
+              "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+              "effectiveModelId": "gemini-flash-model",
+              "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.009803,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]",
+                "reasoningTokens": "[REDACTED]",
+                "cachedInputTokens": "[REDACTED]"
+              }
+            }
+          ]
+        }
+      },
+      "governance": {
+        "policyVersion": "2026-03-05.query-data-governance.v1",
+        "redactionCount": 23,
+        "omittedSensitiveFieldsCount": 1,
+        "exposure": {
+          "runtimeArtifacts": "internal_runtime_only",
+          "durableAudit": "internal_ops_only",
+          "developerTrace": "explicit_opt_in_redacted",
+          "publicDataUrl": "explicit_request_opt_in"
+        },
+        "retention": {
+          "runtimeTtlMs": 900000,
+          "durableAuditDays": 30,
+          "publicDataUrl": "until_deleted"
+        }
+      }
+    },
+    "orchestrationMetrics": {
+      "parityStage": "enabled",
+      "orchestrationMode": "manual_selected_tools",
+      "firstPassSuccess": false,
+      "capabilityMissSignaled": false,
+      "rediscoveryExecuted": false
+    },
+    "assumptionMade": {
+      "mode": "auto",
+      "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+      "label": "Search for Polymarket prediction markets by keyword or category",
+      "reason": "Your request depends on how the Polymarket event/outcome is structured (combined vs separate US/allied outcomes). Multiple interpretations remain before we can reliably list the specific markets, resolution dates, and corresponding price l…"
+    }
+  }
+}

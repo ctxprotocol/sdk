@@ -270,13 +270,13 @@
     "patchedContextPreviewQueryValidation": {
       "environment": "http://localhost:3000",
       "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
-      "modelId": "kimi-model-thinking",
+      "answerModelId": "kimi-model-thinking",
       "historicalFailureReplayCount": 6,
       "completedCount": 6,
       "notes": [
         "After restarting the local /context dev server with the MCP timeout and abort-retry patch, all six prompts that had been failing in live pinned validation reached real Kalshi tool calls and completed with non-empty answers.",
         "The replay exercised browse_series, analyze_market_liquidity, check_market_efficiency, kalshi_crossref_polymarket, get_market_orderbook, and get_market_candlesticks. Declared slow methods now logged the intended 90-second inner MCP budgets instead of the old flat 30-second limit.",
-        "This is strong confirmation that the blocker is /context runtime behavior, but it is not yet a production sign-off because the replay targeted a local baseUrl and had to force modelId kimi-model-thinking after the local default gemini-flash-model was unavailable in-region."
+        "This is strong confirmation that the blocker is /context runtime behavior, but it is not yet a production sign-off because the replay targeted a local baseUrl and had to force answerModelId kimi-model-thinking after the local default gemini-flash-model was unavailable in-region."
       ]
     },
     "marketplaceExecuteValidation": {

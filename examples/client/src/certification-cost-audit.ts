@@ -371,7 +371,7 @@ async function main(): Promise<void> {
 
   const queryDepth = (process.env.QUERY_DEPTH as "fast" | "auto" | "deep" | undefined) ?? "deep";
   const modes = parseModes(process.env.AUDIT_MODES);
-  const modelId = process.env.CONTEXT_MODEL_ID;
+  const answerModelId = process.env.CONTEXT_ANSWER_MODEL_ID;
   const client = new ContextClient({ apiKey });
 
   const suiteRuns: Array<Record<string, unknown>> = [];
@@ -400,7 +400,7 @@ async function main(): Promise<void> {
             queryDepth,
             includeData: true,
             includeDeveloperTrace: true,
-            ...(modelId ? { modelId } : {}),
+            ...(answerModelId ? { answerModelId } : {}),
             idempotencyKey,
           });
 
@@ -609,7 +609,7 @@ async function main(): Promise<void> {
   const output = {
     generatedAt: new Date().toISOString(),
     queryDepth,
-    modelId: modelId || null,
+    answerModelId: answerModelId || null,
     thresholds: {
       freshnessThresholdMinutes: FRESHNESS_THRESHOLD_MINUTES,
       trace: TRACE_THRESHOLDS,

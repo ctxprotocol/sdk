@@ -1,0 +1,5462 @@
+{
+  "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+  "toolName": "Polymarket",
+  "savedAt": "2026-03-28T05:51:37.476Z",
+  "previousUpdatedAt": "2026-03-27T09:22:51.414Z",
+  "schema": {
+    "kind": "mcp",
+    "tools": [
+      {
+        "name": "analyze_market_liquidity",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Analyze market liquidity and calculate \"Whale Cost\" for ONE specific outcome token - simulates the slippage for selling $1k, $5k, and $10k positions. Answers: \"Can I exit this position if I put $X in?\" Merges direct + synthetic liquidity from both YES and NO orderbooks for accurate depth.\n\nUse this when the user already means ONE named team/candidate/outcome or when you already have tokenId/conditionId. Do NOT use this as the first choice for event-level multi-outcome requests like \"World Cup winner market\" or \"election market\" when no specific outcome was named. For those categorical-market prompts, prefer analyze_event_outcome_liquidity.\n\nAccepts tokenId, conditionId, slug, or marketQuery. If you only know the single market by name, pass marketQuery and this tool will resolve the best live match first.\n\n⏱️ PERFORMANCE: Makes 3 CLOB API calls (~3-5s). Safe to call in parallel with 1-2 other lightweight tools, but avoid calling alongside find_trading_opportunities or analyze_top_holders.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "Event or market slug when you know the Polymarket URL slug"
+            },
+            "tokenId": {
+              "type": "string",
+              "description": "The token ID (YES or NO outcome token) to analyze"
+            },
+            "conditionId": {
+              "type": "string",
+              "description": "The market condition ID (alternative to tokenId)"
+            },
+            "marketQuery": {
+              "type": "string",
+              "description": "Natural-language SINGLE-market reference (e.g. 'Will Trump win Pennsylvania?' or 'Fed decision in April'). For categorical event-level requests like 'World Cup winner market', prefer analyze_event_outcome_liquidity unless the exact outcome is named."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "market",
+            "tokenId",
+            "currentPrice",
+            "spread",
+            "whaleCost",
+            "liquidityScore"
+          ],
+          "properties": {
+            "depth": {
+              "type": "object",
+              "properties": {
+                "note": {
+                  "type": "string"
+                },
+                "askDepthUsd": {
+                  "type": "number"
+                },
+                "bidDepthUsd": {
+                  "type": "number"
+                },
+                "totalDepthUsd": {
+                  "type": "number"
+                }
+              }
+            },
+            "market": {
+              "type": "string"
+            },
+            "spread": {
+              "type": "object",
+              "properties": {
+                "bps": {
+                  "type": "number"
+                },
+                "bestAsk": {
+                  "type": "number"
+                },
+                "bestBid": {
+                  "type": "number"
+                },
+                "absolute": {
+                  "type": "number"
+                },
+                "spreadBps": {
+                  "type": "number"
+                },
+                "percentage": {
+                  "type": "number"
+                },
+                "spreadCents": {
+                  "type": "number"
+                }
+              }
+            },
+            "tokenId": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "whaleCost": {
+              "type": "object",
+              "properties": {
+                "sell1k": {
+                  "type": "object"
+                },
+                "sell5k": {
+                  "type": "object"
+                },
+                "sell10k": {
+                  "type": "object"
+                }
+              },
+              "description": "Slippage simulation for different position sizes"
+            },
+            "currentPrice": {
+              "type": "number"
+            },
+            "liquidityScore": {
+              "enum": [
+                "excellent",
+                "good",
+                "moderate",
+                "poor",
+                "illiquid"
+              ],
+              "type": "string"
+            },
+            "recommendation": {
+              "type": "string"
+            },
+            "depthWithin2Percent": {
+              "type": "object",
+              "properties": {
+                "askDepthUsd": {
+                  "type": "number"
+                },
+                "bidDepthUsd": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "check_market_efficiency",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Check if a market is efficiently priced. Calculates the \"vig\" (sum of YES + NO prices), identifies if fees/spread are eating potential edge, and reports true implied probabilities. Accepts either conditionId OR slug - both work equally well.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "The event slug (e.g., 'will-trump-release-epstein-files-by'). Alternative to conditionId."
+            },
+            "conditionId": {
+              "type": "string",
+              "description": "The market condition ID (hex string starting with 0x). Works with IDs from discover_trending_markets or other tools."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "conditionId",
+            "outcomes",
+            "marketEfficiency"
+          ],
+          "properties": {
+            "market": {
+              "type": "string"
+            },
+            "outcomes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "number"
+                  },
+                  "tokenId": {
+                    "type": "string"
+                  },
+                  "impliedProbability": {
+                    "type": "number",
+                    "description": "Implied probability in decimal form (0.0-1.0)"
+                  },
+                  "impliedProbabilityPercent": {
+                    "type": "number",
+                    "description": "Implied probability in percent form (0-100)"
+                  }
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "conditionId": {
+              "type": "string"
+            },
+            "recommendation": {
+              "type": "string"
+            },
+            "marketEfficiency": {
+              "type": "object",
+              "properties": {
+                "vig": {
+                  "type": "number",
+                  "description": "The overround/vig as percentage (sumOfOutcomes - 1)"
+                },
+                "vigBps": {
+                  "type": "number"
+                },
+                "efficiency": {
+                  "enum": [
+                    "excellent",
+                    "good",
+                    "fair",
+                    "poor",
+                    "exploitable"
+                  ],
+                  "type": "string"
+                },
+                "isEfficient": {
+                  "type": "boolean"
+                },
+                "sumOfOutcomes": {
+                  "type": "number",
+                  "description": "Sum of all outcome prices. Should be ~1.0 for efficient market"
+                }
+              }
+            },
+            "trueProbabilities": {
+              "type": "object",
+              "description": "Vig-adjusted true probabilities in decimal form (0.0-1.0)"
+            },
+            "trueProbabilitiesPercent": {
+              "type": "object",
+              "description": "Vig-adjusted true probabilities in percent form (0-100)"
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_whale_flow",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Track recent trading activity by analyzing trade sizes. Buckets trades into Small (<$50), Medium ($50-$500), and Whale (>$1000), then calculates net directional flow.\n\n⚠️ IMPORTANT: This analyzes RECENT TRADES (last N hours). May return zero data if no trades occurred in the time window.\n\nUSE THIS FOR: \"What's happening RIGHT NOW?\", \"Recent whale trades?\", \"Trading activity in the last 24h?\"\n\nUSE analyze_top_holders INSTEAD FOR: \"Who are the biggest holders?\", \"What are whales betting on?\", \"Which side do smart money players favor?\"",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "Event or market slug (alternative to conditionId)"
+            },
+            "tokenId": {
+              "type": "string",
+              "description": "Specific token ID to analyze"
+            },
+            "hoursBack": {
+              "type": "number",
+              "description": "Hours of trade history to analyze (default: 24)"
+            },
+            "conditionId": {
+              "type": "string",
+              "description": "The market condition ID"
+            },
+            "marketQuery": {
+              "type": "string",
+              "description": "Natural-language market reference (e.g., 'Fed rate decision'). Use when conditionId/slug is unknown."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "totalTrades",
+            "flowBySize",
+            "whaleActivity"
+          ],
+          "properties": {
+            "market": {
+              "type": "string"
+            },
+            "period": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "divergence": {
+              "type": "string",
+              "description": "Is whale flow diverging from retail? e.g., 'Retail selling, whales buying YES'"
+            },
+            "flowBySize": {
+              "type": "object",
+              "properties": {
+                "small": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "number"
+                    },
+                    "netFlow": {
+                      "type": "number"
+                    },
+                    "buyVolume": {
+                      "type": "number"
+                    },
+                    "sentiment": {
+                      "type": "string"
+                    },
+                    "sellVolume": {
+                      "type": "number"
+                    }
+                  },
+                  "description": "Trades < $50"
+                },
+                "whale": {
+                  "type": "object",
+                  "description": "Trades > $1000"
+                },
+                "medium": {
+                  "type": "object",
+                  "description": "Trades $50-$500"
+                }
+              }
+            },
+            "totalTrades": {
+              "type": "number"
+            },
+            "totalVolume": {
+              "type": "number"
+            },
+            "whaleActivity": {
+              "type": "object",
+              "properties": {
+                "sentiment": {
+                  "enum": [
+                    "bullish",
+                    "bearish",
+                    "neutral"
+                  ],
+                  "type": "string"
+                },
+                "largestTrade": {
+                  "type": "object"
+                },
+                "netWhaleVolume": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_top_holders",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Heavy Polymarket workflow. Call this tool alone and prefer narrower scopes first.",
+            "cooldownMs": 1500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "search_markets",
+              "discover_trending_markets"
+            ]
+          },
+          "latencyClass": "slow",
+          "queryEligible": true
+        },
+        "description": "🐋 WHALE POSITIONS: Find who holds the largest positions and WHAT SIDE (YES/NO) they're betting on.\n\n⚠️ IMPORTANT: For MULTI-OUTCOME events (tournaments, elections with multiple candidates), use analyze_event_whale_breakdown instead! This tool only shows YES/NO for ONE market, not which specific outcome (player/candidate) whales favor.\n\nReturns:\n- yesWhales[]: Top holders betting YES (with shares, positionValue, convictionScore, name if public)\n- noWhales[]: Top holders betting NO (with shares, positionValue, convictionScore, name if public)\n- smartMoneySignal: Which side whales favor (YES/NO/NEUTRAL)\n- totalUniqueHolders: Total holders found via deep fetching\n\n🔥 DEEP FETCHING: We work around Polymarket's 20-holder API limit by querying holder tiers from $1M (ultra-whales) down to $1, then deduplicating addresses. This captures the full spectrum and typically returns 50-100+ unique holders.\n\nCONVICTIONSCORES: \"extreme\" (>$10k), \"high\" ($5k-$10k), \"moderate\" ($1k-$5k), \"low\" (<$1k)\n\nUSE THIS FOR: Single-outcome markets like \"Will Bitcoin hit $100k?\" or \"Will Trump win?\"\nUSE analyze_event_whale_breakdown FOR: \"Which player are whales betting on in Australian Open?\"\nUSE analyze_whale_flow FOR: \"Recent trades?\", \"Trading activity in last 24h?\"\n\n⏱️ PERFORMANCE: This tool performs deep fetching in paced batches. It typically takes ~8-15s.\n⚠️ Call this tool ALONE (not in parallel with other heavy tools like find_trading_opportunities or analyze_market_liquidity) to avoid timeouts.\nIf you need multiple analyses, call them SEQUENTIALLY, not with Promise.all().",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "The event slug. Alternative to conditionId."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Optional holder scan target. Deep fetch defaults to 50; shallow mode defaults to 20."
+            },
+            "deepFetch": {
+              "type": "boolean",
+              "description": "Set false for a faster but shallower holder scan. Default true for the full whale-spectrum fetch."
+            },
+            "conditionId": {
+              "type": "string",
+              "description": "The market condition ID (hex string starting with 0x)"
+            },
+            "marketQuery": {
+              "type": "string",
+              "description": "Natural-language market title/query (e.g., 'Bitcoin above $100k'). The server resolves this to the best matching market across ACTIVE and RESOLVED markets when conditionId/slug are not provided."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "market",
+            "conditionId",
+            "whaleAnalysis",
+            "smartMoneySignal"
+          ],
+          "properties": {
+            "market": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "conditionId": {
+              "type": "string"
+            },
+            "currentPrice": {
+              "type": "number"
+            },
+            "whaleAnalysis": {
+              "type": "object",
+              "properties": {
+                "noWhales": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "rank": {
+                        "type": "number"
+                      },
+                      "shares": {
+                        "type": "number"
+                      },
+                      "address": {
+                        "type": "string"
+                      },
+                      "positionValue": {
+                        "type": "number"
+                      },
+                      "unrealizedPnL": {
+                        "type": "number"
+                      },
+                      "estimatedEntry": {
+                        "type": "number"
+                      },
+                      "convictionScore": {
+                        "enum": [
+                          "extreme",
+                          "high",
+                          "moderate",
+                          "low"
+                        ],
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "yesWhales": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "rank": {
+                        "type": "number"
+                      },
+                      "shares": {
+                        "type": "number"
+                      },
+                      "address": {
+                        "type": "string"
+                      },
+                      "positionValue": {
+                        "type": "number"
+                      },
+                      "unrealizedPnL": {
+                        "type": "number"
+                      },
+                      "estimatedEntry": {
+                        "type": "number",
+                        "description": "Estimated avg entry price"
+                      },
+                      "convictionScore": {
+                        "enum": [
+                          "extreme",
+                          "high",
+                          "moderate",
+                          "low"
+                        ],
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "recommendation": {
+              "type": "string"
+            },
+            "smartMoneySignal": {
+              "type": "object",
+              "properties": {
+                "direction": {
+                  "enum": [
+                    "YES",
+                    "NO",
+                    "NEUTRAL"
+                  ],
+                  "type": "string"
+                },
+                "reasoning": {
+                  "type": "string"
+                },
+                "confidence": {
+                  "enum": [
+                    "high",
+                    "medium",
+                    "low"
+                  ],
+                  "type": "string"
+                }
+              }
+            },
+            "marketConcentration": {
+              "type": "object",
+              "properties": {
+                "whaleCount": {
+                  "type": "number"
+                },
+                "top5NoPercent": {
+                  "type": "number"
+                },
+                "top5YesPercent": {
+                  "type": "number"
+                },
+                "concentrationRisk": {
+                  "enum": [
+                    "high",
+                    "moderate",
+                    "low"
+                  ],
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_event_whale_breakdown",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Heavy Polymarket workflow. Call this tool alone and prefer narrower scopes first.",
+            "cooldownMs": 1500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "discover_trending_markets"
+            ]
+          },
+          "latencyClass": "slow",
+          "queryEligible": true
+        },
+        "description": "🐋 MULTI-OUTCOME WHALE ANALYSIS: For events with multiple outcomes (like \"Australian Open Winner\"), shows WHICH SPECIFIC OUTCOME whales are betting on.\n\n⚠️ USE THIS for multi-outcome events like sports tournaments, elections with multiple candidates, etc.\n⚠️ analyze_top_holders only shows YES/NO for ONE market. This tool shows whale positions ACROSS ALL outcomes in an event.\n\nExample: For \"Australian Open Winner\" event with 20+ player markets:\n- Returns: \"Whales have $100k on Sinner, $50k on Djokovic, $30k on Alcaraz...\"\n- NOT just: \"Whales have $X on YES, $Y on NO\" (which is meaningless without knowing WHICH player)\n\nDATA FLOW: discover_trending_markets → slug → analyze_event_whale_breakdown\n\nReturns:\n- eventTitle: The event name\n- totalMarketsAnalyzed: How many outcome markets were checked\n- whalesByOutcome[]: Sorted by total whale value, showing which outcomes have biggest whale positions\n- topWhaleOutcome: The outcome with most whale money",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "slug"
+          ],
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "The EVENT slug (e.g., '2026-mens-australian-open-winner'). Required."
+            },
+            "maxOutcomes": {
+              "type": "number",
+              "description": "Maximum number of outcomes/markets to analyze (default: 10, max: 20). Higher = slower but more thorough."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "eventTitle",
+            "whalesByOutcome",
+            "topWhaleOutcome"
+          ],
+          "properties": {
+            "eventSlug": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "eventTitle": {
+              "type": "string"
+            },
+            "topWhaleOutcome": {
+              "type": "object",
+              "properties": {
+                "outcome": {
+                  "type": "string"
+                },
+                "confidence": {
+                  "type": "string"
+                },
+                "totalValue": {
+                  "type": "number"
+                }
+              }
+            },
+            "whalesByOutcome": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rank": {
+                    "type": "number"
+                  },
+                  "outcome": {
+                    "type": "string",
+                    "description": "The specific outcome (e.g., 'Sinner', 'Djokovic')"
+                  },
+                  "whaleCount": {
+                    "type": "number",
+                    "description": "Number of whale-sized positions"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "currentPrice": {
+                    "type": "number",
+                    "description": "Current YES price (implied probability)"
+                  },
+                  "convictionLevel": {
+                    "enum": [
+                      "extreme",
+                      "high",
+                      "moderate",
+                      "low"
+                    ],
+                    "type": "string"
+                  },
+                  "totalWhaleValue": {
+                    "type": "number",
+                    "description": "Total $ value of whale positions on this outcome"
+                  },
+                  "topWhalePosition": {
+                    "type": "number",
+                    "description": "Largest single whale position"
+                  }
+                }
+              }
+            },
+            "smartMoneyConsensus": {
+              "type": "string"
+            },
+            "totalMarketsInEvent": {
+              "type": "number"
+            },
+            "totalMarketsAnalyzed": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_event_outcome_liquidity",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Heavy Polymarket workflow. Call this tool alone and prefer narrower scopes first.",
+            "cooldownMs": 1500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "search_and_get_outcomes",
+              "get_event_outcomes"
+            ]
+          },
+          "latencyClass": "slow",
+          "queryEligible": true
+        },
+        "description": "📉 MULTI-OUTCOME EVENT LIQUIDITY: Analyze spreads, depth, and exit slippage across specific outcomes inside the SAME event.\n\nUSE THIS for:\n- \"Analyze liquidity in the World Cup winner market\"\n- \"Analyze liquidity for the YES side of the current World Cup winner market and estimate slippage for $1k, $5k, and $10k exits\"\n- \"Which candidates in this election market are easiest to exit?\"\n- \"Estimate slippage for top outcomes in a tournament market\"\n\n⚠️ IMPORTANT: Multi-outcome events do NOT have one universal YES side. If the user does not name an outcome, this tool will analyze the top outcomes by volume instead of arbitrarily picking one.\n⚠️ When the prompt says \"the YES side\" of a tournament, election, or other categorical market without naming the outcome, this is the correct tool.\n\nDATA FLOW:\n- Named outcomes: search_and_get_outcomes → outcome match → analyze_market_liquidity\n- Ambiguous event-only request: search_and_get_outcomes/get_event_outcomes → top-volume outcomes → analyze_market_liquidity\n\nBest when the user wants liquidity or slippage for a tournament, election, award, or other categorical market and either names several outcomes or leaves the exact outcome unspecified.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "Direct Polymarket event slug when already known (preferred over search)."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum outcomes to analyze when outcomes are omitted (default: 4, max: 8)."
+            },
+            "query": {
+              "type": "string",
+              "description": "Raw liquidity request. Example: 'Analyze liquidity for the World Cup winner market and estimate slippage for $1k, $5k, and $10k exits.'"
+            },
+            "sortBy": {
+              "enum": [
+                "volume",
+                "price"
+              ],
+              "type": "string",
+              "description": "How to choose fallback outcomes when no explicit outcomes are provided. 'volume' is the safer default for exit-quality analysis."
+            },
+            "category": {
+              "type": "string",
+              "description": "Optional category hint (sports, politics, crypto, etc.) to narrow event resolution."
+            },
+            "outcomes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Specific outcomes to analyze (e.g. ['Spain', 'Brazil']). If omitted, the tool analyzes the top outcomes by volume."
+            },
+            "eventQuery": {
+              "type": "string",
+              "description": "Natural-language event query if you want to pass the event separately (e.g. '2026 FIFA World Cup winner')"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "eventTitle",
+            "selectionMode",
+            "analyzedOutcomes",
+            "needsOutcomeDisambiguation"
+          ],
+          "properties": {
+            "summary": {
+              "type": "string"
+            },
+            "eventUrl": {
+              "type": "string",
+              "format": "uri"
+            },
+            "eventSlug": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "eventTitle": {
+              "type": "string"
+            },
+            "analysisNotes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "selectionMode": {
+              "enum": [
+                "requested_outcomes",
+                "top_volume_outcomes",
+                "top_price_outcomes"
+              ],
+              "type": "string"
+            },
+            "totalOutcomes": {
+              "type": "number"
+            },
+            "selectionReason": {
+              "type": "string"
+            },
+            "analyzedOutcomes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "matchedName",
+                  "tokenId",
+                  "liquidityScore",
+                  "slippage5kPercent"
+                ],
+                "properties": {
+                  "volume": {
+                    "type": "number"
+                  },
+                  "bestAsk": {
+                    "type": "number"
+                  },
+                  "bestBid": {
+                    "type": "number"
+                  },
+                  "tokenId": {
+                    "type": "string"
+                  },
+                  "canExit1k": {
+                    "type": "boolean"
+                  },
+                  "canExit5k": {
+                    "type": "boolean"
+                  },
+                  "spreadBps": {
+                    "type": "number"
+                  },
+                  "canExit10k": {
+                    "type": "boolean"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "matchedName": {
+                    "type": "string"
+                  },
+                  "spreadCents": {
+                    "type": "number"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "requestedName": {
+                    "type": "string"
+                  },
+                  "totalDepthUsd": {
+                    "type": "number"
+                  },
+                  "liquidityScore": {
+                    "type": "string"
+                  },
+                  "recommendation": {
+                    "type": "string"
+                  },
+                  "slippage1kPercent": {
+                    "type": "number"
+                  },
+                  "slippage5kPercent": {
+                    "type": "number"
+                  },
+                  "impliedProbability": {
+                    "type": "string"
+                  },
+                  "slippage10kPercent": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "unmatchedOutcomes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "bestLiquidityOutcome": {
+              "type": "object",
+              "properties": {
+                "matchedName": {
+                  "type": "string"
+                },
+                "spreadCents": {
+                  "type": "number"
+                },
+                "totalDepthUsd": {
+                  "type": "number"
+                },
+                "liquidityScore": {
+                  "type": "string"
+                }
+              }
+            },
+            "highestVolumeOutcome": {
+              "type": "object",
+              "properties": {
+                "volume": {
+                  "type": "number"
+                },
+                "matchedName": {
+                  "type": "string"
+                },
+                "currentPrice": {
+                  "type": "number"
+                }
+              }
+            },
+            "needsOutcomeDisambiguation": {
+              "type": "boolean"
+            }
+          }
+        }
+      },
+      {
+        "name": "find_correlated_markets",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Find markets that might be correlated for hedging purposes. If betting on \"Bitcoin > $100k\", shows related crypto markets. Accepts either conditionId OR slug - both work equally well.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "The event slug (e.g., 'bitcoin-100k'). Alternative to conditionId."
+            },
+            "conditionId": {
+              "type": "string",
+              "description": "The market condition ID (hex string starting with 0x). Works with IDs from discover_trending_markets or other tools."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "sourceMarket",
+            "correlatedMarkets"
+          ],
+          "properties": {
+            "fetchedAt": {
+              "type": "string"
+            },
+            "sourceMarket": {
+              "type": "object",
+              "properties": {
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "title": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                }
+              }
+            },
+            "hedgingStrategy": {
+              "type": "string"
+            },
+            "correlatedMarkets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "hedgeNote": {
+                    "type": "string"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "correlationType": {
+                    "enum": [
+                      "same_category",
+                      "same_tags",
+                      "title_similarity",
+                      "same_event"
+                    ],
+                    "type": "string"
+                  },
+                  "correlationScore": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "check_market_rules",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Parse market resolution rules and highlight potential \"gotchas\". Extracts the description, resolution source, and edge cases that could cause unexpected resolution. Accepts either conditionId OR slug - both work equally well.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "The event slug (e.g., 'will-trump-release-epstein-files-by'). Alternative to conditionId."
+            },
+            "conditionId": {
+              "type": "string",
+              "description": "The market condition ID (hex string starting with 0x). Works with IDs from discover_trending_markets or other tools."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "market",
+            "description",
+            "rulesSummary"
+          ],
+          "properties": {
+            "market": {
+              "type": "string"
+            },
+            "endDate": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "riskFactors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "rulesSummary": {
+              "type": "object",
+              "properties": {
+                "ambiguities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "resolvesNoIf": {
+                  "type": "string"
+                },
+                "resolvesYesIf": {
+                  "type": "string"
+                },
+                "potentialGotchas": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Edge cases that could cause unexpected resolution"
+                },
+                "primaryCondition": {
+                  "type": "string"
+                }
+              }
+            },
+            "resolutionSource": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "find_arbitrage_opportunities",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Heavy Polymarket workflow. Call this tool alone and prefer narrower scopes first.",
+            "cooldownMs": 1500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "slow",
+          "queryEligible": true
+        },
+        "description": "Scan LIVE markets for VERIFIED arbitrage and wide spreads by fetching actual CLOB orderbooks. Checks if buying both YES and NO costs less than $1 (guaranteed profit), returns direct Polymarket URLs, and only surfaces markets whose quotes were verified from live books. Great for sports-category spread scans and other 'only return markets you can verify' requests. Limited to ~20 markets to avoid timeout.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Number of markets to scan (default: 20, max: 30 due to orderbook fetching)"
+            },
+            "category": {
+              "type": "string",
+              "description": "Category to scan (e.g., \"politics\", \"crypto\", \"sports\")"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "scannedMarkets",
+            "arbitrageOpportunities",
+            "summary",
+            "methodology"
+          ],
+          "properties": {
+            "summary": {
+              "type": "object",
+              "properties": {
+                "summaryNote": {
+                  "type": "string"
+                },
+                "arbitrageCount": {
+                  "type": "number"
+                },
+                "wideSpreadCount": {
+                  "type": "number"
+                },
+                "averageSpreadCents": {
+                  "type": "number"
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "methodology": {
+              "type": "string"
+            },
+            "scannedMarkets": {
+              "type": "number"
+            },
+            "wideSpreadMarkets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "market": {
+                    "type": "string"
+                  },
+                  "spread": {
+                    "type": "number"
+                  },
+                  "midPrice": {
+                    "type": "number"
+                  },
+                  "spreadPercent": {
+                    "type": "string"
+                  }
+                }
+              },
+              "description": "Markets with wide bid-ask spreads (potential for limit order profits)"
+            },
+            "arbitrageOpportunities": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "market": {
+                    "type": "string"
+                  },
+                  "buyNoAt": {
+                    "type": "number",
+                    "description": "Best ask price for NO"
+                  },
+                  "buyYesAt": {
+                    "type": "number",
+                    "description": "Best ask price for YES"
+                  },
+                  "liquidity": {
+                    "type": "number"
+                  },
+                  "totalCost": {
+                    "type": "number",
+                    "description": "Total cost to buy both (should be < 1 for arbitrage)"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "edgePercent": {
+                    "type": "string"
+                  },
+                  "potentialEdge": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "find_trading_opportunities",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Heavy Polymarket workflow. Call this tool alone and prefer narrower scopes first.",
+            "cooldownMs": 1500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "find_moderate_probability_bets",
+              "get_bets_by_probability"
+            ]
+          },
+          "latencyClass": "slow",
+          "queryEligible": true
+        },
+        "description": "Advanced tool for finding Polymarket opportunities with complex filtering. Supports strategies: lottery_tickets (1-15¢), moderate_conviction (35-65¢), high_confidence (70-90¢), momentum, mispriced, near_resolution.\n\n⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent markets or construct URLs. If no results match the criteria, say \"No matching markets found\" - do NOT make up markets that might exist.\n\n⚠️ FOR SIMPLER QUERIES: If user wants 'likely bets', 'safer bets', or 'bets that will probably win' → use find_moderate_probability_bets instead. For filtering by probability like 'coinflip bets' or 'unlikely bets' → use get_bets_by_probability instead.\n\n⏱️ PERFORMANCE: This tool scans many markets. Use the 'depth' parameter to control how many markets are scanned:\n- \"shallow\" (~500 markets, ~5s) - Quick scan for fast answers or when called alongside other tools\n- \"medium\" (~1000 markets, ~10s) - Good balance, DEFAULT for most queries\n- \"deep\" (~2000+ markets, ~20s) - Maximum coverage. Use when user specifically asks for thorough/comprehensive analysis, or when initial results are insufficient\n⚠️ Call this tool ALONE (not in parallel with other heavy tools) when using \"deep\" depth to avoid timeouts.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "depth": {
+              "enum": [
+                "shallow",
+                "medium",
+                "deep"
+              ],
+              "type": "string",
+              "description": "How many markets to scan. 'shallow' (~500, fast), 'medium' (~1000, default), 'deep' (~2000+, thorough). Use 'deep' for comprehensive analysis but call this tool ALONE to avoid timeouts."
+            },
+            "category": {
+              "type": "string",
+              "description": "Filter by category (politics, crypto, sports, etc.)"
+            },
+            "strategy": {
+              "enum": [
+                "all",
+                "lottery_tickets",
+                "moderate_conviction",
+                "high_confidence",
+                "mispriced",
+                "momentum",
+                "near_resolution"
+              ],
+              "type": "string",
+              "description": "Trading strategy to use:\n            - all: Scan all strategies (default)\n            - lottery_tickets: 1-15¢ bets with 7-100x potential (very unlikely to win, but huge payoff if right)\n            - moderate_conviction: 35-65¢ bets with 1.5-2.8x potential (coin-flip probability, balanced risk/reward)\n            - high_confidence: 70-90¢ bets with 1.1-1.4x potential (likely outcomes, lower but safer returns)\n            - mispriced: Markets where price differs significantly from estimated true probability\n            - momentum: Markets with strong recent price movement in one direction\n            - near_resolution: Markets closing soon where you can lock in returns"
+            },
+            "priceRange": {
+              "type": "object",
+              "properties": {
+                "max": {
+                  "type": "number",
+                  "description": "Maximum price (0.0-1.0)"
+                },
+                "min": {
+                  "type": "number",
+                  "description": "Minimum price (0.0-1.0)"
+                }
+              },
+              "description": "Filter for YES token price range (0.0 to 1.0). E.g., { min: 0.50, max: 0.75 } for moderate probability bets"
+            },
+            "minLiquidity": {
+              "type": "number",
+              "description": "Minimum liquidity in USD (default: 1000). Higher = more reliable exits"
+            },
+            "riskTolerance": {
+              "enum": [
+                "conservative",
+                "moderate",
+                "aggressive"
+              ],
+              "type": "string",
+              "description": "Risk tolerance affects which opportunities are shown. Default: moderate"
+            },
+            "targetProbability": {
+              "enum": [
+                "longshot",
+                "moderate",
+                "likely",
+                "near_certain"
+              ],
+              "type": "string",
+              "description": "Filter by implied probability range: longshot (1-20%), moderate (35-65%), likely (65-85%), near_certain (85-98%)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "summary",
+            "opportunities"
+          ],
+          "properties": {
+            "summary": {
+              "type": "object",
+              "properties": {
+                "marketsScanned": {
+                  "type": "number"
+                },
+                "marketConditions": {
+                  "type": "string"
+                },
+                "opportunitiesFound": {
+                  "type": "number"
+                },
+                "bestOpportunityType": {
+                  "type": "string"
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "suggestions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "availableCount": {
+                    "type": "number"
+                  }
+                }
+              },
+              "description": "Alternative actions to try when no opportunities match the criteria"
+            },
+            "opportunities": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "market",
+                  "url",
+                  "currentPrice"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Direct Polymarket URL - always use this, never construct URLs"
+                  },
+                  "rank": {
+                    "type": "number"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "market": {
+                    "type": "string"
+                  },
+                  "signal": {
+                    "type": "string"
+                  },
+                  "liquidity": {
+                    "type": "number"
+                  },
+                  "volume24h": {
+                    "type": "number"
+                  },
+                  "confidence": {
+                    "enum": [
+                      "high",
+                      "medium",
+                      "low"
+                    ],
+                    "type": "string"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "riskFactors": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "suggestedSide": {
+                    "enum": [
+                      "YES",
+                      "NO",
+                      "EITHER"
+                    ],
+                    "type": "string"
+                  },
+                  "opportunityType": {
+                    "enum": [
+                      "lottery_tickets",
+                      "moderate_conviction",
+                      "high_confidence",
+                      "mispriced",
+                      "momentum",
+                      "near_resolution"
+                    ],
+                    "type": "string"
+                  },
+                  "potentialReturn": {
+                    "type": "string"
+                  },
+                  "impliedProbability": {
+                    "type": "string"
+                  },
+                  "whyThisOpportunity": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "nearestMatches": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "market": {
+                    "type": "string"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "whyNotMatched": {
+                    "type": "string"
+                  }
+                }
+              },
+              "description": "Markets that almost matched the criteria"
+            },
+            "noOpportunitiesReason": {
+              "type": "string",
+              "description": "If no good opportunities, explains why and what to do instead"
+            }
+          }
+        }
+      },
+      {
+        "name": "build_high_conviction_workflow",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Run an end-to-end high-conviction workflow in ONE call: discover trending markets, validate rules, check efficiency, analyze liquidity, and return top tradable setups with explicit risks.\n\nThis is the recommended tool when users ask for a multi-step workflow like:\n\"discover trending markets → validate rules → check efficiency → top setups with risks.\"\n\nWhy use this:\n- Avoids brittle multi-call orchestration in client-generated code\n- Executes analysis sequentially and safely on the server\n- Returns normalized setup cards with entry guidance and risk factors\n\n⏱️ PERFORMANCE: Runs several analyses sequentially (~10-25s depending on candidateCount and whale options).",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "Optional category filter (politics, crypto, sports, etc.)"
+            },
+            "hoursBack": {
+              "type": "number",
+              "description": "Trade-flow lookback window in hours when includeWhaleFlow=true (default: 24)"
+            },
+            "topSetups": {
+              "type": "number",
+              "description": "How many final setups to return (default: 3, max: 5)"
+            },
+            "candidateCount": {
+              "type": "number",
+              "description": "How many trending markets to analyze before ranking (default: 6, max: 10)"
+            },
+            "includeWhaleFlow": {
+              "type": "boolean",
+              "description": "Include recent trade-flow sentiment checks for shortlisted setups (default: false)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "workflowSummary",
+            "topSetups"
+          ],
+          "properties": {
+            "fetchedAt": {
+              "type": "string"
+            },
+            "topSetups": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "rank": {
+                    "type": "number"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "risks": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "score": {
+                    "type": "number"
+                  },
+                  "checks": {
+                    "type": "object"
+                  },
+                  "market": {
+                    "type": "string"
+                  },
+                  "signal": {
+                    "type": "string"
+                  },
+                  "entryPlan": {
+                    "type": "object"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "whaleInsights": {
+                    "type": "object"
+                  }
+                }
+              }
+            },
+            "analysisNotes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "workflowSummary": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "type": "string"
+                },
+                "strategy": {
+                  "type": "string"
+                },
+                "analyzedMarkets": {
+                  "type": "number"
+                },
+                "discoveredMarkets": {
+                  "type": "number"
+                },
+                "topSetupsReturned": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_single_market_whales",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Heavy Polymarket workflow. Call this tool alone and prefer narrower scopes first.",
+            "cooldownMs": 1500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "get_top_markets"
+            ]
+          },
+          "latencyClass": "slow",
+          "queryEligible": true
+        },
+        "description": "Run recent whale-flow analysis plus top-holder concentration analysis for a SINGLE-OUTCOME market in one call.\n\nUSE THIS for:\n- \"Show me whale flow and top holders for a live single-outcome politics market\"\n- \"Give me the smart-money read on a live yes/no market\"\n- \"Pick the most liquid live politics market and tell me what whales are doing\"\n\nIf marketQuery is omitted, this tool uses the category to pick the most liquid live single-outcome market first, then runs both whale analyses and returns a combined smart-money summary.\n\nFor broad prompts like \"show me whale flow and top holders for a live single-outcome politics market\", call THIS TOOL ALONE.\nDo not prefetch get_top_markets or call analyze_top_holders separately unless the user explicitly asks for a specific market shortlist or deeper follow-up.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "Category to sample when marketQuery is omitted (e.g. politics, sports, crypto)"
+            },
+            "hoursBack": {
+              "type": "number",
+              "description": "Lookback window for recent trade-flow analysis (default: 24)"
+            },
+            "marketQuery": {
+              "type": "string",
+              "description": "Natural-language market reference to analyze (preferred when the user names a market)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "selectedMarket",
+            "whaleFlow",
+            "holderAnalysis"
+          ],
+          "properties": {
+            "noWhales": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "whaleFlow": {
+              "type": "object",
+              "required": [
+                "period",
+                "totalTrades",
+                "totalVolume"
+              ],
+              "properties": {
+                "period": {
+                  "type": "string"
+                },
+                "divergence": {
+                  "type": "string"
+                },
+                "flowBySize": {
+                  "type": "object"
+                },
+                "totalTrades": {
+                  "type": "number"
+                },
+                "totalVolume": {
+                  "type": "number"
+                },
+                "whaleActivity": {
+                  "type": "object"
+                }
+              }
+            },
+            "yesWhales": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "holderAnalysis": {
+              "type": "object",
+              "properties": {
+                "recommendation": {
+                  "type": "string"
+                },
+                "smartMoneySignal": {
+                  "type": "object"
+                },
+                "marketConcentration": {
+                  "type": "object"
+                }
+              }
+            },
+            "selectedMarket": {
+              "type": "object",
+              "required": [
+                "title",
+                "conditionId",
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "slug": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "conditionId": {
+                  "type": "string"
+                },
+                "selectionReason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "summarize_live_market_activity",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Select a live market and return recent trades plus current open interest in one call.\n\nUSE THIS for:\n- \"Show me recent trades and open interest for a live market ending this week\"\n- \"Pick a live market ending soon and summarize current trading activity\"\n- \"Summarize recent trades and open interest for this market\"\n\nIf marketQuery/conditionId/slug is omitted, this tool picks a live market automatically using endingWithinDays plus optional category filters.\n\nFor prompts that ask for both recent trades and open interest together, call THIS TOOL ALONE instead of chaining get_top_markets + get_market_trades + get_market_open_interest.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "Specific event or market slug to analyze"
+            },
+            "sortBy": {
+              "enum": [
+                "ending_soon",
+                "volume",
+                "liquidity"
+              ],
+              "type": "string",
+              "description": "How to rank auto-selected markets before pulling activity (default: ending_soon)"
+            },
+            "category": {
+              "type": "string",
+              "description": "Optional category filter when auto-selecting a live market"
+            },
+            "tradeLimit": {
+              "type": "number",
+              "description": "Maximum recent trades to return (default: 20, max: 100)"
+            },
+            "conditionId": {
+              "type": "string",
+              "description": "Specific market condition ID to analyze"
+            },
+            "marketQuery": {
+              "type": "string",
+              "description": "Natural-language market reference when the user names a market"
+            },
+            "endingWithinDays": {
+              "type": "number",
+              "description": "When auto-selecting, prefer live markets ending within this many days (default: 7)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "selectedMarket",
+            "tradesSummary",
+            "openInterest",
+            "recentTrades"
+          ],
+          "properties": {
+            "fetchedAt": {
+              "type": "string"
+            },
+            "openInterest": {
+              "type": "object",
+              "required": [
+                "conditionId",
+                "value"
+              ],
+              "properties": {
+                "value": {
+                  "type": "number"
+                },
+                "conditionId": {
+                  "type": "string"
+                }
+              }
+            },
+            "recentTrades": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "tradesSummary": {
+              "type": "object",
+              "required": [
+                "totalTrades",
+                "totalVolume",
+                "buyVolume",
+                "sellVolume",
+                "avgPrice"
+              ],
+              "properties": {
+                "avgPrice": {
+                  "type": "number"
+                },
+                "buyVolume": {
+                  "type": "number"
+                },
+                "sellVolume": {
+                  "type": "number"
+                },
+                "totalTrades": {
+                  "type": "number"
+                },
+                "totalVolume": {
+                  "type": "number"
+                }
+              }
+            },
+            "selectedMarket": {
+              "type": "object",
+              "required": [
+                "title",
+                "conditionId",
+                "url",
+                "selectionReason"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "slug": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "endDate": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "liquidity": {
+                  "type": "number"
+                },
+                "volume24h": {
+                  "type": "number"
+                },
+                "conditionId": {
+                  "type": "string"
+                },
+                "selectionReason": {
+                  "type": "string"
+                }
+              }
+            },
+            "noResultsReason": {
+              "type": "string",
+              "description": "Present when no live market matches the requested or auto-selected criteria."
+            },
+            "searchExhausted": {
+              "type": "boolean",
+              "description": "True when the tool could not find a suitable live market for this activity summary."
+            }
+          }
+        }
+      },
+      {
+        "name": "find_moderate_probability_bets",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": true,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "🎯 BEST TOOL for 'likely bets', 'safer bets', or 'bets that will probably win'. Finds prediction market bets priced 40-75¢ (40-75% implied probability) with good liquidity. Returns 1.3-2.5x if correct. USE THIS instead of find_trading_opportunities when user wants higher probability outcomes.\n\n⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent additional markets or URLs. Each result includes a real 'url' field - use ONLY those URLs.\n\n⏱️ PERFORMANCE: Scans ~50 events (~5-8s). Safe to call alone or alongside lightweight tools like check_market_efficiency.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Maximum number of results (default: 10)"
+            },
+            "sortBy": {
+              "enum": [
+                "return_potential",
+                "liquidity",
+                "volume",
+                "closing_soon"
+              ],
+              "type": "string",
+              "description": "How to rank results (default: return_potential)"
+            },
+            "category": {
+              "enum": [
+                "politics",
+                "crypto",
+                "sports",
+                "entertainment",
+                "science",
+                "all"
+              ],
+              "type": "string",
+              "description": "Filter by category (default: all)"
+            },
+            "maxPrice": {
+              "type": "number",
+              "description": "Maximum YES price (default 0.75 = 75% probability)"
+            },
+            "minPrice": {
+              "type": "number",
+              "description": "Minimum YES price (default 0.40 = 40% probability)"
+            },
+            "minLiquidity": {
+              "type": "number",
+              "description": "Minimum liquidity in USD (default: 10000)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "opportunities",
+            "summary"
+          ],
+          "properties": {
+            "summary": {
+              "type": "object",
+              "properties": {
+                "avgReturn": {
+                  "type": "string"
+                },
+                "priceRange": {
+                  "type": "string"
+                },
+                "matchingBets": {
+                  "type": "number"
+                },
+                "marketsScanned": {
+                  "type": "number"
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "opportunities": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "market",
+                  "url",
+                  "currentPrice"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Direct Polymarket URL - always use this, never construct URLs"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "market": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "liquidity": {
+                    "type": "number"
+                  },
+                  "volume24h": {
+                    "type": "number"
+                  },
+                  "whyThisBet": {
+                    "type": "string"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "potentialReturn": {
+                    "type": "string"
+                  },
+                  "impliedProbability": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_bets_by_probability",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": true,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "🎯 SIMPLEST tool for filtering bets by win probability. Use when user asks for: 'coinflip bets' → likelihood='coinflip', 'unlikely bets'/'longshots' → likelihood='very_unlikely', 'likely bets' → likelihood='likely'. Options: very_unlikely (1-15%), unlikely (15-35%), coinflip (35-65%), likely (65-85%), very_likely (85-95%).\n\n⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent additional markets or construct URLs from titles. Use ONLY the 'url' field provided in each result.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "likelihood"
+          ],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Maximum number of results (default: 5)"
+            },
+            "category": {
+              "enum": [
+                "politics",
+                "crypto",
+                "sports",
+                "all"
+              ],
+              "type": "string",
+              "description": "Filter by category (default: all)"
+            },
+            "likelihood": {
+              "enum": [
+                "very_unlikely",
+                "unlikely",
+                "coinflip",
+                "likely",
+                "very_likely"
+              ],
+              "type": "string",
+              "description": "How likely the bet is to win: very_unlikely (1-15%), unlikely (15-35%), coinflip (35-65%), likely (65-85%), very_likely (85-95%)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "bets",
+            "summary"
+          ],
+          "properties": {
+            "bets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "market",
+                  "url",
+                  "currentPrice"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Direct Polymarket URL - always use this, never construct URLs"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "market": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "liquidity": {
+                    "type": "number"
+                  },
+                  "volume24h": {
+                    "type": "number"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "potentialReturn": {
+                    "type": "string"
+                  },
+                  "impliedProbability": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "betsFound": {
+                  "type": "number"
+                },
+                "likelihood": {
+                  "type": "string"
+                },
+                "returnRange": {
+                  "type": "string"
+                },
+                "probabilityRange": {
+                  "type": "string"
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "discover_trending_markets",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": true,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Find the hottest markets on Polymarket right now. Shows volume spikes, unusual activity, and which markets are seeing the most action.\n\nCATEGORY FILTER: Use category=\"sports\" for ONLY sports markets, \"crypto\" for crypto, \"politics\" for political markets, etc.\nSupported aliases: sports (includes nfl, nba, mlb, tennis, mma, golf, hockey), crypto (bitcoin, ethereum, defi), politics (elections), pop-culture (movies, entertainment), science (tech, ai, space), business (economics, finance).\n\nUSE THIS for:\n- \"What categories are hottest right now?\"\n- \"Which tags are active on Polymarket today?\"\n- \"Why is this market/category suddenly active?\"\n\nDo not pair this with get_top_markets when the user only needs a direct ranked list or a filtered market screen.\nUse get_top_markets alone for direct retrieval of ranked/filtered markets.\nUse discover_trending_markets when the user wants surge detection, active tags/categories, or an explanation of why activity is unusual relative to baseline.\n\n💡 TIP: For exact categories, call get_all_tags first to see available Polymarket tags, then use browse_by_tag for precise filtering.\n\n🐋 WHALE ANALYSIS - CHOOSE THE RIGHT TOOL:\n- For MULTI-OUTCOME events (tournaments, elections): Use slug → analyze_event_whale_breakdown\n  Shows: \"Whales have $100k on Sinner, $50k on Djokovic...\"\n- For SINGLE-OUTCOME markets (yes/no questions): Use conditionId → analyze_top_holders\n  Shows: \"Whales have $X on YES, $Y on NO\"\n\nDATA FLOWS:\n- Multi-outcome: discover_trending_markets → slug → analyze_event_whale_breakdown\n- Single-outcome: discover_trending_markets → conditionId → analyze_top_holders",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Number of results (default: 20)"
+            },
+            "sortBy": {
+              "enum": [
+                "volume",
+                "liquidity",
+                "price_change"
+              ],
+              "type": "string",
+              "description": "How to rank trending markets"
+            },
+            "category": {
+              "type": "string",
+              "description": "Filter by category (politics, crypto, sports, etc.)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "marketSummary",
+            "trendingMarkets"
+          ],
+          "properties": {
+            "topTags": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "slug": {
+                    "type": "string"
+                  },
+                  "count": {
+                    "type": "number"
+                  },
+                  "label": {
+                    "type": "string"
+                  }
+                }
+              },
+              "description": "Most common tags across the sampled active markets"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "categories": {
+              "type": "object",
+              "description": "Breakdown by category"
+            },
+            "totalActive": {
+              "type": "number"
+            },
+            "marketSummary": {
+              "type": "string",
+              "description": "Overall market conditions summary"
+            },
+            "trendingMarkets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "url",
+                  "currentPrice"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Direct Polymarket URL - always use this, never construct URLs"
+                  },
+                  "rank": {
+                    "type": "number"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "signal": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "liquidity": {
+                    "type": "number"
+                  },
+                  "volume24h": {
+                    "type": "number"
+                  },
+                  "trendScore": {
+                    "type": "number"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "whyTrending": {
+                    "type": "string"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "priceDirection": {
+                    "type": "string"
+                  },
+                  "volumeVsAverage": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "topLiquidMarketsByCategory": {
+              "type": "object",
+              "description": "Top liquid sampled markets grouped by category",
+              "additionalProperties": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "liquidity": {
+                      "type": "number"
+                    },
+                    "volume24h": {
+                      "type": "number"
+                    },
+                    "conditionId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_top_markets",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": true,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "📊 Get the highest volume/liquidity markets on Polymarket.\n\nDefault behavior is LIVE/NOW: only active, tradeable markets are returned (excludes ended and near-resolved markets unless explicitly included).\n      \nSorting options (mirrors Polymarket UI):\n- total_volume: ALL-TIME volume (e.g., $507M) - USE THIS for \"biggest markets\" questions\n- volume: 24-hour trading volume (e.g., $9M) - USE THIS for \"most active today\" questions  \n- recent_activity: alias of volume (best match for \"recent activity\" wording)\n- liquidity: Deepest orderbooks\n- trending: Most popular (default)\n- newest: Recently created markets  \n- ending_soon: Markets closing soon\n- competitive: 50/50 contested markets\n- includeNearResolved: Include very high/low probability markets (>95% YES or <5% YES). Default false.\n- includeEnded: Include markets whose endDate has already passed. Default false.\n\nUSE THIS for questions like:\n- \"What are the highest volume markets?\" → sortBy: \"total_volume\"\n- \"What's most active right now?\" → sortBy: \"volume\"\n- \"Show me the most liquid markets\" → sortBy: \"liquidity\"\n\nFor straightforward ranked retrieval and filter-constrained screens, call this tool ALONE.\nAdd discover_trending_markets only when the user explicitly wants trend/surge context in addition to the ranked market list.\n\nReturns BOTH total volume AND 24h volume for each market, plus direct Polymarket URLs.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Number of markets to return (default: 15, max: 100)"
+            },
+            "offset": {
+              "type": "number",
+              "description": "Skip first N results for pagination. Use to go DEEPER (e.g., offset=50 for results 51-100)."
+            },
+            "sortBy": {
+              "enum": [
+                "total_volume",
+                "volume",
+                "recent_activity",
+                "liquidity",
+                "trending",
+                "newest",
+                "ending_soon",
+                "competitive"
+              ],
+              "type": "string",
+              "description": "How to sort: 'total_volume' for all-time biggest markets, 'volume'/'recent_activity' for 24h active markets (default: total_volume)"
+            },
+            "category": {
+              "type": "string",
+              "description": "Filter by category (politics, crypto, sports, etc.). Uses tag-aware client-side matching for reliable results."
+            },
+            "endDateAfter": {
+              "type": "string",
+              "description": "Only markets ending after this date (ISO format). Excludes markets ending too soon."
+            },
+            "includeEnded": {
+              "type": "boolean",
+              "description": "Include markets whose endDate is in the past. Default false to keep results focused on currently live opportunities."
+            },
+            "minLiquidity": {
+              "type": "number",
+              "description": "Minimum liquidity in USD. Higher = better exit options."
+            },
+            "endDateBefore": {
+              "type": "string",
+              "description": "Only markets ending before this date (ISO format: 2026-02-01). Great for 'ending this week/month'."
+            },
+            "maxTotalVolume": {
+              "type": "number",
+              "description": "Maximum ALL-TIME volume in USD. Use with minTotalVolume to find mid-tier markets."
+            },
+            "minTotalVolume": {
+              "type": "number",
+              "description": "Minimum ALL-TIME volume in USD (e.g., 10000000 for $10M+). Use this to find only major markets."
+            },
+            "includeNearResolved": {
+              "type": "boolean",
+              "description": "Include near-resolved markets (>95% YES or <5% YES). Default false; set true to include one-sided markets."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "sortedBy",
+            "markets"
+          ],
+          "properties": {
+            "markets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Direct Polymarket URL - ALWAYS provided"
+                  },
+                  "rank": {
+                    "type": "number"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "liquidity": {
+                    "type": "number",
+                    "description": "Current liquidity in USD"
+                  },
+                  "volume24h": {
+                    "type": "number",
+                    "description": "24h trading volume in USD"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "totalVolume": {
+                    "type": "number",
+                    "description": "All-time volume"
+                  },
+                  "currentPrice": {
+                    "type": "number",
+                    "description": "YES price (0-1)"
+                  }
+                }
+              }
+            },
+            "summary": {
+              "type": "string"
+            },
+            "sortedBy": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "pagination": {
+              "type": "object",
+              "properties": {
+                "offset": {
+                  "type": "number"
+                },
+                "hasMore": {
+                  "type": "boolean"
+                },
+                "returned": {
+                  "type": "number"
+                },
+                "nextOffset": {
+                  "type": "number"
+                },
+                "pagesScanned": {
+                  "type": "number"
+                },
+                "scannedToOffset": {
+                  "type": "number"
+                }
+              }
+            },
+            "filtersApplied": {
+              "type": "object"
+            },
+            "searchExhausted": {
+              "type": "boolean",
+              "description": "True when the API has no further rows to scan and fewer than requested results were returned."
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_my_positions",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true,
+          "contextRequirements": [
+            "polymarket"
+          ]
+        },
+        "description": "Analyze your Polymarket positions with exit liquidity simulation, P&L calculation, and personalized recommendations. Requires portfolio context to be injected by the app.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "portfolio"
+          ],
+          "properties": {
+            "portfolio": {
+              "type": "object",
+              "required": [
+                "walletAddress",
+                "positions"
+              ],
+              "properties": {
+                "fetchedAt": {
+                  "type": "string"
+                },
+                "positions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "shares": {
+                        "type": "number"
+                      },
+                      "outcome": {
+                        "enum": [
+                          "YES",
+                          "NO"
+                        ],
+                        "type": "string"
+                      },
+                      "tokenId": {
+                        "type": "string"
+                      },
+                      "conditionId": {
+                        "type": "string"
+                      },
+                      "marketTitle": {
+                        "type": "string"
+                      },
+                      "avgEntryPrice": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                },
+                "openOrders": {
+                  "type": "array"
+                },
+                "totalValue": {
+                  "type": "number"
+                },
+                "walletAddress": {
+                  "type": "string"
+                }
+              },
+              "description": "Your Polymarket portfolio context (injected by the Context app)"
+            },
+            "focus_market": {
+              "type": "string",
+              "description": "Optional: specific conditionId to focus analysis on"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "walletAddress",
+            "totalPositions",
+            "portfolioSummary",
+            "positionAnalyses"
+          ],
+          "properties": {
+            "fetchedAt": {
+              "type": "string"
+            },
+            "walletAddress": {
+              "type": "string"
+            },
+            "totalPositions": {
+              "type": "number"
+            },
+            "noResultsReason": {
+              "type": "string",
+              "description": "Present when there are no analyzable positions (e.g., no_active_positions)."
+            },
+            "searchExhausted": {
+              "type": "boolean",
+              "description": "True when there are no additional positions to analyze for this wallet context."
+            },
+            "portfolioSummary": {
+              "type": "object",
+              "properties": {
+                "totalValue": {
+                  "type": "number"
+                },
+                "riskyPositions": {
+                  "type": "number",
+                  "description": "Positions with poor exit liquidity"
+                },
+                "totalUnrealizedPnL": {
+                  "type": "number"
+                },
+                "totalUnrealizedPnLPercent": {
+                  "type": "number"
+                }
+              }
+            },
+            "positionAnalyses": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "shares": {
+                    "type": "number"
+                  },
+                  "outcome": {
+                    "type": "string"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "marketTitle": {
+                    "type": "string"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "avgEntryPrice": {
+                    "type": "number"
+                  },
+                  "exitLiquidity": {
+                    "type": "object",
+                    "properties": {
+                      "canExitCleanly": {
+                        "type": "boolean"
+                      },
+                      "liquidityScore": {
+                        "type": "string"
+                      },
+                      "estimatedSlippage": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "positionValue": {
+                    "type": "number"
+                  },
+                  "unrealizedPnL": {
+                    "type": "number"
+                  },
+                  "recommendation": {
+                    "type": "string"
+                  },
+                  "unrealizedPnLPercent": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "overallRecommendation": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "place_polymarket_order",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true,
+          "contextRequirements": [
+            "polymarket"
+          ]
+        },
+        "description": "Prepare an order for Polymarket prediction markets and provide a direct link to execute.\n\nDue to Polymarket's centralized orderbook (CLOB) requiring API key authentication that cannot be delegated,\ntrading must be completed on polymarket.com. This tool will:\n1. Analyze current market prices\n2. Calculate optimal order parameters  \n3. Provide a direct link to the market where you can place the order\n\nUse cases:\n- \"Buy $10 of YES on Trump winning\" → Provides link and suggested order\n- \"Sell my NO position\" → Calculates position value and links to market",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "outcome",
+            "side",
+            "amount"
+          ],
+          "properties": {
+            "side": {
+              "enum": [
+                "BUY",
+                "SELL"
+              ],
+              "type": "string",
+              "description": "BUY to purchase shares, SELL to sell shares you own"
+            },
+            "slug": {
+              "type": "string",
+              "description": "The market slug (e.g., 'will-trump-win-2024'). Alternative to conditionId."
+            },
+            "price": {
+              "type": "number",
+              "description": "Suggested limit price (0.01-0.99). Optional - will calculate market price if not provided."
+            },
+            "amount": {
+              "type": "number",
+              "description": "For BUY: dollar amount to spend. For SELL: number of shares to sell."
+            },
+            "outcome": {
+              "enum": [
+                "YES",
+                "NO"
+              ],
+              "type": "string",
+              "description": "Which outcome to trade (YES or NO token)"
+            },
+            "portfolio": {
+              "type": "object",
+              "description": "Your Polymarket portfolio context (injected by the Context app)"
+            },
+            "conditionId": {
+              "type": "string",
+              "description": "The market condition ID (hex string). Can be obtained from search_markets or other market tools."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "external_action_required"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "tradingLink": {
+              "type": "string"
+            },
+            "suggestedOrder": {
+              "type": "object",
+              "properties": {
+                "side": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "market": {
+                  "type": "string"
+                },
+                "outcome": {
+                  "type": "string"
+                },
+                "currentBestAsk": {
+                  "type": "number"
+                },
+                "currentBestBid": {
+                  "type": "number"
+                },
+                "suggestedPrice": {
+                  "type": "number"
+                },
+                "estimatedShares": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "polymarket_crossref_kalshi",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "[POLYMARKET SERVER] Search Kalshi for markets equivalent to a Polymarket market.\n\nThis tool belongs to the POLYMARKET MCP server. Use it when you have a Polymarket market \nand want to find the corresponding market on Kalshi for comparison.\n\n⚠️ Call this tool with POLYMARKET's toolId, not Kalshi's.\n\nUSE THIS when you have a Polymarket market and want to find the same on Kalshi for:\n  - Price comparison / arbitrage detection\n  - Cross-platform probability analysis\n  - Finding additional liquidity\n\nWORKFLOW:\n  1. You have a Polymarket market (from get_event_by_slug or search_markets)\n  2. Call: polymarket_crossref_kalshi({ keywords: \"tariffs revenue 2025\" })\n  3. Returns matching Kalshi markets with prices\n\nEXAMPLE INPUT:\n  { \"keywords\": \"tariffs revenue 2025\" }\n\nEXAMPLE OUTPUT:\n  {\n    \"searchedFor\": { \"keywords\": \"tariffs revenue 2025\", \"polymarketSlug\": null },\n    \"kalshiResults\": [\n      { \n        \"title\": \"Will tariffs generate...\", \n        \"ticker\": \"KXTARIFFS\", \n        \"yesPrice\": 31, \n        \"matchScore\": 0.67,\n        \"rules\": \"If tariffs generate more than X by Y, then...\"\n      }\n    ],\n    \"hint\": \"Found 1 potential matches on Kalshi...\",\n    \"fetchedAt\": \"2025-01-10T...\"\n  }\n\nNEXT STEPS after finding match:\n  - ⚠️ CRITICAL: Compare the 'rules' field with Polymarket rules to ensure YES/NO mean the same thing!\n  - Use Kalshi MCP tools (get_event, get_market) with the 'ticker' for deeper analysis\n  - Compare yesPrice: Kalshi uses cents (31 = 31%), Polymarket uses decimals (0.31 = 31%)\n\n⚠️ IMPORTANT: Always compare resolution rules before calculating arbitrage! Markets may define YES/NO differently.\n\n⚠️ API LIMITATION: Kalshi's API does NOT support server-side text search. This tool fetches recent markets and filters client-side. For best results:\n  - Use specific keywords from the market title\n  - Works best for popular/high-volume markets\n  - May miss less popular markets not in the first batch\n\n⚠️ Kalshi has NO sports markets. For sports, use Odds API instead.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Max results (default: 10)"
+            },
+            "title": {
+              "type": "string",
+              "description": "The Polymarket market title to search for on Kalshi"
+            },
+            "keywords": {
+              "type": "string",
+              "description": "Keywords to search (e.g., 'supreme court tariffs trump'). More specific = better results."
+            },
+            "polymarketSlug": {
+              "type": "string",
+              "description": "Optional: The Polymarket slug (for reference in results)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "kalshiResults"
+          ],
+          "properties": {
+            "hint": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "searchedFor": {
+              "type": "object",
+              "properties": {
+                "keywords": {
+                  "type": "string"
+                },
+                "polymarketSlug": {
+                  "type": "string"
+                }
+              }
+            },
+            "sourcesTried": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Kalshi API hosts tried during lookup."
+            },
+            "kalshiResults": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "Direct Kalshi URL"
+                  },
+                  "rules": {
+                    "type": "string",
+                    "description": "Full resolution rules text"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Kalshi market title"
+                  },
+                  "ticker": {
+                    "type": "string",
+                    "description": "Use this with Kalshi's get_market or get_event tools"
+                  },
+                  "yesPrice": {
+                    "type": "number",
+                    "description": "Current YES price in cents (29 = 29%)"
+                  },
+                  "volume24h": {
+                    "type": "number"
+                  },
+                  "matchScore": {
+                    "type": "number",
+                    "description": "Keyword match score (higher = better match)"
+                  },
+                  "eventTicker": {
+                    "type": "string"
+                  },
+                  "noOutcomeMeans": {
+                    "type": "string",
+                    "description": "⚠️ CRITICAL: What does buying NO mean? Compare with Polymarket!"
+                  },
+                  "yesOutcomeMeans": {
+                    "type": "string",
+                    "description": "⚠️ CRITICAL: What does buying YES mean? Compare with Polymarket!"
+                  }
+                }
+              },
+              "description": "Matching Kalshi markets. Use 'ticker' with Kalshi's get_market tool for details."
+            },
+            "comparisonNote": {
+              "type": "string",
+              "description": "⚠️ MUST READ: Step-by-step guide for comparing outcomes across platforms"
+            },
+            "noResultsReason": {
+              "type": "string",
+              "description": "Machine-readable reason when kalshiResults is empty (e.g., no_kalshi_match_found, kalshi_unavailable)."
+            },
+            "searchExhausted": {
+              "type": "boolean",
+              "description": "True when no sufficiently matching Kalshi markets were found in the scanned window."
+            }
+          }
+        }
+      },
+      {
+        "name": "get_events",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get list of events (markets) from Polymarket with optional filters. By default returns LIVE (active) markets. Use closed=true for resolved/finished markets.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Number of results (default: 50, max: 100)"
+            },
+            "active": {
+              "type": "boolean",
+              "description": "Filter to active events only (default: true)"
+            },
+            "closed": {
+              "type": "boolean",
+              "description": "Include closed/resolved events (default: false)"
+            },
+            "offset": {
+              "type": "number",
+              "description": "Pagination offset"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "events",
+            "count"
+          ],
+          "properties": {
+            "count": {
+              "type": "number"
+            },
+            "events": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "url"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Direct Polymarket URL - always use this"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "volume": {
+                    "type": "number"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "liquidity": {
+                    "type": "number"
+                  },
+                  "marketsCount": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_event_by_slug",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": [
+              "get_batch_orderbooks"
+            ]
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get detailed information about a specific event by its slug. Returns event metadata and all associated markets with their token IDs for trading.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "slug"
+          ],
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "The event slug from the Polymarket URL (e.g., 'maduro-out-in-2025')"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "event",
+            "markets"
+          ],
+          "properties": {
+            "event": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "active": {
+                  "type": "boolean"
+                },
+                "closed": {
+                  "type": "boolean"
+                },
+                "volume": {
+                  "type": "number"
+                },
+                "endDate": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "liquidity": {
+                  "type": "number"
+                },
+                "startDate": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "resolutionSource": {
+                  "type": "string"
+                }
+              },
+              "description": "The event (parent container for markets)"
+            },
+            "markets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "tokens": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "outcome": {
+                          "type": "string",
+                          "description": "YES or NO"
+                        },
+                        "token_id": {
+                          "type": "string",
+                          "description": "Token ID for trading and price lookups. Use this to look up prices via get_prices."
+                        }
+                      }
+                    },
+                    "description": "Outcome tokens for this market (YES and NO)"
+                  },
+                  "volume": {
+                    "type": "number"
+                  },
+                  "question": {
+                    "type": "string",
+                    "description": "The market question"
+                  },
+                  "liquidity": {
+                    "type": "number"
+                  },
+                  "conditionId": {
+                    "type": "string",
+                    "description": "Unique market identifier"
+                  },
+                  "outcomePrices": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Current prices as strings [yesPrice, noPrice]"
+                  }
+                }
+              },
+              "description": "Array of markets (betting questions) within this event"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "search_and_get_outcomes",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "🔍 SEARCH + GET OUTCOMES in ONE CALL. Finds a market and returns all its outcomes immediately.\n\n✅ Uses Polymarket's official /public-search API for reliable server-side text search.\n\n⚠️ USE THIS INSTEAD OF: search_markets → get_event_outcomes (which requires chaining calls)\n\nThis tool:\n1. Searches for the most relevant market matching your query (using /public-search API)\n2. Automatically fetches all outcomes for that market\n3. Returns everything in one response\n\n⚠️ VERIFY THE RETURNED MARKET: Always check that eventTitle matches your intent!\nIf the returned market doesn't match (e.g., got a division market instead of championship),\ntry a different query with the correct terminology.\n\nPERFECT FOR CROSS-PLATFORM COMPARISON:\n  - Sports championships → Returns all teams with their Polymarket prices\n  - Political elections → Returns all candidates with prices\n  - Any multi-outcome event → Returns all possibilities\n\nINPUT: Natural language query describing the market you want\nOUTPUT: All outcomes with prices, ready for comparison",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "query"
+          ],
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Natural language search query (e.g., 'NBA Champion', 'Super Bowl Winner', 'Presidential Election')"
+            },
+            "category": {
+              "enum": [
+                "sports",
+                "politics",
+                "crypto",
+                "pop-culture",
+                "science",
+                "business"
+              ],
+              "type": "string",
+              "description": "Optional category to narrow search"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "eventTitle",
+            "outcomes"
+          ],
+          "properties": {
+            "eventUrl": {
+              "type": "string"
+            },
+            "outcomes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Team/candidate/outcome name"
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "Current YES price (0-1, treat as probability)"
+                  },
+                  "volume": {
+                    "type": "number"
+                  },
+                  "tokenId": {
+                    "type": "string",
+                    "description": "Primary YES token ID for this outcome. Use directly with get_batch_orderbooks/get_orderbook/get_prices."
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "pricePercent": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "eventSlug": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "eventTitle": {
+              "type": "string"
+            },
+            "searchQuery": {
+              "type": "string"
+            },
+            "totalVolume": {
+              "type": "number"
+            },
+            "searchMethod": {
+              "enum": [
+                "public-search",
+                "events-fallback"
+              ],
+              "type": "string",
+              "description": "Which search method was used"
+            },
+            "totalOutcomes": {
+              "type": "number"
+            },
+            "matchConfidence": {
+              "enum": [
+                "exact",
+                "high",
+                "medium",
+                "low"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "compare_event_outcome_quotes",
+        "_meta": {
+          "surface": "answer",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": [
+              "search_and_get_outcomes",
+              "get_spreads"
+            ]
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Compare specific named outcomes inside the SAME multi-outcome event in one call.\n\nUSE THIS for:\n- \"Compare Spain, Brazil, and France in the World Cup winner market\"\n- \"Show the implied odds and spreads for the top three candidates in this election market\"\n- \"Which named outcomes inside this event have the widest spreads right now?\"\n\nThis tool:\n1. Resolves the event from a natural-language query\n2. Matches the requested outcome names\n3. Fetches current spread snapshots for those token IDs\n4. Returns a clean side-by-side comparison with token IDs and best quotes\n\nBest when the user names 2+ teams, candidates, or outcomes in the same event and wants current implied odds plus spread comparison without brittle multi-tool chaining.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "If outcomes are omitted, compare the top N outcomes by current price (default: 5, max: 10)"
+            },
+            "query": {
+              "type": "string",
+              "description": "Raw comparison request. Example: 'Compare Spain, Brazil, and France in the 2026 FIFA World Cup winner market.'"
+            },
+            "category": {
+              "type": "string",
+              "description": "Optional category hint (sports, politics, crypto, etc.) to narrow event resolution"
+            },
+            "outcomes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Specific outcome names to compare (e.g. ['Spain', 'Brazil', 'France'])"
+            },
+            "eventQuery": {
+              "type": "string",
+              "description": "Natural-language event query if you want to pass the event separately (e.g. '2026 FIFA World Cup winner')"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "eventTitle",
+            "matchedOutcomes"
+          ],
+          "properties": {
+            "eventUrl": {
+              "type": "string",
+              "format": "uri"
+            },
+            "eventSlug": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "eventTitle": {
+              "type": "string"
+            },
+            "matchedOutcomes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "matchedName",
+                  "tokenId",
+                  "currentPrice",
+                  "spread"
+                ],
+                "properties": {
+                  "spread": {
+                    "type": "number"
+                  },
+                  "volume": {
+                    "type": "number"
+                  },
+                  "bestAsk": {
+                    "type": "number"
+                  },
+                  "bestBid": {
+                    "type": "number"
+                  },
+                  "tokenId": {
+                    "type": "string"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "matchedName": {
+                    "type": "string"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "requestedName": {
+                    "type": "string"
+                  },
+                  "spreadPercent": {
+                    "type": "number"
+                  },
+                  "impliedProbability": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "unmatchedOutcomes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "widestSpreadOutcome": {
+              "type": "object",
+              "properties": {
+                "spread": {
+                  "type": "number"
+                },
+                "matchedName": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_event_outcomes",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": true,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": [
+              "get_batch_orderbooks"
+            ]
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "📊 Get ALL outcomes in a multi-outcome event with their individual volumes.\n\n⚠️ PREFER search_and_get_outcomes if you don't have a slug! That tool searches AND returns outcomes in one call.\n\nWorks for ANY multi-outcome market:\n- Political: \"Which candidate has the highest volume?\" (returns all real candidates)\n- Sports: \"Show all teams and their betting volumes\" (returns all teams)\n- Awards: \"NBA MVP\", \"NFL MVP\" (returns all PLAYERS)\n- Crypto: \"What Bitcoin price targets are most traded?\" (returns all price brackets)\n\nPERFECT FOR questions about:\n- Individual outcome volumes within an event\n- Top N most traded outcomes\n- Complete breakdown of all options\n- Comparing volumes across outcomes\n\n⚠️ CROSS-PLATFORM COMPARISON NOTE:\nFor PLAYER AWARD markets (MVP, DPOY, etc.), Polymarket is often the ONLY source!\nTraditional sportsbook APIs (The Odds API) typically only have TEAM championship futures.\n\n✅ Can compare across platforms: \"NBA Champion\" (both have TEAMS)\n❌ Cannot compare: \"NBA MVP\" (Polymarket has PLAYERS, Odds API doesn't have MVP)\n\nNOTE: Automatically filters out placeholder entries (e.g., \"Person A\", \"Person AB\") that Polymarket \nuses as reserved slots for future outcomes. Only ACTIVE outcomes returned.\n\nIncludes tokenId per outcome so you can call get_batch_orderbooks immediately without extra lookup.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "slug"
+          ],
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "The event slug (e.g., 'democratic-presidential-nominee-2028')"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Max outcomes to return (default: all). Use for 'top 10' type questions."
+            },
+            "sortBy": {
+              "enum": [
+                "volume",
+                "price",
+                "name"
+              ],
+              "type": "string",
+              "description": "How to sort outcomes: 'volume' (default), 'price' (probability), or 'name' (alphabetical)"
+            },
+            "includeInactive": {
+              "type": "boolean",
+              "description": "Include placeholder/inactive outcomes with zero volume (default: false). Rarely needed."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "eventTitle",
+            "outcomes"
+          ],
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "Direct Polymarket URL"
+            },
+            "outcomes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Outcome name (e.g., 'Gavin Newsom', 'Chiefs', '$100K-$110K')"
+                  },
+                  "rank": {
+                    "type": "number"
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "Current price (0-1, represents probability)"
+                  },
+                  "volume": {
+                    "type": "number",
+                    "description": "Individual trading volume for this outcome"
+                  },
+                  "tokenId": {
+                    "type": "string",
+                    "description": "Primary YES token ID for this outcome. Use directly with get_batch_orderbooks/get_orderbook/get_prices."
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "pricePercent": {
+                    "type": "string",
+                    "description": "Price as percentage (e.g., '34.0%')"
+                  }
+                }
+              }
+            },
+            "sortedBy": {
+              "type": "string"
+            },
+            "eventSlug": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "eventTitle": {
+              "type": "string"
+            },
+            "totalVolume": {
+              "type": "number",
+              "description": "Total event volume"
+            },
+            "totalOutcomes": {
+              "type": "number",
+              "description": "Total number of outcomes in this event"
+            },
+            "returnedOutcomes": {
+              "type": "number",
+              "description": "Number returned (may be limited)"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_orderbook",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get the Level 2 orderbook for a specific token. Use merged=true to see the full orderbook including synthetic liquidity (matches Polymarket UI). Raw orderbook only shows direct orders and may appear to have very wide spreads.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "tokenId"
+          ],
+          "properties": {
+            "merged": {
+              "type": "boolean",
+              "description": "If true, returns merged orderbook combining direct + synthetic liquidity from complement token. This matches what Polymarket UI shows. Default: false (raw orderbook)"
+            },
+            "tokenId": {
+              "type": "string",
+              "description": "The token ID to get orderbook for"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "assetId",
+            "bids",
+            "asks"
+          ],
+          "properties": {
+            "asks": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "size": {
+                    "type": "number",
+                    "description": "Available size at this price level"
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "Ask price on a 0-1 scale"
+                  },
+                  "source": {
+                    "enum": [
+                      "direct",
+                      "synthetic"
+                    ],
+                    "type": "string",
+                    "description": "Whether this level is from the direct book or synthetic complement liquidity in merged view"
+                  }
+                }
+              },
+              "description": "Ask orders sorted by price ascending"
+            },
+            "bids": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "size": {
+                    "type": "number",
+                    "description": "Available size at this price level"
+                  },
+                  "price": {
+                    "type": "number",
+                    "description": "Bid price on a 0-1 scale"
+                  },
+                  "source": {
+                    "enum": [
+                      "direct",
+                      "synthetic"
+                    ],
+                    "type": "string",
+                    "description": "Whether this level is from the direct book or synthetic complement liquidity in merged view"
+                  }
+                }
+              },
+              "description": "Bid orders sorted by price descending"
+            },
+            "view": {
+              "type": "string",
+              "description": "'raw' or 'merged'"
+            },
+            "market": {
+              "type": "string"
+            },
+            "spread": {
+              "type": "number"
+            },
+            "assetId": {
+              "type": "string"
+            },
+            "bestAsk": {
+              "type": "number"
+            },
+            "bestBid": {
+              "type": "number"
+            },
+            "midPrice": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "spreadCents": {
+              "type": "number",
+              "description": "Spread in cents (only for merged view)"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_prices",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get current prices for one or more tokens.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "tokenIds"
+          ],
+          "properties": {
+            "tokenIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Array of token IDs to get prices for"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "prices"
+          ],
+          "properties": {
+            "prices": {
+              "type": "object",
+              "description": "Map of token_id (string) to price info. Keys are the token_id strings from get_event_by_slug.",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "buy": {
+                    "type": "number",
+                    "description": "Best buy price (what you pay to buy YES/NO)"
+                  },
+                  "mid": {
+                    "type": "number",
+                    "description": "Mid price between buy and sell"
+                  },
+                  "sell": {
+                    "type": "number",
+                    "description": "Best sell price (what you receive when selling)"
+                  },
+                  "spread": {
+                    "type": "number",
+                    "description": "Spread between buy and sell"
+                  }
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_price_history",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get historical price data for a market.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "tokenId"
+          ],
+          "properties": {
+            "tokenId": {
+              "type": "string",
+              "description": "The token ID (CLOB market ID)"
+            },
+            "fidelity": {
+              "type": "number",
+              "description": "Resolution in minutes"
+            },
+            "interval": {
+              "enum": [
+                "1m",
+                "1h",
+                "6h",
+                "1d",
+                "1w",
+                "max"
+              ],
+              "type": "string",
+              "description": "Time interval"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "tokenId",
+            "history"
+          ],
+          "properties": {
+            "history": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "price": {
+                    "type": "number"
+                  },
+                  "timestamp": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "low": {
+                  "type": "number"
+                },
+                "high": {
+                  "type": "number"
+                },
+                "change": {
+                  "type": "number"
+                },
+                "changePercent": {
+                  "type": "number"
+                }
+              }
+            },
+            "tokenId": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_batch_orderbooks",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": true,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get RAW direct CLOB orderbooks for MULTIPLE tokens in a single request. Much faster than calling get_orderbook multiple times.\n\nUSE THIS when comparing prices across multiple markets or scanning for arbitrage.\nIdeal for event-wide raw depth snapshots after get_event_outcomes.\n\nIMPORTANT: This batch endpoint returns DIRECT books only, not the merged synthetic liquidity view shown in the Polymarket UI. On neg-risk markets, use get_prices/get_spreads for actionable quote snapshots or get_orderbook with merged=true for a single UI-equivalent orderbook.\n\nReturns raw bids/asks arrays for each token with direct-book best prices and depth.\nSupports up to 150 token IDs per call.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "tokenIds"
+          ],
+          "properties": {
+            "tokenIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 150,
+              "description": "Array of token IDs to get orderbooks for (max 150)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "orderbooks"
+          ],
+          "properties": {
+            "fetchedAt": {
+              "type": "string"
+            },
+            "orderbooks": {
+              "type": "object",
+              "description": "Map of token_id to orderbook data",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "asks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "size": {
+                          "type": "number",
+                          "description": "Available size at this price level"
+                        },
+                        "price": {
+                          "type": "number",
+                          "description": "Ask price on a 0-1 scale"
+                        }
+                      }
+                    },
+                    "description": "Top 5 asks"
+                  },
+                  "bids": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "size": {
+                          "type": "number",
+                          "description": "Available size at this price level"
+                        },
+                        "price": {
+                          "type": "number",
+                          "description": "Bid price on a 0-1 scale"
+                        }
+                      }
+                    },
+                    "description": "Top 5 bids"
+                  },
+                  "view": {
+                    "enum": [
+                      "raw"
+                    ],
+                    "type": "string",
+                    "description": "Batch orderbooks return direct raw CLOB books only"
+                  },
+                  "spread": {
+                    "type": "number"
+                  },
+                  "bestAsk": {
+                    "type": "number"
+                  },
+                  "bestBid": {
+                    "type": "number"
+                  },
+                  "warning": {
+                    "type": "string",
+                    "description": "Use get_prices/get_spreads for quote snapshots or get_orderbook with merged=true for a UI-equivalent book"
+                  },
+                  "askDepth": {
+                    "type": "number",
+                    "description": "Total size at best ask"
+                  },
+                  "bidDepth": {
+                    "type": "number",
+                    "description": "Total size at best bid"
+                  },
+                  "midpoint": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_market_parameters",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get trading parameters for a market: tick size, fee rate, and negative risk setting.\n\n- tick_size: Minimum price increment (e.g., 0.01 = 1 cent)\n- fee_rate_bps: Trading fee in basis points (e.g., 100 = 1%)\n- neg_risk: Whether market uses negative risk model",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "tokenId"
+          ],
+          "properties": {
+            "tokenId": {
+              "type": "string",
+              "description": "Token ID to get parameters for"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "tokenId",
+            "tickSize"
+          ],
+          "properties": {
+            "negRisk": {
+              "type": "boolean",
+              "description": "Whether market uses negative risk"
+            },
+            "tokenId": {
+              "type": "string"
+            },
+            "tickSize": {
+              "type": "string",
+              "description": "Minimum price increment"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "feeRateBps": {
+              "type": "number",
+              "description": "Fee rate in basis points"
+            },
+            "minOrderSize": {
+              "type": "number",
+              "description": "Minimum order size"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_midpoints",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get midpoint prices for multiple tokens at once. Midpoint = (best_bid + best_ask) / 2.\n\nFaster than fetching full orderbooks when you only need the mid price.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "tokenIds"
+          ],
+          "properties": {
+            "tokenIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Array of token IDs (max 50)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "midpoints"
+          ],
+          "properties": {
+            "fetchedAt": {
+              "type": "string"
+            },
+            "midpoints": {
+              "type": "object",
+              "description": "Map of token_id to midpoint price (0-1 scale)",
+              "additionalProperties": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_spreads",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get bid-ask spreads for multiple tokens at once. Spread = best_ask - best_bid.\n\nUseful for identifying liquid vs illiquid markets. Wide spreads (>0.05) indicate low liquidity.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "tokenIds"
+          ],
+          "properties": {
+            "tokenIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Array of token IDs (max 50)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "spreads"
+          ],
+          "properties": {
+            "spreads": {
+              "type": "object",
+              "description": "Map of token_id to spread info",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "spread": {
+                    "type": "number",
+                    "description": "Absolute spread (ask - bid)"
+                  },
+                  "bestAsk": {
+                    "type": "number"
+                  },
+                  "bestBid": {
+                    "type": "number"
+                  },
+                  "spreadPercent": {
+                    "type": "number",
+                    "description": "Spread as % of midpoint"
+                  }
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "search_markets",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": true,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Search for Polymarket prediction markets by keyword or category.\n\n✅ Uses Polymarket's official /public-search API for reliable server-side text search.\n\nMARKET STATUS:\n- LIVE markets: Still trading, outcome not yet determined\n- RESOLVED markets: Already finished, for historical reference only\n\nBy default, only LIVE markets are returned. Use status='resolved' for finished markets.\n\n⚠️ Always verify the returned results match your intent by checking the title field.\n\nEach result includes:\n- url: Direct link to the market (always use this, never construct URLs)\n- slug: Use with get_event_by_slug for detailed market data\n- status: Either \"live\" or \"resolved\"",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Number of results (default: 20, max: 50)"
+            },
+            "query": {
+              "type": "string",
+              "description": "Search query (searches title and description). Natural language queries work well (e.g., 'supreme court trump tariffs')."
+            },
+            "status": {
+              "enum": [
+                "live",
+                "resolved",
+                "all"
+              ],
+              "type": "string",
+              "description": "Filter by market status: 'live' (default) = still trading/open for bets, 'resolved' = already finished/closed, 'all' = both"
+            },
+            "category": {
+              "type": "string",
+              "description": "Filter by category (e.g., 'politics', 'crypto', 'sports')"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "results",
+            "count"
+          ],
+          "properties": {
+            "count": {
+              "type": "number"
+            },
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "url",
+                  "status"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Direct Polymarket URL - always use this"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": [
+                      "live",
+                      "resolved"
+                    ],
+                    "type": "string",
+                    "description": "live=tradeable, resolved=finished"
+                  },
+                  "volume": {
+                    "type": "number"
+                  },
+                  "endDate": {
+                    "type": "string",
+                    "description": "When market resolves/resolved"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "liquidity": {
+                    "type": "number"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "statusBreakdown": {
+              "type": "object",
+              "properties": {
+                "live": {
+                  "type": "number",
+                  "description": "Count of live/tradeable markets"
+                },
+                "resolved": {
+                  "type": "number",
+                  "description": "Count of resolved/finished markets"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_market_trades",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get recent trades for a specific market. Shows who's buying/selling, at what prices, and trade sizes. Essential for understanding order flow and market activity.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "conditionId"
+          ],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Number of trades to return (default: 50, max: 100)"
+            },
+            "conditionId": {
+              "type": "string",
+              "description": "The market condition ID"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "market",
+            "trades",
+            "summary"
+          ],
+          "properties": {
+            "market": {
+              "type": "string"
+            },
+            "trades": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "side": {
+                    "enum": [
+                      "BUY",
+                      "SELL"
+                    ],
+                    "type": "string"
+                  },
+                  "size": {
+                    "type": "number"
+                  },
+                  "price": {
+                    "type": "number"
+                  },
+                  "trader": {
+                    "type": "string",
+                    "description": "Wallet address (may be proxy)"
+                  },
+                  "outcome": {
+                    "enum": [
+                      "YES",
+                      "NO"
+                    ],
+                    "type": "string"
+                  },
+                  "notional": {
+                    "type": "number",
+                    "description": "USD value of trade"
+                  },
+                  "timestamp": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "avgPrice": {
+                  "type": "number"
+                },
+                "buyVolume": {
+                  "type": "number"
+                },
+                "sellVolume": {
+                  "type": "number"
+                },
+                "totalTrades": {
+                  "type": "number"
+                },
+                "totalVolume": {
+                  "type": "number"
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_user_positions",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get positions AND trading history for any Polymarket wallet. Shows BOTH open positions (unrealized P&L) AND closed positions (realized P&L with true win rate). Essential for whale tracking - the 'tradingHistory' section shows actual win rate based on completed trades, not just current position values.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Maximum positions to return (default: 50)"
+            },
+            "address": {
+              "type": "string",
+              "description": "The wallet address to look up (can be proxy wallet or main wallet)"
+            },
+            "sizeThreshold": {
+              "type": "number",
+              "description": "Minimum position size in shares to include (default: 0)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "openPositions",
+            "tradingHistory",
+            "openPositionsSummary"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "openPositions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "size": {
+                    "type": "number",
+                    "description": "Number of shares"
+                  },
+                  "outcome": {
+                    "enum": [
+                      "YES",
+                      "NO"
+                    ],
+                    "type": "string"
+                  },
+                  "avgPrice": {
+                    "type": "number",
+                    "description": "Average entry price"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "marketTitle": {
+                    "type": "string"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "currentValue": {
+                    "type": "number"
+                  },
+                  "initialValue": {
+                    "type": "number"
+                  },
+                  "unrealizedPnL": {
+                    "type": "number"
+                  },
+                  "unrealizedPnLPercent": {
+                    "type": "number"
+                  }
+                }
+              },
+              "description": "Currently open positions (unrealized P&L)"
+            },
+            "tradingHistory": {
+              "type": "object",
+              "properties": {
+                "wins": {
+                  "type": "number",
+                  "description": "Trades with positive realized P&L"
+                },
+                "losses": {
+                  "type": "number",
+                  "description": "Trades with negative realized P&L"
+                },
+                "winRate": {
+                  "type": "number",
+                  "description": "Win percentage based on REALIZED trades (0-100)"
+                },
+                "recentTrades": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string"
+                      },
+                      "marketTitle": {
+                        "type": "string"
+                      },
+                      "realizedPnL": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "description": "Most recent closed trades"
+                },
+                "totalRealizedPnL": {
+                  "type": "number",
+                  "description": "Total profit/loss from closed positions"
+                },
+                "totalClosedTrades": {
+                  "type": "number"
+                }
+              },
+              "description": "Historical trading performance from closed positions - THIS is the TRUE win rate"
+            },
+            "openPositionsSummary": {
+              "type": "object",
+              "properties": {
+                "totalValue": {
+                  "type": "number"
+                },
+                "totalOpenPositions": {
+                  "type": "number"
+                },
+                "totalUnrealizedPnL": {
+                  "type": "number"
+                },
+                "profitablePositions": {
+                  "type": "number"
+                },
+                "underwaterPositions": {
+                  "type": "number"
+                }
+              },
+              "description": "Summary of currently OPEN positions (unrealized, may change)"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_user_activity",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get on-chain user activity from the Polymarket Data API. Useful for tracking trade flow, side bias (BUY/SELL), and recent wallet behavior.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "side": {
+              "enum": [
+                "BUY",
+                "SELL"
+              ],
+              "type": "string",
+              "description": "Optional trade side filter"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum activities to return (default: 100, max: 500)"
+            },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional activity type filter (TRADE, SPLIT, MERGE, REDEEM, REWARD, CONVERSION, MAKER_REBATE)"
+            },
+            "offset": {
+              "type": "number",
+              "description": "Pagination offset (default: 0)"
+            },
+            "address": {
+              "type": "string",
+              "description": "The wallet address to inspect"
+            },
+            "conditionId": {
+              "type": "string",
+              "description": "Optional market conditionId filter"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "activity",
+            "summary"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "total": {
+                  "type": "number"
+                },
+                "byType": {
+                  "type": "object"
+                },
+                "buyCount": {
+                  "type": "number"
+                },
+                "sellCount": {
+                  "type": "number"
+                },
+                "totalUsdcFlow": {
+                  "type": "number"
+                }
+              }
+            },
+            "activity": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "side": {
+                    "type": "string"
+                  },
+                  "size": {
+                    "type": "number"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "number"
+                  },
+                  "outcome": {
+                    "type": "string"
+                  },
+                  "usdcSize": {
+                    "type": "number"
+                  },
+                  "timestamp": {
+                    "type": "string"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "marketTitle": {
+                    "type": "string"
+                  },
+                  "transactionHash": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_user_total_value",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get total marked-to-market value of a user's positions from Polymarket Data API /value.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "The wallet address to inspect"
+            },
+            "conditionIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Optional list of conditionIds to scope valuation"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "totalValue"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "totalValue": {
+              "type": "number"
+            },
+            "conditionIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "get_market_open_interest",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get open interest from Polymarket Data API /oi for one or more conditionIds.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "conditionId": {
+              "type": "string",
+              "description": "Single conditionId"
+            },
+            "conditionIds": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Multiple conditionIds"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "openInterest",
+            "totalOpenInterest"
+          ],
+          "properties": {
+            "fetchedAt": {
+              "type": "string"
+            },
+            "openInterest": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "totalOpenInterest": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_event_live_volume",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get real-time event-level volume breakdown from Polymarket Data API /live-volume.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "eventId"
+          ],
+          "properties": {
+            "eventId": {
+              "type": "number",
+              "description": "Polymarket event id"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "eventId",
+            "total",
+            "markets"
+          ],
+          "properties": {
+            "total": {
+              "type": "number"
+            },
+            "eventId": {
+              "type": "number"
+            },
+            "markets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "type": "number"
+                  },
+                  "market": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_top_holders",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Heavy Polymarket workflow. Call this tool alone and prefer narrower scopes first.",
+            "cooldownMs": 1500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "search_markets",
+              "discover_trending_markets"
+            ]
+          },
+          "latencyClass": "slow",
+          "queryEligible": true
+        },
+        "description": "Get the top holders (biggest positions) for a specific market. Shows who the whales are, their position sizes, and implied conviction. Essential for smart money analysis.\n\nDEEP FETCHING (default=true): Polymarket API caps at 20 holders per call with NO pagination. To work around this, we query 10 minBalance thresholds [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] in paced batches and deduplicate results. This captures everything from ultra-whales ($1M+) down to small positions, returning 50-100+ unique holders instead of just 20.\n\nSet deepFetch=false for faster but shallower results (20 per side max).\n\n⏱️ PERFORMANCE: With deepFetch=true, this runs 10 holder-tier queries in paced batches and typically takes ~8-15s.\n⚠️ Call ALONE (not in parallel with other heavy tools) when deepFetch=true to avoid timeouts.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "conditionId"
+          ],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "description": "Number of top holders to return per outcome (default: 50 with deepFetch, 20 without)"
+            },
+            "outcome": {
+              "enum": [
+                "YES",
+                "NO",
+                "BOTH"
+              ],
+              "type": "string",
+              "description": "Which outcome to show holders for (default: BOTH)"
+            },
+            "deepFetch": {
+              "type": "boolean",
+              "description": "Use multi-tier fetching to get more holders (default: true). Set to false for faster but limited results."
+            },
+            "conditionId": {
+              "type": "string",
+              "description": "The market condition ID"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "market",
+            "conditionId",
+            "topHolders"
+          ],
+          "properties": {
+            "market": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "topHolders": {
+              "type": "object",
+              "properties": {
+                "no": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "rank": {
+                        "type": "number"
+                      },
+                      "size": {
+                        "type": "number"
+                      },
+                      "value": {
+                        "type": "number"
+                      },
+                      "address": {
+                        "type": "string"
+                      },
+                      "percentOfSupply": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                },
+                "yes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "rank": {
+                        "type": "number"
+                      },
+                      "size": {
+                        "type": "number",
+                        "description": "Number of shares"
+                      },
+                      "value": {
+                        "type": "number",
+                        "description": "Current position value in USD"
+                      },
+                      "address": {
+                        "type": "string"
+                      },
+                      "percentOfSupply": {
+                        "type": "number",
+                        "description": "% of total YES shares"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "conditionId": {
+              "type": "string"
+            },
+            "concentration": {
+              "type": "object",
+              "properties": {
+                "whaleCount": {
+                  "type": "number",
+                  "description": "Holders with > $1000 position"
+                },
+                "top10NoPercent": {
+                  "type": "number",
+                  "description": "% of NO held by top 10"
+                },
+                "top10YesPercent": {
+                  "type": "number",
+                  "description": "% of YES held by top 10"
+                }
+              },
+              "description": "How concentrated the market is"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_market_comments",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get comments and discussion for a market or event. Useful for understanding market sentiment, identifying controversies, and seeing what traders are saying.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "slug"
+          ],
+          "properties": {
+            "slug": {
+              "type": "string",
+              "description": "The event slug (e.g., 'will-trump-win')"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Number of comments to return (default: 50)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "comments"
+          ],
+          "properties": {
+            "event": {
+              "type": "string"
+            },
+            "comments": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "likes": {
+                    "type": "number"
+                  },
+                  "author": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "createdAt": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "totalComments": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_all_categories",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "📂 DISCOVERY: List ALL available categories on Polymarket.\n\nReturns category IDs and slugs that can be used with browse_category.\n\nCATEGORIES include: Politics, Crypto, Sports, Science, Pop Culture, Business, etc.\n\nDATA FLOW:\n  get_all_categories → category_slug → browse_category → events with conditionIds\n\nEXAMPLE USE CASES:\n  - \"What categories of predictions exist?\" → Call this\n  - \"Find crypto markets\" → Call this, then browse_category({ slug: \"crypto\" })\n  \nCROSS-PLATFORM: Use this to find categories that overlap with other data sources (e.g., Sports category overlaps with sportsbook futures).",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "default": 50,
+              "description": "Max categories to return (default: 50)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "categories",
+            "fetchedAt"
+          ],
+          "properties": {
+            "fetchedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "categories": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Category ID"
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "URL-friendly ID for filtering (e.g., 'politics')"
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "Display name (e.g., 'Politics')"
+                  },
+                  "parentCategory": {
+                    "type": "string",
+                    "description": "Parent category if nested"
+                  }
+                }
+              }
+            },
+            "totalCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_all_tags",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "🏷️ DISCOVERY: List ALL available tags on Polymarket.\n\nTags are more granular than categories. Examples: \"NBA\", \"Bitcoin\", \"Trump\", \"Fed\", \"Olympics\".\n\nReturns tag IDs that can be used with browse_by_tag to find all markets with that tag.\n\nDATA FLOW:\n  get_all_tags → tag_id → browse_by_tag → events/markets with conditionIds\n\nEXAMPLE USE CASES:\n  - \"Find all NBA prediction markets\" → Get NBA tag_id, then browse_by_tag\n  - \"What Bitcoin markets exist?\" → Get Bitcoin tag_id, then browse_by_tag\n  \nCOMPOSABILITY WITH ODDS API:\n  1. Get NBA tag from Polymarket → browse NBA markets → find \"Lakers win championship\" at 45%\n  2. Call Odds API get_outrights({ sport: \"basketball_nba_championship_winner\" }) → Lakers +450 (18%)\n  3. Compare prices for arbitrage opportunities",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "default": 100,
+              "description": "Max tags to return (default: 100)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "tags",
+            "fetchedAt"
+          ],
+          "properties": {
+            "hint": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Tag ID for filtering"
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "URL-friendly identifier"
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "Display name"
+                  }
+                }
+              }
+            },
+            "fetchedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "totalCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "browse_category",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "📊 BROWSE: Get all events and markets within a category.\n\nINPUT: category slug from get_all_categories (e.g., \"politics\", \"crypto\", \"sports\")\n\nRETURNS: Events with:\n  - conditionId (use with check_market_efficiency, analyze_whale_flow, etc.)\n  - tokenIds (use with analyze_market_liquidity, get_orderbook)\n  - Current prices and volumes\n  - Direct URLs to markets\n\nDATA FLOW:\n  browse_category → conditionId → [any analysis tool]\n  browse_category → slug → get_event_by_slug → detailed market data\n\nCROSS-PLATFORM COMPOSABILITY:\n  - Browse \"sports\" category → find championship markets → compare with Odds API futures\n  - Browse \"crypto\" category → compare with exchange prices from CoinGecko",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "category"
+          ],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "default": 50,
+              "description": "Max results (default: 50)"
+            },
+            "sortBy": {
+              "enum": [
+                "volume",
+                "liquidity",
+                "endDate"
+              ],
+              "type": "string",
+              "default": "volume",
+              "description": "Sort order (default: volume)"
+            },
+            "category": {
+              "type": "string",
+              "description": "Category slug from get_all_categories (e.g., 'politics', 'crypto', 'sports')"
+            },
+            "includeResolved": {
+              "type": "boolean",
+              "default": false,
+              "description": "Include resolved/closed markets (default: false)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "category",
+            "events",
+            "fetchedAt"
+          ],
+          "properties": {
+            "events": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "enum": [
+                      "live",
+                      "resolved"
+                    ],
+                    "type": "string"
+                  },
+                  "volume": {
+                    "type": "number"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "liquidity": {
+                    "type": "number"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "category": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "totalCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "browse_by_tag",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Prefer batch/snapshot tools before fan-out loops when possible.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "🔍 BROWSE: Get all events/markets with a specific tag.\n\nINPUT: tag_id from get_all_tags\n\nMore granular than categories. Use for:\n  - Specific sports leagues: \"NBA\", \"NFL\", \"Premier League\"\n  - Crypto assets: \"Bitcoin\", \"Ethereum\", \"Solana\"  \n  - People: \"Trump\", \"Biden\", \"Elon Musk\"\n  - Topics: \"AI\", \"Fed\", \"Elections\"\n\nDATA FLOW:\n  get_all_tags → tag_id → browse_by_tag → events with conditionIds → analysis tools\n\nCROSS-PLATFORM EXAMPLE (Sports):\n  1. browse_by_tag({ tag_id: \"<NBA_TAG_ID>\" }) → \"Lakers NBA Finals\" at 45%\n  2. Odds API get_outrights({ sport: \"basketball_nba_championship_winner\" }) → Lakers +450\n  3. Convert: +450 = 18.2% implied probability\n  4. DISCREPANCY: Polymarket 45% vs Sportsbooks 18% = potential arbitrage",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "tag_id"
+          ],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "default": 50,
+              "description": "Max results (default: 50)"
+            },
+            "tag_id": {
+              "type": "string",
+              "description": "Tag ID from get_all_tags"
+            },
+            "includeResolved": {
+              "type": "boolean",
+              "default": false,
+              "description": "Include resolved markets (default: false)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "tag_id",
+            "events",
+            "fetchedAt"
+          ],
+          "properties": {
+            "events": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string"
+                  },
+                  "slug": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "volume": {
+                    "type": "number"
+                  },
+                  "endDate": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "liquidity": {
+                    "type": "number"
+                  },
+                  "conditionId": {
+                    "type": "string"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "tag_id": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "totalCount": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    ],
+    "endpoint": "https://mcp.ctxprotocol.com/polymarket/mcp"
+  }
+}

@@ -1,0 +1,491 @@
+{
+  "generatedAt": "2026-03-27T17:17:06.250Z",
+  "summary": {
+    "label": "auto",
+    "prompt": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?",
+    "baseUrl": "http://localhost:3000",
+    "outcomeType": "capability_miss",
+    "durationMs": 46800,
+    "toolsUsed": [],
+    "orchestrationMetrics": {
+      "parityStage": "enabled",
+      "orchestrationMode": "auto_discovery",
+      "firstPassSuccess": false,
+      "capabilityMissSignaled": true,
+      "rediscoveryExecuted": false
+    },
+    "traceSummary": {
+      "toolCalls": 0,
+      "retryCount": 0,
+      "selfHealCount": 0,
+      "fallbackCount": 0,
+      "failureCount": 0,
+      "recoveryCount": 0,
+      "completionChecks": 0,
+      "loopCount": 0
+    },
+    "clarification": {
+      "orchestrationMode": "auto_discovery",
+      "rolloutStage": "enabled",
+      "shadowMode": false,
+      "policy": "auto",
+      "outcomeType": "capability_miss",
+      "triggered": true,
+      "optionCount": 3,
+      "candidateCount": 40,
+      "viableCandidateCount": 3,
+      "recommendedOptionId": null,
+      "recommendedOptionReason": "The available grounded Polymarket methods in this pool can discover markets and fetch event outcomes, but none can reliably retrieve the current token price/midpoint needed to compute implied odds across specific markets and resolution dat…",
+      "autoResolved": false,
+      "autoSelectEnabled": true,
+      "assumptionMade": null,
+      "missingCapability": null,
+      "decisionReasonCode": "capability_miss",
+      "decisionSignals": [
+        "llm_judge"
+      ],
+      "evidenceSources": {
+        "usesMethodSchemas": true,
+        "usesProbeArgs": false,
+        "usesMethodMetadata": true,
+        "usesToolSelectionContext": true,
+        "usesLlmSelection": true
+      },
+      "comparedOptionIds": [
+        "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+        "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+        "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes"
+      ],
+      "decisionStrategy": "llm_primary",
+      "judgeAttempted": true,
+      "judgeApplied": true,
+      "judgeOutcomeType": "capability_miss",
+      "judgeConfidence": 0,
+      "judgeReason": "The available grounded Polymarket methods in this pool can discover markets and fetch event outcomes, but none can reliably retrieve the current token price/midpoint needed to compute implied odds across specific markets and resolution dat…",
+      "judgeError": null,
+      "validatorReason": null,
+      "fallbackReason": null,
+      "copyStrategy": "deterministic",
+      "rewriteAttempted": false,
+      "rewriteApplied": false,
+      "rewriteError": null,
+      "candidateSummaries": [
+        {
+          "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+          "fitScore": 21.55,
+          "llmRelevanceScore": null,
+          "requiredParams": [],
+          "unresolvedRequiredParams": [],
+          "probeArgKeys": [],
+          "inputFieldNames": [
+            "limit",
+            "title",
+            "keywords",
+            "polymarketSlug"
+          ],
+          "outputKeys": [
+            "hint",
+            "fetchedAt",
+            "searchedFor",
+            "sourcesTried",
+            "kalshiResults",
+            "comparisonNote"
+          ],
+          "semanticScope": "event-wide",
+          "semanticEntityGranularity": "event",
+          "semanticRequiresNamedEntity": false,
+          "semanticVenueSpecificity": "tool-bound",
+          "semanticOutputCardinality": "comparison",
+          "semanticProfileConfidence": 0.95,
+          "latencyClass": "instant",
+          "executePriceUsd": null,
+          "queryEligible": true
+        },
+        {
+          "optionId": "5cc326fb-500d-4c17-bc5f-ade143210636:discover_trending_markets",
+          "fitScore": 17.55,
+          "llmRelevanceScore": null,
+          "requiredParams": [],
+          "unresolvedRequiredParams": [],
+          "probeArgKeys": [],
+          "inputFieldNames": [
+            "limit",
+            "sortBy",
+            "category"
+          ],
+          "outputKeys": [
+            "fetchedAt",
+            "totalActive",
+            "marketSummary",
+            "trendingMarkets"
+          ],
+          "semanticScope": "event-wide",
+          "semanticEntityGranularity": "event",
+          "semanticRequiresNamedEntity": false,
+          "semanticVenueSpecificity": "tool-bound",
+          "semanticOutputCardinality": "comparison",
+          "semanticProfileConfidence": 0.95,
+          "latencyClass": "slow",
+          "executePriceUsd": "0.002",
+          "queryEligible": true
+        },
+        {
+          "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:get_event_outcomes",
+          "fitScore": 16.55,
+          "llmRelevanceScore": 0.6667,
+          "requiredParams": [
+            "slug"
+          ],
+          "unresolvedRequiredParams": [
+            "slug"
+          ],
+          "probeArgKeys": [],
+          "inputFieldNames": [
+            "slug",
+            "limit",
+            "sortBy",
+            "includeInactive"
+          ],
+          "outputKeys": [
+            "url",
+            "outcomes",
+            "sortedBy",
+            "eventSlug",
+            "fetchedAt",
+            "eventTitle"
+          ],
+          "semanticScope": "event-wide",
+          "semanticEntityGranularity": "event",
+          "semanticRequiresNamedEntity": false,
+          "semanticVenueSpecificity": "tool-bound",
+          "semanticOutputCardinality": "comparison",
+          "semanticProfileConfidence": 0.95,
+          "latencyClass": "instant",
+          "executePriceUsd": "0.001",
+          "queryEligible": true
+        }
+      ],
+      "modelTelemetry": {
+        "modelId": "gpt-5.4-nano-model",
+        "runtimeModelId": "openai/gpt-5.4-nano",
+        "judgeUsage": {
+          "inputTokens": "[REDACTED]",
+          "outputTokens": "[REDACTED]",
+          "totalTokens": "[REDACTED]",
+          "promptTokens": "[REDACTED]",
+          "completionTokens": "[REDACTED]"
+        },
+        "judgeActualCostUsd": 0.0037769499999999994,
+        "rewriteUsage": null,
+        "rewriteActualCostUsd": null,
+        "totalActualCostUsd": 0.0037769499999999994
+      }
+    },
+    "selection": {
+      "selectedDepth": "deep",
+      "deepMode": "deep",
+      "debugScoutDeepMode": null,
+      "plannerReasoningStage": "full",
+      "scoutEnabled": false,
+      "preserveFastOneShot": false,
+      "candidateMethodCount": 96,
+      "scoutProbeStatus": "ready",
+      "scoutProbeAdequacy": "limited",
+      "scoutProbeConfidence": 0.9758,
+      "scoutMetadataConfidence": 0.903,
+      "scoutProbeQuerySafeCandidateCount": 38,
+      "scoutProbeRankedMethodCount": 38,
+      "scoutProbeAmbiguityPoolCount": 10,
+      "scoutProbeShortlistedMethodCount": 6,
+      "scoutProbeMissingCapability": null,
+      "scoutPrePlanProbeCalls": 0,
+      "scoutPrePlanProbeBudgetReasonCode": null,
+      "scoutChangedInitialPlan": false,
+      "scoutChangedPlannerReasoningStage": false,
+      "scoutInitialSelectedDepth": "deep",
+      "scoutInitialDeepMode": "deep",
+      "scoutInitialPlannerReasoningStage": "full",
+      "scoutInitialReasonCode": "explicit_override",
+      "scoutFinalReasonCode": "explicit_override",
+      "scoutEvidenceAttachedToPlanning": true,
+      "scoutLlmSelectionUsed": true,
+      "scoutLlmSelectionFallback": false,
+      "scoutLlmSelectionLatencyMs": 7817,
+      "selectedTools": [
+        {
+          "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+          "toolName": "Polymarket",
+          "priceUsd": "0.000000",
+          "selectedMethodCount": 45,
+          "selectedMethods": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "find_correlated_markets",
+            "check_market_rules",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "build_high_conviction_workflow",
+            "analyze_single_market_whales"
+          ],
+          "omittedSelectedMethodCount": 33
+        },
+        {
+          "toolId": "ffe8cd46-ced1-4c7f-9e43-dc8fca25ecbc",
+          "toolName": "Coinglass",
+          "priceUsd": "0.000000",
+          "selectedMethodCount": 27,
+          "selectedMethods": [
+            "analyze_market_sentiment",
+            "get_btc_valuation_score",
+            "get_market_overview",
+            "scan_oi_divergence",
+            "get_oi_batch",
+            "analyze_hobby_market_regime",
+            "analyze_exchange_balance_pressure",
+            "get_supported_coins",
+            "get_supported_exchanges",
+            "get_exchange_pairs",
+            "get_futures_pairs_markets",
+            "get_funding_rates"
+          ],
+          "omittedSelectedMethodCount": 15
+        },
+        {
+          "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
+          "toolName": "Kalshi",
+          "priceUsd": "0.000000",
+          "selectedMethodCount": 24,
+          "selectedMethods": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "omittedSelectedMethodCount": 12
+        }
+      ]
+    },
+    "completeness": {
+      "evaluations": [],
+      "repairEvents": [],
+      "triggerNeedsDifferentTools": true,
+      "triggerMissingCapability": "No grounded capability path was established."
+    },
+    "executionProgramLineage": null,
+    "repairTracePreview": [],
+    "searchMethods": [],
+    "websiteSearchV2Seen": false,
+    "responsePreview": "I could not establish a reliable capability path for this request with the currently grounded tools.\n\nSuggested next steps:\n- Specify the exact market, outcome, venue, or time range you want analyzed.\n- Pin one or more tool IDs if you already know which tool should answer.\n- Rewrite the question into a narrower, single-intent request.",
+    "dataUrl": null
+  },
+  "result": {
+    "success": true,
+    "response": "I could not establish a reliable capability path for this request with the currently grounded tools.\n\nSuggested next steps:\n- Specify the exact market, outcome, venue, or time range you want analyzed.\n- Pin one or more tool IDs if you already know which tool should answer.\n- Rewrite the question into a narrower, single-intent request.",
+    "toolsUsed": [],
+    "cost": {
+      "totalCostUsd": "0.000000",
+      "toolCostUsd": "0.000000",
+      "modelCostUsd": "0.000000"
+    },
+    "durationMs": 46800,
+    "outcomeType": "capability_miss",
+    "capabilityMiss": {
+      "message": "I could not establish a reliable capability path for this request with the currently grounded tools.",
+      "missingCapabilities": [
+        "No grounded capability path was established."
+      ],
+      "suggestedRewrites": [
+        "Specify the exact market, outcome, venue, or time range you want analyzed.",
+        "Pin one or more tool IDs if you already know which tool should answer.",
+        "Rewrite the question into a narrower, single-intent request."
+      ],
+      "originalQuery": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?"
+    },
+    "developerTrace": {
+      "summary": "[OMITTED:CIRCULAR_REFERENCE]",
+      "timeline": [
+        {
+          "stepType": "orchestration",
+          "event": "capability-miss",
+          "status": "success",
+          "message": "I could not establish a reliable capability path for this request with the currently grounded tools.\n\nSuggested next steps:\n- Specify the exact market, outcome, venue, or time range you want analyzed.\n- Pin one or more tool IDs if you already know which tool should answer.\n- Rewrite the question into a narrower, single-intent request.",
+          "timestampMs": 1774631826241,
+          "metadata": {
+            "requestId": "4d5b3bc1-f9dd-4099-8ea2-e4fb6d575a14",
+            "durationMs": 46800,
+            "queryDepth": "deep"
+          }
+        },
+        {
+          "stepType": "orchestration",
+          "event": "capability-miss",
+          "status": "success",
+          "message": "I could not establish a reliable capability path for this request with the currently grounded tools.\n\nSuggested next steps:\n- Specify the exact market, outcome, venue, or time range you want analyzed.\n- Pin one or more tool IDs if you already know which tool should answer.\n- Rewrite the question into a narrower, single-intent request.",
+          "timestampMs": 1774631826241,
+          "metadata": {
+            "requestId": "4d5b3bc1-f9dd-4099-8ea2-e4fb6d575a14",
+            "durationMs": 46800,
+            "queryDepth": "deep"
+          }
+        }
+      ],
+      "requestId": "4d5b3bc1-f9dd-4099-8ea2-e4fb6d575a14",
+      "query": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?",
+      "source": "backend-runtime",
+      "diagnostics": {
+        "selection": "[OMITTED:CIRCULAR_REFERENCE]",
+        "planning": {
+          "initial": {
+            "plannerQuery": "What are Polymarket's implied odds on US or allied boots on the ground in Iran—which specific markets, resolution dates, and price levels matter, and how should I think about that for broader risk-off positioning?",
+            "scoutEvidenceAttached": true,
+            "scoutEvidencePromptBlock": null,
+            "allowedModules": []
+          }
+        },
+        "cost": {
+          "planningCostUsd": 0,
+          "initialExecutionCostUsd": 0,
+          "rediscoveryAdditionalCostUsd": 0,
+          "synthesisCostUsd": 0,
+          "totalModelCostUsd": 0,
+          "toolCostUsd": 0,
+          "totalChargedUsd": 0
+        },
+        "completeness": "[OMITTED:CIRCULAR_REFERENCE]",
+        "rediscovery": null,
+        "clarification": "[OMITTED:CIRCULAR_REFERENCE]",
+        "models": {
+          "overrideMode": "none",
+          "stages": [
+            {
+              "stageKey": "tool-selection",
+              "stageKind": "stage",
+              "stage": "tool-selection",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gemini-flash-model",
+              "requestedModelId": "gemini-flash-model",
+              "resolvedModelId": "gemini-flash-model",
+              "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+              "effectiveModelId": "gemini-flash-model",
+              "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.0327715,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]",
+                "reasoningTokens": "[REDACTED]",
+                "cachedInputTokens": "[REDACTED]"
+              }
+            },
+            {
+              "stageKey": "scout-llm-selection",
+              "stageKind": "stage",
+              "stage": "scout-llm-selection",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gpt-5.4-nano-model",
+              "requestedModelId": "gpt-5.4-nano-model",
+              "resolvedModelId": "gpt-5.4-nano-model",
+              "resolvedRuntimeModelId": "openai/gpt-5.4-nano",
+              "effectiveModelId": "gpt-5.4-nano-model",
+              "effectiveRuntimeModelId": "openai/gpt-5.4-nano",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.0020401,
+              "usage": null
+            },
+            {
+              "stageKey": "clarification-judge",
+              "stageKind": "stage",
+              "stage": "clarification-judge",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gpt-5.4-nano-model",
+              "requestedModelId": "gpt-5.4-nano-model",
+              "resolvedModelId": "gpt-5.4-nano-model",
+              "resolvedRuntimeModelId": "openai/gpt-5.4-nano",
+              "effectiveModelId": "gpt-5.4-nano-model",
+              "effectiveRuntimeModelId": "openai/gpt-5.4-nano",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.0037769499999999994,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]"
+              }
+            }
+          ]
+        }
+      },
+      "governance": {
+        "policyVersion": "2026-03-05.query-data-governance.v1",
+        "redactionCount": 13,
+        "omittedSensitiveFieldsCount": 0,
+        "exposure": {
+          "runtimeArtifacts": "internal_runtime_only",
+          "durableAudit": "internal_ops_only",
+          "developerTrace": "explicit_opt_in_redacted",
+          "publicDataUrl": "explicit_request_opt_in"
+        },
+        "retention": {
+          "runtimeTtlMs": 900000,
+          "durableAuditDays": 30,
+          "publicDataUrl": "until_deleted"
+        }
+      }
+    },
+    "orchestrationMetrics": "[OMITTED:CIRCULAR_REFERENCE]",
+    "querySession": {
+      "sessionId": "e9586686-78ca-4014-980a-219beba6d55b",
+      "attemptId": "9d8f051c-55da-44bf-a05b-e608cca3ba9d",
+      "parentAttemptId": null,
+      "rootAttemptId": "9d8f051c-55da-44bf-a05b-e608cca3ba9d",
+      "mode": "initial",
+      "origin": "initial_request",
+      "status": "aborted",
+      "checkpoint": {
+        "currentStage": "planning",
+        "latestCheckpointArtifactId": "4d5b3bc1-f9dd-4099-8ea2-e4fb6d575a14:10",
+        "canonicalDatasetId": null,
+        "executionProgramCurrentRevisionId": null
+      }
+    }
+  }
+}

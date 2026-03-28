@@ -1,0 +1,253 @@
+{
+  "outcomeType": "answer",
+  "durationMs": 337700,
+  "querySession": {
+    "sessionId": "432e8eda-e9b9-4096-bdcc-f42137c71edd",
+    "attemptId": "face42b7-cac8-4b74-932e-827c9e1c66ad",
+    "parentAttemptId": null,
+    "rootAttemptId": "face42b7-cac8-4b74-932e-827c9e1c66ad",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "completed",
+    "checkpoint": {
+      "currentStage": "execution",
+      "latestCheckpointArtifactId": "8d83ef15-2da9-43e1-9a62-649c6b0b8f5a:23",
+      "canonicalDatasetId": "8d83ef15-2da9-43e1-9a62-649c6b0b8f5a:canonical-execution",
+      "executionProgramCurrentRevisionId": "rev-2"
+    }
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "manual_selected_tools",
+    "firstPassSuccess": true,
+    "capabilityMissSignaled": false,
+    "rediscoveryExecuted": false
+  },
+  "selection": {
+    "selectedDepth": "deep",
+    "deepMode": "deep",
+    "debugScoutDeepMode": null,
+    "plannerReasoningStage": "full",
+    "scoutEnabled": false,
+    "preserveFastOneShot": false,
+    "candidateMethodCount": 45,
+    "scoutProbeStatus": "ready",
+    "scoutProbeAdequacy": "adequate",
+    "scoutProbeConfidence": 0.9885,
+    "scoutMetadataConfidence": 0.9538,
+    "scoutProbeQuerySafeCandidateCount": 38,
+    "scoutProbeRankedMethodCount": 38,
+    "scoutProbeAmbiguityPoolCount": 10,
+    "scoutProbeShortlistedMethodCount": 8,
+    "scoutProbeMissingCapability": null,
+    "scoutPrePlanProbeCalls": 0,
+    "scoutPrePlanProbeBudgetReasonCode": null,
+    "scoutChangedInitialPlan": false,
+    "scoutChangedPlannerReasoningStage": false,
+    "scoutInitialSelectedDepth": "deep",
+    "scoutInitialDeepMode": "deep",
+    "scoutInitialPlannerReasoningStage": "full",
+    "scoutInitialReasonCode": "explicit_override",
+    "scoutFinalReasonCode": "explicit_override",
+    "scoutEvidenceAttachedToPlanning": true,
+    "scoutLlmSelectionUsed": true,
+    "scoutLlmSelectionFallback": false,
+    "scoutLlmSelectionLatencyMs": 7629,
+    "selectedTools": [
+      {
+        "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+        "toolName": "Polymarket",
+        "priceUsd": "0.000000",
+        "selectedMethodCount": 45,
+        "selectedMethods": [
+          "analyze_market_liquidity",
+          "check_market_efficiency",
+          "analyze_whale_flow",
+          "analyze_top_holders",
+          "analyze_event_whale_breakdown",
+          "analyze_event_outcome_liquidity",
+          "find_correlated_markets",
+          "check_market_rules",
+          "find_arbitrage_opportunities",
+          "find_trading_opportunities",
+          "build_high_conviction_workflow",
+          "analyze_single_market_whales"
+        ],
+        "omittedSelectedMethodCount": 33
+      }
+    ]
+  },
+  "clarification": {
+    "orchestrationMode": "manual_selected_tools",
+    "rolloutStage": "enabled",
+    "shadowMode": false,
+    "policy": "auto",
+    "outcomeType": "clarification_required",
+    "triggered": true,
+    "optionCount": 3,
+    "candidateCount": 38,
+    "viableCandidateCount": 0,
+    "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+    "recommendedOptionReason": "Your request could map to either one specific Polymarket outcome with a single resolution date (easy to compute implied odds from that price) or multiple separate markets with different time cutoffs/definitions of “boots on the ground,” wh…",
+    "autoResolved": true,
+    "autoSelectEnabled": true,
+    "assumptionMade": {
+      "mode": "auto",
+      "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+      "label": "Search for Polymarket prediction markets by keyword or category",
+      "reason": "Your request could map to either one specific Polymarket outcome with a single resolution date (easy to compute implied odds from that price) or multiple separate markets with different time cutoffs/definitions of “boots on the ground,” wh…"
+    },
+    "missingCapability": null,
+    "decisionReasonCode": "semantic_scope_ambiguity",
+    "decisionSignals": [
+      "llm_judge"
+    ],
+    "evidenceSources": {
+      "usesMethodSchemas": true,
+      "usesProbeArgs": false,
+      "usesMethodMetadata": true,
+      "usesToolSelectionContext": false,
+      "usesLlmSelection": true
+    },
+    "comparedOptionIds": [],
+    "decisionStrategy": "llm_primary",
+    "judgeAttempted": true,
+    "judgeApplied": true,
+    "judgeOutcomeType": "clarification_required",
+    "judgeConfidence": 0.62,
+    "judgeReason": "Your request could map to either one specific Polymarket outcome with a single resolution date (easy to compute implied odds from that price) or multiple separate markets with different time cutoffs/definitions of “boots on the ground,” wh…",
+    "judgeError": null,
+    "validatorReason": null,
+    "fallbackReason": null,
+    "copyStrategy": "deterministic",
+    "rewriteAttempted": false,
+    "rewriteApplied": false,
+    "rewriteError": null,
+    "candidateSummaries": [
+      {
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+        "fitScore": 21.55,
+        "llmRelevanceScore": null,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [],
+        "inputFieldNames": [
+          "limit",
+          "title",
+          "keywords",
+          "polymarketSlug"
+        ],
+        "outputKeys": [
+          "hint",
+          "fetchedAt",
+          "searchedFor",
+          "sourcesTried",
+          "kalshiResults",
+          "comparisonNote"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "comparison",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "instant",
+        "executePriceUsd": null,
+        "queryEligible": true
+      },
+      {
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:get_event_outcomes",
+        "fitScore": 16.55,
+        "llmRelevanceScore": 0.6364,
+        "requiredParams": [
+          "slug"
+        ],
+        "unresolvedRequiredParams": [
+          "slug"
+        ],
+        "probeArgKeys": [],
+        "inputFieldNames": [
+          "slug",
+          "limit",
+          "sortBy",
+          "includeInactive"
+        ],
+        "outputKeys": [
+          "url",
+          "outcomes",
+          "sortedBy",
+          "eventSlug",
+          "fetchedAt",
+          "eventTitle"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "comparison",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "instant",
+        "executePriceUsd": "0.001",
+        "queryEligible": true
+      },
+      {
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:discover_trending_markets",
+        "fitScore": 15.55,
+        "llmRelevanceScore": null,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [],
+        "inputFieldNames": [
+          "limit",
+          "sortBy",
+          "category"
+        ],
+        "outputKeys": [
+          "topTags",
+          "fetchedAt",
+          "categories",
+          "totalActive",
+          "marketSummary",
+          "trendingMarkets"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "multiple",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "instant",
+        "executePriceUsd": null,
+        "queryEligible": true
+      }
+    ],
+    "modelTelemetry": {
+      "modelId": "gpt-5.4-nano-model",
+      "runtimeModelId": "openai/gpt-5.4-nano",
+      "judgeUsage": {
+        "inputTokens": "[REDACTED]",
+        "outputTokens": "[REDACTED]",
+        "totalTokens": "[REDACTED]",
+        "promptTokens": "[REDACTED]",
+        "completionTokens": "[REDACTED]"
+      },
+      "judgeActualCostUsd": 0.00410845,
+      "rewriteUsage": null,
+      "rewriteActualCostUsd": null,
+      "totalActualCostUsd": 0.00410845
+    }
+  },
+  "completeness": {
+    "evaluations": [
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "repairEvents": [
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "triggerNeedsDifferentTools": false,
+    "triggerMissingCapability": null
+  },
+  "responsePreview": "Based on current data, Polymarket reflects a significant expected escalation in direct ground involvement over the next 30 days. While the implied probability of US forces entering Iran by the end of March stands at **19.5%**, that probability surges to **62.5%** for the April 30th resolution date.\n\n### Key \"Boots on the Ground\" Markets\n\n| Market Question | Resolution Date | Implied Probability (Yes Price) |\n| :--- | :--- | :--- |\n| US forces enter Iran by March 31? | March 31, 2026 | 19.5% |\n| US forces enter Iran by April 30? | April 30, 2026 | 62.5% |\n| US forces enter Iran by December 31? | December 31, 2026 | 69.5% |\n| Israel ground operation in Iran confirmed by March 31? | March 31, 2026 | 4.5% |\n| Israel ground operation in Iran confirmed by April 30? | April 30, 2026 | 30.5% |\n| US announces military support of Kurds in Iran by March 31? | March 31, 2026 | 2.8% |\n\n### Critical Resolution Nuances\nWhen monitoring these levels for risk-off signals, pay close attention to the specific rules:\n*   **Definition of \"Entry\":** For the US markets, \"active military personnel\" must physically enter terrestrial territory. **Special Operations forces qualify**, but intelligence operatives (CIA) and drone strikes do not.\n*   **Allied Definitions:** The Israeli market specifically requires \"Israeli military ground forces\" and excludes Mossad/intelligence activity, airstrikes, or proxy actions.\n\n### Broader Risk-Off Positioning Framework\nThe current spread between March and April pro"
+}

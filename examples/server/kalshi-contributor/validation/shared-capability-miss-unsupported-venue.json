@@ -1,0 +1,129 @@
+{
+  "version": "ctx-contributor-search-validation/v1",
+  "generatedAt": "2026-03-28T12:00:00.000Z",
+  "caseId": "capability-miss-unsupported-venue",
+  "caseKind": "capability_miss",
+  "rawRequest": "Find a Bybit perpetual order-book market on Kalshi.",
+  "intents": [
+    {
+      "intentId": "bybit-perpetual-order-book",
+      "rawRequest": "Find a Bybit perpetual order-book market on Kalshi.",
+      "query": "bybit perpetual order book",
+      "clause": "unsupported venue and capability request"
+    }
+  ],
+  "candidates": [
+    {
+      "candidateId": "kalshi-weather-high-ny",
+      "title": "NYC high temperature above 47.5F?",
+      "description": "A valid Kalshi contract that cannot satisfy the requested venue or capability.",
+      "rawIds": {
+        "ticker": "KXHIGHNY-26MAR19-B47.5"
+      },
+      "rankFeatures": {
+        "exactPhraseMatch": false,
+        "semanticScore": 0.08
+      },
+      "provenance": [
+        {
+          "source": "search_markets",
+          "query": "bybit perpetual order book",
+          "rank": 1,
+          "fetchedAt": "2026-03-28T12:00:00.000Z",
+          "metadata": {
+            "fixture": true,
+            "venue": "kalshi",
+            "capability": "weather"
+          }
+        }
+      ],
+      "metadata": {
+        "venue": "kalshi",
+        "capability": "weather"
+      }
+    },
+    {
+      "candidateId": "kalshi-bitcoin-spot-range",
+      "title": "Will Bitcoin settle above $120k this week?",
+      "description": "A venue-matched but capability-mismatched contract.",
+      "rawIds": {
+        "ticker": "KXBTC-120K"
+      },
+      "rankFeatures": {
+        "exactPhraseMatch": false,
+        "semanticScore": 0.12
+      },
+      "provenance": [
+        {
+          "source": "search_markets",
+          "query": "bybit perpetual order book",
+          "rank": 2,
+          "fetchedAt": "2026-03-28T12:00:00.000Z",
+          "metadata": {
+            "fixture": true,
+            "venue": "kalshi",
+            "capability": "event_contract"
+          }
+        }
+      ],
+      "metadata": {
+        "venue": "kalshi",
+        "capability": "event_contract"
+      }
+    }
+  ],
+  "resolution": {
+    "outcome": "capability_miss",
+    "selectedCandidateId": null,
+    "shortlistCandidateIds": [],
+    "relatedCandidateIds": [],
+    "rejectedCandidateIds": [],
+    "confidence": "low",
+    "reason": "No contributor search judge was configured for this resolution.",
+    "degradedReasonCode": "no_viable_candidates"
+  },
+  "searchMetadata": {
+    "version": "ctx-contributor-search/v1",
+    "outcome": "capability_miss",
+    "confidence": "low",
+    "selectedCandidateId": null,
+    "shortlistCandidateIds": [],
+    "relatedCandidateIds": [],
+    "rejectedCandidateIds": [],
+    "candidateCount": 2,
+    "shortlistCount": 0,
+    "intentQueries": [
+      "bybit perpetual order book"
+    ],
+    "degraded": {
+      "reasonCode": "no_viable_candidates",
+      "message": "No contributor search judge was configured for this resolution."
+    },
+    "judge": {
+      "provider": "openrouter",
+      "model": "glm-turbo-model",
+      "timeoutMs": 1000,
+      "budgetUsd": "0.001500",
+      "disabled": false,
+      "applied": false,
+      "usage": null
+    },
+    "provenance": [
+      {
+        "source": "search_markets",
+        "query": "bybit perpetual order book",
+        "candidateCount": 2
+      }
+    ],
+    "trace": {
+      "usedDeterministicFallback": true,
+      "validatorStatus": "not_run",
+      "validatorReasonCode": null,
+      "validatorReason": null
+    }
+  },
+  "expectation": {
+    "outcome": "capability_miss",
+    "degradedReasonCode": "no_viable_candidates"
+  }
+}

@@ -1,0 +1,296 @@
+{
+  "outcomeType": "answer",
+  "durationMs": 327654,
+  "querySession": {
+    "sessionId": "1f9e3ebd-d3f2-4fbc-a3d6-c6a287add9f8",
+    "attemptId": "eeb8eb86-b952-4583-abc1-25a1d1fab833",
+    "parentAttemptId": null,
+    "rootAttemptId": "eeb8eb86-b952-4583-abc1-25a1d1fab833",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "completed",
+    "checkpoint": {
+      "currentStage": "execution",
+      "latestCheckpointArtifactId": "7ce86f8a-1523-4574-ba30-934cded14013:23",
+      "canonicalDatasetId": "7ce86f8a-1523-4574-ba30-934cded14013:canonical-execution",
+      "executionProgramCurrentRevisionId": "rev-1"
+    }
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "auto_discovery",
+    "firstPassSuccess": true,
+    "capabilityMissSignaled": false,
+    "rediscoveryExecuted": false
+  },
+  "traceSummary": {
+    "toolCalls": 14,
+    "retryCount": 0,
+    "selfHealCount": 0,
+    "fallbackCount": 0,
+    "failureCount": 0,
+    "recoveryCount": 0,
+    "completionChecks": 1,
+    "loopCount": 0
+  },
+  "toolsUsed": [
+    {
+      "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+      "name": "Polymarket",
+      "skillCalls": 1
+    },
+    {
+      "id": "d5ff9ac5-e91a-4766-b24e-982fdc14a755",
+      "name": "Exa Search",
+      "skillCalls": 1
+    }
+  ],
+  "selection": {
+    "selectedDepth": "deep",
+    "deepMode": "deep",
+    "debugScoutDeepMode": null,
+    "plannerReasoningStage": "full",
+    "scoutEnabled": false,
+    "preserveFastOneShot": false,
+    "candidateMethodCount": 54,
+    "scoutProbeStatus": "ready",
+    "scoutProbeAdequacy": "limited",
+    "scoutProbeConfidence": 0.9626,
+    "scoutMetadataConfidence": 0.8503,
+    "scoutProbeQuerySafeCandidateCount": 38,
+    "scoutProbeRankedMethodCount": 38,
+    "scoutProbeAmbiguityPoolCount": 10,
+    "scoutProbeShortlistedMethodCount": 10,
+    "scoutProbeMissingCapability": null,
+    "scoutPrePlanProbeCalls": 0,
+    "scoutPrePlanProbeBudgetReasonCode": null,
+    "scoutChangedInitialPlan": false,
+    "scoutChangedPlannerReasoningStage": false,
+    "scoutInitialSelectedDepth": "deep",
+    "scoutInitialDeepMode": "deep",
+    "scoutInitialPlannerReasoningStage": "full",
+    "scoutInitialReasonCode": "explicit_override",
+    "scoutFinalReasonCode": "explicit_override",
+    "scoutEvidenceAttachedToPlanning": true,
+    "scoutLlmSelectionUsed": true,
+    "scoutLlmSelectionFallback": false,
+    "scoutLlmSelectionLatencyMs": 10755,
+    "selectedTools": [
+      {
+        "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+        "toolName": "Polymarket",
+        "priceUsd": "0.000000",
+        "selectedMethodCount": 45,
+        "selectedMethods": [
+          "analyze_market_liquidity",
+          "check_market_efficiency",
+          "analyze_whale_flow",
+          "analyze_top_holders",
+          "analyze_event_whale_breakdown",
+          "analyze_event_outcome_liquidity",
+          "find_correlated_markets",
+          "check_market_rules",
+          "find_arbitrage_opportunities",
+          "find_trading_opportunities",
+          "build_high_conviction_workflow",
+          "analyze_single_market_whales"
+        ],
+        "omittedSelectedMethodCount": 33
+      },
+      {
+        "toolId": "d5ff9ac5-e91a-4766-b24e-982fdc14a755",
+        "toolName": "Exa Search",
+        "priceUsd": "0.000000",
+        "selectedMethodCount": 9,
+        "selectedMethods": [
+          "web_search_exa",
+          "web_search_advanced_exa",
+          "company_research_exa",
+          "crawling_exa",
+          "linkedin_search_exa",
+          "deep_researcher_start",
+          "deep_researcher_check",
+          "get_code_context_exa",
+          "deep_search_exa"
+        ],
+        "omittedSelectedMethodCount": 0
+      }
+    ]
+  },
+  "clarification": {
+    "orchestrationMode": "auto_discovery",
+    "rolloutStage": "enabled",
+    "shadowMode": false,
+    "policy": "auto",
+    "outcomeType": "clarification_required",
+    "triggered": true,
+    "optionCount": 3,
+    "candidateCount": 39,
+    "viableCandidateCount": 3,
+    "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+    "recommendedOptionReason": "The request depends on how Polymarket phrases the underlying ‘boots on ground’ condition and whether the user wants LIVE-only vs including RESOLVED; those are materially different interpretations that affect which markets/dates/outcome pri…",
+    "autoResolved": true,
+    "autoSelectEnabled": true,
+    "assumptionMade": {
+      "mode": "auto",
+      "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+      "label": "Search for Polymarket prediction markets by keyword or category",
+      "reason": "The request depends on how Polymarket phrases the underlying ‘boots on ground’ condition and whether the user wants LIVE-only vs including RESOLVED; those are materially different interpretations that affect which markets/dates/outcome pri…"
+    },
+    "missingCapability": null,
+    "decisionReasonCode": "semantic_scope_ambiguity",
+    "decisionSignals": [
+      "llm_judge"
+    ],
+    "evidenceSources": {
+      "usesMethodSchemas": true,
+      "usesProbeArgs": true,
+      "usesMethodMetadata": true,
+      "usesToolSelectionContext": true,
+      "usesLlmSelection": true
+    },
+    "comparedOptionIds": [
+      "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+      "294100e8-c648-4e5f-a254-95a14b56e398:search_markets",
+      "294100e8-c648-4e5f-a254-95a14b56e398:search_and_get_outcomes"
+    ],
+    "decisionStrategy": "llm_primary",
+    "judgeAttempted": true,
+    "judgeApplied": true,
+    "judgeOutcomeType": "clarification_required",
+    "judgeConfidence": 0.48,
+    "judgeReason": "The request depends on how Polymarket phrases the underlying ‘boots on ground’ condition and whether the user wants LIVE-only vs including RESOLVED; those are materially different interpretations that affect which markets/dates/outcome pri…",
+    "judgeError": null,
+    "validatorReason": null,
+    "fallbackReason": null,
+    "copyStrategy": "deterministic",
+    "rewriteAttempted": false,
+    "rewriteApplied": false,
+    "rewriteError": null,
+    "candidateSummaries": [
+      {
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:polymarket_crossref_kalshi",
+        "fitScore": 21.55,
+        "llmRelevanceScore": null,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [],
+        "inputFieldNames": [
+          "limit",
+          "title",
+          "keywords",
+          "polymarketSlug"
+        ],
+        "outputKeys": [
+          "hint",
+          "fetchedAt",
+          "searchedFor",
+          "sourcesTried",
+          "kalshiResults",
+          "comparisonNote"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "comparison",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "instant",
+        "executePriceUsd": null,
+        "queryEligible": true
+      },
+      {
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:get_event_outcomes",
+        "fitScore": 16.55,
+        "llmRelevanceScore": 0.82,
+        "requiredParams": [
+          "slug"
+        ],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [
+          "includeInactive",
+          "limit",
+          "slug",
+          "sortBy"
+        ],
+        "inputFieldNames": [
+          "slug",
+          "limit",
+          "sortBy",
+          "includeInactive"
+        ],
+        "outputKeys": [
+          "url",
+          "outcomes",
+          "sortedBy",
+          "eventSlug",
+          "fetchedAt",
+          "eventTitle"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "comparison",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "instant",
+        "executePriceUsd": "0.001",
+        "queryEligible": true
+      },
+      {
+        "optionId": "294100e8-c648-4e5f-a254-95a14b56e398:discover_trending_markets",
+        "fitScore": 15.55,
+        "llmRelevanceScore": null,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [],
+        "inputFieldNames": [
+          "limit",
+          "sortBy",
+          "category"
+        ],
+        "outputKeys": [
+          "topTags",
+          "fetchedAt",
+          "categories",
+          "totalActive",
+          "marketSummary",
+          "trendingMarkets"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "multiple",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "instant",
+        "executePriceUsd": null,
+        "queryEligible": true
+      }
+    ],
+    "modelTelemetry": {
+      "modelId": "gpt-5.4-nano-model",
+      "runtimeModelId": "openai/gpt-5.4-nano",
+      "judgeUsage": {
+        "inputTokens": "[REDACTED]",
+        "outputTokens": "[REDACTED]",
+        "totalTokens": "[REDACTED]",
+        "promptTokens": "[REDACTED]",
+        "completionTokens": "[REDACTED]"
+      },
+      "judgeActualCostUsd": 0.004440749999999999,
+      "rewriteUsage": null,
+      "rewriteActualCostUsd": null,
+      "totalActualCostUsd": 0.004440749999999999
+    }
+  },
+  "completeness": {
+    "evaluations": [
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "repairEvents": [],
+    "triggerNeedsDifferentTools": false,
+    "triggerMissingCapability": null
+  },
+  "responsePreview": "Based on recent Polymarket data, there is a sharp divergence in implied odds between immediate (March) and short-term (April) escalations regarding US military involvement in Iran. \n\n### **Direct Entry and Conflict Odds**\nThe primary market for tracking \"boots on the ground\" is **\"US forces enter Iran by..?\"**. While the probability remains lower for the current month, it climbs significantly for late spring.\n\n| Market Question | Resolution Date | Yes Price (Implied %) | Volume |\n| :--- | :--- | :--- | :--- |\n| **US forces enter Iran by..?** | March 31, 2026 | $0.185 (18.5%) | $25,141,840 |\n| **US forces enter Iran by..?** | April 30, 2026 | $0.625 (62.5%) | $4,915,922 |\n| **US forces enter Iran by..?** | Dec 31, 2026 | $0.695 (69.5%) | $4,837,988 |\n| **Will the US officially declare war?** | March 31, 2026 | $0.0025 (0.3%) | $3,940,677 |\n| **Will the US officially declare war?** | Dec 31, 2026 | $0.095 (9.5%) | $300,797 |\n\n### **Allied Striking Odds (Broader Escalation)**\nFor \"allied\" action, Polymarket tracks likely strikes by regional and Western partners by April 30, 2026.\n\n| Country | Action Against Iran by April 30 | Yes Price (Implied %) |\n| :--- | :--- | :--- |\n| **Saudi Arabia** | Will strike Iran | $0.255 (25.5%) |\n| **UAE** | Will strike Iran | $0.22 (22.0%) |\n| **United Kingdom** | Will strike Iran | $0.065 (6.5%) |\n| **Germany** | Will strike Iran | $0.042 (4.2%) |\n\n### **Risk-Off Positioning and Context**\nThe data suggests a \"high-tension, low-certainty\" environment for the immediate term, with a potential breaking point in April.\n\n*   **Near-Term Resilience vs. Monthly Cliff:** The 4.3% implied probability of a **\"US x Iran ceasefire by March 31\"** suggests the market has virtually no confidence in a diplomatic resolution this month. \n*   **Asset Sensitiv"
+}

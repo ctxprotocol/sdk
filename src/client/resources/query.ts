@@ -1,4 +1,7 @@
 import type {
+  QueryCapabilityMissPayload,
+  QueryClarificationPayload,
+  QueryClarificationPolicy,
   QueryOptions,
   QueryDeveloperTrace,
   QueryResult,
@@ -21,6 +24,74 @@ import type { ContextClient } from "../client.js";
  */
 export class Query {
   constructor(private client: ContextClient) {}
+
+  private normalizeResult(result: QueryResult): QueryResult {
+    const candidate = result as QueryResult & { outcomeType?: string };
+    if (
+      candidate.outcomeType === "clarification_required" &&
+      "clarification" in candidate &&
+      candidate.clarification
+    ) {
+      return candidate;
+    }
+    if (
+      candidate.outcomeType === "capability_miss" &&
+      "capabilityMiss" in candidate &&
+      candidate.capabilityMiss
+    ) {
+      return candidate;
+    }
+    return {
+      ...candidate,
+      outcomeType: "answer",
+    };
+  }
+
+  private buildPolicyErrorEvent(params: {
+    result: QueryResult;
+    clarificationPolicy?: QueryClarificationPolicy;
+  }):
+    | {
+        type: "error";
+        error: string;
+        code: string;
+        reasonCode: string;
+        outcomeType: "clarification_required" | "capability_miss";
+        clarification?: QueryClarificationPayload;
+        capabilityMiss?: QueryCapabilityMissPayload;
+        querySession?: QueryResult["querySession"];
+      }
+    | undefined {
+    if (params.clarificationPolicy !== "error") {
+      return;
+    }
+
+    if (params.result.outcomeType === "clarification_required") {
+      return {
+        type: "error",
+        error: params.result.response,
+        code: "clarification_required",
+        reasonCode: "clarification_required",
+        outcomeType: "clarification_required",
+        clarification: params.result.clarification,
+        querySession: params.result.querySession,
+      };
+    }
+
+    if (params.result.outcomeType === "capability_miss") {
+      return {
+        type: "error",
+        error: params.result.response,
+        code: "capability_miss",
+        reasonCode: "capability_miss",
+        outcomeType: "capability_miss",
+        capabilityMiss: params.result.capabilityMiss,
+        querySession: params.result.querySession,
+      };
+    }
+
+    return undefined;
+  }
 
   private buildSyntheticTraceFromRunResult(params: {
     toolsUsed: Array<{ id: string; name: string; skillCalls: number }>;
@@ -197,6 +268,7 @@ export class Query {
     let terminalError:
       | { error: string; code?: string; scope?: string; reasonCode?: string }
       | undefined;
+    let finalResult: QueryResult | undefined;
 
     for await (const event of this.stream(opts)) {
       if (event.type === "error") {
@@ -210,8 +282,12 @@ export class Query {
       }
 
       if (event.type === "done") {
-        return event.result;
+        finalResult = event.result;
       }
+    }
+
+    if (finalResult) {
+      return finalResult;
     }
 
     if (terminalError) {
@@ -272,7 +348,11 @@ export class Query {
       body: JSON.stringify({
         query: opts.query,
         tools: opts.tools,
-        modelId: opts.modelId,
+        resumeFrom: opts.resumeFrom,
+        forkFrom: opts.forkFrom,
+        clarificationPolicy: opts.clarificationPolicy,
+        answerModelId: opts.answerModelId,
+        responseShape: opts.responseShape,
         includeData: opts.includeData,
         includeDataUrl: opts.includeDataUrl,
         includeDeveloperTrace: opts.includeDeveloperTrace,
@@ -321,25 +401,35 @@ export class Query {
       }
 
       if (event.type === "done") {
+        const normalizedResult = this.normalizeResult(event.result);
         let mergedTrace = this.mergeDeveloperTrace(
           aggregatedTrace,
-          event.result.developerTrace
+          normalizedResult.developerTrace
         );
         if (!mergedTrace && opts.includeDeveloperTrace) {
           mergedTrace =
             statusTimeline.length > 0
               ? this.buildSyntheticTraceFromStreamStatus({
                   statusTimeline,
-                  toolsUsed: event.result.toolsUsed,
-                  durationMs: event.result.durationMs,
+                  toolsUsed: normalizedResult.toolsUsed,
+                  durationMs: normalizedResult.durationMs,
                 })
               : this.buildSyntheticTraceFromRunResult({
-                  toolsUsed: event.result.toolsUsed,
-                  durationMs: event.result.durationMs,
+                  toolsUsed: normalizedResult.toolsUsed,
+                  durationMs: normalizedResult.durationMs,
                 });
         }
         if (mergedTrace) {
-          event.result.developerTrace = mergedTrace;
+          normalizedResult.developerTrace = mergedTrace;
+        }
+        event.result = normalizedResult;
+
+        const policyErrorEvent = this.buildPolicyErrorEvent({
+          result: normalizedResult,
+          clarificationPolicy: opts.clarificationPolicy,
+        });
+        if (policyErrorEvent) {
+          return policyErrorEvent;
         }
       }
 

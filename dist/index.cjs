@@ -238,6 +238,47 @@ var Query = class {
   constructor(client) {
     this.client = client;
   }
+  normalizeResult(result) {
+    const candidate = result;
+    if (candidate.outcomeType === "clarification_required" && "clarification" in candidate && candidate.clarification) {
+      return candidate;
+    }
+    if (candidate.outcomeType === "capability_miss" && "capabilityMiss" in candidate && candidate.capabilityMiss) {
+      return candidate;
+    }
+    return {
+      ...candidate,
+      outcomeType: "answer"
+    };
+  }
+  buildPolicyErrorEvent(params) {
+    if (params.clarificationPolicy !== "error") {
+      return;
+    }
+    if (params.result.outcomeType === "clarification_required") {
+      return {
+        type: "error",
+        error: params.result.response,
+        code: "clarification_required",
+        reasonCode: "clarification_required",
+        outcomeType: "clarification_required",
+        clarification: params.result.clarification,
+        querySession: params.result.querySession
+      };
+    }
+    if (params.result.outcomeType === "capability_miss") {
+      return {
+        type: "error",
+        error: params.result.response,
+        code: "capability_miss",
+        reasonCode: "capability_miss",
+        outcomeType: "capability_miss",
+        capabilityMiss: params.result.capabilityMiss,
+        querySession: params.result.querySession
+      };
+    }
+    return void 0;
+  }
   buildSyntheticTraceFromRunResult(params) {
     const timeline = params.toolsUsed.map((tool, index) => ({
       stepType: "tool-call",
@@ -380,6 +421,7 @@ var Query = class {
   async run(options) {
     const opts = typeof options === "string" ? { query: options } : options;
     let terminalError;
+    let finalResult;
     for await (const event of this.stream(opts)) {
       if (event.type === "error") {
         terminalError = {
@@ -391,8 +433,11 @@ var Query = class {
         continue;
       }
       if (event.type === "done") {
-        return event.result;
+        finalResult = event.result;
       }
+    }
+    if (finalResult) {
+      return finalResult;
     }
     if (terminalError) {
       throw new ContextError(terminalError.error, terminalError.code);
@@ -445,7 +490,11 @@ var Query = class {
       body: JSON.stringify({
         query: opts.query,
         tools: opts.tools,
-        modelId: opts.modelId,
+        resumeFrom: opts.resumeFrom,
+        forkFrom: opts.forkFrom,
+        clarificationPolicy: opts.clarificationPolicy,
+        answerModelId: opts.answerModelId,
+        responseShape: opts.responseShape,
         includeData: opts.includeData,
         includeDataUrl: opts.includeDataUrl,
         includeDeveloperTrace: opts.includeDeveloperTrace,
@@ -483,22 +532,31 @@ var Query = class {
         return event;
       }
       if (event.type === "done") {
+        const normalizedResult = this.normalizeResult(event.result);
         let mergedTrace = this.mergeDeveloperTrace(
           aggregatedTrace,
-          event.result.developerTrace
+          normalizedResult.developerTrace
         );
         if (!mergedTrace && opts.includeDeveloperTrace) {
           mergedTrace = statusTimeline.length > 0 ? this.buildSyntheticTraceFromStreamStatus({
             statusTimeline,
-            toolsUsed: event.result.toolsUsed,
-            durationMs: event.result.durationMs
+            toolsUsed: normalizedResult.toolsUsed,
+            durationMs: normalizedResult.durationMs
           }) : this.buildSyntheticTraceFromRunResult({
-            toolsUsed: event.result.toolsUsed,
-            durationMs: event.result.durationMs
+            toolsUsed: normalizedResult.toolsUsed,
+            durationMs: normalizedResult.durationMs
           });
         }
         if (mergedTrace) {
-          event.result.developerTrace = mergedTrace;
+          normalizedResult.developerTrace = mergedTrace;
+        }
+        event.result = normalizedResult;
+        const policyErrorEvent = this.buildPolicyErrorEvent({
+          result: normalizedResult,
+          clarificationPolicy: opts.clarificationPolicy
+        });
+        if (policyErrorEvent) {
+          return policyErrorEvent;
         }
       }
       return event;

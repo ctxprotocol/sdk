@@ -4,6 +4,7 @@ import { ContextError } from "../types.js";
 import type {
   QueryResult,
   QueryStreamDeveloperTraceEvent,
+  QueryStreamErrorEvent,
   QueryStreamToolStatusEvent,
   QueryStreamTextDeltaEvent,
   QueryStreamDoneEvent,
@@ -12,19 +13,6 @@ import type {
 // ============================================================================
 // Helpers
 // ============================================================================
-
-/**
- * Mock a successful JSON response from fetch
- */
-function mockFetchJson(data: unknown, status = 200) {
-  return vi.fn().mockResolvedValue({
-    ok: status >= 200 && status < 300,
-    status,
-    statusText: status === 200 ? "OK" : "Error",
-    json: () => Promise.resolve(data),
-    headers: new Headers(),
-  });
-}
 
 /**
  * Mock a fetch response that returns an SSE stream body
@@ -109,6 +97,94 @@ const MOCK_SUCCESS_RESPONSE = {
     capabilityMissSignaled: false,
     rediscoveryExecuted: false,
   },
+  querySession: {
+    sessionId: "11111111-1111-4111-8111-111111111111",
+    attemptId: "22222222-2222-4222-8222-222222222222",
+    parentAttemptId: null,
+    rootAttemptId: "22222222-2222-4222-8222-222222222222",
+    mode: "initial" as const,
+    origin: "initial_request" as const,
+    status: "completed" as const,
+    checkpoint: {
+      currentStage: "synthesis",
+      latestCheckpointArtifactId: "artifact-1",
+      canonicalDatasetId: "dataset-1",
+      executionProgramCurrentRevisionId: "rev-1",
+    },
+  },
+};
+
+const MOCK_EVIDENCE_RESPONSE = {
+  ...MOCK_SUCCESS_RESPONSE,
+  responseShape: "evidence_only" as const,
+  response: "Structured evidence package with 2 evidence facts and medium confidence.",
+  summary: "BTC net exchange flow is negative across the last 24h sample.",
+  evidence: {
+    facts: [
+      {
+        id: "fact-1",
+        label: "Net BTC exchange flow",
+        path: "aggregateFlow.netFlowUsd",
+        relevanceScore: 0.93,
+        value: -12_500_000,
+      },
+    ],
+    sourceRefs: [
+      {
+        id: "source-1",
+        provider: "Coinglass",
+        dataset: "exchange flows",
+        observedAt: "2026-03-23T12:00:00.000Z",
+        publishedAt: null,
+        artifactRef: "https://example.com/data.json",
+        url: "https://example.com/data.json",
+        note: "Canonical execution artifact",
+      },
+    ],
+    assumptions: ["Used rolling 24h window."],
+    knownUnknowns: ["No venue-specific catalyst evidence was available."],
+    retrievalPlanReasonCodes: ["bounded_retrieval_first"],
+  },
+  artifacts: {
+    dataUrl: "https://example.com/data.json",
+    canonicalDataRef: {
+      datasetId: "dataset-1",
+      hash: "abc123",
+      bytes: 2048,
+      publicDataUrl: "https://example.com/data.json",
+    },
+    stageArtifactKinds: ["canonical-execution-data", "completeness-evaluation"],
+  },
+  view: {
+    type: "timeseries" as const,
+    label: "Timeseries",
+  },
+  freshness: {
+    asOf: "2026-03-23T12:00:00.000Z",
+    sourceTimestamps: ["2026-03-23T12:00:00.000Z"],
+    note: "Most recent evidence timestamp: 2026-03-23T12:00:00.000Z",
+  },
+  confidence: {
+    level: "medium" as const,
+    reason: "Grounded in canonical execution data with one unresolved gap.",
+    verifiedFactCount: 2,
+    inferredFactCount: 0,
+    gapCount: 1,
+    gapSignals: [
+      {
+        code: "missing_catalyst",
+        severity: "medium",
+        detail: "No catalyst evidence was retrieved.",
+      },
+    ],
+  },
+  usage: {
+    durationMs: 4200,
+    cost: MOCK_SUCCESS_RESPONSE.cost,
+    toolsUsed: MOCK_SUCCESS_RESPONSE.toolsUsed,
+    outcomeType: "answer" as const,
+    orchestrationMetrics: MOCK_SUCCESS_RESPONSE.orchestrationMetrics,
+  },
 };
 
 const MOCK_DEVELOPER_TRACE = {
@@ -133,6 +209,143 @@ const MOCK_DEVELOPER_TRACE = {
       message: "Retrying after transient provider timeout",
     },
   ],
+  diagnostics: {
+    selection: {
+      selectedDepth: "deep",
+      deepMode: "deep",
+      debugScoutDeepMode: "deep",
+      plannerReasoningStage: "focused",
+      scoutEnabled: false,
+      preserveFastOneShot: false,
+      candidateMethodCount: 12,
+      scoutProbeStatus: "ready",
+      scoutProbeAdequacy: "limited",
+      scoutProbeConfidence: 0.81,
+      scoutMetadataConfidence: 0.74,
+      scoutProbeQuerySafeCandidateCount: 8,
+      scoutProbeRankedMethodCount: 5,
+      scoutProbeAmbiguityPoolCount: 2,
+      scoutProbeShortlistedMethodCount: 2,
+      scoutProbeMissingCapability: null,
+      scoutPrePlanProbeCalls: 0,
+      scoutPrePlanProbeBudgetReasonCode: null,
+      scoutChangedInitialPlan: false,
+      scoutChangedPlannerReasoningStage: false,
+      scoutInitialSelectedDepth: "deep",
+      scoutInitialDeepMode: "deep",
+      scoutInitialPlannerReasoningStage: "focused",
+      scoutInitialReasonCode: "metadata_quality_deep",
+      scoutFinalReasonCode: "deep_lane_enabled",
+      scoutEvidenceAttachedToPlanning: true,
+      scoutLlmSelectionUsed: true,
+      scoutLlmSelectionFallback: false,
+      scoutLlmSelectionLatencyMs: 183,
+      selectedTools: [
+        {
+          toolId: "tool-uuid-1",
+          toolName: "Whale Tracker",
+          selectedMethodCount: 2,
+          selectedMethods: ["get_whales", "get_whale_summary"],
+          omittedSelectedMethodCount: 1,
+        },
+      ],
+    },
+    clarification: {
+      orchestrationMode: "query",
+      rolloutStage: "candidate",
+      shadowMode: false,
+      policy: "return",
+      outcomeType: "clarification_required",
+      triggered: true,
+      optionCount: 2,
+      candidateCount: 3,
+      viableCandidateCount: 2,
+      recommendedOptionId: "tool-1:analyze_event_outcome_liquidity",
+      recommendedOptionReason: "Event-level interpretation stays broadest.",
+      autoResolved: false,
+      autoSelectEnabled: false,
+      assumptionMade: null,
+      missingCapability: null,
+      decisionReasonCode: "semantic_scope_ambiguity",
+      decisionSignals: ["multi_outcome_market_scope"],
+      evidenceSources: {
+        usesMethodSchemas: true,
+        usesProbeArgs: true,
+        usesMethodMetadata: true,
+        usesToolSelectionContext: true,
+        usesLlmSelection: true,
+      },
+      comparedOptionIds: [
+        "tool-1:analyze_event_outcome_liquidity",
+        "tool-1:analyze_market_liquidity",
+      ],
+      decisionStrategy: "llm_primary",
+      judgeAttempted: true,
+      judgeApplied: true,
+      judgeOutcomeType: "clarification_required",
+      judgeConfidence: 0.84,
+      judgeReason: "Need the user to choose event-wide or single-outcome scope.",
+      judgeError: null,
+      validatorReason: null,
+      fallbackReason: null,
+      copyStrategy: "deterministic",
+      rewriteAttempted: false,
+      rewriteApplied: false,
+      rewriteError: null,
+      candidateSummaries: [],
+    },
+    completeness: {
+      evaluations: [
+        {
+          attempt: 2,
+          isComplete: false,
+          missingParts: ["Need one more venue-level confirmation."],
+          canRetryWithSameTools: true,
+          needsDifferentTools: false,
+          suggestedFix: "Patch the program to fetch one more market snapshot.",
+          missingCapability: null,
+          capabilityConstrained: false,
+          outcome: "retry_same_tools",
+          parseFailed: false,
+          rawDecisionText: "retry_same_tools",
+        },
+      ],
+      repairEvents: [
+        {
+          attempt: 2,
+          outcome: "attempted",
+          semanticRetryCount: 1,
+          maxSemanticRetries: 2,
+          strategy: null,
+          summary: null,
+          failReason: null,
+          requestedReplan: false,
+          hadSyntaxFix: false,
+          editCount: null,
+          skipReason: null,
+          boundedAnswerReason: null,
+          blockingDiagnostics: [],
+        },
+        {
+          attempt: 2,
+          outcome: "patched",
+          semanticRetryCount: 1,
+          maxSemanticRetries: 2,
+          strategy: "patch",
+          summary: "Added one extra market snapshot call.",
+          failReason: null,
+          requestedReplan: false,
+          hadSyntaxFix: false,
+          editCount: 1,
+          skipReason: null,
+          boundedAnswerReason: null,
+          blockingDiagnostics: [],
+        },
+      ],
+      triggerNeedsDifferentTools: false,
+      triggerMissingCapability: null,
+    },
+  },
 };
 
 const MOCK_SSE_EVENTS = [
@@ -191,6 +404,115 @@ const MOCK_SSE_TRACE_EVENTS = [
   })}`,
   "data: [DONE]",
 ];
+
+const MOCK_CLARIFICATION_RESULT = {
+  response:
+    "I found multiple plausible ways to interpret this request. Which direction should I take?",
+  toolsUsed: [],
+  cost: {
+    totalCostUsd: "0.000000",
+    toolCostUsd: "0.000000",
+    modelCostUsd: "0.000000",
+  },
+  durationMs: 1100,
+  outcomeType: "clarification_required" as const,
+  querySession: {
+    sessionId: "33333333-3333-4333-8333-333333333333",
+    attemptId: "44444444-4444-4444-8444-444444444444",
+    parentAttemptId: null,
+    rootAttemptId: "44444444-4444-4444-8444-444444444444",
+    mode: "initial" as const,
+    origin: "initial_request" as const,
+    status: "active" as const,
+    checkpoint: {
+      currentStage: "clarification",
+      latestCheckpointArtifactId: "artifact-clarification",
+      canonicalDatasetId: null,
+      executionProgramCurrentRevisionId: null,
+    },
+  },
+  clarification: {
+    question: "Which direction should I take?",
+    options: [
+      {
+        id: "tool-1:analyze_event_outcome_liquidity",
+        toolId: "tool-1",
+        toolName: "Polymarket",
+        methodName: "analyze_event_outcome_liquidity",
+        label: "Compare event-level liquidity",
+        description: "Polymarket -> analyze_event_outcome_liquidity",
+        fitScore: 9,
+        recommended: true,
+      },
+      {
+        id: "tool-1:analyze_market_liquidity",
+        toolId: "tool-1",
+        toolName: "Polymarket",
+        methodName: "analyze_market_liquidity",
+        label: "Analyze one specific outcome",
+        description: "Polymarket -> analyze_market_liquidity",
+        fitScore: 5,
+        recommended: false,
+      },
+    ],
+    allowFreeform: true,
+    recommendedOptionId: "tool-1:analyze_event_outcome_liquidity",
+    originalQuery: "Analyze liquidity for the World Cup winner market",
+  },
+};
+
+const MOCK_AUTO_SELECTED_RESULT = {
+  ...MOCK_SUCCESS_RESPONSE,
+  outcomeType: "answer" as const,
+  assumptionMade: {
+    mode: "auto" as const,
+    optionId: "tool-1:analyze_event_outcome_liquidity",
+    label: "Compare event-level liquidity",
+    reason:
+      "Recommended because Polymarket.analyze_event_outcome_liquidity ranked highest after comparing probe fit, method contract details, and grounded query eligibility.",
+  },
+};
+
+const MOCK_CAPABILITY_MISS_RESULT = {
+  response:
+    "I could not satisfy this request with grounded tool coverage. Try narrowing the venue or asking for supported market data instead.",
+  toolsUsed: [],
+  cost: {
+    totalCostUsd: "0.000000",
+    toolCostUsd: "0.000000",
+    modelCostUsd: "0.000000",
+  },
+  durationMs: 950,
+  outcomeType: "capability_miss" as const,
+  querySession: {
+    sessionId: "55555555-5555-4555-8555-555555555555",
+    attemptId: "66666666-6666-4666-8666-666666666666",
+    parentAttemptId: null,
+    rootAttemptId: "66666666-6666-4666-8666-666666666666",
+    mode: "initial" as const,
+    origin: "initial_request" as const,
+    status: "failed" as const,
+    checkpoint: {
+      currentStage: "capability-miss",
+      latestCheckpointArtifactId: "artifact-capability-miss",
+      canonicalDatasetId: null,
+      executionProgramCurrentRevisionId: null,
+    },
+  },
+  capabilityMiss: {
+    message:
+      "I could not satisfy this request with grounded tool coverage. Try narrowing the venue or asking for supported market data instead.",
+    missingCapabilities: [
+      "Need venue coverage that no selected tool exposes.",
+    ],
+    suggestedRewrites: [
+      "Ask for a supported venue instead of Bybit.",
+      "Request Polymarket market liquidity rather than perpetual order-book data.",
+      "Name the exact supported market you want analyzed.",
+    ],
+    originalQuery: "Using only Polymarket data, give me live order-book imbalance for BTC perpetuals on Bybit.",
+  },
+};
 
 // ============================================================================
 // Tests
@@ -265,24 +587,26 @@ describe("Query Resource", () => {
 
       const result = await client.query.run({
         query: "Analyze whale activity",
-        modelId: "glm-model",
+        answerModelId: "glm-model",
+        responseShape: "answer_with_evidence",
         includeData: true,
         includeDataUrl: true,
         includeDeveloperTrace: true,
         queryDepth: "auto",
-        debugScoutDeepMode: "deep-light",
+        debugScoutDeepMode: "deep",
       });
 
       const body = JSON.parse(mockFn.mock.calls[0][1].body);
       expect(body).toEqual({
         query: "Analyze whale activity",
         tools: undefined,
-        modelId: "glm-model",
+        answerModelId: "glm-model",
+        responseShape: "answer_with_evidence",
         includeData: true,
         includeDataUrl: true,
         includeDeveloperTrace: true,
         queryDepth: "auto",
-        debugScoutDeepMode: "deep-light",
+        debugScoutDeepMode: "deep",
         stream: true,
       });
       expect(result.data).toEqual({ summary: "tool output" });
@@ -290,6 +614,45 @@ describe("Query Resource", () => {
         "https://example.public.blob.vercel-storage.com/data.json",
       );
       expect(result.developerTrace?.summary?.retryCount).toBe(2);
+    });
+
+    it("forwards clarificationPolicy for run()", async () => {
+      const mockFn = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
+      globalThis.fetch = mockFn;
+
+      await client.query.run({
+        query: "Analyze whale activity",
+        clarificationPolicy: "auto",
+      });
+
+      const body = JSON.parse(mockFn.mock.calls[0][1].body);
+      expect(body.clarificationPolicy).toBe("auto");
+    });
+
+    it("forwards resumeFrom for run()", async () => {
+      const mockFn = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
+      globalThis.fetch = mockFn;
+
+      await client.query.run({
+        query: "Resume this query",
+        resumeFrom: {
+          sessionId: "77777777-7777-4777-8777-777777777777",
+          attemptId: "88888888-8888-4888-8888-888888888888",
+        },
+      });
+
+      const body = JSON.parse(mockFn.mock.calls[0][1].body);
+      expect(body.resumeFrom).toEqual({
+        sessionId: "77777777-7777-4777-8777-777777777777",
+        attemptId: "88888888-8888-4888-8888-888888888888",
+      });
+    });
+
+    it("includes querySession in run() results when present", async () => {
+      globalThis.fetch = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
+
+      const result = await client.query.run("test query");
+      expect(result.querySession).toEqual(MOCK_SUCCESS_RESPONSE.querySession);
     });
 
     it("includes developerTrace in run() result when present", async () => {
@@ -300,6 +663,16 @@ describe("Query Resource", () => {
 
       const result = await client.query.run("test query");
       expect(result.developerTrace).toEqual(MOCK_DEVELOPER_TRACE);
+      expect(
+        result.developerTrace?.diagnostics?.selection?.scoutProbeAmbiguityPoolCount
+      ).toBe(2);
+      expect(
+        result.developerTrace?.diagnostics?.completeness?.repairEvents?.[1]
+          ?.outcome
+      ).toBe("patched");
+      expect(
+        result.developerTrace?.diagnostics?.clarification?.decisionStrategy
+      ).toBe("llm_primary");
     });
 
     it("includes orchestrationMetrics in run() result when present", async () => {
@@ -408,6 +781,7 @@ describe("Query Resource", () => {
       const result: QueryResult = await client.query.run("test query");
 
       expect(result.response).toBe(MOCK_SUCCESS_RESPONSE.response);
+      expect(result.outcomeType).toBe("answer");
       expect(result.toolsUsed).toHaveLength(2);
       expect(result.toolsUsed[0]).toEqual({
         id: "tool-uuid-1",
@@ -423,6 +797,99 @@ describe("Query Resource", () => {
       expect(result.orchestrationMetrics).toEqual(
         MOCK_SUCCESS_RESPONSE.orchestrationMetrics,
       );
+    });
+
+    it("preserves structured evidence envelopes in QueryResult", async () => {
+      globalThis.fetch = mockFetchRunResult(MOCK_EVIDENCE_RESPONSE);
+
+      const result: QueryResult = await client.query.run({
+        query: "Where is BTC flowing today?",
+        responseShape: "evidence_only",
+      });
+
+      expect(result.outcomeType).toBe("answer");
+      if (result.outcomeType === "answer") {
+        expect(result.responseShape).toBe("evidence_only");
+        expect(result.summary).toBe(MOCK_EVIDENCE_RESPONSE.summary);
+        expect(result.evidence?.facts[0]?.label).toBe("Net BTC exchange flow");
+        expect(result.artifacts?.canonicalDataRef?.datasetId).toBe("dataset-1");
+        expect(result.usage?.outcomeType).toBe("answer");
+      }
+    });
+
+    it("returns structured clarification results by default", async () => {
+      globalThis.fetch = mockFetchRunResult(MOCK_CLARIFICATION_RESULT);
+
+      const result = await client.query.run({
+        query: "Analyze liquidity for the World Cup winner market",
+        clarificationPolicy: "return",
+      });
+
+      expect(result.outcomeType).toBe("clarification_required");
+      if (result.outcomeType === "clarification_required") {
+        expect(result.clarification.options).toHaveLength(2);
+        expect(result.clarification.recommendedOptionId).toBe(
+          "tool-1:analyze_event_outcome_liquidity",
+        );
+      }
+    });
+
+    it("returns structured capability misses by default", async () => {
+      globalThis.fetch = mockFetchRunResult(MOCK_CAPABILITY_MISS_RESULT);
+
+      const result = await client.query.run({
+        query:
+          "Using only Polymarket data, give me live order-book imbalance for BTC perpetuals on Bybit.",
+        clarificationPolicy: "return",
+      });
+
+      expect(result.outcomeType).toBe("capability_miss");
+      if (result.outcomeType === "capability_miss") {
+        expect(result.capabilityMiss.missingCapabilities).toEqual([
+          "Need venue coverage that no selected tool exposes.",
+        ]);
+        expect(result.capabilityMiss.suggestedRewrites).toHaveLength(3);
+      }
+    });
+
+    it("preserves server-side clarification auto-select assumptions", async () => {
+      globalThis.fetch = mockFetchRunResult(MOCK_AUTO_SELECTED_RESULT);
+
+      const result = await client.query.run({
+        query: "Analyze liquidity for the World Cup winner market",
+        clarificationPolicy: "auto",
+      });
+
+      expect(result.outcomeType).toBe("answer");
+      if (result.outcomeType === "answer") {
+        expect(result.assumptionMade?.mode).toBe("auto");
+        expect(result.assumptionMade?.optionId).toBe(
+          "tool-1:analyze_event_outcome_liquidity",
+        );
+      }
+    });
+
+    it("throws when clarificationPolicy is error and clarification is returned", async () => {
+      globalThis.fetch = mockFetchRunResult(MOCK_CLARIFICATION_RESULT);
+
+      await expect(
+        client.query.run({
+          query: "Analyze liquidity for the World Cup winner market",
+          clarificationPolicy: "error",
+        }),
+      ).rejects.toThrow(ContextError);
+    });
+
+    it("throws when clarificationPolicy is error and capability miss is returned", async () => {
+      globalThis.fetch = mockFetchRunResult(MOCK_CAPABILITY_MISS_RESULT);
+
+      await expect(
+        client.query.run({
+          query:
+            "Using only Polymarket data, give me live order-book imbalance for BTC perpetuals on Bybit.",
+          clarificationPolicy: "error",
+        }),
+      ).rejects.toThrow(ContextError);
     });
 
     it("throws ContextError on insufficient_allowance", async () => {
@@ -609,12 +1076,12 @@ describe("Query Resource", () => {
       const events = [];
       for await (const event of client.query.stream({
         query: "test",
-        modelId: "claude-sonnet-model",
+        answerModelId: "claude-sonnet-model",
         includeData: true,
         includeDataUrl: true,
         includeDeveloperTrace: true,
         queryDepth: "deep",
-        debugScoutDeepMode: "deep-heavy",
+        debugScoutDeepMode: "deep",
       })) {
         events.push(event);
       }
@@ -622,12 +1089,157 @@ describe("Query Resource", () => {
       const body = JSON.parse(
         (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
       );
-      expect(body.modelId).toBe("claude-sonnet-model");
+      expect(body.answerModelId).toBe("claude-sonnet-model");
       expect(body.includeData).toBe(true);
       expect(body.includeDataUrl).toBe(true);
       expect(body.includeDeveloperTrace).toBe(true);
       expect(body.queryDepth).toBe("deep");
-      expect(body.debugScoutDeepMode).toBe("deep-heavy");
+      expect(body.debugScoutDeepMode).toBe("deep");
+    });
+
+    it("forwards clarificationPolicy for stream()", async () => {
+      globalThis.fetch = mockFetchSSE([
+        buildDoneEvent(MOCK_SUCCESS_RESPONSE),
+        "data: [DONE]",
+      ]);
+
+      for await (const _event of client.query.stream({
+        query: "test",
+        clarificationPolicy: "auto",
+      })) {
+        // consume
+      }
+
+      const body = JSON.parse(
+        (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
+      );
+      expect(body.clarificationPolicy).toBe("auto");
+    });
+
+    it("forwards forkFrom for stream()", async () => {
+      globalThis.fetch = mockFetchSSE([
+        buildDoneEvent(MOCK_SUCCESS_RESPONSE),
+        "data: [DONE]",
+      ]);
+
+      for await (const _event of client.query.stream({
+        query: "fork this query",
+        forkFrom: {
+          sessionId: "99999999-9999-4999-8999-999999999999",
+          attemptId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          reason: "bounded_rediscovery",
+        },
+      })) {
+        // consume
+      }
+
+      const body = JSON.parse(
+        (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
+      );
+      expect(body.forkFrom).toEqual({
+        sessionId: "99999999-9999-4999-8999-999999999999",
+        attemptId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        reason: "bounded_rediscovery",
+      });
+    });
+
+    it("yields structured clarification done events by default", async () => {
+      globalThis.fetch = mockFetchSSE([
+        buildDoneEvent(MOCK_CLARIFICATION_RESULT),
+        "data: [DONE]",
+      ]);
+
+      const events = [];
+      for await (const event of client.query.stream({
+        query: "test",
+        clarificationPolicy: "return",
+      })) {
+        events.push(event);
+      }
+
+      const doneEvent = events.find((event) => event.type === "done") as
+        | QueryStreamDoneEvent
+        | undefined;
+      expect(doneEvent).toBeDefined();
+      expect(doneEvent?.result.outcomeType).toBe("clarification_required");
+    });
+
+    it("yields structured capability miss done events by default", async () => {
+      globalThis.fetch = mockFetchSSE([
+        buildDoneEvent(MOCK_CAPABILITY_MISS_RESULT),
+        "data: [DONE]",
+      ]);
+
+      const events = [];
+      for await (const event of client.query.stream({
+        query:
+          "Using only Polymarket data, give me live order-book imbalance for BTC perpetuals on Bybit.",
+        clarificationPolicy: "return",
+      })) {
+        events.push(event);
+      }
+
+      const doneEvent = events.find((event) => event.type === "done") as
+        | QueryStreamDoneEvent
+        | undefined;
+      expect(doneEvent).toBeDefined();
+      expect(doneEvent?.result.outcomeType).toBe("capability_miss");
+      if (doneEvent?.result.outcomeType === "capability_miss") {
+        expect(doneEvent.result.capabilityMiss.suggestedRewrites).toHaveLength(3);
+      }
+    });
+
+    it("turns structured clarification outcomes into error events when policy is error", async () => {
+      globalThis.fetch = mockFetchSSE([
+        buildDoneEvent(MOCK_CLARIFICATION_RESULT),
+        "data: [DONE]",
+      ]);
+
+      const events = [];
+      for await (const event of client.query.stream({
+        query: "test",
+        clarificationPolicy: "error",
+      })) {
+        events.push(event);
+      }
+
+      const errorEvent = events.find((event) => event.type === "error") as
+        | QueryStreamErrorEvent
+        | undefined;
+      expect(errorEvent).toBeDefined();
+      expect(errorEvent?.outcomeType).toBe("clarification_required");
+      expect(errorEvent?.clarification?.recommendedOptionId).toBe(
+        "tool-1:analyze_event_outcome_liquidity",
+      );
+      expect(errorEvent?.querySession).toEqual(MOCK_CLARIFICATION_RESULT.querySession);
+      expect(events.some((event) => event.type === "done")).toBe(false);
+    });
+
+    it("turns structured capability miss outcomes into error events when policy is error", async () => {
+      globalThis.fetch = mockFetchSSE([
+        buildDoneEvent(MOCK_CAPABILITY_MISS_RESULT),
+        "data: [DONE]",
+      ]);
+
+      const events = [];
+      for await (const event of client.query.stream({
+        query:
+          "Using only Polymarket data, give me live order-book imbalance for BTC perpetuals on Bybit.",
+        clarificationPolicy: "error",
+      })) {
+        events.push(event);
+      }
+
+      const errorEvent = events.find((event) => event.type === "error") as
+        | QueryStreamErrorEvent
+        | undefined;
+      expect(errorEvent).toBeDefined();
+      expect(errorEvent?.outcomeType).toBe("capability_miss");
+      expect(errorEvent?.capabilityMiss?.missingCapabilities).toEqual([
+        "Need venue coverage that no selected tool exposes.",
+      ]);
+      expect(errorEvent?.querySession).toEqual(MOCK_CAPABILITY_MISS_RESULT.querySession);
+      expect(events.some((event) => event.type === "done")).toBe(false);
     });
 
     it("handles developer-trace stream events and aggregates final trace", async () => {

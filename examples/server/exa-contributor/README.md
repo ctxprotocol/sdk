@@ -19,12 +19,13 @@ This server proxies requests to Exa's official hosted MCP at `https://mcp.exa.ai
 
 1. Receives MCP requests at `/mcp`
 2. Forwards them to Exa's hosted MCP with your API key
-3. Streams the response back
+3. Preserves the streamable MCP headers and normalizes search responses when Exa returns text-only payloads
 
 This approach:
 - Uses Exa's official HTTP streaming endpoint
 - Always up-to-date with Exa's latest features
 - Consistent `/mcp` endpoint like other MCP servers
+- Keeps legacy callers working while surfacing `web_search_advanced_exa` for richer structured search
 
 ## Setup
 
@@ -43,20 +44,28 @@ Server runs on `http://localhost:4004`.
 |----------|-------------|---------|
 | `PORT` | Server port | `4004` |
 | `EXA_API_KEY` | Your Exa API key (required) | - |
-| `EXA_TOOLS` | Comma-separated list of tools to enable | All tools |
+| `EXA_TOOLS` | Comma-separated list of tools to enable | `web_search_exa,web_search_advanced_exa,get_code_context_exa,crawling_exa` |
 
 ### Available Tools
 
 | Tool | Description |
 |------|-------------|
 | `web_search_exa` | Real-time web searches with optimized results |
+| `web_search_advanced_exa` | Structured search with richer filters and JSON-style results |
 | `get_code_context_exa` | Search code snippets, docs, and examples |
 | `deep_search_exa` | Deep web search with smart query expansion |
 | `crawling_exa` | Extract content from specific URLs |
 | `company_research_exa` | Comprehensive company research |
 | `linkedin_search_exa` | Search LinkedIn for companies and people |
+| `people_search_exa` | Current people-search surface when enabled upstream |
 | `deep_researcher_start` | Start a deep AI research task |
 | `deep_researcher_check` | Check research task status |
+
+### Notes
+
+- If a legacy config still includes `deep_search_exa`, the proxy also enables `web_search_advanced_exa`.
+- Rich `web_search_exa` calls that include filters like `category`, `freshness`, or `numResults` are upgraded to `web_search_advanced_exa` upstream.
+- Text-only Exa search results are normalized into `structuredContent.results` so downstream callers can consume them as data instead of raw prose.
 
 ## Endpoints
 
