@@ -296,6 +296,7 @@ const BULK_FIRST_TOOLS = new Set([
   "get_bets_by_probability",
   "discover_trending_markets",
   "get_top_markets",
+  "search_and_get_outcomes",
   "search_markets",
   "get_event_outcomes",
   "get_batch_orderbooks",
@@ -307,11 +308,34 @@ const TOOL_BATCH_HINTS: Record<string, string[]> = {
   analyze_event_whale_breakdown: ["discover_trending_markets"],
   analyze_event_outcome_liquidity: ["search_and_get_outcomes", "get_event_outcomes"],
   compare_event_outcome_quotes: ["search_and_get_outcomes", "get_spreads"],
+  search_and_get_outcomes: [
+    "compare_event_outcome_quotes",
+    "analyze_event_outcome_liquidity",
+  ],
+  search_markets: ["search_and_get_outcomes", "compare_event_outcome_quotes"],
   get_top_holders: ["search_markets", "discover_trending_markets"],
   find_trading_opportunities: ["find_moderate_probability_bets", "get_bets_by_probability"],
   get_event_outcomes: ["get_batch_orderbooks"],
   get_event_by_slug: ["get_batch_orderbooks"],
 };
+
+function resolveRateLimitNote(toolName: string, heavy: boolean): string {
+  if (toolName === "search_markets") {
+    return "Discovery/listing primitive. Prefer search_and_get_outcomes for one event plus current outcomes/prices, and compare_event_outcome_quotes for named same-event outcome comparisons.";
+  }
+
+  if (toolName === "search_and_get_outcomes") {
+    return "Composite query-first tool. Prefer this over chaining search_markets to get_event_outcomes when the user wants one resolved event with current outcomes/prices.";
+  }
+
+  if (toolName === "compare_event_outcome_quotes") {
+    return "Query-first comparison tool. Best for two or more named outcomes inside the same event after event resolution.";
+  }
+
+  return heavy
+    ? "Heavy Polymarket workflow. Call this tool alone and prefer narrower scopes first."
+    : "Prefer batch/snapshot tools before fan-out loops when possible.";
+}
 
 function buildToolRateLimitMetadata(toolName: string): ToolRateLimitMetadata {
   const heavy = HEAVY_ANALYSIS_TOOLS.has(toolName);
@@ -321,14 +345,16 @@ function buildToolRateLimitMetadata(toolName: string): ToolRateLimitMetadata {
     cooldownMs: heavy ? 1_500 : 500,
     supportsBulk: BULK_FIRST_TOOLS.has(toolName),
     recommendedBatchTools: TOOL_BATCH_HINTS[toolName] ?? [],
-    notes: heavy
-      ? "Heavy Polymarket workflow. Call this tool alone and prefer narrower scopes first."
-      : "Prefer batch/snapshot tools before fan-out loops when possible.",
+    notes: resolveRateLimitNote(toolName, heavy),
   };
 }
 
 function resolveToolSurface(toolName: string): ToolSurface {
-  return ANSWER_ONLY_TOOLS.has(toolName) ? "answer" : "both";
+  if (ANSWER_ONLY_TOOLS.has(toolName)) {
+    return "answer";
+  }
+
+  return "both";
 }
 
 function resolveExecutePricingMeta(
@@ -747,7 +773,7 @@ const POLYMARKET_SEARCH_JUDGE_API_KEY =
   normalizeOptionalString(process.env.OPENROUTER_API_KEY);
 const POLYMARKET_SEARCH_JUDGE_MODEL =
   normalizeOptionalString(process.env.POLYMARKET_SEARCH_JUDGE_MODEL) ??
-  "openai/gpt-4o-mini";
+  "google/gemini-3.1-flash-lite-preview";
 const POLYMARKET_SEARCH_JUDGE_DISABLE =
   process.env.POLYMARKET_DISABLE_SEARCH_JUDGE === "true";
 const POLYMARKET_SEARCH_JUDGE_TIMEOUT_MS = getConfiguredInteger(
@@ -2769,11 +2795,18 @@ NEXT STEPS after finding match:
 
   {
     name: "search_and_get_outcomes",
-    description: `🔍 SEARCH + GET OUTCOMES in ONE CALL. Finds a market and returns all its outcomes immediately.
+    description: `🔍 Query-first composite for resolving ONE Polymarket event and returning all current outcomes in ONE CALL.
 
 ✅ Uses Polymarket's website-backed /search-v2 discovery surface first, with local reranking and fallback search if needed.
 
 ⚠️ USE THIS INSTEAD OF: search_markets → get_event_outcomes (which requires chaining calls)
+
+✅ FIRST CHOICE when the user wants:
+- one event plus all current outcomes/prices
+- a full binary or multi-outcome market breakdown in one response
+- a clean follow-up input for compare_event_outcome_quotes or analyze_event_outcome_liquidity
+
+⚠️ DO NOT use this as the first choice for broad contract-family mapping across multiple related markets. For that, prefer search_markets.
 
 This tool:
 1. Searches for the most relevant market matching your query (using Polymarket's website-backed search surface)
@@ -2796,7 +2829,13 @@ OUTPUT: All outcomes with prices, ready for comparison`,
       properties: {
         query: {
           type: "string",
-          description: "Natural language search query (e.g., 'NBA Champion', 'Super Bowl Winner', 'Presidential Election')",
+          description:
+            "Single-event natural-language query. Examples: 'US forces enter Iran by', '2026 FIFA World Cup winner', 'Democratic presidential nominee'.",
+          examples: [
+            "US forces enter Iran by",
+            "2026 FIFA World Cup winner",
+            "Democratic presidential nominee",
+          ],
         },
         category: {
           type: "string",
@@ -2860,7 +2899,9 @@ This tool:
 3. Fetches current spread snapshots for those token IDs
 4. Returns a clean side-by-side comparison with token IDs and best quotes
 
-Best when the user names 2+ teams, candidates, or outcomes in the same event and wants current implied odds plus spread comparison without brittle multi-tool chaining.`,
+Best when the user names 2+ teams, candidates, or outcomes in the same event and wants current implied odds plus spread comparison without brittle multi-tool chaining.
+
+If the user wants the FULL event breakdown first, prefer search_and_get_outcomes.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -2868,15 +2909,22 @@ Best when the user names 2+ teams, candidates, or outcomes in the same event and
           type: "string",
           description:
             "Raw comparison request. Example: 'Compare Spain, Brazil, and France in the 2026 FIFA World Cup winner market.'",
+          examples: [
+            "Compare Spain, Brazil, and France in the 2026 FIFA World Cup winner market.",
+            "Show the implied odds and spreads for the top three candidates in this election market.",
+          ],
         },
         eventQuery: {
           type: "string",
-          description: "Natural-language event query if you want to pass the event separately (e.g. '2026 FIFA World Cup winner')",
+          description:
+            "Natural-language event query if you want to pass the event separately (e.g. '2026 FIFA World Cup winner')",
+          examples: ["2026 FIFA World Cup winner", "Democratic presidential nominee"],
         },
         outcomes: {
           type: "array",
           items: { type: "string" },
           description: "Specific outcome names to compare (e.g. ['Spain', 'Brazil', 'France'])",
+          examples: [["Spain", "Brazil", "France"], ["Trump", "Newsom", "Whitmer"]],
         },
         category: {
           type: "string",
@@ -2885,6 +2933,7 @@ Best when the user names 2+ teams, candidates, or outcomes in the same event and
         limit: {
           type: "number",
           description: "If outcomes are omitted, compare the top N outcomes by current price (default: 5, max: 10)",
+          default: 5,
         },
       },
       required: [],
@@ -3356,9 +3405,18 @@ Useful for identifying liquid vs illiquid markets. Wide spreads (>0.05) indicate
 
   {
     name: "search_markets",
-    description: `Search for Polymarket prediction markets by keyword or category.
+    description: `Discovery/listing primitive for Polymarket market families and candidate contracts.
 
 ✅ Uses Polymarket's website-backed /search-v2 discovery surface first, with local reranking and fallback search if needed.
+
+USE THIS when the user wants to:
+- see which live markets exist about a topic
+- map a family of related contracts before choosing one
+- get slugs, URLs, or conditionIds for follow-up tools
+
+⚠️ DO NOT use this as the first choice when:
+- the user wants ONE event plus all current outcomes/prices -> prefer search_and_get_outcomes
+- the user names 2+ outcomes in the SAME event -> prefer compare_event_outcome_quotes
 
 MARKET STATUS:
 - LIVE markets: Still trading, outcome not yet determined
@@ -3377,7 +3435,14 @@ Each result includes:
       properties: {
         query: {
           type: "string",
-          description: "Search query (searches title and description). Natural language queries work well (e.g., 'supreme court trump tariffs').",
+          description:
+            "Discovery query for candidate markets or market families. Examples: 'boots on the ground iran polymarket', 'us forces enter iran by', 'supreme court trump tariffs', 'world cup winner'. Use broader topic language here, not same-event outcome comparison prompts.",
+          examples: [
+            "boots on the ground iran polymarket",
+            "us forces enter iran by",
+            "supreme court trump tariffs",
+            "world cup winner",
+          ],
         },
         category: {
           type: "string",
@@ -3387,10 +3452,12 @@ Each result includes:
           type: "string",
           enum: ["live", "resolved", "all"],
           description: "Filter by market status: 'live' (default) = still trading/open for bets, 'resolved' = already finished/closed, 'all' = both",
+          default: "live",
         },
         limit: {
           type: "number",
           description: "Number of results (default: 20, max: 50)",
+          default: 20,
         },
       },
       required: [],
@@ -4527,25 +4594,46 @@ function createPolymarketOpenRouterJudge(): ContributorSearchJudge | null {
 
 async function resolvePolymarketContributorSearch(params: {
   rawRequest: string;
-  intentQuery: string;
   traceLabel: string;
   candidates: SearchCandidate[];
   instructions?: string;
+  intentQueries?: string[];
 }): Promise<ContributorSearchResolution | null> {
   if (params.candidates.length === 0) {
     return null;
   }
 
   const judge = createPolymarketOpenRouterJudge();
+  const derivedIntentQueries = buildMarketSearchQueries(params.rawRequest);
+  const defaultIntentQueries =
+    derivedIntentQueries.length > 1
+      ? derivedIntentQueries.slice(1)
+      : derivedIntentQueries;
+  const intentQueries =
+    (params.intentQueries && params.intentQueries.length > 0
+      ? params.intentQueries
+      : defaultIntentQueries
+    ).slice(0, 3);
+  const fallbackIntentQuery = normalizeMarketQueryText(params.rawRequest);
+
   return await resolveContributorSearch({
     rawRequest: params.rawRequest,
-    intents: [
-      createSearchIntent({
-        rawRequest: params.rawRequest,
-        query: params.intentQuery,
-        clause: "polymarket contributor search resolution",
-      }),
-    ],
+    intents:
+      intentQueries.length > 0
+        ? intentQueries.map((query, index) =>
+            createSearchIntent({
+              rawRequest: params.rawRequest,
+              query,
+              clause: `polymarket contributor search resolution ${index + 1}`,
+            })
+          )
+        : [
+            createSearchIntent({
+              rawRequest: params.rawRequest,
+              query: fallbackIntentQuery,
+              clause: "polymarket contributor search resolution",
+            }),
+          ],
     candidates: params.candidates,
     ...(judge ? { judge } : {}),
     contributorConfig: {
@@ -4943,6 +5031,19 @@ const DISCOVERY_QUERY_SYNONYM_GROUPS = [
   ["military", "operation", "operations", "strike", "strikes", "attack", "attacks", "offensive"],
   ["ceasefire", "truce", "deescalation", "peace"],
 ];
+const DISCOVERY_ACTION_HINT_TERMS = new Set(DISCOVERY_QUERY_SYNONYM_GROUPS.flat());
+const DISCOVERY_COALITION_HINT_TERMS = new Set([
+  "us",
+  "american",
+  "america",
+  "allied",
+  "allies",
+  "ally",
+  "britain",
+  "british",
+  "uk",
+  "coalition",
+]);
 const ACTIVE_EVENT_SEARCH_ORDER_PLAN = [
   {
     order: "volume24hr",
@@ -5051,6 +5152,7 @@ function buildMarketSearchQueries(value: string): string[] {
     return [];
   }
 
+  const context = buildStructuredMarketSearchContext({ query: trimmed });
   const variants: string[] = [];
   const seen = new Set<string>();
 
@@ -5075,28 +5177,66 @@ function buildMarketSearchQueries(value: string): string[] {
 
   addVariant(trimmed);
 
-  const namedTokens = extractNamedMarketQueryTokens(trimmed).filter((token) => {
-    const normalizedToken = normalizeMarketQueryText(token);
-    return !MARKET_QUERY_VARIANT_STOP_WORDS.has(normalizedToken);
-  });
-  const searchTokens = extractMarketQueryTokens(trimmed).filter(
+  const namedTokens = context.namedTokens.filter(
     (token) => !MARKET_QUERY_VARIANT_STOP_WORDS.has(token)
+  );
+  const searchTokens = context.scoringTokens.filter(
+    (token) => !MARKET_QUERY_VARIANT_STOP_WORDS.has(token)
+  );
+  const variantTokens = searchTokens.filter((token) => token !== "polymarket");
+  const coalitionTokens = variantTokens.filter((token) =>
+    DISCOVERY_COALITION_HINT_TERMS.has(token)
+  );
+  const actionTokens = variantTokens.filter((token) =>
+    DISCOVERY_ACTION_HINT_TERMS.has(token)
+  );
+  const placeTokens = Array.from(
+    new Set(
+      [...namedTokens, ...variantTokens.filter((token) => POLITICS_DISCOVERY_HINT_TERMS.includes(token))].filter(
+        (token) => !DISCOVERY_COALITION_HINT_TERMS.has(token)
+      )
+    )
   );
 
   if (namedTokens.length > 0) {
     addVariant(namedTokens.slice(0, 3).join(" "));
-    addVariant(namedTokens.at(-1));
   }
 
-  if (searchTokens.length > 0) {
-    addVariant(searchTokens.slice(0, 3).join(" "));
-    addVariant(searchTokens.at(-1));
-    if (searchTokens.length > 1) {
-      addVariant(`${searchTokens[0]} ${searchTokens.at(-1)}`);
+  if (variantTokens.length > 0) {
+    addVariant(variantTokens.slice(0, 4).join(" "));
+  }
+
+  const primaryPlace = placeTokens[0];
+  const preferredActionTokens = ["enter", "invade"].filter((token) =>
+    actionTokens.includes(token)
+  );
+  const actionSlice =
+    preferredActionTokens.length > 0
+      ? preferredActionTokens
+      : actionTokens.slice(0, 2);
+
+  if (normalized.includes("boots on the ground") && primaryPlace) {
+    addVariant(`boots on the ground ${primaryPlace}`);
+    if (normalized.includes("polymarket")) {
+      addVariant(`boots on the ground ${primaryPlace} polymarket`);
     }
   }
 
-  return variants.slice(0, 5);
+  if (primaryPlace && actionSlice.length > 0) {
+    if (coalitionTokens.length > 0) {
+      addVariant(
+        [...coalitionTokens.slice(0, 2), ...actionSlice.slice(0, 2), primaryPlace].join(" ")
+      );
+    }
+
+    addVariant([...actionSlice.slice(0, 2), primaryPlace].join(" "));
+  }
+
+  if (variantTokens.length > 1) {
+    addVariant(`${variantTokens[0]} ${variantTokens.at(-1)}`);
+  }
+
+  return variants.slice(0, 6);
 }
 
 async function searchGammaEventsByVariants(params: {
@@ -5182,46 +5322,49 @@ async function searchGammaEventsByWebsiteSearch(params: {
     6
   );
   const eventsByKey = new Map<string, GammaEvent>();
+  const queries = buildMarketSearchQueries(trimmedQuery);
 
-  for (let page = 1; page <= maxPages; page += 1) {
-    let endpoint =
-      `/search-v2?q=${encodeURIComponent(trimmedQuery)}` +
-      `&page=${page}` +
-      `&limit_per_type=${cappedLimitPerType}` +
-      "&type=events&optimized=false";
-    if (params.eventsStatus) {
-      endpoint += `&events_status=${params.eventsStatus}`;
-    }
-
-    const searchData = (await fetchJsonWithPolicy({
-      upstream: "gamma",
-      endpoint,
-      timeoutMs: 8_000,
-      init: {
-        headers: {
-          Accept: "application/json",
-          "User-Agent": "Polymarket-MCP-Server/1.0",
-        },
-      },
-    })) as {
-      events?: GammaEvent[];
-      pagination?: {
-        hasMore?: boolean;
-        totalResults?: number;
-      };
-    };
-
-    const events = Array.isArray(searchData.events) ? searchData.events : [];
-    for (const event of events) {
-      const key = event.slug || event.id || event.title || "";
-      if (key.length === 0 || eventsByKey.has(key)) {
-        continue;
+  for (const searchQuery of queries) {
+    for (let page = 1; page <= maxPages; page += 1) {
+      let endpoint =
+        `/search-v2?q=${encodeURIComponent(searchQuery)}` +
+        `&page=${page}` +
+        `&limit_per_type=${cappedLimitPerType}` +
+        "&type=events&optimized=false";
+      if (params.eventsStatus) {
+        endpoint += `&events_status=${params.eventsStatus}`;
       }
-      eventsByKey.set(key, event);
-    }
 
-    if (searchData.pagination?.hasMore !== true || events.length < cappedLimitPerType) {
-      break;
+      const searchData = (await fetchJsonWithPolicy({
+        upstream: "gamma",
+        endpoint,
+        timeoutMs: 8_000,
+        init: {
+          headers: {
+            Accept: "application/json",
+            "User-Agent": "Polymarket-MCP-Server/1.0",
+          },
+        },
+      })) as {
+        events?: GammaEvent[];
+        pagination?: {
+          hasMore?: boolean;
+          totalResults?: number;
+        };
+      };
+
+      const events = Array.isArray(searchData.events) ? searchData.events : [];
+      for (const event of events) {
+        const key = event.slug || event.id || event.title || "";
+        if (key.length === 0 || eventsByKey.has(key)) {
+          continue;
+        }
+        eventsByKey.set(key, event);
+      }
+
+      if (searchData.pagination?.hasMore !== true || events.length < cappedLimitPerType) {
+        break;
+      }
     }
   }
 
@@ -11965,7 +12108,6 @@ async function handleSearchAndGetOutcomes(
 
     const searchResolution = await resolvePolymarketContributorSearch({
       rawRequest: query,
-      intentQuery: normalizedQuery,
       traceLabel: "polymarket:search_and_get_outcomes",
       instructions:
         "Pick the exact Polymarket market family the user is asking about before returning all its outcomes. Prefer direct ground-entry or invasion contracts over broader ceasefire, strike, or macro-risk proxies when the query is specifically about boots on the ground.",
@@ -13068,7 +13210,6 @@ async function handleSearchMarkets(
     query && results.length > 0
       ? await resolvePolymarketContributorSearch({
           rawRequest: query,
-          intentQuery: normalizedQuery,
           traceLabel: "polymarket:search_markets",
           candidates: results.map((result, index) =>
             buildPolymarketResultSearchCandidate({

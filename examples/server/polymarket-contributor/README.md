@@ -18,12 +18,10 @@ This server includes tools that require user portfolio data. These tools declare
 
 ### Tools NOT Requiring Context (Public Data)
 
-All other tools use public Polymarket API data:
-- `get_events`, `get_event_by_slug`, `search_markets`
-- `get_orderbook`, `get_prices`, `get_price_history`
-- `analyze_market_liquidity`, `check_market_efficiency`
-- `analyze_whale_flow`, `find_correlated_markets`
-- `find_arbitrage_opportunities`, `discover_trending_markets`
+All other tools use public Polymarket API data, including:
+- Query-first discovery/comparison tools such as `search_and_get_outcomes`, `compare_event_outcome_quotes`, and `search_markets`
+- Raw primitives such as `get_events`, `get_event_by_slug`, `get_event_outcomes`, `get_orderbook`, `get_prices`, and `get_price_history`
+- Higher-level analytics such as `analyze_market_liquidity`, `check_market_efficiency`, `analyze_whale_flow`, `find_correlated_markets`, `find_arbitrage_opportunities`, and `discover_trending_markets`
 
 ### How Context Requirements Work
 
@@ -79,10 +77,13 @@ interface PolymarketContext {
 
 ## Features
 
-### Tier 1: Intelligence Tools (High Value)
+### Tier 1: Query-First Intelligence Tools (High Value)
 
 | Tool | Question Answered |
 |------|------------------|
+| `search_and_get_outcomes` | "Resolve one event and show all current outcomes/prices in one call" |
+| `compare_event_outcome_quotes` | "Compare Spain, Brazil, and France in one market with live spreads" |
+| `search_markets` | "Which live Polymarket contracts exist about this topic?" |
 | `analyze_market_liquidity` | "Can I exit this position? What's the whale cost?" |
 | `analyze_event_outcome_liquidity` | "For a multi-outcome event, which outcomes are actually liquid enough to exit?" |
 | `check_market_efficiency` | "Is this market efficiently priced? What's the vig?" |
@@ -98,14 +99,16 @@ interface PolymarketContext {
 |------|---------|
 | `get_events` | List markets with filters |
 | `get_event_by_slug` | Get specific event details |
+| `get_event_outcomes` | Get all outcomes once you already know the event slug |
 | `get_orderbook` | Raw L2 orderbook data |
 | `get_prices` | Current token prices |
 | `get_price_history` | Historical price data |
-| `search_markets` | Search by keyword/category |
 | `get_user_activity` | Wallet activity feed (trades/redeems/etc.) |
 | `get_user_total_value` | Total marked-to-market user value |
 | `get_market_open_interest` | Open interest by conditionId |
 | `get_event_live_volume` | Live event-level volume breakdown |
+
+These raw primitives remain available to broad Query flows too, but planners usually do best when a query-first resolver has already identified the right slug, conditionId, or tokenId.
 
 ## Quick Start
 
@@ -140,6 +143,56 @@ POLYMARKET_ALLOW_UNAUTH_MCP=true
 This is intended for short-lived debugging on isolated environments. Keep it `false` in production.
 
 ## Tool Examples
+
+### Search And Get Outcomes In One Call
+
+```json
+{
+  "name": "search_and_get_outcomes",
+  "arguments": {
+    "query": "US forces enter Iran by"
+  }
+}
+```
+
+**Behavior notes:**
+- Best first choice when the user wants one resolved event plus all current outcomes/prices
+- Uses the helper-backed website search flow before fetching the winning event
+- Better Query entry point than chaining `search_markets` -> `get_event_outcomes`
+
+### Compare Specific Outcomes Inside One Event
+
+```json
+{
+  "name": "compare_event_outcome_quotes",
+  "arguments": {
+    "query": "Compare Spain, Brazil, and France in the 2026 FIFA World Cup winner market."
+  }
+}
+```
+
+**Behavior notes:**
+- Best when the user names two or more outcomes in the same event
+- Returns matched names, current implied odds, and live bid/ask spreads
+- Avoids brittle multi-step token lookup plus spread fetching
+
+### Search Candidate Market Families
+
+```json
+{
+  "name": "search_markets",
+  "arguments": {
+    "query": "boots on the ground iran polymarket",
+    "status": "live",
+    "limit": 10
+  }
+}
+```
+
+**Behavior notes:**
+- Use this to map related contracts and gather slugs/URLs/conditionIds
+- Not the best first tool when the user clearly wants one event plus all outcomes
+- Prefer `compare_event_outcome_quotes` for same-event named outcome comparisons
 
 ### Analyze Market Liquidity (Whale Cost)
 
@@ -298,6 +351,13 @@ Default budgets (override via env vars):
 - `POLYMARKET_DATA_RATE_LIMIT=120`
 - `POLYMARKET_RETRY_ATTEMPTS=3`
 - `POLYMARKET_RETRY_BASE_BACKOFF_MS=450`
+
+Search-helper defaults (contributor BYOK via OpenRouter unless overridden):
+
+- `POLYMARKET_SEARCH_JUDGE_MODEL=google/gemini-3.1-flash-lite-preview`
+- `POLYMARKET_SEARCH_JUDGE_TIMEOUT_MS=4500`
+- `POLYMARKET_SEARCH_JUDGE_MAX_SHORTLIST=6`
+- `POLYMARKET_SEARCH_JUDGE_BUDGET_USD=0.010`
 
 In addition, tools publish `_meta.rateLimit` hints in `listTools()` so agent planners can choose safer call patterns (batch-first, sequential heavy calls).
 
