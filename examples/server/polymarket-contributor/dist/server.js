@@ -121,13 +121,13 @@ const UPSTREAM_TIMEOUT_MS = {
     heavy: 45_000,
 };
 const UPSTREAM_GET_CACHE_TTL_MS = {
-    gamma: 12_000,
+    gamma: 6_000,
     clob: 5_000,
-    data: 12_000,
+    data: 6_000,
 };
-const DISCOVER_TRENDING_CACHE_TTL_MS = getConfiguredInteger("POLYMARKET_DISCOVER_TRENDING_CACHE_TTL_MS", 45_000, 0, 300_000);
+const DISCOVER_TRENDING_CACHE_TTL_MS = getConfiguredInteger("POLYMARKET_DISCOVER_TRENDING_CACHE_TTL_MS", 15_000, 0, 300_000);
 const DISCOVER_TRENDING_STALE_IF_ERROR_TTL_MS = getConfiguredInteger("POLYMARKET_DISCOVER_TRENDING_STALE_IF_ERROR_TTL_MS", 180_000, 0, 900_000);
-const ACTIVE_EVENT_SEARCH_INDEX_CACHE_TTL_MS = getConfiguredInteger("POLYMARKET_ACTIVE_EVENT_SEARCH_INDEX_CACHE_TTL_MS", 60_000, 1_000, 900_000);
+const ACTIVE_EVENT_SEARCH_INDEX_CACHE_TTL_MS = getConfiguredInteger("POLYMARKET_ACTIVE_EVENT_SEARCH_INDEX_CACHE_TTL_MS", 20_000, 1_000, 900_000);
 const ACTIVE_EVENT_SEARCH_INDEX_STALE_IF_ERROR_TTL_MS = getConfiguredInteger("POLYMARKET_ACTIVE_EVENT_SEARCH_INDEX_STALE_IF_ERROR_TTL_MS", 300_000, 0, 3_600_000);
 const ACTIVE_EVENT_SEARCH_INDEX_PAGE_SIZE = getConfiguredInteger("POLYMARKET_ACTIVE_EVENT_SEARCH_INDEX_PAGE_SIZE", 100, 20, 200);
 const ACTIVE_EVENT_SEARCH_INDEX_MAX_PAGES = getConfiguredInteger("POLYMARKET_ACTIVE_EVENT_SEARCH_INDEX_MAX_PAGES", 2, 1, 6);
@@ -5199,10 +5199,6 @@ function pickTopIndexedCandidatesByEvent(candidates, limit) {
     }
     return [...bestByEvent.values()];
 }
-function getPrimaryOutcomePrice(market) {
-    const prices = parseJsonArray(market.outcomePrices);
-    return prices[0] ?? null;
-}
 function scoreMarketCandidate(params) {
     const { queryText, queryTokens, queryTargets, candidateText } = params;
     const normalizedCandidateText = normalizeMarketQueryText(candidateText);
@@ -5729,6 +5725,174 @@ async function fetchClobQuoteSnapshots(tokenIds, timeoutMs) {
     }
     return snapshots;
 }
+function parseFiniteNumber(value) {
+    if (typeof value === "number") {
+        return Number.isFinite(value) ? value : null;
+    }
+    if (typeof value === "string" && value.trim().length > 0) {
+        const numeric = Number(value);
+        return Number.isFinite(numeric) ? numeric : null;
+    }
+    return null;
+}
+function extractGammaMarketTokenIds(market) {
+    if (Array.isArray(market.tokens)) {
+        return market.tokens
+            .map((token) => token.token_id)
+            .filter((tokenId) => typeof tokenId === "string" && tokenId.trim().length > 0);
+    }
+    return parseJsonArray(market.clobTokenIds).filter((tokenId) => typeof tokenId === "string" && tokenId.trim().length > 0);
+}
+function extractGammaYesTokenId(market) {
+    return extractGammaMarketTokenIds(market)[0] || "";
+}
+function extractGammaNoTokenId(market) {
+    return extractGammaMarketTokenIds(market)[1] || "";
+}
+function parseGammaOutcomePriceAtIndex(market, index) {
+    const prices = parseJsonArray(market.outcomePrices);
+    if (index < 0 || index >= prices.length) {
+        return null;
+    }
+    return parseFiniteNumber(prices[index]);
+}
+function resolveQuoteMidpoint(quote) {
+    if (!quote) {
+        return null;
+    }
+    return Number.isFinite(quote.midpoint) && quote.midpoint > 0
+        ? quote.midpoint
+        : null;
+}
+function isTradableGammaMarket(market) {
+    if (market.active === false || market.closed === true) {
+        return false;
+    }
+    if (market.acceptingOrders === false) {
+        return false;
+    }
+    return (market.umaResolutionStatus || "").toLowerCase() !== "resolved";
+}
+async function fetchClobQuoteSnapshotsBatched(tokenIds, timeoutMs) {
+    const uniqueTokenIds = Array.from(new Set(tokenIds.filter((tokenId) => typeof tokenId === "string" && tokenId.trim().length > 0)));
+    if (uniqueTokenIds.length === 0) {
+        return {};
+    }
+    const batchSize = 120;
+    const snapshots = {};
+    for (let offset = 0; offset < uniqueTokenIds.length; offset += batchSize) {
+        const batch = uniqueTokenIds.slice(offset, offset + batchSize);
+        try {
+            Object.assign(snapshots, await fetchClobQuoteSnapshots(batch, timeoutMs));
+        }
+        catch (error) {
+            console.warn("[polymarket-clob] quote batch failed", {
+                batchSize: batch.length,
+                error: error instanceof Error
+                    ? error.message.slice(0, 160)
+                    : String(error).slice(0, 160),
+            });
+        }
+    }
+    return snapshots;
+}
+async function fetchGammaMarketQuoteSnapshots(markets, options) {
+    const tokenIds = [];
+    for (const market of markets) {
+        const marketTokenIds = extractGammaMarketTokenIds(market);
+        if (marketTokenIds[0]) {
+            tokenIds.push(marketTokenIds[0]);
+        }
+        if (options?.includeNoTokens && marketTokenIds[1]) {
+            tokenIds.push(marketTokenIds[1]);
+        }
+    }
+    return fetchClobQuoteSnapshotsBatched(tokenIds, options?.timeoutMs);
+}
+function resolveCurrentBinaryPrices(market, quoteSnapshots) {
+    const yesTokenId = extractGammaYesTokenId(market);
+    const noTokenId = extractGammaNoTokenId(market);
+    const liveYesPrice = resolveQuoteMidpoint(yesTokenId ? quoteSnapshots?.[yesTokenId] : undefined);
+    const liveNoPrice = resolveQuoteMidpoint(noTokenId ? quoteSnapshots?.[noTokenId] : undefined);
+    if (liveYesPrice !== null && liveNoPrice !== null) {
+        return {
+            yesPrice: liveYesPrice,
+            noPrice: liveNoPrice,
+            usedLiveQuotes: true,
+        };
+    }
+    const gammaYesPrice = parseGammaOutcomePriceAtIndex(market, 0);
+    const gammaNoPrice = parseGammaOutcomePriceAtIndex(market, 1);
+    if (gammaYesPrice !== null && gammaNoPrice !== null) {
+        return {
+            yesPrice: gammaYesPrice,
+            noPrice: gammaNoPrice,
+            usedLiveQuotes: false,
+        };
+    }
+    return {
+        yesPrice: liveYesPrice ?? gammaYesPrice,
+        noPrice: liveNoPrice ?? gammaNoPrice,
+        usedLiveQuotes: liveYesPrice !== null || liveNoPrice !== null,
+    };
+}
+function resolveCurrentOutcomePrice(market, quoteSnapshots) {
+    const yesTokenId = extractGammaYesTokenId(market);
+    const livePrice = resolveQuoteMidpoint(yesTokenId ? quoteSnapshots?.[yesTokenId] : undefined);
+    if (livePrice !== null) {
+        return livePrice;
+    }
+    return parseGammaOutcomePriceAtIndex(market, 0) ?? 0;
+}
+function isPlaceholderOutcomeName(name, volume) {
+    if (/^Person [A-Z]{1,2}$/i.test(name)) {
+        return true;
+    }
+    return (name === "Other" || name === "Unknown") && volume <= 0;
+}
+async function buildEventOutcomeRows(params) {
+    const markets = Array.isArray(params.event.markets) ? params.event.markets : [];
+    const rawOutcomeCount = markets.length;
+    const nonPlaceholderMarkets = markets.filter((market) => {
+        const volume = parseFiniteNumber(market.volume) ?? 0;
+        const name = market.groupItemTitle || market.question || "Unknown";
+        return !isPlaceholderOutcomeName(name, volume);
+    });
+    const filteredPlaceholderCount = rawOutcomeCount - nonPlaceholderMarkets.length;
+    let visibleMarkets = nonPlaceholderMarkets;
+    let filteredInactiveCount = 0;
+    if (!params.includeInactive) {
+        const activeMarkets = nonPlaceholderMarkets.filter(isTradableGammaMarket);
+        if (activeMarkets.length > 0) {
+            filteredInactiveCount = nonPlaceholderMarkets.length - activeMarkets.length;
+            visibleMarkets = activeMarkets;
+        }
+    }
+    const quoteSnapshots = await fetchGammaMarketQuoteSnapshots(visibleMarkets, {
+        timeoutMs: visibleMarkets.length > 60 ? "heavy" : "default",
+    });
+    const outcomes = visibleMarkets.map((market) => {
+        const volume = parseFiniteNumber(market.volume) ?? 0;
+        const price = resolveCurrentOutcomePrice(market, quoteSnapshots);
+        const tokenId = extractGammaYesTokenId(market);
+        return {
+            rank: 0,
+            name: market.groupItemTitle || market.question || "Unknown",
+            volume,
+            price,
+            pricePercent: `${(price * 100).toFixed(1)}%`,
+            conditionId: market.conditionId || "",
+            tokenId,
+            active: isTradableGammaMarket(market),
+        };
+    });
+    return {
+        outcomes,
+        rawOutcomeCount,
+        filteredPlaceholderCount,
+        filteredInactiveCount,
+    };
+}
 // ============================================================================
 // TIER 1: INTELLIGENCE TOOL HANDLERS
 // ============================================================================
@@ -5786,8 +5950,7 @@ async function handleAnalyzeMarketLiquidity(args) {
                     const m = gammaMarkets[0];
                     fallbackMarketTitle = m.question || m.title || fallbackMarketTitle;
                     fallbackLiquidity = Number(m.liquidity || 0);
-                    const gammaPrices = parseJsonArray(m.outcomePrices);
-                    const yesPrice = parseFloat(gammaPrices[0]) || 0;
+                    const yesPrice = resolveCurrentOutcomePrice(m);
                     if (yesPrice > 0 && yesPrice < 1) {
                         fallbackPrice = yesPrice;
                     }
@@ -6054,55 +6217,32 @@ async function handleCheckMarketEfficiency(args) {
     }
     // Get prices for all outcome tokens
     const outcomes = [];
-    // For binary markets - parse clobTokenIds and outcomePrices (may be JSON strings)
-    const tokenIds = parseJsonArray(market.clobTokenIds);
-    const gammaPrices = parseJsonArray(market.outcomePrices);
-    const yesToken = tokenIds[0];
-    const noToken = tokenIds[1];
+    // For binary markets, prefer live CLOB midpoints and fall back to Gamma.
+    const yesToken = extractGammaYesTokenId(market);
+    const noToken = extractGammaNoTokenId(market);
     if (yesToken && noToken) {
-        let yesPrice = 0;
-        let noPrice = 0;
-        let usedClobPrices = false;
-        // Try to get live midpoint prices from the CLOB quote API.
+        let quoteSnapshots = {};
         try {
-            const quoteSnapshots = await fetchClobQuoteSnapshots([yesToken, noToken]);
-            const yesQuote = quoteSnapshots[yesToken];
-            const noQuote = quoteSnapshots[noToken];
-            if (yesQuote && yesQuote.midpoint > 0) {
-                yesPrice = yesQuote.midpoint;
-                usedClobPrices = true;
-            }
-            if (noQuote && noQuote.midpoint > 0) {
-                noPrice = noQuote.midpoint;
-            }
+            quoteSnapshots = await fetchClobQuoteSnapshots([yesToken, noToken]);
         }
         catch {
             // CLOB API error - will fall back to Gamma prices
         }
-        // Fall back to Gamma API prices if CLOB failed or returned invalid data
-        if (!usedClobPrices || isNaN(yesPrice) || isNaN(noPrice) || (yesPrice === 0 && noPrice === 0)) {
-            if (gammaPrices.length >= 2) {
-                yesPrice = parseFloat(gammaPrices[0]) || 0;
-                noPrice = parseFloat(gammaPrices[1]) || 0;
-            }
-        }
-        // Final fallback to 0.5 if still no valid prices
-        if (isNaN(yesPrice) || yesPrice === 0)
-            yesPrice = 0.5;
-        if (isNaN(noPrice) || noPrice === 0)
-            noPrice = 0.5;
+        const { yesPrice, noPrice } = resolveCurrentBinaryPrices(market, quoteSnapshots);
+        const safeYesPrice = yesPrice ?? 0.5;
+        const safeNoPrice = noPrice ?? 0.5;
         outcomes.push({
             name: "YES",
             tokenId: yesToken,
-            price: yesPrice,
-            impliedProbability: Number(yesPrice.toFixed(4)),
-            impliedProbabilityPercent: Number((yesPrice * 100).toFixed(2)),
+            price: safeYesPrice,
+            impliedProbability: Number(safeYesPrice.toFixed(4)),
+            impliedProbabilityPercent: Number((safeYesPrice * 100).toFixed(2)),
         }, {
             name: "NO",
             tokenId: noToken,
-            price: noPrice,
-            impliedProbability: Number(noPrice.toFixed(4)),
-            impliedProbabilityPercent: Number((noPrice * 100).toFixed(2)),
+            price: safeNoPrice,
+            impliedProbability: Number(safeNoPrice.toFixed(4)),
+            impliedProbabilityPercent: Number((safeNoPrice * 100).toFixed(2)),
         });
     }
     // Calculate market efficiency
@@ -6619,19 +6759,19 @@ async function handleFindArbitrageOpportunities(args) {
         if (!event.markets || event.markets.length === 0)
             continue;
         for (const market of event.markets) {
-            const tokenIds = parseJsonArray(market.clobTokenIds);
-            const gammaPrices = parseJsonArray(market.outcomePrices);
-            if (tokenIds.length < 2 || gammaPrices.length < 2)
+            const yesTokenId = extractGammaYesTokenId(market);
+            const noTokenId = extractGammaNoTokenId(market);
+            if (!yesTokenId || !noTokenId)
                 continue;
-            const yesPrice = parseFloat(gammaPrices[0]) || 0;
+            const { yesPrice } = resolveCurrentBinaryPrices(market);
             // Skip settled markets
-            if (yesPrice <= 0 || yesPrice >= 1)
+            if (yesPrice === null || yesPrice <= 0 || yesPrice >= 1)
                 continue;
             marketsToCheck.push({
                 event,
                 market,
-                yesTokenId: tokenIds[0],
-                noTokenId: tokenIds[1],
+                yesTokenId,
+                noTokenId,
             });
         }
     }
@@ -6829,6 +6969,10 @@ async function handleFindTradingOpportunities(args) {
         }
     });
     const allEvents = Array.from(eventMap.values());
+    const tradingOpportunityQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(allEvents.flatMap((event) => event.markets || []), {
+        includeNoTokens: true,
+        timeoutMs: "heavy",
+    });
     const opportunities = [];
     // Track all markets for suggestions when empty
     const allMarketsData = [];
@@ -6844,18 +6988,18 @@ async function handleFindTradingOpportunities(args) {
         const eventVolume24h = Number(event.volume24hr || 0);
         const eventSlug = event.slug || "";
         for (const market of event.markets) {
-            const gammaPrices = parseJsonArray(market.outcomePrices);
-            if (gammaPrices.length < 2)
-                continue;
-            const yesPrice = parseFloat(gammaPrices[0]) || 0;
-            const noPrice = parseFloat(gammaPrices[1]) || 0;
+            const { yesPrice, noPrice } = resolveCurrentBinaryPrices(market, tradingOpportunityQuoteSnapshots);
             const marketLiquidity = Number(market.liquidity || eventLiquidity || 0);
             const marketVolume24h = Number(market.volume24hr || eventVolume24h || 0);
             const marketTitle = market.question || event.title || "Unknown";
             if (marketLiquidity < minLiquidity)
                 continue;
-            if (yesPrice <= 0 || noPrice <= 0)
+            if (yesPrice === null ||
+                noPrice === null ||
+                yesPrice <= 0 ||
+                noPrice <= 0) {
                 continue;
+            }
             marketsScanned++;
             // Track all markets for suggestions
             allMarketsData.push({
@@ -8467,6 +8611,9 @@ async function handleFindModerateProbabilityBets(args) {
         endpoint += `&category=${category}`;
     }
     const events = (await fetchGamma(endpoint, 10000));
+    const moderateBetQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(events.flatMap((event) => event.markets || []), {
+        timeoutMs: "heavy",
+    });
     const opportunities = [];
     let marketsScanned = 0;
     for (const event of events) {
@@ -8478,10 +8625,7 @@ async function handleFindModerateProbabilityBets(args) {
         const eventCategory = event.category || "other";
         const eventEndDate = event.endDate || event.endDateIso || "";
         for (const market of event.markets) {
-            const gammaPrices = parseJsonArray(market.outcomePrices);
-            if (gammaPrices.length < 2)
-                continue;
-            const yesPrice = parseFloat(gammaPrices[0]) || 0;
+            const yesPrice = resolveCurrentOutcomePrice(market, moderateBetQuoteSnapshots);
             const marketLiquidity = Number(market.liquidity || eventLiquidity || 0);
             const marketVolume24h = Number(market.volume24hr || eventVolume24h || 0);
             const marketTitle = market.question || event.title || "Unknown";
@@ -8578,6 +8722,10 @@ async function handleGetBetsByProbability(args) {
         endpoint += `&category=${category}`;
     }
     const events = (await fetchGamma(endpoint, 10000));
+    const probabilityBetQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(events.flatMap((event) => event.markets || []), {
+        includeNoTokens: true,
+        timeoutMs: "heavy",
+    });
     const bets = [];
     for (const event of events) {
         if (!event.markets || event.markets.length === 0)
@@ -8587,18 +8735,14 @@ async function handleGetBetsByProbability(args) {
         const eventSlug = event.slug || "";
         const eventCategory = event.category || "other";
         for (const market of event.markets) {
-            const gammaPrices = parseJsonArray(market.outcomePrices);
-            if (gammaPrices.length < 2)
-                continue;
-            const yesPrice = parseFloat(gammaPrices[0]) || 0;
-            const noPrice = parseFloat(gammaPrices[1]) || 0;
+            const { yesPrice, noPrice } = resolveCurrentBinaryPrices(market, probabilityBetQuoteSnapshots);
             const marketLiquidity = Number(market.liquidity || eventLiquidity || 0);
             const marketVolume24h = Number(market.volume24hr || eventVolume24h || 0);
             const marketTitle = market.question || event.title || "Unknown";
             // Minimum liquidity check
             if (marketLiquidity < 5000)
                 continue;
-            if (yesPrice <= 0)
+            if (yesPrice === null || noPrice === null || yesPrice <= 0)
                 continue;
             // Check YES side
             if (yesPrice >= range.min && yesPrice <= range.max) {
@@ -8735,6 +8879,9 @@ async function handleDiscoverTrendingMarkets(args) {
                 });
             });
         }
+        const trendingQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(events.flatMap((event) => (event.markets?.[0] ? [event.markets[0]] : [])), {
+            timeoutMs: "heavy",
+        });
         const trendingMarkets = [];
         const categoryBreakdown = {};
         const tagBreakdown = {};
@@ -8748,14 +8895,11 @@ async function handleDiscoverTrendingMarkets(args) {
             // Skip low activity markets or near-resolved markets (for meaningful whale analysis)
             if (volume24h < 1000 || liquidity < 1000)
                 continue;
+            const yesPrice = resolveCurrentOutcomePrice(market, trendingQuoteSnapshots);
             // Skip near-resolved markets (>95% or <5%) - no meaningful position building
-            const gammaPricesPrecheck = parseJsonArray(market.outcomePrices);
-            const yesPricePrecheck = parseFloat(gammaPricesPrecheck[0]) || 0.5;
-            if (yesPricePrecheck > 0.95 || yesPricePrecheck < 0.05) {
+            if (yesPrice > 0.95 || yesPrice < 0.05) {
                 continue; // Near-resolved, skip for whale analysis
             }
-            const gammaPrices = parseJsonArray(market.outcomePrices);
-            const yesPrice = parseFloat(gammaPrices[0]) || 0.5;
             // Calculate trend score (weighted)
             let trendScore = 0;
             // Volume weight
@@ -9068,6 +9212,9 @@ async function handleGetTopMarkets(args) {
         if (events.length === 0) {
             break;
         }
+        const topMarketQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(events.flatMap((event) => event.markets || []), {
+            timeoutMs: "heavy",
+        });
         for (const event of events) {
             if (categoryMatchers.length > 0) {
                 const normalizedCategory = (event.category || "").toLowerCase();
@@ -9107,8 +9254,7 @@ async function handleGetTopMarkets(args) {
                     continue;
                 }
             }
-            const gammaPrices = parseJsonArray(market.outcomePrices);
-            const yesPrice = parseFloat(gammaPrices[0]) || 0.5;
+            const yesPrice = resolveCurrentOutcomePrice(market, topMarketQuoteSnapshots);
             if (!includeNearResolved && (yesPrice > 0.95 || yesPrice < 0.05)) {
                 continue;
             }
@@ -9937,15 +10083,17 @@ async function handleGetEventBySlug(args) {
     if (!event) {
         return errorResult(`Event not found: ${slug}`);
     }
+    const marketQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(event.markets || [], {
+        includeNoTokens: true,
+        timeoutMs: "heavy",
+    });
     // Transform markets to include tokens array in the expected format
     const markets = (event.markets || []).map((m) => {
-        // Parse clobTokenIds and outcomePrices (API returns as JSON strings)
-        const tokenIds = parseJsonArray(m.clobTokenIds);
-        const prices = parseJsonArray(m.outcomePrices);
-        const yesTokenId = tokenIds[0];
-        const noTokenId = tokenIds[1];
-        const yesPrice = prices[0] ? parseFloat(prices[0]) : 0.5;
-        const noPrice = prices[1] ? parseFloat(prices[1]) : 0.5;
+        const yesTokenId = extractGammaYesTokenId(m);
+        const noTokenId = extractGammaNoTokenId(m);
+        const { yesPrice, noPrice } = resolveCurrentBinaryPrices(m, marketQuoteSnapshots);
+        const safeYesPrice = yesPrice ?? 0.5;
+        const safeNoPrice = noPrice ?? 0.5;
         // Build tokens array - use token_id (not id) to match schema
         const tokens = [];
         if (yesTokenId) {
@@ -9957,7 +10105,7 @@ async function handleGetEventBySlug(args) {
         return {
             conditionId: m.conditionId,
             question: m.question,
-            outcomePrices: prices,
+            outcomePrices: [safeYesPrice, safeNoPrice],
             volume: Number(m.volume || 0),
             liquidity: Number(m.liquidity || 0),
             tokens,
@@ -10187,48 +10335,20 @@ async function handleSearchAndGetOutcomes(args) {
         if (markets.length === 0) {
             return errorResult(`Event "${event.title}" has no markets/outcomes.`);
         }
-        // Parse outcomes
-        const outcomes = markets
-            .filter(m => {
-            // Filter out placeholder entries
-            const name = m.groupItemTitle || m.question || "";
-            const isPlaceholder = /^(Person|Team|Option)\s*[A-Z]{1,2}$/i.test(name);
-            const hasVolume = Number(m.volume || 0) > 0 || Number(m.liquidity || 0) > 0;
-            return !isPlaceholder && (hasVolume || markets.length <= 5);
-        })
-            .map(m => {
-            // Get YES price
-            let price = 0.5;
-            if (m.outcomePrices) {
-                try {
-                    const pricesStr = typeof m.outcomePrices === "string"
-                        ? m.outcomePrices
-                        : JSON.stringify(m.outcomePrices);
-                    const prices = JSON.parse(pricesStr);
-                    if (Array.isArray(prices) && prices.length > 0) {
-                        price = Number(prices[0]) || 0.5;
-                    }
-                }
-                catch {
-                    // Use default
-                }
-            }
-            const tokenIds = Array.isArray(m.tokens)
-                ? m.tokens
-                    .map((token) => token.token_id)
-                    .filter((tokenId) => typeof tokenId === "string" && tokenId.trim().length > 0)
-                : parseJsonArray(m.clobTokenIds);
-            const tokenId = tokenIds[0] || "";
-            return {
-                name: m.groupItemTitle || m.question || "Unknown",
-                price: Number(price.toFixed(4)),
-                pricePercent: `${(price * 100).toFixed(1)}%`,
-                volume: Number(m.volume || 0),
-                conditionId: m.conditionId || "",
-                tokenId,
-            };
-        })
-            .sort((a, b) => b.price - a.price); // Sort by price (probability) descending
+        const { outcomes: eventOutcomeRows } = await buildEventOutcomeRows({
+            event,
+            includeInactive: false,
+        });
+        const outcomes = eventOutcomeRows
+            .map((row) => ({
+            name: row.name,
+            price: Number(row.price.toFixed(4)),
+            pricePercent: `${(row.price * 100).toFixed(1)}%`,
+            volume: row.volume,
+            conditionId: row.conditionId,
+            tokenId: row.tokenId,
+        }))
+            .sort((a, b) => b.price - a.price);
         const totalVolume = outcomes.reduce((sum, o) => sum + o.volume, 0);
         const responseData = {
             eventTitle: event.title || slug,
@@ -10274,55 +10394,13 @@ async function handleGetEventOutcomes(args) {
     if (!event.markets || event.markets.length === 0) {
         return errorResult(`Event has no markets/outcomes: ${slug}`);
     }
-    // Extract and transform all outcomes
-    let outcomes = event.markets.map((m) => {
-        const prices = parseJsonArray(m.outcomePrices);
-        const yesPrice = prices[0] ? parseFloat(prices[0]) : 0;
-        const tokenIds = Array.isArray(m.tokens)
-            ? m.tokens
-                .map((token) => token.token_id)
-                .filter((tokenId) => typeof tokenId === "string" && tokenId.trim().length > 0)
-            : parseJsonArray(m.clobTokenIds);
-        const tokenId = tokenIds[0] || "";
-        // Volume can be string or number from API
-        const volume = typeof m.volume === 'string' ? parseFloat(m.volume) : (m.volume || 0);
-        // Use groupItemTitle for multi-outcome events (e.g., "Gavin Newsom")
-        // Fall back to question for binary events
-        const name = m.groupItemTitle || m.question || "Unknown";
-        return {
-            rank: 0,
-            name,
-            volume,
-            price: yesPrice,
-            pricePercent: `${(yesPrice * 100).toFixed(1)}%`,
-            conditionId: m.conditionId || "",
-            tokenId,
-        };
+    const { outcomes: builtOutcomeRows, rawOutcomeCount, filteredPlaceholderCount, filteredInactiveCount, } = await buildEventOutcomeRows({
+        event,
+        includeInactive,
     });
-    // Track raw count before filtering
-    const rawOutcomeCount = outcomes.length;
-    // Filter out placeholder entries that Polymarket uses for future candidates
-    // These have names like "Person A", "Person AB", "Person BZ", "Other" and typically have 0 volume
-    // Skip filtering if includeInactive is true (for advanced users who need raw data)
-    if (!includeInactive) {
-        const placeholderPattern = /^Person [A-Z]{1,2}$/;
-        outcomes = outcomes.filter((o) => {
-            // Remove placeholder "Person X" entries
-            if (placeholderPattern.test(o.name)) {
-                return false;
-            }
-            // Remove "Other" entries with no trading activity
-            if (o.name === "Other" && o.volume === 0) {
-                return false;
-            }
-            // Remove "Unknown" entries with no activity
-            if (o.name === "Unknown" && o.volume === 0) {
-                return false;
-            }
-            return true;
-        });
-    }
-    const filteredCount = rawOutcomeCount - outcomes.length;
+    let outcomes = builtOutcomeRows.map(({ active: _active, ...row }) => ({
+        ...row,
+    }));
     // Sort based on sortBy parameter
     switch (sortBy) {
         case "volume":
@@ -10349,10 +10427,11 @@ async function handleGetEventOutcomes(args) {
     return successResult({
         eventTitle: event.title,
         eventSlug: event.slug,
-        totalVolume: event.volume,
+        totalVolume: Number(event.volume || 0),
         totalOutcomes,
         returnedOutcomes: outcomes.length,
-        filteredPlaceholders: filteredCount,
+        filteredPlaceholders: filteredPlaceholderCount,
+        filteredInactive: filteredInactiveCount,
         sortedBy: sortBy,
         outcomes,
         url: `https://polymarket.com/event/${event.slug}`,
@@ -10969,6 +11048,14 @@ async function handleSearchMarkets(args) {
     // Count by status for breakdown
     let liveCount = 0;
     let resolvedCount = 0;
+    const searchResultQuoteSnapshots = await fetchGammaMarketQuoteSnapshots([
+        ...rankedCandidates.map((candidate) => candidate.market),
+        ...filtered
+            .slice(0, limit)
+            .flatMap((event) => event.markets || []),
+    ], {
+        timeoutMs: "heavy",
+    });
     const results = rankedCandidates.length > 0
         ? rankedCandidates.slice(0, limit).map((candidate) => {
             const isResolved = candidate.event.closed === true;
@@ -10989,7 +11076,7 @@ async function handleSearchMarkets(args) {
                 matchedOutcome: candidate.market.groupItemTitle ||
                     candidate.market.question ||
                     candidate.market.title,
-                outcomePrice: getPrimaryOutcomePrice(candidate.market),
+                outcomePrice: resolveCurrentOutcomePrice(candidate.market, searchResultQuoteSnapshots).toFixed(4),
                 volume: candidate.event.volume,
                 liquidity: candidate.event.liquidity,
                 endDate: candidate.event.endDate || candidate.event.endDateIso,
@@ -11016,18 +11103,13 @@ async function handleSearchMarkets(args) {
                     const matches = searchQueryWords.some(word => marketText.includes(word));
                     if (matches) {
                         matchedMarket = market;
-                        if (market.outcomePrices) {
-                            try {
-                                const prices = typeof market.outcomePrices === 'string'
-                                    ? JSON.parse(market.outcomePrices)
-                                    : market.outcomePrices;
-                                matchedOutcomePrice = prices[0];
-                            }
-                            catch { }
-                        }
+                        matchedOutcomePrice = resolveCurrentOutcomePrice(market, searchResultQuoteSnapshots).toFixed(4);
                         break;
                     }
                 }
+            }
+            if (!matchedOutcomePrice && matchedMarket) {
+                matchedOutcomePrice = resolveCurrentOutcomePrice(matchedMarket, searchResultQuoteSnapshots).toFixed(4);
             }
             return {
                 title: e.title,
@@ -11680,13 +11762,17 @@ async function handleBrowseCategory(args) {
             tag_slug: tagSlug,
         });
         const filteredEvents = (await fetchGamma(`/events?${eventParams.toString()}`));
+        const browseCategoryQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(filteredEvents.flatMap((event) => (event.markets?.[0] ? [event.markets[0]] : [])), {
+            timeoutMs: "heavy",
+        });
         const formatted = filteredEvents
             .filter((e) => e.slug)
             .slice(0, limit) // Apply limit after filtering
             .map((e) => {
             const market = e.markets?.[0];
-            const prices = parseJsonArray(market?.outcomePrices);
-            const yesPrice = prices[0] ? parseFloat(prices[0]) : 0.5;
+            const yesPrice = market
+                ? resolveCurrentOutcomePrice(market, browseCategoryQuoteSnapshots)
+                : 0.5;
             return {
                 title: e.title || "",
                 slug: e.slug || "",
@@ -11720,12 +11806,16 @@ async function handleBrowseByTag(args) {
     try {
         const closed = includeResolved ? "true" : "false";
         const events = await fetchGamma(`/events?tag_id=${tag_id}&closed=${closed}&limit=${limit}&order=volume&ascending=false`);
+        const browseTagQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(events.flatMap((event) => (event.markets?.[0] ? [event.markets[0]] : [])), {
+            timeoutMs: "heavy",
+        });
         const formatted = (events || [])
             .filter((e) => e.slug)
             .map((e) => {
             const market = e.markets?.[0];
-            const prices = parseJsonArray(market?.outcomePrices);
-            const yesPrice = prices[0] ? parseFloat(prices[0]) : 0.5;
+            const yesPrice = market
+                ? resolveCurrentOutcomePrice(market, browseTagQuoteSnapshots)
+                : 0.5;
             return {
                 title: e.title || "",
                 slug: e.slug || "",
@@ -11959,6 +12049,9 @@ async function handleAnalyzeEventWhaleBreakdown(args) {
         });
         // Analyze top N markets
         const marketsToAnalyze = sortedMarkets.slice(0, maxOutcomes);
+        const whaleQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(marketsToAnalyze, {
+            timeoutMs: "heavy",
+        });
         // Fetch holders for each market in parallel (with rate limiting)
         const whaleResults = [];
         // Process in batches of 3 to avoid overwhelming the API
@@ -11994,29 +12087,7 @@ async function handleAnalyzeEventWhaleBreakdown(args) {
                     const totalWhaleValue = yesHolders.reduce((sum, h) => sum + (h.value || 0), 0);
                     const topWhalePosition = yesHolders[0]?.value || 0;
                     const whaleCount = yesHolders.filter((h) => h.value > 1000).length;
-                    // Get current price
-                    let currentPrice = 0.5;
-                    try {
-                        const clobMarket = (await fetchClob(`/markets/${conditionId}`, undefined, "heavy"));
-                        const tokens = clobMarket?.tokens;
-                        if (tokens && tokens.length >= 1) {
-                            const quoteSnapshots = await fetchClobQuoteSnapshots([tokens[0].token_id], "heavy");
-                            currentPrice = quoteSnapshots[tokens[0].token_id]?.midpoint || currentPrice;
-                        }
-                    }
-                    catch {
-                        // Try to use outcomePrices from gamma
-                        if (market.outcomePrices) {
-                            try {
-                                const prices = JSON.parse(market.outcomePrices);
-                                if (prices[0])
-                                    currentPrice = Number(prices[0]);
-                            }
-                            catch {
-                                // Use default
-                            }
-                        }
-                    }
+                    const currentPrice = resolveCurrentOutcomePrice(market, whaleQuoteSnapshots);
                     return {
                         outcome: outcomeName,
                         conditionId,

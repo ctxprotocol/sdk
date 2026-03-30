@@ -1,7 +1,11 @@
 {
-  "generatedAt": "2026-03-19T13:22:00.000Z",
+  "generatedAt": "2026-03-29T09:31:00.000Z",
   "serverName": "polymarket-contributor",
-  "toolCount": 43,
+  "runType": "full-enhancement",
+  "codeChanged": true,
+  "promptPoolRegenerated": false,
+  "autoQueryValidationRun": false,
+  "toolCount": 45,
   "formFields": {
     "name": "Polymarket Intelligence",
     "description": "Live Polymarket market intelligence for discovering active prediction markets, checking pricing efficiency, sizing liquidity, and pulling normalized CLOB data from one MCP endpoint.\n\nFeatures:\n- Discover live markets by total volume, recent activity, liquidity, category, end date, and competitive pricing\n- Analyze liquidity, whale cost, whale flow, top holders, market efficiency, arbitrage, rules, and cross-market setups\n- Pull normalized prices, spreads, midpoints, orderbooks, trades, comments, open interest, categories, tags, and event outcomes\n- Returns structured outputs with direct Polymarket URLs and clear raw-vs-merged orderbook guidance for agents\n\nTry asking:\n- \"What are the top 5 Polymarket markets by volume right now, and which ones are liquid enough for a $5,000 trade?\"\n- \"Show me the most active sports markets on Polymarket today.\"\n- \"Compare the current implied odds and spreads for Spain, Brazil, and France in the 2026 FIFA World Cup winner market.\"\n- \"Find live crypto markets on Polymarket with total volume above $10M and liquidity above $100k.\"\n- \"Build a high-conviction workflow for the most liquid political market live right now: validate rules, check efficiency, and list the key trading risks.\"\n- \"Analyze liquidity for the YES side of the current World Cup winner market and estimate slippage for $1k, $5k, and $10k exits.\"\n- \"Check whether the top live market on Polymarket is efficiently priced or whether YES plus NO still leaves a vig.\"\n- \"Get the raw batch orderbooks for both YES and NO tokens in a live negative-risk market, then explain how that differs from actionable quote snapshots.\"\n\nAgent tips:\n- Start with `get_top_markets` or `discover_trending_markets` when the user has not named a specific market.\n- Use `get_event_by_slug` or `search_and_get_outcomes` to resolve token IDs before price, spread, or orderbook calls.\n- Use `get_prices`, `get_spreads`, or `get_orderbook` with `merged=true` for actionable quotes; `get_batch_orderbooks` returns raw direct books only.",
@@ -119,9 +123,9 @@
       "conditionId": "0x7976b8dbacf9077eb1453a62bcefd6ab2df199acd28aad276ff0d920d6992892"
     },
     "checks": {
-      "toolCount": 43,
+      "toolCount": 45,
       "surfaceClassification": "mixed",
-      "queryMethodCount": 43,
+      "queryMethodCount": 45,
       "executeMethodCount": 24,
       "authModel": {
         "initializeWithoutAuth": true,
@@ -151,8 +155,8 @@
       "sdkResolvedName": "Polymarket",
       "sdkQuerySearchResultCount": null,
       "sdkExecuteSearchResultCount": 5,
-      "publicToolCount": 43,
-      "marketplaceMethodCount": 43,
+      "publicToolCount": 45,
+      "marketplaceMethodCount": 45,
       "marketplaceSurfaceSummary": {
         "queryCount": 43,
         "executeCount": 24
@@ -236,7 +240,7 @@
       "executed": true,
       "changed": true,
       "previousCount": 43,
-      "freshCount": 43
+      "freshCount": 45
     },
     "latestProductionValidation": {
       "contextBaseUrl": "production-default",
@@ -284,10 +288,65 @@
       "dominantFailureMethod": "discover_trending_markets",
       "dominantFailureMode": "AbortError after one infrastructure retry and zero successful tool calls"
     },
-    "localContextSdkValidationBlockedByInvalidApiKey": true,
+    "localContextSdkValidationBlockedByInvalidApiKey": false,
     "localContextBrowserValidationBlockedByDatabaseTimeout": true,
     "localContextDatabaseTimeoutObserved": true,
-    "liveContextPreviewDeployPassed": true
+    "liveContextPreviewDeployPassed": true,
+    "currentFreshnessPatch": {
+      "targetFile": "context-sdk/examples/server/polymarket-contributor/server.ts",
+      "liveQuoteOverlayEnabled": true,
+      "cacheTtlMs": {
+        "gamma": 6000,
+        "clob": 5000,
+        "data": 6000,
+        "discoverTrending": 15000,
+        "activeEventSearchIndex": 20000
+      },
+      "refreshedMethods": [
+        "get_event_by_slug",
+        "search_and_get_outcomes",
+        "get_event_outcomes",
+        "search_markets",
+        "discover_trending_markets",
+        "get_top_markets",
+        "find_trading_opportunities",
+        "find_moderate_probability_bets",
+        "get_bets_by_probability",
+        "browse_category",
+        "browse_by_tag",
+        "analyze_event_whale_breakdown",
+        "check_market_efficiency"
+      ]
+    },
+    "currentFreshnessValidation": {
+      "localBuildPassed": true,
+      "localLintPassed": true,
+      "localFreshnessParity": {
+        "eventSlug": "us-forces-enter-iran-by",
+        "maxObservedSearchVsLiveDiff": 0,
+        "maxObservedEventVsLiveDiff": 0
+      },
+      "remoteFreshnessParity": {
+        "eventSlug": "us-forces-enter-iran-by",
+        "searchAndGetOutcomesMatchedLiveMid": true,
+        "getEventOutcomesReturned": 3
+      },
+      "publicAuthProbe": {
+        "initializeStatus": 200,
+        "toolsListStatus": 200,
+        "toolsCallStatus": 401
+      },
+      "marketplaceSanity": {
+        "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+        "discoveryResultCount": 7,
+        "executeMethodCount": 24,
+        "pinnedQueryOutcomeType": "answer",
+        "pinnedQueryToolsUsedCount": 1,
+        "pinnedQueryDeveloperTraceToolCalls": 0,
+        "executeSearchAndGetOutcomesEventSlug": "us-forces-enter-iran-by",
+        "executeSearchAndGetOutcomesOutcomeCount": 3
+      }
+    }
   },
   "signoff": {
     "apiValueExtraction": {
@@ -301,6 +360,7 @@
     "queryModeAlignment": {
       "status": "FAIL",
       "notes": [
+        "A targeted current-run pinned Query sanity check on the live Polymarket listing did return an answer for the Iran ground-forces prompt, but the developer trace still reported zero toolCalls even while toolsUsed recorded Polymarket.",
         "The corrected-rule run used production `client.query.run()` after an official live listing refresh, not preview-only `/context` changes.",
         "Production Query improved to pinned 6/12 after the live refresh, but the remaining failed prompts still collapse into generic or zero-tool-call outcomes often enough to miss the release bar.",
         "Direct MCP smoke on the same contributor deployment answered most failed capability clusters quickly (`compare_event_outcome_quotes`, `discover_trending_markets`, week-window market selection plus trades/open-interest, `search_and_get_outcomes`, sampled batch orderbooks), so the dominant remaining issue is production Query orchestration rather than an obvious direct contributor outage."
@@ -310,7 +370,8 @@
       "status": "PASS",
       "notes": [
         "Representative execute validation passed 6/6 methods with normalized outputs, correct session spend accounting, and no execution errors.",
-        "Current live discovery reports the mixed 43/24 split cleanly again, with no direct-vs-listing method drift.",
+        "Current live discovery reports the mixed 45/24 split cleanly again, with no direct-vs-listing method drift on the execute surface.",
+        "A current-run execute sanity check for `search_and_get_outcomes` returned the refreshed Iran event slug and three live-priced outcomes through the marketplace listing.",
         "Execute-mode alignment is no longer a blocking issue for this contributor."
       ]
     },
@@ -318,10 +379,11 @@
       "status": "PASS",
       "notes": [
         "A direct schema bug was found and fixed during this pass: `get_event_by_slug` and `get_events` were returning string volume/liquidity fields against numeric schemas.",
+        "The stale-odds issue was reproduced and fixed: local fresh-price parity checks now show `search_and_get_outcomes` and `get_event_outcomes` matching `get_prices` live mids exactly for the Iran market sample.",
         "After redeploy, remote localhost smoke tests succeeded across discovery, comparison, workflow, arbitrage, whale, and raw-data methods.",
         "A temporary SSH auth-bypass smoke test confirmed the new `discover_trending_markets` result cache works as intended: first direct localhost call completed in 577ms and the next four identical calls returned the same snapshot in 4-5ms.",
         "Additional direct cluster smokes on the refreshed contributor were healthy and fast: `compare_event_outcome_quotes` 680ms, `discover_trending_markets` 459ms, week-window `get_top_markets` 164ms, `get_market_trades` 122ms, `get_market_open_interest` 582ms, `search_and_get_outcomes` 7ms, and sampled `get_batch_orderbooks` 61ms.",
-        "Public HTTPS discovery now returns 43 tools and the live endpoint remains healthy with auth restored."
+        "Public HTTPS discovery now returns 45 tools and the live endpoint remains healthy with auth restored."
       ]
     },
     "authContract": {
@@ -335,6 +397,7 @@
     "marketplaceQueryValidation": {
       "status": "FAIL",
       "notes": [
+        "A current-run pinned marketplace sanity check did return an answer for the Iran live-probability prompt, but the accompanying developer trace still showed zero toolCalls while toolsUsed recorded the Polymarket listing.",
         "A fresh full production validator run was completed after the official listing refresh: auto Query 2/5, pinned Query 6/12, Execute 6/6.",
         "The six pinned failures all remained generic/zero-tool-call style failures even though direct MCP smoke shows the contributor can answer most of those clusters quickly, which points away from a fresh contributor outage.",
         "Because production Query still fails on must-win prompts after deploy, refresh, and direct smoke confirmation, this stage remains FAIL."
@@ -344,6 +407,7 @@
       "status": "PASS",
       "notes": [
         "Marketplace execute discovery found the live Polymarket listing and a healthy execute session started successfully.",
+        "A current-run execute sanity check for `search_and_get_outcomes` returned the refreshed Iran event with three live-priced outcomes through the marketplace listing.",
         "Six representative execute methods passed: get_event_by_slug, get_prices, get_market_parameters, get_batch_orderbooks, get_market_open_interest, and check_market_efficiency.",
         "Session accounting closed cleanly at $0.006 total spend with no residual pending accrual."
       ]
@@ -360,6 +424,7 @@
       "status": "FAIL",
       "notes": [
         "This corrected-rule run kept scope on the contributor, deploy host, listing refresh path, and production marketplace validation. No `/context` app edits remain in scope or in the current repo state.",
+        "The stale-data contributor bug is fixed and deployed: the refreshed direct paths now prefer live CLOB quote snapshots over stale Gamma outcomePrices for odds-facing methods, and local plus remote parity checks on the Iran market matched live mids exactly.",
         "The contributor is materially healthier than at the start of the pass: direct schema correctness is fixed, `discover_trending_markets` now fast-fails and caches snapshots, the live listing was refreshed successfully, and production pinned Query improved to 6/12 with Execute still 6/6.",
         "Release quality is still below bar because production Query continues to fail on several must-win prompts even after deploy, refresh, and healthy direct MCP smokes. With `/context` edits off-limits, the remaining gap is outside the contributor surfaces that were reasonable to change in this run."
       ]
@@ -383,7 +448,7 @@
   "toolIdOrName": "294100e8-c648-4e5f-a254-95a14b56e398",
   "surfaceClassification": "mixed",
   "surfaceSummary": {
-    "queryMethodCount": 43,
+    "queryMethodCount": 45,
     "executeMethodCount": 24
   },
   "surfaceMatrix": [
