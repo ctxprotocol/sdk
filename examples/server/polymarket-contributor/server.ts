@@ -1235,7 +1235,21 @@ Returns:
               currentPrice: { type: "number", description: "Current YES price (implied probability)" },
               totalWhaleValue: { type: "number", description: "Total $ value of whale positions on this outcome" },
               topWhalePosition: { type: "number", description: "Largest single whale position" },
-              whaleCount: { type: "number", description: "Number of whale-sized positions" },
+              whaleCount: {
+                type: "number",
+                description:
+                  "Number of whale-sized YES positions detected across the full deep holder scan",
+              },
+              holdersScanned: {
+                type: "number",
+                description:
+                  "Number of YES holders scanned for this outcome before any response truncation",
+              },
+              returnedHolderSampleCount: {
+                type: "number",
+                description:
+                  "Number of top YES holders retained in the returned sample payload for this outcome",
+              },
               convictionLevel: { type: "string", enum: ["extreme", "high", "moderate", "low"] },
             },
           },
@@ -3884,6 +3898,50 @@ Set deepFetch=false for faster but shallower results (20 per side max).
                   percentOfSupply: { type: "number" },
                 },
               },
+            },
+          },
+        },
+        totalUniqueHolders: {
+          type: "number",
+          description:
+            "Combined YES + NO holders found after deep-fetch deduplication",
+        },
+        holdersReturned: {
+          type: "object",
+          properties: {
+            yes: { type: "number" },
+            no: { type: "number" },
+          },
+        },
+        holdersScanned: {
+          type: "object",
+          properties: {
+            yes: { type: "number" },
+            no: { type: "number" },
+          },
+        },
+        positionValueSummary: {
+          type: "object",
+          properties: {
+            yesTotalValue: {
+              type: "number",
+              description:
+                "Total current YES-side position value across the full scanned holder set",
+            },
+            noTotalValue: {
+              type: "number",
+              description:
+                "Total current NO-side position value across the full scanned holder set",
+            },
+            yesWhaleCount: {
+              type: "number",
+              description:
+                "Number of YES holders above the whale threshold across the full scanned set",
+            },
+            noWhaleCount: {
+              type: "number",
+              description:
+                "Number of NO holders above the whale threshold across the full scanned set",
             },
           },
         },
@@ -8932,6 +8990,9 @@ function workflowExtractEventQueryFromLiquidity(value: string): string {
   const trimmed = value.trim();
   const patterns = [
     /\b(?:for|of)\s+(?:the\s+)?(?:yes|no)\s+side of\s+(?:the\s+)?(.+?)(?:\s+market)?(?:\s+and\s+(?:estimate|size|model)|\s+with\s+|\?|$)/i,
+    /\bbet on\s+(?:the\s+)?(.+?)(?:\.\s+based on|\s+based on|\s+with\s+|\?|$)/i,
+    /\bsplit(?:ting)?(?:\s+(?:my|the))?\s+(?:bets?|capital|position|positions|stakes?)\s+(?:across|among|between|for)\s+(?:the\s+)?(.+?)(?:\.\s+based on|\s+based on|\s+with\s+|\?|$)/i,
+    /\ballocat(?:e|ing)\s+(?:my\s+|the\s+)?(?:bets?|capital|position|positions|stakes?)?\s*(?:across|among|between|to|into|for)\s+(?:the\s+)?(.+?)(?:\.\s+based on|\s+based on|\s+with\s+|\?|$)/i,
     /\b(?:for|in|within)\s+(?:the\s+)?(.+?)(?:\s+market)?(?:\s+and\s+(?:estimate|size|model)|\s+with\s+|\?|$)/i,
   ];
 
@@ -14010,6 +14071,20 @@ async function handleGetTopHolders(
     // Calculate totals for percentages
     const totalYes = yesHolders.reduce((sum, p) => sum + p.size, 0);
     const totalNo = noHolders.reduce((sum, p) => sum + p.size, 0);
+    const yesTotalValue = yesHolders.reduce(
+      (sum, holder) => sum + holder.size * yesPrice,
+      0
+    );
+    const noTotalValue = noHolders.reduce(
+      (sum, holder) => sum + holder.size * noPrice,
+      0
+    );
+    const yesWhaleCount = yesHolders.filter(
+      (holder) => holder.size * yesPrice > 1000
+    ).length;
+    const noWhaleCount = noHolders.filter(
+      (holder) => holder.size * noPrice > 1000
+    ).length;
 
     const formatHolders = (
       holders: Array<{ address: string; size: number; name?: string; profileImage?: string }>, 
@@ -14038,7 +14113,6 @@ async function handleGetTopHolders(
     // Calculate concentration
     const top10YesPercent = topYes.slice(0, 10).reduce((sum, h) => sum + h.percentOfSupply, 0);
     const top10NoPercent = topNo.slice(0, 10).reduce((sum, h) => sum + h.percentOfSupply, 0);
-    const whaleCount = [...topYes, ...topNo].filter(h => h.value > 1000).length;
     
     // Track how many unique holders we found
     const totalUniqueHolders = yesHolders.length + noHolders.length;
@@ -14061,16 +14135,23 @@ async function handleGetTopHolders(
       topHolders: { yes: topYes, no: topNo },
       totalUniqueHolders,
       holdersReturned: { yes: topYes.length, no: topNo.length },
+      holdersScanned: { yes: yesHolders.length, no: noHolders.length },
+      positionValueSummary: {
+        yesTotalValue: Number(yesTotalValue.toFixed(2)),
+        noTotalValue: Number(noTotalValue.toFixed(2)),
+        yesWhaleCount,
+        noWhaleCount,
+      },
       concentration: {
         top10YesPercent: Number(top10YesPercent.toFixed(2)),
         top10NoPercent: Number(top10NoPercent.toFixed(2)),
-        whaleCount,
+        whaleCount: yesWhaleCount + noWhaleCount,
       },
       fetchMethod: deepFetch
         ? "multi-tier (10 API calls in paced batches with minBalance thresholds from $1M to $1)"
         : "single-call",
       note: deepFetch 
-        ? `Deep fetch found ${totalUniqueHolders} unique holders by querying 10 position tiers (from $1M ultra-whales to $1 positions). Polymarket API caps at 20 per call with no pagination, so we query [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] thresholds in paced batches and deduplicate.`
+        ? `Deep fetch found ${totalUniqueHolders} unique holders by querying 10 position tiers (from $1M ultra-whales to $1 positions). Polymarket API caps at 20 per call with no pagination, so we query [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] thresholds in paced batches and deduplicate. Response samples may still be truncated, but whale counts and total values use the full deduplicated holder scan.`
         : "Single API call (limit 20 per side). Use deepFetch=true for more thorough results.",
       fetchedAt: new Date().toISOString(),
     });
@@ -14580,6 +14661,8 @@ async function handleAnalyzeEventWhaleBreakdown(
       totalWhaleValue: number;
       topWhalePosition: number;
       whaleCount: number;
+      holdersScanned: number;
+      returnedHolderSampleCount: number;
     }> = [];
 
     // Process in batches of 3 to avoid overwhelming the API
@@ -14614,12 +14697,35 @@ async function handleAnalyzeEventWhaleBreakdown(
           }
 
           const holdersData = JSON.parse((holdersResult.content[0] as { text: string }).text);
-          
-          // Calculate whale metrics for YES positions
-          const yesHolders = holdersData.topHolders?.yes || [];
-          const totalWhaleValue = yesHolders.reduce((sum: number, h: { value: number }) => sum + (h.value || 0), 0);
-          const topWhalePosition = yesHolders[0]?.value || 0;
-          const whaleCount = yesHolders.filter((h: { value: number }) => h.value > 1000).length;
+          const topHolders = workflowObject(holdersData.topHolders);
+          const yesHolders = workflowObjectArray(topHolders.yes);
+          const positionValueSummary = workflowObject(holdersData.positionValueSummary);
+          const holdersReturned = workflowObject(holdersData.holdersReturned);
+          const holdersScanned = workflowObject(holdersData.holdersScanned);
+
+          const totalWhaleValue = workflowToNumber(
+            positionValueSummary.yesTotalValue,
+            yesHolders.reduce(
+              (sum: number, holder: { value?: number }) =>
+                sum + workflowToNumber(holder.value, 0),
+              0
+            )
+          );
+          const topWhalePosition = workflowToNumber(yesHolders[0]?.value, 0);
+          const whaleCount = workflowToNumber(
+            positionValueSummary.yesWhaleCount,
+            yesHolders.filter(
+              (holder: { value?: number }) => workflowToNumber(holder.value, 0) > 1000
+            ).length
+          );
+          const scannedHolderCount = workflowToNumber(
+            holdersScanned.yes,
+            yesHolders.length
+          );
+          const returnedHolderSampleCount = workflowToNumber(
+            holdersReturned.yes,
+            yesHolders.length
+          );
 
           const currentPrice = resolveCurrentOutcomePrice(
             market,
@@ -14633,6 +14739,8 @@ async function handleAnalyzeEventWhaleBreakdown(
             totalWhaleValue,
             topWhalePosition,
             whaleCount,
+            holdersScanned: scannedHolderCount,
+            returnedHolderSampleCount,
           };
         } catch {
           return null;
@@ -14670,7 +14778,9 @@ async function handleAnalyzeEventWhaleBreakdown(
         currentPrice: Number(r.currentPrice.toFixed(4)),
         totalWhaleValue: Number(r.totalWhaleValue.toFixed(2)),
         topWhalePosition: Number(r.topWhalePosition.toFixed(2)),
-        whaleCount: r.whaleCount,
+        whaleCount: Number(r.whaleCount.toFixed(0)),
+        holdersScanned: Number(r.holdersScanned.toFixed(0)),
+        returnedHolderSampleCount: Number(r.returnedHolderSampleCount.toFixed(0)),
         convictionLevel,
       };
     });
@@ -14714,7 +14824,7 @@ async function handleAnalyzeEventWhaleBreakdown(
         confidence,
       } : null,
       smartMoneyConsensus,
-      note: `Analyzed ${whaleResults.length} of ${totalMarketsInEvent} markets. Whale positions show YES bets on each outcome - the outcome with most whale money suggests smart money's pick.`,
+      note: `Analyzed ${whaleResults.length} of ${totalMarketsInEvent} markets. Whale totals and whale counts use the full deep holder scan for each outcome; returned holder samples may still be truncated for payload size. The outcome with the most whale money suggests smart money's pick.`,
       fetchedAt: new Date().toISOString(),
     });
   } catch (error) {
