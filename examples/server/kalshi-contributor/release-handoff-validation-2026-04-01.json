@@ -1,0 +1,67 @@
+{
+  "generatedAt": "2026-04-01T07:45:00.000Z",
+  "status": "browser_handoff_ready",
+  "localQueryBaseUrl": "http://localhost:3000",
+  "publicContributorEndpoint": "https://mcp.ctxprotocol.com/kalshi/mcp",
+  "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
+  "artifacts": {
+    "fullSweep": "local-query-validation-2026-04-01.json",
+    "targetedRerunAfterDeploy": "local-query-rerun-after-deploy-2026-04-01.json",
+    "nycExactFollowup": "edge-rerun-nyc-exact-2026-04-01.json",
+    "climateFollowup": "edge-rerun-climate-post-alias-2026-04-01.json"
+  },
+  "changesApplied": [
+    "Strengthened Kalshi planner-facing descriptions so /context prefers search_markets for exact topical lookups and daily high-temperature prompts.",
+    "Added category alias normalization so Climate or Weather map to the contributor's Climate and Weather filtering path.",
+    "Redeployed kalshi-contributor to the public MCP endpoint and restarted mcp-kalshi."
+  ],
+  "representativePromptStatus": {
+    "total": 15,
+    "pass": 13,
+    "partial": 1,
+    "fail": 1
+  },
+  "passingPromptShapes": [
+    "Daily high-temperature exact-market lookup now resolves to KXHIGHNY buckets instead of hourly KXTEMPNY contracts.",
+    "KXHIGHNY series listing returns exact tickers, yes prices, and close times.",
+    "Top NYC high-temperature market comparison returns the KXHIGHNY bucket set with current yes prices and 24h volume.",
+    "Probability plus liquidity screen completes with bounded-scan gap reporting instead of a generic failure.",
+    "Liquidity analysis returns slippage and spread metrics for KXHIGHNY-26APR01-T79.",
+    "Event efficiency check returns vig, bucket probabilities, and recommendation.",
+    "Slug resolution returns the full KXHIGHNY event plus rules and market buckets.",
+    "Exact market snapshot returns live prices, rules, and close time for KXHIGHNY-26APR01-T79.",
+    "Direct current-market details, orderbook, trades, and candlesticks all return cleanly.",
+    "Trump tariffs search returns an exact Kalshi match with ticker and close time.",
+    "Kalshi to Polymarket cross-reference completes with a grounded no-match explanation."
+  ],
+  "residualGaps": [
+    {
+      "promptShape": "What are the hottest Kalshi markets right now in Climate and Weather?",
+      "status": "partial",
+      "latestArtifact": "edge-rerun-climate-post-alias-2026-04-01.json",
+      "notes": [
+        "The contributor no longer returns unrelated sports or crypto markets for this prompt.",
+        "The latest /context run now stays inside climate/weather, but still surfaces only one active market instead of a broader ranked set.",
+        "This looks like a planner/probe-budget issue rather than a direct contributor failure."
+      ]
+    },
+    {
+      "promptShape": "Search Kalshi for a Supreme Court market and return the best exact match with ticker and close time.",
+      "status": "fail",
+      "latestArtifact": "local-query-rerun-after-deploy-2026-04-01.json",
+      "notes": [
+        "Direct contributor search can surface SCOTUS-related markets, but the routed /context prompt still sometimes returns no match.",
+        "This remains a planner/query-shaping edge case."
+      ]
+    }
+  ],
+  "browserQaRecommendedPrompts": [
+    "What is the best exact Kalshi market for highest temperature in NYC today?",
+    "List open markets in the KXHIGHNY series with tickers, current yes prices, and close times.",
+    "Resolve the slug for the NYC high temperature market and fetch the full event with market rules.",
+    "Get the exact market snapshot for KXHIGHNY-26APR01-T79.",
+    "Analyze liquidity for KXHIGHNY-26APR01-T79 and estimate slippage for a 500 dollar yes buy.",
+    "Cross-reference the closest Polymarket market to KXTARIFFSECTOR-27JAN01-WIND and explain whether the outcomes really match."
+  ],
+  "conclusion": "Automated contributor work is complete enough to hand off for manual browser QA. The remaining issues are narrow planner-level prompt-shape gaps, not broad contributor execution failures."
+}
