@@ -1,0 +1,545 @@
+{
+  "transport": "run",
+  "idempotencyKey": "2fb6905f-ef55-4db0-b392-5fd40ec41753",
+  "requestId": "2fb6905f-ef55-4db0-b392-5fd40ec41753",
+  "outcomeType": "answer",
+  "responseShape": null,
+  "assumptionMade": null,
+  "durationMs": 106552,
+  "responseChars": 642,
+  "responsePreview": "There's currently **1 active market** in Kalshi's Climate category, with combined 24-hour volume of **3,754 contracts**:\n\n| Rank | Market | Yes Price | No Price | 24h Volume | Closes |\n|------|--------|-----------|----------|------------|--------|\n| 1 | Will the maximum temperature be  >47° on Apr 1, 2026? (KXHIGHTMIN-26APR01-T47) | 51¢ | 57¢ | 3,754 | Apr 2, 2026 06:00 UTC |\n\n**Market details:**\n- **Current odds:** Trading at roughly 47% probability (implied by the Yes/No prices)\n- **Total volume:** 3,854 contracts\n- **Status:** Active\n- **URL:** https://kalshi.com/markets/kxhightmin-26apr01\n...",
+  "cost": {
+    "totalCostUsd": "0.077463",
+    "toolCostUsd": "0.000000",
+    "modelCostUsd": "0.077463"
+  },
+  "querySession": {
+    "sessionId": "757ee5a6-28cf-4304-abcd-b4ee29b8df1c",
+    "attemptId": "2e422bf4-5ae8-4bfd-b171-4c217c81118f",
+    "parentAttemptId": null,
+    "rootAttemptId": "2e422bf4-5ae8-4bfd-b171-4c217c81118f",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "completed",
+    "checkpoint": {
+      "currentStage": "execution",
+      "latestCheckpointArtifactId": "2fb6905f-ef55-4db0-b392-5fd40ec41753:19",
+      "canonicalDatasetId": "2fb6905f-ef55-4db0-b392-5fd40ec41753:canonical-execution",
+      "executionProgramCurrentRevisionId": "rev-2"
+    }
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "auto_discovery",
+    "firstPassSuccess": true,
+    "capabilityMissSignaled": false,
+    "rediscoveryExecuted": false
+  },
+  "traceSummary": {
+    "toolCalls": 3,
+    "retryCount": 2,
+    "selfHealCount": 2,
+    "fallbackCount": 0,
+    "failureCount": 2,
+    "recoveryCount": 0,
+    "completionChecks": 2,
+    "loopCount": 2
+  },
+  "traceTimelineStepCount": 24,
+  "executionProgramLineage": {
+    "baseRevisionId": "rev-1",
+    "currentRevisionId": "rev-2",
+    "revisionCount": 2,
+    "patchCount": 1,
+    "replanCount": 0,
+    "deterministicChangeCount": 0,
+    "revisions": [
+      {
+        "revisionId": "rev-1",
+        "parentRevisionId": null,
+        "attempt": 0,
+        "action": "initial",
+        "reason": "initial",
+        "summary": "Planner base program",
+        "codeHash": "b801bee32e06b07fae3cc178091dcc00b1ac41ba15dd96d49d5684bfb1dd7b2c",
+        "codeLength": 953,
+        "changedLineCount": 0,
+        "diffPreview": null,
+        "editCount": null,
+        "preservesPriorLogic": true
+      },
+      {
+        "revisionId": "rev-2",
+        "parentRevisionId": "rev-1",
+        "attempt": 1,
+        "action": "llm_patch",
+        "reason": "completeness_gap",
+        "summary": "Expanded climate discovery into two evidence sources and merged results to surface additional active weather/climate markets instead of a single narrow trending hit.",
+        "codeHash": "1c51412849fcdba6121df48711ef3ed9cca9479ccb9f53a471b6a9fa6836bbda",
+        "codeLength": 2054,
+        "changedLineCount": 42,
+        "diffPreview": "Before:\n  const result = await callMcpSkill({\n    toolId,\n    toolName: \"discover_trending_markets\",\n    args: {\nAfter:\n  const trendingResult = await callMcpSkill({\n    toolId,\n    toolName: \"discover_trending_markets\",\n    args: {\n[diff preview truncated]",
+        "editCount": 1,
+        "preservesPriorLogic": true
+      }
+    ]
+  },
+  "repairTracePreview": [
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 1,
+      "programRevision": {
+        "revisionId": "rev-1",
+        "action": "initial",
+        "reason": "initial",
+        "preservesPriorLogic": true,
+        "summary": "Planner base program"
+      },
+      "completenessCheck": {
+        "isComplete": false,
+        "missingParts": [
+          "The search returned only one market, which is insufficient for a 'hottest markets' (plural) analysis",
+          "The returned market has a category of 'Unknown' despite being found via the 'Climate' filter, suggesting a possible broad search or category mismatch",
+          "No identification of 'Weather' specific markets (e.g., NYC/Chicago/Miami daily temperatures) which are a core part of Kalshi's climate offerings"
+        ],
+        "suggestedFix": "The current result is too narrow. Perform a two-step discovery: (1) Use 'get_all_series' with the category 'Climate' to find active series tickers (like KXHIGHNY, KXHIGHCHI, etc.), (2) Use 'browse_series' or 'get_events' for the top 3-5 discovered series to identify high-volume active markets. This will surface the standard weather markets that appear missing from the singular trending result.",
+        "canRetryWithSameTools": true,
+        "needsDifferentTools": false,
+        "missingCapability": null,
+        "capabilityConstrained": false,
+        "outcome": "retry_same_tools",
+        "parseFailed": false,
+        "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"The search returned only one market, which is insufficient for a 'hottest markets' (plural) analysis\",\n    \"The returned market has a category of 'Unknown' despite being found via the 'Climate' filter, suggesting a possible broad search or category mismatch\",\n    \"No identification of 'Weather' specific markets (e.g., NYC/Chicago/Miami daily temperatures) which are a core part of Kalshi's climate offerings\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The current result is too narrow. Perform a two-step discovery: (1) Use 'get_all_series' with the category 'Climate' to find active series tickers (like KXHIGHNY, KXHIGHCHI, etc.), (2) Use 'browse_series' or 'get_events' for the top 3-5 discovered series to identify high-volume active markets. This will surface the standard weather markets that appear missing from the singular trending result.\",\n  \"missingCapability\": null\n}"
+      },
+      "completenessRepairEvents": [
+        {
+          "attempt": 1,
+          "outcome": "attempted",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": null,
+          "summary": null,
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": null,
+          "skipReason": null,
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        },
+        {
+          "attempt": 1,
+          "outcome": "patched",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": "patch",
+          "summary": "Expanded climate discovery into two evidence sources and merged results to surface additional active weather/climate markets instead of a single narrow trending hit.",
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": 1,
+          "skipReason": null,
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        }
+      ]
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 2,
+      "programRevision": {
+        "revisionId": "rev-2",
+        "action": "llm_patch",
+        "reason": "completeness_gap",
+        "preservesPriorLogic": true,
+        "summary": "Expanded climate discovery into two evidence sources and merged results to surface additional active weather/climate markets instead of a single narrow trending hit."
+      },
+      "completenessCheck": {
+        "isComplete": false,
+        "missingParts": [
+          "The search through 'discover_trending_markets' and 'find_trading_opportunities' only returned a single market (KXHIGHTMIN-26APR01-T47), which is insufficient for a 'hottest markets' (plural) analysis in the Climate and Weather category."
+        ],
+        "suggestedFix": "The current tools returned only one active market due to narrow 'Climate' category filtering or low current activity in that specific bucket. Use a probe-first branch: (1) Call 'get_all_categories' to confirm the exact category name and associated tags for weather/climate, (2) Use 'search_markets' with broader keywords like 'weather', 'temperature', 'hurricane', or 'rain' to find relevant series, (3) Use 'browse_series' on any discovered high-volume series (e.g., KXHIGHNY) to retrieve a more comprehensive list of active markets. If no other markets are found after these steps, report the single market as the only one currently available.",
+        "canRetryWithSameTools": true,
+        "needsDifferentTools": false,
+        "missingCapability": null,
+        "capabilityConstrained": false,
+        "outcome": "retry_same_tools",
+        "parseFailed": false,
+        "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"The search through 'discover_trending_markets' and 'find_trading_opportunities' only returned a single market (KXHIGHTMIN-26APR01-T47), which is insufficient for a 'hottest markets' (plural) analysis in the Climate and Weather category.\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The current tools returned only one active market due to narrow 'Climate' category filtering or low current activity in that specific bucket. Use a probe-first branch: (1) Call 'get_all_categories' to confirm the exact category name and associated tags for weather/climate, (2) Use 'search_markets' with broader keywords like 'weather', 'temperature', 'hurricane', or 'rain' to find relevant series, (3) Use 'browse_series' on any discovered high-volume series (e.g., KXHIGHNY) to retrieve a more comprehensive list of active markets. If no other markets are found after these steps, report the single market as the only one currently available.\",\n  \"missingCapability\": null\n}"
+      },
+      "completenessRepairEvents": [
+        {
+          "attempt": 2,
+          "outcome": "skipped_no_retry_budget",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": null,
+          "summary": null,
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": null,
+          "skipReason": "max_semantic_retries_reached",
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        }
+      ]
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 1,
+      "programRevision": {
+        "revisionId": "rev-1",
+        "action": "initial",
+        "reason": "initial",
+        "preservesPriorLogic": true,
+        "summary": "Planner base program"
+      },
+      "completenessCheck": {
+        "isComplete": false,
+        "missingParts": [
+          "The search returned only one market, which is insufficient for a 'hottest markets' (plural) analysis",
+          "The returned market has a category of 'Unknown' despite being found via the 'Climate' filter, suggesting a possible broad search or category mismatch",
+          "No identification of 'Weather' specific markets (e.g., NYC/Chicago/Miami daily temperatures) which are a core part of Kalshi's climate offerings"
+        ],
+        "suggestedFix": "The current result is too narrow. Perform a two-step discovery: (1) Use 'get_all_series' with the category 'Climate' to find active series tickers (like KXHIGHNY, KXHIGHCHI, etc.), (2) Use 'browse_series' or 'get_events' for the top 3-5 discovered series to identify high-volume active markets. This will surface the standard weather markets that appear missing from the singular trending result.",
+        "canRetryWithSameTools": true,
+        "needsDifferentTools": false,
+        "missingCapability": null,
+        "capabilityConstrained": false,
+        "outcome": "retry_same_tools",
+        "parseFailed": false,
+        "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"The search returned only one market, which is insufficient for a 'hottest markets' (plural) analysis\",\n    \"The returned market has a category of 'Unknown' despite being found via the 'Climate' filter, suggesting a possible broad search or category mismatch\",\n    \"No identification of 'Weather' specific markets (e.g., NYC/Chicago/Miami daily temperatures) which are a core part of Kalshi's climate offerings\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The current result is too narrow. Perform a two-step discovery: (1) Use 'get_all_series' with the category 'Climate' to find active series tickers (like KXHIGHNY, KXHIGHCHI, etc.), (2) Use 'browse_series' or 'get_events' for the top 3-5 discovered series to identify high-volume active markets. This will surface the standard weather markets that appear missing from the singular trending result.\",\n  \"missingCapability\": null\n}"
+      },
+      "completenessRepairEvents": [
+        {
+          "attempt": 1,
+          "outcome": "attempted",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": null,
+          "summary": null,
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": null,
+          "skipReason": null,
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        },
+        {
+          "attempt": 1,
+          "outcome": "patched",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": "patch",
+          "summary": "Expanded climate discovery into two evidence sources and merged results to surface additional active weather/climate markets instead of a single narrow trending hit.",
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": 1,
+          "skipReason": null,
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        }
+      ]
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 2,
+      "programRevision": {
+        "revisionId": "rev-2",
+        "action": "llm_patch",
+        "reason": "completeness_gap",
+        "preservesPriorLogic": true,
+        "summary": "Expanded climate discovery into two evidence sources and merged results to surface additional active weather/climate markets instead of a single narrow trending hit."
+      },
+      "completenessCheck": {
+        "isComplete": false,
+        "missingParts": [
+          "The search through 'discover_trending_markets' and 'find_trading_opportunities' only returned a single market (KXHIGHTMIN-26APR01-T47), which is insufficient for a 'hottest markets' (plural) analysis in the Climate and Weather category."
+        ],
+        "suggestedFix": "The current tools returned only one active market due to narrow 'Climate' category filtering or low current activity in that specific bucket. Use a probe-first branch: (1) Call 'get_all_categories' to confirm the exact category name and associated tags for weather/climate, (2) Use 'search_markets' with broader keywords like 'weather', 'temperature', 'hurricane', or 'rain' to find relevant series, (3) Use 'browse_series' on any discovered high-volume series (e.g., KXHIGHNY) to retrieve a more comprehensive list of active markets. If no other markets are found after these steps, report the single market as the only one currently available.",
+        "canRetryWithSameTools": true,
+        "needsDifferentTools": false,
+        "missingCapability": null,
+        "capabilityConstrained": false,
+        "outcome": "retry_same_tools",
+        "parseFailed": false,
+        "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"The search through 'discover_trending_markets' and 'find_trading_opportunities' only returned a single market (KXHIGHTMIN-26APR01-T47), which is insufficient for a 'hottest markets' (plural) analysis in the Climate and Weather category.\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The current tools returned only one active market due to narrow 'Climate' category filtering or low current activity in that specific bucket. Use a probe-first branch: (1) Call 'get_all_categories' to confirm the exact category name and associated tags for weather/climate, (2) Use 'search_markets' with broader keywords like 'weather', 'temperature', 'hurricane', or 'rain' to find relevant series, (3) Use 'browse_series' on any discovered high-volume series (e.g., KXHIGHNY) to retrieve a more comprehensive list of active markets. If no other markets are found after these steps, report the single market as the only one currently available.\",\n  \"missingCapability\": null\n}"
+      },
+      "completenessRepairEvents": [
+        {
+          "attempt": 2,
+          "outcome": "skipped_no_retry_budget",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": null,
+          "summary": null,
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": null,
+          "skipReason": "max_semantic_retries_reached",
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        }
+      ]
+    }
+  ],
+  "completenessRepairEvents": [
+    "[OMITTED:CIRCULAR_REFERENCE]",
+    "[OMITTED:CIRCULAR_REFERENCE]",
+    "[OMITTED:CIRCULAR_REFERENCE]"
+  ],
+  "selection": {
+    "selectedDepth": "deep",
+    "deepMode": "deep",
+    "debugScoutDeepMode": null,
+    "plannerReasoningStage": "focused",
+    "scoutEnabled": false,
+    "preserveFastOneShot": false,
+    "candidateMethodCount": 24,
+    "scoutProbeStatus": "ready",
+    "scoutProbeAdequacy": "adequate",
+    "scoutProbeConfidence": 0.9879,
+    "scoutMetadataConfidence": 0.9517,
+    "scoutProbeQuerySafeCandidateCount": 21,
+    "scoutProbeRankedMethodCount": 21,
+    "scoutProbeAmbiguityPoolCount": 10,
+    "scoutProbeShortlistedMethodCount": 4,
+    "scoutProbeMissingCapability": null,
+    "scoutPrePlanProbeCalls": 0,
+    "scoutPrePlanProbeBudgetReasonCode": null,
+    "scoutChangedInitialPlan": true,
+    "scoutChangedPlannerReasoningStage": false,
+    "scoutInitialSelectedDepth": "deep",
+    "scoutInitialDeepMode": "deep",
+    "scoutInitialPlannerReasoningStage": "focused",
+    "scoutInitialReasonCode": "schema_guided_deep",
+    "scoutFinalReasonCode": "probe_confirmed_adequacy",
+    "scoutEvidenceAttachedToPlanning": true,
+    "scoutLlmSelectionUsed": true,
+    "scoutLlmSelectionFallback": false,
+    "scoutLlmSelectionLatencyMs": 2787,
+    "selectedTools": [
+      {
+        "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
+        "toolName": "Kalshi",
+        "priceUsd": "0.000000",
+        "selectedMethodCount": 24,
+        "selectedMethods": [
+          "discover_trending_markets",
+          "analyze_market_liquidity",
+          "check_market_efficiency",
+          "find_arbitrage_opportunities",
+          "find_trading_opportunities",
+          "get_markets_by_probability",
+          "analyze_market_sentiment",
+          "kalshi_crossref_polymarket",
+          "get_events",
+          "get_markets",
+          "get_event",
+          "resolve_slug"
+        ],
+        "omittedSelectedMethodCount": 12
+      }
+    ]
+  },
+  "clarification": {
+    "orchestrationMode": "auto_discovery",
+    "rolloutStage": "enabled",
+    "shadowMode": false,
+    "policy": "return",
+    "outcomeType": "answer",
+    "triggered": false,
+    "optionCount": 1,
+    "candidateCount": 21,
+    "viableCandidateCount": 1,
+    "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:search_markets",
+    "recommendedOptionReason": "Recommended because Kalshi.search_markets already matches the user's full workflow directly, while the remaining alternatives only add optional entity narrowing.",
+    "autoResolved": false,
+    "autoSelectEnabled": false,
+    "assumptionMade": null,
+    "missingCapability": null,
+    "decisionReasonCode": "single_grounded_interpretation",
+    "decisionSignals": [
+      "direct_composite_intent_match"
+    ],
+    "evidenceSources": {
+      "usesMethodSchemas": true,
+      "usesProbeArgs": true,
+      "usesMethodMetadata": true,
+      "usesToolSelectionContext": true,
+      "usesLlmSelection": true
+    },
+    "comparedOptionIds": [
+      "5cc326fb-500d-4c17-bc5f-ade143210636:search_markets"
+    ],
+    "decisionStrategy": "deterministic",
+    "judgeAttempted": false,
+    "judgeApplied": false,
+    "judgeOutcomeType": null,
+    "judgeConfidence": null,
+    "judgeReason": null,
+    "judgeError": null,
+    "validatorReason": null,
+    "fallbackReason": null,
+    "copyStrategy": "deterministic",
+    "rewriteAttempted": false,
+    "rewriteApplied": false,
+    "rewriteError": null,
+    "candidateSummaries": [
+      {
+        "optionId": "5cc326fb-500d-4c17-bc5f-ade143210636:discover_trending_markets",
+        "fitScore": 20.2286,
+        "llmRelevanceScore": 1,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [
+          "category",
+          "limit",
+          "sortBy"
+        ],
+        "inputFieldNames": [
+          "limit",
+          "sortBy",
+          "category"
+        ],
+        "outputKeys": [
+          "fetchedAt",
+          "totalActive",
+          "marketSummary",
+          "trendingMarkets"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "comparison",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "slow",
+        "executePriceUsd": "0.002",
+        "queryEligible": true
+      },
+      {
+        "optionId": "5cc326fb-500d-4c17-bc5f-ade143210636:search_markets",
+        "fitScore": 12.2286,
+        "llmRelevanceScore": 0.7,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [
+          "limit",
+          "query",
+          "status"
+        ],
+        "inputFieldNames": [
+          "limit",
+          "query",
+          "status",
+          "category",
+          "maxSeriesScan"
+        ],
+        "outputKeys": [
+          "count",
+          "results",
+          "fetchedAt",
+          "searchBudget"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "multiple",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "slow",
+        "executePriceUsd": "0.002",
+        "queryEligible": true
+      },
+      {
+        "optionId": "5cc326fb-500d-4c17-bc5f-ade143210636:get_markets_by_probability",
+        "fitScore": 12.2286,
+        "llmRelevanceScore": null,
+        "requiredParams": [
+          "probability"
+        ],
+        "unresolvedRequiredParams": [
+          "probability"
+        ],
+        "probeArgKeys": [],
+        "inputFieldNames": [
+          "limit",
+          "category",
+          "probability",
+          "minLiquidity"
+        ],
+        "outputKeys": [
+          "markets",
+          "summary",
+          "warning",
+          "degraded",
+          "fetchedAt"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "multiple",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "fast",
+        "executePriceUsd": "0.002",
+        "queryEligible": true
+      }
+    ]
+  },
+  "costDiagnostics": {
+    "planningCostUsd": 0.0258843,
+    "initialExecutionCostUsd": 0.01914625,
+    "rediscoveryAdditionalCostUsd": 0,
+    "synthesisCostUsd": 0.0029132,
+    "totalModelCostUsd": 0.07746275000000001,
+    "toolCostUsd": 0,
+    "totalChargedUsd": 0.07746275000000001
+  },
+  "completeness": {
+    "evaluations": [
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "repairEvents": [
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "triggerNeedsDifferentTools": false,
+    "triggerMissingCapability": null
+  },
+  "rediscovery": {
+    "considered": false,
+    "executed": false,
+    "skipReason": "not_eligible_for_bounded_rediscovery",
+    "missingCapability": null,
+    "rediscoveryQuery": null,
+    "capabilityLooksLikeSearchNeed": false,
+    "allowSearchFallbackOnElapsedCap": false,
+    "searchFallbackUsed": false,
+    "preRediscoveryBudgetReasonCode": null,
+    "candidateSearchResults": [],
+    "selectedAlternatives": [],
+    "mergedTools": [],
+    "usingPaidFallback": false,
+    "branchPlan": null
+  },
+  "envelopeSummary": null,
+  "artifactSummary": null,
+  "usageSummary": null
+}

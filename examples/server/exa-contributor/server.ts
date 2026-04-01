@@ -74,6 +74,14 @@ type JsonRpcResponseBody = {
   };
 };
 
+type JsonRpcRequestContext = {
+  method: string | null;
+  requestedToolName: string | null;
+};
+
+const EXA_INCLUDE_TEXT_DESCRIPTION =
+  "Optional single phrase of up to 5 words (NOT an array of multiple phrases).";
+
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -211,6 +219,14 @@ function rewriteToolCallRequest(body: unknown): unknown {
   };
 }
 
+function getRequestedMethod(body: unknown): string | null {
+  if (!isObjectRecord(body) || !hasStringValue(body.method)) {
+    return null;
+  }
+
+  return body.method;
+}
+
 function getRequestedToolName(body: unknown): string | null {
   if (!isObjectRecord(body) || body.method !== "tools/call" || !isObjectRecord(body.params)) {
     return null;
@@ -300,6 +316,81 @@ function extractSingleTextResult(responseBody: JsonRpcResponseBody): string | nu
   return block.text;
 }
 
+function normalizeIncludeTextSchema(
+  propertySchema: unknown
+): { value: unknown; changed: boolean } {
+  if (!isObjectRecord(propertySchema)) {
+    return { value: propertySchema, changed: false };
+  }
+
+  let changed = false;
+  const nextSchema: Record<string, unknown> = { ...propertySchema };
+  const existingDescription = hasStringValue(propertySchema.description)
+    ? propertySchema.description.trim()
+    : "";
+
+  if (!existingDescription.includes("single phrase of up to 5 words")) {
+    nextSchema.description = existingDescription
+      ? `${existingDescription}${existingDescription.endsWith(".") ? "" : "."} ${EXA_INCLUDE_TEXT_DESCRIPTION}`
+      : EXA_INCLUDE_TEXT_DESCRIPTION;
+    changed = true;
+  }
+
+  if (propertySchema.type === "array" && propertySchema.maxItems !== 1) {
+    nextSchema.maxItems = 1;
+    changed = true;
+  }
+
+  return changed
+    ? { value: nextSchema, changed: true }
+    : { value: propertySchema, changed: false };
+}
+
+function normalizeIncludeTextSchemaNodes(
+  node: unknown
+): { value: unknown; changed: boolean } {
+  if (Array.isArray(node)) {
+    let changed = false;
+    const normalizedItems = node.map((item) => {
+      const normalizedItem = normalizeIncludeTextSchemaNodes(item);
+      if (normalizedItem.changed) {
+        changed = true;
+      }
+      return normalizedItem.value;
+    });
+
+    return changed ? { value: normalizedItems, changed: true } : { value: node, changed: false };
+  }
+
+  if (!isObjectRecord(node)) {
+    return { value: node, changed: false };
+  }
+
+  let changed = false;
+  const normalizedNode: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(node)) {
+    if (key === "includeText") {
+      const normalizedIncludeText = normalizeIncludeTextSchema(value);
+      normalizedNode[key] = normalizedIncludeText.value;
+      if (normalizedIncludeText.changed) {
+        changed = true;
+      }
+      continue;
+    }
+
+    const normalizedChild = normalizeIncludeTextSchemaNodes(value);
+    normalizedNode[key] = normalizedChild.value;
+    if (normalizedChild.changed) {
+      changed = true;
+    }
+  }
+
+  return changed
+    ? { value: normalizedNode, changed: true }
+    : { value: node, changed: false };
+}
+
 function normalizeToolCallResponsePayload(
   payload: unknown,
   requestedToolName: string | null
@@ -339,6 +430,64 @@ function normalizeToolCallResponsePayload(
       structuredContent,
     },
   };
+}
+
+function normalizeToolsListResponsePayload(payload: unknown): unknown {
+  if (
+    !isObjectRecord(payload) ||
+    !isObjectRecord(payload.result) ||
+    !Array.isArray(payload.result.tools)
+  ) {
+    return payload;
+  }
+
+  let changed = false;
+  const normalizedTools = payload.result.tools.map((tool) => {
+    if (!isObjectRecord(tool) || !isObjectRecord(tool.inputSchema)) {
+      return tool;
+    }
+
+    const normalizedSchema = normalizeIncludeTextSchemaNodes(tool.inputSchema);
+    if (!normalizedSchema.changed) {
+      return tool;
+    }
+
+    changed = true;
+    return {
+      ...tool,
+      inputSchema: normalizedSchema.value,
+    };
+  });
+
+  if (!changed) {
+    return payload;
+  }
+
+  return {
+    ...payload,
+    result: {
+      ...payload.result,
+      tools: normalizedTools,
+    },
+  };
+}
+
+function normalizeJsonRpcPayload(
+  payload: unknown,
+  requestContext: JsonRpcRequestContext
+): unknown {
+  if (requestContext.method === "tools/list") {
+    return normalizeToolsListResponsePayload(payload);
+  }
+
+  if (requestContext.method === "tools/call") {
+    return normalizeToolCallResponsePayload(
+      payload,
+      requestContext.requestedToolName
+    );
+  }
+
+  return payload;
 }
 
 function parseSsePayload(bodyText: string): { eventName: string | null; payload: unknown } | null {
@@ -384,21 +533,17 @@ function serializeSsePayload(payload: unknown, eventName: string | null): string
 function normalizeResponseBody(
   bodyText: string,
   contentType: string,
-  requestedToolName: string | null
+  requestContext: JsonRpcRequestContext
 ): string {
-  if (!requestedToolName) {
-    return bodyText;
-  }
-
   if (contentType.includes("text/event-stream")) {
     const parsed = parseSsePayload(bodyText);
     if (!parsed) {
       return bodyText;
     }
 
-    const normalizedPayload = normalizeToolCallResponsePayload(
+    const normalizedPayload = normalizeJsonRpcPayload(
       parsed.payload,
-      requestedToolName
+      requestContext
     );
     if (normalizedPayload === parsed.payload) {
       return bodyText;
@@ -413,9 +558,9 @@ function normalizeResponseBody(
       return bodyText;
     }
 
-    const normalizedPayload = normalizeToolCallResponsePayload(
+    const normalizedPayload = normalizeJsonRpcPayload(
       parsedPayload,
-      requestedToolName
+      requestContext
     );
     return normalizedPayload === parsedPayload
       ? bodyText
@@ -456,8 +601,16 @@ app.all("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
   try {
     const rewrittenBody =
       req.method === "POST" ? rewriteToolCallRequest(req.body) : req.body;
-    const requestedToolName =
-      req.method === "POST" ? getRequestedToolName(rewrittenBody) : null;
+    const requestContext: JsonRpcRequestContext =
+      req.method === "POST"
+        ? {
+            method: getRequestedMethod(rewrittenBody),
+            requestedToolName: getRequestedToolName(rewrittenBody),
+          }
+        : {
+            method: null,
+            requestedToolName: null,
+          };
 
     const fetchOptions: RequestInit = {
       method: req.method,
@@ -479,7 +632,7 @@ app.all("/mcp", verifyContextAuth, async (req: Request, res: Response) => {
       const normalizedBody = normalizeResponseBody(
         bodyText,
         contentType,
-        requestedToolName
+        requestContext
       );
       res.send(normalizedBody);
       return;

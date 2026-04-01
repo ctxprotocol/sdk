@@ -1,0 +1,4410 @@
+{
+  "toolId": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+  "backedUpAt": "2026-04-01T09:38:03.740Z",
+  "toolSchema": {
+    "kind": "mcp",
+    "tools": [
+      {
+        "name": "get_orderbook",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get the Level 2 orderbook for a Hyperliquid perpetual market. Returns bids/asks with cumulative depth, liquidity metrics, and volume context for understanding market absorption capacity.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "The coin symbol (e.g., \"HYPE\", \"BTC\", \"ETH\")"
+            },
+            "nSigFigs": {
+              "type": "number",
+              "maximum": 5,
+              "minimum": 2,
+              "description": "Aggregate price levels to N significant figures (2-5). Lower = wider view."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "midPrice",
+            "bids",
+            "asks",
+            "totalBidLiquidity",
+            "totalAskLiquidity",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "asks": {
+              "type": "array",
+              "description": "Ask levels with cumulative depth"
+            },
+            "bids": {
+              "type": "array",
+              "description": "Bid levels with cumulative depth"
+            },
+            "coin": {
+              "type": "string"
+            },
+            "note": {
+              "type": "string"
+            },
+            "spread": {
+              "type": "number",
+              "description": "Spread in basis points"
+            },
+            "midPrice": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "liquidityContext": {
+              "type": "object",
+              "description": "Context comparing orderbook to daily volume"
+            },
+            "totalAskLiquidity": {
+              "type": "number",
+              "description": "Total ask liquidity in USD"
+            },
+            "totalBidLiquidity": {
+              "type": "number",
+              "description": "Total bid liquidity in USD"
+            }
+          }
+        }
+      },
+      {
+        "name": "calculate_price_impact",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Composite analysis tool. Prefer narrowing scope first (coin/address filters) for faster responses.",
+            "cooldownMs": 1000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "list_markets",
+              "get_market_info"
+            ]
+          },
+          "latencyClass": "fast",
+          "queryEligible": true
+        },
+        "description": "🧠 INTELLIGENCE: Calculate the price impact of selling or buying a specific amount. Simulates execution through the orderbook, estimates TWAP duration for minimal impact, and provides absorption analysis. CRITICAL for analyzing large order flows.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "side"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"HYPE\")"
+            },
+            "side": {
+              "enum": [
+                "sell",
+                "buy"
+              ],
+              "type": "string",
+              "description": "sell hits bids, buy lifts asks"
+            },
+            "size": {
+              "type": "number",
+              "description": "Size in base asset units"
+            },
+            "sizeInUsd": {
+              "type": "number",
+              "description": "Alternative: size in USD (overrides size)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "side",
+            "orderSize",
+            "canAbsorb",
+            "absorption",
+            "volumeContext",
+            "confidence",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string"
+            },
+            "side": {
+              "type": "string"
+            },
+            "midPrice": {
+              "type": "number"
+            },
+            "canAbsorb": {
+              "type": "boolean"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "orderSize": {
+              "type": "number"
+            },
+            "absorption": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "maximum": 1,
+              "minimum": 0,
+              "description": "Confidence in estimate (limited by visible book depth)"
+            },
+            "filledSize": {
+              "type": "number"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "slippageBps": {
+              "type": "number"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "filledPercent": {
+              "type": "number"
+            },
+            "orderNotional": {
+              "type": "number"
+            },
+            "remainingSize": {
+              "type": "number"
+            },
+            "volumeContext": {
+              "type": "object"
+            },
+            "levelsConsumed": {
+              "type": "number"
+            },
+            "worstFillPrice": {
+              "type": "number"
+            },
+            "averageFillPrice": {
+              "type": "number"
+            },
+            "priceImpactPercent": {
+              "type": "number"
+            },
+            "hiddenLiquidityNote": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_market_info",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get comprehensive market information: price, volume, open interest, funding rate, max leverage, and market health metrics.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"HYPE\", \"BTC\")"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "markPrice",
+            "fundingRate",
+            "openInterest",
+            "volume24h",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string"
+            },
+            "spread": {
+              "type": "number",
+              "description": "Spread in bps"
+            },
+            "premium": {
+              "type": "number",
+              "description": "Premium/discount vs index (%)"
+            },
+            "midPrice": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "markPrice": {
+              "type": "number"
+            },
+            "volume24h": {
+              "type": "number"
+            },
+            "indexPrice": {
+              "type": "number"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "fundingRate": {
+              "type": "number",
+              "description": "Hourly funding rate"
+            },
+            "maxLeverage": {
+              "type": "number"
+            },
+            "impactPrices": {
+              "type": "object"
+            },
+            "openInterest": {
+              "type": "number",
+              "description": "OI in base units"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "priceChange24h": {
+              "type": "number"
+            },
+            "openInterestUsd": {
+              "type": "number"
+            },
+            "fundingRateAnnualized": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "list_markets",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "List all available perpetual markets on Hyperliquid with prices and basic info.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "markets",
+            "count",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "count": {
+              "type": "number"
+            },
+            "markets": {
+              "type": "array"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_funding_analysis",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Composite analysis tool. Prefer narrowing scope first (coin/address filters) for faster responses.",
+            "cooldownMs": 1000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "list_markets",
+              "get_market_info"
+            ]
+          },
+          "latencyClass": "fast",
+          "queryEligible": true
+        },
+        "description": "🧠 INTELLIGENCE: Get comprehensive funding rate analysis including current rates, predicted rates across venues (Binance, Bybit, Hyperliquid), and arbitrage opportunities.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"HYPE\", \"BTC\")"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "currentFunding",
+            "confidence",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "maximum": 1,
+              "minimum": 0,
+              "description": "Confidence in arbitrage opportunity"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "currentFunding": {
+              "type": "object"
+            },
+            "fundingArbitrage": {
+              "type": "object"
+            },
+            "predictedFundings": {
+              "type": "array"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_staking_summary",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get Hyperliquid staking statistics and mechanics. Essential for understanding HYPE token dynamics.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "includeValidators": {
+              "type": "boolean",
+              "description": "Include validator info (default: false)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "stakingMechanics",
+            "note",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "note": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "validators": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "currentHypePrice": {
+              "type": "number"
+            },
+            "stakingMechanics": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_user_delegations",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get staking delegations for a specific wallet address.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Wallet address (0x...)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "delegations",
+            "totalDelegated",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "delegations": {
+              "type": "array"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "totalDelegated": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_open_interest_analysis",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Composite analysis tool. Prefer narrowing scope first (coin/address filters) for faster responses.",
+            "cooldownMs": 1000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "list_markets",
+              "get_market_info"
+            ]
+          },
+          "latencyClass": "fast",
+          "queryEligible": true
+        },
+        "description": "🧠 INTELLIGENCE: Analyze open interest for a coin: current OI, OI changes, long/short ratio estimation, and OI caps. Identifies liquidation cascade risk.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"HYPE\")"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "openInterest",
+            "openInterestUsd",
+            "confidence",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "maximum": 1,
+              "minimum": 0,
+              "description": "Confidence in risk assessment"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "openInterest": {
+              "type": "number"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "liquidationRisk": {
+              "enum": [
+                "low",
+                "moderate",
+                "high"
+              ],
+              "type": "string"
+            },
+            "oiToVolumeRatio": {
+              "type": "number"
+            },
+            "openInterestUsd": {
+              "type": "number"
+            },
+            "atOpenInterestCap": {
+              "type": "boolean"
+            },
+            "fundingImpliedBias": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_candles",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get historical OHLCV candle data for technical analysis.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "interval"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"HYPE\")"
+            },
+            "limit": {
+              "type": "number",
+              "description": "Number of candles (default 100, max 500)"
+            },
+            "interval": {
+              "enum": [
+                "1m",
+                "5m",
+                "15m",
+                "1h",
+                "4h",
+                "1d",
+                "1w"
+              ],
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "interval",
+            "candles",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string"
+            },
+            "candles": {
+              "type": "array"
+            },
+            "summary": {
+              "type": "object"
+            },
+            "interval": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_recent_trades",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get recent trades with whale detection. Returns the last ~100 trades chronologically and flags any exceeding the whale threshold. NOTE: True whale trades ($100k+) are rare events and may not appear in this snapshot. Use analyze_whale_wallet with known addresses for reliable whale tracking.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"HYPE\")"
+            },
+            "whaleThresholdUsd": {
+              "type": "number",
+              "description": "USD threshold for whale trades (default: $100,000). Lower for altcoins, higher for BTC."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "trades",
+            "summary",
+            "whaleStatus",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string"
+            },
+            "trades": {
+              "type": "array"
+            },
+            "summary": {
+              "type": "object"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "limitations": {
+              "type": "string",
+              "description": "Data source limitations to consider"
+            },
+            "whaleStatus": {
+              "type": "string",
+              "description": "Human-readable status of whale detection"
+            },
+            "whaleTrades": {
+              "type": "array",
+              "description": "Trades exceeding whale threshold (may be empty)"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_large_order",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Composite analysis tool. Prefer narrowing scope first (coin/address filters) for faster responses.",
+            "cooldownMs": 1000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "list_markets",
+              "get_market_info"
+            ]
+          },
+          "latencyClass": "fast",
+          "queryEligible": true
+        },
+        "description": "🧠 INTELLIGENCE: COMPREHENSIVE analysis for large order scenarios (like team unlocks, whale sells). Combines orderbook depth, volume context, funding sentiment, and OI analysis. Provides execution recommendations.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "side"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"HYPE\")"
+            },
+            "side": {
+              "enum": [
+                "sell",
+                "buy"
+              ],
+              "type": "string"
+            },
+            "size": {
+              "type": "number",
+              "description": "Order size in base units"
+            },
+            "sizeInUsd": {
+              "type": "number",
+              "description": "Alternative: size in USD"
+            },
+            "executionStrategy": {
+              "enum": [
+                "market",
+                "twap",
+                "otc"
+              ],
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "orderSummary",
+            "marketImpact",
+            "executionRecommendation",
+            "conclusion",
+            "confidence",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "conclusion": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "maximum": 1,
+              "minimum": 0,
+              "description": "Confidence in analysis (based on data quality)"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "marketImpact": {
+              "type": "object"
+            },
+            "orderSummary": {
+              "type": "object"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "marketContext": {
+              "type": "object"
+            },
+            "reflexivityRisk": {
+              "type": "object"
+            },
+            "executionRecommendation": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_markets_at_oi_cap",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get list of perpetual markets currently at their open interest caps.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "marketsAtCap",
+            "count",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "note": {
+              "type": "string"
+            },
+            "count": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "marketsAtCap": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_hlp_vault_stats",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get HLP (Hyperliquidity Provider) vault statistics including APR, TVL, and performance.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "apr",
+            "tvl",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "apr": {
+              "type": "number"
+            },
+            "tvl": {
+              "type": "number"
+            },
+            "name": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "performance": {
+              "type": "object"
+            },
+            "lockupPeriod": {
+              "type": "string"
+            },
+            "vaultAddress": {
+              "type": "string"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "followerCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_funding_history",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get historical funding rates for a coin over a time period.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"HYPE\")"
+            },
+            "days": {
+              "type": "number",
+              "description": "Number of days of history (default: 30, max: 90)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "fundingHistory",
+            "summary",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "object"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "fundingHistory": {
+              "type": "array"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_exchange_stats",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get aggregated exchange-wide statistics: total 24h volume, total OI, and market counts.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "totalVolume24h",
+            "totalOpenInterest",
+            "marketCount",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "marketCount": {
+              "type": "number"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "totalVolume24h": {
+              "type": "number"
+            },
+            "totalOpenInterest": {
+              "type": "number"
+            },
+            "topMarketsByVolume": {
+              "type": "array"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_volume_history",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Analyze historical volume trends for a coin. Critical for understanding liquidity trends.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"HYPE\"). If omitted, analyzes major markets."
+            },
+            "days": {
+              "type": "number",
+              "description": "Number of days of history (default: 30, max: 90)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "dailyVolumes",
+            "summary",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "object"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "API endpoints used"
+            },
+            "dailyVolumes": {
+              "type": "array"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_spot_meta",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get spot market metadata including all tokens and trading pairs available on Hyperliquid spot.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "tokens",
+            "universe",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "tokens": {
+              "type": "array",
+              "description": "List of all spot tokens with decimals and metadata"
+            },
+            "universe": {
+              "type": "array",
+              "description": "List of all spot trading pairs"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "assetContexts": {
+              "type": "array",
+              "description": "Current prices and volumes for spot pairs"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_spot_balances",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get spot token balances for any wallet address with CURRENT market values and unrealized P&L. Unlike perps, spot holdings are simply owned tokens (no margin/leverage).",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Wallet address (0x...)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "balances",
+            "summary",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "object",
+              "properties": {
+                "totalEntryValue": {
+                  "type": "number",
+                  "description": "Total cost basis"
+                },
+                "totalCurrentValue": {
+                  "type": "number",
+                  "description": "Total current market value"
+                },
+                "totalUnrealizedPnl": {
+                  "type": "number"
+                },
+                "totalUnrealizedPnlPercent": {
+                  "type": "number"
+                }
+              }
+            },
+            "balances": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "coin": {
+                    "type": "string"
+                  },
+                  "hold": {
+                    "type": "number",
+                    "description": "Locked in open orders"
+                  },
+                  "total": {
+                    "type": "number"
+                  },
+                  "entryNtl": {
+                    "type": "number",
+                    "description": "Cost basis (what you paid)"
+                  },
+                  "available": {
+                    "type": "number"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "currentValue": {
+                    "type": "number",
+                    "description": "Current market value"
+                  },
+                  "unrealizedPnl": {
+                    "type": "number"
+                  },
+                  "unrealizedPnlPercent": {
+                    "type": "number"
+                  }
+                }
+              },
+              "description": "Token balances with current prices and P&L"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "totalValue": {
+              "type": "number",
+              "description": "Total current value (for backwards compatibility)"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_user_state",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get perpetual positions and margin state for any wallet address. Includes positions, margin usage, and withdrawable balance.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Wallet address (0x...)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "assetPositions",
+            "marginSummary",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "withdrawable": {
+              "type": "number"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "marginSummary": {
+              "type": "object",
+              "description": "Account value and margin usage"
+            },
+            "assetPositions": {
+              "type": "array",
+              "description": "All open perp positions with P&L"
+            },
+            "crossMarginSummary": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_open_orders",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get all open orders for a wallet address. Includes limit orders, trigger orders, and TP/SL orders.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Wallet address (0x...)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "orders",
+            "orderCount",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "orders": {
+              "type": "array",
+              "description": "All open orders with prices, sizes, and types"
+            },
+            "address": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "orderCount": {
+              "type": "number"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_order_status",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get the status of a specific order by order ID. Shows if filled, canceled, or open.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "oid"
+          ],
+          "properties": {
+            "oid": {
+              "type": "string",
+              "description": "Order ID (number or hex string)"
+            },
+            "address": {
+              "type": "string",
+              "description": "Wallet address (0x...)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "order": {
+              "type": "object",
+              "description": "Full order details if available"
+            },
+            "status": {
+              "type": "string",
+              "description": "Order status (open, filled, canceled, etc.)"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_user_fills",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get trade fill history for a wallet. Returns up to 2000 most recent fills with P&L and fees.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Wallet address (0x...)"
+            },
+            "endTime": {
+              "type": "number",
+              "description": "End time in ms (optional)"
+            },
+            "startTime": {
+              "type": "number",
+              "description": "Start time in ms (optional)"
+            },
+            "aggregateByTime": {
+              "type": "boolean",
+              "description": "Aggregate partial fills (default: false)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "fills",
+            "fillCount",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "fills": {
+              "type": "array",
+              "description": "Trade fills with price, size, P&L, and fees"
+            },
+            "address": {
+              "type": "string"
+            },
+            "summary": {
+              "type": "object",
+              "description": "Volume and P&L summary"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "fillCount": {
+              "type": "number"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_user_fees",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get fee schedule and VIP tier info for a wallet. Includes maker/taker rates, discounts, and staking benefits.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Wallet address (0x...)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "feeSchedule",
+            "userRates",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "userRates": {
+              "type": "object",
+              "description": "User's current maker/taker rates"
+            },
+            "dailyVolume": {
+              "type": "array",
+              "description": "Recent daily trading volume"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "feeSchedule": {
+              "type": "object",
+              "description": "Full fee schedule with tiers"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "activeDiscounts": {
+              "type": "object",
+              "description": "Referral and staking discounts"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_referral_state",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get referral program state for a wallet including referred volume, rewards, and builder fees.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Wallet address (0x...)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "referralState",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "referralState": {
+              "type": "object",
+              "description": "Referral stats and earnings"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_user_portfolio",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get historical portfolio data including account value and P&L history over different timeframes.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Wallet address (0x...)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "portfolio",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "portfolio": {
+              "type": "object",
+              "description": "Portfolio data by timeframe (day, week, month, allTime)"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_user_vault_equities",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get all vault positions for a wallet including equity in each vault.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Wallet address (0x...)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "vaultEquities",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "totalEquity": {
+              "type": "number"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "vaultEquities": {
+              "type": "array",
+              "description": "List of vault positions with equity"
+            }
+          }
+        }
+      },
+      {
+        "name": "get_sub_accounts",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Raw data endpoint suitable for iterative Execute workflows.",
+            "cooldownMs": 500,
+            "supportsBulk": false,
+            "maxConcurrency": 2,
+            "maxRequestsPerMinute": 120,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "instant",
+          "queryEligible": true
+        },
+        "description": "Get all sub-accounts for a master wallet including their positions and balances.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Master wallet address (0x...)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "subAccounts",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "subAccounts": {
+              "type": "array",
+              "description": "Sub-account details with positions"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "subAccountCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_trader_performance",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Composite analysis tool. Prefer narrowing scope first (coin/address filters) for faster responses.",
+            "cooldownMs": 1000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "list_markets",
+              "get_market_info"
+            ]
+          },
+          "latencyClass": "fast",
+          "queryEligible": true
+        },
+        "description": "🧠 INTELLIGENCE: Comprehensive trading performance analysis for any wallet. Combines fills, fees, and portfolio data to calculate win rate, P&L, fee efficiency, and trading patterns. Identifies optimization opportunities.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "days": {
+              "type": "number",
+              "description": "Days of history to analyze (default: 30, max: 90)"
+            },
+            "address": {
+              "type": "string",
+              "description": "Wallet address to analyze (0x...)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "tradingStats",
+            "feeAnalysis",
+            "confidence",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "maximum": 1,
+              "minimum": 0
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "feeAnalysis": {
+              "type": "object",
+              "properties": {
+                "currentTier": {
+                  "type": "string"
+                },
+                "totalFeesPaid": {
+                  "type": "number"
+                },
+                "nextTierVolume": {
+                  "type": "number"
+                },
+                "effectiveFeeRate": {
+                  "type": "number"
+                },
+                "potentialSavings": {
+                  "type": "number"
+                }
+              }
+            },
+            "tradingStats": {
+              "type": "object",
+              "properties": {
+                "winRate": {
+                  "type": "number"
+                },
+                "totalPnL": {
+                  "type": "number"
+                },
+                "totalTrades": {
+                  "type": "number"
+                },
+                "totalVolume": {
+                  "type": "number"
+                },
+                "profitFactor": {
+                  "type": "number"
+                },
+                "averageTradeSize": {
+                  "type": "number"
+                }
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "recommendations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "tradingPatterns": {
+              "type": "object",
+              "properties": {
+                "preferredSide": {
+                  "type": "string"
+                },
+                "averageHoldTime": {
+                  "type": "string"
+                },
+                "mostTradedCoins": {
+                  "type": "array"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_spot_markets",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Composite analysis tool. Prefer narrowing scope first (coin/address filters) for faster responses.",
+            "cooldownMs": 1000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "list_markets",
+              "get_market_info"
+            ]
+          },
+          "latencyClass": "fast",
+          "queryEligible": true
+        },
+        "description": "🧠 INTELLIGENCE: Comprehensive spot market analysis. Identifies high-volume pairs, liquidity depth, price divergences between spot and perp, and arbitrage opportunities.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "minVolume": {
+              "type": "number",
+              "description": "Minimum 24h volume filter in USD (default: 10000)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "marketOverview",
+            "topMarketsByVolume",
+            "confidence",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "fetchedAt": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "maximum": 1,
+              "minimum": 0
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "opportunities": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "marketOverview": {
+              "type": "object",
+              "properties": {
+                "activeTokens": {
+                  "type": "number"
+                },
+                "totalSpotPairs": {
+                  "type": "number"
+                },
+                "totalVolume24h": {
+                  "type": "number"
+                }
+              }
+            },
+            "liquidityAnalysis": {
+              "type": "array"
+            },
+            "topMarketsByVolume": {
+              "type": "array"
+            },
+            "spotPerpDivergences": {
+              "type": "array",
+              "description": "Pairs with significant spot-perp price differences"
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_whale_wallet",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Composite analysis tool. Prefer narrowing scope first (coin/address filters) for faster responses.",
+            "cooldownMs": 1000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "list_markets",
+              "get_market_info"
+            ]
+          },
+          "latencyClass": "fast",
+          "queryEligible": true
+        },
+        "description": "🧠 INTELLIGENCE: Deep analysis of any wallet's positions, orders, and trading activity. Identifies position sizing, leverage usage, directional bias, and recent activity patterns. Essential for tracking notable traders.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Wallet address to analyze (0x...)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "address",
+            "accountSummary",
+            "positions",
+            "directionalBias",
+            "confidence",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "insights": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "positions": {
+              "type": "array",
+              "description": "All positions with size, leverage, and P&L"
+            },
+            "confidence": {
+              "type": "number",
+              "maximum": 1,
+              "minimum": 0
+            },
+            "openOrders": {
+              "type": "object",
+              "properties": {
+                "orderCount": {
+                  "type": "number"
+                },
+                "pendingBuyNotional": {
+                  "type": "number"
+                },
+                "pendingSellNotional": {
+                  "type": "number"
+                }
+              }
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "accountSummary": {
+              "type": "object",
+              "properties": {
+                "unrealizedPnL": {
+                  "type": "number"
+                },
+                "marginUtilization": {
+                  "type": "number"
+                },
+                "totalAccountValue": {
+                  "type": "number"
+                },
+                "totalPositionValue": {
+                  "type": "number"
+                }
+              }
+            },
+            "riskAssessment": {
+              "type": "object",
+              "properties": {
+                "leverageRisk": {
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high",
+                    "extreme"
+                  ],
+                  "type": "string"
+                },
+                "liquidationRisk": {
+                  "type": "string"
+                },
+                "concentrationRisk": {
+                  "type": "string"
+                }
+              }
+            },
+            "directionalBias": {
+              "type": "object",
+              "properties": {
+                "bias": {
+                  "enum": [
+                    "strongly_long",
+                    "long",
+                    "neutral",
+                    "short",
+                    "strongly_short"
+                  ],
+                  "type": "string"
+                },
+                "netLongExposure": {
+                  "type": "number"
+                },
+                "netShortExposure": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_my_positions",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Composite analysis tool. Prefer narrowing scope first (coin/address filters) for faster responses.",
+            "cooldownMs": 1000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "list_markets",
+              "get_market_info"
+            ]
+          },
+          "latencyClass": "fast",
+          "queryEligible": true,
+          "contextRequirements": [
+            "hyperliquid"
+          ]
+        },
+        "description": "🧠 INTELLIGENCE: Analyze your DIRECT Hyperliquid perpetual positions (main trading account) with risk assessment, P&L breakdown, liquidation warnings, and personalized recommendations. Does NOT include vault positions - use analyze_vault_exposure for that. Requires portfolio context.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "portfolio"
+          ],
+          "properties": {
+            "portfolio": {
+              "type": "object",
+              "required": [
+                "walletAddress",
+                "perpPositions",
+                "accountSummary"
+              ],
+              "properties": {
+                "fetchedAt": {
+                  "type": "string"
+                },
+                "openOrders": {
+                  "type": "array"
+                },
+                "spotBalances": {
+                  "type": "array"
+                },
+                "perpPositions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "coin": {
+                        "type": "string"
+                      },
+                      "size": {
+                        "type": "number"
+                      },
+                      "leverage": {
+                        "type": "object"
+                      },
+                      "entryPrice": {
+                        "type": "number"
+                      },
+                      "marginUsed": {
+                        "type": "number"
+                      },
+                      "positionValue": {
+                        "type": "number"
+                      },
+                      "unrealizedPnl": {
+                        "type": "number"
+                      },
+                      "liquidationPrice": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                },
+                "walletAddress": {
+                  "type": "string"
+                },
+                "accountSummary": {
+                  "type": "object"
+                }
+              },
+              "description": "Your Hyperliquid portfolio context (injected by the Context app)"
+            },
+            "focus_coin": {
+              "type": "string",
+              "description": "Optional: specific coin to focus analysis on (e.g., 'ETH')"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "walletAddress",
+            "totalPositions",
+            "portfolioSummary",
+            "positionAnalyses",
+            "confidence",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "fetchedAt": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "maximum": 1,
+              "minimum": 0,
+              "description": "Confidence in risk assessment"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Data sources used"
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "walletAddress": {
+              "type": "string"
+            },
+            "totalPositions": {
+              "type": "number"
+            },
+            "portfolioSummary": {
+              "type": "object",
+              "properties": {
+                "accountValue": {
+                  "type": "number"
+                },
+                "atRiskPositions": {
+                  "type": "number",
+                  "description": "Positions near liquidation"
+                },
+                "totalMarginUsed": {
+                  "type": "number"
+                },
+                "marginUtilization": {
+                  "type": "number",
+                  "description": "Percentage of margin used"
+                },
+                "totalUnrealizedPnL": {
+                  "type": "number"
+                }
+              }
+            },
+            "positionAnalyses": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "coin": {
+                    "type": "string"
+                  },
+                  "size": {
+                    "type": "number"
+                  },
+                  "leverage": {
+                    "type": "number"
+                  },
+                  "direction": {
+                    "enum": [
+                      "LONG",
+                      "SHORT"
+                    ],
+                    "type": "string"
+                  },
+                  "riskLevel": {
+                    "enum": [
+                      "low",
+                      "medium",
+                      "high",
+                      "critical"
+                    ],
+                    "type": "string"
+                  },
+                  "entryPrice": {
+                    "type": "number"
+                  },
+                  "currentPrice": {
+                    "type": "number"
+                  },
+                  "unrealizedPnL": {
+                    "type": "number"
+                  },
+                  "recommendation": {
+                    "type": "string"
+                  },
+                  "liquidationPrice": {
+                    "type": "number"
+                  },
+                  "unrealizedPnLPercent": {
+                    "type": "number"
+                  },
+                  "distanceToLiquidation": {
+                    "type": "number",
+                    "description": "Percentage distance to liquidation"
+                  }
+                }
+              }
+            },
+            "vaultExposureNote": {
+              "type": "string",
+              "description": "Note if user has vault equity that should be analyzed separately"
+            },
+            "overallRecommendation": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_vault_exposure",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Composite analysis tool. Prefer narrowing scope first (coin/address filters) for faster responses.",
+            "cooldownMs": 1000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "list_markets",
+              "get_market_info"
+            ]
+          },
+          "latencyClass": "fast",
+          "queryEligible": true,
+          "contextRequirements": [
+            "hyperliquid"
+          ]
+        },
+        "description": "🧠 INTELLIGENCE: Analyze your exposure through Hyperliquid vaults (like HLP). Shows your equity in each vault, the vault's positions, and calculates your 'shadow positions' (proportional share of vault positions). Essential for understanding true market exposure when you're invested in vaults.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Wallet address (0x...). If not provided, requires portfolio context."
+            },
+            "portfolio": {
+              "type": "object",
+              "description": "Optional: Your Hyperliquid portfolio context (injected by the Context app) - only walletAddress is used"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "walletAddress",
+            "vaultSummary",
+            "vaults",
+            "confidence",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "vaults": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "apr": {
+                    "type": "number"
+                  },
+                  "vaultName": {
+                    "type": "string"
+                  },
+                  "userEquity": {
+                    "type": "number"
+                  },
+                  "lockupUntil": {
+                    "type": "string"
+                  },
+                  "vaultAddress": {
+                    "type": "string"
+                  },
+                  "shadowPositions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "coin": {
+                          "type": "string"
+                        },
+                        "direction": {
+                          "enum": [
+                            "LONG",
+                            "SHORT"
+                          ],
+                          "type": "string"
+                        },
+                        "effectiveSize": {
+                          "type": "number",
+                          "description": "Your share of this position"
+                        },
+                        "vaultFullSize": {
+                          "type": "number"
+                        },
+                        "effectiveNotional": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "description": "User's proportional share of vault positions"
+                  },
+                  "ownershipPercent": {
+                    "type": "number"
+                  },
+                  "vaultTotalEquity": {
+                    "type": "number"
+                  }
+                }
+              }
+            },
+            "insights": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "maximum": 1,
+              "minimum": 0
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "vaultSummary": {
+              "type": "object",
+              "properties": {
+                "vaultCount": {
+                  "type": "number"
+                },
+                "totalVaultEquity": {
+                  "type": "number",
+                  "description": "Total USD value across all vaults"
+                }
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "walletAddress": {
+              "type": "string"
+            },
+            "aggregatedExposure": {
+              "type": "object",
+              "properties": {
+                "bias": {
+                  "type": "string"
+                },
+                "byCoins": {
+                  "type": "array"
+                },
+                "netLongExposure": {
+                  "type": "number"
+                },
+                "netShortExposure": {
+                  "type": "number"
+                }
+              },
+              "description": "Combined exposure across all vaults by coin"
+            }
+          }
+        }
+      },
+      {
+        "name": "analyze_full_portfolio",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "both",
+          "rateLimit": {
+            "notes": "Composite analysis tool. Prefer narrowing scope first (coin/address filters) for faster responses.",
+            "cooldownMs": 1000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 60,
+            "recommendedBatchTools": [
+              "list_markets",
+              "get_market_info"
+            ]
+          },
+          "latencyClass": "fast",
+          "queryEligible": true,
+          "contextRequirements": [
+            "hyperliquid"
+          ]
+        },
+        "description": "🧠 INTELLIGENCE: COMPREHENSIVE portfolio analysis combining ALL exposure sources: (1) Direct trading positions (main account), (2) Vault exposure (HLP, user vaults), (3) Sub-accounts. Provides true total market exposure with clear source labeling. Use this to answer 'What is my REAL exposure?'",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "address": {
+              "type": "string",
+              "description": "Wallet address (0x...). If not provided, requires portfolio context."
+            },
+            "portfolio": {
+              "type": "object",
+              "description": "Optional: Your Hyperliquid portfolio context (injected by the Context app)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "walletAddress",
+            "portfolioOverview",
+            "directPositions",
+            "vaultExposure",
+            "aggregatedExposure",
+            "confidence",
+            "dataSources",
+            "dataFreshness"
+          ],
+          "properties": {
+            "insights": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "maximum": 1,
+              "minimum": 0
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "riskSummary": {
+              "type": "object",
+              "properties": {
+                "positionsAtRisk": {
+                  "type": "number"
+                },
+                "concentrationRisk": {
+                  "type": "string"
+                },
+                "highLeveragePositions": {
+                  "type": "number"
+                }
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time",
+                "near-real-time",
+                "cached",
+                "historical"
+              ],
+              "type": "string"
+            },
+            "vaultExposure": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "enum": [
+                    "vaults"
+                  ],
+                  "type": "string"
+                },
+                "vaults": {
+                  "type": "array"
+                },
+                "totalEquity": {
+                  "type": "number"
+                },
+                "shadowPositions": {
+                  "type": "array",
+                  "description": "Aggregated proportional positions across vaults"
+                }
+              },
+              "description": "Exposure through vault positions"
+            },
+            "walletAddress": {
+              "type": "string"
+            },
+            "directPositions": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "enum": [
+                    "main_account"
+                  ],
+                  "type": "string"
+                },
+                "positions": {
+                  "type": "array"
+                },
+                "totalValue": {
+                  "type": "number"
+                },
+                "unrealizedPnL": {
+                  "type": "number"
+                }
+              },
+              "description": "Positions in main trading account"
+            },
+            "portfolioOverview": {
+              "type": "object",
+              "properties": {
+                "vaultEquity": {
+                  "type": "number"
+                },
+                "mainAccountValue": {
+                  "type": "number"
+                },
+                "subAccountsValue": {
+                  "type": "number"
+                },
+                "totalAccountValue": {
+                  "type": "number",
+                  "description": "Main account + vault equity + sub-accounts"
+                }
+              }
+            },
+            "aggregatedExposure": {
+              "type": "object",
+              "properties": {
+                "byCoin": {
+                  "type": "array"
+                },
+                "directionalBias": {
+                  "type": "string"
+                },
+                "netLongExposure": {
+                  "type": "number"
+                },
+                "netShortExposure": {
+                  "type": "number"
+                }
+              },
+              "description": "Total exposure by coin across ALL sources"
+            },
+            "subAccountPositions": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "enum": [
+                    "sub_accounts"
+                  ],
+                  "type": "string"
+                },
+                "accounts": {
+                  "type": "array"
+                },
+                "totalValue": {
+                  "type": "number"
+                }
+              },
+              "description": "Positions in sub-accounts"
+            }
+          }
+        }
+      },
+      {
+        "name": "place_order",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true,
+          "contextRequirements": [
+            "hyperliquid"
+          ]
+        },
+        "description": "🔐 WRITE ACTION: Place a perpetual order on Hyperliquid. Returns a signature request that must be approved by the user. Supports limit, market, stop-loss, and take-profit orders. The signature is used to authorize the order without exposing the user's private key. To CLOSE a position: set closeEntirePosition=true and the size will be auto-calculated from the user's current position.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "isBuy"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "The coin symbol (e.g., \"ETH\", \"BTC\", \"HYPE\")"
+            },
+            "size": {
+              "type": "number",
+              "description": "Order size in base units (e.g., 0.1 ETH). NOT required if closeEntirePosition=true."
+            },
+            "isBuy": {
+              "type": "boolean",
+              "description": "true for long/buy, false for short/sell"
+            },
+            "price": {
+              "type": "number",
+              "description": "Limit price. For market orders, this is auto-calculated with slippage."
+            },
+            "postOnly": {
+              "type": "boolean",
+              "description": "If true, order will only be placed if it would be a maker order (default: false)"
+            },
+            "orderType": {
+              "type": "string",
+              "description": "Order type: \"limit\" (default), \"market\" (IOC with slippage), \"stop_loss\", or \"take_profit\""
+            },
+            "portfolio": {
+              "type": "object",
+              "description": "Optional: Your Hyperliquid portfolio context (injected by the Context app)"
+            },
+            "reduceOnly": {
+              "type": "boolean",
+              "description": "If true, order can only reduce position size (default: false, auto-set true for SL/TP)"
+            },
+            "triggerPrice": {
+              "type": "number",
+              "description": "Trigger price for stop-loss or take-profit orders (required for those types)"
+            },
+            "closeEntirePosition": {
+              "type": "boolean",
+              "description": "If true, automatically use the FULL position size from portfolio context. Sets reduceOnly=true. Use this for closing positions instead of guessing the size."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object",
+              "description": "Contains handshakeAction for signature request"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "success",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "orderDetails": {
+              "type": "object",
+              "properties": {
+                "coin": {
+                  "type": "string"
+                },
+                "side": {
+                  "enum": [
+                    "buy",
+                    "sell"
+                  ],
+                  "type": "string"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "price": {
+                  "type": "number"
+                },
+                "postOnly": {
+                  "type": "boolean"
+                },
+                "reduceOnly": {
+                  "type": "boolean"
+                },
+                "notionalValue": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "cancel_orders",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔐 WRITE ACTION: Cancel one or more open perpetual orders by order ID (oid) for a coin. Returns a signature request for user approval.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "orderIds"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"ETH\", \"BTC\", \"HYPE\")"
+            },
+            "orderIds": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "Array of Hyperliquid order IDs (oid) to cancel"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "actionPreview": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "cancel_orders_by_cloid",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔐 WRITE ACTION: Cancel one or more open perpetual orders by client order ID (cloid). Returns a signature request for user approval.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "cloids"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"ETH\", \"BTC\", \"HYPE\")"
+            },
+            "cloids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Array of client order IDs (cloid) to cancel"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "actionPreview": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "schedule_cancel",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔐 WRITE ACTION: Set or clear Hyperliquid dead-man's switch (scheduleCancel). Returns a signature request for user approval.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "disable": {
+              "type": "boolean",
+              "description": "If true, clear existing dead-man's switch instead of setting a new one."
+            },
+            "secondsFromNow": {
+              "type": "number",
+              "description": "When to auto-cancel all open orders, in seconds from now (default: 300). Ignored if disable=true."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "actionPreview": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "modify_order",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔐 WRITE ACTION: Modify an existing perpetual order by oid. Returns a signature request for user approval.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "oid",
+            "isBuy",
+            "size"
+          ],
+          "properties": {
+            "oid": {
+              "type": "number",
+              "description": "Existing order ID to modify"
+            },
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"ETH\", \"BTC\", \"HYPE\")"
+            },
+            "size": {
+              "type": "number",
+              "description": "New order size in base units"
+            },
+            "isBuy": {
+              "type": "boolean",
+              "description": "true for buy/long, false for sell/short"
+            },
+            "price": {
+              "type": "number",
+              "description": "New limit price. Required for limit orders, optional for market order."
+            },
+            "postOnly": {
+              "type": "boolean",
+              "description": "If true on limit orders, use maker-only placement"
+            },
+            "orderType": {
+              "enum": [
+                "limit",
+                "market",
+                "stop_loss",
+                "take_profit"
+              ],
+              "type": "string",
+              "description": "Order type (default: limit)"
+            },
+            "reduceOnly": {
+              "type": "boolean",
+              "description": "If true, only reduces position size"
+            },
+            "triggerPrice": {
+              "type": "number",
+              "description": "Trigger price for stop_loss/take_profit"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "actionPreview": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "batch_modify_orders",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔐 WRITE ACTION: Modify multiple existing perpetual orders in one action. Returns a signature request for user approval.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "modifications"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"ETH\", \"BTC\", \"HYPE\")"
+            },
+            "modifications": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "oid",
+                  "isBuy",
+                  "size"
+                ],
+                "properties": {
+                  "oid": {
+                    "type": "number"
+                  },
+                  "size": {
+                    "type": "number"
+                  },
+                  "isBuy": {
+                    "type": "boolean"
+                  },
+                  "price": {
+                    "type": "number"
+                  },
+                  "postOnly": {
+                    "type": "boolean"
+                  },
+                  "orderType": {
+                    "enum": [
+                      "limit",
+                      "market",
+                      "stop_loss",
+                      "take_profit"
+                    ],
+                    "type": "string"
+                  },
+                  "reduceOnly": {
+                    "type": "boolean"
+                  },
+                  "triggerPrice": {
+                    "type": "number"
+                  }
+                }
+              },
+              "description": "Array of order modifications (max 20). Each entry must include oid, isBuy, and size."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "actionPreview": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "update_leverage",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔐 WRITE ACTION: Update leverage settings for a perpetual market. Returns a signature request for user approval.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "leverage"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"ETH\", \"BTC\", \"HYPE\")"
+            },
+            "leverage": {
+              "type": "number",
+              "description": "Target leverage (integer)"
+            },
+            "marginMode": {
+              "enum": [
+                "cross",
+                "isolated"
+              ],
+              "type": "string",
+              "description": "Use cross or isolated margin mode (default: cross)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "actionPreview": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "update_isolated_margin",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔐 WRITE ACTION: Add or remove isolated margin for a perpetual market. Returns a signature request for user approval.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "usdDelta"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"ETH\", \"BTC\", \"HYPE\")"
+            },
+            "isBuy": {
+              "type": "boolean",
+              "description": "Direction selector required by endpoint (currently has no effect; default true)."
+            },
+            "usdDelta": {
+              "type": "number",
+              "description": "USD amount to add (positive) or remove (negative) from isolated margin."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "actionPreview": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "place_twap_order",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔐 WRITE ACTION: Place a TWAP order on Hyperliquid. Returns a signature request for user approval.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "isBuy",
+            "size",
+            "minutes"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"ETH\", \"BTC\", \"HYPE\")"
+            },
+            "size": {
+              "type": "number",
+              "description": "Total order size in base units"
+            },
+            "isBuy": {
+              "type": "boolean",
+              "description": "true for buy/long, false for sell/short"
+            },
+            "minutes": {
+              "type": "number",
+              "description": "TWAP duration in minutes"
+            },
+            "randomize": {
+              "type": "boolean",
+              "description": "If true, randomize TWAP slice timing"
+            },
+            "reduceOnly": {
+              "type": "boolean",
+              "description": "If true, only reduce existing positions"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "actionPreview": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "cancel_twap_order",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔐 WRITE ACTION: Cancel an active TWAP order by TWAP ID. Returns a signature request for user approval.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "coin",
+            "twapId"
+          ],
+          "properties": {
+            "coin": {
+              "type": "string",
+              "description": "Coin symbol (e.g., \"ETH\", \"BTC\", \"HYPE\")"
+            },
+            "twapId": {
+              "type": "number",
+              "description": "TWAP order ID"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "actionPreview": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "stake_hype",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔐 WRITE ACTION: Stake HYPE into Hyperliquid staking (cDeposit). Returns a signature request for user approval.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "amount"
+          ],
+          "properties": {
+            "amount": {
+              "type": "number",
+              "description": "Amount of HYPE to stake"
+            },
+            "hyperliquidChain": {
+              "type": "string",
+              "description": "Chain name (default: \"Mainnet\")"
+            },
+            "signatureChainId": {
+              "type": "string",
+              "description": "Hex chain id used for signing (default: \"0xa4b1\")"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "actionPreview": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "unstake_hype",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔐 WRITE ACTION: Unstake HYPE from Hyperliquid staking (cWithdraw). Returns a signature request for user approval.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "amount"
+          ],
+          "properties": {
+            "amount": {
+              "type": "number",
+              "description": "Amount of HYPE to unstake"
+            },
+            "hyperliquidChain": {
+              "type": "string",
+              "description": "Chain name (default: \"Mainnet\")"
+            },
+            "signatureChainId": {
+              "type": "string",
+              "description": "Hex chain id used for signing (default: \"0xa4b1\")"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "actionPreview": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "delegate_stake",
+        "_meta": {
+          "pricing": {
+            "executeUsd": "0.001"
+          },
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Write action. Use sparingly and only after explicit user intent.",
+            "cooldownMs": 2000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 30,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔐 WRITE ACTION: Delegate or undelegate staked HYPE to a validator (tokenDelegate). Returns a signature request for user approval.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "validator",
+            "amount"
+          ],
+          "properties": {
+            "amount": {
+              "type": "number",
+              "description": "Amount of HYPE to delegate/undelegate"
+            },
+            "validator": {
+              "type": "string",
+              "description": "Validator address (0x...)"
+            },
+            "isUndelegate": {
+              "type": "boolean",
+              "description": "Set true to undelegate, false to delegate"
+            },
+            "hyperliquidChain": {
+              "type": "string",
+              "description": "Chain name (default: \"Mainnet\")"
+            },
+            "signatureChainId": {
+              "type": "string",
+              "description": "Hex chain id used for signing (default: \"0xa4b1\")"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "enum": [
+                "handshake_required",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "actionPreview": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      {
+        "name": "verify_signature_security",
+        "_meta": {
+          "pricing": {},
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Internal handshake callback. Not intended for direct user invocation.",
+            "cooldownMs": 3000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 20,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false,
+          "handshakeAction": true
+        },
+        "description": "🔒 Security verification tool for testing signature request handling. Returns different EIP-712 signature patterns to verify client detection works. Use with scenario: 'standard_order', 'withdrawal_request', or 'transfer_request'.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "scenario"
+          ],
+          "properties": {
+            "scenario": {
+              "type": "string",
+              "description": "Scenario to test: \"standard_order\" (safe), \"withdrawal_request\" (should warn), \"transfer_request\" (should warn), \"unknown_action\" (caution)"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "properties": {
+            "_meta": {
+              "type": "object"
+            },
+            "status": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "submit_signed_action",
+        "_meta": {
+          "pricing": {},
+          "surface": "execute",
+          "rateLimit": {
+            "notes": "Internal handshake callback. Not intended for direct user invocation.",
+            "cooldownMs": 3000,
+            "supportsBulk": false,
+            "maxConcurrency": 1,
+            "maxRequestsPerMinute": 20,
+            "recommendedBatchTools": []
+          },
+          "latencyClass": "fast",
+          "queryEligible": false
+        },
+        "description": "🔐 INTERNAL: Submit a signed action to Hyperliquid. This tool is called automatically after the user signs a handshake request. It takes the signature and action payload from the handshake flow and submits to Hyperliquid.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "signature"
+          ],
+          "properties": {
+            "nonce": {
+              "type": "number",
+              "description": "Action nonce in milliseconds. If omitted, server attempts to recover it from handshake metadata."
+            },
+            "action": {
+              "type": "object",
+              "description": "The preformatted Hyperliquid exchange action object (order/cancel/modify/TWAP/leverage/margin/staking/etc)."
+            },
+            "signature": {
+              "type": "string",
+              "description": "The EIP-712 signature from the user's wallet"
+            },
+            "vaultAddress": {
+              "type": "string",
+              "description": "Optional vault address if trading for a vault"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "message"
+          ],
+          "properties": {
+            "status": {
+              "enum": [
+                "success",
+                "error"
+              ],
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "response": {
+              "type": "object",
+              "description": "Response from Hyperliquid exchange API"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "dataSources": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "dataFreshness": {
+              "enum": [
+                "real-time"
+              ],
+              "type": "string"
+            }
+          }
+        }
+      }
+    ],
+    "endpoint": "https://mcp.ctxprotocol.com/hyperliquid/mcp"
+  }
+}

@@ -1,0 +1,541 @@
+{
+  "transport": "run",
+  "idempotencyKey": "914f519d-ae14-4fd6-8ca0-65359481da17",
+  "requestId": "914f519d-ae14-4fd6-8ca0-65359481da17",
+  "outcomeType": "answer",
+  "responseShape": null,
+  "assumptionMade": null,
+  "durationMs": 110512,
+  "responseChars": 915,
+  "responsePreview": "Based on the current data from Kalshi's Climate category, here's what's active:\n\n**Market Overview**\n- **318 total active** Climate markets\n- **Combined 24h volume**: 1,842,242 contracts\n\n**Top Market Example** (Rank #9 by activity):\n\n| Metric | Value |\n|--------|-------|\n| **Market** | Will the **high temp in LA** be 69-70° on Mar 31, 2026? |\n| **Ticker** | KXHIGHLAX-26MAR31-B69.5 |\n| **24h Volume** | 77,917 |\n| **Open Interest** | 41,323 |\n| **Yes Price** | 100¢ |\n| **No Price** | 1¢ |\n| **Status** | Active |\n| **Closes** | Today (Apr 1) at 07:59 UTC |\n\n**Note**: The data shows this is 1 of ...",
+  "cost": {
+    "totalCostUsd": "0.082557",
+    "toolCostUsd": "0.000000",
+    "modelCostUsd": "0.082557"
+  },
+  "querySession": {
+    "sessionId": "51d6585f-5bd6-4ebe-9ffa-8d18d7a0e843",
+    "attemptId": "c0a34e9a-48ad-4820-9736-6a23b5ca7ede",
+    "parentAttemptId": null,
+    "rootAttemptId": "c0a34e9a-48ad-4820-9736-6a23b5ca7ede",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "completed",
+    "checkpoint": {
+      "currentStage": "execution",
+      "latestCheckpointArtifactId": "914f519d-ae14-4fd6-8ca0-65359481da17:19",
+      "canonicalDatasetId": "914f519d-ae14-4fd6-8ca0-65359481da17:canonical-execution",
+      "executionProgramCurrentRevisionId": "rev-2"
+    }
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "auto_discovery",
+    "firstPassSuccess": true,
+    "capabilityMissSignaled": false,
+    "rediscoveryExecuted": false
+  },
+  "traceSummary": {
+    "toolCalls": 2,
+    "retryCount": 2,
+    "selfHealCount": 2,
+    "fallbackCount": 0,
+    "failureCount": 2,
+    "recoveryCount": 0,
+    "completionChecks": 2,
+    "loopCount": 2
+  },
+  "traceTimelineStepCount": 22,
+  "executionProgramLineage": {
+    "baseRevisionId": "rev-1",
+    "currentRevisionId": "rev-2",
+    "revisionCount": 2,
+    "patchCount": 1,
+    "replanCount": 0,
+    "deterministicChangeCount": 0,
+    "revisions": [
+      {
+        "revisionId": "rev-1",
+        "parentRevisionId": null,
+        "attempt": 0,
+        "action": "initial",
+        "reason": "initial",
+        "summary": "Planner base program",
+        "codeHash": "7dfbf82671aa59d4eac11d20f725b11da864f0deadf980ba51dedd7a9d87bdc3",
+        "codeLength": 921,
+        "changedLineCount": 0,
+        "diffPreview": null,
+        "editCount": null,
+        "preservesPriorLogic": true
+      },
+      {
+        "revisionId": "rev-2",
+        "parentRevisionId": "rev-1",
+        "attempt": 1,
+        "action": "llm_patch",
+        "reason": "completeness_gap",
+        "summary": "Filter noisy Climate trending results down to weather/climate markets only, preserving the existing tool call and response shape.",
+        "codeHash": "bf2b4ff2927232b3b8b8188a15d7eaf4496da3dca118f9e358706b46c4325dbc",
+        "codeLength": 1204,
+        "changedLineCount": 12,
+        "diffPreview": "Before:\n\n  return {\n    fetchedAt: result?.fetchedAt,\n    totalActive: result?.totalActive,\nAfter:\n  const climateMarkets = markets.filter((m) => {\n    const text = `${m?.title || \"\"} ${m?.ticker || \"\"} ${m?.eventTicker || \"\"}`.toLowerCase();\n    return /weather|climate|temp|temperature|rain|snow|storm|hurricane|wind|flood|heat|high temp|low temp/.test(text);\n  });\n[diff preview truncated]",
+        "editCount": 2,
+        "preservesPriorLogic": true
+      }
+    ]
+  },
+  "repairTracePreview": [
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 1,
+      "programRevision": {
+        "revisionId": "rev-1",
+        "action": "initial",
+        "reason": "initial",
+        "preservesPriorLogic": true,
+        "summary": "Planner base program"
+      },
+      "completenessCheck": {
+        "isComplete": false,
+        "missingParts": [
+          "The returned data contains a semantic mismatch: the user asked for 'Climate and Weather' markets, but 19 out of 20 results are about Sports (College Basketball, IPL, MLB, NBA, B.League, CBA, Tennis) or Finance (WTI Oil, Bitcoin). Only one market (rank 9, 'high temp in LA') is relevant."
+        ],
+        "suggestedFix": "The `discover_trending_markets` tool with `category: 'Climate'` returned noisy results dominated by unrelated high-volume sports markets. Use a probe-first approach: (1) call `browse_category` with 'Climate' to get a clean list of weather-specific markets, (2) if that list is too broad, use `browse_series` on weather-specific series like 'KXHIGHLAX' (LA High Temp) or 'KXHIGHNY' (NYC High Temp) discovered in the first step to identify the most active entries. Avoid relying solely on the trending tool when it returns cross-category noise.",
+        "canRetryWithSameTools": true,
+        "needsDifferentTools": false,
+        "missingCapability": null,
+        "capabilityConstrained": false,
+        "outcome": "retry_same_tools",
+        "parseFailed": false,
+        "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"The returned data contains a semantic mismatch: the user asked for 'Climate and Weather' markets, but 19 out of 20 results are about Sports (College Basketball, IPL, MLB, NBA, B.League, CBA, Tennis) or Finance (WTI Oil, Bitcoin). Only one market (rank 9, 'high temp in LA') is relevant.\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The `discover_trending_markets` tool with `category: 'Climate'` returned noisy results dominated by unrelated high-volume sports markets. Use a probe-first approach: (1) call `browse_category` with 'Climate' to get a clean list of weather-specific markets, (2) if that list is too broad, use `browse_series` on weather-specific series like 'KXHIGHLAX' (LA High Temp) or 'KXHIGHNY' (NYC High Temp) discovered in the first step to identify the most active entries. Avoid relying solely on the trending tool when it returns cross-category noise.\",\n  \"missingCapability\": null\n}"
+      },
+      "completenessRepairEvents": [
+        {
+          "attempt": 1,
+          "outcome": "attempted",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": null,
+          "summary": null,
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": null,
+          "skipReason": null,
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        },
+        {
+          "attempt": 1,
+          "outcome": "patched",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": "patch",
+          "summary": "Filter noisy Climate trending results down to weather/climate markets only, preserving the existing tool call and response shape.",
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": 2,
+          "skipReason": null,
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        }
+      ]
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 2,
+      "programRevision": {
+        "revisionId": "rev-2",
+        "action": "llm_patch",
+        "reason": "completeness_gap",
+        "preservesPriorLogic": true,
+        "summary": "Filter noisy Climate trending results down to weather/climate markets only, preserving the existing tool call and response shape."
+      },
+      "completenessCheck": {
+        "isComplete": false,
+        "missingParts": [
+          "The results returned for the 'Climate' category filter are semantically incorrect, containing mostly sports and finance markets (College Basketball, IPL, NBA, MLB, WTI Oil, Bitcoin) rather than Climate and Weather markets."
+        ],
+        "suggestedFix": "The 'discover_trending_markets' tool with the 'Climate' category filter returned a noisy dataset dominated by non-climate markets. Use a probe-first strategy: (1) Call 'get_all_series' or 'search_markets' with weather-specific keywords like 'temperature', 'hurricane', 'rain', or 'precipitation' to find the correct series tickers (e.g., 'KXHIGHLAX', 'KXHIGHNY'), (2) Use 'browse_series' with those discovered tickers to get valid, active weather markets. If no high-volume weather markets are found, report the specific gap.",
+        "canRetryWithSameTools": true,
+        "needsDifferentTools": false,
+        "missingCapability": null,
+        "capabilityConstrained": false,
+        "outcome": "retry_same_tools",
+        "parseFailed": false,
+        "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"The results returned for the 'Climate' category filter are semantically incorrect, containing mostly sports and finance markets (College Basketball, IPL, NBA, MLB, WTI Oil, Bitcoin) rather than Climate and Weather markets.\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The 'discover_trending_markets' tool with the 'Climate' category filter returned a noisy dataset dominated by non-climate markets. Use a probe-first strategy: (1) Call 'get_all_series' or 'search_markets' with weather-specific keywords like 'temperature', 'hurricane', 'rain', or 'precipitation' to find the correct series tickers (e.g., 'KXHIGHLAX', 'KXHIGHNY'), (2) Use 'browse_series' with those discovered tickers to get valid, active weather markets. If no high-volume weather markets are found, report the specific gap.\",\n  \"missingCapability\": null\n}"
+      },
+      "completenessRepairEvents": [
+        {
+          "attempt": 2,
+          "outcome": "skipped_no_retry_budget",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": null,
+          "summary": null,
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": null,
+          "skipReason": "max_semantic_retries_reached",
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        }
+      ]
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 1,
+      "programRevision": {
+        "revisionId": "rev-1",
+        "action": "initial",
+        "reason": "initial",
+        "preservesPriorLogic": true,
+        "summary": "Planner base program"
+      },
+      "completenessCheck": {
+        "isComplete": false,
+        "missingParts": [
+          "The returned data contains a semantic mismatch: the user asked for 'Climate and Weather' markets, but 19 out of 20 results are about Sports (College Basketball, IPL, MLB, NBA, B.League, CBA, Tennis) or Finance (WTI Oil, Bitcoin). Only one market (rank 9, 'high temp in LA') is relevant."
+        ],
+        "suggestedFix": "The `discover_trending_markets` tool with `category: 'Climate'` returned noisy results dominated by unrelated high-volume sports markets. Use a probe-first approach: (1) call `browse_category` with 'Climate' to get a clean list of weather-specific markets, (2) if that list is too broad, use `browse_series` on weather-specific series like 'KXHIGHLAX' (LA High Temp) or 'KXHIGHNY' (NYC High Temp) discovered in the first step to identify the most active entries. Avoid relying solely on the trending tool when it returns cross-category noise.",
+        "canRetryWithSameTools": true,
+        "needsDifferentTools": false,
+        "missingCapability": null,
+        "capabilityConstrained": false,
+        "outcome": "retry_same_tools",
+        "parseFailed": false,
+        "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"The returned data contains a semantic mismatch: the user asked for 'Climate and Weather' markets, but 19 out of 20 results are about Sports (College Basketball, IPL, MLB, NBA, B.League, CBA, Tennis) or Finance (WTI Oil, Bitcoin). Only one market (rank 9, 'high temp in LA') is relevant.\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The `discover_trending_markets` tool with `category: 'Climate'` returned noisy results dominated by unrelated high-volume sports markets. Use a probe-first approach: (1) call `browse_category` with 'Climate' to get a clean list of weather-specific markets, (2) if that list is too broad, use `browse_series` on weather-specific series like 'KXHIGHLAX' (LA High Temp) or 'KXHIGHNY' (NYC High Temp) discovered in the first step to identify the most active entries. Avoid relying solely on the trending tool when it returns cross-category noise.\",\n  \"missingCapability\": null\n}"
+      },
+      "completenessRepairEvents": [
+        {
+          "attempt": 1,
+          "outcome": "attempted",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": null,
+          "summary": null,
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": null,
+          "skipReason": null,
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        },
+        {
+          "attempt": 1,
+          "outcome": "patched",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": "patch",
+          "summary": "Filter noisy Climate trending results down to weather/climate markets only, preserving the existing tool call and response shape.",
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": 2,
+          "skipReason": null,
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        }
+      ]
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 2,
+      "programRevision": {
+        "revisionId": "rev-2",
+        "action": "llm_patch",
+        "reason": "completeness_gap",
+        "preservesPriorLogic": true,
+        "summary": "Filter noisy Climate trending results down to weather/climate markets only, preserving the existing tool call and response shape."
+      },
+      "completenessCheck": {
+        "isComplete": false,
+        "missingParts": [
+          "The results returned for the 'Climate' category filter are semantically incorrect, containing mostly sports and finance markets (College Basketball, IPL, NBA, MLB, WTI Oil, Bitcoin) rather than Climate and Weather markets."
+        ],
+        "suggestedFix": "The 'discover_trending_markets' tool with the 'Climate' category filter returned a noisy dataset dominated by non-climate markets. Use a probe-first strategy: (1) Call 'get_all_series' or 'search_markets' with weather-specific keywords like 'temperature', 'hurricane', 'rain', or 'precipitation' to find the correct series tickers (e.g., 'KXHIGHLAX', 'KXHIGHNY'), (2) Use 'browse_series' with those discovered tickers to get valid, active weather markets. If no high-volume weather markets are found, report the specific gap.",
+        "canRetryWithSameTools": true,
+        "needsDifferentTools": false,
+        "missingCapability": null,
+        "capabilityConstrained": false,
+        "outcome": "retry_same_tools",
+        "parseFailed": false,
+        "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"The results returned for the 'Climate' category filter are semantically incorrect, containing mostly sports and finance markets (College Basketball, IPL, NBA, MLB, WTI Oil, Bitcoin) rather than Climate and Weather markets.\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The 'discover_trending_markets' tool with the 'Climate' category filter returned a noisy dataset dominated by non-climate markets. Use a probe-first strategy: (1) Call 'get_all_series' or 'search_markets' with weather-specific keywords like 'temperature', 'hurricane', 'rain', or 'precipitation' to find the correct series tickers (e.g., 'KXHIGHLAX', 'KXHIGHNY'), (2) Use 'browse_series' with those discovered tickers to get valid, active weather markets. If no high-volume weather markets are found, report the specific gap.\",\n  \"missingCapability\": null\n}"
+      },
+      "completenessRepairEvents": [
+        {
+          "attempt": 2,
+          "outcome": "skipped_no_retry_budget",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": null,
+          "summary": null,
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": null,
+          "skipReason": "max_semantic_retries_reached",
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        }
+      ]
+    }
+  ],
+  "completenessRepairEvents": [
+    "[OMITTED:CIRCULAR_REFERENCE]",
+    "[OMITTED:CIRCULAR_REFERENCE]",
+    "[OMITTED:CIRCULAR_REFERENCE]"
+  ],
+  "selection": {
+    "selectedDepth": "deep",
+    "deepMode": "deep",
+    "debugScoutDeepMode": null,
+    "plannerReasoningStage": "focused",
+    "scoutEnabled": false,
+    "preserveFastOneShot": false,
+    "candidateMethodCount": 24,
+    "scoutProbeStatus": "ready",
+    "scoutProbeAdequacy": "adequate",
+    "scoutProbeConfidence": 0.9879,
+    "scoutMetadataConfidence": 0.9517,
+    "scoutProbeQuerySafeCandidateCount": 21,
+    "scoutProbeRankedMethodCount": 21,
+    "scoutProbeAmbiguityPoolCount": 10,
+    "scoutProbeShortlistedMethodCount": 3,
+    "scoutProbeMissingCapability": null,
+    "scoutPrePlanProbeCalls": 0,
+    "scoutPrePlanProbeBudgetReasonCode": null,
+    "scoutChangedInitialPlan": true,
+    "scoutChangedPlannerReasoningStage": false,
+    "scoutInitialSelectedDepth": "deep",
+    "scoutInitialDeepMode": "deep",
+    "scoutInitialPlannerReasoningStage": "focused",
+    "scoutInitialReasonCode": "schema_guided_deep",
+    "scoutFinalReasonCode": "probe_confirmed_adequacy",
+    "scoutEvidenceAttachedToPlanning": true,
+    "scoutLlmSelectionUsed": true,
+    "scoutLlmSelectionFallback": false,
+    "scoutLlmSelectionLatencyMs": 2599,
+    "selectedTools": [
+      {
+        "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
+        "toolName": "Kalshi",
+        "priceUsd": "0.000000",
+        "selectedMethodCount": 24,
+        "selectedMethods": [
+          "discover_trending_markets",
+          "analyze_market_liquidity",
+          "check_market_efficiency",
+          "find_arbitrage_opportunities",
+          "find_trading_opportunities",
+          "get_markets_by_probability",
+          "analyze_market_sentiment",
+          "kalshi_crossref_polymarket",
+          "get_events",
+          "get_markets",
+          "get_event",
+          "resolve_slug"
+        ],
+        "omittedSelectedMethodCount": 12
+      }
+    ]
+  },
+  "clarification": {
+    "orchestrationMode": "auto_discovery",
+    "rolloutStage": "enabled",
+    "shadowMode": false,
+    "policy": "return",
+    "outcomeType": "answer",
+    "triggered": false,
+    "optionCount": 1,
+    "candidateCount": 21,
+    "viableCandidateCount": 1,
+    "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:search_markets",
+    "recommendedOptionReason": "Recommended because Kalshi.search_markets already matches the user's full workflow directly, while the remaining alternatives only add optional entity narrowing.",
+    "autoResolved": false,
+    "autoSelectEnabled": false,
+    "assumptionMade": null,
+    "missingCapability": null,
+    "decisionReasonCode": "single_grounded_interpretation",
+    "decisionSignals": [
+      "direct_composite_intent_match"
+    ],
+    "evidenceSources": {
+      "usesMethodSchemas": true,
+      "usesProbeArgs": true,
+      "usesMethodMetadata": true,
+      "usesToolSelectionContext": true,
+      "usesLlmSelection": true
+    },
+    "comparedOptionIds": [
+      "5cc326fb-500d-4c17-bc5f-ade143210636:search_markets"
+    ],
+    "decisionStrategy": "deterministic",
+    "judgeAttempted": false,
+    "judgeApplied": false,
+    "judgeOutcomeType": null,
+    "judgeConfidence": null,
+    "judgeReason": null,
+    "judgeError": null,
+    "validatorReason": null,
+    "fallbackReason": null,
+    "copyStrategy": "deterministic",
+    "rewriteAttempted": false,
+    "rewriteApplied": false,
+    "rewriteError": null,
+    "candidateSummaries": [
+      {
+        "optionId": "5cc326fb-500d-4c17-bc5f-ade143210636:discover_trending_markets",
+        "fitScore": 20.2286,
+        "llmRelevanceScore": 1,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [
+          "category",
+          "limit",
+          "sortBy"
+        ],
+        "inputFieldNames": [
+          "limit",
+          "sortBy",
+          "category"
+        ],
+        "outputKeys": [
+          "fetchedAt",
+          "totalActive",
+          "marketSummary",
+          "trendingMarkets"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "comparison",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "slow",
+        "executePriceUsd": "0.002",
+        "queryEligible": true
+      },
+      {
+        "optionId": "5cc326fb-500d-4c17-bc5f-ade143210636:search_markets",
+        "fitScore": 12.2286,
+        "llmRelevanceScore": 0.6,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [
+          "category",
+          "query",
+          "status"
+        ],
+        "inputFieldNames": [
+          "limit",
+          "query",
+          "status",
+          "category",
+          "maxSeriesScan"
+        ],
+        "outputKeys": [
+          "count",
+          "results",
+          "fetchedAt",
+          "searchBudget"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "multiple",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "slow",
+        "executePriceUsd": "0.002",
+        "queryEligible": true
+      },
+      {
+        "optionId": "5cc326fb-500d-4c17-bc5f-ade143210636:get_markets_by_probability",
+        "fitScore": 12.2286,
+        "llmRelevanceScore": null,
+        "requiredParams": [
+          "probability"
+        ],
+        "unresolvedRequiredParams": [
+          "probability"
+        ],
+        "probeArgKeys": [],
+        "inputFieldNames": [
+          "limit",
+          "category",
+          "probability",
+          "minLiquidity"
+        ],
+        "outputKeys": [
+          "markets",
+          "summary",
+          "warning",
+          "degraded",
+          "fetchedAt"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "multiple",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "fast",
+        "executePriceUsd": "0.002",
+        "queryEligible": true
+      }
+    ]
+  },
+  "costDiagnostics": {
+    "planningCostUsd": 0.0244698,
+    "initialExecutionCostUsd": 0.02301925,
+    "rediscoveryAdditionalCostUsd": 0,
+    "synthesisCostUsd": 0.0034766,
+    "totalModelCostUsd": 0.0825568,
+    "toolCostUsd": 0,
+    "totalChargedUsd": 0.0825568
+  },
+  "completeness": {
+    "evaluations": [
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "repairEvents": [
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "triggerNeedsDifferentTools": false,
+    "triggerMissingCapability": null
+  },
+  "rediscovery": {
+    "considered": false,
+    "executed": false,
+    "skipReason": "not_eligible_for_bounded_rediscovery",
+    "missingCapability": null,
+    "rediscoveryQuery": null,
+    "capabilityLooksLikeSearchNeed": false,
+    "allowSearchFallbackOnElapsedCap": false,
+    "searchFallbackUsed": false,
+    "preRediscoveryBudgetReasonCode": null,
+    "candidateSearchResults": [],
+    "selectedAlternatives": [],
+    "mergedTools": [],
+    "usingPaidFallback": false,
+    "branchPlan": null
+  },
+  "envelopeSummary": null,
+  "artifactSummary": null,
+  "usageSummary": null
+}

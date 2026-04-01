@@ -259,7 +259,7 @@ const TOOLS = [
   {
     name: "get_funding_analysis",
     description:
-      "🧠 INTELLIGENCE: Get comprehensive funding rate analysis including current rates, predicted rates across venues (Binance, Bybit, Hyperliquid), and arbitrage opportunities.",
+      "🧠 INTELLIGENCE: Get comprehensive funding rate analysis including the live Hyperliquid current rate, an explicit venueFundingSnapshot for Hyperliquid/Binance/Bybit, normalized predicted rates across venues, and arbitrage opportunities.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -271,15 +271,84 @@ const TOOLS = [
       type: "object" as const,
       properties: {
         coin: { type: "string" },
-        currentFunding: { type: "object" },
-        predictedFundings: { type: "array" },
-        fundingArbitrage: { type: "object" },
+        currentFunding: {
+          type: "object" as const,
+          properties: {
+            venue: { type: "string" },
+            rate: { type: "number" },
+            annualized: { type: "number" },
+            sentiment: { type: "string" },
+          },
+          required: ["venue", "rate", "annualized", "sentiment"],
+        },
+        venueFundingSnapshot: {
+          type: "object" as const,
+          properties: {
+            Hyperliquid: {
+              type: "object" as const,
+              properties: {
+                venue: { type: "string" },
+                rate: { type: "number" },
+                rateKind: { type: "string", enum: ["current"] },
+                nextFundingTime: { type: "null" },
+              },
+              required: ["venue", "rate", "rateKind", "nextFundingTime"],
+            },
+            Binance: {
+              type: "object" as const,
+              properties: {
+                venue: { type: "string" },
+                rate: { type: ["number", "null"] as const },
+                rateKind: { type: "string", enum: ["predicted"] },
+                nextFundingTime: { type: ["string", "null"] as const },
+              },
+              required: ["venue", "rate", "rateKind", "nextFundingTime"],
+            },
+            Bybit: {
+              type: "object" as const,
+              properties: {
+                venue: { type: "string" },
+                rate: { type: ["number", "null"] as const },
+                rateKind: { type: "string", enum: ["predicted"] },
+                nextFundingTime: { type: ["string", "null"] as const },
+              },
+              required: ["venue", "rate", "rateKind", "nextFundingTime"],
+            },
+          },
+          required: ["Hyperliquid", "Binance", "Bybit"],
+        },
+        predictedFundings: {
+          type: "array" as const,
+          items: {
+            type: "object" as const,
+            properties: {
+              venue: { type: "string" },
+              venueCode: { type: "string" },
+              rate: { type: "number" },
+              nextFundingTime: { type: "string" },
+            },
+            required: ["venue", "venueCode", "rate", "nextFundingTime"],
+          },
+        },
+        fundingArbitrage: {
+          anyOf: [
+            { type: "null" },
+            {
+              type: "object" as const,
+              properties: {
+                strategy: { type: "string" },
+                annualizedSpread: { type: "string" },
+              },
+              required: ["strategy", "annualizedSpread"],
+            },
+          ],
+        },
         confidence: { type: "number", minimum: 0, maximum: 1, description: "Confidence in arbitrage opportunity" },
         dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
         dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
         fetchedAt: { type: "string" },
       },
-      required: ["coin", "currentFunding", "confidence", "dataSources", "dataFreshness"],
+      required: ["coin", "currentFunding", "venueFundingSnapshot", "predictedFundings", "fundingArbitrage", "confidence", "dataSources", "dataFreshness"],
     },
   },
 
@@ -2513,26 +2582,41 @@ async function handleGetFundingAnalysis(args: Record<string, unknown> | undefine
   const annualized = fundingRate * 24 * 365 * 100;
 
   const coinPredictions = predictedFundings.find((p: [string, unknown[]]) => p[0] === coin);
-  const predictions: Array<{ venue: string; rate: number; nextFundingTime: string }> = [];
+  const predictions: Array<{
+    venue: string;
+    venueCode: string;
+    rate: number;
+    nextFundingTime: string;
+  }> = [];
+  const venueLabelByCode: Record<string, string> = {
+    BinPerp: "Binance",
+    HlPerp: "Hyperliquid",
+    BybitPerp: "Bybit",
+  };
 
   if (coinPredictions && Array.isArray(coinPredictions[1])) {
     for (const pred of coinPredictions[1]) {
       const [venue, data] = pred as [string, { fundingRate: string; nextFundingTime: number } | null];
       if (!data) continue;
       predictions.push({
-        venue,
+        venue: venueLabelByCode[venue] ?? venue,
+        venueCode: venue,
         rate: Number(data.fundingRate),
         nextFundingTime: new Date(data.nextFundingTime).toISOString(),
       });
     }
   }
 
-  const hlRate = predictions.find((p) => p.venue === "HlPerp")?.rate ?? fundingRate;
-  const binRate = predictions.find((p) => p.venue === "BinPerp")?.rate;
+  const hyperliquidVenueRate =
+    predictions.find((p) => p.venue === "Hyperliquid")?.rate ?? fundingRate;
+  const binanceFundingRate =
+    predictions.find((p) => p.venue === "Binance")?.rate ?? null;
+  const bybitFundingRate =
+    predictions.find((p) => p.venue === "Bybit")?.rate ?? null;
   let arbitrageOpportunity: { strategy: string; annualizedSpread: string } | null = null;
 
-  if (binRate !== undefined) {
-    const diff = (binRate - hlRate) * 24 * 365 * 100;
+  if (binanceFundingRate !== null) {
+    const diff = (binanceFundingRate - hyperliquidVenueRate) * 24 * 365 * 100;
     if (Math.abs(diff) > 5) {
       arbitrageOpportunity = {
         strategy: diff > 0 ? "Long HL, Short Binance" : "Short HL, Long Binance",
@@ -2547,9 +2631,33 @@ async function handleGetFundingAnalysis(args: Record<string, unknown> | undefine
   return successResult({
     coin,
     currentFunding: {
+      venue: "Hyperliquid",
       rate: fundingRate,
       annualized: Number(annualized.toFixed(2)),
       sentiment: fundingRate > 0 ? "bullish (longs pay shorts)" : fundingRate < 0 ? "bearish (shorts pay longs)" : "neutral",
+    },
+    // Expose stable venue keys so planner-generated code can compare rates safely.
+    venueFundingSnapshot: {
+      Hyperliquid: {
+        venue: "Hyperliquid",
+        rate: fundingRate,
+        rateKind: "current",
+        nextFundingTime: null,
+      },
+      Binance: {
+        venue: "Binance",
+        rate: binanceFundingRate,
+        rateKind: "predicted",
+        nextFundingTime:
+          predictions.find((p) => p.venue === "Binance")?.nextFundingTime ?? null,
+      },
+      Bybit: {
+        venue: "Bybit",
+        rate: bybitFundingRate,
+        rateKind: "predicted",
+        nextFundingTime:
+          predictions.find((p) => p.venue === "Bybit")?.nextFundingTime ?? null,
+      },
     },
     predictedFundings: predictions,
     fundingArbitrage: arbitrageOpportunity,

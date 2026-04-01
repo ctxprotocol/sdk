@@ -120,8 +120,10 @@ console.log(answer.orchestrationMetrics); // high-level first-pass / rediscovery
 `responseShape` options:
 
 - `answer`: backward-compatible prose answer
-- `answer_with_evidence`: prose plus `summary`, `evidence`, `artifacts`, `freshness`, `confidence`, and `usage`
+- `answer_with_evidence`: prose plus `summary`, `evidence`, `artifacts`, `freshness`, `confidence`, `usage`, `outcome`, and `controller`
 - `evidence_only`: machine-friendly summary plus the same evidence package for downstream agents
+
+Premium wedge answers can also expose `evidence.marketIntelligence`, `view.rows`, `view.columns`, and the top-level controller fields `stopReason`, `issueClass`, and `actionsTaken`.
 
 The first-party chat app uses the same Query contract and defaults to `answer_with_evidence`.
 

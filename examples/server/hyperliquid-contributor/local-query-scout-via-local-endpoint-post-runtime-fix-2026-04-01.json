@@ -1,0 +1,110 @@
+{
+  "toolId": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+  "promptCount": 5,
+  "results": [
+    {
+      "prompt": "Which Hyperliquid market currently has the largest open interest, and what does that imply about crowded positioning?",
+      "success": true,
+      "outcomeType": "answer",
+      "summary": "Based on the data retrieved from the Hyperliquid perp universe as of April 1, 2026, the system discovered **229 markets**.",
+      "responsePreview": "Based on the data retrieved from the Hyperliquid perp universe as of April 1, 2026, the system discovered **229 markets**.\n\nHowever, the current execution was **partially bounded**. While the list of 229 markets was successfully identified and normalized, the initial discovery payload did not contain real-time Open Interest (OI) values for the full set. \n\n### Current Status\n*   **Total Markets Discovered:** 229\n*   **Markets with Direct OI Data:** 0 (requires sequential enrichment)\n*   **Data Freshness:** April 1, 2026, 09:49:45 UTC\n\nBecause the open interest field was missing from the high-level discovery call, the final ranking of the largest market is pending a sequential loop through each of the 229 markets to fetch specific market info.\n\n**Remaining Gap:**\nTo identify the single largest market and determine crowding (indicated by high OI relative to volume or extreme funding rates), the system needs to complete the \"full sequential enrichment\" branch for all 229 candidates. Withou",
+      "durationMs": 61773,
+      "toolCalls": 1,
+      "completionChecks": 1,
+      "loopCount": 1,
+      "decisionSignals": [
+        "capability_miss_rescued"
+      ],
+      "freshness": {
+        "asOf": "2026-04-01T09:49:45.318Z",
+        "sourceTimestamps": [
+          "2026-04-01T09:49:45.318Z"
+        ],
+        "note": "Most recent evidence timestamp: 2026-04-01T09:49:45.318Z"
+      }
+    },
+    {
+      "prompt": "For HYPE on Hyperliquid, show the current orderbook depth and estimate slippage for a 50000 dollar sell order.",
+      "success": true,
+      "outcomeType": "answer",
+      "summary": "Based on real-time data from Hyperliquid (fetched April 1, 2026), here is the current orderbook depth for HYPE and the slippage estimate for a $50,000 sell order.",
+      "responsePreview": "Based on real-time data from Hyperliquid (fetched April 1, 2026), here is the current orderbook depth for HYPE and the slippage estimate for a $50,000 sell order.\n\n### HYPE Orderbook Depth\nThe orderbook is currently characterized by a very tight spread but relatively thin visible liquidity across the top levels.\n\n| Metric | Value |\n| :--- | :--- |\n| **Mid Price** | 37.0175 |\n| **Spread (Bps)** | 0.27 bps |\n| **Total Bid Liquidity** | 109,585.47 |\n| **Total Ask Liquidity** | 141,116.18 |\n| **24h Volume** | $281,011,316.80 |\n| **Liquidity Score** | Very Thin |\n\n*Note: The visible orderbook typically reflects the top 20 levels. Hidden liquidity and market maker activity often provide additional absorption not shown in these totals.*\n\n### Estimated Slippage for $50,000 Sell Order\nA $50,000 sell order is expected to be easily absorbed by the current market conditions.\n\n| Metric | Value |\n| :--- | :--- |\n| **Average Fill Price** | 37.003651 |\n| **Worst Fill Price** | 36.999 |\n| **Price Impac",
+      "durationMs": 36435,
+      "toolCalls": 2,
+      "completionChecks": 1,
+      "loopCount": 0,
+      "decisionSignals": [
+        "llm_judge",
+        "composable_multi_intent",
+        "intent_clause_partition",
+        "multi_candidate_clause_ownership"
+      ],
+      "freshness": {
+        "asOf": "2026-04-01T09:50:34.344Z",
+        "sourceTimestamps": [
+          "2026-04-01T09:50:34.344Z",
+          "2026-04-01T09:50:31.163Z"
+        ],
+        "note": "Most recent evidence timestamp: 2026-04-01T09:50:34.344Z"
+      }
+    },
+    {
+      "prompt": "Compare current ETH funding on Hyperliquid versus Binance and say whether there is a funding arbitrage spread right now.",
+      "success": true,
+      "outcomeType": "answer",
+      "summary": "Based on recent data, there is currently an ETH funding arbitrage spread between Hyperliquid and Binance.",
+      "responsePreview": "Based on recent data, there is currently an ETH funding arbitrage spread between Hyperliquid and Binance.\n\n### ETH Funding Comparison\n\n| Venue | Funding Rate | Rate Kind | Annualized Rate |\n| :--- | :--- | :--- | :--- |\n| **Hyperliquid** | 0.0000118745 | Current | 10.4% |\n| **Binance** | 0.00008023 | Predicted | ~70.28%* |\n\n*\\*Annualized based on Binance's standard 8-hour settlement intervals.*\n\n### Arbitrage Opportunity\nThere is a clear funding arbitrage spread of approximately **59.96% annualized**.\n\n*   **Arbitrage Direction:** Long Hyperliquid / Short Binance\n*   **Strategy:** By being long on Hyperliquid and short on Binance, you capture the higher funding rate paid by shorts on Binance while paying a significantly lower rate on Hyperliquid.\n*   **Data Freshness:** Real-time as of April 1, 2026, 09:51 UTC.",
+      "durationMs": 31895,
+      "toolCalls": 1,
+      "completionChecks": 1,
+      "loopCount": 0,
+      "decisionSignals": [],
+      "freshness": {
+        "asOf": "2026-04-01T09:51:10.258Z",
+        "sourceTimestamps": [
+          "2026-04-01T09:51:10.258Z"
+        ],
+        "note": "Most recent evidence timestamp: 2026-04-01T09:51:10.258Z"
+      }
+    },
+    {
+      "prompt": "Is HYPE at risk of a liquidation cascade right now based on open interest and funding?",
+      "success": true,
+      "outcomeType": "answer",
+      "summary": "As of April 1, 2026, the liquidation cascade risk for HYPE is classified as **mixed**.",
+      "responsePreview": "As of April 1, 2026, the liquidation cascade risk for HYPE is classified as **mixed**. While there is a significant concentration of Open Interest (OI), funding remains relatively stable.\n\nThe following data points from the latest market snapshot breakdown the current risk profile:\n\n### Liquidation & Market Risk Metrics\n| Metric | Value | Risk Assessment |\n| :--- | :--- | :--- |\n| **Liquidation Cascade Risk** | Mixed | Moderate risk due to OI concentration |\n| **Open Interest (USD)** | $801,358,152.05 | High concentration |\n| **OI to Volume Ratio** | 2.85 | Reflects high positioning relative to daily trade flow |\n| **At OI Cap** | False | Market hasn't reached maximum capacity limits |\n\n### Funding & Sentiment\n| Metric | Value | Sentiment |\n| :--- | :--- | :--- |\n| **Current Funding Rate** | 0.0000125 | Bullish (Longs paying Shorts) |\n| **Annualized Rate** | 10.95% | Sustainable/Moderate |\n| **Primary Venue** | Hyperliquid | Active funding environment |\n\n**Rationale for \"Mixed\" Risk:**",
+      "durationMs": 31933,
+      "toolCalls": 2,
+      "completionChecks": 1,
+      "loopCount": 0,
+      "decisionSignals": [],
+      "freshness": {
+        "asOf": "2026-04-01T09:51:44.529Z",
+        "sourceTimestamps": [
+          "2026-04-01T09:51:44.529Z",
+          "2026-04-01T09:51:41.190Z"
+        ],
+        "note": "Most recent evidence timestamp: 2026-04-01T09:51:44.529Z"
+      }
+    },
+    {
+      "prompt": "Show recent HYPE trades on Hyperliquid and tell me whether buyers or sellers are in control over the last few prints.",
+      "success": true,
+      "outcomeType": "answer",
+      "summary": "Based on the most recent data from Hyperliquid (fetched at 09:52:15 UTC today), **sellers are in control** of the HYPE market.",
+      "responsePreview": "Based on the most recent data from Hyperliquid (fetched at 09:52:15 UTC today), **sellers are in control** of the HYPE market.\n\nOver the last 10 prints analyzed, selling activity significantly outweighed buying activity in both trade count and volume.\n\n### Market Summary (Last 10 Prints)\n| Metric | Value |\n| :--- | :--- |\n| **Control** | **Sellers** |\n| **Sell Count** | 9 |\n| **Buy Count** | 1 |\n| **Sell Notional** | $1,893.05 |\n| **Buy Notional** | $397.13 |\n| **Whale Activity** | None detected (Threshold >$100k) |\n\n### Recent Trade Log\n| Time (UTC) | Price | Size | Notional | Side |\n| :--- | :--- | :--- | :--- | :--- |\n| 09:52:15 | 37.049 | 4.5 | $166.72 | Sell |\n| 09:52:14 | 37.049 | 9 | $333.44 | Sell |\n| 09:52:14 | 37.046 | 10.72 | $397.13 | Buy |\n| 09:52:13 | 37.045 | 8.1 | $300.06 | Sell |\n| 09:52:13 | 37.045 | 0.71 | $26.30 | Sell |\n| 09:52:13 | 37.045 | 5.59 | $207.08 | Sell |\n| 09:52:12 | 37.045 | 7.2 | $266.72 | Sell |\n| 09:52:11 | 37.045 | 8.8 | $326.00 | Sell |\n| 09:52:09 ",
+      "durationMs": 34248,
+      "toolCalls": 1,
+      "completionChecks": 1,
+      "loopCount": 0,
+      "decisionSignals": [],
+      "freshness": {
+        "asOf": "2026-04-01T09:52:15.815Z",
+        "sourceTimestamps": [
+          "2026-04-01T09:52:15.815Z"
+        ],
+        "note": "Most recent evidence timestamp: 2026-04-01T09:52:15.815Z"
+      }
+    }
+  ]
+}

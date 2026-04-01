@@ -1,0 +1,532 @@
+{
+  "transport": "run",
+  "idempotencyKey": "081178cb-2f7c-4248-91b3-892814332780",
+  "requestId": "081178cb-2f7c-4248-91b3-892814332780",
+  "outcomeType": "answer",
+  "responseShape": null,
+  "assumptionMade": null,
+  "durationMs": 210588,
+  "responseChars": 1270,
+  "responsePreview": "The search found Kalshi markets for **April 1, 2026** (today's date per the current context). Here are the available exact markets for NYC's highest temperature:\n\n| Market Title | Ticker | Yes Price | Close Time |\n|-------------|--------|-----------|------------|\n| Will the **high temp in NYC** be >79° on Apr 1, 2026? | KXHIGHNY-26APR01-T79 | 16¢ | 2026-04-02T04:59:00Z |\n| Will the **high temp in NYC** be 76-77° on Apr 1, 2026? | KXHIGHNY-26APR01-B76.5 | 46¢ | 2026-04-02T04:59:00Z |\n| Will the **high temp in NYC** be 78-79° on Apr 1, 2026? | KXHIGHNY-26APR01-B78.5 | 29¢ | 2026-04-02T04:59:00Z ...",
+  "cost": {
+    "totalCostUsd": "0.116918",
+    "toolCostUsd": "0.000000",
+    "modelCostUsd": "0.116918"
+  },
+  "querySession": {
+    "sessionId": "4fd28449-0226-4b76-a859-c0c2b18871f8",
+    "attemptId": "369030e9-1719-43f7-8392-389a90c202d8",
+    "parentAttemptId": null,
+    "rootAttemptId": "369030e9-1719-43f7-8392-389a90c202d8",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "completed",
+    "checkpoint": {
+      "currentStage": "execution",
+      "latestCheckpointArtifactId": "081178cb-2f7c-4248-91b3-892814332780:19",
+      "canonicalDatasetId": "081178cb-2f7c-4248-91b3-892814332780:canonical-execution",
+      "executionProgramCurrentRevisionId": "rev-2"
+    }
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "auto_discovery",
+    "firstPassSuccess": true,
+    "capabilityMissSignaled": false,
+    "rediscoveryExecuted": false
+  },
+  "traceSummary": {
+    "toolCalls": 4,
+    "retryCount": 2,
+    "selfHealCount": 2,
+    "fallbackCount": 0,
+    "failureCount": 2,
+    "recoveryCount": 0,
+    "completionChecks": 2,
+    "loopCount": 2
+  },
+  "traceTimelineStepCount": 26,
+  "executionProgramLineage": {
+    "baseRevisionId": "rev-1",
+    "currentRevisionId": "rev-2",
+    "revisionCount": 2,
+    "patchCount": 1,
+    "replanCount": 0,
+    "deterministicChangeCount": 0,
+    "revisions": [
+      {
+        "revisionId": "rev-1",
+        "parentRevisionId": null,
+        "attempt": 0,
+        "action": "initial",
+        "reason": "initial",
+        "summary": "Planner base program",
+        "codeHash": "248b7161fad2f8776724a8e1ffbdf5ac537ec31433d39e72de5cde8d94247f20",
+        "codeLength": 3691,
+        "changedLineCount": 0,
+        "diffPreview": null,
+        "editCount": null,
+        "preservesPriorLogic": true
+      },
+      {
+        "revisionId": "rev-2",
+        "parentRevisionId": "rev-1",
+        "attempt": 1,
+        "action": "llm_patch",
+        "reason": "completeness_gap",
+        "summary": "Expanded NYC temperature handling to include the full Apr 1 event bucket set from the existing search results, so the response no longer surfaces only one contract when the series search already found all relevant NYC outcomes.",
+        "codeHash": "de77afcb2b464cfc48342f30e65218e4abd4c330cf234706bd281977effbd07f",
+        "codeLength": 4214,
+        "changedLineCount": 29,
+        "diffPreview": "Before:\n  return {\n    found: true,\n    searchedQuery: \"NYC highest temperature today\",\n    selectedMarket: {\nAfter:\n  const eventTicker = market?.market?.eventTicker || bestCandidate.eventTicker || null;\n  const eventBuckets = eventTicker\n    ? candidates\n        .filter((candidate) => candidate?.eventTicker === eventTicker)\n[diff preview truncated]",
+        "editCount": 1,
+        "preservesPriorLogic": true
+      }
+    ]
+  },
+  "repairTracePreview": [
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 1,
+      "programRevision": {
+        "revisionId": "rev-1",
+        "action": "initial",
+        "reason": "initial",
+        "preservesPriorLogic": true,
+        "summary": "Planner base program"
+      },
+      "completenessCheck": {
+        "isComplete": false,
+        "missingParts": [
+          "User asked for the high temperature 'today', but the returned markets are for April 1, 2026 (a future date relative to the search timestamp 2026-04-01)."
+        ],
+        "suggestedFix": "The current results for 'today' (2026-04-01) returned markets that close in 2026-04-02, which might be the correct series, but the search results provided for 'NYC highest temperature today' only show a single event (KXHIGHNY-26APR01). Use 'browse_series' with the 'KXHIGHNY' ticker to see if there are other active markets or more specific 'today' contracts that were missed by the keyword search. If no other markets for today exist, provide the specific buckets for the April 1st event.",
+        "canRetryWithSameTools": true,
+        "needsDifferentTools": false,
+        "missingCapability": null,
+        "capabilityConstrained": false,
+        "outcome": "retry_same_tools",
+        "parseFailed": false,
+        "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"User asked for the high temperature 'today', but the returned markets are for April 1, 2026 (a future date relative to the search timestamp 2026-04-01).\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The current results for 'today' (2026-04-01) returned markets that close in 2026-04-02, which might be the correct series, but the search results provided for 'NYC highest temperature today' only show a single event (KXHIGHNY-26APR01). Use 'browse_series' with the 'KXHIGHNY' ticker to see if there are other active markets or more specific 'today' contracts that were missed by the keyword search. If no other markets for today exist, provide the specific buckets for the April 1st event.\",\n  \"missingCapability\": null\n}"
+      },
+      "completenessRepairEvents": [
+        {
+          "attempt": 1,
+          "outcome": "attempted",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": null,
+          "summary": null,
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": null,
+          "skipReason": null,
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        },
+        {
+          "attempt": 1,
+          "outcome": "patched",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": "patch",
+          "summary": "Expanded NYC temperature handling to include the full Apr 1 event bucket set from the existing search results, so the response no longer surfaces only one contract when the series search already found all relevant NYC outcomes.",
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": 1,
+          "skipReason": null,
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        }
+      ]
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 2,
+      "programRevision": {
+        "revisionId": "rev-2",
+        "action": "llm_patch",
+        "reason": "completeness_gap",
+        "preservesPriorLogic": true,
+        "summary": "Expanded NYC temperature handling to include the full Apr 1 event bucket set from the existing search results, so the response no longer surfaces only one contract when the series search already found all relevant NYC outcomes."
+      },
+      "completenessCheck": {
+        "isComplete": false,
+        "missingParts": [
+          "The data returned is for April 1, 2026, but the user asked for 'today' (April 1, 2024). This is a semantic mismatch due to an incorrect year in the search results."
+        ],
+        "suggestedFix": "The search returned markets for the year 2026 instead of the current date. Use a probe-first branch: (1) Call get_all_series with category 'Climate' or 'Weather' to find the correct series ticker for Daily NYC High Temperature (expected: KXHIGHNY), (2) Use get_events with that seriesTicker and status='open' to find the specific event for the current date (April 1, 2024), (3) Call get_event with the discovered event ticker to provide the exact market buckets. If no markets exist for the current date, return explicit gaps.",
+        "canRetryWithSameTools": true,
+        "needsDifferentTools": false,
+        "missingCapability": null,
+        "capabilityConstrained": false,
+        "outcome": "retry_same_tools",
+        "parseFailed": false,
+        "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"The data returned is for April 1, 2026, but the user asked for 'today' (April 1, 2024). This is a semantic mismatch due to an incorrect year in the search results.\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The search returned markets for the year 2026 instead of the current date. Use a probe-first branch: (1) Call get_all_series with category 'Climate' or 'Weather' to find the correct series ticker for Daily NYC High Temperature (expected: KXHIGHNY), (2) Use get_events with that seriesTicker and status='open' to find the specific event for the current date (April 1, 2024), (3) Call get_event with the discovered event ticker to provide the exact market buckets. If no markets exist for the current date, return explicit gaps.\",\n  \"missingCapability\": null\n}"
+      },
+      "completenessRepairEvents": [
+        {
+          "attempt": 2,
+          "outcome": "skipped_no_retry_budget",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": null,
+          "summary": null,
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": null,
+          "skipReason": "max_semantic_retries_reached",
+          "boundedAnswerReason": "retry_guardrail_upstream_abort",
+          "blockingDiagnostics": []
+        }
+      ]
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 1,
+      "programRevision": {
+        "revisionId": "rev-1",
+        "action": "initial",
+        "reason": "initial",
+        "preservesPriorLogic": true,
+        "summary": "Planner base program"
+      },
+      "completenessCheck": {
+        "isComplete": false,
+        "missingParts": [
+          "User asked for the high temperature 'today', but the returned markets are for April 1, 2026 (a future date relative to the search timestamp 2026-04-01)."
+        ],
+        "suggestedFix": "The current results for 'today' (2026-04-01) returned markets that close in 2026-04-02, which might be the correct series, but the search results provided for 'NYC highest temperature today' only show a single event (KXHIGHNY-26APR01). Use 'browse_series' with the 'KXHIGHNY' ticker to see if there are other active markets or more specific 'today' contracts that were missed by the keyword search. If no other markets for today exist, provide the specific buckets for the April 1st event.",
+        "canRetryWithSameTools": true,
+        "needsDifferentTools": false,
+        "missingCapability": null,
+        "capabilityConstrained": false,
+        "outcome": "retry_same_tools",
+        "parseFailed": false,
+        "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"User asked for the high temperature 'today', but the returned markets are for April 1, 2026 (a future date relative to the search timestamp 2026-04-01).\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The current results for 'today' (2026-04-01) returned markets that close in 2026-04-02, which might be the correct series, but the search results provided for 'NYC highest temperature today' only show a single event (KXHIGHNY-26APR01). Use 'browse_series' with the 'KXHIGHNY' ticker to see if there are other active markets or more specific 'today' contracts that were missed by the keyword search. If no other markets for today exist, provide the specific buckets for the April 1st event.\",\n  \"missingCapability\": null\n}"
+      },
+      "completenessRepairEvents": [
+        {
+          "attempt": 1,
+          "outcome": "attempted",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": null,
+          "summary": null,
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": null,
+          "skipReason": null,
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        },
+        {
+          "attempt": 1,
+          "outcome": "patched",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": "patch",
+          "summary": "Expanded NYC temperature handling to include the full Apr 1 event bucket set from the existing search results, so the response no longer surfaces only one contract when the series search already found all relevant NYC outcomes.",
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": 1,
+          "skipReason": null,
+          "boundedAnswerReason": null,
+          "blockingDiagnostics": []
+        }
+      ]
+    },
+    {
+      "stepType": "completion-check",
+      "event": "completeness",
+      "status": "incomplete",
+      "attempt": 2,
+      "programRevision": {
+        "revisionId": "rev-2",
+        "action": "llm_patch",
+        "reason": "completeness_gap",
+        "preservesPriorLogic": true,
+        "summary": "Expanded NYC temperature handling to include the full Apr 1 event bucket set from the existing search results, so the response no longer surfaces only one contract when the series search already found all relevant NYC outcomes."
+      },
+      "completenessCheck": {
+        "isComplete": false,
+        "missingParts": [
+          "The data returned is for April 1, 2026, but the user asked for 'today' (April 1, 2024). This is a semantic mismatch due to an incorrect year in the search results."
+        ],
+        "suggestedFix": "The search returned markets for the year 2026 instead of the current date. Use a probe-first branch: (1) Call get_all_series with category 'Climate' or 'Weather' to find the correct series ticker for Daily NYC High Temperature (expected: KXHIGHNY), (2) Use get_events with that seriesTicker and status='open' to find the specific event for the current date (April 1, 2024), (3) Call get_event with the discovered event ticker to provide the exact market buckets. If no markets exist for the current date, return explicit gaps.",
+        "canRetryWithSameTools": true,
+        "needsDifferentTools": false,
+        "missingCapability": null,
+        "capabilityConstrained": false,
+        "outcome": "retry_same_tools",
+        "parseFailed": false,
+        "rawDecisionText": "{\n  \"isComplete\": false,\n  \"missingParts\": [\n    \"The data returned is for April 1, 2026, but the user asked for 'today' (April 1, 2024). This is a semantic mismatch due to an incorrect year in the search results.\"\n  ],\n  \"canRetryWithSameTools\": true,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": \"The search returned markets for the year 2026 instead of the current date. Use a probe-first branch: (1) Call get_all_series with category 'Climate' or 'Weather' to find the correct series ticker for Daily NYC High Temperature (expected: KXHIGHNY), (2) Use get_events with that seriesTicker and status='open' to find the specific event for the current date (April 1, 2024), (3) Call get_event with the discovered event ticker to provide the exact market buckets. If no markets exist for the current date, return explicit gaps.\",\n  \"missingCapability\": null\n}"
+      },
+      "completenessRepairEvents": [
+        {
+          "attempt": 2,
+          "outcome": "skipped_no_retry_budget",
+          "semanticRetryCount": 1,
+          "maxSemanticRetries": 1,
+          "strategy": null,
+          "summary": null,
+          "failReason": null,
+          "requestedReplan": false,
+          "hadSyntaxFix": false,
+          "editCount": null,
+          "skipReason": "max_semantic_retries_reached",
+          "boundedAnswerReason": "retry_guardrail_upstream_abort",
+          "blockingDiagnostics": []
+        }
+      ]
+    }
+  ],
+  "completenessRepairEvents": [
+    "[OMITTED:CIRCULAR_REFERENCE]",
+    "[OMITTED:CIRCULAR_REFERENCE]",
+    "[OMITTED:CIRCULAR_REFERENCE]"
+  ],
+  "selection": {
+    "selectedDepth": "deep",
+    "deepMode": "deep",
+    "debugScoutDeepMode": null,
+    "plannerReasoningStage": "focused",
+    "scoutEnabled": false,
+    "preserveFastOneShot": false,
+    "candidateMethodCount": 24,
+    "scoutProbeStatus": "ready",
+    "scoutProbeAdequacy": "adequate",
+    "scoutProbeConfidence": 0.9879,
+    "scoutMetadataConfidence": 0.9517,
+    "scoutProbeQuerySafeCandidateCount": 21,
+    "scoutProbeRankedMethodCount": 21,
+    "scoutProbeAmbiguityPoolCount": 10,
+    "scoutProbeShortlistedMethodCount": 3,
+    "scoutProbeMissingCapability": null,
+    "scoutPrePlanProbeCalls": 0,
+    "scoutPrePlanProbeBudgetReasonCode": null,
+    "scoutChangedInitialPlan": true,
+    "scoutChangedPlannerReasoningStage": false,
+    "scoutInitialSelectedDepth": "deep",
+    "scoutInitialDeepMode": "deep",
+    "scoutInitialPlannerReasoningStage": "focused",
+    "scoutInitialReasonCode": "schema_guided_deep",
+    "scoutFinalReasonCode": "probe_confirmed_adequacy",
+    "scoutEvidenceAttachedToPlanning": true,
+    "scoutLlmSelectionUsed": true,
+    "scoutLlmSelectionFallback": false,
+    "scoutLlmSelectionLatencyMs": 2547,
+    "selectedTools": [
+      {
+        "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
+        "toolName": "Kalshi",
+        "priceUsd": "0.000000",
+        "selectedMethodCount": 24,
+        "selectedMethods": [
+          "discover_trending_markets",
+          "analyze_market_liquidity",
+          "check_market_efficiency",
+          "find_arbitrage_opportunities",
+          "find_trading_opportunities",
+          "get_markets_by_probability",
+          "analyze_market_sentiment",
+          "kalshi_crossref_polymarket",
+          "get_events",
+          "get_markets",
+          "get_event",
+          "resolve_slug"
+        ],
+        "omittedSelectedMethodCount": 12
+      }
+    ]
+  },
+  "clarification": {
+    "orchestrationMode": "auto_discovery",
+    "rolloutStage": "enabled",
+    "shadowMode": false,
+    "policy": "return",
+    "outcomeType": "answer",
+    "triggered": false,
+    "optionCount": 1,
+    "candidateCount": 21,
+    "viableCandidateCount": 1,
+    "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:search_markets",
+    "recommendedOptionReason": "Recommended because Kalshi.search_markets already matches the user's full workflow directly, while the remaining alternatives only add optional entity narrowing.",
+    "autoResolved": false,
+    "autoSelectEnabled": false,
+    "assumptionMade": null,
+    "missingCapability": null,
+    "decisionReasonCode": "single_grounded_interpretation",
+    "decisionSignals": [
+      "direct_composite_intent_match"
+    ],
+    "evidenceSources": {
+      "usesMethodSchemas": true,
+      "usesProbeArgs": true,
+      "usesMethodMetadata": true,
+      "usesToolSelectionContext": true,
+      "usesLlmSelection": true
+    },
+    "comparedOptionIds": [
+      "5cc326fb-500d-4c17-bc5f-ade143210636:search_markets"
+    ],
+    "decisionStrategy": "deterministic",
+    "judgeAttempted": false,
+    "judgeApplied": false,
+    "judgeOutcomeType": null,
+    "judgeConfidence": null,
+    "judgeReason": null,
+    "judgeError": null,
+    "validatorReason": null,
+    "fallbackReason": null,
+    "copyStrategy": "deterministic",
+    "rewriteAttempted": false,
+    "rewriteApplied": false,
+    "rewriteError": null,
+    "candidateSummaries": [
+      {
+        "optionId": "5cc326fb-500d-4c17-bc5f-ade143210636:kalshi_crossref_polymarket",
+        "fitScore": 17.4563,
+        "llmRelevanceScore": null,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [],
+        "inputFieldNames": [
+          "limit",
+          "title",
+          "keywords",
+          "kalshiTicker"
+        ],
+        "outputKeys": [
+          "hint",
+          "fetchedAt",
+          "searchedFor",
+          "comparisonNote",
+          "polymarketResults"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "comparison",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "slow",
+        "executePriceUsd": "0.002",
+        "queryEligible": true
+      },
+      {
+        "optionId": "5cc326fb-500d-4c17-bc5f-ade143210636:get_market",
+        "fitScore": 18.4563,
+        "llmRelevanceScore": null,
+        "requiredParams": [
+          "ticker"
+        ],
+        "unresolvedRequiredParams": [
+          "ticker"
+        ],
+        "probeArgKeys": [],
+        "inputFieldNames": [
+          "ticker"
+        ],
+        "outputKeys": [
+          "market",
+          "fetchedAt"
+        ],
+        "semanticScope": "multi-target",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "single",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "fast",
+        "executePriceUsd": "0.001",
+        "queryEligible": true
+      },
+      {
+        "optionId": "5cc326fb-500d-4c17-bc5f-ade143210636:search_markets",
+        "fitScore": 11.2062,
+        "llmRelevanceScore": 1,
+        "requiredParams": [],
+        "unresolvedRequiredParams": [],
+        "probeArgKeys": [
+          "query",
+          "status"
+        ],
+        "inputFieldNames": [
+          "limit",
+          "query",
+          "status",
+          "category",
+          "maxSeriesScan"
+        ],
+        "outputKeys": [
+          "count",
+          "results",
+          "fetchedAt",
+          "searchBudget"
+        ],
+        "semanticScope": "event-wide",
+        "semanticEntityGranularity": "event",
+        "semanticRequiresNamedEntity": false,
+        "semanticVenueSpecificity": "tool-bound",
+        "semanticOutputCardinality": "multiple",
+        "semanticProfileConfidence": 0.95,
+        "latencyClass": "slow",
+        "executePriceUsd": "0.002",
+        "queryEligible": true
+      }
+    ]
+  },
+  "costDiagnostics": {
+    "planningCostUsd": 0.053013599999999994,
+    "initialExecutionCostUsd": 0.02734225,
+    "rediscoveryAdditionalCostUsd": 0,
+    "synthesisCostUsd": 0.01110854,
+    "totalModelCostUsd": 0.11691763999999999,
+    "toolCostUsd": 0,
+    "totalChargedUsd": 0.11691763999999999
+  },
+  "completeness": {
+    "evaluations": [
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "repairEvents": [
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]",
+      "[OMITTED:CIRCULAR_REFERENCE]"
+    ],
+    "triggerNeedsDifferentTools": false,
+    "triggerMissingCapability": null
+  },
+  "rediscovery": {
+    "considered": false,
+    "executed": false,
+    "skipReason": "execution_loop_guardrail_partial_answer",
+    "missingCapability": null,
+    "rediscoveryQuery": null,
+    "capabilityLooksLikeSearchNeed": false,
+    "allowSearchFallbackOnElapsedCap": false,
+    "searchFallbackUsed": false,
+    "preRediscoveryBudgetReasonCode": null,
+    "candidateSearchResults": [],
+    "selectedAlternatives": [],
+    "mergedTools": [],
+    "usingPaidFallback": false,
+    "branchPlan": null
+  },
+  "envelopeSummary": null,
+  "artifactSummary": null,
+  "usageSummary": null
+}

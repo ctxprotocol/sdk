@@ -1,0 +1,377 @@
+{
+  "success": true,
+  "response": "No grounded method supports the requested venue: binance.\n\nSuggested next steps:\n- Specify the exact entity, dataset, or tool scope you want analyzed.\n- Pin one or more tool IDs if you already know which tool should answer.\n- Rewrite the question into a narrower, single-intent request.",
+  "toolsUsed": [],
+  "cost": {
+    "totalCostUsd": "0.000000",
+    "toolCostUsd": "0.000000",
+    "modelCostUsd": "0.000000"
+  },
+  "durationMs": 12109,
+  "outcomeType": "capability_miss",
+  "capabilityMiss": {
+    "message": "No grounded method supports the requested venue: binance.",
+    "missingCapabilities": [
+      "No grounded method supports the requested venue: binance."
+    ],
+    "suggestedRewrites": [
+      "Specify the exact entity, dataset, or tool scope you want analyzed.",
+      "Pin one or more tool IDs if you already know which tool should answer.",
+      "Rewrite the question into a narrower, single-intent request."
+    ],
+    "originalQuery": "Compare current ETH funding on Hyperliquid versus Binance and say whether there is a funding arbitrage spread right now."
+  },
+  "developerTrace": {
+    "summary": {
+      "toolCalls": 0,
+      "retryCount": 0,
+      "selfHealCount": 0,
+      "fallbackCount": 0,
+      "failureCount": 0,
+      "recoveryCount": 0,
+      "completionChecks": 0,
+      "loopCount": 0
+    },
+    "timeline": [
+      {
+        "stepType": "orchestration",
+        "event": "capability-miss",
+        "status": "success",
+        "message": "No grounded method supports the requested venue: binance.\n\nSuggested next steps:\n- Specify the exact entity, dataset, or tool scope you want analyzed.\n- Pin one or more tool IDs if you already know which tool should answer.\n- Rewrite the question into a narrower, single-intent request.",
+        "timestampMs": 1775036307825,
+        "metadata": {
+          "requestId": "ded60d9b-ac71-4523-b1d2-ede6b1c230e6",
+          "durationMs": 12109,
+          "queryDepth": "deep"
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "capability-miss",
+        "status": "success",
+        "message": "No grounded method supports the requested venue: binance.\n\nSuggested next steps:\n- Specify the exact entity, dataset, or tool scope you want analyzed.\n- Pin one or more tool IDs if you already know which tool should answer.\n- Rewrite the question into a narrower, single-intent request.",
+        "timestampMs": 1775036307825,
+        "metadata": {
+          "requestId": "ded60d9b-ac71-4523-b1d2-ede6b1c230e6",
+          "durationMs": 12109,
+          "queryDepth": "deep"
+        }
+      }
+    ],
+    "requestId": "ded60d9b-ac71-4523-b1d2-ede6b1c230e6",
+    "query": "Compare current ETH funding on Hyperliquid versus Binance and say whether there is a funding arbitrage spread right now.",
+    "source": "backend-runtime",
+    "diagnostics": {
+      "selection": {
+        "selectedDepth": "deep",
+        "deepMode": "deep",
+        "debugScoutDeepMode": null,
+        "plannerReasoningStage": "focused",
+        "scoutEnabled": false,
+        "preserveFastOneShot": false,
+        "candidateMethodCount": 33,
+        "scoutProbeStatus": "ready",
+        "scoutProbeAdequacy": "adequate",
+        "scoutProbeConfidence": 0.9922,
+        "scoutMetadataConfidence": 0.9688,
+        "scoutProbeQuerySafeCandidateCount": 25,
+        "scoutProbeRankedMethodCount": 25,
+        "scoutProbeAmbiguityPoolCount": 10,
+        "scoutProbeShortlistedMethodCount": 3,
+        "scoutProbeMissingCapability": null,
+        "scoutPrePlanProbeCalls": 0,
+        "scoutPrePlanProbeBudgetReasonCode": null,
+        "scoutChangedInitialPlan": false,
+        "scoutChangedPlannerReasoningStage": false,
+        "scoutInitialSelectedDepth": "deep",
+        "scoutInitialDeepMode": "deep",
+        "scoutInitialPlannerReasoningStage": "focused",
+        "scoutInitialReasonCode": "explicit_override",
+        "scoutFinalReasonCode": "explicit_override",
+        "scoutEvidenceAttachedToPlanning": true,
+        "scoutLlmSelectionUsed": true,
+        "scoutLlmSelectionFallback": false,
+        "scoutLlmSelectionLatencyMs": 3098,
+        "selectedTools": [
+          {
+            "toolId": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "toolName": "Hyperliquid",
+            "priceUsd": "0.000000",
+            "selectedMethodCount": 33,
+            "selectedMethods": [
+              "get_orderbook",
+              "calculate_price_impact",
+              "get_market_info",
+              "list_markets",
+              "get_funding_analysis",
+              "get_staking_summary",
+              "get_user_delegations",
+              "get_open_interest_analysis",
+              "get_candles",
+              "get_recent_trades",
+              "analyze_large_order",
+              "get_markets_at_oi_cap"
+            ],
+            "omittedSelectedMethodCount": 21
+          }
+        ]
+      },
+      "planning": {
+        "initial": {
+          "plannerQuery": "Compare current ETH funding on Hyperliquid versus Binance and say whether there is a funding arbitrage spread right now.",
+          "scoutEvidenceAttached": true,
+          "scoutEvidencePromptBlock": null,
+          "allowedModules": []
+        }
+      },
+      "cost": {
+        "planningCostUsd": 0,
+        "initialExecutionCostUsd": 0,
+        "rediscoveryAdditionalCostUsd": 0,
+        "synthesisCostUsd": 0,
+        "totalModelCostUsd": 0,
+        "toolCostUsd": 0,
+        "totalChargedUsd": 0
+      },
+      "completeness": {
+        "evaluations": [],
+        "repairEvents": [],
+        "triggerNeedsDifferentTools": true,
+        "triggerMissingCapability": "No grounded method supports the requested venue: binance."
+      },
+      "rediscovery": null,
+      "clarification": {
+        "orchestrationMode": "manual_selected_tools",
+        "rolloutStage": "enabled",
+        "shadowMode": false,
+        "policy": "return",
+        "outcomeType": "capability_miss",
+        "triggered": true,
+        "optionCount": 0,
+        "candidateCount": 25,
+        "viableCandidateCount": 0,
+        "recommendedOptionId": null,
+        "recommendedOptionReason": null,
+        "autoResolved": false,
+        "autoSelectEnabled": false,
+        "assumptionMade": null,
+        "missingCapability": "No grounded method supports the requested venue: binance.",
+        "decisionReasonCode": "capability_miss",
+        "decisionSignals": [
+          "unsupported_venue:binance"
+        ],
+        "evidenceSources": {
+          "usesMethodSchemas": true,
+          "usesProbeArgs": true,
+          "usesMethodMetadata": true,
+          "usesToolSelectionContext": false,
+          "usesLlmSelection": true
+        },
+        "comparedOptionIds": [],
+        "decisionStrategy": "deterministic",
+        "judgeAttempted": false,
+        "judgeApplied": false,
+        "judgeOutcomeType": null,
+        "judgeConfidence": null,
+        "judgeReason": null,
+        "judgeError": null,
+        "validatorReason": null,
+        "fallbackReason": null,
+        "copyStrategy": "deterministic",
+        "rewriteAttempted": false,
+        "rewriteApplied": false,
+        "rewriteError": null,
+        "candidateSummaries": [
+          {
+            "optionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_analysis",
+            "fitScore": 19.2167,
+            "llmRelevanceScore": 1,
+            "requiredParams": [
+              "coin"
+            ],
+            "unresolvedRequiredParams": [],
+            "probeArgKeys": [
+              "coin"
+            ],
+            "inputFieldNames": [
+              "coin"
+            ],
+            "outputKeys": [
+              "coin",
+              "currentFunding",
+              "venueFundingSnapshot",
+              "predictedFundings",
+              "fundingArbitrage",
+              "confidence"
+            ],
+            "semanticScope": "multi-target",
+            "semanticEntityGranularity": "venue",
+            "semanticRequiresNamedEntity": false,
+            "semanticVenueSpecificity": "tool-bound",
+            "semanticOutputCardinality": "comparison",
+            "semanticProfileConfidence": 0.95,
+            "latencyClass": "fast",
+            "executePriceUsd": "0.001",
+            "queryEligible": true
+          },
+          {
+            "optionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_history",
+            "fitScore": 7.75,
+            "llmRelevanceScore": null,
+            "requiredParams": [
+              "coin"
+            ],
+            "unresolvedRequiredParams": [
+              "coin"
+            ],
+            "probeArgKeys": [],
+            "inputFieldNames": [
+              "coin",
+              "days"
+            ],
+            "outputKeys": [
+              "coin",
+              "fundingHistory",
+              "summary",
+              "dataSources",
+              "dataFreshness",
+              "fetchedAt"
+            ],
+            "semanticScope": "multi-target",
+            "semanticEntityGranularity": "venue",
+            "semanticRequiresNamedEntity": false,
+            "semanticVenueSpecificity": "tool-bound",
+            "semanticOutputCardinality": "multiple",
+            "semanticProfileConfidence": 0.95,
+            "latencyClass": "instant",
+            "executePriceUsd": "0.001",
+            "queryEligible": true
+          },
+          {
+            "optionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_market_info",
+            "fitScore": 5.6667,
+            "llmRelevanceScore": 0.6,
+            "requiredParams": [
+              "coin"
+            ],
+            "unresolvedRequiredParams": [],
+            "probeArgKeys": [
+              "coin"
+            ],
+            "inputFieldNames": [
+              "coin"
+            ],
+            "outputKeys": [
+              "coin",
+              "markPrice",
+              "indexPrice",
+              "midPrice",
+              "premium",
+              "spread"
+            ],
+            "semanticScope": "multi-target",
+            "semanticEntityGranularity": "market",
+            "semanticRequiresNamedEntity": false,
+            "semanticVenueSpecificity": "tool-bound",
+            "semanticOutputCardinality": "comparison",
+            "semanticProfileConfidence": 0.95,
+            "latencyClass": "instant",
+            "executePriceUsd": "0.001",
+            "queryEligible": true
+          }
+        ]
+      },
+      "models": {
+        "overrideMode": "none",
+        "stages": [
+          {
+            "stageKey": "scout-llm-selection",
+            "stageKind": "stage",
+            "stage": "scout-llm-selection",
+            "surface": "query",
+            "responseShape": null,
+            "answerModelId": "gemini-flash-model",
+            "logicalModelId": "gemini-flash-model",
+            "requestedModelId": "gemini-flash-model",
+            "resolvedModelId": "gemini-flash-model",
+            "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+            "effectiveModelId": "gemini-flash-model",
+            "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.0021365,
+            "usage": null
+          },
+          {
+            "stageKey": "clarification-judge",
+            "stageKind": "stage",
+            "stage": "clarification-judge",
+            "surface": "query",
+            "responseShape": null,
+            "answerModelId": "gemini-flash-model",
+            "logicalModelId": "gemini-flash-model",
+            "requestedModelId": "gemini-flash-model",
+            "resolvedModelId": "gemini-flash-model",
+            "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+            "effectiveModelId": "gemini-flash-model",
+            "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": false,
+            "latencyMs": null,
+            "actualCostUsd": null,
+            "usage": null
+          }
+        ]
+      }
+    },
+    "governance": {
+      "policyVersion": "2026-03-05.query-data-governance.v1",
+      "redactionCount": 0,
+      "omittedSensitiveFieldsCount": 0,
+      "exposure": {
+        "runtimeArtifacts": "internal_runtime_only",
+        "durableAudit": "internal_ops_only",
+        "developerTrace": "explicit_opt_in_redacted",
+        "publicDataUrl": "explicit_request_opt_in"
+      },
+      "retention": {
+        "runtimeTtlMs": 900000,
+        "durableAuditDays": 30,
+        "publicDataUrl": "until_deleted"
+      }
+    }
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "manual_selected_tools",
+    "firstPassSuccess": false,
+    "capabilityMissSignaled": true,
+    "rediscoveryExecuted": false
+  },
+  "querySession": {
+    "sessionId": "5b767fdd-90af-465c-be84-bc0aaf577870",
+    "attemptId": "dbed3755-4ee8-477e-ae1f-59c6fbb4d483",
+    "parentAttemptId": null,
+    "rootAttemptId": "dbed3755-4ee8-477e-ae1f-59c6fbb4d483",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "aborted",
+    "checkpoint": {
+      "currentStage": "planning",
+      "latestCheckpointArtifactId": "ded60d9b-ac71-4523-b1d2-ede6b1c230e6:10",
+      "canonicalDatasetId": null,
+      "executionProgramCurrentRevisionId": null
+    }
+  }
+}

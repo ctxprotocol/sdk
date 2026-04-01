@@ -313,6 +313,54 @@
     "descriptionSync": "BLOCKED",
     "passed": false
   },
+  "dataQualityValidation": {
+    "reviewedAt": "2026-04-01T00:00:00Z",
+    "automationVersion": "canonical-paid-query-demand-2026-04-01",
+    "level1InternalConsistency": {
+      "status": "PASS",
+      "checks": [
+        {
+          "scope": "Ranked comparisons, liquidity analysis, and execute-mode snapshots",
+          "status": "PASS",
+          "issueClass": null,
+          "evidenceSources": [
+            "context-sdk/examples/server/kalshi-contributor/marketplace-validation-artifact.json",
+            "context-sdk/examples/server/kalshi-contributor/marketplace-manual-validation-summary.json"
+          ],
+          "notes": [
+            "Manual review plus execute validation showed clean yes-price, contract-volume, orderbook, candlestick, and event-resolution outputs on the strongest Kalshi paths.",
+            "No buyer-perspective red flag such as identical values, capped fields, or contradictory calculations remained on the validated direct and execute surfaces."
+          ]
+        }
+      ]
+    },
+    "level2ExternalAccuracy": {
+      "status": "PARTIAL",
+      "checks": [
+        {
+          "scope": "Climate and Weather discovery ranking",
+          "status": "PARTIAL",
+          "issueClass": "scope_drift_not_reproduced_in_pinned_replays",
+          "evidenceSources": [
+            "context-sdk/examples/server/kalshi-contributor/marketplace-manual-validation-summary.json",
+            "context-sdk/examples/server/kalshi-contributor/marketplace-validation-artifact.json"
+          ],
+          "notes": [
+            "Auto-query manual review once returned unrelated sports and tech contracts for a climate-and-weather prompt, which is the right class of issue for wrong-universe automation.",
+            "Pinned/manual and localhost preview reruns later returned correctly scoped climate-and-weather contracts, so contributor-side external-accuracy failure was not reproduced deterministically and remains a tracked partial rather than a confirmed contributor defect."
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "wrongUniverseStatus": "not_confirmed",
+      "automationReady": "PARTIAL",
+      "notes": [
+        "Kalshi now preserves the observed query-surface scope drift in a machine-readable block even though later reruns point to runtime instability instead of a stable contributor ranking bug.",
+        "Future reruns should refresh this same check instead of inferring it from manual-summary prose."
+      ]
+    }
+  },
   "signoff": {
     "apiValueExtraction": "PASS",
     "queryModeAlignment": "PASS",

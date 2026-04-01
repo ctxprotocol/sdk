@@ -1,0 +1,1375 @@
+{
+  "success": true,
+  "response": "Yes, there is currently a significant funding arbitrage spread for ETH between Hyperliquid and Binance.\n\n| Venue | Funding Rate | Rate Type | Next Funding Time |\n| :--- | :--- | :--- | :--- |\n| **Hyperliquid** | 0.0000100382 | current | N/A |\n| **Binance** | 0.0000758 | predicted | 2026-04-01T16:00:00.000Z |\n\n### Arbitrage Opportunity\nThe spread between the two venues is **-0.0000657618**, which presents a clear arbitrage opportunity.\n\n*   **Strategy:** Long ETH on Hyperliquid / Short ETH on Binance\n*   **Annualized Spread:** 57.67%\n\nThis data is based on real-time values fetched at 09:43:03 UTC today.",
+  "toolsUsed": [
+    {
+      "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+      "name": "Hyperliquid",
+      "skillCalls": 1
+    }
+  ],
+  "cost": {
+    "totalCostUsd": "0.052368",
+    "toolCostUsd": "0.000000",
+    "modelCostUsd": "0.052368"
+  },
+  "durationMs": 38680,
+  "outcomeType": "answer",
+  "querySession": {
+    "sessionId": "c51aeea4-4a7f-43e6-86bf-8e6e834db9d1",
+    "attemptId": "c2e86a87-87bc-49bd-a9f9-6b00db87d948",
+    "parentAttemptId": null,
+    "rootAttemptId": "c2e86a87-87bc-49bd-a9f9-6b00db87d948",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "completed",
+    "checkpoint": {
+      "currentStage": "completeness",
+      "latestCheckpointArtifactId": "0405c963-c9aa-413d-87d1-97caf9b7762e:19",
+      "canonicalDatasetId": "0405c963-c9aa-413d-87d1-97caf9b7762e:canonical-execution",
+      "executionProgramCurrentRevisionId": "rev-1"
+    }
+  },
+  "developerTrace": {
+    "summary": {
+      "toolCalls": 1,
+      "retryCount": 0,
+      "selfHealCount": 0,
+      "fallbackCount": 0,
+      "failureCount": 0,
+      "recoveryCount": 0,
+      "completionChecks": 1,
+      "loopCount": 0
+    },
+    "timeline": [
+      {
+        "stepType": "orchestration",
+        "event": "query-start",
+        "status": "ok",
+        "message": "Query orchestration started",
+        "timestampMs": 1775036590591,
+        "metadata": {
+          "requestId": "0405c963-c9aa-413d-87d1-97caf9b7762e",
+          "queryDepth": "deep"
+        }
+      },
+      {
+        "stepType": "selection",
+        "event": "selected-tools",
+        "status": "ok",
+        "timestampMs": 1775036590592,
+        "metadata": {
+          "selectedDepth": "deep",
+          "deepMode": "deep",
+          "debugScoutDeepMode": null,
+          "plannerReasoningStage": "focused",
+          "scoutEnabled": false,
+          "preserveFastOneShot": false,
+          "candidateMethodCount": 33,
+          "scoutProbeStatus": "ready",
+          "scoutProbeAdequacy": "adequate",
+          "scoutProbeConfidence": 0.9922,
+          "scoutMetadataConfidence": 0.9688,
+          "scoutProbeQuerySafeCandidateCount": 25,
+          "scoutProbeRankedMethodCount": 25,
+          "scoutProbeAmbiguityPoolCount": 10,
+          "scoutProbeShortlistedMethodCount": 3,
+          "scoutProbeMissingCapability": null,
+          "scoutPrePlanProbeCalls": 0,
+          "scoutPrePlanProbeBudgetReasonCode": null,
+          "scoutChangedInitialPlan": false,
+          "scoutChangedPlannerReasoningStage": false,
+          "scoutInitialSelectedDepth": "deep",
+          "scoutInitialDeepMode": "deep",
+          "scoutInitialPlannerReasoningStage": "focused",
+          "scoutInitialReasonCode": "explicit_override",
+          "scoutFinalReasonCode": "explicit_override",
+          "scoutEvidenceAttachedToPlanning": true,
+          "selectedTools": [
+            {
+              "toolId": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+              "toolName": "Hyperliquid",
+              "priceUsd": "0.000000",
+              "selectedMethodCount": 33,
+              "selectedMethods": [
+                "get_orderbook",
+                "calculate_price_impact",
+                "get_market_info",
+                "list_markets",
+                "get_funding_analysis",
+                "get_staking_summary",
+                "get_user_delegations",
+                "get_open_interest_analysis",
+                "get_candles",
+                "get_recent_trades",
+                "analyze_large_order",
+                "get_markets_at_oi_cap"
+              ],
+              "omittedSelectedMethodCount": 21
+            }
+          ],
+          "clarification": {
+            "orchestrationMode": "manual_selected_tools",
+            "rolloutStage": "enabled",
+            "shadowMode": false,
+            "policy": "return",
+            "outcomeType": "answer",
+            "triggered": false,
+            "optionCount": 1,
+            "candidateCount": 25,
+            "viableCandidateCount": 1,
+            "recommendedOptionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_analysis",
+            "recommendedOptionReason": "Recommended because Hyperliquid.get_funding_analysis ranked highest after comparing probe fit, method contract details, and grounded query eligibility.",
+            "autoResolved": false,
+            "autoSelectEnabled": false,
+            "assumptionMade": null,
+            "missingCapability": null,
+            "decisionReasonCode": "single_grounded_interpretation",
+            "decisionSignals": [],
+            "evidenceSources": {
+              "usesMethodSchemas": true,
+              "usesProbeArgs": true,
+              "usesMethodMetadata": true,
+              "usesToolSelectionContext": false,
+              "usesLlmSelection": true
+            },
+            "comparedOptionIds": [
+              "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_analysis"
+            ],
+            "decisionStrategy": "deterministic",
+            "judgeAttempted": false,
+            "judgeApplied": false,
+            "judgeOutcomeType": null,
+            "judgeConfidence": null,
+            "judgeReason": null,
+            "judgeError": null,
+            "validatorReason": null,
+            "fallbackReason": null,
+            "copyStrategy": "deterministic",
+            "rewriteAttempted": false,
+            "rewriteApplied": false,
+            "rewriteError": null,
+            "candidateSummaries": [
+              {
+                "optionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_analysis",
+                "fitScore": 19.2167,
+                "llmRelevanceScore": 1,
+                "requiredParams": [
+                  "coin"
+                ],
+                "unresolvedRequiredParams": [],
+                "probeArgKeys": [
+                  "coin"
+                ],
+                "inputFieldNames": [
+                  "coin"
+                ],
+                "outputKeys": [
+                  "coin",
+                  "currentFunding",
+                  "venueFundingSnapshot",
+                  "predictedFundings",
+                  "fundingArbitrage",
+                  "confidence"
+                ],
+                "semanticScope": "multi-target",
+                "semanticEntityGranularity": "venue",
+                "semanticRequiresNamedEntity": false,
+                "semanticVenueSpecificity": "tool-bound",
+                "semanticOutputCardinality": "comparison",
+                "semanticProfileConfidence": 0.95,
+                "latencyClass": "fast",
+                "executePriceUsd": "0.001",
+                "queryEligible": true
+              },
+              {
+                "optionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_history",
+                "fitScore": 7.75,
+                "llmRelevanceScore": 0.3,
+                "requiredParams": [
+                  "coin"
+                ],
+                "unresolvedRequiredParams": [],
+                "probeArgKeys": [
+                  "coin"
+                ],
+                "inputFieldNames": [
+                  "coin",
+                  "days"
+                ],
+                "outputKeys": [
+                  "coin",
+                  "fundingHistory",
+                  "summary",
+                  "dataSources",
+                  "dataFreshness",
+                  "fetchedAt"
+                ],
+                "semanticScope": "multi-target",
+                "semanticEntityGranularity": "venue",
+                "semanticRequiresNamedEntity": false,
+                "semanticVenueSpecificity": "tool-bound",
+                "semanticOutputCardinality": "multiple",
+                "semanticProfileConfidence": 0.95,
+                "latencyClass": "instant",
+                "executePriceUsd": "0.001",
+                "queryEligible": true
+              },
+              {
+                "optionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_market_info",
+                "fitScore": 5.6667,
+                "llmRelevanceScore": 0.6,
+                "requiredParams": [
+                  "coin"
+                ],
+                "unresolvedRequiredParams": [],
+                "probeArgKeys": [
+                  "coin"
+                ],
+                "inputFieldNames": [
+                  "coin"
+                ],
+                "outputKeys": [
+                  "coin",
+                  "markPrice",
+                  "indexPrice",
+                  "midPrice",
+                  "premium",
+                  "spread"
+                ],
+                "semanticScope": "multi-target",
+                "semanticEntityGranularity": "market",
+                "semanticRequiresNamedEntity": false,
+                "semanticVenueSpecificity": "tool-bound",
+                "semanticOutputCardinality": "comparison",
+                "semanticProfileConfidence": 0.95,
+                "latencyClass": "instant",
+                "executePriceUsd": "0.001",
+                "queryEligible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stepType": "planning",
+        "event": "planner-generated-code",
+        "status": "ok",
+        "timestampMs": 1775036590593,
+        "metadata": {
+          "initialCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  // Directly fetch the venue-specific funding snapshot for ETH.\n  // This is a single endpoint call, so no same-endpoint batching is used.\n  const result = await callMcpSkill({\n    toolId: \"b940bedc-3d67-45b0-8709-b3d070e5e454\",\n    toolName: \"get_funding_analysis\",\n    args: { coin: \"ETH\" }\n  });\n\n  const hyperliquid = result?.venueFundingSnapshot?.Hyperliquid || null;\n  const binance = result?.venueFundingSnapshot?.Binance || null;\n\n  const hyperliquidRate = typeof hyperliquid?.rate === \"number\" ? hyperliquid.rate : null;\n  const binanceRate = typeof binance?.rate === \"number\" ? binance.rate : null;\n\n  const fundingSpread =\n    hyperliquidRate !== null && binanceRate !== null\n      ? hyperliquidRate - binanceRate\n      : null;\n\n  const hasArbitrageSpread =\n    result?.fundingArbitrage !== null &&\n    result?.fundingArbitrage !== undefined &&\n    fundingSpread !== null;\n\n  return {\n    coin: result?.coin,\n    comparison: {\n      Hyperliquid: hyperliquid,\n      Binance: binance\n    },\n    fundingSpread: {\n      hyperliquidMinusBinance: fundingSpread,\n      hasFundingArbitrageSpread: hasArbitrageSpread,\n      fundingArbitrage: result?.fundingArbitrage || null\n    },\n    confidence: result?.confidence,\n    dataFreshness: result?.dataFreshness,\n    fetchedAt: result?.fetchedAt\n  };\n}",
+          "finalCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  // Directly fetch the venue-specific funding snapshot for ETH.\n  // This is a single endpoint call, so no same-endpoint batching is used.\n  const result = await callMcpSkill({\n    toolId: \"b940bedc-3d67-45b0-8709-b3d070e5e454\",\n    toolName: \"get_funding_analysis\",\n    args: { coin: \"ETH\" }\n  });\n\n  const hyperliquid = result?.venueFundingSnapshot?.Hyperliquid || null;\n  const binance = result?.venueFundingSnapshot?.Binance || null;\n\n  const hyperliquidRate = typeof hyperliquid?.rate === \"number\" ? hyperliquid.rate : null;\n  const binanceRate = typeof binance?.rate === \"number\" ? binance.rate : null;\n\n  const fundingSpread =\n    hyperliquidRate !== null && binanceRate !== null\n      ? hyperliquidRate - binanceRate\n      : null;\n\n  const hasArbitrageSpread =\n    result?.fundingArbitrage !== null &&\n    result?.fundingArbitrage !== undefined &&\n    fundingSpread !== null;\n\n  return {\n    coin: result?.coin,\n    comparison: {\n      Hyperliquid: hyperliquid,\n      Binance: binance\n    },\n    fundingSpread: {\n      hyperliquidMinusBinance: fundingSpread,\n      hasFundingArbitrageSpread: hasArbitrageSpread,\n      fundingArbitrage: result?.fundingArbitrage || null\n    },\n    confidence: result?.confidence,\n    dataFreshness: result?.dataFreshness,\n    fetchedAt: result?.fetchedAt\n  };\n}",
+          "plannerQuery": "Compare current ETH funding on Hyperliquid versus Binance and say whether there is a funding arbitrage spread right now.",
+          "scoutEvidenceAttached": false,
+          "scoutEvidencePromptBlock": null,
+          "allowedModules": [
+            "@/lib/ai/skills/mcp"
+          ]
+        }
+      },
+      {
+        "stepType": "execution-program",
+        "event": "execution-program-lineage",
+        "status": "ok",
+        "timestampMs": 1775036590594,
+        "metadata": {
+          "executionProgram": {
+            "baseRevisionId": "rev-1",
+            "currentRevisionId": "rev-1",
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "deterministicChangeCount": 0,
+            "revisions": [
+              {
+                "revisionId": "rev-1",
+                "parentRevisionId": null,
+                "attempt": 0,
+                "action": "initial",
+                "reason": "initial",
+                "summary": "Planner base program",
+                "codeHash": "af99491ec594f122e02f0e886d49b635423e8a60f1723c06e419a86f1741d73e",
+                "codeLength": 1386,
+                "changedLineCount": 0,
+                "diffPreview": null,
+                "editCount": null,
+                "preservesPriorLogic": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "initial",
+        "status": "success",
+        "timestampMs": 1775036590601,
+        "attempt": 1,
+        "metadata": {
+          "codeSnippet": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  // Directly fetch the venue-specific funding snapshot for ETH.\n  // This is a single endpoint call, so no same-endpoint batching is used.\n  const result = await callMcpSkill({\n    toolId: \"b940bedc-3d67-45b0-8709-b3d070e5e454\",\n    toolName: \"get_funding_analysis\",\n    args: { coin: \"ETH\" }\n  });\n\n  const hyperliquid = result?.venueFundingSnapshot?.Hyperliquid || null;\n  const binance = result?.venueFundingSnapshot?.Binance || null;\n\n  const hyperliquidRate = typeof hyperliquid?.rate === \"number\" ? hyperliquid.rate : null;\n  const binanceRate = typeof binance?.rate === \"number\" ? binance.rate : null;\n\n  const fundingSpread =\n    hyperliquidRate !== null && binanceRate !== null\n      ? hyperliquidRate - binanceRate\n      : null;\n\n  const hasArbitrageSpread =\n    result?.fundingArbitrage !== null &&\n    result?.fundingArbitrage !== undefined &&\n    fundingSpread !== null;\n\n  return {\n    coin: result?.coin,\n    comparison: {\n      Hyperliquid: hyperliquid,\n      Binance: binance\n    },\n    fundingSpread: {\n      hyperliquidMinusBinance: fundingSpread,\n      hasFundingArbitrageSpread: hasArbitrageSpread,\n      fundingArbitrage: result?.fundingArbitrage || null\n    },\n    confidence: result?.confidence,\n    dataFreshness: result?.dataFreshness,\n    fetchedAt: result?.fetchedAt\n  };\n}",
+          "completenessCheck": {
+            "isComplete": true,
+            "missingParts": [],
+            "suggestedFix": null,
+            "canRetryWithSameTools": false,
+            "needsDifferentTools": false,
+            "missingCapability": null,
+            "capabilityConstrained": false,
+            "outcome": "complete",
+            "parseFailed": false,
+            "rawDecisionText": "{\n  \"isComplete\": true,\n  \"missingParts\": [],\n  \"canRetryWithSameTools\": false,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": null,\n  \"missingCapability\": null\n}"
+          },
+          "programRevision": {
+            "revisionId": "rev-1",
+            "action": "initial",
+            "reason": "initial",
+            "preservesPriorLogic": true,
+            "summary": "Planner base program"
+          }
+        }
+      },
+      {
+        "stepType": "completion-check",
+        "event": "verification-decision",
+        "status": "complete",
+        "timestampMs": 1775036591091,
+        "attempt": 1,
+        "metadata": {
+          "evaluation": {
+            "attempt": 1,
+            "isComplete": true,
+            "missingParts": [],
+            "canRetryWithSameTools": false,
+            "needsDifferentTools": false,
+            "suggestedFix": null,
+            "missingCapability": null,
+            "capabilityConstrained": false,
+            "outcome": "complete",
+            "parseFailed": false,
+            "rawDecisionText": "{\n  \"isComplete\": true,\n  \"missingParts\": [],\n  \"canRetryWithSameTools\": false,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": null,\n  \"missingCapability\": null\n}"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1775036591591,
+        "tool": {
+          "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+          "name": "get_funding_analysis"
+        },
+        "metadata": {
+          "args": {
+            "coin": "ETH"
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"coin\":\"ETH\",\"currentFunding\":{\"venue\":\"Hyperliquid\",\"rate\":0.0000100382,\"annualized\":8.79,\"sentiment\":\"bullish (longs pay shorts)\"},\"venueFundingSnapshot\":{\"Hyperliquid\":{\"venue\":\"Hyperliquid\",\"rate\":0.0000100382,\"rateKind\":\"current\",\"nextFundingTime\":null},\"Binance\":{\"venue\":\"Binance\",\"rate\":0.0000758,\"rateKind\":\"predicted\",\"nextFundingTime\":\"2026-04-01T16:00:00.000Z\"},\"Bybit\":{\"venue\":\"Bybit\",\"rate\":0.00002704,\"rateKind\":\"predicted\",\"nextFundingTime\":\"2026-04-01T16:00:00.000Z\"}},\"predictedFundings\":[{\"venue\":\"Binance\",\"venueCode\":\"BinPerp\",\"rate\":0.0000758,\"nextFundingTime\":\"2026-04-01T16:00:00.000Z\"},{\"venue\":\"Hyperliquid\",\"venueCode\":\"HlPerp\",\"rate\":0.0000099718,\"nextFundingTime\":\"2026-04-01T09:00:00.000Z\"},{\"venue\":\"Bybit\",\"venueCode\":\"BybitPerp\",\"rate\":0.00002704,\"nextFundingTime\":...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "query-complete",
+        "status": "success",
+        "timestampMs": 1775036592592,
+        "metadata": {
+          "durationMs": 38680,
+          "executionOk": true
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "query-start",
+        "status": "ok",
+        "message": "Query orchestration started",
+        "timestampMs": 1775036590591,
+        "metadata": {
+          "requestId": "0405c963-c9aa-413d-87d1-97caf9b7762e",
+          "queryDepth": "deep"
+        }
+      },
+      {
+        "stepType": "selection",
+        "event": "selected-tools",
+        "status": "ok",
+        "timestampMs": 1775036590592,
+        "metadata": {
+          "selectedDepth": "deep",
+          "deepMode": "deep",
+          "debugScoutDeepMode": null,
+          "plannerReasoningStage": "focused",
+          "scoutEnabled": false,
+          "preserveFastOneShot": false,
+          "candidateMethodCount": 33,
+          "scoutProbeStatus": "ready",
+          "scoutProbeAdequacy": "adequate",
+          "scoutProbeConfidence": 0.9922,
+          "scoutMetadataConfidence": 0.9688,
+          "scoutProbeQuerySafeCandidateCount": 25,
+          "scoutProbeRankedMethodCount": 25,
+          "scoutProbeAmbiguityPoolCount": 10,
+          "scoutProbeShortlistedMethodCount": 3,
+          "scoutProbeMissingCapability": null,
+          "scoutPrePlanProbeCalls": 0,
+          "scoutPrePlanProbeBudgetReasonCode": null,
+          "scoutChangedInitialPlan": false,
+          "scoutChangedPlannerReasoningStage": false,
+          "scoutInitialSelectedDepth": "deep",
+          "scoutInitialDeepMode": "deep",
+          "scoutInitialPlannerReasoningStage": "focused",
+          "scoutInitialReasonCode": "explicit_override",
+          "scoutFinalReasonCode": "explicit_override",
+          "scoutEvidenceAttachedToPlanning": true,
+          "selectedTools": [
+            {
+              "toolId": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+              "toolName": "Hyperliquid",
+              "priceUsd": "0.000000",
+              "selectedMethodCount": 33,
+              "selectedMethods": [
+                "get_orderbook",
+                "calculate_price_impact",
+                "get_market_info",
+                "list_markets",
+                "get_funding_analysis",
+                "get_staking_summary",
+                "get_user_delegations",
+                "get_open_interest_analysis",
+                "get_candles",
+                "get_recent_trades",
+                "analyze_large_order",
+                "get_markets_at_oi_cap"
+              ],
+              "omittedSelectedMethodCount": 21
+            }
+          ],
+          "clarification": {
+            "orchestrationMode": "manual_selected_tools",
+            "rolloutStage": "enabled",
+            "shadowMode": false,
+            "policy": "return",
+            "outcomeType": "answer",
+            "triggered": false,
+            "optionCount": 1,
+            "candidateCount": 25,
+            "viableCandidateCount": 1,
+            "recommendedOptionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_analysis",
+            "recommendedOptionReason": "Recommended because Hyperliquid.get_funding_analysis ranked highest after comparing probe fit, method contract details, and grounded query eligibility.",
+            "autoResolved": false,
+            "autoSelectEnabled": false,
+            "assumptionMade": null,
+            "missingCapability": null,
+            "decisionReasonCode": "single_grounded_interpretation",
+            "decisionSignals": [],
+            "evidenceSources": {
+              "usesMethodSchemas": true,
+              "usesProbeArgs": true,
+              "usesMethodMetadata": true,
+              "usesToolSelectionContext": false,
+              "usesLlmSelection": true
+            },
+            "comparedOptionIds": [
+              "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_analysis"
+            ],
+            "decisionStrategy": "deterministic",
+            "judgeAttempted": false,
+            "judgeApplied": false,
+            "judgeOutcomeType": null,
+            "judgeConfidence": null,
+            "judgeReason": null,
+            "judgeError": null,
+            "validatorReason": null,
+            "fallbackReason": null,
+            "copyStrategy": "deterministic",
+            "rewriteAttempted": false,
+            "rewriteApplied": false,
+            "rewriteError": null,
+            "candidateSummaries": [
+              {
+                "optionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_analysis",
+                "fitScore": 19.2167,
+                "llmRelevanceScore": 1,
+                "requiredParams": [
+                  "coin"
+                ],
+                "unresolvedRequiredParams": [],
+                "probeArgKeys": [
+                  "coin"
+                ],
+                "inputFieldNames": [
+                  "coin"
+                ],
+                "outputKeys": [
+                  "coin",
+                  "currentFunding",
+                  "venueFundingSnapshot",
+                  "predictedFundings",
+                  "fundingArbitrage",
+                  "confidence"
+                ],
+                "semanticScope": "multi-target",
+                "semanticEntityGranularity": "venue",
+                "semanticRequiresNamedEntity": false,
+                "semanticVenueSpecificity": "tool-bound",
+                "semanticOutputCardinality": "comparison",
+                "semanticProfileConfidence": 0.95,
+                "latencyClass": "fast",
+                "executePriceUsd": "0.001",
+                "queryEligible": true
+              },
+              {
+                "optionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_history",
+                "fitScore": 7.75,
+                "llmRelevanceScore": 0.3,
+                "requiredParams": [
+                  "coin"
+                ],
+                "unresolvedRequiredParams": [],
+                "probeArgKeys": [
+                  "coin"
+                ],
+                "inputFieldNames": [
+                  "coin",
+                  "days"
+                ],
+                "outputKeys": [
+                  "coin",
+                  "fundingHistory",
+                  "summary",
+                  "dataSources",
+                  "dataFreshness",
+                  "fetchedAt"
+                ],
+                "semanticScope": "multi-target",
+                "semanticEntityGranularity": "venue",
+                "semanticRequiresNamedEntity": false,
+                "semanticVenueSpecificity": "tool-bound",
+                "semanticOutputCardinality": "multiple",
+                "semanticProfileConfidence": 0.95,
+                "latencyClass": "instant",
+                "executePriceUsd": "0.001",
+                "queryEligible": true
+              },
+              {
+                "optionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_market_info",
+                "fitScore": 5.6667,
+                "llmRelevanceScore": 0.6,
+                "requiredParams": [
+                  "coin"
+                ],
+                "unresolvedRequiredParams": [],
+                "probeArgKeys": [
+                  "coin"
+                ],
+                "inputFieldNames": [
+                  "coin"
+                ],
+                "outputKeys": [
+                  "coin",
+                  "markPrice",
+                  "indexPrice",
+                  "midPrice",
+                  "premium",
+                  "spread"
+                ],
+                "semanticScope": "multi-target",
+                "semanticEntityGranularity": "market",
+                "semanticRequiresNamedEntity": false,
+                "semanticVenueSpecificity": "tool-bound",
+                "semanticOutputCardinality": "comparison",
+                "semanticProfileConfidence": 0.95,
+                "latencyClass": "instant",
+                "executePriceUsd": "0.001",
+                "queryEligible": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stepType": "planning",
+        "event": "planner-generated-code",
+        "status": "ok",
+        "timestampMs": 1775036590593,
+        "metadata": {
+          "initialCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  // Directly fetch the venue-specific funding snapshot for ETH.\n  // This is a single endpoint call, so no same-endpoint batching is used.\n  const result = await callMcpSkill({\n    toolId: \"b940bedc-3d67-45b0-8709-b3d070e5e454\",\n    toolName: \"get_funding_analysis\",\n    args: { coin: \"ETH\" }\n  });\n\n  const hyperliquid = result?.venueFundingSnapshot?.Hyperliquid || null;\n  const binance = result?.venueFundingSnapshot?.Binance || null;\n\n  const hyperliquidRate = typeof hyperliquid?.rate === \"number\" ? hyperliquid.rate : null;\n  const binanceRate = typeof binance?.rate === \"number\" ? binance.rate : null;\n\n  const fundingSpread =\n    hyperliquidRate !== null && binanceRate !== null\n      ? hyperliquidRate - binanceRate\n      : null;\n\n  const hasArbitrageSpread =\n    result?.fundingArbitrage !== null &&\n    result?.fundingArbitrage !== undefined &&\n    fundingSpread !== null;\n\n  return {\n    coin: result?.coin,\n    comparison: {\n      Hyperliquid: hyperliquid,\n      Binance: binance\n    },\n    fundingSpread: {\n      hyperliquidMinusBinance: fundingSpread,\n      hasFundingArbitrageSpread: hasArbitrageSpread,\n      fundingArbitrage: result?.fundingArbitrage || null\n    },\n    confidence: result?.confidence,\n    dataFreshness: result?.dataFreshness,\n    fetchedAt: result?.fetchedAt\n  };\n}",
+          "finalCode": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  // Directly fetch the venue-specific funding snapshot for ETH.\n  // This is a single endpoint call, so no same-endpoint batching is used.\n  const result = await callMcpSkill({\n    toolId: \"b940bedc-3d67-45b0-8709-b3d070e5e454\",\n    toolName: \"get_funding_analysis\",\n    args: { coin: \"ETH\" }\n  });\n\n  const hyperliquid = result?.venueFundingSnapshot?.Hyperliquid || null;\n  const binance = result?.venueFundingSnapshot?.Binance || null;\n\n  const hyperliquidRate = typeof hyperliquid?.rate === \"number\" ? hyperliquid.rate : null;\n  const binanceRate = typeof binance?.rate === \"number\" ? binance.rate : null;\n\n  const fundingSpread =\n    hyperliquidRate !== null && binanceRate !== null\n      ? hyperliquidRate - binanceRate\n      : null;\n\n  const hasArbitrageSpread =\n    result?.fundingArbitrage !== null &&\n    result?.fundingArbitrage !== undefined &&\n    fundingSpread !== null;\n\n  return {\n    coin: result?.coin,\n    comparison: {\n      Hyperliquid: hyperliquid,\n      Binance: binance\n    },\n    fundingSpread: {\n      hyperliquidMinusBinance: fundingSpread,\n      hasFundingArbitrageSpread: hasArbitrageSpread,\n      fundingArbitrage: result?.fundingArbitrage || null\n    },\n    confidence: result?.confidence,\n    dataFreshness: result?.dataFreshness,\n    fetchedAt: result?.fetchedAt\n  };\n}",
+          "plannerQuery": "Compare current ETH funding on Hyperliquid versus Binance and say whether there is a funding arbitrage spread right now.",
+          "scoutEvidenceAttached": false,
+          "scoutEvidencePromptBlock": null,
+          "allowedModules": [
+            "@/lib/ai/skills/mcp"
+          ]
+        }
+      },
+      {
+        "stepType": "execution-program",
+        "event": "execution-program-lineage",
+        "status": "ok",
+        "timestampMs": 1775036590594,
+        "metadata": {
+          "executionProgram": {
+            "baseRevisionId": "rev-1",
+            "currentRevisionId": "rev-1",
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "deterministicChangeCount": 0,
+            "revisions": [
+              {
+                "revisionId": "rev-1",
+                "parentRevisionId": null,
+                "attempt": 0,
+                "action": "initial",
+                "reason": "initial",
+                "summary": "Planner base program",
+                "codeHash": "af99491ec594f122e02f0e886d49b635423e8a60f1723c06e419a86f1741d73e",
+                "codeLength": 1386,
+                "changedLineCount": 0,
+                "diffPreview": null,
+                "editCount": null,
+                "preservesPriorLogic": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "initial",
+        "status": "success",
+        "timestampMs": 1775036590601,
+        "attempt": 1,
+        "metadata": {
+          "codeSnippet": "import { callMcpSkill } from \"@/lib/ai/skills/mcp\";\n\nexport async function main() {\n  // Directly fetch the venue-specific funding snapshot for ETH.\n  // This is a single endpoint call, so no same-endpoint batching is used.\n  const result = await callMcpSkill({\n    toolId: \"b940bedc-3d67-45b0-8709-b3d070e5e454\",\n    toolName: \"get_funding_analysis\",\n    args: { coin: \"ETH\" }\n  });\n\n  const hyperliquid = result?.venueFundingSnapshot?.Hyperliquid || null;\n  const binance = result?.venueFundingSnapshot?.Binance || null;\n\n  const hyperliquidRate = typeof hyperliquid?.rate === \"number\" ? hyperliquid.rate : null;\n  const binanceRate = typeof binance?.rate === \"number\" ? binance.rate : null;\n\n  const fundingSpread =\n    hyperliquidRate !== null && binanceRate !== null\n      ? hyperliquidRate - binanceRate\n      : null;\n\n  const hasArbitrageSpread =\n    result?.fundingArbitrage !== null &&\n    result?.fundingArbitrage !== undefined &&\n    fundingSpread !== null;\n\n  return {\n    coin: result?.coin,\n    comparison: {\n      Hyperliquid: hyperliquid,\n      Binance: binance\n    },\n    fundingSpread: {\n      hyperliquidMinusBinance: fundingSpread,\n      hasFundingArbitrageSpread: hasArbitrageSpread,\n      fundingArbitrage: result?.fundingArbitrage || null\n    },\n    confidence: result?.confidence,\n    dataFreshness: result?.dataFreshness,\n    fetchedAt: result?.fetchedAt\n  };\n}",
+          "completenessCheck": {
+            "isComplete": true,
+            "missingParts": [],
+            "suggestedFix": null,
+            "canRetryWithSameTools": false,
+            "needsDifferentTools": false,
+            "missingCapability": null,
+            "capabilityConstrained": false,
+            "outcome": "complete",
+            "parseFailed": false,
+            "rawDecisionText": "{\n  \"isComplete\": true,\n  \"missingParts\": [],\n  \"canRetryWithSameTools\": false,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": null,\n  \"missingCapability\": null\n}"
+          },
+          "programRevision": {
+            "revisionId": "rev-1",
+            "action": "initial",
+            "reason": "initial",
+            "preservesPriorLogic": true,
+            "summary": "Planner base program"
+          }
+        }
+      },
+      {
+        "stepType": "completion-check",
+        "event": "verification-decision",
+        "status": "complete",
+        "timestampMs": 1775036591091,
+        "attempt": 1,
+        "metadata": {
+          "evaluation": {
+            "attempt": 1,
+            "isComplete": true,
+            "missingParts": [],
+            "canRetryWithSameTools": false,
+            "needsDifferentTools": false,
+            "suggestedFix": null,
+            "missingCapability": null,
+            "capabilityConstrained": false,
+            "outcome": "complete",
+            "parseFailed": false,
+            "rawDecisionText": "{\n  \"isComplete\": true,\n  \"missingParts\": [],\n  \"canRetryWithSameTools\": false,\n  \"needsDifferentTools\": false,\n  \"suggestedFix\": null,\n  \"missingCapability\": null\n}"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1775036591591,
+        "tool": {
+          "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+          "name": "get_funding_analysis"
+        },
+        "metadata": {
+          "args": {
+            "coin": "ETH"
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"coin\":\"ETH\",\"currentFunding\":{\"venue\":\"Hyperliquid\",\"rate\":0.0000100382,\"annualized\":8.79,\"sentiment\":\"bullish (longs pay shorts)\"},\"venueFundingSnapshot\":{\"Hyperliquid\":{\"venue\":\"Hyperliquid\",\"rate\":0.0000100382,\"rateKind\":\"current\",\"nextFundingTime\":null},\"Binance\":{\"venue\":\"Binance\",\"rate\":0.0000758,\"rateKind\":\"predicted\",\"nextFundingTime\":\"2026-04-01T16:00:00.000Z\"},\"Bybit\":{\"venue\":\"Bybit\",\"rate\":0.00002704,\"rateKind\":\"predicted\",\"nextFundingTime\":\"2026-04-01T16:00:00.000Z\"}},\"predictedFundings\":[{\"venue\":\"Binance\",\"venueCode\":\"BinPerp\",\"rate\":0.0000758,\"nextFundingTime\":\"2026-04-01T16:00:00.000Z\"},{\"venue\":\"Hyperliquid\",\"venueCode\":\"HlPerp\",\"rate\":0.0000099718,\"nextFundingTime\":\"2026-04-01T09:00:00.000Z\"},{\"venue\":\"Bybit\",\"venueCode\":\"BybitPerp\",\"rate\":0.00002704,\"nextFundingTime\":...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "query-complete",
+        "status": "success",
+        "timestampMs": 1775036592592,
+        "metadata": {
+          "durationMs": 38680,
+          "executionOk": true
+        }
+      }
+    ],
+    "requestId": "0405c963-c9aa-413d-87d1-97caf9b7762e",
+    "query": "Compare current ETH funding on Hyperliquid versus Binance and say whether there is a funding arbitrage spread right now.",
+    "source": "backend-runtime",
+    "diagnostics": {
+      "selection": {
+        "selectedDepth": "deep",
+        "deepMode": "deep",
+        "debugScoutDeepMode": null,
+        "plannerReasoningStage": "focused",
+        "scoutEnabled": false,
+        "preserveFastOneShot": false,
+        "candidateMethodCount": 33,
+        "scoutProbeStatus": "ready",
+        "scoutProbeAdequacy": "adequate",
+        "scoutProbeConfidence": 0.9922,
+        "scoutMetadataConfidence": 0.9688,
+        "scoutProbeQuerySafeCandidateCount": 25,
+        "scoutProbeRankedMethodCount": 25,
+        "scoutProbeAmbiguityPoolCount": 10,
+        "scoutProbeShortlistedMethodCount": 3,
+        "scoutProbeMissingCapability": null,
+        "scoutPrePlanProbeCalls": 0,
+        "scoutPrePlanProbeBudgetReasonCode": null,
+        "scoutChangedInitialPlan": false,
+        "scoutChangedPlannerReasoningStage": false,
+        "scoutInitialSelectedDepth": "deep",
+        "scoutInitialDeepMode": "deep",
+        "scoutInitialPlannerReasoningStage": "focused",
+        "scoutInitialReasonCode": "explicit_override",
+        "scoutFinalReasonCode": "explicit_override",
+        "scoutEvidenceAttachedToPlanning": true,
+        "scoutLlmSelectionUsed": true,
+        "scoutLlmSelectionFallback": false,
+        "scoutLlmSelectionLatencyMs": 3707,
+        "selectedTools": [
+          {
+            "toolId": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "toolName": "Hyperliquid",
+            "priceUsd": "0.000000",
+            "selectedMethodCount": 33,
+            "selectedMethods": [
+              "get_orderbook",
+              "calculate_price_impact",
+              "get_market_info",
+              "list_markets",
+              "get_funding_analysis",
+              "get_staking_summary",
+              "get_user_delegations",
+              "get_open_interest_analysis",
+              "get_candles",
+              "get_recent_trades",
+              "analyze_large_order",
+              "get_markets_at_oi_cap"
+            ],
+            "omittedSelectedMethodCount": 21
+          }
+        ]
+      },
+      "planning": {
+        "initial": {
+          "plannerQuery": "Compare current ETH funding on Hyperliquid versus Binance and say whether there is a funding arbitrage spread right now.",
+          "scoutEvidenceAttached": false,
+          "scoutEvidencePromptBlock": null,
+          "allowedModules": [
+            "@/lib/ai/skills/mcp"
+          ],
+          "intentContract": {
+            "strictValidation": true,
+            "namedVenues": [
+              "Hyperliquid"
+            ],
+            "requiresCrossVenueCoverage": false,
+            "requiresDirectInstruments": true,
+            "requiresHedge": false,
+            "requiresPortfolioConstruction": false,
+            "requiresRepresentativeOutcomeSelection": false,
+            "requiresBinaryEfficiencyPath": false,
+            "primaryScenario": null,
+            "hedgeScenario": null
+          },
+          "validation": {
+            "applied": true,
+            "passed": false,
+            "issues": [
+              "The plan does not directly cover both venues in the user’s comparison: it only calls a Hyperliquid skill and relies on a nested Binance snapshot, rather than making an explicit direct Binance funding query or otherwise c",
+              "Because the user explicitly asks whether there is a funding arbitrage spread right now, the plan should make the spread computation explicit from venue-specific current funding inputs instead of depending on a generic ag",
+              "The plan under-specifies the requested comparison structure: it returns a generic funding analysis result but does not clearly show a direct Hyperliquid-vs-Binance path that can support an immediate yes/no arbitrage conc"
+            ],
+            "rewriteAttempted": true,
+            "rewriteAccepted": true,
+            "rewriteGuidance": "Use explicit direct funding queries for ETH on both Hyperliquid and Binance, then compute the spread from those two venue rates and decide whether an arbitrage spread exists right now. Avoid relying on a single generic funding-analysis call unless it clearly and directly exposes both venues’ current rates."
+          }
+        }
+      },
+      "cost": {
+        "planningCostUsd": 0.04489875,
+        "initialExecutionCostUsd": 0.002374,
+        "rediscoveryAdditionalCostUsd": 0,
+        "synthesisCostUsd": 0.0027905,
+        "totalModelCostUsd": 0.052367750000000005,
+        "toolCostUsd": 0,
+        "totalChargedUsd": 0.052367750000000005
+      },
+      "completeness": {
+        "evaluations": [
+          "[OMITTED:CIRCULAR_REFERENCE]"
+        ],
+        "repairEvents": [],
+        "triggerNeedsDifferentTools": false,
+        "triggerMissingCapability": null
+      },
+      "rediscovery": {
+        "considered": false,
+        "executed": false,
+        "skipReason": "not_eligible_for_bounded_rediscovery",
+        "missingCapability": null,
+        "rediscoveryQuery": null,
+        "capabilityLooksLikeSearchNeed": false,
+        "allowSearchFallbackOnElapsedCap": false,
+        "searchFallbackUsed": false,
+        "preRediscoveryBudgetReasonCode": null,
+        "candidateSearchResults": [],
+        "selectedAlternatives": [],
+        "mergedTools": [],
+        "usingPaidFallback": false,
+        "branchPlan": null
+      },
+      "clarification": {
+        "orchestrationMode": "manual_selected_tools",
+        "rolloutStage": "enabled",
+        "shadowMode": false,
+        "policy": "return",
+        "outcomeType": "answer",
+        "triggered": false,
+        "optionCount": 1,
+        "candidateCount": 25,
+        "viableCandidateCount": 1,
+        "recommendedOptionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_analysis",
+        "recommendedOptionReason": "Recommended because Hyperliquid.get_funding_analysis ranked highest after comparing probe fit, method contract details, and grounded query eligibility.",
+        "autoResolved": false,
+        "autoSelectEnabled": false,
+        "assumptionMade": null,
+        "missingCapability": null,
+        "decisionReasonCode": "single_grounded_interpretation",
+        "decisionSignals": [],
+        "evidenceSources": {
+          "usesMethodSchemas": true,
+          "usesProbeArgs": true,
+          "usesMethodMetadata": true,
+          "usesToolSelectionContext": false,
+          "usesLlmSelection": true
+        },
+        "comparedOptionIds": [
+          "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_analysis"
+        ],
+        "decisionStrategy": "deterministic",
+        "judgeAttempted": false,
+        "judgeApplied": false,
+        "judgeOutcomeType": null,
+        "judgeConfidence": null,
+        "judgeReason": null,
+        "judgeError": null,
+        "validatorReason": null,
+        "fallbackReason": null,
+        "copyStrategy": "deterministic",
+        "rewriteAttempted": false,
+        "rewriteApplied": false,
+        "rewriteError": null,
+        "candidateSummaries": [
+          {
+            "optionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_analysis",
+            "fitScore": 19.2167,
+            "llmRelevanceScore": 1,
+            "requiredParams": [
+              "coin"
+            ],
+            "unresolvedRequiredParams": [],
+            "probeArgKeys": [
+              "coin"
+            ],
+            "inputFieldNames": [
+              "coin"
+            ],
+            "outputKeys": [
+              "coin",
+              "currentFunding",
+              "venueFundingSnapshot",
+              "predictedFundings",
+              "fundingArbitrage",
+              "confidence"
+            ],
+            "semanticScope": "multi-target",
+            "semanticEntityGranularity": "venue",
+            "semanticRequiresNamedEntity": false,
+            "semanticVenueSpecificity": "tool-bound",
+            "semanticOutputCardinality": "comparison",
+            "semanticProfileConfidence": 0.95,
+            "latencyClass": "fast",
+            "executePriceUsd": "0.001",
+            "queryEligible": true
+          },
+          {
+            "optionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_funding_history",
+            "fitScore": 7.75,
+            "llmRelevanceScore": 0.3,
+            "requiredParams": [
+              "coin"
+            ],
+            "unresolvedRequiredParams": [],
+            "probeArgKeys": [
+              "coin"
+            ],
+            "inputFieldNames": [
+              "coin",
+              "days"
+            ],
+            "outputKeys": [
+              "coin",
+              "fundingHistory",
+              "summary",
+              "dataSources",
+              "dataFreshness",
+              "fetchedAt"
+            ],
+            "semanticScope": "multi-target",
+            "semanticEntityGranularity": "venue",
+            "semanticRequiresNamedEntity": false,
+            "semanticVenueSpecificity": "tool-bound",
+            "semanticOutputCardinality": "multiple",
+            "semanticProfileConfidence": 0.95,
+            "latencyClass": "instant",
+            "executePriceUsd": "0.001",
+            "queryEligible": true
+          },
+          {
+            "optionId": "b940bedc-3d67-45b0-8709-b3d070e5e454:get_market_info",
+            "fitScore": 5.6667,
+            "llmRelevanceScore": 0.6,
+            "requiredParams": [
+              "coin"
+            ],
+            "unresolvedRequiredParams": [],
+            "probeArgKeys": [
+              "coin"
+            ],
+            "inputFieldNames": [
+              "coin"
+            ],
+            "outputKeys": [
+              "coin",
+              "markPrice",
+              "indexPrice",
+              "midPrice",
+              "premium",
+              "spread"
+            ],
+            "semanticScope": "multi-target",
+            "semanticEntityGranularity": "market",
+            "semanticRequiresNamedEntity": false,
+            "semanticVenueSpecificity": "tool-bound",
+            "semanticOutputCardinality": "comparison",
+            "semanticProfileConfidence": 0.95,
+            "latencyClass": "instant",
+            "executePriceUsd": "0.001",
+            "queryEligible": true
+          }
+        ]
+      },
+      "models": {
+        "overrideMode": "none",
+        "stages": [
+          {
+            "stageKey": "scout-llm-selection",
+            "stageKind": "stage",
+            "stage": "scout-llm-selection",
+            "surface": "query",
+            "responseShape": null,
+            "answerModelId": "gemini-flash-model",
+            "logicalModelId": "gemini-flash-model",
+            "requestedModelId": "gemini-flash-model",
+            "resolvedModelId": "gemini-flash-model",
+            "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+            "effectiveModelId": "gemini-flash-model",
+            "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.0023045,
+            "usage": null
+          },
+          {
+            "stageKey": "clarification-judge",
+            "stageKind": "stage",
+            "stage": "clarification-judge",
+            "surface": "query",
+            "responseShape": null,
+            "answerModelId": "gemini-flash-model",
+            "logicalModelId": "gemini-flash-model",
+            "requestedModelId": "gemini-flash-model",
+            "resolvedModelId": "gemini-flash-model",
+            "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+            "effectiveModelId": "gemini-flash-model",
+            "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": false,
+            "latencyMs": null,
+            "actualCostUsd": null,
+            "usage": null
+          },
+          {
+            "stageKey": "planning",
+            "stageKind": "stage",
+            "stage": "planning",
+            "surface": "query",
+            "responseShape": null,
+            "answerModelId": "gemini-flash-model",
+            "logicalModelId": "gpt-5.4-mini-model",
+            "requestedModelId": "gpt-5.4-mini-model",
+            "resolvedModelId": "gpt-5.4-mini-model",
+            "resolvedRuntimeModelId": "openai/gpt-5.4-mini",
+            "effectiveModelId": "gpt-5.4-mini-model",
+            "effectiveRuntimeModelId": "openai/gpt-5.4-mini",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.04489875,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]",
+              "reasoningTokens": "[REDACTED]",
+              "cachedInputTokens": "[REDACTED]"
+            }
+          },
+          {
+            "stageKey": "planning-validation",
+            "stageKind": "stage",
+            "stage": "planning",
+            "surface": "query",
+            "responseShape": null,
+            "answerModelId": "gemini-flash-model",
+            "logicalModelId": "gpt-5.4-mini-model",
+            "requestedModelId": "gpt-5.4-mini-model",
+            "resolvedModelId": "gpt-5.4-mini-model",
+            "resolvedRuntimeModelId": "openai/gpt-5.4-mini",
+            "effectiveModelId": "gpt-5.4-mini-model",
+            "effectiveRuntimeModelId": "openai/gpt-5.4-mini",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": 4296,
+            "actualCostUsd": 0.0023887500000000002,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]",
+              "reasoningTokens": "[REDACTED]",
+              "cachedInputTokens": "[REDACTED]"
+            }
+          },
+          {
+            "stageKey": "completeness-check",
+            "stageKind": "stage",
+            "stage": "completeness-check",
+            "surface": "query",
+            "responseShape": null,
+            "answerModelId": "gemini-flash-model",
+            "logicalModelId": "gemini-flash-model",
+            "requestedModelId": "gemini-flash-model",
+            "resolvedModelId": "gemini-flash-model",
+            "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+            "effectiveModelId": "gemini-flash-model",
+            "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.002374,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]"
+            }
+          },
+          {
+            "stageKey": "final-synthesis",
+            "stageKind": "final-synthesis",
+            "stage": "final-synthesis",
+            "surface": "query",
+            "responseShape": "answer_with_evidence",
+            "answerModelId": "gemini-flash-model",
+            "logicalModelId": "gemini-flash-model",
+            "requestedModelId": "gemini-flash-model",
+            "resolvedModelId": "gemini-flash-model",
+            "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+            "effectiveModelId": "gemini-flash-model",
+            "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.0027905,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]",
+              "reasoningTokens": "[REDACTED]",
+              "cachedInputTokens": "[REDACTED]"
+            }
+          }
+        ]
+      }
+    },
+    "governance": {
+      "policyVersion": "2026-03-05.query-data-governance.v1",
+      "redactionCount": 18,
+      "omittedSensitiveFieldsCount": 1,
+      "exposure": {
+        "runtimeArtifacts": "internal_runtime_only",
+        "durableAudit": "internal_ops_only",
+        "developerTrace": "explicit_opt_in_redacted",
+        "publicDataUrl": "explicit_request_opt_in"
+      },
+      "retention": {
+        "runtimeTtlMs": 900000,
+        "durableAuditDays": 30,
+        "publicDataUrl": "until_deleted"
+      }
+    }
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "manual_selected_tools",
+    "firstPassSuccess": true,
+    "capabilityMissSignaled": false,
+    "rediscoveryExecuted": false
+  },
+  "responseShape": "answer_with_evidence",
+  "summary": "Yes, there is currently a significant funding arbitrage spread for ETH between Hyperliquid and Binance.",
+  "evidence": {
+    "facts": [
+      {
+        "id": "path_lookup:0",
+        "label": "Top-level path lookup for \"fundingSpread\"",
+        "path": "fundingSpread",
+        "relevanceScore": 1,
+        "value": {
+          "hyperliquidMinusBinance": -0.0000657618,
+          "hasFundingArbitrageSpread": true,
+          "fundingArbitrage": {
+            "strategy": "Long HL, Short Binance",
+            "annualizedSpread": "57.67%"
+          }
+        }
+      },
+      {
+        "id": "path_lookup:1",
+        "label": "Top-level path lookup for \"coin\"",
+        "path": "coin",
+        "relevanceScore": null,
+        "value": "ETH"
+      },
+      {
+        "id": "path_lookup:2",
+        "label": "Top-level path lookup for \"comparison\"",
+        "path": "comparison",
+        "relevanceScore": null,
+        "value": {
+          "Hyperliquid": {
+            "venue": "Hyperliquid",
+            "rate": 0.0000100382,
+            "rateKind": "current",
+            "nextFundingTime": null
+          },
+          "Binance": {
+            "venue": "Binance",
+            "rate": 0.0000758,
+            "rateKind": "predicted",
+            "nextFundingTime": "2026-04-01T16:00:00.000Z"
+          }
+        }
+      },
+      {
+        "id": "keyword_slice:3",
+        "label": "Keyword slice for \"current\" (lines 6-8)",
+        "path": "line:7",
+        "relevanceScore": 1,
+        "value": "      \"rate\": 0.0000100382,\n      \"rateKind\": \"current\",\n      \"nextFundingTime\": null"
+      },
+      {
+        "id": "keyword_slice:4",
+        "label": "Keyword slice for \"eth\" (lines 1-3)",
+        "path": "line:2",
+        "relevanceScore": 1,
+        "value": "{\n  \"coin\": \"ETH\",\n  \"comparison\": {"
+      },
+      {
+        "id": "keyword_slice:5",
+        "label": "Keyword slice for \"funding\" (lines 7-9)",
+        "path": "line:8",
+        "relevanceScore": 1,
+        "value": "      \"rateKind\": \"current\",\n      \"nextFundingTime\": null\n    },"
+      },
+      {
+        "id": "keyword_slice:6",
+        "label": "Keyword slice for \"hyperliquid\" (lines 3-5)",
+        "path": "line:4",
+        "relevanceScore": 1,
+        "value": "  \"comparison\": {\n    \"Hyperliquid\": {\n      \"venue\": \"Hyperliquid\","
+      },
+      {
+        "id": "top_k_relevance:7",
+        "label": "Top-K relevance slice at \"$\"",
+        "path": "$",
+        "relevanceScore": 5,
+        "value": "{\n  \"coin\": \"ETH\",\n  \"comparison\": {\n    \"Hyperliquid\": {\n      \"venue\": \"Hyperliquid\",\n      \"rate\": 0.0000100382,\n      \"rateKind\": \"current\",\n      \"nextFundingTime\": null\n    },\n    \"Binance\": {\n      \"venue\": \"Binance\",\n      \"rate\": 0.0000758,\n      \"rateKind\": \"predicted\",\n      \"nextFundingTime\": \"2026-04-01T16:00:00.000Z\"\n    }\n  },\n  \"fundingSpread\": {\n    \"hyperliquidMinusBinance\": -0.0000657618,\n    \"hasFundingArbitrageSpread\": true,\n    \"fundingArbitrage\": {\n      \"strategy\": \"Long \n... [truncated for context window efficiency]"
+      }
+    ],
+    "sourceRefs": [
+      {
+        "id": "source-1",
+        "provider": null,
+        "dataset": null,
+        "observedAt": "2026-04-01T09:43:03.598Z",
+        "publishedAt": null,
+        "artifactRef": null,
+        "url": null,
+        "note": null
+      },
+      {
+        "id": "source-2",
+        "provider": "Hyperliquid",
+        "dataset": null,
+        "observedAt": null,
+        "publishedAt": null,
+        "artifactRef": null,
+        "url": null,
+        "note": null
+      },
+      {
+        "id": "source-3",
+        "provider": "Binance",
+        "dataset": null,
+        "observedAt": null,
+        "publishedAt": null,
+        "artifactRef": null,
+        "url": null,
+        "note": null
+      }
+    ],
+    "assumptions": [],
+    "knownUnknowns": [],
+    "retrievalPlanReasonCodes": [
+      "keyword_lookup"
+    ]
+  },
+  "artifacts": {
+    "dataUrl": null,
+    "canonicalDataRef": {
+      "datasetId": "0405c963-c9aa-413d-87d1-97caf9b7762e:canonical-execution",
+      "hash": "5764e62b09ca9995adb69a124435439392bc15b6bc5125b61c090b72028563b4",
+      "bytes": 662,
+      "publicDataUrl": null
+    },
+    "stageArtifactKinds": [
+      "query-session-contract",
+      "tool-selection",
+      "scout-evidence-sanitized",
+      "scout-contract",
+      "scout-pre-plan-probe",
+      "depth-decision",
+      "scout-budget-envelope",
+      "scout-rollout-contract",
+      "clarification-decision-input",
+      "clarification-decision",
+      "planner-generated-code",
+      "first-pass-execution",
+      "execution-program-lineage",
+      "completeness-evaluation",
+      "canonical-dataset-registered",
+      "final-execution",
+      "synthesis-context-selection",
+      "scout-budget-stop",
+      "scout-budget-summary"
+    ]
+  },
+  "view": {
+    "type": "table",
+    "label": "Table"
+  },
+  "freshness": {
+    "asOf": "2026-04-01T09:43:03.598Z",
+    "sourceTimestamps": [
+      "2026-04-01T09:43:03.598Z"
+    ],
+    "note": "Most recent evidence timestamp: 2026-04-01T09:43:03.598Z"
+  },
+  "confidence": {
+    "level": "high",
+    "reason": "Grounded in 3 verified evidence facts with no recorded retrieval gaps.",
+    "verifiedFactCount": 3,
+    "inferredFactCount": 3,
+    "gapCount": 0,
+    "gapSignals": []
+  },
+  "usage": {
+    "durationMs": 38680,
+    "cost": {
+      "totalCostUsd": "0.052368",
+      "toolCostUsd": "0.000000",
+      "modelCostUsd": "0.052368"
+    },
+    "toolsUsed": [
+      {
+        "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+        "name": "Hyperliquid",
+        "skillCalls": 1
+      }
+    ],
+    "outcomeType": "answer",
+    "orchestrationMetrics": {
+      "parityStage": "enabled",
+      "orchestrationMode": "manual_selected_tools",
+      "firstPassSuccess": true,
+      "capabilityMissSignaled": false,
+      "rediscoveryExecuted": false
+    }
+  }
+}

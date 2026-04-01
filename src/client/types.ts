@@ -916,16 +916,122 @@ export interface QueryResponseEnvelopeSourceRef {
   note: string | null;
 }
 
+export type QueryResponseEnvelopeTone =
+  | "positive"
+  | "negative"
+  | "neutral"
+  | "caution";
+
+export type QueryControllerStopReason =
+  | "complete_answer"
+  | "bounded_runtime_budget"
+  | "bounded_same_endpoint_guardrail"
+  | "bounded_upstream_abort_guardrail"
+  | "clarification_required"
+  | "capability_miss";
+
+export type QueryControllerIssueClass =
+  | "scope_ambiguity"
+  | "missing_evidence"
+  | "missing_capability"
+  | "stale_data"
+  | "wrong_tool_path";
+
+export type QueryControllerAction =
+  | "inspect_current_grounding"
+  | "patch_current_program"
+  | "bounded_rediscovery"
+  | "clarify_scope"
+  | "return_capability_miss"
+  | "return_bounded_answer"
+  | "return_complete_answer";
+
+export interface QueryResponseEnvelopeMarketAggregateFlow {
+  netFlowUsd: number | null;
+  grossInflowUsd: number | null;
+  grossOutflowUsd: number | null;
+  nativeNetFlow: number | null;
+  nativeUnit: string | null;
+  direction: "inflow" | "outflow" | "flat" | "mixed";
+}
+
+export interface QueryResponseEnvelopeMarketVenueBreakdown {
+  venue: string;
+  asset: string | null;
+  netFlowUsd: number | null;
+  grossInflowUsd: number | null;
+  grossOutflowUsd: number | null;
+  nativeNetFlow: number | null;
+  nativeUnit: string | null;
+  shareOfTotal: number | null;
+  rank: number | null;
+}
+
+export interface QueryResponseEnvelopeCatalystRef {
+  source: string;
+  publishedAt: string | null;
+  claim: string | null;
+  relationToFlow: string | null;
+  url: string | null;
+}
+
+export interface QueryResponseEnvelopeDerivativesContext {
+  openInterestDirection: string | null;
+  openInterestChangePct: number | null;
+  liquidationBias: string | null;
+  venues: string[];
+  relationshipToSpotFlows: string | null;
+}
+
+export interface QueryResponseEnvelopeMarketIntelligence {
+  asset: string | null;
+  assets: string[] | null;
+  timeWindow: string | null;
+  asOf: string | null;
+  aggregateFlow: QueryResponseEnvelopeMarketAggregateFlow | null;
+  venueBreakdown: QueryResponseEnvelopeMarketVenueBreakdown[];
+  catalystRefs: QueryResponseEnvelopeCatalystRef[];
+  derivativesContext: QueryResponseEnvelopeDerivativesContext | null;
+}
+
+export interface QueryResponseEnvelopeViewMetric {
+  label: string;
+  value: string;
+  tone?: QueryResponseEnvelopeTone;
+}
+
+export interface QueryResponseEnvelopeViewRow {
+  key: string;
+  cells: string[];
+  tone?: QueryResponseEnvelopeTone;
+  sourceRefIds?: string[];
+}
+
 export interface QueryResponseEnvelope {
   responseShape: Exclude<QueryResponseShape, "answer">;
   response: string;
   summary: string;
+  outcome: {
+    label: string;
+    tone: QueryResponseEnvelopeTone;
+    stopReason: QueryControllerStopReason;
+    issueClass: QueryControllerIssueClass | null;
+  };
+  controller: {
+    scope: "wedge" | "standard";
+    nextAction: QueryControllerAction;
+    actionsTaken: QueryControllerAction[];
+    patchFirstProgramPreserved: boolean;
+    executionProgramRevisionId: string | null;
+    hardBudgetApplied: boolean;
+  } | null;
   evidence: {
     facts: QueryResponseEnvelopeFact[];
     sourceRefs: QueryResponseEnvelopeSourceRef[];
     assumptions: string[];
     knownUnknowns: string[];
     retrievalPlanReasonCodes: string[];
+    marketIntelligence?: QueryResponseEnvelopeMarketIntelligence | null;
   };
   artifacts: {
     dataUrl: string | null;
@@ -940,6 +1046,10 @@ export interface QueryResponseEnvelope {
   view: {
     type: QueryResponseEnvelopeViewType;
     label: string;
+    title?: string | null;
+    metrics?: QueryResponseEnvelopeViewMetric[];
+    columns?: string[];
+    rows?: QueryResponseEnvelopeViewRow[];
   } | null;
   freshness: {
     asOf: string | null;
@@ -991,6 +1101,18 @@ export interface QueryBaseResult {
 
   /** Optional orchestration outcome metrics for benchmarking and rollout analysis */
   orchestrationMetrics?: QueryOrchestrationMetrics;
+
+  /** Typed public stop reason for the final outcome. */
+  stopReason?: QueryControllerStopReason;
+
+  /** Typed issue class exposed by the bounded controller contract. */
+  issueClass?: QueryControllerIssueClass | null;
+
+  /** Ordered public controller actions taken before the final outcome. */
+  actionsTaken?: QueryControllerAction[];
+
+  /** Optional controller summary for bounded wedge-style answers. */
+  controller?: QueryResponseEnvelope["controller"];
 
   /**
    * Optional public durable continuation handles for resume/fork flows.
