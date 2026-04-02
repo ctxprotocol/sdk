@@ -6272,7 +6272,9 @@ async function resolveMarketReference(options: {
   if (slug) {
     try {
       const event = (await fetchGamma(`/events/slug/${slug}`, 8_000)) as GammaEvent;
-      const market = event?.markets?.[0];
+      const market = getRepresentativeGammaMarket(event, {
+        preference: "tradable",
+      });
       if (market?.conditionId) {
         return {
           conditionId: market.conditionId,
@@ -6857,6 +6859,99 @@ function isTradableGammaMarket(market: GammaMarket): boolean {
   }
 
   return (market.umaResolutionStatus || "").toLowerCase() !== "resolved";
+}
+
+type GammaMarketSelectionPreference = "tradable" | "resolved" | "any";
+
+function isResolvedGammaMarket(market: GammaMarket): boolean {
+  if (market.closed === true) {
+    return true;
+  }
+
+  return (market.umaResolutionStatus || "").toLowerCase() === "resolved";
+}
+
+function scoreGammaMarketForSelection(
+  market: GammaMarket,
+  preference: GammaMarketSelectionPreference
+): number {
+  let score = 0;
+  const tradable = isTradableGammaMarket(market);
+  const resolved = isResolvedGammaMarket(market);
+
+  if (preference === "tradable" && tradable) {
+    score += 1_000_000_000;
+  } else if (preference === "resolved" && resolved) {
+    score += 1_000_000_000;
+  } else if (preference === "any" && tradable) {
+    score += 100_000_000;
+  }
+
+  if (market.active !== false) {
+    score += 10_000_000;
+  }
+  if (market.closed !== true) {
+    score += 1_000_000;
+  }
+  if (market.acceptingOrders !== false) {
+    score += 100_000;
+  }
+  if (!resolved) {
+    score += 10_000;
+  }
+
+  score += (getFiniteNumber(market.liquidity) ?? 0) * 10;
+  score += (getFiniteNumber(market.volume24hr) ?? 0) * 5;
+  score += getFiniteNumber(market.volume) ?? 0;
+
+  return score;
+}
+
+function selectPreferredGammaMarket(
+  markets: GammaMarket[],
+  options?: { preference?: GammaMarketSelectionPreference }
+): GammaMarket | null {
+  if (markets.length === 0) {
+    return null;
+  }
+
+  const preference = options?.preference ?? "tradable";
+  return [...markets].sort((a, b) => {
+    const scoreDelta =
+      scoreGammaMarketForSelection(b, preference) -
+      scoreGammaMarketForSelection(a, preference);
+    if (scoreDelta !== 0) {
+      return scoreDelta;
+    }
+
+    return (a.question || a.title || "").localeCompare(
+      b.question || b.title || ""
+    );
+  })[0] ?? null;
+}
+
+function getRepresentativeGammaMarket(
+  event: GammaEvent | undefined,
+  options?: { preference?: GammaMarketSelectionPreference }
+): GammaMarket | null {
+  const markets = Array.isArray(event?.markets)
+    ? event.markets.filter(
+        (market): market is GammaMarket =>
+          typeof market === "object" && market !== null
+      )
+    : [];
+
+  return selectPreferredGammaMarket(markets, options);
+}
+
+function getRepresentativeGammaMarkets(
+  events: GammaEvent[],
+  options?: { preference?: GammaMarketSelectionPreference }
+): GammaMarket[] {
+  return events.flatMap((event) => {
+    const market = getRepresentativeGammaMarket(event, options);
+    return market ? [market] : [];
+  });
 }
 
 async function fetchClobQuoteSnapshotsBatched(
@@ -10747,7 +10842,9 @@ async function handleDiscoverTrendingMarkets(
       });
     }
     const trendingQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(
-      events.flatMap((event) => (event.markets?.[0] ? [event.markets[0]] : [])),
+      getRepresentativeGammaMarkets(events, {
+        preference: "tradable",
+      }),
       {
         timeoutMs: "heavy",
       }
@@ -10777,7 +10874,9 @@ async function handleDiscoverTrendingMarkets(
     > = {};
 
     for (const event of events) {
-      const market = event.markets?.[0];
+      const market = getRepresentativeGammaMarket(event, {
+        preference: "tradable",
+      });
       if (!market) continue;
 
       const volume = Number(event.volume || market.volume || 0);
@@ -11136,7 +11235,9 @@ async function handleGetTopMarkets(
     }
 
     const topMarketQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(
-      events.flatMap((event) => event.markets || []),
+      getRepresentativeGammaMarkets(events, {
+        preference: "tradable",
+      }),
       {
         timeoutMs: "heavy",
       }
@@ -11164,7 +11265,9 @@ async function handleGetTopMarkets(
         }
       }
 
-      const market = event.markets?.[0];
+      const market = getRepresentativeGammaMarket(event, {
+        preference: "tradable",
+      });
       if (!market) continue;
 
       // Keep default behavior focused on currently tradable/live markets.
@@ -11662,8 +11765,10 @@ async function handlePlacePolymarketOrder(
   if (!marketConditionId && slug) {
     try {
       marketData = await fetchGamma(`/events/slug/${slug}`) as GammaEvent;
-      const firstMarket = marketData?.markets?.[0];
-      marketConditionId = firstMarket?.conditionId;
+      const representativeMarket = getRepresentativeGammaMarket(marketData, {
+        preference: "tradable",
+      });
+      marketConditionId = representativeMarket?.conditionId;
     } catch {
       return errorResult(`Market not found for slug: ${slug}`);
     }
@@ -13441,22 +13546,36 @@ async function handleSearchMarkets(
               liveCount++;
             }
 
+            const marketPreference: GammaMarketSelectionPreference =
+              status === "resolved"
+                ? "resolved"
+                : status === "all"
+                  ? "any"
+                  : "tradable";
             // Find the specific market matching the search query (e.g., "Gavin Newsom")
-            let matchedMarket = e.markets?.[0]; // Default to first market
+            let matchedMarket = getRepresentativeGammaMarket(e, {
+              preference: marketPreference,
+            });
             let matchedOutcomePrice: string | null = null;
             
             if (searchQueryWords.length > 0 && e.markets && e.markets.length > 1) {
+              const matchingMarkets: GammaMarket[] = [];
               for (const market of e.markets) {
                 const marketText = ((market.question || '') + ' ' + (market.title || '')).toLowerCase();
                 const matches = searchQueryWords.some(word => marketText.includes(word));
                 if (matches) {
-                  matchedMarket = market;
-                  matchedOutcomePrice = resolveCurrentOutcomePrice(
-                    market,
-                    searchResultQuoteSnapshots
-                  ).toFixed(4);
-                  break;
+                  matchingMarkets.push(market);
                 }
+              }
+              const preferredMatch = selectPreferredGammaMarket(matchingMarkets, {
+                preference: marketPreference,
+              });
+              if (preferredMatch) {
+                matchedMarket = preferredMatch;
+                matchedOutcomePrice = resolveCurrentOutcomePrice(
+                  preferredMatch,
+                  searchResultQuoteSnapshots
+                ).toFixed(4);
               }
             }
 
@@ -14314,7 +14433,9 @@ async function handleBrowseCategory(
       `/events?${eventParams.toString()}`
     )) as GammaEvent[];
     const browseCategoryQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(
-      filteredEvents.flatMap((event) => (event.markets?.[0] ? [event.markets[0]] : [])),
+      getRepresentativeGammaMarkets(filteredEvents, {
+        preference: includeResolved ? "any" : "tradable",
+      }),
       {
         timeoutMs: "heavy",
       }
@@ -14324,7 +14445,9 @@ async function handleBrowseCategory(
       .filter((e) => e.slug)
       .slice(0, limit) // Apply limit after filtering
       .map((e) => {
-        const market = e.markets?.[0];
+        const market = getRepresentativeGammaMarket(e, {
+          preference: includeResolved ? "any" : "tradable",
+        });
         const yesPrice = market
           ? resolveCurrentOutcomePrice(market, browseCategoryQuoteSnapshots)
           : 0.5;
@@ -14371,7 +14494,9 @@ async function handleBrowseByTag(
       `/events?tag_id=${tag_id}&closed=${closed}&limit=${limit}&order=volume&ascending=false`
     ) as GammaEvent[];
     const browseTagQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(
-      events.flatMap((event) => (event.markets?.[0] ? [event.markets[0]] : [])),
+      getRepresentativeGammaMarkets(events, {
+        preference: includeResolved ? "any" : "tradable",
+      }),
       {
         timeoutMs: "heavy",
       }
@@ -14380,7 +14505,9 @@ async function handleBrowseByTag(
     const formatted = (events || [])
       .filter((e) => e.slug)
       .map((e) => {
-        const market = e.markets?.[0];
+        const market = getRepresentativeGammaMarket(e, {
+          preference: includeResolved ? "any" : "tradable",
+        });
         const yesPrice = market
           ? resolveCurrentOutcomePrice(market, browseTagQuoteSnapshots)
           : 0.5;

@@ -938,7 +938,18 @@ Returns:
                             currentPrice: { type: "number", description: "Current YES price (implied probability)" },
                             totalWhaleValue: { type: "number", description: "Total $ value of whale positions on this outcome" },
                             topWhalePosition: { type: "number", description: "Largest single whale position" },
-                            whaleCount: { type: "number", description: "Number of whale-sized positions" },
+                            whaleCount: {
+                                type: "number",
+                                description: "Number of whale-sized YES positions detected across the full deep holder scan",
+                            },
+                            holdersScanned: {
+                                type: "number",
+                                description: "Number of YES holders scanned for this outcome before any response truncation",
+                            },
+                            returnedHolderSampleCount: {
+                                type: "number",
+                                description: "Number of top YES holders retained in the returned sample payload for this outcome",
+                            },
                             convictionLevel: { type: "string", enum: ["extreme", "high", "moderate", "low"] },
                         },
                     },
@@ -3505,6 +3516,45 @@ Set deepFetch=false for faster but shallower results (20 per side max).
                         },
                     },
                 },
+                totalUniqueHolders: {
+                    type: "number",
+                    description: "Combined YES + NO holders found after deep-fetch deduplication",
+                },
+                holdersReturned: {
+                    type: "object",
+                    properties: {
+                        yes: { type: "number" },
+                        no: { type: "number" },
+                    },
+                },
+                holdersScanned: {
+                    type: "object",
+                    properties: {
+                        yes: { type: "number" },
+                        no: { type: "number" },
+                    },
+                },
+                positionValueSummary: {
+                    type: "object",
+                    properties: {
+                        yesTotalValue: {
+                            type: "number",
+                            description: "Total current YES-side position value across the full scanned holder set",
+                        },
+                        noTotalValue: {
+                            type: "number",
+                            description: "Total current NO-side position value across the full scanned holder set",
+                        },
+                        yesWhaleCount: {
+                            type: "number",
+                            description: "Number of YES holders above the whale threshold across the full scanned set",
+                        },
+                        noWhaleCount: {
+                            type: "number",
+                            description: "Number of NO holders above the whale threshold across the full scanned set",
+                        },
+                    },
+                },
                 concentration: {
                     type: "object",
                     description: "How concentrated the market is",
@@ -5332,7 +5382,9 @@ async function resolveMarketReference(options) {
     if (slug) {
         try {
             const event = (await fetchGamma(`/events/slug/${slug}`, 8_000));
-            const market = event?.markets?.[0];
+            const market = getRepresentativeGammaMarket(event, {
+                preference: "tradable",
+            });
             if (market?.conditionId) {
                 return {
                     conditionId: market.conditionId,
@@ -5772,6 +5824,68 @@ function isTradableGammaMarket(market) {
         return false;
     }
     return (market.umaResolutionStatus || "").toLowerCase() !== "resolved";
+}
+function isResolvedGammaMarket(market) {
+    if (market.closed === true) {
+        return true;
+    }
+    return (market.umaResolutionStatus || "").toLowerCase() === "resolved";
+}
+function scoreGammaMarketForSelection(market, preference) {
+    let score = 0;
+    const tradable = isTradableGammaMarket(market);
+    const resolved = isResolvedGammaMarket(market);
+    if (preference === "tradable" && tradable) {
+        score += 1_000_000_000;
+    }
+    else if (preference === "resolved" && resolved) {
+        score += 1_000_000_000;
+    }
+    else if (preference === "any" && tradable) {
+        score += 100_000_000;
+    }
+    if (market.active !== false) {
+        score += 10_000_000;
+    }
+    if (market.closed !== true) {
+        score += 1_000_000;
+    }
+    if (market.acceptingOrders !== false) {
+        score += 100_000;
+    }
+    if (!resolved) {
+        score += 10_000;
+    }
+    score += (getFiniteNumber(market.liquidity) ?? 0) * 10;
+    score += (getFiniteNumber(market.volume24hr) ?? 0) * 5;
+    score += getFiniteNumber(market.volume) ?? 0;
+    return score;
+}
+function selectPreferredGammaMarket(markets, options) {
+    if (markets.length === 0) {
+        return null;
+    }
+    const preference = options?.preference ?? "tradable";
+    return [...markets].sort((a, b) => {
+        const scoreDelta = scoreGammaMarketForSelection(b, preference) -
+            scoreGammaMarketForSelection(a, preference);
+        if (scoreDelta !== 0) {
+            return scoreDelta;
+        }
+        return (a.question || a.title || "").localeCompare(b.question || b.title || "");
+    })[0] ?? null;
+}
+function getRepresentativeGammaMarket(event, options) {
+    const markets = Array.isArray(event?.markets)
+        ? event.markets.filter((market) => typeof market === "object" && market !== null)
+        : [];
+    return selectPreferredGammaMarket(markets, options);
+}
+function getRepresentativeGammaMarkets(events, options) {
+    return events.flatMap((event) => {
+        const market = getRepresentativeGammaMarket(event, options);
+        return market ? [market] : [];
+    });
 }
 async function fetchClobQuoteSnapshotsBatched(tokenIds, timeoutMs) {
     const uniqueTokenIds = Array.from(new Set(tokenIds.filter((tokenId) => typeof tokenId === "string" && tokenId.trim().length > 0)));
@@ -7520,6 +7634,9 @@ function workflowExtractEventQueryFromLiquidity(value) {
     const trimmed = value.trim();
     const patterns = [
         /\b(?:for|of)\s+(?:the\s+)?(?:yes|no)\s+side of\s+(?:the\s+)?(.+?)(?:\s+market)?(?:\s+and\s+(?:estimate|size|model)|\s+with\s+|\?|$)/i,
+        /\bbet on\s+(?:the\s+)?(.+?)(?:\.\s+based on|\s+based on|\s+with\s+|\?|$)/i,
+        /\bsplit(?:ting)?(?:\s+(?:my|the))?\s+(?:bets?|capital|position|positions|stakes?)\s+(?:across|among|between|for)\s+(?:the\s+)?(.+?)(?:\.\s+based on|\s+based on|\s+with\s+|\?|$)/i,
+        /\ballocat(?:e|ing)\s+(?:my\s+|the\s+)?(?:bets?|capital|position|positions|stakes?)?\s*(?:across|among|between|to|into|for)\s+(?:the\s+)?(.+?)(?:\.\s+based on|\s+based on|\s+with\s+|\?|$)/i,
         /\b(?:for|in|within)\s+(?:the\s+)?(.+?)(?:\s+market)?(?:\s+and\s+(?:estimate|size|model)|\s+with\s+|\?|$)/i,
     ];
     for (const pattern of patterns) {
@@ -8879,14 +8996,18 @@ async function handleDiscoverTrendingMarkets(args) {
                 });
             });
         }
-        const trendingQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(events.flatMap((event) => (event.markets?.[0] ? [event.markets[0]] : [])), {
+        const trendingQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(getRepresentativeGammaMarkets(events, {
+            preference: "tradable",
+        }), {
             timeoutMs: "heavy",
         });
         const trendingMarkets = [];
         const categoryBreakdown = {};
         const tagBreakdown = {};
         for (const event of events) {
-            const market = event.markets?.[0];
+            const market = getRepresentativeGammaMarket(event, {
+                preference: "tradable",
+            });
             if (!market)
                 continue;
             const volume = Number(event.volume || market.volume || 0);
@@ -9212,7 +9333,9 @@ async function handleGetTopMarkets(args) {
         if (events.length === 0) {
             break;
         }
-        const topMarketQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(events.flatMap((event) => event.markets || []), {
+        const topMarketQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(getRepresentativeGammaMarkets(events, {
+            preference: "tradable",
+        }), {
             timeoutMs: "heavy",
         });
         for (const event of events) {
@@ -9231,7 +9354,9 @@ async function handleGetTopMarkets(args) {
                     continue;
                 }
             }
-            const market = event.markets?.[0];
+            const market = getRepresentativeGammaMarket(event, {
+                preference: "tradable",
+            });
             if (!market)
                 continue;
             // Keep default behavior focused on currently tradable/live markets.
@@ -9628,8 +9753,10 @@ async function handlePlacePolymarketOrder(args) {
     if (!marketConditionId && slug) {
         try {
             marketData = await fetchGamma(`/events/slug/${slug}`);
-            const firstMarket = marketData?.markets?.[0];
-            marketConditionId = firstMarket?.conditionId;
+            const representativeMarket = getRepresentativeGammaMarket(marketData, {
+                preference: "tradable",
+            });
+            marketConditionId = representativeMarket?.conditionId;
         }
         catch {
             return errorResult(`Market not found for slug: ${slug}`);
@@ -11094,18 +11221,31 @@ async function handleSearchMarkets(args) {
             else {
                 liveCount++;
             }
+            const marketPreference = status === "resolved"
+                ? "resolved"
+                : status === "all"
+                    ? "any"
+                    : "tradable";
             // Find the specific market matching the search query (e.g., "Gavin Newsom")
-            let matchedMarket = e.markets?.[0]; // Default to first market
+            let matchedMarket = getRepresentativeGammaMarket(e, {
+                preference: marketPreference,
+            });
             let matchedOutcomePrice = null;
             if (searchQueryWords.length > 0 && e.markets && e.markets.length > 1) {
+                const matchingMarkets = [];
                 for (const market of e.markets) {
                     const marketText = ((market.question || '') + ' ' + (market.title || '')).toLowerCase();
                     const matches = searchQueryWords.some(word => marketText.includes(word));
                     if (matches) {
-                        matchedMarket = market;
-                        matchedOutcomePrice = resolveCurrentOutcomePrice(market, searchResultQuoteSnapshots).toFixed(4);
-                        break;
+                        matchingMarkets.push(market);
                     }
+                }
+                const preferredMatch = selectPreferredGammaMarket(matchingMarkets, {
+                    preference: marketPreference,
+                });
+                if (preferredMatch) {
+                    matchedMarket = preferredMatch;
+                    matchedOutcomePrice = resolveCurrentOutcomePrice(preferredMatch, searchResultQuoteSnapshots).toFixed(4);
                 }
             }
             if (!matchedOutcomePrice && matchedMarket) {
@@ -11586,6 +11726,10 @@ async function handleGetTopHolders(args) {
         // Calculate totals for percentages
         const totalYes = yesHolders.reduce((sum, p) => sum + p.size, 0);
         const totalNo = noHolders.reduce((sum, p) => sum + p.size, 0);
+        const yesTotalValue = yesHolders.reduce((sum, holder) => sum + holder.size * yesPrice, 0);
+        const noTotalValue = noHolders.reduce((sum, holder) => sum + holder.size * noPrice, 0);
+        const yesWhaleCount = yesHolders.filter((holder) => holder.size * yesPrice > 1000).length;
+        const noWhaleCount = noHolders.filter((holder) => holder.size * noPrice > 1000).length;
         const formatHolders = (holders, total, price) => {
             return holders
                 .slice(0, requestedLimit)
@@ -11607,7 +11751,6 @@ async function handleGetTopHolders(args) {
         // Calculate concentration
         const top10YesPercent = topYes.slice(0, 10).reduce((sum, h) => sum + h.percentOfSupply, 0);
         const top10NoPercent = topNo.slice(0, 10).reduce((sum, h) => sum + h.percentOfSupply, 0);
-        const whaleCount = [...topYes, ...topNo].filter(h => h.value > 1000).length;
         // Track how many unique holders we found
         const totalUniqueHolders = yesHolders.length + noHolders.length;
         // Get market title - use direct Gamma /markets?condition_ids= lookup instead of
@@ -11628,16 +11771,23 @@ async function handleGetTopHolders(args) {
             topHolders: { yes: topYes, no: topNo },
             totalUniqueHolders,
             holdersReturned: { yes: topYes.length, no: topNo.length },
+            holdersScanned: { yes: yesHolders.length, no: noHolders.length },
+            positionValueSummary: {
+                yesTotalValue: Number(yesTotalValue.toFixed(2)),
+                noTotalValue: Number(noTotalValue.toFixed(2)),
+                yesWhaleCount,
+                noWhaleCount,
+            },
             concentration: {
                 top10YesPercent: Number(top10YesPercent.toFixed(2)),
                 top10NoPercent: Number(top10NoPercent.toFixed(2)),
-                whaleCount,
+                whaleCount: yesWhaleCount + noWhaleCount,
             },
             fetchMethod: deepFetch
                 ? "multi-tier (10 API calls in paced batches with minBalance thresholds from $1M to $1)"
                 : "single-call",
             note: deepFetch
-                ? `Deep fetch found ${totalUniqueHolders} unique holders by querying 10 position tiers (from $1M ultra-whales to $1 positions). Polymarket API caps at 20 per call with no pagination, so we query [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] thresholds in paced batches and deduplicate.`
+                ? `Deep fetch found ${totalUniqueHolders} unique holders by querying 10 position tiers (from $1M ultra-whales to $1 positions). Polymarket API caps at 20 per call with no pagination, so we query [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] thresholds in paced batches and deduplicate. Response samples may still be truncated, but whale counts and total values use the full deduplicated holder scan.`
                 : "Single API call (limit 20 per side). Use deepFetch=true for more thorough results.",
             fetchedAt: new Date().toISOString(),
         });
@@ -11762,14 +11912,18 @@ async function handleBrowseCategory(args) {
             tag_slug: tagSlug,
         });
         const filteredEvents = (await fetchGamma(`/events?${eventParams.toString()}`));
-        const browseCategoryQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(filteredEvents.flatMap((event) => (event.markets?.[0] ? [event.markets[0]] : [])), {
+        const browseCategoryQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(getRepresentativeGammaMarkets(filteredEvents, {
+            preference: includeResolved ? "any" : "tradable",
+        }), {
             timeoutMs: "heavy",
         });
         const formatted = filteredEvents
             .filter((e) => e.slug)
             .slice(0, limit) // Apply limit after filtering
             .map((e) => {
-            const market = e.markets?.[0];
+            const market = getRepresentativeGammaMarket(e, {
+                preference: includeResolved ? "any" : "tradable",
+            });
             const yesPrice = market
                 ? resolveCurrentOutcomePrice(market, browseCategoryQuoteSnapshots)
                 : 0.5;
@@ -11806,13 +11960,17 @@ async function handleBrowseByTag(args) {
     try {
         const closed = includeResolved ? "true" : "false";
         const events = await fetchGamma(`/events?tag_id=${tag_id}&closed=${closed}&limit=${limit}&order=volume&ascending=false`);
-        const browseTagQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(events.flatMap((event) => (event.markets?.[0] ? [event.markets[0]] : [])), {
+        const browseTagQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(getRepresentativeGammaMarkets(events, {
+            preference: includeResolved ? "any" : "tradable",
+        }), {
             timeoutMs: "heavy",
         });
         const formatted = (events || [])
             .filter((e) => e.slug)
             .map((e) => {
-            const market = e.markets?.[0];
+            const market = getRepresentativeGammaMarket(e, {
+                preference: includeResolved ? "any" : "tradable",
+            });
             const yesPrice = market
                 ? resolveCurrentOutcomePrice(market, browseTagQuoteSnapshots)
                 : 0.5;
@@ -12082,11 +12240,16 @@ async function handleAnalyzeEventWhaleBreakdown(args) {
                         return null;
                     }
                     const holdersData = JSON.parse(holdersResult.content[0].text);
-                    // Calculate whale metrics for YES positions
-                    const yesHolders = holdersData.topHolders?.yes || [];
-                    const totalWhaleValue = yesHolders.reduce((sum, h) => sum + (h.value || 0), 0);
-                    const topWhalePosition = yesHolders[0]?.value || 0;
-                    const whaleCount = yesHolders.filter((h) => h.value > 1000).length;
+                    const topHolders = workflowObject(holdersData.topHolders);
+                    const yesHolders = workflowObjectArray(topHolders.yes);
+                    const positionValueSummary = workflowObject(holdersData.positionValueSummary);
+                    const holdersReturned = workflowObject(holdersData.holdersReturned);
+                    const holdersScanned = workflowObject(holdersData.holdersScanned);
+                    const totalWhaleValue = workflowToNumber(positionValueSummary.yesTotalValue, yesHolders.reduce((sum, holder) => sum + workflowToNumber(holder.value, 0), 0));
+                    const topWhalePosition = workflowToNumber(yesHolders[0]?.value, 0);
+                    const whaleCount = workflowToNumber(positionValueSummary.yesWhaleCount, yesHolders.filter((holder) => workflowToNumber(holder.value, 0) > 1000).length);
+                    const scannedHolderCount = workflowToNumber(holdersScanned.yes, yesHolders.length);
+                    const returnedHolderSampleCount = workflowToNumber(holdersReturned.yes, yesHolders.length);
                     const currentPrice = resolveCurrentOutcomePrice(market, whaleQuoteSnapshots);
                     return {
                         outcome: outcomeName,
@@ -12095,6 +12258,8 @@ async function handleAnalyzeEventWhaleBreakdown(args) {
                         totalWhaleValue,
                         topWhalePosition,
                         whaleCount,
+                        holdersScanned: scannedHolderCount,
+                        returnedHolderSampleCount,
                     };
                 }
                 catch {
@@ -12132,7 +12297,9 @@ async function handleAnalyzeEventWhaleBreakdown(args) {
                 currentPrice: Number(r.currentPrice.toFixed(4)),
                 totalWhaleValue: Number(r.totalWhaleValue.toFixed(2)),
                 topWhalePosition: Number(r.topWhalePosition.toFixed(2)),
-                whaleCount: r.whaleCount,
+                whaleCount: Number(r.whaleCount.toFixed(0)),
+                holdersScanned: Number(r.holdersScanned.toFixed(0)),
+                returnedHolderSampleCount: Number(r.returnedHolderSampleCount.toFixed(0)),
                 convictionLevel,
             };
         });
@@ -12177,7 +12344,7 @@ async function handleAnalyzeEventWhaleBreakdown(args) {
                 confidence,
             } : null,
             smartMoneyConsensus,
-            note: `Analyzed ${whaleResults.length} of ${totalMarketsInEvent} markets. Whale positions show YES bets on each outcome - the outcome with most whale money suggests smart money's pick.`,
+            note: `Analyzed ${whaleResults.length} of ${totalMarketsInEvent} markets. Whale totals and whale counts use the full deep holder scan for each outcome; returned holder samples may still be truncated for payload size. The outcome with the most whale money suggests smart money's pick.`,
             fetchedAt: new Date().toISOString(),
         });
     }
