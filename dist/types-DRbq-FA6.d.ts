@@ -365,6 +365,30 @@ interface SearchOptions {
     excludeSlow?: boolean;
 }
 /**
+ * Options for updating a tool listing via `client.developer.updateTool()`.
+ * At least one field must be provided.
+ */
+declare const ALLOWED_TOOL_CATEGORIES: readonly ["Crypto & DeFi", "Financial Markets", "Business & Sales", "Marketing & SEO", "Legal & Regulatory", "Real World", "Developer Tools", "Research & Academia", "Utility", "Other"];
+type ToolCategory = (typeof ALLOWED_TOOL_CATEGORIES)[number];
+interface UpdateToolOptions {
+    /** New display name for the tool */
+    name?: string;
+    /** New marketplace description */
+    description?: string;
+    /** New category -- must be one of the predefined marketplace categories */
+    category?: ToolCategory | null;
+}
+/**
+ * Response from updating a tool listing.
+ */
+interface UpdateToolResult {
+    id: string;
+    name: string;
+    description: string;
+    category: string | null;
+    updatedAt: string;
+}
+/**
  * Options for executing a tool
  */
 interface ExecuteOptions {
@@ -918,16 +942,89 @@ interface QueryResponseEnvelopeSourceRef {
     url: string | null;
     note: string | null;
 }
+type QueryResponseEnvelopeTone = "positive" | "negative" | "neutral" | "caution";
+type QueryControllerStopReason = "complete_answer" | "bounded_runtime_budget" | "bounded_same_endpoint_guardrail" | "bounded_upstream_abort_guardrail" | "clarification_required" | "capability_miss";
+type QueryControllerIssueClass = "scope_ambiguity" | "missing_evidence" | "missing_capability" | "stale_data" | "wrong_tool_path";
+type QueryControllerAction = "inspect_current_grounding" | "patch_current_program" | "bounded_rediscovery" | "clarify_scope" | "return_capability_miss" | "return_bounded_answer" | "return_complete_answer";
+interface QueryResponseEnvelopeMarketAggregateFlow {
+    netFlowUsd: number | null;
+    grossInflowUsd: number | null;
+    grossOutflowUsd: number | null;
+    nativeNetFlow: number | null;
+    nativeUnit: string | null;
+    direction: "inflow" | "outflow" | "flat" | "mixed";
+}
+interface QueryResponseEnvelopeMarketVenueBreakdown {
+    venue: string;
+    asset: string | null;
+    netFlowUsd: number | null;
+    grossInflowUsd: number | null;
+    grossOutflowUsd: number | null;
+    nativeNetFlow: number | null;
+    nativeUnit: string | null;
+    shareOfTotal: number | null;
+    rank: number | null;
+}
+interface QueryResponseEnvelopeCatalystRef {
+    source: string;
+    publishedAt: string | null;
+    claim: string | null;
+    relationToFlow: string | null;
+    url: string | null;
+}
+interface QueryResponseEnvelopeDerivativesContext {
+    openInterestDirection: string | null;
+    openInterestChangePct: number | null;
+    liquidationBias: string | null;
+    venues: string[];
+    relationshipToSpotFlows: string | null;
+}
+interface QueryResponseEnvelopeMarketIntelligence {
+    asset: string | null;
+    assets: string[] | null;
+    timeWindow: string | null;
+    asOf: string | null;
+    aggregateFlow: QueryResponseEnvelopeMarketAggregateFlow | null;
+    venueBreakdown: QueryResponseEnvelopeMarketVenueBreakdown[];
+    catalystRefs: QueryResponseEnvelopeCatalystRef[];
+    derivativesContext: QueryResponseEnvelopeDerivativesContext | null;
+}
+interface QueryResponseEnvelopeViewMetric {
+    label: string;
+    value: string;
+    tone?: QueryResponseEnvelopeTone;
+}
+interface QueryResponseEnvelopeViewRow {
+    key: string;
+    cells: string[];
+    tone?: QueryResponseEnvelopeTone;
+    sourceRefIds?: string[];
+}
 interface QueryResponseEnvelope {
     responseShape: Exclude<QueryResponseShape, "answer">;
     response: string;
     summary: string;
+    outcome: {
+        label: string;
+        tone: QueryResponseEnvelopeTone;
+        stopReason: QueryControllerStopReason;
+        issueClass: QueryControllerIssueClass | null;
+    };
+    controller: {
+        scope: "wedge" | "standard";
+        nextAction: QueryControllerAction;
+        actionsTaken: QueryControllerAction[];
+        patchFirstProgramPreserved: boolean;
+        executionProgramRevisionId: string | null;
+        hardBudgetApplied: boolean;
+    } | null;
     evidence: {
         facts: QueryResponseEnvelopeFact[];
         sourceRefs: QueryResponseEnvelopeSourceRef[];
         assumptions: string[];
         knownUnknowns: string[];
         retrievalPlanReasonCodes: string[];
+        marketIntelligence?: QueryResponseEnvelopeMarketIntelligence | null;
     };
     artifacts: {
         dataUrl: string | null;
@@ -942,6 +1039,10 @@ interface QueryResponseEnvelope {
     view: {
         type: QueryResponseEnvelopeViewType;
         label: string;
+        title?: string | null;
+        metrics?: QueryResponseEnvelopeViewMetric[];
+        columns?: string[];
+        rows?: QueryResponseEnvelopeViewRow[];
     } | null;
     freshness: {
         asOf: string | null;
@@ -985,6 +1086,14 @@ interface QueryBaseResult {
     developerTrace?: QueryDeveloperTrace;
     /** Optional orchestration outcome metrics for benchmarking and rollout analysis */
     orchestrationMetrics?: QueryOrchestrationMetrics;
+    /** Typed public stop reason for the final outcome. */
+    stopReason?: QueryControllerStopReason;
+    /** Typed issue class exposed by the bounded controller contract. */
+    issueClass?: QueryControllerIssueClass | null;
+    /** Ordered public controller actions taken before the final outcome. */
+    actionsTaken?: QueryControllerAction[];
+    /** Optional controller summary for bounded wedge-style answers. */
+    controller?: QueryResponseEnvelope["controller"];
     /**
      * Optional public durable continuation handles for resume/fork flows.
      * Query exposes handle-based continuation, not chat-style continuation payloads.
@@ -1068,4 +1177,4 @@ declare class ContextError extends Error {
     constructor(message: string, code?: (ContextErrorCode | string) | undefined, statusCode?: number | undefined, helpUrl?: string | undefined);
 }
 
-export { type QueryForkReference as $, type SearchCandidateProvenance as A, ContextError as B, type ContributorSearchResolution as C, type ContextClientOptions as D, type McpToolMeta as E, type McpToolRateLimitHints as F, type SearchResponse as G, type SearchOptions as H, type ExecuteOptions as I, type ExecuteSessionStartOptions as J, type ExecuteSessionStatus as K, type ExecuteSessionSpend as L, type McpTool as M, type ExecuteSessionResult as N, type ExecutionResult as O, type ExecuteApiSuccessResponse as P, type QueryDeveloperTrace as Q, type ResolveContributorSearchParams as R, type SearchCandidate as S, type Tool as T, type ExecuteApiErrorResponse as U, type ExecuteApiResponse as V, type ExecuteSessionApiSuccessResponse as W, type ExecuteSessionApiResponse as X, type QueryDeepMode as Y, type QueryAttemptForkReason as Z, type QueryAttemptReference as _, type ContributorSearchMetadata as a, type QueryOptions as a0, type QueryResult as a1, type QuerySessionState as a2, type QueryToolUsage as a3, type QueryCost as a4, type QueryCompletenessRepairEvent as a5, type QueryDeveloperTraceDiagnostics as a6, type QueryDeveloperTraceSummary as a7, type QueryDeveloperTraceStep as a8, type QueryDeveloperTraceToolRef as a9, type QueryDeveloperTraceLoopInfo as aa, type QueryApiSuccessResponse as ab, type QueryApiResponse as ac, type QueryStreamEvent as ad, type QueryStreamToolStatusEvent as ae, type QueryStreamTextDeltaEvent as af, type QueryStreamDeveloperTraceEvent as ag, type QueryStreamDoneEvent as ah, type QueryStreamErrorEvent as ai, type ContextErrorCode as aj, type QueryClarificationPayload as ak, type QueryClarificationOption as al, type QueryClarificationPolicy as am, type QueryCapabilityMissPayload as an, type QueryAssumptionMetadata as ao, type QueryOutcomeType as ap, type SearchShortlist as b, type SearchIntent as c, type ContributorSearchConfig as d, type ContributorSearchResolvedConfig as e, type ContributorSearchTraceRecord as f, type ContributorSearchValidationCaseKind as g, type ContributorSearchValidationExpectation as h, type ContributorSearchValidationArtifact as i, ContributorSearchBudgetExceededError as j, CONTRIBUTOR_SEARCH_METADATA_VERSION as k, CONTRIBUTOR_SEARCH_VALIDATION_VERSION as l, type ContributorSearchConfidence as m, type ContributorSearchDegradedOutcome as n, type ContributorSearchDegradedOutcomePolicy as o, type ContributorSearchDegradedReasonCode as p, type ContributorSearchJudge as q, type ContributorSearchJudgeContext as r, type ContributorSearchJudgeInput as s, type ContributorSearchJudgeResult as t, type ContributorSearchJudgeSnapshot as u, type ContributorSearchJudgeUsage as v, type ContributorSearchMetadataSource as w, type ContributorSearchOutcome as x, type ContributorSearchTraceSummary as y, type ContributorSearchValidatorStatus as z };
+export { type QueryForkReference as $, type SearchCandidateProvenance as A, ContextError as B, type ContributorSearchResolution as C, type ContextClientOptions as D, type McpToolMeta as E, type McpToolRateLimitHints as F, type SearchResponse as G, type SearchOptions as H, type ExecuteOptions as I, type ExecuteSessionStartOptions as J, type ExecuteSessionStatus as K, type ExecuteSessionSpend as L, type McpTool as M, type ExecuteSessionResult as N, type ExecutionResult as O, type ExecuteApiSuccessResponse as P, type QueryDeveloperTrace as Q, type ResolveContributorSearchParams as R, type SearchCandidate as S, type Tool as T, type ExecuteApiErrorResponse as U, type ExecuteApiResponse as V, type ExecuteSessionApiSuccessResponse as W, type ExecuteSessionApiResponse as X, type QueryDeepMode as Y, type QueryAttemptForkReason as Z, type QueryAttemptReference as _, type ContributorSearchMetadata as a, type QueryOptions as a0, type QueryResult as a1, type QuerySessionState as a2, type QueryToolUsage as a3, type QueryCost as a4, type QueryCompletenessRepairEvent as a5, type QueryDeveloperTraceDiagnostics as a6, type QueryDeveloperTraceSummary as a7, type QueryDeveloperTraceStep as a8, type QueryDeveloperTraceToolRef as a9, type QueryDeveloperTraceLoopInfo as aa, type QueryApiSuccessResponse as ab, type QueryApiResponse as ac, type QueryStreamEvent as ad, type QueryStreamToolStatusEvent as ae, type QueryStreamTextDeltaEvent as af, type QueryStreamDeveloperTraceEvent as ag, type QueryStreamDoneEvent as ah, type QueryStreamErrorEvent as ai, type UpdateToolOptions as aj, type UpdateToolResult as ak, type ContextErrorCode as al, type QueryClarificationPayload as am, type QueryClarificationOption as an, type QueryClarificationPolicy as ao, type QueryCapabilityMissPayload as ap, type QueryAssumptionMetadata as aq, type QueryOutcomeType as ar, type ToolCategory as as, ALLOWED_TOOL_CATEGORIES as at, type SearchShortlist as b, type SearchIntent as c, type ContributorSearchConfig as d, type ContributorSearchResolvedConfig as e, type ContributorSearchTraceRecord as f, type ContributorSearchValidationCaseKind as g, type ContributorSearchValidationExpectation as h, type ContributorSearchValidationArtifact as i, ContributorSearchBudgetExceededError as j, CONTRIBUTOR_SEARCH_METADATA_VERSION as k, CONTRIBUTOR_SEARCH_VALIDATION_VERSION as l, type ContributorSearchConfidence as m, type ContributorSearchDegradedOutcome as n, type ContributorSearchDegradedOutcomePolicy as o, type ContributorSearchDegradedReasonCode as p, type ContributorSearchJudge as q, type ContributorSearchJudgeContext as r, type ContributorSearchJudgeInput as s, type ContributorSearchJudgeResult as t, type ContributorSearchJudgeSnapshot as u, type ContributorSearchJudgeUsage as v, type ContributorSearchMetadataSource as w, type ContributorSearchOutcome as x, type ContributorSearchTraceSummary as y, type ContributorSearchValidatorStatus as z };

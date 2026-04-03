@@ -1,5 +1,37 @@
-import { T as Tool, H as SearchOptions, I as ExecuteOptions, O as ExecutionResult, J as ExecuteSessionStartOptions, N as ExecuteSessionResult, a0 as QueryOptions, a1 as QueryResult, ad as QueryStreamEvent, D as ContextClientOptions } from '../types-Bgjq3OBR.cjs';
-export { B as ContextError, aj as ContextErrorCode, U as ExecuteApiErrorResponse, V as ExecuteApiResponse, P as ExecuteApiSuccessResponse, X as ExecuteSessionApiResponse, W as ExecuteSessionApiSuccessResponse, L as ExecuteSessionSpend, K as ExecuteSessionStatus, M as McpTool, E as McpToolMeta, F as McpToolRateLimitHints, ac as QueryApiResponse, ab as QueryApiSuccessResponse, ao as QueryAssumptionMetadata, Z as QueryAttemptForkReason, _ as QueryAttemptReference, an as QueryCapabilityMissPayload, al as QueryClarificationOption, ak as QueryClarificationPayload, am as QueryClarificationPolicy, a5 as QueryCompletenessRepairEvent, a4 as QueryCost, Y as QueryDeepMode, Q as QueryDeveloperTrace, a6 as QueryDeveloperTraceDiagnostics, aa as QueryDeveloperTraceLoopInfo, a8 as QueryDeveloperTraceStep, a7 as QueryDeveloperTraceSummary, a9 as QueryDeveloperTraceToolRef, $ as QueryForkReference, ap as QueryOutcomeType, a2 as QuerySessionState, ag as QueryStreamDeveloperTraceEvent, ah as QueryStreamDoneEvent, ai as QueryStreamErrorEvent, af as QueryStreamTextDeltaEvent, ae as QueryStreamToolStatusEvent, a3 as QueryToolUsage, G as SearchResponse } from '../types-Bgjq3OBR.cjs';
+import { aj as UpdateToolOptions, ak as UpdateToolResult, T as Tool, H as SearchOptions, I as ExecuteOptions, O as ExecutionResult, J as ExecuteSessionStartOptions, N as ExecuteSessionResult, a0 as QueryOptions, a1 as QueryResult, ad as QueryStreamEvent, D as ContextClientOptions } from '../types-DRbq-FA6.cjs';
+export { at as ALLOWED_TOOL_CATEGORIES, B as ContextError, al as ContextErrorCode, U as ExecuteApiErrorResponse, V as ExecuteApiResponse, P as ExecuteApiSuccessResponse, X as ExecuteSessionApiResponse, W as ExecuteSessionApiSuccessResponse, L as ExecuteSessionSpend, K as ExecuteSessionStatus, M as McpTool, E as McpToolMeta, F as McpToolRateLimitHints, ac as QueryApiResponse, ab as QueryApiSuccessResponse, aq as QueryAssumptionMetadata, Z as QueryAttemptForkReason, _ as QueryAttemptReference, ap as QueryCapabilityMissPayload, an as QueryClarificationOption, am as QueryClarificationPayload, ao as QueryClarificationPolicy, a5 as QueryCompletenessRepairEvent, a4 as QueryCost, Y as QueryDeepMode, Q as QueryDeveloperTrace, a6 as QueryDeveloperTraceDiagnostics, aa as QueryDeveloperTraceLoopInfo, a8 as QueryDeveloperTraceStep, a7 as QueryDeveloperTraceSummary, a9 as QueryDeveloperTraceToolRef, $ as QueryForkReference, ar as QueryOutcomeType, a2 as QuerySessionState, ag as QueryStreamDeveloperTraceEvent, ah as QueryStreamDoneEvent, ai as QueryStreamErrorEvent, af as QueryStreamTextDeltaEvent, ae as QueryStreamToolStatusEvent, a3 as QueryToolUsage, G as SearchResponse, as as ToolCategory } from '../types-DRbq-FA6.cjs';
+
+/**
+ * Developer resource for managing tool listings on the Context Protocol marketplace.
+ *
+ * Scoped to contributor/developer concerns (listing management), separate from
+ * the consumer-facing `tools.execute()` and `query.run()`.
+ */
+declare class Developer {
+    private client;
+    constructor(client: ContextClient);
+    /**
+     * Update a tool listing's metadata (name, description, category).
+     *
+     * Requires an API key belonging to the tool's owner.
+     *
+     * @param toolId - The UUID of the tool to update
+     * @param updates - Fields to update (at least one required)
+     * @returns The updated tool metadata
+     *
+     * @throws {ContextError} If authentication fails or the caller does not own the tool
+     *
+     * @example
+     * ```typescript
+     * const updated = await client.developer.updateTool("tool-uuid", {
+     *   description: "Updated description with better showcase prompts",
+     *   category: "crypto",
+     * });
+     * console.log(updated.updatedAt);
+     * ```
+     */
+    updateTool(toolId: string, updates: UpdateToolOptions): Promise<UpdateToolResult>;
+}
 
 /**
  * Discovery resource for searching and finding tools on the Context Protocol marketplace
@@ -212,6 +244,10 @@ declare class ContextClient {
     private readonly streamTimeoutMs;
     private _closed;
     /**
+     * Developer resource for managing tool listings (contributor/developer concerns).
+     */
+    readonly developer: Developer;
+    /**
      * Discovery resource for searching tools
      */
     readonly discovery: Discovery;
@@ -261,4 +297,4 @@ declare class ContextClient {
     _fetchRaw(endpoint: string, options?: RequestInit): Promise<Response>;
 }
 
-export { ContextClient, ContextClientOptions, Discovery, ExecuteOptions, ExecuteSessionResult, ExecuteSessionStartOptions, ExecutionResult, Query, QueryOptions, QueryResult, QueryStreamEvent, SearchOptions, Tool, Tools };
+export { ContextClient, ContextClientOptions, Developer, Discovery, ExecuteOptions, ExecuteSessionResult, ExecuteSessionStartOptions, ExecutionResult, Query, QueryOptions, QueryResult, QueryStreamEvent, SearchOptions, Tool, Tools, UpdateToolOptions, UpdateToolResult };

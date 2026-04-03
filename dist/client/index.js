@@ -1,4 +1,16 @@
 // src/client/types.ts
+var ALLOWED_TOOL_CATEGORIES = [
+  "Crypto & DeFi",
+  "Financial Markets",
+  "Business & Sales",
+  "Marketing & SEO",
+  "Legal & Regulatory",
+  "Real World",
+  "Developer Tools",
+  "Research & Academia",
+  "Utility",
+  "Other"
+];
 var ContextError = class _ContextError extends Error {
   constructor(message, code, statusCode, helpUrl) {
     super(message);
@@ -7,6 +19,57 @@ var ContextError = class _ContextError extends Error {
     this.helpUrl = helpUrl;
     this.name = "ContextError";
     Object.setPrototypeOf(this, _ContextError.prototype);
+  }
+};
+
+// src/client/resources/developer.ts
+var Developer = class {
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Update a tool listing's metadata (name, description, category).
+   *
+   * Requires an API key belonging to the tool's owner.
+   *
+   * @param toolId - The UUID of the tool to update
+   * @param updates - Fields to update (at least one required)
+   * @returns The updated tool metadata
+   *
+   * @throws {ContextError} If authentication fails or the caller does not own the tool
+   *
+   * @example
+   * ```typescript
+   * const updated = await client.developer.updateTool("tool-uuid", {
+   *   description: "Updated description with better showcase prompts",
+   *   category: "crypto",
+   * });
+   * console.log(updated.updatedAt);
+   * ```
+   */
+  async updateTool(toolId, updates) {
+    if (!toolId) {
+      throw new ContextError("toolId is required");
+    }
+    if (updates.name === void 0 && updates.description === void 0 && updates.category === void 0) {
+      throw new ContextError(
+        "At least one field required: name, description, or category"
+      );
+    }
+    if (updates.category !== void 0 && updates.category !== null && !ALLOWED_TOOL_CATEGORIES.includes(updates.category)) {
+      throw new ContextError(
+        `category must be one of: ${ALLOWED_TOOL_CATEGORIES.join(", ")}`
+      );
+    }
+    const encodedToolId = encodeURIComponent(toolId);
+    return this.client._fetch(
+      `/api/v1/tools/${encodedToolId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(updates)
+      },
+      { retry: false }
+    );
   }
 };
 
@@ -608,6 +671,10 @@ var ContextClient = class {
   streamTimeoutMs;
   _closed = false;
   /**
+   * Developer resource for managing tool listings (contributor/developer concerns).
+   */
+  developer;
+  /**
    * Discovery resource for searching tools
    */
   discovery;
@@ -648,6 +715,7 @@ var ContextClient = class {
     this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
     this.requestTimeoutMs = requestTimeoutMs;
     this.streamTimeoutMs = streamTimeoutMs;
+    this.developer = new Developer(this);
     this.discovery = new Discovery(this);
     this.tools = new Tools(this);
     this.query = new Query(this);
@@ -806,6 +874,6 @@ var ContextClient = class {
   }
 };
 
-export { ContextClient, ContextError, Discovery, Query, Tools };
+export { ALLOWED_TOOL_CATEGORIES, ContextClient, ContextError, Developer, Discovery, Query, Tools };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map
