@@ -69,7 +69,8 @@ export type {
   ContextErrorCode,
   UpdateToolOptions,
   UpdateToolResult,
+  ToolCategory,
 } from "./types.js";
 
-// Error export
-export { ContextError } from "./types.js";
+// Error and constant exports
+export { ContextError, ALLOWED_TOOL_CATEGORIES } from "./types.js";

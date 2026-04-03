@@ -250,6 +250,21 @@ export interface SearchOptions {
  * Options for updating a tool listing via `client.developer.updateTool()`.
  * At least one field must be provided.
  */
+export const ALLOWED_TOOL_CATEGORIES = [
+  "Crypto & DeFi",
+  "Financial Markets",
+  "Business & Sales",
+  "Marketing & SEO",
+  "Legal & Regulatory",
+  "Real World",
+  "Developer Tools",
+  "Research & Academia",
+  "Utility",
+  "Other",
+] as const;
+
+export type ToolCategory = (typeof ALLOWED_TOOL_CATEGORIES)[number];
+
 export interface UpdateToolOptions {
   /** New display name for the tool */
   name?: string;
@@ -257,8 +272,8 @@ export interface UpdateToolOptions {
   /** New marketplace description */
   description?: string;
 
-  /** New category (e.g. "crypto", "finance", "data") */
-  category?: string | null;
+  /** New category -- must be one of the predefined marketplace categories */
+  category?: ToolCategory | null;
 }
 
 /**

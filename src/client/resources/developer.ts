@@ -1,5 +1,5 @@
 import type { UpdateToolOptions, UpdateToolResult } from "../types.js";
-import { ContextError } from "../types.js";
+import { ALLOWED_TOOL_CATEGORIES, ContextError } from "../types.js";
 import type { ContextClient } from "../client.js";
 
 /**
@@ -46,6 +46,16 @@ export class Developer {
     ) {
       throw new ContextError(
         "At least one field required: name, description, or category"
+      );
+    }
+
+    if (
+      updates.category !== undefined &&
+      updates.category !== null &&
+      !ALLOWED_TOOL_CATEGORIES.includes(updates.category)
+    ) {
+      throw new ContextError(
+        `category must be one of: ${ALLOWED_TOOL_CATEGORIES.join(", ")}`
       );
     }
 
