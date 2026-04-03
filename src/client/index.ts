@@ -10,6 +10,7 @@
 export { ContextClient } from "./client.js";
 
 // Resource exports
+export { Developer } from "./resources/developer.js";
 export { Discovery } from "./resources/discovery.js";
 export { Tools } from "./resources/tools.js";
 export { Query } from "./resources/query.js";
@@ -66,6 +67,8 @@ export type {
   QueryStreamDoneEvent,
   QueryStreamErrorEvent,
   ContextErrorCode,
+  UpdateToolOptions,
+  UpdateToolResult,
 } from "./types.js";
 
 // Error export

@@ -1,5 +1,6 @@
 import type { ContextClientOptions } from "./types.js";
 import { ContextError } from "./types.js";
+import { Developer } from "./resources/developer.js";
 import { Discovery } from "./resources/discovery.js";
 import { Tools } from "./resources/tools.js";
 import { Query } from "./resources/query.js";
@@ -39,6 +40,11 @@ export class ContextClient {
   private readonly requestTimeoutMs: number;
   private readonly streamTimeoutMs: number;
   private _closed = false;
+
+  /**
+   * Developer resource for managing tool listings (contributor/developer concerns).
+   */
+  public readonly developer: Developer;
 
   /**
    * Discovery resource for searching tools
@@ -90,6 +96,7 @@ export class ContextClient {
     this.streamTimeoutMs = streamTimeoutMs;
 
     // Initialize resources
+    this.developer = new Developer(this);
     this.discovery = new Discovery(this);
     this.tools = new Tools(this);
     this.query = new Query(this);

@@ -1,0 +1,330 @@
+{
+  "generatedAt": "2026-04-03T05:44:13.310Z",
+  "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+  "localMcpUrl": "http://localhost:4003/mcp",
+  "localContextBaseUrl": "http://localhost:3000",
+  "publicMcpUrl": "https://mcp.ctxprotocol.com/polymarket/mcp",
+  "localToolCount": 45,
+  "sampleMarket": {
+    "title": "US x Iran ceasefire by...?",
+    "slug": "us-x-iran-ceasefire-by",
+    "conditionId": "0x773abaa5fe55e5cde51a261f444b7921652a4e059ead6b3be9fe56499c2d4609",
+    "tokenIds": [
+      "85191934649046129480174964255278880752271767733539167443243111973456166096127",
+      "44149007410374101286260953227333745102128417138356632089802983317837574022801",
+      "82855088893985825781350466813737280564000275725006328179621744619327480699369",
+      "97390751868769233430161550786035197721004217118584051662030655361575807718008"
+    ],
+    "primaryTokenId": "85191934649046129480174964255278880752271767733539167443243111973456166096127"
+  },
+  "autoQuerySummary": {
+    "promptCount": 5,
+    "passedCount": 4,
+    "failedCount": 1,
+    "routedCount": 4,
+    "runs": [
+      {
+        "id": "balanced-liquidity-screen",
+        "prompt": "Find live 40% to 60% Polymarket contracts with at least $1M liquidity right now, and rank which ones are actually tradable for a $5,000 position without ugly slippage.",
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 5,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket",
+            "skillCalls": 5
+          },
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket",
+            "skillCalls": 5
+          }
+        ],
+        "durationMs": 106868,
+        "responsePreview": "Based on data fetched today, April 3, 2026, here are the live Polymarket contracts between 40% and 60% with at least $1M in liquidity, ranked by their tradability for a $5,000 position.\n\nAll identified markets currently show **\"Excellent\"** liquidity scores with a consistent 1¢ spread and approximately **1.1% slippage** for a $5,000 sell order.\n\n| Rank | Market | Price | Liquidity | 24h Volume | Est. Slippage ($5k) |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| 1 | [Connecticut Huskies vs. Illi",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 5,
+          "retryCount": 2,
+          "selfHealCount": 2,
+          "fallbackCount": 0,
+          "failureCount": 1,
+          "recoveryCount": 1,
+          "completionChecks": 2,
+          "loopCount": 2
+        }
+      },
+      {
+        "id": "politics-passive-spread-capture",
+        "prompt": "Which live politics markets currently show the widest verified spreads or sub-$1 arbitrage-style pricing, and are any worth working with passive orders right now?",
+        "status": "fail",
+        "error": {
+          "name": "ContextError",
+          "message": "An error occurred while executing a database query.",
+          "code": "query_failed"
+        }
+      },
+      {
+        "id": "multi-outcome-exit-ladder",
+        "prompt": "Use the most liquid live multi-outcome politics event on Polymarket right now and compare the top four outcomes by price, spread, and estimated exit slippage. Which outcomes can actually absorb size cleanly?",
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 4,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket",
+            "skillCalls": 4
+          }
+        ],
+        "durationMs": 114587,
+        "responsePreview": "Based on data from a past query (April 3, 2026), the most liquid multi-outcome politics event is **\"US x Iran ceasefire by...?\"**. \n\nThe event currently has a total liquidity of **$2,467,706.81** and a 24-hour trading volume of **$3,462,305.60**.\n\nWhile the event was identified as the primary liquid target, the specific price and slippage data for individual outcomes was not fully extracted during the tool execution (0 outcomes returned in the targeted analysis branch). Consequently, a side-by-s",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 4,
+          "retryCount": 2,
+          "selfHealCount": 2,
+          "fallbackCount": 0,
+          "failureCount": 2,
+          "recoveryCount": 0,
+          "completionChecks": 2,
+          "loopCount": 2
+        }
+      },
+      {
+        "id": "fed-whale-concentration-flow",
+        "prompt": "For the most relevant live Fed decision market right now, what are whales doing, how concentrated are positions, and does that line up with recent directional flow?",
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 5,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket",
+            "skillCalls": 5
+          }
+        ],
+        "durationMs": 82152,
+        "responsePreview": "Based on the data, the most relevant live market for the upcoming Fed decision is **\"Fed decision in April?\"**. \n\n### **Whale Activity & Position Concentration**\nWhales are overwhelmingly positioned for a **\"NO\"** outcome. The market shows a high concentration of risk, particularly on the \"NO\" side, where the top five holders control almost the entire side of the trade.\n\n| Metric | YES Side | NO Side |\n| :--- | :--- | :--- |\n| **Whale Position Value** | $13,752 (10 Whales) | $3,697,785 (10 Whale",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 5,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 1,
+          "loopCount": 0
+        }
+      },
+      {
+        "id": "geopolitics-tape-read",
+        "prompt": "Summarize the hottest live geopolitics market on Polymarket right now and explain what the recent tape implies for short-term positioning.",
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 2,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket",
+            "skillCalls": 2
+          }
+        ],
+        "durationMs": 47715,
+        "responsePreview": "Based on data from a past query (captured April 3, 2026), the hottest live geopolitics market on Polymarket is the **\"US x Iran ceasefire by...?\"** event.\n\n### Market Overview\n| Metric | Value |\n| :--- | :--- |\n| **Market Title** | US x Iran ceasefire by...? |\n| **Current Price** | 0.065 (6.5% probability) |\n| **24h Volume** | $3,462,305.60 |\n| **Liquidity** | $2,467,706.81 |\n| **Open Interest** | $3,075,553.99 |\n\n### Tape Analysis & Short-Term Positioning\nThe recent \"tape\" (transaction history)",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 1,
+          "loopCount": 0
+        }
+      }
+    ]
+  },
+  "executeValidation": {
+    "discoveredToolName": "Polymarket",
+    "discoveredMethodCount": 24,
+    "passedMethodCount": 6,
+    "failedMethodCount": 0,
+    "methods": [
+      {
+        "methodName": "search_and_get_outcomes",
+        "args": {
+          "query": "US x Iran ceasefire by...?"
+        },
+        "status": "pass",
+        "durationMs": 21662,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.001000",
+        "sessionRemainingUsd": "0.999",
+        "resultKeys": [
+          "eventTitle",
+          "eventSlug",
+          "eventUrl",
+          "totalVolume",
+          "totalOutcomes",
+          "outcomes",
+          "searchQuery",
+          "searchMethod",
+          "matchConfidence",
+          "note",
+          "fetchedAt",
+          "searchMetadata"
+        ]
+      },
+      {
+        "methodName": "get_event_by_slug",
+        "args": {
+          "slug": "us-x-iran-ceasefire-by"
+        },
+        "status": "pass",
+        "durationMs": 12886,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.002000",
+        "sessionRemainingUsd": "0.998",
+        "resultKeys": [
+          "event",
+          "markets",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_prices",
+        "args": {
+          "tokenIds": [
+            "85191934649046129480174964255278880752271767733539167443243111973456166096127",
+            "44149007410374101286260953227333745102128417138356632089802983317837574022801"
+          ]
+        },
+        "status": "pass",
+        "durationMs": 11582,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.003000",
+        "sessionRemainingUsd": "0.997",
+        "resultKeys": [
+          "prices",
+          "note",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_market_parameters",
+        "args": {
+          "tokenId": "85191934649046129480174964255278880752271767733539167443243111973456166096127"
+        },
+        "status": "pass",
+        "durationMs": 10263,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.004000",
+        "sessionRemainingUsd": "0.996",
+        "resultKeys": [
+          "tokenId",
+          "tickSize",
+          "feeRateBps",
+          "negRisk",
+          "minOrderSize",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_spreads",
+        "args": {
+          "tokenIds": [
+            "85191934649046129480174964255278880752271767733539167443243111973456166096127",
+            "44149007410374101286260953227333745102128417138356632089802983317837574022801"
+          ]
+        },
+        "status": "pass",
+        "durationMs": 10120,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.005000",
+        "sessionRemainingUsd": "0.995",
+        "resultKeys": [
+          "spreads",
+          "count",
+          "note",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_market_open_interest",
+        "args": {
+          "conditionId": "0x773abaa5fe55e5cde51a261f444b7921652a4e059ead6b3be9fe56499c2d4609"
+        },
+        "status": "pass",
+        "durationMs": 10146,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.006000",
+        "sessionRemainingUsd": "0.994",
+        "resultKeys": [
+          "openInterest",
+          "totalOpenInterest",
+          "fetchedAt"
+        ]
+      }
+    ]
+  },
+  "publicAuthProbe": {
+    "initializeStatus": 200,
+    "toolsListStatus": 200,
+    "toolsCallStatus": 401,
+    "toolCount": 45,
+    "rpcAuthBlocked": false,
+    "pass": true
+  },
+  "externalAccuracyCheck": {
+    "status": "PASS",
+    "overlapTop3": 3,
+    "localTopMarkets": [
+      {
+        "title": "Democratic Presidential Nominee 2028",
+        "slug": "democratic-presidential-nominee-2028"
+      },
+      {
+        "title": "Republican Presidential Nominee 2028",
+        "slug": "republican-presidential-nominee-2028"
+      },
+      {
+        "title": "Presidential Election Winner 2028",
+        "slug": "presidential-election-winner-2028"
+      }
+    ],
+    "upstreamTopMarkets": [
+      {
+        "title": "Democratic Presidential Nominee 2028",
+        "slug": "democratic-presidential-nominee-2028"
+      },
+      {
+        "title": "Republican Presidential Nominee 2028",
+        "slug": "republican-presidential-nominee-2028"
+      },
+      {
+        "title": "Presidential Election Winner 2028",
+        "slug": "presidential-election-winner-2028"
+      }
+    ],
+    "notes": [
+      "The contributor's top-volume ranking materially matched the raw Gamma upstream top-three set.",
+      "No obvious wrong-universe regression was detected in the fresh external spot check."
+    ]
+  }
+}

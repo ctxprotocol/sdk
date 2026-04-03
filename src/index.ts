@@ -27,6 +27,7 @@
 // Re-export everything from client module for backwards compatibility
 export {
   ContextClient,
+  Developer,
   Discovery,
   Tools,
   Query,
@@ -77,6 +78,9 @@ export type {
   QueryStreamDeveloperTraceEvent,
   QueryStreamDoneEvent,
   QueryStreamErrorEvent,
+  // Developer types
+  UpdateToolOptions,
+  UpdateToolResult,
   ContextErrorCode,
 } from "./client/index.js";
 

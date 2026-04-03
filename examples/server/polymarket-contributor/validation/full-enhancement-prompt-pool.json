@@ -1,0 +1,293 @@
+[
+  {
+    "id": "balanced-liquidity-screen",
+    "prompt": "Find live 40% to 60% Polymarket contracts with at least $1M liquidity right now, and rank which ones are actually tradable for a $5,000 position without ugly slippage.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "microstructure_screen",
+    "alphaCategory": "Live Screening And Microstructure",
+    "whyUsersCare": "This is a real deployment question for traders who want balanced-risk setups but still need enough depth to enter and exit size cleanly.",
+    "whyWebSearchBaselineWeak": "A free baseline can talk about prediction-market ideas in general, but it cannot screen the live venue by current probability, liquidity, and tradability in one pass.",
+    "upstreamDataFields": [
+      "currentPrice",
+      "liquidity",
+      "volume24hr",
+      "spread",
+      "orderbookDepth",
+      "slippage1k",
+      "slippage5k"
+    ],
+    "synthesisRequired": "Turn the live universe into an actionable shortlist by combining price-band filters, liquidity, and depth-aware tradeability signals.",
+    "expectedMethods": [
+      "find_moderate_probability_bets",
+      "find_trading_opportunities"
+    ]
+  },
+  {
+    "id": "politics-passive-spread-capture",
+    "prompt": "Which live politics markets currently show the widest verified spreads or sub-$1 arbitrage-style pricing, and are any worth working with passive orders right now?",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "spread_dislocations",
+    "alphaCategory": "Spread And Pricing Dislocations",
+    "whyUsersCare": "Execution cost and spread capture are edge-defining in thin political markets. A stale answer can mean crossing a bad book or missing a real dislocation.",
+    "whyWebSearchBaselineWeak": "A free model can discuss sentiment, but it cannot verify live bid-ask conditions or orderbook-backed inefficiencies across current politics markets.",
+    "upstreamDataFields": [
+      "bestBid",
+      "bestAsk",
+      "spread",
+      "spreadPercent",
+      "negRisk",
+      "tickSize"
+    ],
+    "synthesisRequired": "Verify live book conditions, distinguish true dislocations from noisy headlines, and explain whether passive execution is materially better than crossing the spread.",
+    "expectedMethods": [
+      "find_arbitrage_opportunities",
+      "get_spreads",
+      "get_orderbook"
+    ]
+  },
+  {
+    "id": "multi-outcome-exit-ladder",
+    "prompt": "Use the most liquid live multi-outcome politics event on Polymarket right now and compare the top four outcomes by price, spread, and estimated exit slippage. Which outcomes can actually absorb size cleanly?",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "outcome_liquidity",
+    "alphaCategory": "Outcome-Level Exit Liquidity",
+    "whyUsersCare": "Headline odds are not enough in multi-outcome markets. Traders need to know which outcomes are liquid enough to enter and exit without ugly slippage.",
+    "whyWebSearchBaselineWeak": "A free model can maybe identify a famous market, but it cannot compare live outcome-level prices, spreads, and slippage across the event right now.",
+    "upstreamDataFields": [
+      "eventSlug",
+      "outcomeName",
+      "tokenId",
+      "currentPrice",
+      "spread",
+      "slippage1k",
+      "slippage5k",
+      "slippage10k"
+    ],
+    "synthesisRequired": "Resolve the right event, pull the current outcome set, and translate raw price and slippage data into a buyer-ready tradability ranking.",
+    "expectedMethods": [
+      "analyze_event_outcome_liquidity",
+      "search_and_get_outcomes",
+      "compare_event_outcome_quotes"
+    ]
+  },
+  {
+    "id": "fed-whale-concentration-flow",
+    "prompt": "For the most relevant live Fed decision market right now, what are whales doing, how concentrated are positions, and does that line up with recent directional flow?",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "whales",
+    "alphaCategory": "Whale Positioning And Smart-Money Divergence",
+    "whyUsersCare": "Whale concentration versus recent tape helps distinguish genuine conviction from crowded retail positioning. That changes trade sizing and timing.",
+    "whyWebSearchBaselineWeak": "A free baseline has no access to current holder concentration or live venue-specific flow, so it falls back to macro commentary instead of market microstructure.",
+    "upstreamDataFields": [
+      "topHolderAddresses",
+      "holderPositionValue",
+      "holderConcentration",
+      "recentTradeSizes",
+      "netWhaleFlow",
+      "directionalSentiment",
+      "largestTrade"
+    ],
+    "synthesisRequired": "Bridge static holder concentration with recent directional flow to answer whether smart money and current tape are aligned or diverging.",
+    "expectedMethods": [
+      "analyze_single_market_whales",
+      "analyze_whale_flow"
+    ]
+  },
+  {
+    "id": "geopolitics-tape-read",
+    "prompt": "Summarize the hottest live geopolitics market on Polymarket right now and explain what the recent tape implies for short-term positioning.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "tape",
+    "alphaCategory": "Live Tape And Momentum",
+    "whyUsersCare": "If a market is suddenly active, traders want a quick live read on what the tape is saying before the opportunity disappears.",
+    "whyWebSearchBaselineWeak": "A free model can discuss the news backdrop but cannot inspect the live market's recent prints or venue-specific activity to tell you what traders are actually doing right now.",
+    "upstreamDataFields": [
+      "recentTrades",
+      "tradeTimestamp",
+      "tradeSize",
+      "tradeDirection",
+      "currentPrice",
+      "volume24hr",
+      "liquidity"
+    ],
+    "synthesisRequired": "Identify the hottest live market in the category, summarize the recent trade tape, and translate that into a buyer-facing positioning read.",
+    "expectedMethods": [
+      "summarize_live_market_activity",
+      "discover_trending_markets"
+    ]
+  },
+  {
+    "id": "politics-conviction-workflow",
+    "prompt": "Run a high-conviction workflow across live politics markets with at least $1M liquidity right now: shortlist the cleanest setups, validate the resolution rules, check pricing efficiency, and tell me which ones still offer edge after execution costs.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "workflow",
+    "alphaCategory": "Decision Workflow Synthesis",
+    "whyUsersCare": "A trader paying for Polymarket intelligence wants a current shortlist where execution quality, rule risk, and pricing edge have already been screened instead of manually auditing contracts one by one.",
+    "whyWebSearchBaselineWeak": "A free frontier model can suggest a generic politics workflow, but it cannot identify the live contracts, inspect current liquidity and vig, and fold in current rule risk from the venue right now.",
+    "upstreamDataFields": [
+      "candidateMarkets",
+      "currentPrice",
+      "liquidity",
+      "spread",
+      "vigBps",
+      "riskFactors",
+      "edgePercent",
+      "marketUrl"
+    ],
+    "synthesisRequired": "Sequence live discovery, rules validation, efficiency checks, and liquidity analysis into a ranked shortlist that is actually tradable after costs.",
+    "expectedMethods": [
+      "build_high_conviction_workflow",
+      "check_market_rules",
+      "check_market_efficiency",
+      "analyze_market_liquidity"
+    ]
+  },
+  {
+    "id": "sports-book-verified-dislocation",
+    "prompt": "Scan live sports markets on Polymarket right now for verified arbitrage or extreme spread dislocations, and only return opportunities confirmed from current order books.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "sports_dislocation",
+    "alphaCategory": "Spread And Pricing Dislocations",
+    "whyUsersCare": "A stale or unverified arbitrage answer can lose money instantly. Traders need current orderbook-backed verification before they act.",
+    "whyWebSearchBaselineWeak": "Search results and generic models do not have access to the current Polymarket orderbooks needed to verify whether both sides can actually be bought below $1.",
+    "upstreamDataFields": [
+      "buyYesAt",
+      "buyNoAt",
+      "totalCost",
+      "spread",
+      "bestBid",
+      "bestAsk",
+      "marketUrl"
+    ],
+    "synthesisRequired": "Use live books to distinguish real executable arbitrage or spread dislocation from stale or illusory opportunities.",
+    "expectedMethods": [
+      "find_arbitrage_opportunities",
+      "get_orderbook",
+      "get_spreads"
+    ]
+  },
+  {
+    "id": "cross-venue-semantic-gap",
+    "prompt": "Take a live high-volume Trump or Fed-related Polymarket market, find likely Kalshi matches, and explain whether the current odds gap is real once you line up the YES/NO semantics.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "cross_tool",
+    "alphaCategory": "Cross-Venue Semantic Alignment",
+    "whyUsersCare": "Cross-venue disagreements are valuable only if the contracts really mean the same thing. Misreading semantics can create a fake arbitrage and an expensive mistake.",
+    "whyWebSearchBaselineWeak": "A free model may mention Kalshi and Polymarket conceptually, but it cannot reliably align live venue-specific contracts, wording, and current odds.",
+    "upstreamDataFields": [
+      "title",
+      "slug",
+      "yesPrice",
+      "rules",
+      "yesOutcomeMeans",
+      "noOutcomeMeans",
+      "matchScore",
+      "marketUrl"
+    ],
+    "synthesisRequired": "Resolve the Polymarket contract, search Kalshi for comparable contracts, then normalize semantics before deciding whether the odds gap is actionable.",
+    "expectedMethods": [
+      "search_markets",
+      "polymarket_crossref_kalshi"
+    ]
+  },
+  {
+    "id": "iran-contract-family-map",
+    "prompt": "For live Iran escalation risk, which exact Polymarket contracts matter right now, how do their resolution windows differ, and which contract is the cleanest expression of the thesis?",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "discovery",
+    "alphaCategory": "Contract Family Mapping",
+    "whyUsersCare": "Choosing the wrong contract family can destroy the trade thesis even if your macro view is right. Traders need the exact contract map, not a loose keyword search result.",
+    "whyWebSearchBaselineWeak": "Web search may surface one market page or a news article, but it cannot reliably map live contract families with different resolution windows and adjacent proxies.",
+    "upstreamDataFields": [
+      "title",
+      "slug",
+      "status",
+      "endDate",
+      "currentPrice",
+      "resolutionDate",
+      "marketUrl"
+    ],
+    "synthesisRequired": "Disambiguate several related live contracts and explain which one best matches the user's intended geopolitical thesis.",
+    "expectedMethods": [
+      "search_markets",
+      "search_and_get_outcomes"
+    ]
+  },
+  {
+    "id": "recent-trades-open-interest-signal",
+    "prompt": "Find a live market ending soon with real activity, summarize the recent trade tape plus open interest, and tell me whether it looks like genuine conviction or just noise.",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "activity",
+    "alphaCategory": "Live Tape And Momentum",
+    "whyUsersCare": "Near-dated markets can move fast. Traders want to know whether current prints and open interest reflect real conviction or temporary noise before they chase a move.",
+    "whyWebSearchBaselineWeak": "A free model can discuss the event, but it cannot inspect the live tape plus venue-specific open interest for a current market ending soon.",
+    "upstreamDataFields": [
+      "recentTrades",
+      "tradeDirection",
+      "tradeSize",
+      "tradeTimestamp",
+      "openInterest",
+      "liquidity"
+    ],
+    "synthesisRequired": "Auto-select a relevant live market, summarize the tape, layer in open interest, and translate both into a trader-facing signal.",
+    "expectedMethods": [
+      "summarize_live_market_activity"
+    ]
+  },
+  {
+    "id": "tag-regime-liquidity",
+    "prompt": "Which Polymarket tags or categories are hottest right now, and inside them which live markets have the best actual tradable liquidity?",
+    "mustWin": false,
+    "showcaseCandidate": false,
+    "category": "regime_rotation",
+    "alphaCategory": "Regime Discovery And Thematic Rotation",
+    "whyUsersCare": "The venue's opportunity set rotates by theme. Traders want to know which regimes are active now and which markets inside those themes are actually liquid enough to trade.",
+    "whyWebSearchBaselineWeak": "A free model cannot combine live venue-specific activity clustering with actual market liquidity inside those tags and categories.",
+    "upstreamDataFields": [
+      "topTags",
+      "categories",
+      "topLiquidMarketsByCategory",
+      "volume24h",
+      "liquidity"
+    ],
+    "synthesisRequired": "Surface the active thematic regimes first, then map them to the best tradable contracts instead of just listing headlines.",
+    "expectedMethods": [
+      "discover_trending_markets",
+      "get_all_tags",
+      "browse_by_tag",
+      "browse_category"
+    ]
+  },
+  {
+    "id": "lower-vol-thesis-expression",
+    "prompt": "Show me live high-probability politics markets that still have enough liquidity for a $5,000 position, and rank which ones are the cleanest lower-volatility ways to express a thesis right now.",
+    "mustWin": false,
+    "showcaseCandidate": false,
+    "category": "screening",
+    "alphaCategory": "Live Screening And Microstructure",
+    "whyUsersCare": "Not every trader wants lottery-ticket convexity. Some want current higher-probability markets with enough depth to express a thesis more conservatively.",
+    "whyWebSearchBaselineWeak": "A generic model cannot screen the live politics board for current high-probability contracts that also retain real liquidity and size capacity.",
+    "upstreamDataFields": [
+      "currentPrice",
+      "likelihoodBucket",
+      "liquidity",
+      "volume24h",
+      "marketUrl"
+    ],
+    "synthesisRequired": "Filter current politics markets by live probability bucket and liquidity, then rank which ones offer the cleanest lower-volatility exposure right now.",
+    "expectedMethods": [
+      "get_bets_by_probability",
+      "get_top_markets"
+    ]
+  }
+]

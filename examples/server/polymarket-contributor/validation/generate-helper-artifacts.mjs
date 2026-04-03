@@ -30,7 +30,7 @@ const {
   resolveContributorSearch,
 } = await loadContributorSearchModule();
 
-const GENERATED_AT = "2026-03-28T12:00:00.000Z";
+const GENERATED_AT = new Date().toISOString();
 const VALIDATION_DIR = dirname(fileURLToPath(import.meta.url));
 
 const IRAN_PROMPT =

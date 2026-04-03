@@ -242,6 +242,36 @@ export interface SearchOptions {
   excludeSlow?: boolean;
 }
 
+// ---------------------------------------------------------------------------
+// Developer / tool management types
+// ---------------------------------------------------------------------------
+
+/**
+ * Options for updating a tool listing via `client.developer.updateTool()`.
+ * At least one field must be provided.
+ */
+export interface UpdateToolOptions {
+  /** New display name for the tool */
+  name?: string;
+
+  /** New marketplace description */
+  description?: string;
+
+  /** New category (e.g. "crypto", "finance", "data") */
+  category?: string | null;
+}
+
+/**
+ * Response from updating a tool listing.
+ */
+export interface UpdateToolResult {
+  id: string;
+  name: string;
+  description: string;
+  category: string | null;
+  updatedAt: string;
+}
+
 /**
  * Options for executing a tool
  */

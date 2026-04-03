@@ -181,6 +181,9 @@ const HEAVY_ANALYSIS_TOOLS = new Set([
   "find_arbitrage_opportunities",
   "analyze_single_market_whales",
   "get_top_holders",
+  "build_high_conviction_workflow",
+  "summarize_live_market_activity",
+  "polymarket_crossref_kalshi",
 ]);
 
 const ANSWER_ONLY_TOOLS = new Set([
