@@ -26,6 +26,15 @@ Before starting, collect these from the contributor:
 | **MCP endpoint URL** | The deployed server URL | Direct MCP calls in Phase 6 |
 | **CONTEXT_API_KEY** | [ctxprotocol.com/developer](https://ctxprotocol.com/developer) → API Keys | SDK calls and listing update |
 | **TOOL_ID** | [ctxprotocol.com/developer/tools](https://ctxprotocol.com/developer/tools) → tool card | Listing update target |
+| **Funded wallet** | [ctxprotocol.com/developer](https://ctxprotocol.com/developer) → Wallet | Required for query calls to succeed |
+
+> **Important: Fund your wallet before running this skill.** The optimization process
+> makes real query calls through the Context platform to validate your tool's responses.
+> These calls go through the full librarian agentic flow, which requires a funded wallet
+> to complete. If your wallet balance is zero, the validation queries will fail and the
+> skill cannot verify your tool's quality. Deposit a small amount (a few dollars is
+> sufficient for a full optimization run) at
+> [ctxprotocol.com/developer](https://ctxprotocol.com/developer) before starting.
 
 ---
 
