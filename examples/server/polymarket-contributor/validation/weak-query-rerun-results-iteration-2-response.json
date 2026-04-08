@@ -1,0 +1,149 @@
+{
+  "iteration": 2,
+  "changedFiles": [
+    "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/server.ts"
+  ],
+  "fixSummaryByRootCause": {
+    "clarification_punt_for_history_query": "Made event outcome comparison resolve or auto-select a live multi-outcome fallback event instead of erroring when the prompt is deictic.",
+    "unnecessary_clarification": "Strengthened direct-event tool descriptions so live-volume prompts route straight to event resolution instead of asking the user to choose an internal method.",
+    "missing_event_resolution": "Extended event comparison to execute with generic or empty event references by grounding to a live fallback event and exposing the selection reason.",
+    "wrong_initial_tool_selection": "Clarified efficiency-tool routing and explicitly warned planner prompts away from whale-holder tools for vig and spread analysis.",
+    "missing_market_resolution": "Allowed single-market whale analysis to run without an explicit identifier by selecting a strong live single-outcome fallback market.",
+    "missing_grounded_market_reference": "Reinforced direct rules-tool usage for deictic single-market prompts so the planner can ground rules analysis without an explicit slug.",
+    "deictic_contract_substitution": "Tightened cross-venue contract matching by improving fallback contract resolution and raising Kalshi match-score safety thresholds.",
+    "deictic_event_substitution": "Reinforced direct multi-outcome event tool usage so whale/event prompts can ground to a live fallback event instead of stalling.",
+    "candidate_selection_drift": "Kept ending-soon selection strict so tape/open-interest screens no longer silently drift to far-dated volume fallbacks.",
+    "upstream_listing_mismatch": "Made Kalshi cross-reference matching more conservative so weak fuzzy matches are filtered out instead of being presented as equivalents.",
+    "overstated_synthesis": "Raised the high-conviction bar so flat or negative model-edge setups are downgraded instead of being marketed as high conviction.",
+    "limited_scan_scope": "Expanded trending-market scan breadth and made sampled-scope language explicit in the trend summary output."
+  },
+  "deployment": {
+    "performed": true,
+    "deployScript": "/Users/alex/Documents/context-sdk/examples/server/deploy.sh",
+    "setupScript": "/Users/alex/Documents/context-sdk/examples/server/setup-servers.sh",
+    "healthCheckPassed": true
+  },
+  "verification": {
+    "tsc": {
+      "command": "npx tsc --noEmit",
+      "passed": false,
+      "errors": [
+        "src/contrib/search/__tests__/search.test.ts(1,30): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.",
+        "src/contrib/search/__tests__/search.test.ts(2,34): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.",
+        "src/contrib/search/__tests__/search.test.ts(3,31): error TS2307: Cannot find module 'node:url' or its corresponding type declarations.",
+        "src/contrib/search/__tests__/search.test.ts(752,12): error TS2493: Tuple type '[]' of length '0' has no element at index '0'.",
+        "src/contrib/search/__tests__/search.test.ts(752,19): error TS2493: Tuple type '[]' of length '0' has no element at index '1'."
+      ]
+    }
+  },
+  "rerun": {
+    "attempted": true,
+    "blockedBy": "auth_unavailable",
+    "resultsPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/weak-query-rerun-results-iteration-2.json",
+    "queryCount": 12,
+    "queryIds": [
+      "event-momentum-vs-spread",
+      "event-live-volume-share",
+      "compare-named-outcomes-event",
+      "efficiency-vig-check",
+      "single-market-whale-consensus",
+      "rules-gotchas-single-market",
+      "single-cross-venue-equivalence",
+      "event-whale-breakdown",
+      "tape-vs-open-interest",
+      "cross-venue-gap-screen",
+      "high-conviction-workflow",
+      "hot-tags-today"
+    ],
+    "promptResults": [
+      {
+        "index": 14,
+        "promptId": "event-momentum-vs-spread",
+        "rootCauseCategory": "clarification_punt_for_history_query",
+        "outcomeType": "error",
+        "rerunBlockedBy": "auth_unavailable"
+      },
+      {
+        "index": 9,
+        "promptId": "event-live-volume-share",
+        "rootCauseCategory": "unnecessary_clarification",
+        "outcomeType": "error",
+        "rerunBlockedBy": "auth_unavailable"
+      },
+      {
+        "index": 4,
+        "promptId": "compare-named-outcomes-event",
+        "rootCauseCategory": "missing_event_resolution",
+        "outcomeType": "error",
+        "rerunBlockedBy": "auth_unavailable"
+      },
+      {
+        "index": 3,
+        "promptId": "efficiency-vig-check",
+        "rootCauseCategory": "wrong_initial_tool_selection",
+        "outcomeType": "error",
+        "rerunBlockedBy": "auth_unavailable"
+      },
+      {
+        "index": 6,
+        "promptId": "single-market-whale-consensus",
+        "rootCauseCategory": "missing_market_resolution",
+        "outcomeType": "error",
+        "rerunBlockedBy": "auth_unavailable"
+      },
+      {
+        "index": 2,
+        "promptId": "rules-gotchas-single-market",
+        "rootCauseCategory": "missing_grounded_market_reference",
+        "outcomeType": "error",
+        "rerunBlockedBy": "auth_unavailable"
+      },
+      {
+        "index": 12,
+        "promptId": "single-cross-venue-equivalence",
+        "rootCauseCategory": "deictic_contract_substitution",
+        "outcomeType": "error",
+        "rerunBlockedBy": "auth_unavailable"
+      },
+      {
+        "index": 7,
+        "promptId": "event-whale-breakdown",
+        "rootCauseCategory": "deictic_event_substitution",
+        "outcomeType": "error",
+        "rerunBlockedBy": "auth_unavailable"
+      },
+      {
+        "index": 8,
+        "promptId": "tape-vs-open-interest",
+        "rootCauseCategory": "candidate_selection_drift",
+        "outcomeType": "error",
+        "rerunBlockedBy": "auth_unavailable"
+      },
+      {
+        "index": 13,
+        "promptId": "cross-venue-gap-screen",
+        "rootCauseCategory": "upstream_listing_mismatch",
+        "outcomeType": "error",
+        "rerunBlockedBy": "auth_unavailable"
+      },
+      {
+        "index": 15,
+        "promptId": "high-conviction-workflow",
+        "rootCauseCategory": "overstated_synthesis",
+        "outcomeType": "error",
+        "rerunBlockedBy": "auth_unavailable"
+      },
+      {
+        "index": 1,
+        "promptId": "hot-tags-today",
+        "rootCauseCategory": "limited_scan_scope",
+        "outcomeType": "error",
+        "rerunBlockedBy": "auth_unavailable"
+      }
+    ],
+    "outcomeTypeCounts": {
+      "error": 12
+    },
+    "responseArtifactPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/weak-query-rerun-results-iteration-2-response.json"
+  }
+}

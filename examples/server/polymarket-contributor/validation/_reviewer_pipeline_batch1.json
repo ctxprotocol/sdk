@@ -1,0 +1,287 @@
+{
+  "reviewedAt": "2026-04-07T06:45:00.000Z",
+  "perQueryEvaluations": [
+    {
+      "query": "Find live 40% to 60% Polymarket contracts with at least $1M liquidity right now, and rank which ones are actually tradable for a $5,000 position without ugly slippage.",
+      "quotedExcerpts": [
+        "As of April 7, 2026, here are the Polymarket contracts within the 40% to 60% price range (0.40\u20130.60) with at least $1M in liquidity, ranked by their tradability for a $5,000 position.",
+        "Based on recent tool results, three contracts offer high liquidity with minimal slippage, while one is currently flagged as illiquid due to orderbook unavailability.",
+        "| 1 | [UCL: SPO vs ARS](https://polymarket.com/event/ucl-spo1-ars-2026-04-07) | 0.535 | $1,528,052 | **0.9%** | Excellent liquidity; 1\u00a2 spread. Best for $5k exit. |"
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.67,
+      "scoreExplanations": {
+        "actionability": "Ranks contracts and ties each to estimated $5k exit slippage plus a clear avoid on the MLB market where the book is unusable.",
+        "dataFreshness": "States an as-of calendar date (April 7, 2026) though not sub-hour timestamps.",
+        "specificity": "Gives prices, dollar liquidity, slippage percentages, spreads, and Polymarket URLs/condition context.",
+        "uniqueness": "Combines probability filtering with per-market liquidity/slippage diagnostics beyond a generic market commentary page.",
+        "completeness": "Covers the 40\u201360% band, $1M liquidity floor, $5k sizing, and flags execution risk where liquidity is misleading.",
+        "dataAccuracy": "The 100% slippage / CLOB-unavailable case is consistent with tool output noting missing order book; other slippage figures align with quoted tight spreads."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 19.45,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Delivers a ranked, tradability-focused shortlist with explicit slippage and a material execution warning.",
+        "improvementLever": "Add an explicit as-of UTC timestamp and a one-line definition of how slippage was simulated so buyers can audit freshness and methodology."
+      }
+    },
+    {
+      "query": "Which live politics markets currently show the widest verified spreads or sub-$1 arbitrage-style pricing, and are any worth working with passive orders right now?",
+      "quotedExcerpts": [
+        "As of **April 7, 2026, at 05:39 UTC**, an analysis of 40 scanned markets shows that there are currently **no verified sub-$1 arbitrage opportunities or wide-spread politics markets** available.",
+        "The tool results indicate that the market is currently priced very efficiently, with an average spread of only **0.1\u00a2**.",
+        "While the query specifically targeted politics, the data returned only unrelated sports markets, which were excluded from the arbitrage calculations."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 3,
+        "uniqueness": 2,
+        "completeness": 2,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 2.67,
+      "scoreExplanations": {
+        "actionability": "It mainly concludes absence of opportunities and pivots to generic search tips rather than naming any live politics markets with actionable widths or maker setups.",
+        "dataFreshness": "Includes a precise UTC timestamp for the scan moment.",
+        "specificity": "Reports scan size (40), zero counts, and an average spread, but does not surface concrete politics market rows because the tool feed was wrong-category.",
+        "uniqueness": "The negative result plus troubleshooting bullets could largely be reasoned without trustworthy politics-specific tool rows.",
+        "completeness": "Does not actually identify politics markets with wide spreads or passive-order viability; it explains a data mismatch instead of substituting a correct politics sample.",
+        "dataAccuracy": "The trace shows `find_arbitrage_opportunities` with `category: politics` yet `wideSpreadMarkets` sample entries are World Cup sports titles, undermining politics-scoped metrics."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": 10.1,
+        "fragilityRisk": "medium",
+        "selectionIssue": "Primary method choice is plausible, but repeated calls returned the same politics-tagged scan whose wide-spread examples are non-politics markets.",
+        "planningIssue": null,
+        "executionIssue": "Two semantic retries/self-heals reproducing the same tool output indicates fragile recovery rather than a corrected data path.",
+        "completenessIssue": "Completeness evaluations were not inspectable in the trace (`[OMITTED:CIRCULAR_REFERENCE]`).",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "Tool results interleave FIFA World Cup markets under a politics-scoped arbitrage scan, so politics-only conclusions are unreliable.",
+        "rootCauseCategory": "contributor_tool_bug",
+        "rootCauseEvidence": "`toolCallHistory` shows `find_arbitrage_opportunities` with args `{\"category\":\"politics\",\"limit\":20}` while result heads list World Cup winner markets in `wideSpreadMarkets`.",
+        "responseQualityNote": "Honest about missing politics coverage but still charges the buyer for a politics question without delivering politics market rows or verified spreads.",
+        "improvementLever": "Fix politics filtering inside `find_arbitrage_opportunities` (or chain a politics market enumerator first) so scans and wide-spread exemplars are category-consistent before synthesis."
+      },
+      "diagnosticBrief": {
+        "toolUsed": "find_arbitrage_opportunities",
+        "toolShouldHaveUsed": null,
+        "argsUsed": "{\"category\": \"politics\", \"limit\": 20}",
+        "argsShouldHaveUsed": null,
+        "codeSnippet": "  const result = await callMcpSkill({\n    toolId,\n    toolName: \"find_arbitrage_opportunities\",",
+        "toolResultSample": "{'scannedMarkets': 40, 'arbitrageOpportunities': [], 'wideSpreadMarkets': [{'market': 'Will Japan win the 2026 FIFA World Cup?', 'url': 'https://polymarket.com/event/2026-fifa-world-cup-winner-595', 'conditionId': '0x0189df05ed7bf84d799213b01a79571e305c03b2ac5359cfbb3a323448ba20fa', 'spread': 0.003, 'spreadPercent': '0.3\u00a2', 'midPrice': 0.0205}, {'market': 'Will Spain win the 2026 FIFA World Cup?', 'url': 'https://polymarket.com/event/2026-fifa-world-cup-winner-595', 'conditionId': '0x7976b8dbacf",
+        "completenessVerdict": "diagnostics.completeness.evaluations omitted in trace ([OMITTED:CIRCULAR_REFERENCE])",
+        "stageTimingBottleneck": "execution=67189ms"
+      }
+    },
+    {
+      "query": "Use the most liquid live multi-outcome politics event on Polymarket right now and compare the top four outcomes by price, spread, and estimated exit slippage. Which outcomes can actually absorb size cleanly?",
+      "quotedExcerpts": [
+        "Based on current market data, the most liquid multi-outcome politics event is **\"Will Fidesz\u2013KDNP win the most seats in the next Hungarian parliamentary election?\"** with a total liquidity of **$777,314.20** and a 24-hour volume of **$437,936.52**.",
+        "| **TISZA** | *N/A* | Primary Challenger | High Liquidity |",
+        "*   **Slippage & Spreads:** For **Jobbik** and **LMP**, even moderate trade sizes will likely result in high exit slippage and wider spreads due to their status as long-shot outcomes with much thinner order books."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 3,
+        "specificity": 2,
+        "uniqueness": 2,
+        "completeness": 2,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 2.33,
+      "scoreExplanations": {
+        "actionability": "You cannot size trades from *N/A* prices; slippage guidance is qualitative only.",
+        "dataFreshness": "Footer cites Tuesday April 7, 2026 but the body lacks outcome-level timestamps.",
+        "specificity": "Fails the rubric bar for numeric specificity because all four outcome prices are *N/A* and spreads/slippage are not quantified per outcome.",
+        "uniqueness": "Narrative liquidity claims could be approximated without the structured multi-outcome tool outputs that were actually retrieved.",
+        "completeness": "Does not compare top four outcomes by price, spread, and estimated exit slippage as requested; omits numeric spread and slippage columns.",
+        "dataAccuracy": "Tool traces contain concrete prices/spreads for matched outcomes, so the published *N/A* table is internally inconsistent with the underlying tool data."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 15.49,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "Completeness evaluations omitted in trace ([OMITTED:CIRCULAR_REFERENCE]).",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "compare_event_outcome_quotes returned numeric prices and spreads while the answer displays *N/A* for every outcome price.",
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "`toolCallHistory` for `compare_event_outcome_quotes` includes `currentPrice` 0.69 and spread fields, yet `responseText` lists *N/A* for all outcome prices.",
+        "responseQualityNote": "Identifies a plausible liquid politics multi-outcome event and gives qualitative size guidance, but withholds the numeric comparison the buyer paid for.",
+        "improvementLever": "Map `compare_event_outcome_quotes` / `analyze_event_outcome_liquidity` fields directly into the outcome table (price, bid/ask, spread, modeled exit slippage) instead of placeholders."
+      },
+      "diagnosticBrief": {
+        "toolUsed": "get_top_markets; discover_trending_markets; search_and_get_outcomes; compare_event_outcome_quotes; analyze_event_outcome_liquidity",
+        "toolShouldHaveUsed": null,
+        "argsUsed": "{\"eventQuery\": \"Will Fidesz\\u2013KDNP win the most seats in the next Hungarian parliamentary election?\", \"outcomes\": [\"TISZA\", \"Fidesz-KDNP\", \"Jobbik\", \"LMP\"], \"category\": \"politics\"}",
+        "argsShouldHaveUsed": null,
+        "codeSnippet": "import { callMcpSkill, callMcpSkillsParallel } from \"@/lib/ai/skills/mcp\";\nimport { pickTopSemanticCandidates } from \"@/lib/ai/skills/semantic-targeting\";",
+        "toolResultSample": "{\"eventTitle\": \"Hungary Parliamentary Election Winner\", \"matchedOutcomes\": [{\"requestedName\": \"TISZA\", \"currentPrice\": 0.69, \"bestBid\": 0.68, \"bestAsk\": 0.7, \"spread\": 0.02, \"spreadPercent\": 2.9}]}",
+        "completenessVerdict": "diagnostics.completeness.evaluations omitted in trace ([OMITTED:CIRCULAR_REFERENCE])",
+        "stageTimingBottleneck": "execution=42799ms"
+      }
+    },
+    {
+      "query": "For the most relevant live Fed decision market right now, what are whales doing, how concentrated are positions, and does that line up with recent directional flow?",
+      "quotedExcerpts": [
+        "Based on recent market data for the Fed's June 2026 meeting, here is the current breakdown of whale activity and position concentration:",
+        "**Smart Money Signal** | **NO** (Medium confidence)",
+        "**Alignment:** **Not Aligned**. Large historical \"No\" positions held by a few high-conviction whales do not match the immediate 24-hour trend, where both retail and new whale flow are currently buying \"Yes.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "Translates whale positioning, concentration, and 24h flow into a clear smart-money stance plus an explicit alignment verdict.",
+        "dataFreshness": "Uses same-day April 2026 context; tool payload includes a `fetchedAt` timestamp though the prose is not minute-precise throughout.",
+        "specificity": "Provides dollar whale balances, concentration percentages, trade counts/volumes, and a largest-trade example with price.",
+        "uniqueness": "Combines holder concentration with short-horizon flow divergence\u2014harder to reconstruct from a headline price alone.",
+        "completeness": "Addresses whales, concentration, and recent directional flow consistency in one narrative.",
+        "dataAccuracy": "Numbers look internally coherent; the large trade at $0.92 is explained as opposing the cheap \"Yes\" side, but it demands careful reading to avoid looking contradictory beside an $0.085 spot print."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 16.12,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": "Discovery seeds used `category: politics` lists before landing on the Fed instrument\u2014worked but is an odd semantic path for a rates market.",
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Strong quantitative whale and flow story with an explicit mismatch narrative between inventory and near-term buying.",
+        "improvementLever": "Surface the Fed market `conditionId` and tighten discovery intent so Fed queries do not rely on unrelated politics leaderboards."
+      }
+    },
+    {
+      "query": "Summarize the hottest live geopolitics market on Polymarket right now and explain what the recent tape implies for short-term positioning.",
+      "quotedExcerpts": [
+        "Based on the most recent data from April 7, 2026, the hottest live geopolitics market on Polymarket is: **\"Will the U.S. invade Iran before 2027?\"**",
+        "| **Tape Bias** | Buy-dominant |",
+        "The recent tape implies a **bullish/momentum-following bias** for the \"Yes\" side."
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.67,
+      "scoreExplanations": {
+        "actionability": "Links identified \"hot\" market metrics to a directional trading bias and crowding implications.",
+        "dataFreshness": "Dated to April 7, 2026; tape stats are framed as recent though not sub-hour labeled in prose.",
+        "specificity": "Includes price, 24h volume, liquidity, open interest, and a trade-bias table with dollar buy/sell splits and trade counts.",
+        "uniqueness": "Grounds the narrative in `summarize_live_market_activity` style tape aggregation rather than generic geopol commentary.",
+        "completeness": "Both asks\u2014hottest market identification and tape-based short-term positioning\u2014are answered with supporting numbers.",
+        "dataAccuracy": "Average trade price below spot is acknowledged while still arguing buy-dominance\u2014internally consistent storytelling."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 4.86,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Cohesive geopolitics focus with quantitative tape interpretation and crowding context.",
+        "improvementLever": "State the exact trade sample window (count/time span) beside average price to reduce ambiguity versus the headline mid."
+      }
+    },
+    {
+      "query": "Run a high-conviction workflow across live politics markets with at least $1M liquidity right now: shortlist the cleanest setups, validate the resolution rules, check pricing efficiency, and tell me which ones still offer edge after execution costs.",
+      "quotedExcerpts": [
+        "Based on a review of live politics markets with over $1M in liquidity, the following setups have been shortlisted.",
+        "### Validation & Resolution Rules",
+        "**Note:** Specific \"net edge\" values could not be calculated due to insufficient alpha signal data."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 3,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.0,
+      "scoreExplanations": {
+        "actionability": "Produces a politics shortlist with execution-cost and slippage commentary plus rule summaries, but stops short of ranking net edge.",
+        "dataFreshness": "Opening line lacks a sharp UTC stamp even though downstream metrics imply contemporaneous pulls.",
+        "specificity": "Table includes liquidity bands, prices, bps estimates, and slippage scenarios for multiple notionals.",
+        "uniqueness": "Multi-step validation across rules, efficiency, and liquidity is more than a single-market blurb.",
+        "completeness": "Explicitly admits it cannot quantify residual edge after costs, leaving the core economic question partially open despite rich diagnostics.",
+        "dataAccuracy": "Slippage and efficiency labels look plausible and internally varied across markets; no uniform-value red flag across distinct names."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 35.66,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "Completeness evaluations omitted in trace ([OMITTED:CIRCULAR_REFERENCE]).",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "Despite extensive `check_market_rules`, `check_market_efficiency`, and `analyze_market_liquidity` calls, the prose states net edge could not be calculated, leaving the buyer question under-answered.",
+        "responseQualityNote": "Strong operational pack\u2014rules, efficiency tags, and liquidity/slippage\u2014but hedges away the ultimate edge-after-costs verdict.",
+        "improvementLever": "Convert the already-fetched efficiency and slippage metrics into explicit post-cost edge bands (even scenario tables) instead of deferring for missing alpha."
+      },
+      "diagnosticBrief": {
+        "toolUsed": "get_top_markets; discover_trending_markets; check_market_rules; check_market_efficiency; analyze_market_liquidity (17 calls total)",
+        "toolShouldHaveUsed": "build_high_conviction_workflow (available in tool schema but not invoked as a single orchestrated call)",
+        "argsUsed": "{\"category\": \"politics\", \"sortBy\": \"volume\", \"limit\": 25, \"minLiquidity\": 1000000}",
+        "argsShouldHaveUsed": null,
+        "codeSnippet": "export async function main() {\n  const toolId = \"294100e8-c648-4e5f-a254-95a14b56e398\";\n\n  const plan = {\n    intent:",
+        "toolResultSample": "[OMITTED:CIRCULAR_REFERENCE] on multiple downstream tool results in trace snapshot",
+        "completenessVerdict": "diagnostics.completeness.evaluations omitted in trace ([OMITTED:CIRCULAR_REFERENCE])",
+        "stageTimingBottleneck": "synthesis=74646ms"
+      }
+    }
+  ]
+}

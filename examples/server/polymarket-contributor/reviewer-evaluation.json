@@ -1,0 +1,1013 @@
+{
+  "reviewedAt": "2026-04-08T11:54:40Z",
+  "note": "Merged from reviewer-output-batch-1.json and reviewer-output-batch-2.json; differentiation calibrated against free-baseline-results.json.",
+  "perQueryEvaluations": [
+    {
+      "query": "For the 'US forces enter Iran by April 30?' market, what are the current best bid, best ask, midpoint, quoted spread, and estimated slippage to buy or sell $25,000 notional right now?",
+      "quotedExcerpts": [
+        "\"**Best Bid** | 0.998\"",
+        "\"**Best Ask** | 0.999\"",
+        "\"**Buy** | 0.999 | 0.050075%\""
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "scoreExplanations": {
+        "actionability": "A trader gets direct executable numbers for both sides, including spread and $25k slippage.",
+        "dataFreshness": "The answer is framed as a current depth snapshot rather than generic market commentary.",
+        "specificity": "It provides bid, ask, midpoint, bps spread, and concrete buy/sell slippage figures.",
+        "uniqueness": "Venue-native merged orderbook and slippage detail materially beat the free generic baseline.",
+        "completeness": "It answers every requested field without hedging.",
+        "dataAccuracy": "The response matches the trace values from `analyze_market_liquidity`, `get_orderbook`, and market parameters."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 19.2,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": "Direct liquidity + orderbook + parameter path returned all requested fields on the first attempt.",
+        "responseQualityNote": "Strong buyer answer: clean live quote snapshot with execution costs.",
+        "improvementLever": "None meaningful; preserve the direct liquidity-plus-orderbook flow.",
+        "diagnosticBrief": {
+          "toolUsed": "analyze_market_liquidity, get_orderbook, get_market_parameters",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "marketQuery=\"US forces enter Iran by April 30?\"; merged=true orderbook",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "bestBid=0.998, bestAsk=0.999, midpoint=0.9985, buy25000 slippage=0.0501%",
+          "completenessVerdict": "Complete on first pass.",
+          "stageTimingBottleneck": "None; execution stayed well inside budget."
+        }
+      },
+      "overallVerdict": "Excellent paid answer with live microstructure and immediate execution guidance.",
+      "satisfactionMean": 5.0,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "For the 'Will the U.S. invade Iran before 2027?' market, how concentrated are top holders, how fast is open interest changing, and does recent whale flow agree with the current 24-cent price?",
+      "quotedExcerpts": [
+        "\"The market is heavily influenced by a small number of holders.\"",
+        "\"Data for the velocity or rate of change of OI is currently unavailable, as only a point-in-time snapshot was captured.\"",
+        "\"Whale flow is currently aligned with the upward price movement.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "scoreExplanations": {
+        "actionability": "A trader gets a usable concentration and whale-flow read, even though true OI velocity is still unavailable.",
+        "dataFreshness": "The answer is clearly anchored to same-session live market reads, including the updated 27.5-cent price.",
+        "specificity": "It provides concrete holder concentration, OI level, whale net flow, buy and sell volume, and the largest trade price.",
+        "uniqueness": "Venue-native holder and whale-flow evidence gives real paid value beyond a generic geopolitical take.",
+        "completeness": "It answers two parts directly and is honest that the OI-speed subquestion cannot be fully answered from one snapshot.",
+        "dataAccuracy": "The concentration, OI, price, and whale-flow figures line up with the trace outputs."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 15,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": "The workflow still depended on a point-in-time OI endpoint that cannot produce a true change rate.",
+        "executionIssue": null,
+        "completenessIssue": "No second time-separated OI snapshot was available, so velocity could not be measured.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "capability_gap",
+        "rootCauseEvidence": "The trace explicitly says `changeRateAvailable=false` and notes that a second snapshot is required for a true OI-speed read.",
+        "responseQualityNote": "Good buyer answer: live concentration and whale-flow data were surfaced clearly, with an honest limit on OI velocity.",
+        "improvementLever": "Keep the same synthesis quality and add a second timed OI snapshot when the workflow needs velocity.",
+        "diagnosticBrief": {
+          "toolUsed": "search_markets, analyze_top_holders, analyze_whale_flow, get_market_open_interest",
+          "toolShouldHaveUsed": "a second time-separated open-interest snapshot flow",
+          "argsUsed": "conditionId for the Iran market; hoursBack=24 for whale flow",
+          "argsShouldHaveUsed": "same conditionId across two timed OI reads",
+          "codeSnippet": null,
+          "toolResultSample": "currentPrice=0.275; top5 concentration roughly 43.67% YES / 51.7% NO; totalOpenInterest=1896791.23; netWhaleVolume=2913.46",
+          "completenessVerdict": "Good answer with one structural OI-speed gap.",
+          "stageTimingBottleneck": "OI velocity was blocked by single-snapshot data."
+        }
+      },
+      "overallVerdict": "Strong rerun: the buyer gets a real holder-and-flow read, and the answer clearly marks the one metric that still cannot be measured.",
+      "satisfactionMean": 4.5,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "For the 'Strait of Hormuz traffic returns to normal by end of April?' market, what resolution language, deadline, and current price make this a high- or low-rules-risk trade?",
+      "quotedExcerpts": [
+        "\"**Current Price** | 0.475\"",
+        "\"IMF Portwatch publishes a **7-day moving average** ... **equal to or above 60**\"",
+        "\"The trade is classified as **high rules-risk**\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "scoreExplanations": {
+        "actionability": "A trader can immediately see the deadline, live price, and why the rules require extra monitoring.",
+        "dataFreshness": "The answer includes the current traded price, though it does not foreground a fetch timestamp.",
+        "specificity": "It names the exact source, threshold, deadline, and resolution mechanics.",
+        "uniqueness": "Contract-specific resolution language is valuable paid insight versus the free generic rules-risk discussion.",
+        "completeness": "It covers language, deadline, current price, and the high/low rules-risk judgment.",
+        "dataAccuracy": "The response aligns closely with the checked market rules and liquidity trace."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 17.1,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": "Search, rules check, and liquidity read all landed cleanly on the first pass.",
+        "responseQualityNote": "Strong venue-native contract analysis with a clear rules-risk take.",
+        "improvementLever": "Add one sharper practical gotcha, such as the exact publication-lag risk, to make the trade implication even more actionable.",
+        "diagnosticBrief": {
+          "toolUsed": "search_markets, check_market_rules, analyze_market_liquidity",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "query on market title; slug=\"strait-of-hormuz-traffic-returns-to-normal-by-april-30\"",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "currentPrice=0.475, deadline=2026-04-30T00:00:00Z, source=IMF Portwatch 7-day average >= 60",
+          "completenessVerdict": "Complete on first pass.",
+          "stageTimingBottleneck": "None notable."
+        }
+      },
+      "overallVerdict": "Strong paid answer that cleanly translates contract language into a usable rules-risk judgment.",
+      "satisfactionMean": 4.5,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "Within the 'US forces enter Iran by..?' event, which expiry bucket currently offers the cleanest execution for a directional trader: 'US forces enter Iran by April 30?' or 'US forces enter Iran by December 31?'",
+      "quotedExcerpts": [
+        "\"the April 30 expiry bucket currently offers the cleanest execution\"",
+        "\"The April 30 bucket has nearly double the trading volume of the December 31 bucket.\"",
+        "\"The absolute spread for April 30 is 10x tighter (0.10\u00a2 vs 1.00\u00a2).\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "scoreExplanations": {
+        "actionability": "It gives a clear bucket preference that a trader can actually use.",
+        "dataFreshness": "The answer reads as same-session live quote data and matches the fetched rows.",
+        "specificity": "Bid, ask, spread, implied probability, and volume are all concrete.",
+        "uniqueness": "This is meaningfully better than a free answer because it uses venue-specific quote detail.",
+        "completeness": "It answers the comparison well, though it still uses volume rather than deeper executable-size metrics.",
+        "dataAccuracy": "The April 30 and December 31 numbers line up cleanly with the trace output."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 5,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "No direct depth or slippage check was added beyond quote width and volume.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "The core answer is correct, but the trader framing could have been even stronger with executable-size detail.",
+        "responseQualityNote": "Clean, accurate, and buyer-usable.",
+        "improvementLever": "Add depth or slippage so the execution recommendation rests on more than spread and volume.",
+        "diagnosticBrief": {
+          "toolUsed": "compare_event_outcome_quotes",
+          "toolShouldHaveUsed": "analyze_event_outcome_liquidity",
+          "argsUsed": "event query plus the two named expiries",
+          "argsShouldHaveUsed": "same event plus a bounded liquidity/depth follow-up",
+          "codeSnippet": null,
+          "toolResultSample": "April 30: 0.8\u00a2/0.9\u00a2, 0.10\u00a2 spread, volume 712,256.89; December 31: 7.0\u00a2/8.0\u00a2, 1.00\u00a2 spread, volume 363,464.46",
+          "completenessVerdict": "Good answer with a minor execution-depth gap.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Strong rerun: it gives a defensible live execution preference with real numbers.",
+      "satisfactionMean": 4.5,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "Within the 'US x Iran ceasefire by...?' event, which live submarket is actually attracting tradable flow right now, and does 'US x Iran ceasefire by May 31?' dominate the event's whale attention?",
+      "quotedExcerpts": [
+        "\"the submarket actually attracting the most tradable flow right now is **April 7**, not May 31\"",
+        "\"May 31 ... currently ranks 3rd in total whale value ($2,101,713.94)\"",
+        "\"April 7 ... **Total Volume** | $59,199,797.12 | **Liquidity Depth** | $20,911,616.56\""
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "scoreExplanations": {
+        "actionability": "A directional trader can immediately favor April 7 and deprioritize May 31 for whale-following.",
+        "dataFreshness": "The answer is plainly based on current volume, depth, and whale-position reads.",
+        "specificity": "It gives ranked whale value, volume, liquidity depth, and current prices for the compared submarkets.",
+        "uniqueness": "Event-level liquidity plus whale-breakdown evidence is strong venue-native alpha over the free baseline.",
+        "completeness": "It answers both which submarket has tradable flow and whether May 31 dominates whale attention.",
+        "dataAccuracy": "The figures line up cleanly with the event liquidity and whale-breakdown trace."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 62.5,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": "Discovery, event liquidity, and event whale breakdown all agreed on April 7 as the lead contract.",
+        "responseQualityNote": "Very strong buyer answer with a crisp ranking and clear trade takeaway.",
+        "improvementLever": "None substantial; this is already the kind of event-level read a buyer wants.",
+        "diagnosticBrief": {
+          "toolUsed": "search_and_get_outcomes, analyze_event_outcome_liquidity, analyze_event_whale_breakdown",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "query=\"US x Iran ceasefire by\"; slug=\"us-x-iran-ceasefire-by\"",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "April 7 volume=59199797.12 depth=20911616.56; May 31 whale value=2101713.94 rank=3",
+          "completenessVerdict": "Complete on first pass.",
+          "stageTimingBottleneck": "Execution was lengthy but still produced a clean answer."
+        }
+      },
+      "overallVerdict": "Excellent paid answer with clear event-level ranking and tradability evidence.",
+      "satisfactionMean": 5.0,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "Inside the '2026 FIFA World Cup Winner' event, are the 'Will Congo DR win the 2026 FIFA World Cup?' and 'Will Egypt win the 2026 FIFA World Cup?' markets meaningfully tradable once you compare neg-risk status, spread, midpoint, and orderbook depth?",
+      "quotedExcerpts": [
+        "\"neither the Congo DR nor the Egypt markets are considered meaningfully tradable\"",
+        "\"**Spread** | 0.001 (40% of midpoint) | 0.001 (22% of midpoint)\"",
+        "\"Egypt shows massive ask-side depth ($11.4M+), largely due to synthetic liquidity from complement tokens.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "scoreExplanations": {
+        "actionability": "The trader gets a usable verdict that both markets are traps despite large displayed depth.",
+        "dataFreshness": "The answer is clearly based on current market snapshots, though it does not foreground the exact fetch time in prose.",
+        "specificity": "It includes neg-risk flags, bid/ask, midpoint, calculated spread, and depth for both markets.",
+        "uniqueness": "The synthetic-liquidity explanation is useful venue-native color beyond the free baseline.",
+        "completeness": "It covers every requested comparison field and gives a direct tradability verdict.",
+        "dataAccuracy": "The broad conclusion is credible, though the trace shows the raw spread field came back `None` and the response had to infer spread from bid/ask."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": 46.3,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": "The first pass failed to bind the requested outcomes cleanly and had to patch name matching.",
+        "executionIssue": "Outcome resolution depended on alias-style matching for Congo DR and Egypt before the run could finish.",
+        "completenessIssue": null,
+        "codeIssueDetail": "Patched logic switched from semantic matching to exact/alias matching to recover the named outcomes.",
+        "dataAccuracyRedFlags": "Execution result stored `spread=None`; the response manually reconstructed spread from best bid/ask, which is reasonable but slightly brittle.",
+        "rootCauseCategory": "code_generation_error",
+        "rootCauseEvidence": "Trace completeness repair explicitly says the initial code failed outcome binding and required a patch to continue.",
+        "responseQualityNote": "Final answer is good for the buyer, but the pipeline reached it through a somewhat fragile repair path.",
+        "improvementLever": "Pass named outcomes directly into a comparison/liquidity method instead of relying on custom alias binding.",
+        "diagnosticBrief": {
+          "toolUsed": "search_and_get_outcomes, analyze_market_liquidity, get_market_parameters",
+          "toolShouldHaveUsed": "compare_event_outcome_quotes or event-outcome liquidity with explicit outcome names",
+          "argsUsed": "eventQuery=\"2026 FIFA World Cup Winner\" with token-level liquidity reads for matched outcomes",
+          "argsShouldHaveUsed": "Explicit target outcomes: Congo DR and Egypt under the resolved event slug",
+          "codeSnippet": "Patched outcome binding to use exact/alias matching before liquidity fetches.",
+          "toolResultSample": "Congo DR bid/ask=0.002/0.003; Egypt bid/ask=0.004/0.005; both negRisk=true",
+          "completenessVerdict": "Complete after repair.",
+          "stageTimingBottleneck": "Execution and repair loop consumed moderate budget."
+        }
+      },
+      "overallVerdict": "Good buyer-facing answer with some medium trace fragility underneath.",
+      "satisfactionMean": 4.33,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "For the 'Will Congo DR win the 2026 FIFA World Cup?' market, what do neg-risk settings, spread, and depth imply about how much size can be entered without getting trapped in a tiny longshot book?",
+      "quotedExcerpts": [
+        "\"the liquidity profile suggests this is at high risk of becoming a \"trapped\" position\"",
+        "\"crossing the spread immediately loses ~40% of value\"",
+        "\"Keep size small, expect slippage, and avoid crossing aggressively\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "scoreExplanations": {
+        "actionability": "The guidance is practical: use passive limits, start small, and expect ugly exit economics.",
+        "dataFreshness": "It is clearly anchored to current liquidity and parameter reads, even without an explicit timestamp in the prose.",
+        "specificity": "It cites exact bid/ask, depth, and slippage trials for 1k and 10k.",
+        "uniqueness": "Neg-risk interpretation plus longshot-book slippage is materially more useful than the free generic explanation.",
+        "completeness": "It answers the trap-risk question well, but it stops short of a tighter explicit max entry-size threshold.",
+        "dataAccuracy": "The response lines up well with the liquidity and parameter trace for Congo DR."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 21.5,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "Sizing guidance is qualitative rather than a crisp max-size threshold.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": "Search, liquidity, and market-parameter reads all converged cleanly on the Congo DR outcome.",
+        "responseQualityNote": "Good paid answer with practical execution warnings for a fragile longshot book.",
+        "improvementLever": "Translate the slippage table into a tighter buyer-facing max-size band for entries, not just exits.",
+        "diagnosticBrief": {
+          "toolUsed": "search_and_get_outcomes, search_markets, analyze_market_liquidity, get_market_parameters",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "marketQuery=\"Will Congo DR win the 2026 FIFA World Cup?\" with token-level liquidity",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "price=0.0025, bid/ask=0.002/0.003, totalDepthUsd=36360.84, sell10k slippage=26.2%",
+          "completenessVerdict": "Substantively complete, with room for a sharper size threshold.",
+          "stageTimingBottleneck": "None notable."
+        }
+      },
+      "overallVerdict": "Strong answer that gives real execution caution, though the size cap could be quantified more tightly.",
+      "satisfactionMean": 4.33,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "For the 'Will Vicky D\u00e1vila win the 2026 Colombian presidential election?' market, how concentrated are top holders, and is the current price supported by broad participation or by a few wallets?",
+      "quotedExcerpts": [
+        "\"The current price of **0.001** is supported by a very small number of wallets rather than broad participation.\"",
+        "\"**NO** | 99.93% | 1\"",
+        "\"10 whales holding $161,997 in \"No\" positions compared to just $111 in \"Yes\" positions\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "scoreExplanations": {
+        "actionability": "A buyer can clearly infer that the price is not backed by broad participation and should treat it as whale-dominated.",
+        "dataFreshness": "The answer explicitly dates the snapshot to April 8, 2026.",
+        "specificity": "It provides concentration percentages, whale counts, and top-holder values on both sides.",
+        "uniqueness": "Wallet-level concentration evidence is exactly the kind of paid venue-native insight the buyer wants.",
+        "completeness": "It directly answers both holder concentration and whether the price is broad-based or concentrated.",
+        "dataAccuracy": "The response matches the holder table and smart-money signal in the trace."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 11.8,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": "Single top-holder analysis call returned exactly the concentration evidence needed.",
+        "responseQualityNote": "High-value buyer answer: concise, specific, and clearly different from a free generic take.",
+        "improvementLever": "Minor only: add a one-line caveat about how thin YES participation can distort headline price discovery.",
+        "diagnosticBrief": {
+          "toolUsed": "analyze_top_holders",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "marketQuery=\"Will Vicky D\u00e1vila win the 2026 Colombian presidential election?\"",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "top5NoPercent=99.93, noTop1Value=161182.47, yesTop1Value=23.22",
+          "completenessVerdict": "Complete on first pass.",
+          "stageTimingBottleneck": "None."
+        }
+      },
+      "overallVerdict": "Excellent concentration read that clearly shows the price is driven by a few wallets, not broad participation.",
+      "satisfactionMean": 4.83,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "Within the 'What will WTI Crude Oil (WTI) hit in April 2026?' event, which strike buckets currently carry the most live flow and tightest execution, and does the '$200 HIGH' tail strike look mispriced relative to neighboring strikes?",
+      "quotedExcerpts": [
+        "\"the \u2191 $120 strike currently leads the WTI Crude Oil event in terms of live flow and execution quality\"",
+        "\"the \u2191 $200 strike boasts the highest displayed depth, it suffers from extreme slippage for larger orders\"",
+        "\"not necessarily mispriced in terms of its mid-market value\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 3
+      },
+      "scoreExplanations": {
+        "actionability": "The strike ranking and slippage warning are useful for positioning.",
+        "dataFreshness": "The numbers are clearly live session data.",
+        "specificity": "It includes prices, spreads, whale counts, whale value, and tradability scores.",
+        "uniqueness": "This is real venue-native market structure, not generic commodity commentary.",
+        "completeness": "The rankings are strong, but the specific neighboring-strike mispricing check is only partially answered.",
+        "dataAccuracy": "The $200 execution facts are supported, but the response leans too hard on a relative-value conclusion without an actual neighbor comparison."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 10,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "The tail-strike neighbor check did not really fetch adjacent-strike quotes; the neighbors array only echoed $200 itself.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "Trace `tailStrikeCheck.neighbors` contains only the $200 row, so the 'not mispriced relative to neighbors' claim is under-supported.",
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "The system had good tradability data but converted a thin comparison artifact into a stronger relative-value conclusion than the evidence supports.",
+        "responseQualityNote": "Useful strike-level market color, with the tail-value call being the weak spot.",
+        "improvementLever": "Fetch explicit adjacent strikes like $170 and $160 in the comparison step before making a mispricing judgment.",
+        "diagnosticBrief": {
+          "toolUsed": "rank_event_tradability + compare_event_outcome_quotes",
+          "toolShouldHaveUsed": "compare_event_outcome_quotes with explicit neighboring strikes",
+          "argsUsed": "broad WTI event ranking plus a $200 tail comparison",
+          "argsShouldHaveUsed": "$200 plus adjacent strike names for an actual relative-value check",
+          "codeSnippet": null,
+          "toolResultSample": "$120 tradability 62 with 20 whales; $200 spread 0.10\u00a2, depth $7.85M, slippage5k 85%, neighbors=[only $200]",
+          "completenessVerdict": "Mostly answered, but the mispricing subquestion is only partially supported.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Strong live strike ranking, but the promised neighboring-strike mispricing test was not fully proven.",
+      "satisfactionMean": 4.0,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "For the 'Will WTI Crude Oil (WTI) hit (HIGH) $200 in April?' market, what exactly has to happen to resolve YES, and does the current quote compensate for the rules and tail-risk profile?",
+      "quotedExcerpts": [
+        "\"WTI Crude Oil must hit or exceed the specified price level ($200) during the month of April 2026.\"",
+        "\"Resolution is determined by the Pyth Network.\"",
+        "\"the market is under-compensating participants\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "scoreExplanations": {
+        "actionability": "It gives a practical limit-order recommendation and quantifies exit pain.",
+        "dataFreshness": "The quote, spread, and slippage figures are clearly live.",
+        "specificity": "It provides rule source, expiry timing, current price, spread, and multi-size slippage.",
+        "uniqueness": "The venue-native liquidity analysis is valuable buyer-side detail.",
+        "completeness": "It answers both resolution mechanics and compensation fairly well, though the exact rule text is still thin.",
+        "dataAccuracy": "Most claims are grounded, but the YES-condition sentence is partly inferred from the market framing because the fetched rules summary is sparse."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 15,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "Two side calls failed, so the answer rests mainly on rules metadata and liquidity output.",
+        "completenessIssue": "The trace confirms source and expiry, but not a richer verbatim rule text for the exact YES path.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "`rulesSummary.resolvesYesIf` only echoes the event title rather than a full natural-language rule sentence.",
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "The final rule phrasing is directionally reasonable, but the trace provides only a thin rules summary to support it.",
+        "responseQualityNote": "A solid buyer answer with a modest rules-text caveat.",
+        "improvementLever": "If richer rule text is unavailable, label the YES mechanics as inferred from the event naming instead of fully explicit source text.",
+        "diagnosticBrief": {
+          "toolUsed": "check_market_rules + analyze_market_liquidity",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "resolved WTI $200 market instrument",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "resolutionSource=Pyth; currentPrice 0.0105; spread 952.4 bps; sell5k slippage 63.9%",
+          "completenessVerdict": "Good answer with a mild rules-text caveat.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Good rerun: the buyer gets real execution-risk context, with only minor uncertainty around how explicit the rule text really was.",
+      "satisfactionMean": 4.33,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "For the 'Will there be no change in Fed interest rates after the April 2026 meeting?' market, does the live quote look efficient once you compare it with the related April Fed decision contracts on Polymarket?",
+      "quotedExcerpts": [
+        "\"the market for No change in Fed interest rates appears to be slightly inefficient\"",
+        "\"The total sum of prices for all outcomes in this event is 1.001\"",
+        "\"No change ... is priced richly compared to the other possible outcomes\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "scoreExplanations": {
+        "actionability": "The buyer gets a clear relative-value read even without a hard arbitrage recommendation.",
+        "dataFreshness": "The answer uses live-looking same-session market prices and volumes.",
+        "specificity": "It names all sibling outcomes and gives concrete prices, spreads, and volumes.",
+        "uniqueness": "This is stronger than a free macro answer because it uses actual venue pricing across the event curve.",
+        "completeness": "It answers efficiency versus related April contracts well, though it does not add direct depth or slippage on the No change leg.",
+        "dataAccuracy": "The key pricing conclusions match the trace, but the trace labeling around the primary market title is slightly messy."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 5,
+        "fragilityRisk": "medium",
+        "selectionIssue": "The trace primary-market title points to the 50+ bps contract while the chosen outcome is 'No change,' which is mildly confusing.",
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "There is no direct order-book or slippage check on the quoted premium.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "`primaryMarket.title` and `primaryOutcome` do not align cleanly in the trace metadata.",
+        "rootCauseCategory": "metadata_hygiene",
+        "rootCauseEvidence": "The event-level pricing read is good, but the trace wrappers around market identity are slightly inconsistent.",
+        "responseQualityNote": "Useful and credible buyer-facing comparison with a small trust hit from trace labeling.",
+        "improvementLever": "Keep the same event-level comparison, but add a direct liquidity read for the No change leg and clean up primary-market identity metadata.",
+        "diagnosticBrief": {
+          "toolUsed": "compare_market_against_related_contracts",
+          "toolShouldHaveUsed": "analyze_market_liquidity",
+          "argsUsed": "marketQuery for the April Fed No change contract",
+          "argsShouldHaveUsed": "same market plus a direct liquidity follow-up",
+          "codeSnippet": null,
+          "toolResultSample": "No change 0.9845; 25+ increase 0.0065; 25 decrease 0.0065; 50+ decrease 0.0035; eventPriceSum 1.001",
+          "completenessVerdict": "Good answer with a modest depth gap.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "A solid rerun that gives the buyer a real event-curve view, albeit without the last inch of execution detail.",
+      "satisfactionMean": 4.33,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "For the 'Will the Fed decrease interest rates by 50+ bps after the April 2026 meeting?' market, is there any live arbitrage or obvious overpricing/underpricing once depth and related Fed contracts are considered?",
+      "quotedExcerpts": [
+        "\"there is no direct arbitrage opportunity for the \"50+ bps decrease\" market\"",
+        "\"The total price sum across the April Fed decision outcomes is **1.001**\"",
+        "\"The market is efficiently priced based on current data.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "scoreExplanations": {
+        "actionability": "It gives a clear trading takeaway: no clean arb, and poor liquidity weakens any apparent cheapness.",
+        "dataFreshness": "The answer uses live-looking prices, spreads, volumes, and slippage for the current April Fed curve.",
+        "specificity": "Sibling outcome prices, spread, event price sum, and 14.3% slippage are all concrete.",
+        "uniqueness": "This is meaningful venue-specific contract analysis rather than generic macro commentary.",
+        "completeness": "It covers arbitrage, relative pricing, and depth fairly well, though the execution read is mostly on the sell side.",
+        "dataAccuracy": "The main claims line up with the trace, but the efficient-pricing conclusion still compresses some nuance around one-sided liquidity."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 18,
+        "fragilityRisk": "low",
+        "selectionIssue": "One broad market-list call added noise, but the core efficiency, liquidity, and sibling-comparison tools were correct.",
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "The response leans on sell-side slippage and does not show equivalent buy-side execution costs.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "The trace supports the no-arb view, but the final prose turns a more nuanced cheap-but-hard-to-trade setup into a cleaner efficient-pricing verdict.",
+        "responseQualityNote": "Useful and credible buyer-facing answer with only a mild over-compression of the liquidity nuance.",
+        "improvementLever": "Keep the same event-curve comparison, but add both buy-side and sell-side executable-size costs before calling the contract fully efficient.",
+        "diagnosticBrief": {
+          "toolUsed": "search_markets, check_market_efficiency, analyze_market_liquidity, compare_market_against_related_contracts",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "conditionId for the April 50+ bps decrease contract plus sibling-curve comparison",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "50+ bps decrease price=0.0035; spread=0.1 cent; eventPriceSum=1.001; sell-side slippage=14.3%",
+          "completenessVerdict": "Good answer with a small execution-detail caveat.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Good rerun: it gives the buyer a defensible no-arb read with real curve and liquidity evidence.",
+      "satisfactionMean": 4.33,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "On the 'Trump out as President by April 30?' market, has recent tape and whale flow been one-way enough to trust the quote, or is the price sitting on thin, noisy trading?",
+      "quotedExcerpts": [
+        "\"appears to be sitting on thin and noisy trading rather than a reliable, one-way tape\"",
+        "\"10 whales hold $1,490,008 in \\\"No\\\" vs. $14,108 in \\\"Yes\\\"\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 4,
+      "scoreExplanations": {
+        "actionability": "The buyer gets a clear practical takeaway: treat the quote as noisy rather than trusting recent tape.",
+        "dataFreshness": "The answer is anchored in live 24h trade flow, open interest, concentration, and current efficiency.",
+        "specificity": "It includes concrete trade counts, dollar flows, concentration percentages, and side-specific whale positioning.",
+        "uniqueness": "This is materially more venue-native than a generic political-market explanation.",
+        "completeness": "It addresses tape, whale flow, and the trustworthiness of the current quote.",
+        "dataAccuracy": "Most figures line up with the trace, but the narrative slightly overstates thin/noisy conditions given a 0.1 cent spread and zero vig."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 53.4,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "The response mixes a 50-trade tape sample with a 24h whale-flow window, and its noisy-trading verdict is harsher than the efficiency/spread data suggests.",
+        "rootCauseCategory": null,
+        "rootCauseEvidence": "The trace supports the quoted numbers: 24h whale net flow about $49.5k, smart money heavily NO, spread 0.1 cent, vig 0.",
+        "responseQualityNote": "Strong live-market color with a usable trader conclusion, even if the final tone is a bit more cautious than the microstructure alone implies.",
+        "improvementLever": "Explicitly reconcile the efficient quote and tight spread with the concentration-risk narrative.",
+        "diagnosticBrief": {
+          "toolUsed": "summarize_live_market_activity; analyze_single_market_whales; check_market_efficiency",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "marketQuery=\"Trump out as President by April 30?\"; hoursBack=24; slug=\"trump-out-as-president-by-april-30\"",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "Open interest=2,381,705.34; whale net flow=49,479.79; spreadCents=0.1; YES=1.55%, NO=98.45%.",
+          "completenessVerdict": "Substantially answered.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Good paid answer. It gives live tape and whale context that a trader could actually use.",
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "Build a tradability memo for the 'Kharg Island no longer under Iranian control by April 15?' market that combines rules risk, live quote quality, whale positioning, and recent activity into a buy / pass / avoid decision.",
+      "quotedExcerpts": [
+        "\"Decision: AVOID\"",
+        "\"Whale Positioning | Strong NO | 10 whales hold ~$881k in \"No\" positions vs. ~$12.6k in \"Yes.\"\"",
+        "\"Slippage: A $5,000 order faces ~83.6% exit slippage.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "The memo ends with a clear avoid decision and gives concrete execution reasons.",
+        "dataFreshness": "It is timestamped and uses live-looking quote, activity, and whale telemetry.",
+        "specificity": "The answer includes spread, slippage, whale balances, OI, and rules detail.",
+        "uniqueness": "This is meaningfully better than the free baseline because it ties venue-native quote/holder/activity evidence into one decision memo.",
+        "completeness": "It covers rules risk, quote quality, whale positioning, recent activity, and a final buy/pass/avoid call.",
+        "dataAccuracy": "Most facts look grounded, but the trace contains contradictory whale-direction text and odd search metadata, so confidence is not perfect."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 12,
+        "fragilityRisk": "medium",
+        "selectionIssue": "Search metadata points to a March 31 slug while the matched outcome and rules text are for April 15.",
+        "planningIssue": "Initial planning validation wanted more direct instrument-level steps, but execution did collect them.",
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "The trace memo says \"Whale flow leans with the YES side\" while direct whale holdings and the response say strong NO.",
+        "rootCauseCategory": "metadata_hygiene",
+        "rootCauseEvidence": "The direct evidence is strong, but wrapper text and selection metadata are internally inconsistent.",
+        "responseQualityNote": "Best buyer-facing answer in the batch despite trace hygiene issues.",
+        "improvementLever": "Expose the direct whale table consistently and suppress contradictory memo-wrapper phrasing.",
+        "diagnosticBrief": {
+          "toolUsed": "search_markets + check_market_rules + analyze_market_liquidity + analyze_top_holders + summarize_live_market_activity + build_market_tradability_memo",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "resolved conditionId workflow",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "5k exit slippage 83.6%; 10 whales hold about $881k NO vs about $12.6k YES",
+          "completenessVerdict": "Fully answered with minor trace inconsistency risk.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Strong paid-quality memo with concrete venue-native evidence; only trace hygiene issues keep it from top marks.",
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "Within the 'Democratic Presidential Nominee 2028' event, which candidate submarkets currently combine tight quotes with meaningful whale participation, and which ones are just illiquid headline prices?",
+      "quotedExcerpts": [
+        "\"These candidates have the highest \"Tradability Scores\" (84) because they combine tight spreads with significant institutional or \"whale\" backing.\"",
+        "\"Gavin Newsom is the most tradable submarket with the deepest depth and lowest slippage.\"",
+        "\"Celebrity and veteran politician submarkets ... appear cheap and tight on the spread, but executing even a $5,000 trade would result in double-digit slippage.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "scoreExplanations": {
+        "actionability": "A trader can immediately focus on Newsom and AOC while avoiding the headline-only traps.",
+        "dataFreshness": "It is framed as current market data, though it does not foreground a fetch timestamp.",
+        "specificity": "The answer names spreads, whale counts, whale value, prices, classifications, and $5k slippage.",
+        "uniqueness": "This is strong paid alpha because it translates event-wide market structure into an execution map.",
+        "completeness": "It directly answers both halves of the question: who is tradable and who is just a headline price.",
+        "dataAccuracy": "The rankings and classifications match the ranked-outcomes trace from `rank_event_tradability`."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 5,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": "A single event-level tradability ranking returned exactly the fields needed for a buyer-facing answer.",
+        "responseQualityNote": "Clean, high-signal event map with concrete execution relevance.",
+        "improvementLever": "None meaningful; preserve the direct event-ranking path.",
+        "diagnosticBrief": {
+          "toolUsed": "rank_event_tradability",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "eventQuery=\"Democratic Presidential Nominee 2028\"; limit=10",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "Newsom tradabilityScore=84, spread=0.2 cent, whaleCount=20, slippage5k=3.1%; AOC tradabilityScore=84",
+          "completenessVerdict": "Complete on first pass.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Excellent buyer answer: concise, specific, and directly tradable.",
+      "satisfactionMean": 4.83,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "Within the 'Rockets vs. Suns' event, which live submarkets look genuinely tradable tonight based on spread, depth, and activity rather than just displayed prices?",
+      "quotedExcerpts": [
+        "\"I am unable to provide a tradability analysis for the Rockets vs. Suns submarkets at this time.\"",
+        "\"The data retrieval process failed to resolve an exact head-to-head event for this matchup\"",
+        "\"the tool output contains no specific market data such as spreads, depth, or activity metrics.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 1,
+        "specificity": 2,
+        "uniqueness": 1,
+        "completeness": 1,
+        "dataAccuracy": 4
+      },
+      "scoreExplanations": {
+        "actionability": "The buyer gets no tradable submarket ranking or execution takeaway, only a failure notice.",
+        "dataFreshness": "No live spread, depth, activity, or submarket data is actually surfaced.",
+        "specificity": "The answer is clear about the failure mode and the missing metrics, but not about the market itself.",
+        "uniqueness": "An unresolved lookup with retry suggestions provides almost no paid differentiation.",
+        "completeness": "The requested tonight-only tradability analysis is entirely unanswered.",
+        "dataAccuracy": "The core failure claim matches the trace, though the suggestion that waiting for tip-off or more liquidity will help is speculative."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 23,
+        "fragilityRisk": "high",
+        "selectionIssue": "The workflow jumped straight to `rank_event_tradability` on a natural-language matchup without first verifying the exact live game event.",
+        "planningIssue": "There was no fallback discovery step once exact event resolution failed.",
+        "executionIssue": "The only tool call errored and the run terminated immediately afterward.",
+        "completenessIssue": "No Rockets vs. Suns submarket was resolved, ranked, or measured on spread, depth, or activity.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "selection_routing_issue",
+        "rootCauseEvidence": "The trace shows `toolCalls=1`, `failureCount=1`, and the single `rank_event_tradability` call returned `Could not resolve an exact head-to-head event for analysis.`",
+        "responseQualityNote": "Honest failure reporting, but still a poor buyer outcome because no market insight reaches the answer.",
+        "improvementLever": "Resolve the exact Rockets vs. Suns game event first, then run tradability analysis only on that verified event.",
+        "diagnosticBrief": {
+          "toolUsed": "rank_event_tradability",
+          "toolShouldHaveUsed": "search_markets or search_and_get_outcomes first, then rank_event_tradability after exact event verification",
+          "argsUsed": "query=\"Within the Rockets vs. Suns event, which live submarkets look genuinely tradable tonight based on spread, depth, and activity rather than just displayed prices?\"",
+          "argsShouldHaveUsed": "a verified Rockets vs. Suns game event slug or other exact event identifier",
+          "codeSnippet": null,
+          "toolResultSample": "error=\"rank_event_tradability failed: Could not resolve an exact head-to-head event for analysis.\"",
+          "completenessVerdict": "Failed before answering.",
+          "stageTimingBottleneck": "No timing bottleneck; exact event resolution failed on the first call."
+        }
+      },
+      "overallVerdict": "Weak rerun: the answer is honest about failure, but a paying buyer still gets no tradability analysis.",
+      "satisfactionMean": 1.67,
+      "differentiation": "low_differentiation"
+    },
+    {
+      "query": "For the 'Will Paris Saint-Germain FC win on 2026-04-08?' market, what are the current midpoint, spread, and orderbook depth, and is there enough liquidity for a fast in-and-out trade before kickoff?",
+      "quotedExcerpts": [
+        "\"Midpoint | 0.525\"",
+        "\"There is more than enough liquidity for a fast entry and exit before kickoff.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.67,
+      "scoreExplanations": {
+        "actionability": "A trader can directly use the midpoint, spread, depth, and slippage takeaways to decide on a quick in-and-out trade.",
+        "dataFreshness": "The answer is explicitly built from live liquidity output with a fetchedAt timestamp in trace.",
+        "specificity": "It gives concrete midpoint, bid, ask, spread, depth, and slippage figures.",
+        "uniqueness": "The live orderbook-style microstructure clearly beats a generic sports-betting explanation.",
+        "completeness": "It answers every part of the question, including the final liquidity judgement.",
+        "dataAccuracy": "The numbers align with the trace, though the depth includes synthetic complement liquidity and that caveat could have been made more prominent."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 32.18,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "Depth note says it includes synthetic liquidity from the complement token, which slightly softens the headline depth number.",
+        "rootCauseCategory": null,
+        "rootCauseEvidence": "analyze_market_liquidity returned midpoint 0.525, bid 0.52, ask 0.53, totalDepthUsd 6,048,419.57, and about 1% slippage for 1k/5k/10k sells.",
+        "responseQualityNote": "This is the kind of live, numeric answer a paying trader expects.",
+        "improvementLever": "Surface the synthetic-liquidity caveat inline with the depth table.",
+        "diagnosticBrief": {
+          "toolUsed": "analyze_market_liquidity",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "marketQuery=\"Will Paris Saint-Germain FC win on 2026-04-08?\"",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "currentPrice=0.525; bestBid=0.52; bestAsk=0.53; totalDepthUsd=6048419.57; liquidityScore=excellent.",
+          "completenessVerdict": "Complete.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Strong paid response with exactly the live microstructure details the buyer asked for.",
+      "differentiation": "high_differentiation"
+    },
+    {
+      "query": "Within 'The Masters - Winner', which golfer winner markets currently have the best combination of depth, tight spread, and whale participation, and which favorites are just expensive but untradeable?",
+      "quotedExcerpts": [
+        "\"Robert MacIntyre is currently ranked as the best combined outcome for trading\"",
+        "\"Matt Fitzpatrick has the highest whale participation with 3 whales contributing over $20,000\"",
+        "\"expensive but untradeable returned no results\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "scoreExplanations": {
+        "actionability": "The buyer gets a usable shortlist plus a whale-interest angle.",
+        "dataFreshness": "The golfer rows look like live session market data.",
+        "specificity": "It includes spread, depth, whale count, whale value, and tradability scores.",
+        "uniqueness": "This is real venue-specific tradability analysis rather than generic golf commentary.",
+        "completeness": "It answers most of the ask, though the 'favorites' dimension could be spelled out more explicitly.",
+        "dataAccuracy": "The main numeric claims align with the trace, but the narrative toggles between MacIntyre as best tradable and Fitzpatrick as best whale-backed idea, which is slightly muddled."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 5,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "The answer says no favorites are expensive/untradeable, but it does not explicitly list the highest-priced favorites checked.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "The raw ranking is good, but the narrative could align more tightly around whether the best trade is depth-led or whale-led.",
+        "responseQualityNote": "Good buyer-facing tradability snapshot with only a small framing wobble.",
+        "improvementLever": "Name the highest-priced favorites reviewed so the 'none are untradeable' conclusion feels fully grounded.",
+        "diagnosticBrief": {
+          "toolUsed": "rank_event_tradability",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "The Masters winner event query",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "Robert MacIntyre spread 0.1\u00a2 depth $551k; Matt Fitzpatrick whaleValue $20,955 with 3 whales",
+          "completenessVerdict": "Good answer with a minor favorites-coverage gap.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Strong rerun with useful golfer-level market structure, just short of a fully explicit favorites screen.",
+      "satisfactionMean": 4.33,
+      "differentiation": "high_differentiation"
+    }
+  ],
+  "aggregate": {
+    "satisfactionMean": 4.332,
+    "satisfactionMin": 1.67,
+    "queryCount": 18,
+    "queriesAbove4": 17,
+    "queriesBelow3": 1,
+    "fragilityReport": {
+      "highCount": 1,
+      "mediumCount": 6,
+      "lowCount": 11,
+      "highFragilityRate": 0.056,
+      "highFragilityQueryIds": [
+        "Within the 'Rockets vs. Suns' event, which live submarkets look genuinely tradable tonight based on spread, depth, and activity rather than just displayed prices?"
+      ]
+    },
+    "differentiationSummary": {
+      "high_differentiation": 17,
+      "moderate_differentiation": 0,
+      "low_differentiation": 1,
+      "baselineBeatenRate": 0.944
+    },
+    "highDifferentiationLowSatisfactionIndices": [],
+    "topImprovementLevers": [
+      "None meaningful; preserve the direct liquidity-plus-orderbook flow.",
+      "Keep the same synthesis quality and add a second timed OI snapshot when the workflow needs velocity.",
+      "Add one sharper practical gotcha, such as the exact publication-lag risk, to make the trade implication even more actionable.",
+      "Add depth or slippage so the execution recommendation rests on more than spread and volume.",
+      "None substantial; this is already the kind of event-level read a buyer wants.",
+      "Pass named outcomes directly into a comparison/liquidity method instead of relying on custom alias binding.",
+      "Translate the slippage table into a tighter buyer-facing max-size band for entries, not just exits.",
+      "Minor only: add a one-line caveat about how thin YES participation can distort headline price discovery.",
+      "Fetch explicit adjacent strikes like $170 and $160 in the comparison step before making a mispricing judgment.",
+      "If richer rule text is unavailable, label the YES mechanics as inferred from the event naming instead of fully explicit source text.",
+      "Keep the same event-level comparison, but add a direct liquidity read for the No change leg and clean up primary-market identity metadata.",
+      "Keep the same event-curve comparison, but add both buy-side and sell-side executable-size costs before calling the contract fully efficient."
+    ]
+  }
+}

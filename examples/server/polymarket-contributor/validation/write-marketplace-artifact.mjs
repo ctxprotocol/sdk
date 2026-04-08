@@ -1,8 +1,18 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  aggregateTraceSystemicIssues,
+  analyzeDeveloperTrace,
+} from "../../../../../context/scripts/trace-informed-diagnosis.mjs";
+import {
+  computeReleaseDecision,
+  writeReleaseDecisionFile,
+} from "../../../../../.cursor/hooks/pipeline-release-decision.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = path.resolve(__dirname, "../../../../../");
+const CONTRIBUTOR_NAME = "polymarket-contributor";
 
 const TOOL_ID = "294100e8-c648-4e5f-a254-95a14b56e398";
 const PROMPT_POOL_PATH = path.resolve(__dirname, "full-enhancement-prompt-pool.json");
@@ -419,12 +429,250 @@ function getFailedPromptLabels(results) {
   return getFailedPromptRuns(results).map((run) => run.id);
 }
 
+function buildExpectedToolNames(answerability) {
+  const checks = Array.isArray(answerability?.checks) ? answerability.checks : [];
+  const passingChecks = checks.filter((check) => check?.ok === true);
+  const sourceChecks = passingChecks.length > 0 ? passingChecks : checks;
+  return [...new Set(sourceChecks.map((check) => check?.toolName).filter(Boolean))];
+}
+
+function extractRunToolNames(run, rawRun) {
+  const directNames = Array.isArray(run?.toolsUsed)
+    ? run.toolsUsed.map((tool) => tool?.name).filter(Boolean)
+    : [];
+  if (directNames.length > 0) {
+    return [...new Set(directNames)];
+  }
+  const rawNames = Array.isArray(rawRun?.paidRun?.result?.toolsUsed)
+    ? rawRun.paidRun.result.toolsUsed.map((tool) => tool?.name).filter(Boolean)
+    : [];
+  return [...new Set(rawNames)];
+}
+
+function mapResidualFailureClass(traceAnalysis, promptAnalysis) {
+  if (traceAnalysis.fixScope === "infra") {
+    return "timeout";
+  }
+  if (traceAnalysis.bottleneckStage === "selection") {
+    return traceAnalysis.toolSelectionOptimal === false
+      ? "method_selection"
+      : "discovery_routing";
+  }
+  if (traceAnalysis.bottleneckStage === "synthesis") {
+    return "metadata_hygiene";
+  }
+  if (traceAnalysis.fixScope === "planner" || traceAnalysis.fixScope === "verifier") {
+    return "planner_overhead";
+  }
+  if (promptAnalysis.outcomeType === "timeout") {
+    return "timeout";
+  }
+  return "unknown";
+}
+
+function buildSuspectedFiles(traceAnalysis) {
+  switch (traceAnalysis.fixScope) {
+    case "contributor":
+      return ["context-sdk/examples/server/polymarket-contributor/server.ts"];
+    case "planner":
+      return [
+        "context/lib/ai/prompts.ts",
+        "context/lib/ai/query-preplan-probe.ts",
+        "context/lib/ai/agentic-execution.ts",
+      ];
+    case "verifier":
+      return [
+        "context/lib/ai/agentic-execution.ts",
+        "context/app/api/v1/query/route.ts",
+      ];
+    case "infra":
+      return [
+        "context/lib/ai/query-config.ts",
+        "context/lib/ai/skills/mcp.ts",
+        "context/lib/ai/agentic-execution.ts",
+      ];
+    default:
+      if (traceAnalysis.bottleneckStage === "selection") {
+        return [
+          "context/lib/ai/scout-orchestration.ts",
+          "context/lib/ai/query-preplan-probe.ts",
+          "context/app/api/v1/query/route.ts",
+        ];
+      }
+      return [
+        "context/lib/ai/agentic-execution.ts",
+        "context/app/api/v1/query/route.ts",
+      ];
+  }
+}
+
+function buildDirectMcpEvidence(answerability) {
+  const checks = Array.isArray(answerability?.checks) ? answerability.checks : [];
+  const bestCheck = checks.find((check) => check?.ok === true) ?? checks[0] ?? null;
+  return {
+    method: bestCheck?.toolName ?? null,
+    keyOutputFields: Array.isArray(bestCheck?.structuredKeys)
+      ? bestCheck.structuredKeys
+      : [],
+    latencyMs: null,
+    notes: answerability?.answerabilityNote ?? null,
+  };
+}
+
+function buildTraceDiagnostics(promptPool, resultsMap, results, alphaCategoryWhyMap) {
+  const rawPromptRuns = Array.isArray(results.rawPromptRuns) ? results.rawPromptRuns : [];
+  const rawRunsById = new Map(rawPromptRuns.map((run) => [run.id, run]));
+  const promptAnalyses = [];
+
+  for (const prompt of promptPool) {
+    const run = resultsMap.get(prompt.id);
+    const rawRun = rawRunsById.get(prompt.id);
+    if (!run || !rawRun) {
+      continue;
+    }
+
+    const differentiation = getCalibratedDifferentiation(
+      prompt,
+      run,
+      alphaCategoryWhyMap
+    );
+    const outcomeType =
+      run.outcomeType ?? rawRun?.paidRun?.result?.outcomeType ?? "error";
+    const needsTraceDiagnosis =
+      differentiation !== "high_differentiation" || outcomeType !== "answer";
+    const developerTrace = rawRun?.paidRun?.result?.developerTrace ?? null;
+
+    if (!needsTraceDiagnosis || !developerTrace) {
+      continue;
+    }
+
+    const traceAnalysis = analyzeDeveloperTrace({
+      promptId: prompt.id,
+      developerTrace,
+      outcomeType,
+      toolCalls: run.toolCalls ?? developerTrace?.summary?.toolCalls ?? 0,
+      toolNames: extractRunToolNames(run, rawRun),
+      expectedToolNames: buildExpectedToolNames(rawRun.answerability),
+      coverageStatus:
+        rawRun?.answerability?.upstreamAnswerability ??
+        run.upstreamAnswerability ??
+        "unanswerable_upstream",
+      differentiation,
+    });
+
+    if (!traceAnalysis) {
+      continue;
+    }
+
+    promptAnalyses.push({
+      id: prompt.id,
+      prompt: prompt.prompt,
+      status: run.status ?? "fail",
+      differentiation,
+      outcomeType,
+      upstreamAnswerability:
+        rawRun?.answerability?.upstreamAnswerability ??
+        run.upstreamAnswerability ??
+        "unanswerable_upstream",
+      comparisonNote: run.comparisonNote ?? "",
+      traceAnalysis,
+    });
+  }
+
+  return {
+    generatedAt: new Date().toISOString(),
+    analyzedPromptCount: promptAnalyses.length,
+    promptAnalyses,
+    systemicIssues: aggregateTraceSystemicIssues(
+      promptAnalyses.map((entry) => entry.traceAnalysis)
+    ),
+  };
+}
+
+function buildResidualDiagnostics(results, surfaceChecks, signoff, traceDiagnostics) {
+  if (
+    signoff.overallReleaseStatus.status !== "FAIL" ||
+    !Array.isArray(traceDiagnostics?.promptAnalyses) ||
+    traceDiagnostics.promptAnalyses.length === 0
+  ) {
+    return null;
+  }
+
+  const residualPromptAnalyses = traceDiagnostics.promptAnalyses.filter(
+    (entry) => entry.traceAnalysis.fixScope !== "contributor"
+  );
+  if (residualPromptAnalyses.length === 0) {
+    return null;
+  }
+
+  const rawPromptRuns = Array.isArray(results.rawPromptRuns) ? results.rawPromptRuns : [];
+  const rawRunsById = new Map(rawPromptRuns.map((run) => [run.id, run]));
+
+  const metadataIssues = residualPromptAnalyses
+    .filter(
+      (entry) =>
+        entry.outcomeType === "answer" ||
+        entry.traceAnalysis.fixScope === "verifier" ||
+        entry.traceAnalysis.bottleneckStage === "synthesis"
+    )
+    .map((entry) => ({
+      issue: entry.traceAnalysis.rootCause,
+      affectedPrompts: [entry.prompt],
+      suspectedFiles: buildSuspectedFiles(entry.traceAnalysis),
+      fixHypothesis: entry.traceAnalysis.suggestedFix,
+    }));
+
+  return {
+    generatedAt: new Date().toISOString(),
+    failingPrompts: residualPromptAnalyses.map((entry) => {
+      const rawRun = rawRunsById.get(entry.id);
+      const answerability = rawRun?.answerability ?? null;
+      const directMcpEvidence = buildDirectMcpEvidence(answerability);
+      return {
+        prompt: entry.prompt,
+        expectedBehavior:
+          answerability?.answerabilityNote ??
+          "Direct MCP checks already proved a grounded live answer path for this prompt.",
+        directMcpMethod: directMcpEvidence.method,
+        directMcpPassed: entry.upstreamAnswerability !== "unanswerable_upstream",
+        queryTraceToolCalls:
+          rawRun?.paidRun?.result?.developerTrace?.summary?.toolCalls ??
+          rawRun?.paidRun?.result?.toolsUsed?.reduce(
+            (sum, tool) => sum + (tool?.skillCalls ?? 0),
+            0
+          ) ??
+          0,
+        queryOutcomeType: entry.outcomeType,
+        queryLatencyMs: rawRun?.paidRun?.result?.durationMs ?? null,
+        failureClass: mapResidualFailureClass(entry.traceAnalysis, entry),
+        rootCauseHypothesis: entry.traceAnalysis.rootCause,
+        suspectedFiles: buildSuspectedFiles(entry.traceAnalysis),
+        directMcpEvidence,
+        traceAnalysis: entry.traceAnalysis,
+      };
+    }),
+    metadataIssues,
+    contributorGroundTruth: {
+      directEndpointHealthy: signoff.directEndpointValidation.status === "PASS",
+      authContractPassed: signoff.authContract.status === "PASS",
+      freshnessParity: results.summary.passRate === 1,
+      executeValidationPassed: signoff.executeModeAlignment.status === "PASS",
+      notes:
+        surfaceChecks.externalAccuracyCheck.status === "PASS"
+          ? "Direct MCP answerability checks stayed healthy and the raw upstream ranking spot check did not detect a wrong-universe drift."
+          : "Direct MCP checks stayed available, but at least one validation gate still diverged from the current runtime expectations.",
+    },
+    systemicIssues: traceDiagnostics.systemicIssues,
+  };
+}
+
 function buildValidationEvidence(
   results,
   surfaceChecks,
   promptPool,
   resultsMap,
-  alphaCategoryWhyMap
+  alphaCategoryWhyMap,
+  traceDiagnostics
 ) {
   const differentiation = summarizeDifferentiation(
     promptPool,
@@ -478,6 +726,13 @@ function buildValidationEvidence(
         promptPool,
         resultsMap,
         alphaCategoryWhyMap
+      ),
+    },
+    traceAnalysis: {
+      analyzedPromptCount: traceDiagnostics.analyzedPromptCount,
+      systemicIssueCount: traceDiagnostics.systemicIssues.length,
+      promptsRequiringAttention: traceDiagnostics.promptAnalyses.map(
+        (entry) => entry.id
       ),
     },
     upstreamCoverageReview: API_COVERAGE_REVIEW,
@@ -545,7 +800,11 @@ function buildDataQualityValidation(results, surfaceChecks) {
   };
 }
 
-function buildSignoff(results, surfaceChecks, questionMarketFit) {
+function buildSignoff(
+  results,
+  surfaceChecks,
+  questionMarketFit
+) {
   const failedPromptLabels = getFailedPromptLabels(results);
   const queryPass =
     results.summary.passRate === 1 &&
@@ -555,7 +814,11 @@ function buildSignoff(results, surfaceChecks, questionMarketFit) {
   const directPass =
     authPass && surfaceChecks.externalAccuracyCheck.status === "PASS";
   const apiValuePass = questionMarketFit.apiValueExtractionStatus === "PASS";
-  const overallPass = queryPass && executePass && directPass && apiValuePass;
+  const overallPass =
+    queryPass &&
+    executePass &&
+    directPass &&
+    apiValuePass;
 
   return {
     apiValueExtraction: {
@@ -568,6 +831,20 @@ function buildSignoff(results, surfaceChecks, questionMarketFit) {
         : [
             "Too many must-win prompts collapsed toward a low-differentiation free baseline, so the paid value proposition is not yet strong enough.",
           ],
+    },
+    buyerSatisfaction: {
+      status: "DEFERRED_TO_REVIEWER",
+      notes: [
+        "Buyer satisfaction scoring is handled by the pipeline-reviewer readonly subagent.",
+        "See reviewer-evaluation.json in the contributor's validation directory for scores.",
+      ],
+    },
+    traceAssessment: {
+      status: "DEFERRED_TO_REVIEWER",
+      notes: [
+        "Trace assessment is handled by the pipeline-reviewer readonly subagent.",
+        "See reviewer-evaluation.json in the contributor's validation directory for per-query trace assessments.",
+      ],
     },
     queryModeAlignment: {
       status: queryPass ? "PASS" : "FAIL",
@@ -649,7 +926,7 @@ function buildSignoff(results, surfaceChecks, questionMarketFit) {
             "The remaining work is manual browser QA plus the user's normal commit, push, and deploy flow.",
           ]
         : [
-            `Automated validation is blocked by the remaining pinned prompt failure(s): ${failedPromptLabels.join(", ")}.`,
+            `Automated validation is blocked by the remaining pinned prompt failure(s): ${failedPromptLabels.join(", ") || "none"}. Buyer satisfaction and trace assessment are evaluated separately by the reviewer subagent.`,
           ],
     },
     progressFrontier: {
@@ -671,24 +948,31 @@ function buildSignoff(results, surfaceChecks, questionMarketFit) {
         : "resolve the remaining pinned prompt failure and rerun automated signoff",
       blockerOrStopReason: overallPass
         ? "Automated work is complete; the remaining steps are intentionally manual."
-        : `Pinned prompt failure(s) still remain: ${failedPromptLabels.join(", ")}.`,
+        : `Remaining blockers include pinned prompt failures (${failedPromptLabels.join(", ") || "none"}). Buyer satisfaction and trace fragility are evaluated by the reviewer subagent in reviewer-evaluation.json.`,
     },
   };
 }
 
-function buildQualityGates(signoff) {
-  const passed = signoff.overallReleaseStatus.status === "PASS";
+function buildQualityGates(releaseDecision) {
+  const reviewer = releaseDecision.reviewer ?? {};
+  const reviewerSummary = reviewer.summary ?? {};
+  const reviewerChecks = reviewer.passedChecks ?? {};
+  const localValidation = releaseDecision.localValidation ?? {};
+  const localChecks = localValidation.checks ?? {};
+  const release = releaseDecision.release ?? {};
   return {
-    passed,
-    directValidationPassed: signoff.directEndpointValidation.status === "PASS",
-    authContractPassed: signoff.authContract.status === "PASS",
-    queryMarketplaceValidationCompleted: true,
-    executeMarketplaceValidationCompleted: true,
-    descriptionSyncDryRunCompleted: false,
-    descriptionSyncApplyCompleted: false,
-    reasons: passed
-      ? []
-      : ["One or more automated local validation gates are still failing."],
+    passed: release.artifactWriteAllowed === true,
+    reviewerGatePassed: reviewer.passed === true,
+    buyerSatisfactionPassed: reviewerChecks.satisfactionMeanGte3_5 === true,
+    fragilityPassed: reviewerChecks.highFragilityLte0_3 === true,
+    highDifferentiationFloorPassed: reviewerChecks.noHighDiffBelow3 === true,
+    differentiationPassed: reviewerChecks.differentiationViable === true,
+    blockingPromptIdsBelow3: reviewerSummary.blockingHighDifferentiationPromptIds ?? [],
+    directValidationPassed: localChecks.directValidationPassed === true,
+    authContractPassed: localChecks.authContractPassed === true,
+    queryMarketplaceValidationPassed: localChecks.queryValidationPassed === true,
+    executeMarketplaceValidationPassed: localChecks.executeValidationPassed === true,
+    releaseBlockers: release.blockers ?? [],
   };
 }
 
@@ -756,6 +1040,33 @@ ${API_COVERAGE_REVIEW.map((item) => `- ${item.area}: ${item.decision} - ${item.r
 }
 
 async function main() {
+  const releaseDecision = computeReleaseDecision({
+    rootDir: ROOT_DIR,
+    contributor: CONTRIBUTOR_NAME,
+  });
+  writeReleaseDecisionFile({
+    rootDir: ROOT_DIR,
+    contributor: CONTRIBUTOR_NAME,
+    decision: releaseDecision,
+  });
+
+  if (releaseDecision.release.artifactWriteAllowed !== true) {
+    const blockers = Array.isArray(releaseDecision.release.blockers)
+      ? releaseDecision.release.blockers.join(" ")
+      : "Unknown release blockers.";
+    throw new Error(
+      `Centralized release decision blocks marketplace artifact write for ${CONTRIBUTOR_NAME}: ${blockers}`
+    );
+  }
+
+  const artifactDecisionForEmbed = {
+    ...releaseDecision,
+    artifact: {
+      exists: true,
+      status: "consistent",
+    },
+  };
+
   const promptPool = await readJson(PROMPT_POOL_PATH);
   const results = await readJson(RESULTS_PATH);
   const surfaceChecks = await readJson(SURFACE_CHECKS_PATH);
@@ -783,8 +1094,31 @@ async function main() {
     resultsMap,
     alphaCategoryWhyMap
   );
-  const signoff = buildSignoff(results, surfaceChecks, questionMarketFit);
-  const qualityGates = buildQualityGates(signoff);
+  const traceDiagnostics = buildTraceDiagnostics(
+    promptPool,
+    resultsMap,
+    results,
+    alphaCategoryWhyMap
+  );
+  const signoff = buildSignoff(
+    results,
+    surfaceChecks,
+    questionMarketFit
+  );
+  signoff.overallReleaseStatus = {
+    status: "PASS",
+    notes: [
+      "The centralized release decision is green for this contributor.",
+      "The automated local work is complete and the artifact is being written through the wrapper path.",
+    ],
+  };
+  const qualityGates = buildQualityGates(artifactDecisionForEmbed);
+  const residualDiagnostics = buildResidualDiagnostics(
+    results,
+    surfaceChecks,
+    signoff,
+    traceDiagnostics
+  );
 
   const artifact = {
     generatedAt: new Date().toISOString(),
@@ -803,15 +1137,25 @@ async function main() {
     },
     questionMarketFit,
     verticalAlphaResearch,
+    reviewerEvaluationSummary: artifactDecisionForEmbed.reviewer.summary,
     validationEvidence: buildValidationEvidence(
       results,
       surfaceChecks,
       promptPool,
       resultsMap,
-      alphaCategoryWhyMap
+      alphaCategoryWhyMap,
+      traceDiagnostics
     ),
     dataQualityValidation: buildDataQualityValidation(results, surfaceChecks),
     signoff,
+    releaseDecision: {
+      status: artifactDecisionForEmbed.release.status,
+      artifactWriteAllowed: artifactDecisionForEmbed.release.artifactWriteAllowed,
+      blockers: artifactDecisionForEmbed.release.blockers,
+      iteration: artifactDecisionForEmbed.iteration,
+      artifact: artifactDecisionForEmbed.artifact,
+      decisionPath: artifactDecisionForEmbed.paths.releaseDecisionPath,
+    },
     qualityGates,
     marketplaceStage: "post-submission",
     toolIdOrName: TOOL_ID,
@@ -822,8 +1166,9 @@ async function main() {
       formFields,
       generatedDescription
     ),
+    traceDiagnostics,
     promptSetsStatus: `local-full-enhancement-${results.generatedAt}`,
-    residualDiagnostics: null,
+    residualDiagnostics,
     apiCoverageReview: API_COVERAGE_REVIEW,
   };
 
@@ -839,6 +1184,16 @@ async function main() {
 
   await writeFile(ARTIFACT_PATH, `${JSON.stringify(artifact, null, 2)}\n`, "utf8");
   await writeFile(SIGNOFF_PATH, signoffMarkdown, "utf8");
+
+  const refreshedDecision = computeReleaseDecision({
+    rootDir: ROOT_DIR,
+    contributor: CONTRIBUTOR_NAME,
+  });
+  writeReleaseDecisionFile({
+    rootDir: ROOT_DIR,
+    contributor: CONTRIBUTOR_NAME,
+    decision: refreshedDecision,
+  });
 
   console.log(`Saved ${ARTIFACT_PATH}`);
   console.log(`Saved ${SIGNOFF_PATH}`);

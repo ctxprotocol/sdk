@@ -1,0 +1,270 @@
+{
+  "reviewedAt": "2026-04-06T12:00:00.000Z",
+  "perQueryEvaluations": [
+    {
+      "query": "get_top_markets sortBy volume category sports minLiquidity 25000 limit 8: return each market title, currentPrice, volume24h, liquidity, and url from tool output only.",
+      "quotedExcerpts": [
+        "Based on the data from the past query, here are the top sports markets sorted by volume:",
+        "| Pacers vs. Cavaliers | 0.07500000000000001 | 885353.7354430001 | 1436752.9967 | [Link](https://polymarket.com/event/nba-ind-cle-2026-04-05) |",
+        "| Raptors vs. Celtics | 0.195 | 871536.9235280005 | 1811909.2783 | [Link](https://polymarket.com/event/nba-tor-bos-2026-04-05) |"
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 2,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 2,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 2.83,
+      "scoreExplanations": {
+        "actionability": "You only get two named markets with prices and depth, not a ranked list of eight actionable choices as requested.",
+        "dataFreshness": "The answer cites no as-of time or data pull timestamp despite the rubric tying freshness to explicit recency cues.",
+        "specificity": "Where it does answer, it gives exact prices, 24h volume, liquidity, and Polymarket URLs for two events.",
+        "uniqueness": "The table is clearly tool-grounded (exact floats and event links) rather than generic commentary, but it is thin versus a full top-8 screen.",
+        "completeness": "The prompt demanded limit 8 rows with all fields; the response stops after two rows and never explains the shortfall.",
+        "dataAccuracy": "The two rows differ plausibly in price, volume, and liquidity with no obvious copy-paste uniformity across entities."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 1,
+        "selfHealCount": 1,
+        "budgetConsumedPct": 6,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "Completeness pass flagged fewer than eight markets; execution retried and added a minLiquidity=0 call but toolCallHistory still shows only two markets in each result payload.",
+        "completenessIssue": "diagnostics.completeness path reported missing eight markets while the shipped answer silently presents only two.",
+        "codeIssueDetail": "finalCode fallback merges duplicate markets and slices(0,8) but upstream get_top_markets results never exceed two entries for these filters (see toolCallHistory repeated get_top_markets args and two-market arrays).",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "upstream_api_limitation",
+        "rootCauseEvidence": "toolCallHistory shows get_top_markets returning only two markets even after minLiquidity=0 fallback, matching the two-row answer.",
+        "responseQualityNote": "Honest numeric extraction for two NBA events, but it fails the buyer\u2019s explicit limit-8 contract and omits why the long tail is missing.",
+        "improvementLever": "State that the API only returned two qualifying sports markets under the filters (and show fetchedAt/endDate from the tool) or relax category/liquidity and label the tradeoff.",
+        "diagnosticBrief": {
+          "toolUsed": "get_top_markets",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"sortBy\": \"volume\", \"category\": \"sports\", \"minLiquidity\": 25000, \"limit\": 8} then {\"minLiquidity\": 0}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "if (markets.length < 8) {\n    const fallback = await callMcpSkill({\n      toolName: \"get_top_markets\",\n      args: { sortBy: \"volume\", category: \"sports\", minLiquidity: 0, limit: 8 }\n    });",
+          "toolResultSample": "{\"sortedBy\": \"volume\", \"markets\": [{\"rank\": 1, \"title\": \"Pacers vs. Cavaliers\", \"url\": \"https://polymarket.com/event/nba-ind-cle-2026-04-05\", \"slug\": \"nba-ind-cle-2026-04-05\", \"conditionId\": \"0x00e5c807d5b17f61e851b245ff2310188c3409ac8983b2d978990f4666e44d5a\", \"currentPrice\": 0.07500000000000001, \"volume24h\": 885353.7354430001, \"totalVolume\": 910033.9042210003, \"liquidity\": 1436752.9967, \"endDate\": \"2026-04-05T22:00:00Z\", \"category\": \"sports\"}, {",
+          "completenessVerdict": "First completeness evaluation marked isComplete false because only two markets were returned versus limit 8 (timeline verification-decision retry_same_tools).",
+          "stageTimingBottleneck": "execution=22116ms"
+        }
+      },
+      "overallVerdict": "I would not pay again because I asked for eight markets and only received two with no explanation."
+    },
+    {
+      "query": "find_moderate_probability_bets with category politics minLiquidity 20000 sortBy liquidity limit 5: return market, currentPrice, potentialReturn, liquidity, and url.",
+      "quotedExcerpts": [
+        "Based on the data returned from the market scan, 760 markets were analyzed, and 75 matched the criteria for moderate-probability politics bets (price range 40\u201375\u00a2).",
+        "However, the specific list of individual bets is currently empty in the results.",
+        "To view the specific market names and URLs, you may want to try relaxing the liquidity requirement or searching for a specific political sub-topic."
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 2,
+        "specificity": 3,
+        "uniqueness": 3,
+        "completeness": 1,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 2.0,
+      "scoreExplanations": {
+        "actionability": "There are no named trades, URLs, or prices to act on despite the scan narrative.",
+        "dataFreshness": "No timestamp of the scan; aggregate stats could be stale with no way to know.",
+        "specificity": "The summary counts (760 scanned, 75 matches, 96% average return) are concrete but not the requested per-market fields.",
+        "uniqueness": "The aggregate statistics hint at tool use, but the missing rows mean you do not get curated Polymarket picks.",
+        "completeness": "Every required column for five markets is absent; the answer stops at a hollow summary.",
+        "dataAccuracy": "Saying 75 matches while listing zero rows conflicts with toolCallHistory previews showing populated opportunities, so the buyer-facing story does not match the trace."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": 8,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": "diagnostics.planning.initial validation initially failed and forced a rewrite to inject pickTopSemanticCandidates per planner guidance.",
+        "executionIssue": "Generated code filters opportunities for 'politics' substrings and runs pickTopSemanticCandidates with avoidTerms including 'jesus'/'christ', yielding an empty bets array even though the tool returned liquid candidates.",
+        "completenessIssue": "Two completeness passes flagged wrong-category/no-row outputs; retries never produced the requested five-row table.",
+        "codeIssueDetail": "const ranked = pickTopSemanticCandidates({\n    target: \"moderate-probability politics bets with liquidity at or above 20000\",\n    candidates: politicalOpportunities,\n    requiredTerms: [\"politics\"],\n    avoidTerms: [\"nba\", \"soccer\", \"juventus\", \"roma\", \"como\", \"jesus\", \"christ\"],\n    limit: 5\n  });",
+        "dataAccuracyRedFlags": "Buyer text claims 75 matching bets but returns an empty list while tool previews show a top opportunity string starting with Will Jesus Christ return before GTA VI.",
+        "rootCauseCategory": "code_generation_error",
+        "rootCauseEvidence": "developerTrace.finalCode over-filters and uses avoidTerms that eliminate the tool\u2019s returned rows, producing an empty bets array despite successful find_moderate_probability_bets calls.",
+        "responseQualityNote": "Aggregate scan metrics create false confidence while the actual deliverable\u2014five markets with URLs\u2014is missing.",
+        "improvementLever": "Trust the tool\u2019s category filter and return the top five liquidity rows (or fix server categorization) instead of aggressive client-side semantic stripping.",
+        "diagnosticBrief": {
+          "toolUsed": "find_moderate_probability_bets",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"category\": \"politics\", \"minLiquidity\": 20000, \"sortBy\": \"liquidity\", \"limit\": 5}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "const politicalOpportunities = opportunities.filter((item) => {\n    const category = String(item?.category ?? \"\").toLowerCase();\n    return category === \"politics\" || market.includes(\"politic\") || slug.includes(\"politic\");\n  });",
+          "toolResultSample": "{\"opportunities\":[{\"market\":\"Will Jesus Christ return before GTA VI?\",\"url\":\"https://polymarket.com/event/what-will-happen-before-gta-vi\",\"slug\":\"what-will-happen-before-gta-vi\",\"conditionId\":\"0x32b09f6390252b37d674501527e709016d55581b2c1e544bd4b8167f5f732f4c\",\"currentPrice\":0.485,\"impliedProbability\":\"49%\",\"potentialReturn\":\"106% (2.06x)\",\"liquidity\":866734.0916,\"volume24h\":227217.15221500004,\"endDate\":\"2026-0",
+          "completenessVerdict": "Attempts 1\u20132 marked isComplete false because returned markets were novelty/NBA instead of politics and required fields were missing.",
+          "stageTimingBottleneck": "execution=39289ms"
+        }
+      },
+      "overallVerdict": "I would not pay again because I still do not have a single named market with a link."
+    },
+    {
+      "query": "check_market_rules for slug will-ethereum-hit-5000-by-end-of-2026 (if not found, use the highest-liquidity live crypto market from get_top_markets sortBy liquidity limit 1): summarize resolvesYesIf, resolvesNoIf, and list every potentialGotchas entry.",
+      "quotedExcerpts": [
+        "I was unable to find specific market rules for the slug `will-ethereum-hit-5000-by-end-of-2026`.",
+        "Because no matching market data was returned by the source, I cannot provide the specific resolution criteria (`resolvesYesIf`, `resolvesNoIf`) or the `potentialGotchas` list you requested.",
+        "*   **Fallback Market:** The secondary search for top crypto markets by liquidity returned an empty set, resulting in a \"No usable fallback market\" status."
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 2,
+        "specificity": 2,
+        "uniqueness": 2,
+        "completeness": 1,
+        "dataAccuracy": 1
+      },
+      "satisfactionMean": 1.5,
+      "scoreExplanations": {
+        "actionability": "No resolution rules or gotchas are provided, so a trader cannot judge how the contract settles.",
+        "dataFreshness": "No fetched-at timing accompanies the negative result.",
+        "specificity": "Only repeats the slug and generic advice; none of the requested structured fields appear.",
+        "uniqueness": "Reads like a templated failure message without the actual rule text the tools surfaced.",
+        "completeness": "Omits resolvesYesIf, resolvesNoIf, and potentialGotchas entirely, including for any fallback market.",
+        "dataAccuracy": "developerTrace.toolCallHistory shows check_market_rules returning a Bitcoin market with rulesSummary text while the answer claims the source returned nothing, an internal contradiction."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": 6,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "finalCode sets needsFallback when gotchas empty and generic resolves text, then aborts because get_top_markets(category crypto) returned zero rows, discarding the non-empty check_market_rules payload already retrieved.",
+        "completenessIssue": "diagnostics.completeness triggered needsDifferentTools after noting Bitcoin rules were returned instead of Ethereum; synthesis still produced a total data-absence narrative.",
+        "codeIssueDetail": "const needsFallback =\n    !first ||\n    !first.market ||\n    ...\n    (rulesGotchas.length === 0 && !first.rulesSummary.resolvesYesIf && !first.rulesSummary.resolvesNoIf);",
+        "dataAccuracyRedFlags": "toolCallHistory check_market_rules result includes fallbackUsed true, resolvedSlug what-price-will-bitcoin-hit-in-april-2026, and rulesSummary fields, conflicting with user-facing 'no matching market data'.",
+        "rootCauseCategory": "code_generation_error",
+        "rootCauseEvidence": "developerTrace.finalCode\u2019s needsFallback/stopReason branch returns fallback_failed despite check_market_rules already returning populated rulesSummary data in toolCallHistory.",
+        "responseQualityNote": "Clear structure and next-step suggestions, but it hides concrete rule text that existed in the tool output.",
+        "improvementLever": "When the slug mismatches but the tool supplies a fallback market, present that market\u2019s resolvesYesIf, resolvesNoIf, and gotchas with an explicit mismatch warning instead of declaring total failure.",
+        "diagnosticBrief": {
+          "toolUsed": "check_market_rules; get_top_markets",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "check_market_rules {\"slug\": \"will-ethereum-hit-5000-by-end-of-2026\"}; get_top_markets {\"sortBy\": \"liquidity\", \"limit\": 10, \"category\": \"crypto\"}",
+          "argsShouldHaveUsed": "get_top_markets without overly narrow category when crypto pagination returns zero rows, or accept tool fallback rules.",
+          "codeSnippet": "if (!fallbackMarket || !fallbackMarket.slug) {\n    return {\n      source: \"fallback_failed\",\n      stopReason: \"No usable fallback market was returned.\",\n    };\n  }",
+          "toolResultSample": "{\"fallbackUsed\": true, \"requestedSlug\": \"will-ethereum-hit-5000-by-end-of-2026\", \"resolvedSlug\": \"what-price-will-bitcoin-hit-in-april-2026\", \"market\": \"What price will Bitcoin hit in April?\", \"description\": \"What price will Bitcoin hit in April?\", \"resolutionSource\": \"Not specified\", \"endDate\": \"2026-05-01T04:00:00Z\", \"rulesSummary\": {\"primaryCondition\": \"What price will Bitcoin hit in April?\", \"resolvesYesIf\": \"Condition in title is met\", \"reso",
+          "completenessVerdict": "Second completeness attempt flagged wrong instrument (Bitcoin vs Ethereum) and triggered needsDifferentTools with triggerMissingCapability echoing the user slug.",
+          "stageTimingBottleneck": "execution=28786ms"
+        }
+      },
+      "overallVerdict": "I would not pay again because I received zero of the legal-style fields I paid for despite evidence the tool returned rule text."
+    },
+    {
+      "query": "get_user_activity for address 0x6F143FE9279F329f1F14E3F904b1f6F7a26EEc81 with limit 150: report summary.buyCount, summary.sellCount, summary.totalUsdcFlow, and the dominant side in plain language grounded in those counts.",
+      "quotedExcerpts": [
+        "Based on the activity report for address **0x6F143FE9279F329f1F14E3F904b1f6F7a26EEc81**, there are no recorded transactions within the requested parameters.",
+        "| **Buy Count** | 0 |",
+        "**Summary:** Neither side clearly dominates, as there has been no buying or selling activity for this address."
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 2,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 5,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 3.33,
+      "scoreExplanations": {
+        "actionability": "If the zeros are true it is informative, but there is no follow-up (e.g., verify address on-chain) to build confidence.",
+        "dataFreshness": "The prose omits the tool\u2019s fetchedAt timestamp even though the trace includes one.",
+        "specificity": "The table spells out the exact metrics and repeats the requested address.",
+        "uniqueness": "This is a direct tool readout rather than generic chat, though it is minimal when empty.",
+        "completeness": "It answers buyCount, sellCount, total USDC flow, and dominant side in plain language as asked.",
+        "dataAccuracy": "toolCallHistory args add walletAddresses not present in developerTrace.finalCode, so trace-level inconsistency undermines trust in the empty summary."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 3,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "MCP invocation recorded walletAddresses alongside the user address while generated code only passes address and limit.",
+        "completenessIssue": null,
+        "codeIssueDetail": "const result = await callMcpSkill({\n    toolName: \"get_user_activity\",\n    args: {\n      address: \"0x6F143FE9279F329f1F14E3F904b1f6F7a26EEc81\",\n      limit: 150\n    }\n  });",
+        "dataAccuracyRedFlags": "toolCallHistory shows extra walletAddresses arrays merged into the call, which the buyer did not request and could change interpretation of an empty feed.",
+        "rootCauseCategory": "contributor_tool_bug",
+        "rootCauseEvidence": "toolCallHistory.args includes walletAddresses [\"0x6D04...\",\"0x6426...\"] absent from developerTrace.finalCode, indicating unexpected parameter injection at the tool boundary.",
+        "responseQualityNote": "Clean formatting and logically consistent dominance wording for the all-zero case.",
+        "improvementLever": "Align the executed args with the user\u2019s single address (or document why proxy wallets are injected) and surface fetchedAt in the answer.",
+        "diagnosticBrief": {
+          "toolUsed": "get_user_activity",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"address\": \"0x6F143FE9279F329f1F14E3F904b1f6F7a26EEc81\", \"limit\": 150, \"walletAddresses\": [\"0x6D046A9f585541755081f0D424e97A924d8B95c8\", \"0x64263BCE411e8D7eDBbe3755B952Ab6F4965c803\"]}",
+          "argsShouldHaveUsed": "{\"address\": \"0x6F143FE9279F329f1F14E3F904b1f6F7a26EEc81\", \"limit\": 150}",
+          "codeSnippet": "args: {\n      address: \"0x6F143FE9279F329f1F14E3F904b1f6F7a26EEc81\",\n      limit: 150\n    }",
+          "toolResultSample": "{\"address\": \"0x6F143FE9279F329f1F14E3F904b1f6F7a26EEc81\", \"activity\": [], \"summary\": {\"total\": 0, \"buyCount\": 0, \"sellCount\": 0, \"totalUsdcFlow\": 0, \"byType\": {}}, \"fetchedAt\": \"2026-04-05T18:27:12.375Z\"}",
+          "completenessVerdict": "timeline verification-decision complete with isComplete true on first attempt.",
+          "stageTimingBottleneck": "execution=7013ms"
+        }
+      },
+      "overallVerdict": "I might pay again only after the tool call args match what I asked for and the timestamp is shown; as-is I am uneasy."
+    },
+    {
+      "query": "analyze_event_outcome_liquidity with eventQuery Democratic presidential nominee 2028 and limit 4 sortBy volume: for each analyzed outcome return matchedName, spreadCents, totalDepthUsd, slippage5kPercent, and canExit5k.",
+      "quotedExcerpts": [
+        "Based on the liquidity analysis for the event **\"Democratic Presidential Nominee 2028\"**, here are the top 4 outcomes sorted by volume:",
+        "| Bernie Sanders | 0.1 | $9,261,131.22 | 9.1% | True |",
+        "| Andrew Yang | 0.1 | $8,629,216.79 | 9.3% | True |"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 2,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 3.67,
+      "scoreExplanations": {
+        "actionability": "Depth, slippage, and exit flags give actionable color for sizing a few thousand dollars.",
+        "dataFreshness": "No quote or snapshot time appears in the narrative even though liquidity can move quickly.",
+        "specificity": "All requested columns are populated with named candidates and differentiated depth and slippage figures.",
+        "uniqueness": "Multi-outcome liquidity metrics are not something a bare LLM would credibly fabricate without tool data.",
+        "completeness": "Four outcomes are returned with every field the prompt listed.",
+        "dataAccuracy": "Every outcome shows the same spreadCents of 0.1, a uniform-value red flag across distinct names per the rubric."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 4,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "Identical spreadCents (0.1) for Sanders, Yang, Clinton, and Winfrey despite differing depth and slippage.",
+        "rootCauseCategory": "data_accuracy_issue",
+        "rootCauseEvidence": "responseText and tool preview show the same spreadCents for four different matchedName values, triggering uniform-value suspicion.",
+        "responseQualityNote": "Strong table fidelity to the prompt, but missing temporal context and suspicious spread uniformity.",
+        "improvementLever": "Include fetchedAt from the tool payload and flag or recompute spreads when every outcome collides on the same tick.",
+        "diagnosticBrief": {
+          "toolUsed": "analyze_event_outcome_liquidity",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"eventQuery\": \"Democratic presidential nominee 2028\", \"limit\": 4}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "args: {\n      eventQuery: \"Democratic presidential nominee 2028\",\n      limit: 4\n    }",
+          "toolResultSample": "{\"eventTitle\":\"Democratic Presidential Nominee 2028\",\"eventSlug\":\"democratic-presidential-nominee-2028\",\"eventUrl\":\"https://polymarket.com/event/democratic-presidential-nominee-2028\",\"totalOutcomes\":44,\"selectionMode\":\"top_volume_outcomes\",\"selectionReason\":\"This event has 44 outcomes, so the tool analyzed the top 4 outcomes by trading volume instead of pretending there is one generic YES side.\",\"needsOutcomeDisambiguation",
+          "completenessVerdict": "timeline verification-decision complete with isComplete true on first attempt.",
+          "stageTimingBottleneck": "execution=14077ms"
+        }
+      },
+      "overallVerdict": "I am on the fence about paying again: the table is rich but the identical spreads and missing timestamp erode trust."
+    }
+  ]
+}

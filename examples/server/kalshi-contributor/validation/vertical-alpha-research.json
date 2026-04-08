@@ -1,0 +1,376 @@
+{
+  "researchedAt": "2026-04-06",
+  "upstreamDocsSource": "/websites/kalshi",
+  "marketplaceCategory": "Prediction Markets",
+  "alphaCategories": [
+    {
+      "name": "Time-Bounded Market Discovery",
+      "upstreamDataSource": "Kalshi markets endpoints and contributor discovery tools, including filters for status, event_ticker, series_ticker, min/max close timestamps, pagination cursor, liquidity, and volume fields.",
+      "rationale": "Kalshi exposes live searchable inventories of markets with close-time and status filters, so buyers can find contracts that are open, relevant now, and likely to move soon rather than relying on generic popular-market lists.",
+      "exampleQuery": "Show me open Kalshi markets closing in the next 72 hours with meaningful liquidity and rank them by volume24h.",
+      "buyerPersona": "Active trader or analyst scanning for short-horizon opportunities"
+    },
+    {
+      "name": "Contract Rule And Settlement Risk Analysis",
+      "upstreamDataSource": "Kalshi market and event payloads exposing rules, rulesDetailed, rules_primary, rules_secondary, settlement-related fields, strike fields, and early_close_condition.",
+      "rationale": "The live API exposes contract-specific rule text and resolution mechanics that are easy to misunderstand from a surface-level UI, creating real value for buyers who need to avoid settlement mistakes.",
+      "exampleQuery": "Resolve this Kalshi slug and explain the exact settlement rules, early close condition, and strike mechanics before I trade it.",
+      "buyerPersona": "Risk-aware trader, PM, or researcher validating contract mechanics"
+    },
+    {
+      "name": "Orderbook And Liquidity Microstructure",
+      "upstreamDataSource": "Kalshi orderbook, trades, candlesticks, liquidity, yes/no price, and event-level candle data from contributor raw-data and liquidity tools.",
+      "rationale": "Displayed prices are not enough; live orderbook depth, trade flow, and candle structure determine whether a contract is actually tradable at size and whether price action is meaningful.",
+      "exampleQuery": "Analyze the orderbook for this market and tell me how much size I can execute before price moves materially.",
+      "buyerPersona": "Execution-focused trader"
+    },
+    {
+      "name": "Mispricing And Efficiency Detection",
+      "upstreamDataSource": "Kalshi pricing analytics tools combined with yesPrice, noPrice, previous_price_dollars, recent trades, liquidity, and candlestick data.",
+      "rationale": "The contributor can use fresh market state to identify stale quotes, sentiment-price divergence, and potentially mispriced contracts, which a static model cannot do from training data.",
+      "exampleQuery": "Check whether this Kalshi market looks stale or mispriced given recent trades, liquidity, and current yes/no pricing.",
+      "buyerPersona": "Event-driven trader or quant-minded market monitor"
+    },
+    {
+      "name": "Cross-Venue Price Comparison",
+      "upstreamDataSource": "Kalshi contributor used alongside Polymarket contributor and Odds API contributor, with Kalshi live pricing, liquidity, rules, and close-time data.",
+      "rationale": "The strongest paid-only alpha comes from comparing live Kalshi contracts against parallel venues and keeping only discrepancies that survive contract-mapping and execution checks.",
+      "exampleQuery": "Compare Kalshi and Polymarket prices for the same event and show me the biggest live disagreement that is still executable on Kalshi.",
+      "buyerPersona": "Cross-market trader or alpha researcher"
+    },
+    {
+      "name": "Series-Level Thematic Screening",
+      "upstreamDataSource": "Kalshi categories, series, browse_category, browse_series, get_all_series, get_series, and linked market/event discovery data.",
+      "rationale": "Series and category browsing enables portfolio-style scanning across whole themes such as elections, macro, sports, or weather, which is more useful than one-off ticker lookup.",
+      "exampleQuery": "Browse this Kalshi series and identify the most tradable contracts with clear rules and enough liquidity to matter.",
+      "buyerPersona": "Portfolio manager, newsletter writer, or thematic market watcher"
+    }
+  ],
+  "mustWinPrompts": [
+    {
+      "prompt": "Find the live Kalshi market for whether the Fed will cut rates at the next FOMC meeting, resolve the correct event and market, and return yes price, no price, close time, market status, and the exact settlement rules before trading.",
+      "alphaCategory": "Contract Rule And Settlement Risk Analysis",
+      "whyAlpha": "Requires live contract lookup plus current pricing and rules, which free models cannot reliably retrieve.",
+      "expectedDataFields": [
+        "ticker",
+        "yesPrice",
+        "noPrice",
+        "closeTime",
+        "status",
+        "rules",
+        "rulesDetailed",
+        "earlyCloseCondition"
+      ],
+      "difficultyTier": "lookup"
+    },
+    {
+      "prompt": "Resolve the Kalshi market covering whether New York City will hit 100F this summer, then summarize the rulesDetailed, earlyCloseCondition, and any strike or settlement fields that could change how the contract resolves.",
+      "alphaCategory": "Contract Rule And Settlement Risk Analysis",
+      "whyAlpha": "The value is in precise live contract interpretation, not generic explanation of prediction markets.",
+      "expectedDataFields": [
+        "eventTicker",
+        "ticker",
+        "rulesDetailed",
+        "earlyCloseCondition",
+        "strikeType",
+        "floorStrike",
+        "capStrike",
+        "functionalStrike",
+        "customStrike",
+        "settlementValue"
+      ],
+      "difficultyTier": "lookup"
+    },
+    {
+      "prompt": "Show me open Kalshi markets tied to the next CPI release, the next jobs report, and the next Fed decision that close within the next 72 hours, sorted by volume24h and grouped by macro category.",
+      "alphaCategory": "Time-Bounded Market Discovery",
+      "whyAlpha": "Depends on live status, close-window filtering, liquidity, and current market inventory.",
+      "expectedDataFields": [
+        "ticker",
+        "category",
+        "closeTime",
+        "status",
+        "liquidity",
+        "volume24h",
+        "yesPrice",
+        "noPrice",
+        "nextCursor"
+      ],
+      "difficultyTier": "analysis"
+    },
+    {
+      "prompt": "Rank the most interesting open Kalshi tariff markets between 20% and 80% probability that also have enough liquidity to trade, and explain why each one is operationally tradable instead of just theoretically interesting.",
+      "alphaCategory": "Time-Bounded Market Discovery",
+      "whyAlpha": "Combines live price bands with actual tradability filters rather than static market commentary.",
+      "expectedDataFields": [
+        "ticker",
+        "yesPrice",
+        "noPrice",
+        "liquidity",
+        "volume24h",
+        "closeTime",
+        "status"
+      ],
+      "difficultyTier": "analysis"
+    },
+    {
+      "prompt": "Browse Kalshi climate and weather series and identify contracts that are open, liquid, and close soon but do not yet appear crowded based on current volume and pricing, especially temperature and hurricane-related markets.",
+      "alphaCategory": "Series-Level Thematic Screening",
+      "whyAlpha": "Requires live category and series traversal plus current market conditions.",
+      "expectedDataFields": [
+        "category",
+        "seriesTicker",
+        "ticker",
+        "status",
+        "closeTime",
+        "liquidity",
+        "volume24h",
+        "yesPrice"
+      ],
+      "difficultyTier": "analysis"
+    },
+    {
+      "prompt": "Analyze the orderbook for the main Kalshi market on whether the Fed cuts at the next meeting and tell me how much size I can likely buy or sell before the implied probability moves by 2, 5, and 10 cents.",
+      "alphaCategory": "Orderbook And Liquidity Microstructure",
+      "whyAlpha": "This depends on live depth and executable levels, not just displayed last price.",
+      "expectedDataFields": [
+        "ticker",
+        "yesPrice",
+        "noPrice",
+        "orderbookDepth",
+        "liquidity"
+      ],
+      "difficultyTier": "analysis"
+    },
+    {
+      "prompt": "Use recent trades, candlesticks, and orderbook depth to determine whether the most active Kalshi market on Atlantic hurricane count this season is trending, mean-reverting, or just illiquid noise.",
+      "alphaCategory": "Orderbook And Liquidity Microstructure",
+      "whyAlpha": "Needs fresh trade flow and candle structure that free models do not have.",
+      "expectedDataFields": [
+        "ticker",
+        "candlesticks",
+        "recentTrades",
+        "orderbookDepth",
+        "volume24h",
+        "liquidity"
+      ],
+      "difficultyTier": "analysis"
+    },
+    {
+      "prompt": "Compare the liquidity quality of the top three open Kalshi markets related to U.S. tariffs, including spread, depth, recent trade activity, and whether the displayed yesPrice is actually executable at size.",
+      "alphaCategory": "Orderbook And Liquidity Microstructure",
+      "whyAlpha": "Distinguishes quoted probability from practical execution quality using live microstructure.",
+      "expectedDataFields": [
+        "ticker",
+        "yesPrice",
+        "noPrice",
+        "orderbookDepth",
+        "recentTrades",
+        "liquidity",
+        "volume24h"
+      ],
+      "difficultyTier": "analysis"
+    },
+    {
+      "prompt": "Run a market efficiency check on the leading Kalshi contract for whether core CPI will come in above consensus on the next release and tell me whether the current yes/no prices look internally consistent with recent trading and book depth, or whether the quote looks stale.",
+      "alphaCategory": "Mispricing And Efficiency Detection",
+      "whyAlpha": "Requires current prices, depth, and trade context rather than historical intuition.",
+      "expectedDataFields": [
+        "ticker",
+        "yesPrice",
+        "noPrice",
+        "previousPriceDollars",
+        "recentTrades",
+        "orderbookDepth",
+        "liquidity"
+      ],
+      "difficultyTier": "analysis"
+    },
+    {
+      "prompt": "Find current Kalshi trading opportunities in weather and climate markets where liquidity is adequate, the market is still open, and recent order flow suggests a short-term edge rather than a dead book.",
+      "alphaCategory": "Mispricing And Efficiency Detection",
+      "whyAlpha": "The alpha comes from combining live tradability with fresh order-flow context.",
+      "expectedDataFields": [
+        "ticker",
+        "status",
+        "liquidity",
+        "volume24h",
+        "recentTrades",
+        "candlesticks",
+        "yesPrice",
+        "noPrice"
+      ],
+      "difficultyTier": "analysis"
+    },
+    {
+      "prompt": "Identify Kalshi macro markets where sentiment, recent prints, and candlesticks disagree with the current headline probability enough to warrant manual review, focusing on Fed, CPI, and recession-related contracts.",
+      "alphaCategory": "Mispricing And Efficiency Detection",
+      "whyAlpha": "Surfaces fresh divergences between price and flow that are unavailable to static models.",
+      "expectedDataFields": [
+        "ticker",
+        "yesPrice",
+        "noPrice",
+        "recentTrades",
+        "candlesticks",
+        "volume24h"
+      ],
+      "difficultyTier": "analysis"
+    },
+    {
+      "prompt": "Find Kalshi markets near 50% with unusually high liquidity that are tied to U.S. tariff actions or Fed decisions, and tell me which ones are best suited for event-driven trades because they combine tradability, time-bounded resolution, and clear rules.",
+      "alphaCategory": "Mispricing And Efficiency Detection",
+      "whyAlpha": "This combines live probability bands, liquidity, timing, and contract clarity in one actionable screen.",
+      "expectedDataFields": [
+        "ticker",
+        "yesPrice",
+        "liquidity",
+        "volume24h",
+        "closeTime",
+        "rules",
+        "status"
+      ],
+      "difficultyTier": "comparison"
+    },
+    {
+      "prompt": "Compare Kalshi and Polymarket prices for whether the Fed will cut rates by the end of the year, identify the largest live probability gap, and tell me whether the difference is big enough to matter after considering Kalshi liquidity and contract rules.",
+      "alphaCategory": "Cross-Venue Price Comparison",
+      "whyAlpha": "Requires synchronized live data across both venues plus Kalshi execution and rule context.",
+      "expectedDataFields": [
+        "kalshiTicker",
+        "polymarketMarket",
+        "yesPrice",
+        "noPrice",
+        "liquidity",
+        "volume24h",
+        "rules",
+        "closeTime"
+      ],
+      "difficultyTier": "cross-tool"
+    },
+    {
+      "prompt": "Use Kalshi contributor plus Odds API contributor to compare the implied probability of the New York Yankees winning the World Series across prediction market and sportsbook pricing, then flag the side where Kalshi looks most out of line.",
+      "alphaCategory": "Cross-Venue Price Comparison",
+      "whyAlpha": "This is a live cross-market valuation task that free models cannot answer accurately without tool access.",
+      "expectedDataFields": [
+        "ticker",
+        "yesPrice",
+        "noPrice",
+        "oddsImpliedProbability",
+        "liquidity",
+        "volume24h"
+      ],
+      "difficultyTier": "cross-tool"
+    },
+    {
+      "prompt": "Scan for cross-venue arbitrage or disagreement between Kalshi and Polymarket in markets about new U.S. tariffs on China, but only surface setups where Kalshi orderbook depth suggests the trade can actually be executed.",
+      "alphaCategory": "Cross-Venue Price Comparison",
+      "whyAlpha": "Filters theoretical arbitrage through live execution reality.",
+      "expectedDataFields": [
+        "kalshiTicker",
+        "polymarketMarket",
+        "yesPrice",
+        "noPrice",
+        "orderbookDepth",
+        "liquidity",
+        "closeTime"
+      ],
+      "difficultyTier": "cross-tool"
+    },
+    {
+      "prompt": "For the next Fed meeting, build a decision memo that starts with the correct Kalshi contracts, summarizes the settlement and early-close rules, evaluates current pricing and liquidity, and ends with which contract is safest to express a dovish view in.",
+      "alphaCategory": "Contract Rule And Settlement Risk Analysis",
+      "whyAlpha": "This turns live contract mapping, rules, and microstructure into a concrete trade-selection memo.",
+      "expectedDataFields": [
+        "ticker",
+        "yesPrice",
+        "noPrice",
+        "rules",
+        "rulesDetailed",
+        "earlyCloseCondition",
+        "liquidity",
+        "closeTime"
+      ],
+      "difficultyTier": "ceiling"
+    },
+    {
+      "prompt": "Construct a watchlist of 10 live Kalshi markets for this week across macro, tariffs, weather, and sports using close time, liquidity, volume24h, and current price bands, then separate them into 'trade now', 'monitor for breakout', and 'avoid due to thin book'.",
+      "alphaCategory": "Time-Bounded Market Discovery",
+      "whyAlpha": "This is a live portfolio-building workflow driven by fresh market state rather than static opinions.",
+      "expectedDataFields": [
+        "ticker",
+        "closeTime",
+        "liquidity",
+        "volume24h",
+        "yesPrice",
+        "noPrice",
+        "status"
+      ],
+      "difficultyTier": "ceiling"
+    },
+    {
+      "prompt": "Produce a portfolio-style map of the best current Kalshi opportunities across climate, Fed, tariff, and sports categories by combining discovery, rule clarity, liquidity quality, and mispricing signals, and explicitly note which contracts need cross-venue validation with Polymarket contributor or Odds API contributor.",
+      "alphaCategory": "Series-Level Thematic Screening",
+      "whyAlpha": "This synthesizes multiple live Kalshi tool clusters into one buyer-facing market map.",
+      "expectedDataFields": [
+        "category",
+        "seriesTicker",
+        "ticker",
+        "yesPrice",
+        "liquidity",
+        "volume24h",
+        "rules",
+        "closeTime"
+      ],
+      "difficultyTier": "comparison"
+    }
+  ],
+  "crossToolOpportunities": [
+    {
+      "tools": [
+        "kalshi-contributor",
+        "polymarket-contributor"
+      ],
+      "insight": "Compare parallel event contracts across Kalshi and Polymarket to find the largest live probability disagreements that still survive Kalshi rule review and execution checks.",
+      "exampleQuery": "Compare Kalshi and Polymarket prices for the same event and show me the biggest live disagreement that is still executable on Kalshi."
+    },
+    {
+      "tools": [
+        "kalshi-contributor",
+        "odds-api-contributor"
+      ],
+      "insight": "Compare Kalshi implied probability against sportsbook consensus for sports outcomes to identify contracts where prediction-market pricing diverges from bookmaker pricing.",
+      "exampleQuery": "Use Kalshi and Odds API to find sports outcomes where Kalshi is most out of line with sportsbook implied probability."
+    },
+    {
+      "tools": [
+        "kalshi-contributor",
+        "polymarket-contributor"
+      ],
+      "insight": "Filter apparent cross-market arbitrage by checking whether Kalshi orderbook depth and liquidity make the trade realistically executable.",
+      "exampleQuery": "Scan for Kalshi versus Polymarket arbitrage, but only keep setups where Kalshi orderbook depth suggests meaningful executable size."
+    },
+    {
+      "tools": [
+        "kalshi-contributor",
+        "polymarket-contributor"
+      ],
+      "insight": "Venue selection can be optimized by comparing not just price but also current liquidity, depth, and close timing across venues.",
+      "exampleQuery": "For this thesis, should I trade Kalshi or Polymarket if I care more about execution quality than midpoint price?"
+    }
+  ],
+  "upstreamUIGaps": [
+    "Kalshi-style UIs often emphasize headline yes/no prices more than executable orderbook depth, making it harder to judge whether the displayed probability is actually tradable at size.",
+    "API-level filters for status, series, event, and min/max close timestamps support much stronger time-window scanning than a typical browse-first interface.",
+    "Settlement-critical metadata such as rules, detailed rules, early_close_condition, and strike-related fields is easier to analyze systematically through tool output than through ordinary UI reading.",
+    "Recent trade flow and candlestick context are usually secondary to the last traded price in UI views, even though they are essential for distinguishing trend, staleness, and noise.",
+    "Cross-venue comparison against Polymarket or sportsbook pricing is not native to Kalshi's own product surface, even though it is one of the strongest buyer-value workflows."
+  ],
+  "retiredCategories": [],
+  "newAngles": [
+    "Executable-price-first screening that ranks markets by depth and tradability instead of midpoint price alone.",
+    "Rule-risk-aware market selection that combines current pricing with settlement mechanics and early-close conditions.",
+    "Close-window catalyst workflows built around contracts approaching resolution using min/max close timestamp filters.",
+    "Series-level opportunity maps that scan full themes instead of isolated one-off contracts.",
+    "Cross-venue validation as a default step for high-stakes prompts using Polymarket contributor or Odds API contributor."
+  ]
+}

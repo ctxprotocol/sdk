@@ -1,0 +1,355 @@
+{
+  "generatedAt": "2026-04-07T07:54:28.887Z",
+  "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+  "localMcpUrl": "http://localhost:4003/mcp",
+  "localContextBaseUrl": "http://localhost:3000",
+  "publicMcpUrl": "https://mcp.ctxprotocol.com/polymarket/mcp",
+  "localToolCount": 45,
+  "sampleMarket": {
+    "title": "Will Gavin Newsom win the 2028 US Presidential Election?",
+    "slug": "presidential-election-winner-2028",
+    "conditionId": "0x4567b275e6b667a6217f5cb4f06a797d3a1eaf1d0281fb5bc8c75e2046ae7e57",
+    "tokenIds": [
+      "39223330966352513418907732239455948906399882924787587183466504819170775983376",
+      "2638997461401140008448476093092229850740161649668999975101243681118238509713",
+      "58585097107933138034126275600204468509993701936571284309823871593297754181479",
+      "24863363384036117015867671383779186335047493791693657275104567365292353535818"
+    ],
+    "primaryTokenId": "39223330966352513418907732239455948906399882924787587183466504819170775983376"
+  },
+  "autoQuerySummary": {
+    "promptCount": 5,
+    "passedCount": 5,
+    "failedCount": 0,
+    "routedCount": 5,
+    "runs": [
+      {
+        "id": "balanced-liquidity-screen",
+        "prompt": "Find live 40% to 60% Polymarket contracts with at least $1M liquidity right now, and rank which ones are actually tradable for a $5,000 position without ugly slippage.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 6,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket Intelligence",
+            "skillCalls": 6
+          }
+        ],
+        "durationMs": 60266,
+        "responsePreview": "Based on current live data, here are the top-ranked Polymarket contracts with 40%–60% probability ($0.40–$0.60 current price) and at least $1M in liquidity. \n\nThe following markets are ranked by **exit tradability**, specifically looking at the estimated slippage for a $5,000 position.\n\n| Rank | Market Title | Current Price | Liquidity | $5k Slippage | Note |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| 1 | Will Paris Saint-Germain FC win on 2026-04-08? | 0.555 | $2.35M | **0.9%** | Best tradab",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 6,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 1,
+          "loopCount": 0
+        }
+      },
+      {
+        "id": "politics-passive-spread-capture",
+        "prompt": "Which live politics markets currently show the widest verified spreads or sub-$1 arbitrage-style pricing, and are any worth working with passive orders right now?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 2,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket Intelligence",
+            "skillCalls": 1
+          },
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 62385,
+        "responsePreview": "Based on data from a past query (fetched April 7, 2026), there are currently **no sub-$1 arbitrage opportunities** identified across Polymarket or Kalshi. Polymarket is currently showing high efficiency with an average spread of just 0.1¢ across the 40 politics markets scanned.\n\nWhile no true arbitrage was found, the following Polymarket 2028 Democratic Nomination markets exhibit the widest relative spreads:\n\n| Venue | Market | Mid Price | Spread | Spread % |\n| :--- | :--- | :--- | :--- | :--- |",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 1,
+          "loopCount": 0
+        }
+      },
+      {
+        "id": "multi-outcome-exit-ladder",
+        "prompt": "Use the most liquid live multi-outcome politics event on Polymarket right now and compare the top four outcomes by price, spread, and estimated exit slippage. Which outcomes can actually absorb size cleanly?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 3,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket Intelligence",
+            "skillCalls": 3
+          }
+        ],
+        "durationMs": 67349,
+        "responsePreview": "I have identified the liquid multi-outcome event **\"Will Fidesz–KDNP win the most seats in the next Hungarian parliamentary election?\"**, but I cannot provide the specific breakdown for price, spread, and slippage at this time.\n\nThe search criteria for the most liquid multi-outcome politics market successfully identified this event (slug: `hungary-parliamentary-election-winner`), but the analytical tools returned **zero usable outcome tokens** for this specific market in the current session.\n\n##",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 3,
+          "retryCount": 1,
+          "selfHealCount": 1,
+          "fallbackCount": 0,
+          "failureCount": 1,
+          "recoveryCount": 0,
+          "completionChecks": 1,
+          "loopCount": 1
+        }
+      },
+      {
+        "id": "fed-whale-concentration-flow",
+        "prompt": "For the most relevant live Fed decision market right now, what are whales doing, how concentrated are positions, and does that line up with recent directional flow?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 4,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket Intelligence",
+            "skillCalls": 4
+          }
+        ],
+        "durationMs": 173559,
+        "responsePreview": "Based on the current market data, there are no active Federal Reserve decision markets meeting the criteria for \"live\" and \"relevant\" in the latest search results.\n\nA search was performed across trending, top, and semantic market categories—specifically probing for \"Fed\" or \"Federal Reserve\"—but returned no matching active results. \n\nTo find actionable data, you might consider:\n*   **Broadening the search timeframe:** Look for markets targeting the next FOMC meeting date specifically (e.g., May ",
+        "hasData": true,
+        "actionable": false,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 4,
+          "retryCount": 2,
+          "selfHealCount": 2,
+          "fallbackCount": 0,
+          "failureCount": 2,
+          "recoveryCount": 0,
+          "completionChecks": 2,
+          "loopCount": 2
+        }
+      },
+      {
+        "id": "geopolitics-tape-read",
+        "prompt": "Summarize the hottest live geopolitics market on Polymarket right now and explain what the recent tape implies for short-term positioning.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket Intelligence",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 36257,
+        "responsePreview": "The hottest live geopolitics market on Polymarket right now centers on the **2026 Peruvian presidential election**, specifically whether **Keiko Fujimori** will finish in first place in the first round.\n\nAs of **April 7, 2026**, the market data shows significant one-sided conviction:\n\n### Market Summary: Keiko Fujimori (1st Round Winner)\n| Metric | Value |\n| :--- | :--- |\n| **Open Interest** | $29,307.21 |\n| **Total Recent Volume** | $760.23 |\n| **Buy Volume** | $760.23 (100%) |\n| **Sell Volume*",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 1,
+          "loopCount": 0
+        }
+      }
+    ]
+  },
+  "executeValidation": {
+    "discoveredToolName": "Polymarket Intelligence",
+    "discoveredMethodCount": 24,
+    "passedMethodCount": 6,
+    "failedMethodCount": 0,
+    "methods": [
+      {
+        "methodName": "search_and_get_outcomes",
+        "args": {
+          "query": "Will Gavin Newsom win the 2028 US Presidential Election?"
+        },
+        "status": "pass",
+        "durationMs": 16042,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.001000",
+        "sessionRemainingUsd": "0.999",
+        "resultKeys": [
+          "eventTitle",
+          "eventSlug",
+          "eventUrl",
+          "totalVolume",
+          "totalOutcomes",
+          "sortedBy",
+          "outcomes",
+          "searchQuery",
+          "searchMethod",
+          "matchConfidence",
+          "note",
+          "fetchedAt",
+          "searchMetadata"
+        ]
+      },
+      {
+        "methodName": "get_event_by_slug",
+        "args": {
+          "slug": "presidential-election-winner-2028"
+        },
+        "status": "pass",
+        "durationMs": 11085,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.002000",
+        "sessionRemainingUsd": "0.998",
+        "resultKeys": [
+          "event",
+          "markets",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_prices",
+        "args": {
+          "tokenIds": [
+            "39223330966352513418907732239455948906399882924787587183466504819170775983376",
+            "2638997461401140008448476093092229850740161649668999975101243681118238509713"
+          ]
+        },
+        "status": "pass",
+        "durationMs": 10713,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.003000",
+        "sessionRemainingUsd": "0.997",
+        "resultKeys": [
+          "prices",
+          "note",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_market_parameters",
+        "args": {
+          "tokenId": "39223330966352513418907732239455948906399882924787587183466504819170775983376"
+        },
+        "status": "pass",
+        "durationMs": 9793,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.004000",
+        "sessionRemainingUsd": "0.996",
+        "resultKeys": [
+          "tokenId",
+          "tickSize",
+          "feeRateBps",
+          "negRisk",
+          "minOrderSize",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_spreads",
+        "args": {
+          "tokenIds": [
+            "39223330966352513418907732239455948906399882924787587183466504819170775983376",
+            "2638997461401140008448476093092229850740161649668999975101243681118238509713"
+          ]
+        },
+        "status": "pass",
+        "durationMs": 9299,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.005000",
+        "sessionRemainingUsd": "0.995",
+        "resultKeys": [
+          "spreads",
+          "count",
+          "note",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_market_open_interest",
+        "args": {
+          "conditionId": "0x4567b275e6b667a6217f5cb4f06a797d3a1eaf1d0281fb5bc8c75e2046ae7e57"
+        },
+        "status": "pass",
+        "durationMs": 8772,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.006000",
+        "sessionRemainingUsd": "0.994",
+        "resultKeys": [
+          "openInterest",
+          "totalOpenInterest",
+          "fetchedAt"
+        ]
+      }
+    ]
+  },
+  "publicAuthProbe": {
+    "initializeStatus": 200,
+    "toolsListStatus": 200,
+    "toolsCallStatus": 200,
+    "toolCount": 45,
+    "pass": false
+  },
+  "externalAccuracyCheck": {
+    "status": "PASS",
+    "overlapTop3": 3,
+    "localTopMarkets": [
+      {
+        "title": "Will Chelsea Clinton win the 2028 Democratic presidential nomination?",
+        "slug": "democratic-presidential-nominee-2028"
+      },
+      {
+        "title": "Will Mike Pence win the 2028 Republican presidential nomination?",
+        "slug": "republican-presidential-nominee-2028"
+      },
+      {
+        "title": "Will Uzbekistan win the 2026 FIFA World Cup?",
+        "slug": "2026-fifa-world-cup-winner-595"
+      }
+    ],
+    "upstreamTopMarkets": [
+      {
+        "title": "Democratic Presidential Nominee 2028",
+        "slug": "democratic-presidential-nominee-2028"
+      },
+      {
+        "title": "Republican Presidential Nominee 2028",
+        "slug": "republican-presidential-nominee-2028"
+      },
+      {
+        "title": "2026 FIFA World Cup Winner ",
+        "slug": "2026-fifa-world-cup-winner-595"
+      }
+    ],
+    "notes": [
+      "The contributor's top-volume ranking materially matched the raw Gamma upstream top-three set.",
+      "No obvious wrong-universe regression was detected in the fresh external spot check."
+    ]
+  }
+}

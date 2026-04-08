@@ -1,0 +1,107 @@
+{
+  "generatedAt": "2026-04-08T12:40:57.179Z",
+  "contributor": "polymarket-contributor",
+  "paths": {
+    "contributorDir": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor",
+    "validationDir": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation",
+    "reviewerPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/reviewer-evaluation.json",
+    "artifactPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/marketplace-validation-artifact.json",
+    "releaseDecisionPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/release-decision.json",
+    "resultsPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results.latest.json",
+    "surfaceChecksPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/marketplace-surface-checks.latest.json"
+  },
+  "state": {
+    "pipelineActive": true,
+    "activeContributorPath": "/Users/alex/Documents/.cursor/hooks/state/active-contributor.txt",
+    "convergenceFlag": null,
+    "iterationCount": 0,
+    "previousSatisfactionMean": null
+  },
+  "reviewer": {
+    "present": true,
+    "path": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/reviewer-evaluation.json",
+    "blockers": [],
+    "summary": {
+      "satisfactionMean": 4.332,
+      "highFragilityRate": 0.056,
+      "baselineBeatenRate": 0.944,
+      "queryCount": 18,
+      "queriesBelow3": 1,
+      "weakQueryCount": 1,
+      "weakQueryRate": 0.056,
+      "blockingHighDifferentiationPromptIds": [],
+      "differentiationCounts": {
+        "high_differentiation": 17,
+        "moderate_differentiation": 0,
+        "low_differentiation": 1
+      }
+    },
+    "passedChecks": {
+      "satisfactionMeanGte3_5": true,
+      "highFragilityLte0_3": true,
+      "noHighDiffBelow3": true,
+      "weakQueryRateLte20": true,
+      "differentiationViable": true
+    },
+    "improvementSkipChecks": {
+      "satisfactionMeanGte4_2": true,
+      "weakQueryRateLte20": true
+    },
+    "passed": true,
+    "weakQueries": {
+      "entries": [
+        {
+          "index": 15,
+          "promptId": "Within the 'Rockets vs. Suns' event, which live submarkets look genuinely tradable tonight based on spread, depth, and a",
+          "query": "Within the 'Rockets vs. Suns' event, which live submarkets look genuinely tradable tonight based on spread, depth, and a",
+          "score": 1.67,
+          "rootCauseCategory": "selection_routing_issue",
+          "fixable": true
+        }
+      ],
+      "totalCount": 1,
+      "fixableCount": 1,
+      "fixableBelowFloorCount": 1,
+      "categoryCounts": {
+        "selection_routing_issue": 1
+      }
+    }
+  },
+  "localValidation": {
+    "available": true,
+    "pathSummary": {
+      "resultsPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results.latest.json",
+      "surfaceChecksPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/marketplace-surface-checks.latest.json"
+    },
+    "blockers": [
+      "Local query validation is not green."
+    ],
+    "checks": {
+      "queryValidationPassed": false,
+      "executeValidationPassed": true,
+      "authContractPassed": true,
+      "directValidationPassed": true
+    },
+    "passed": false
+  },
+  "iteration": {
+    "action": "pass",
+    "shouldContinue": false,
+    "terminalState": "converged",
+    "iterationCount": 0,
+    "previousSatisfactionMean": null,
+    "weakQueryRate": 0.056,
+    "reason": "Release gates passed, mean 4.332 >= 4.2, and only 6% weak queries (<= 20%)."
+  },
+  "release": {
+    "status": "blocked",
+    "artifactWriteAllowed": false,
+    "blockers": [
+      "Local query validation is not green."
+    ]
+  },
+  "artifact": {
+    "exists": false,
+    "status": "missing_blocked"
+  }
+}

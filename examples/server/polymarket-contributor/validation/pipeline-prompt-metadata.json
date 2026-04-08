@@ -1,0 +1,385 @@
+[
+  {
+    "id": "lookup-01-screened-live-opportunity-sets",
+    "prompt": "get_top_markets sortBy volume category politics minLiquidity 100000 limit 5: return each market's title, currentPrice, volume24h, totalVolume, liquidity, conditionId, and url.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "lookup",
+    "alphaCategory": "Screened live opportunity sets",
+    "whyUsersCare": "A trader or bettor building a current watchlist and unwilling to manually page through dozens of live contracts.",
+    "whyWebSearchBaselineWeak": "The current high-volume politics leaderboard with live liquidity and token identifiers changes continuously and cannot be answered from training data.",
+    "upstreamDataFields": [
+      "markets.title",
+      "markets.currentPrice",
+      "markets.volume24h",
+      "markets.totalVolume",
+      "markets.liquidity",
+      "markets.conditionId",
+      "markets.url"
+    ],
+    "synthesisRequired": "The current high-volume politics leaderboard with live liquidity and token identifiers changes continuously and cannot be answered from training data."
+  },
+  {
+    "id": "lookup-02-multi-outcome-event-selection-and-tr",
+    "prompt": "search_and_get_outcomes query \"2026 FIFA World Cup winner\" sortBy price: return the six highest-priced outcomes with name, price, volume, conditionId, tokenId, and eventUrl.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "lookup",
+    "alphaCategory": "Multi-outcome event selection and tradability",
+    "whyUsersCare": "An event trader choosing among many correlated outcomes inside one market family.",
+    "whyWebSearchBaselineWeak": "A free model may know the tournament exists, but not the current live ranking, prices, or token IDs across outcomes.",
+    "upstreamDataFields": [
+      "eventTitle",
+      "eventUrl",
+      "outcomes.name",
+      "outcomes.price",
+      "outcomes.volume",
+      "outcomes.conditionId",
+      "outcomes.tokenId"
+    ],
+    "synthesisRequired": "A free model may know the tournament exists, but not the current live ranking, prices, or token IDs across outcomes."
+  },
+  {
+    "id": "lookup-03-resolution-rule-risk",
+    "prompt": "For the highest-liquidity live politics market right now, resolve it with get_top_markets sortBy liquidity category politics limit 1 and then run check_market_rules. Summarize resolvesYesIf, resolvesNoIf, resolutionSource, endDate, and every potentialGotchas entry.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "lookup",
+    "alphaCategory": "Resolution-rule risk",
+    "whyUsersCare": "A risk-aware bettor who treats payout mechanics as seriously as price.",
+    "whyWebSearchBaselineWeak": "Exact rule wording and gotchas are contract-specific, operationally important, and not recoverable from stale general knowledge.",
+    "upstreamDataFields": [
+      "markets.title",
+      "rulesSummary.resolvesYesIf",
+      "rulesSummary.resolvesNoIf",
+      "resolutionSource",
+      "endDate",
+      "rulesSummary.potentialGotchas"
+    ],
+    "synthesisRequired": "Exact rule wording and gotchas are contract-specific, operationally important, and not recoverable from stale general knowledge."
+  },
+  {
+    "id": "lookup-04-execution-microstructure-and-exit-ca",
+    "prompt": "Resolve the most liquid live crypto market with get_top_markets sortBy liquidity category crypto limit 1, then call get_market_parameters on its yesTokenId. Return title, yesTokenId, tickSize, feeRateBps, negRisk, and minOrderSize.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "lookup",
+    "alphaCategory": "Execution microstructure and exit capacity",
+    "whyUsersCare": "An execution-focused trader who cares about getting in and out cleanly, not just headline probability.",
+    "whyWebSearchBaselineWeak": "Tick size, fees, and neg-risk settings are live trading parameters that directly affect whether a quoted edge is actionable.",
+    "upstreamDataFields": [
+      "markets.title",
+      "markets.yesTokenId",
+      "tickSize",
+      "feeRateBps",
+      "negRisk",
+      "minOrderSize"
+    ],
+    "synthesisRequired": "Tick size, fees, and neg-risk settings are live trading parameters that directly affect whether a quoted edge is actionable."
+  },
+  {
+    "id": "analysis-05-screened-live-opportunity-sets",
+    "prompt": "discover_trending_markets category sports limit 15: identify the single market with the strongest volumeVsAverage signal and report title, currentPrice, volume24h, volumeVsAverage, priceDirection, whyTrending, and trendScore.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "analysis",
+    "alphaCategory": "Screened live opportunity sets",
+    "whyUsersCare": "A trader or bettor building a current watchlist and unwilling to manually page through dozens of live contracts.",
+    "whyWebSearchBaselineWeak": "Trend spikes and volume-vs-baseline signals are intrinsically live and cannot be reproduced from model priors.",
+    "upstreamDataFields": [
+      "trendingMarkets.title",
+      "trendingMarkets.currentPrice",
+      "trendingMarkets.volume24h",
+      "trendingMarkets.volumeVsAverage",
+      "trendingMarkets.priceDirection",
+      "trendingMarkets.whyTrending",
+      "trendingMarkets.trendScore"
+    ],
+    "synthesisRequired": "Trend spikes and volume-vs-baseline signals are intrinsically live and cannot be reproduced from model priors."
+  },
+  {
+    "id": "analysis-06-screened-live-opportunity-sets",
+    "prompt": "find_moderate_probability_bets category politics minLiquidity 50000 sortBy volume limit 6: return the best six live contracts with market, currentPrice, impliedProbability, potentialReturn, liquidity, volume24h, endDate, and whyThisBet.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "analysis",
+    "alphaCategory": "Screened live opportunity sets",
+    "whyUsersCare": "A trader or bettor building a current watchlist and unwilling to manually page through dozens of live contracts.",
+    "whyWebSearchBaselineWeak": "This is a live filtered shortlist over current Polymarket inventory, not a static opinion about politics markets.",
+    "upstreamDataFields": [
+      "opportunities.market",
+      "opportunities.currentPrice",
+      "opportunities.impliedProbability",
+      "opportunities.potentialReturn",
+      "opportunities.liquidity",
+      "opportunities.volume24h",
+      "opportunities.endDate",
+      "opportunities.whyThisBet"
+    ],
+    "synthesisRequired": "This is a live filtered shortlist over current Polymarket inventory, not a static opinion about politics markets."
+  },
+  {
+    "id": "analysis-07-vig-adjusted-pricing-and-verified-ar",
+    "prompt": "find_arbitrage_opportunities category sports limit 20: list any verified arbitrageOpportunities with totalCost below 0.995, plus the two widest wideSpreadMarkets with spread and midPrice.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "analysis",
+    "alphaCategory": "Vig-adjusted pricing and verified arb",
+    "whyUsersCare": "A systematic bettor or desk analyst looking for structural mispricing rather than narratives.",
+    "whyWebSearchBaselineWeak": "Verified basket cost and current spread require live book checks; stale price memory is useless for real arbitrage.",
+    "upstreamDataFields": [
+      "arbitrageOpportunities.market",
+      "arbitrageOpportunities.totalCost",
+      "arbitrageOpportunities.edgePercent",
+      "arbitrageOpportunities.liquidity",
+      "wideSpreadMarkets.market",
+      "wideSpreadMarkets.spread",
+      "wideSpreadMarkets.midPrice"
+    ],
+    "synthesisRequired": "Verified basket cost and current spread require live book checks; stale price memory is useless for real arbitrage."
+  },
+  {
+    "id": "analysis-08-trade-tape-open-interest-and-live-fl",
+    "prompt": "summarize_live_market_activity category politics endingWithinDays 7 sortBy open_interest_vs_volume tradeLimit 20: report the selectedMarket, tradesSummary, openInterest.value, and explain whether the tape looks like fresh conviction or churn using only those tool outputs.",
+    "mustWin": true,
+    "showcaseCandidate": true,
+    "category": "analysis",
+    "alphaCategory": "Trade tape, open interest, and live flow concentration",
+    "whyUsersCare": "A short-horizon trader deciding whether current activity is worth chasing.",
+    "whyWebSearchBaselineWeak": "You need current recent-trade volume plus current open interest on an actively selected live market; free models cannot know that ratio now.",
+    "upstreamDataFields": [
+      "selectedMarket.title",
+      "selectedMarket.selectionReason",
+      "tradesSummary.totalTrades",
+      "tradesSummary.totalVolume",
+      "tradesSummary.buyVolume",
+      "tradesSummary.sellVolume",
+      "openInterest.value",
+      "recentTrades"
+    ],
+    "synthesisRequired": "You need current recent-trade volume plus current open interest on an actively selected live market; free models cannot know that ratio now."
+  },
+  {
+    "id": "analysis-09-screened-live-opportunity-sets",
+    "prompt": "find_trading_opportunities strategy mispriced category crypto minLiquidity 50000 depth medium: return the top five current opportunities with opportunityType, market, currentPrice, suggestedSide, potentialReturn, liquidity, volume24h, whyThisOpportunity, and riskFactors.",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "analysis",
+    "alphaCategory": "Screened live opportunity sets",
+    "whyUsersCare": "A trader or bettor building a current watchlist and unwilling to manually page through dozens of live contracts.",
+    "whyWebSearchBaselineWeak": "This is a live server-side screen over current markets and current liquidity constraints, not a timeless view on crypto narratives.",
+    "upstreamDataFields": [
+      "summary.marketsScanned",
+      "opportunities.opportunityType",
+      "opportunities.market",
+      "opportunities.currentPrice",
+      "opportunities.suggestedSide",
+      "opportunities.potentialReturn",
+      "opportunities.liquidity",
+      "opportunities.volume24h",
+      "opportunities.whyThisOpportunity",
+      "opportunities.riskFactors"
+    ],
+    "synthesisRequired": "This is a live server-side screen over current markets and current liquidity constraints, not a timeless view on crypto narratives."
+  },
+  {
+    "id": "comparison-10-multi-outcome-event-selection-and-tr",
+    "prompt": "compare_event_outcome_quotes eventQuery \"2026 FIFA World Cup winner\" outcomes [\"Spain\",\"France\",\"England\"]: return matchedName, currentPrice, impliedProbability, bestBid, bestAsk, spread, spreadPercent, and volume for each outcome.",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "comparison",
+    "alphaCategory": "Multi-outcome event selection and tradability",
+    "whyUsersCare": "An event trader choosing among many correlated outcomes inside one market family.",
+    "whyWebSearchBaselineWeak": "Named outcome comparison inside a live multi-outcome event requires current quote snapshots and cannot be answered from general sports knowledge.",
+    "upstreamDataFields": [
+      "matchedOutcomes.matchedName",
+      "matchedOutcomes.currentPrice",
+      "matchedOutcomes.impliedProbability",
+      "matchedOutcomes.bestBid",
+      "matchedOutcomes.bestAsk",
+      "matchedOutcomes.spread",
+      "matchedOutcomes.spreadPercent",
+      "matchedOutcomes.volume"
+    ],
+    "synthesisRequired": "Named outcome comparison inside a live multi-outcome event requires current quote snapshots and cannot be answered from general sports knowledge."
+  },
+  {
+    "id": "comparison-11-multi-outcome-event-selection-and-tr",
+    "prompt": "analyze_event_outcome_liquidity eventQuery \"2026 FIFA World Cup winner\" outcomes [\"Spain\",\"France\",\"England\"] category sports: for each analyzed outcome return matchedName, currentPrice, volume, spreadCents, totalDepthUsd, slippage5kPercent, canExit5k, and liquidityScore.",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "comparison",
+    "alphaCategory": "Multi-outcome event selection and tradability",
+    "whyUsersCare": "An event trader choosing among many correlated outcomes inside one market family.",
+    "whyWebSearchBaselineWeak": "Outcome-level depth and exit slippage are live microstructure facts that the upstream UI does not consolidate across legs.",
+    "upstreamDataFields": [
+      "analyzedOutcomes.matchedName",
+      "analyzedOutcomes.currentPrice",
+      "analyzedOutcomes.volume",
+      "analyzedOutcomes.spreadCents",
+      "analyzedOutcomes.totalDepthUsd",
+      "analyzedOutcomes.slippage5kPercent",
+      "analyzedOutcomes.canExit5k",
+      "analyzedOutcomes.liquidityScore"
+    ],
+    "synthesisRequired": "Outcome-level depth and exit slippage are live microstructure facts that the upstream UI does not consolidate across legs."
+  },
+  {
+    "id": "comparison-12-vig-adjusted-pricing-and-verified-ar",
+    "prompt": "Use get_top_markets sortBy volume category sports limit 2 to resolve the top two live sports contracts, then run check_market_efficiency on both. Compare market, marketEfficiency.vig, marketEfficiency.efficiency, isEfficient, and YES-side trueProbabilitiesPercent side by side.",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "comparison",
+    "alphaCategory": "Vig-adjusted pricing and verified arb",
+    "whyUsersCare": "A systematic bettor or desk analyst looking for structural mispricing rather than narratives.",
+    "whyWebSearchBaselineWeak": "Current vig and vig-stripped probabilities require synchronized live quotes for each market; they are not durable facts a free model can know.",
+    "upstreamDataFields": [
+      "market",
+      "marketEfficiency.vig",
+      "marketEfficiency.efficiency",
+      "marketEfficiency.isEfficient",
+      "trueProbabilitiesPercent"
+    ],
+    "synthesisRequired": "Current vig and vig-stripped probabilities require synchronized live quotes for each market; they are not durable facts a free model can know."
+  },
+  {
+    "id": "comparison-13-whale-conviction-and-wallet-skill",
+    "prompt": "analyze_single_market_whales category politics hoursBack 24: on the auto-selected live market, compare whaleFlow.whaleActivity.sentiment, whaleFlow.divergence, holderAnalysis.smartMoneySignal.direction, holderAnalysis.marketConcentration, and say whether recent flow agrees with longer-horizon whale positioning.",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "comparison",
+    "alphaCategory": "Whale conviction and wallet skill",
+    "whyUsersCare": "A flow-driven trader tracking whether strong hands are aligned before committing capital.",
+    "whyWebSearchBaselineWeak": "This compares two different live whale datasets: recent flow and current holder concentration. A free model has neither.",
+    "upstreamDataFields": [
+      "selectedMarket.title",
+      "whaleFlow.whaleActivity.sentiment",
+      "whaleFlow.divergence",
+      "holderAnalysis.smartMoneySignal.direction",
+      "holderAnalysis.smartMoneySignal.reasoning",
+      "holderAnalysis.marketConcentration"
+    ],
+    "synthesisRequired": "This compares two different live whale datasets: recent flow and current holder concentration. A free model has neither."
+  },
+  {
+    "id": "cross-tool-14-execution-microstructure-and-exit-ca",
+    "prompt": "Use search_and_get_outcomes query \"2026 FIFA World Cup winner\" sortBy volume, take the top six tokenIds, then call get_batch_orderbooks. Report each outcome's name, tokenId, bestBid, bestAsk, spread, bidDepth, askDepth, and flag which outcome has the tightest direct-book spread.",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "cross-tool",
+    "alphaCategory": "Execution microstructure and exit capacity",
+    "whyUsersCare": "An execution-focused trader who cares about getting in and out cleanly, not just headline probability.",
+    "whyWebSearchBaselineWeak": "Synchronized raw books across multiple outcomes are live CLOB data and cannot be approximated from stale prices alone.",
+    "upstreamDataFields": [
+      "outcomes.name",
+      "outcomes.tokenId",
+      "orderbooks.bestBid",
+      "orderbooks.bestAsk",
+      "orderbooks.spread",
+      "orderbooks.bidDepth",
+      "orderbooks.askDepth"
+    ],
+    "synthesisRequired": "Synchronized raw books across multiple outcomes are live CLOB data and cannot be approximated from stale prices alone."
+  },
+  {
+    "id": "cross-tool-15-trade-tape-open-interest-and-live-fl",
+    "prompt": "Use search_and_get_outcomes query \"2026 FIFA World Cup winner\" to get the eventSlug, then call get_event_by_slug and get_event_live_volume for that event id. Compare the top three submarkets by live volume share of the event total.",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "cross-tool",
+    "alphaCategory": "Trade tape, open interest, and live flow concentration",
+    "whyUsersCare": "A short-horizon trader deciding whether current activity is worth chasing.",
+    "whyWebSearchBaselineWeak": "Live event-level volume concentration tells you where current participation is landing inside an event family, which changes too fast for a free model.",
+    "upstreamDataFields": [
+      "event.id",
+      "total",
+      "markets.market",
+      "markets.value"
+    ],
+    "synthesisRequired": "Live event-level volume concentration tells you where current participation is landing inside an event family, which changes too fast for a free model."
+  },
+  {
+    "id": "cross-tool-16-cross-venue-contract-equivalence-and",
+    "prompt": "Resolve the top-volume live politics market with get_top_markets sortBy volume category politics limit 1, then call polymarket_crossref_kalshi using its title and slug. Return the three best Kalshi candidates with title, ticker, yesPrice, volume24h, matchScore, rules, yesOutcomeMeans, and noOutcomeMeans.",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "cross-tool",
+    "alphaCategory": "Cross-venue contract equivalence and line mismatch",
+    "whyUsersCare": "A cross-venue trader looking for basis trades without stepping into rule mismatch traps.",
+    "whyWebSearchBaselineWeak": "Real cross-venue alpha requires current Polymarket selection plus current Kalshi match candidates and rule equivalence, not a vague comparison from memory.",
+    "upstreamDataFields": [
+      "markets.title",
+      "markets.slug",
+      "kalshiResults.title",
+      "kalshiResults.ticker",
+      "kalshiResults.yesPrice",
+      "kalshiResults.volume24h",
+      "kalshiResults.matchScore",
+      "kalshiResults.rules",
+      "kalshiResults.yesOutcomeMeans",
+      "kalshiResults.noOutcomeMeans"
+    ],
+    "synthesisRequired": "Real cross-venue alpha requires current Polymarket selection plus current Kalshi match candidates and rule equivalence, not a vague comparison from memory."
+  },
+  {
+    "id": "ceiling-17-whale-conviction-and-wallet-skill",
+    "prompt": "Use get_top_markets sortBy liquidity category politics limit 1 to pick the most liquid live politics market, then run analyze_top_holders deepFetch true limit 20. Take the largest YES whale address and run get_user_positions on that wallet. Report the whale's address, positionValue in this market, tradingHistory.winRate, tradingHistory.totalRealizedPnL, totalClosedTrades, and whether this looks like skilled conviction or just large size.",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "ceiling",
+    "alphaCategory": "Whale conviction and wallet skill",
+    "whyUsersCare": "A flow-driven trader tracking whether strong hands are aligned before committing capital.",
+    "whyWebSearchBaselineWeak": "This joins live holder rank with that wallet's realized trading history, which is exactly the kind of current, wallet-specific alpha a free model lacks.",
+    "upstreamDataFields": [
+      "whaleAnalysis.yesWhales.address",
+      "whaleAnalysis.yesWhales.positionValue",
+      "tradingHistory.winRate",
+      "tradingHistory.totalRealizedPnL",
+      "tradingHistory.totalClosedTrades",
+      "openPositionsSummary.totalValue"
+    ],
+    "synthesisRequired": "This joins live holder rank with that wallet's realized trading history, which is exactly the kind of current, wallet-specific alpha a free model lacks."
+  },
+  {
+    "id": "ceiling-18-screened-live-opportunity-sets",
+    "prompt": "build_high_conviction_workflow category sports candidateCount 8 topSetups 3 includeWhaleFlow true hoursBack 12: summarize workflowSummary and each top setup's score, signal, entryPlan, checks, whaleInsights, and risks.",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "ceiling",
+    "alphaCategory": "Screened live opportunity sets",
+    "whyUsersCare": "A trader or bettor building a current watchlist and unwilling to manually page through dozens of live contracts.",
+    "whyWebSearchBaselineWeak": "This is a live sequential workflow over current discovery, rules, liquidity, efficiency, and whale-flow checks; it cannot be reconstructed from training data.",
+    "upstreamDataFields": [
+      "workflowSummary.discoveredMarkets",
+      "workflowSummary.analyzedMarkets",
+      "workflowSummary.survivingHighConvictionSetups",
+      "topSetups.market",
+      "topSetups.score",
+      "topSetups.signal",
+      "topSetups.entryPlan",
+      "topSetups.checks",
+      "topSetups.whaleInsights",
+      "topSetups.risks"
+    ],
+    "synthesisRequired": "This is a live sequential workflow over current discovery, rules, liquidity, efficiency, and whale-flow checks; it cannot be reconstructed from training data."
+  },
+  {
+    "id": "ceiling-19-execution-microstructure-and-exit-ca",
+    "prompt": "Is now a good time to enter a $3,000 YES position on the highest-liquidity live crypto market? Use get_top_markets sortBy liquidity category crypto limit 1, then run check_market_rules, check_market_efficiency, and analyze_market_liquidity on that market. Give a go/no-go answer supported only by rulesSummary.potentialGotchas, trueProbabilities, spread.spreadBps, whaleCost.sell5k, and liquidityScore.",
+    "mustWin": true,
+    "showcaseCandidate": false,
+    "category": "ceiling",
+    "alphaCategory": "Execution microstructure and exit capacity",
+    "whyUsersCare": "An execution-focused trader who cares about getting in and out cleanly, not just headline probability.",
+    "whyWebSearchBaselineWeak": "A real entry decision needs current rule risk, current vig-adjusted odds, and current exit slippage. A free model cannot know those live constraints.",
+    "upstreamDataFields": [
+      "rulesSummary.potentialGotchas",
+      "trueProbabilities",
+      "spread.spreadBps",
+      "whaleCost.sell5k",
+      "liquidityScore",
+      "recommendation"
+    ],
+    "synthesisRequired": "A real entry decision needs current rule risk, current vig-adjusted odds, and current exit slippage. A free model cannot know those live constraints."
+  }
+]

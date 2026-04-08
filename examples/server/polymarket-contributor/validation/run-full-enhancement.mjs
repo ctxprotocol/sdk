@@ -11,7 +11,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const TOOL_ID = "294100e8-c648-4e5f-a254-95a14b56e398";
 const LOCAL_MCP_URL = "http://localhost:4003/mcp";
-const LOCAL_CONTEXT_BASE_URL = "http://localhost:3000";
+const CONTEXT_BASE_URL =
+  normalizeEnvString(process.env.CONTEXT_BASE_URL) || "http://localhost:3000";
 const FREE_MODEL_ID = "google/gemini-3-flash-preview";
 const WALL_TIMEOUT_MS = 360_000;
 const MAX_TRANSIENT_QUERY_RETRIES = 2;
@@ -149,7 +150,7 @@ function parseSseEvents(text) {
 }
 
 async function runDirectStreamingQuery({ apiKey, requestBody, idempotencyKey }) {
-  const response = await fetch(`${LOCAL_CONTEXT_BASE_URL}/api/v1/query`, {
+  const response = await fetch(`${CONTEXT_BASE_URL}/api/v1/query`, {
     method: "POST",
     headers: {
       accept: "text/event-stream",
@@ -774,7 +775,7 @@ async function runFreeBaseline(prompt, apiKey) {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": LOCAL_CONTEXT_BASE_URL,
+        "HTTP-Referer": CONTEXT_BASE_URL,
         "X-Title": "Polymarket full enhancement validation",
       },
       body: JSON.stringify(request),
@@ -1074,7 +1075,7 @@ async function writeProgressCheckpoint(params) {
     runType: "full-enhancement",
     toolId: TOOL_ID,
     localMcpUrl: LOCAL_MCP_URL,
-    localContextBaseUrl: LOCAL_CONTEXT_BASE_URL,
+    localContextBaseUrl: CONTEXT_BASE_URL,
     freeModelId: FREE_MODEL_ID,
     surfaceClassification: params.surfaceClassification,
     surfaceTable: params.surfaceTable,
@@ -1224,7 +1225,7 @@ async function main() {
     runType: "full-enhancement",
     toolId: TOOL_ID,
     localMcpUrl: LOCAL_MCP_URL,
-    localContextBaseUrl: LOCAL_CONTEXT_BASE_URL,
+    localContextBaseUrl: CONTEXT_BASE_URL,
     freeModelId: FREE_MODEL_ID,
     surfaceClassification,
     surfaceTable,

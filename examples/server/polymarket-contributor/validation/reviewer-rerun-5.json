@@ -1,0 +1,588 @@
+{
+  "reviewedAt": "2026-04-07T15:00:00Z",
+  "reviewSource": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/reviewer-rerun-5-tuples.json",
+  "perQueryEvaluations": [
+    {
+      "promptId": "rules-gotchas-single-market",
+      "query": "For this Polymarket market, what exactly makes it resolve YES or NO, what source settles it, and what edge-case gotchas could surprise traders?",
+      "quotedExcerpts": [
+        "\"Based on the market data for **\\\"Kharg Island no longer under Iranian control by...?\\\"**, here are the details regarding resolution and current market conditions.\"",
+        "\"While the specific legal definitions or settlement sources ... are not explicitly detailed in the provided data.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 2.3,
+        "dataFreshness": 3.9,
+        "specificity": 3.5,
+        "uniqueness": 2.6,
+        "completeness": 2.5,
+        "dataAccuracy": 1.5
+      },
+      "satisfactionMean": 2.72,
+      "scoreExplanations": {
+        "actionability": "Scored 2.3/5 because the buyer gets some tradable context and risk notes, but not the exact rule trigger or settlement source they asked for.",
+        "dataFreshness": "Scored 3.9/5 because the liquidity and pricing table is clearly pulled from a current market snapshot.",
+        "specificity": "Scored 3.5/5 because the answer names dates, prices, spreads, and slippage, but the actual rule text remains vague.",
+        "uniqueness": "Scored 2.6/5 because the slippage analysis is somewhat differentiated, yet it is attached to an ungrounded substituted event rather than a verified rules read.",
+        "completeness": "Scored 2.5/5 because the exact YES/NO language, explicit settlement source, and reliable edge-case gotchas are still missing.",
+        "dataAccuracy": "Scored 1.5/5 because the trace says the authorized tool did not provide resolution-rule evidence, yet the response still asserts UMA-style settlement and interpretive gotchas as if confirmed."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": "The run chose `analyze_event_outcome_liquidity` even though the clarification diagnostics recommended a rules-oriented surface.",
+        "planningIssue": "The planner substituted a periodic multi-outcome event from a deictic \"this market\" prompt instead of first grounding the intended contract.",
+        "executionIssue": "Execution only produced liquidity and slippage data, not actual rule text or source language.",
+        "completenessIssue": "The buyer still does not know the exact YES trigger, NO trigger, or formal settlement source for the intended market.",
+        "codeIssueDetail": "The execution result explicitly says `needsDifferentTools: true` and states that rule text and settlement-source evidence were not available from the chosen tool.",
+        "dataAccuracyRedFlags": "The answer presents UMA settlement and control-definition gotchas as if tool-confirmed even though the trace says those details were not in evidence.",
+        "rootCauseCategory": "unsupported_rule_synthesis_from_substituted_event",
+        "rootCauseEvidence": "The only tool call was `analyze_event_outcome_liquidity` on the Kharg Island event, and `executionResult.reason` says the authorized tool did not provide the resolution rule text, settlement source, or dispute language needed for the query.",
+        "responseQualityNote": "Partially useful market color, but not trustworthy enough for a buyer who needs exact resolution mechanics.",
+        "improvementLever": "Ground the specific market first and only answer rules questions from a tool that returns explicit resolution text and settlement-source evidence.",
+        "diagnosticBrief": {
+          "toolUsed": "analyze_event_outcome_liquidity",
+          "toolShouldHaveUsed": "check_market_rules after explicit market grounding",
+          "argsUsed": "{\"query\":\"full user prompt\",\"sortBy\":\"volume\",\"limit\":4}",
+          "argsShouldHaveUsed": "{\"slug|title|conditionId\":\"explicit target market\"}",
+          "codeSnippet": null,
+          "completenessVerdict": "Partial answer with unsupported rule synthesis.",
+          "toolResultSample": "{\"needsDifferentTools\":true,\"reason\":\"tool did not provide resolution rule text or settlement source\"}",
+          "stageTimingBottleneck": "planning"
+        }
+      },
+      "overallVerdict": "More useful than a refusal, but still not buyer-grade because the rules layer is inferred rather than grounded.",
+      "differentiation": "low_differentiation"
+    },
+    {
+      "promptId": "efficiency-vig-check",
+      "query": "Is this yes/no market efficiently priced right now, or are vig and spread making it unattractive to trade? Show the true implied probabilities after adjusting for the overround.",
+      "quotedExcerpts": [
+        "\"As of April 7, 2026, the **\\\"Will the San Antonio Spurs win the 2026 NBA Finals?\\\"** market is considered **efficiently priced** ...\"",
+        "\"The sum of outcome prices is exactly 1.0, meaning the overround is zero ...\""
+      ],
+      "satisfactionScores": {
+        "actionability": 2.3,
+        "dataFreshness": 4.2,
+        "specificity": 4.0,
+        "uniqueness": 3.2,
+        "completeness": 3.3,
+        "dataAccuracy": 1.2
+      },
+      "satisfactionMean": 3.03,
+      "scoreExplanations": {
+        "actionability": "Scored 2.3/5 because the vig math is usable in isolation, but it may send the buyer trading the wrong market.",
+        "dataFreshness": "Scored 4.2/5 because the efficiency numbers are clearly from a live snapshot.",
+        "specificity": "Scored 4.0/5 because the response provides probabilities, vig, spread, liquidity, and a trading takeaway.",
+        "uniqueness": "Scored 3.2/5 because overround-adjusted efficiency analysis is meaningfully differentiated when it targets the right contract.",
+        "completeness": "Scored 3.3/5 because the requested efficiency package is present, but only for a substituted market.",
+        "dataAccuracy": "Scored 1.2/5 because the trace shows the system resolved \"this yes/no market\" by defaulting to the top-volume Spurs contract rather than the buyer's actual market."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": "The workflow used `get_top_markets` and selected the top-volume Spurs contract instead of grounding the deictic market reference.",
+        "planningIssue": "The search probe for \"this yes/no market\" never established what the buyer meant before execution proceeded.",
+        "executionIssue": null,
+        "completenessIssue": "The requested efficiency answer was completed for a market the buyer did not identify.",
+        "codeIssueDetail": "The trace shows `decision.selected` pointing to the Spurs conditionId after generic search and top-markets probing.",
+        "dataAccuracyRedFlags": "The response speaks definitively about the Spurs market as though it were the buyer's intended contract.",
+        "rootCauseCategory": "deictic_market_substitution",
+        "rootCauseEvidence": "Tool history shows `get_top_markets`, `search_markets`, and `check_market_efficiency`, with the final selected contract being `Will the San Antonio Spurs win the 2026 NBA Finals?` rather than a grounded user-provided market.",
+        "responseQualityNote": "Detailed and potentially helpful, but not trustworthy enough to trade from because the target contract is unproven.",
+        "improvementLever": "Require explicit market grounding from context or attached URLs before running single-market efficiency analysis.",
+        "diagnosticBrief": {
+          "toolUsed": "get_top_markets + search_markets + check_market_efficiency",
+          "toolShouldHaveUsed": "check_market_efficiency only after deterministic market grounding",
+          "argsUsed": "{\"conditionId\":\"0xb6b3...e73\"}",
+          "argsShouldHaveUsed": "{\"slug|title|conditionId\":\"resolved user market\"}",
+          "codeSnippet": null,
+          "completenessVerdict": "Rich efficiency output on a likely wrong contract.",
+          "toolResultSample": "{\"selected\":{\"title\":\"Will the San Antonio Spurs win the 2026 NBA Finals?\"},\"vig\":0}",
+          "stageTimingBottleneck": "planning"
+        }
+      },
+      "overallVerdict": "A strong efficiency memo for the wrong market is still a weak buyer outcome.",
+      "differentiation": "moderate_differentiation"
+    },
+    {
+      "promptId": "compare-named-outcomes-event",
+      "query": "Compare the named outcomes inside this event and show each one's implied probability, best bid, best ask, spread in cents, and volume right now.",
+      "quotedExcerpts": [
+        "\"I found a few ways to pull market data. Which approach would you like to take?\"",
+        "\"Reply with one of the options above or send your own wording if none fit exactly.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 1.0,
+        "dataFreshness": 1.0,
+        "specificity": 1.4,
+        "uniqueness": 1.0,
+        "completeness": 1.0,
+        "dataAccuracy": 1.4
+      },
+      "satisfactionMean": 1.13,
+      "scoreExplanations": {
+        "actionability": "Scored 1.0/5 because the buyer leaves without any outcome table or tradeable information.",
+        "dataFreshness": "Scored 1.0/5 because no live comparison call ran.",
+        "specificity": "Scored 1.4/5 because the menu names internal methods, but it does not identify the event or provide any requested metrics.",
+        "uniqueness": "Scored 1.0/5 because asking the buyer to choose an internal method is one of the weakest possible premium experiences.",
+        "completeness": "Scored 1.0/5 because implied probability, bid, ask, spread, and volume are all absent.",
+        "dataAccuracy": "Scored 1.4/5 because the answer does not fabricate numbers, but it also never meaningfully attempts the requested comparison despite a clearly recommended path."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": "The clarification diagnostics already ranked `compare_event_outcome_quotes` as the best grounded fit, yet the workflow still returned a menu.",
+        "planningIssue": "Clarification logic overrode direct execution for a concrete event-comparison request.",
+        "executionIssue": "No tool calls ran.",
+        "completenessIssue": "The answer never produced the requested event comparison table.",
+        "codeIssueDetail": "The clarification trace says the judge output was ignored because it bypassed a directly grounded composite interpretation, but execution still did not happen.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "unnecessary_clarification_menu",
+        "rootCauseEvidence": "The trace has zero tool calls and a clarification object showing `recommendedOptionId` as `compare_event_outcome_quotes` with fallback to `clarification_required`.",
+        "responseQualityNote": "Pure interaction friction from the buyer perspective.",
+        "improvementLever": "Auto-run the best-fit event comparison path instead of asking the buyer to choose among internal methods.",
+        "diagnosticBrief": {
+          "toolUsed": null,
+          "toolShouldHaveUsed": "compare_event_outcome_quotes",
+          "argsUsed": null,
+          "argsShouldHaveUsed": "{\"eventQuery\":\"resolved event from context\"}",
+          "codeSnippet": null,
+          "completenessVerdict": "Failed answer; no comparison output was produced.",
+          "toolResultSample": null,
+          "stageTimingBottleneck": "planning"
+        }
+      },
+      "overallVerdict": "A tool-choice menu instead of an answer is a hard buyer failure.",
+      "differentiation": "low_differentiation"
+    },
+    {
+      "promptId": "single-market-whale-consensus",
+      "query": "For this live single-outcome market, what side are whales actually on, how concentrated is ownership, and is there a clear smart-money signal?",
+      "quotedExcerpts": [
+        "\"Based on the analysis of the market **\\\"Will the US invade Iran before 2027?\\\"** ... here is the breakdown of whale activity and ownership ...\"",
+        "\"There is **no clear smart money signal** (Neutral).\""
+      ],
+      "satisfactionScores": {
+        "actionability": 2.5,
+        "dataFreshness": 4.2,
+        "specificity": 4.2,
+        "uniqueness": 3.5,
+        "completeness": 3.6,
+        "dataAccuracy": 1.3
+      },
+      "satisfactionMean": 3.22,
+      "scoreExplanations": {
+        "actionability": "Scored 2.5/5 because the whale memo is detailed, but it may drive a decision on the wrong contract.",
+        "dataFreshness": "Scored 4.2/5 because the holdings and recent-flow statistics are clearly live-session data.",
+        "specificity": "Scored 4.2/5 because the answer includes net whale flow, concentration, top holders, and a smart-money interpretation.",
+        "uniqueness": "Scored 3.5/5 because whale-positioning analysis is differentiated premium work when it targets the intended market.",
+        "completeness": "Scored 3.6/5 because it covers the requested analytical dimensions, but only for a fallback market.",
+        "dataAccuracy": "Scored 1.3/5 because the trace explicitly says no concrete market was provided and a fallback live single-outcome contract was used."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 1,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": "The workflow accepted a generic fallback market instead of grounding the buyer's deictic reference.",
+        "planningIssue": "Single-market whale analysis proceeded even though the selected market was only a fallback candidate.",
+        "executionIssue": null,
+        "completenessIssue": "The analysis is rich, but it is not proven to be about the market the buyer meant.",
+        "codeIssueDetail": "The tool result contains `selectionReason: \"No concrete market was provided, so whale analysis used a strong live single-outcome fallback.\"`",
+        "dataAccuracyRedFlags": "The response presents the Iran market as if it were unquestionably the requested contract.",
+        "rootCauseCategory": "deictic_market_substitution",
+        "rootCauseEvidence": "The only tool call was `analyze_single_market_whales`, and its own result explicitly says the selected market was a strong live single-outcome fallback because no concrete market was provided.",
+        "responseQualityNote": "Detailed and premium-feeling on its own terms, but not reliable enough for buyer use because the target is ungrounded.",
+        "improvementLever": "Require deterministic market grounding from surrounding context before running single-market whale analysis.",
+        "diagnosticBrief": {
+          "toolUsed": "analyze_single_market_whales",
+          "toolShouldHaveUsed": "analyze_single_market_whales only after explicit market resolution",
+          "argsUsed": "{}",
+          "argsShouldHaveUsed": "{\"marketQuery\":\"resolved live single-outcome market\"}",
+          "codeSnippet": null,
+          "completenessVerdict": "Rich output on an ungrounded fallback market.",
+          "toolResultSample": "{\"selectionReason\":\"No concrete market was provided, so whale analysis used a strong live single-outcome fallback.\"}",
+          "stageTimingBottleneck": "planning"
+        }
+      },
+      "overallVerdict": "The whale analysis is substantial, but it is still not a trustworthy answer to \"this market.\"",
+      "differentiation": "moderate_differentiation"
+    },
+    {
+      "promptId": "event-whale-breakdown",
+      "query": "In this multi-outcome event, which specific outcome has the most whale money behind it right now, and how large is the gap versus the next closest outcome?",
+      "quotedExcerpts": [
+        "\"Based on the whale analysis for the **2026 NBA Champion** event ... the outcome with the most whale money behind it is **the Milwaukee Bucks**.\"",
+        "\"The gap between the top two outcomes is **$288,983.41**.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 2.4,
+        "dataFreshness": 4.0,
+        "specificity": 4.1,
+        "uniqueness": 3.7,
+        "completeness": 3.5,
+        "dataAccuracy": 1.3
+      },
+      "satisfactionMean": 3.17,
+      "scoreExplanations": {
+        "actionability": "Scored 2.4/5 because the whale ranking is actionable in isolation, but it may be about the wrong event.",
+        "dataFreshness": "Scored 4.0/5 because the whale totals and gap are clearly drawn from a current event-level scan.",
+        "specificity": "Scored 4.1/5 because the answer names the top outcome, the runner-up gap, and a ranked outcome table.",
+        "uniqueness": "Scored 3.7/5 because event-level whale-money concentration is strongly differentiated analysis.",
+        "completeness": "Scored 3.5/5 because the requested whale leader and gap are supplied, but not for a verified user-identified event.",
+        "dataAccuracy": "Scored 1.3/5 because the trace shows the system chose the 2026 NBA Champion event from generic discovery results rather than from grounded user context."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 1,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": "The discovery stack selected a top-volume NBA event from a generic prompt about \"this multi-outcome event.\"",
+        "planningIssue": "The fallback policy said not to guess a multi-outcome event from a generic prompt, yet execution still proceeded on a discovered candidate.",
+        "executionIssue": null,
+        "completenessIssue": "The analysis is complete for the chosen event, but the buyer cannot trust that event to be the intended one.",
+        "codeIssueDetail": "The execution result shows `chosenEvent` as `Will the San Antonio Spurs win the 2026 NBA Finals?` / `2026 NBA Champion` after discovery and top-markets probing.",
+        "dataAccuracyRedFlags": "The response states the Bucks result as if it unquestionably answers the user's event.",
+        "rootCauseCategory": "deictic_event_substitution",
+        "rootCauseEvidence": "Tool history shows `discover_trending_markets`, `get_top_markets`, and `analyze_event_whale_breakdown` on slug `2026-nba-champion`; nothing in the trace grounds that event to the buyer's original reference.",
+        "responseQualityNote": "A detailed whale breakdown, but not trustworthy enough as a buyer answer because the event selection is inferred rather than grounded.",
+        "improvementLever": "Resolve the specific event from context first and only run event-level whale ranking after that grounding step succeeds.",
+        "diagnosticBrief": {
+          "toolUsed": "discover_trending_markets + get_top_markets + analyze_event_whale_breakdown",
+          "toolShouldHaveUsed": "analyze_event_whale_breakdown only after explicit event resolution",
+          "argsUsed": "{\"slug\":\"2026-nba-champion\",\"maxOutcomes\":10}",
+          "argsShouldHaveUsed": "{\"slug|eventQuery\":\"resolved user event\"}",
+          "codeSnippet": null,
+          "completenessVerdict": "Rich event analysis on an ungrounded substituted event.",
+          "toolResultSample": "{\"chosenEvent\":{\"eventTitle\":\"2026 NBA Champion\"},\"topWhaleOutcome\":{\"outcome\":\"the Milwaukee Bucks\",\"totalValue\":714209.17}}",
+          "stageTimingBottleneck": "planning"
+        }
+      },
+      "overallVerdict": "A strong event-whale answer structurally, but still not buyer-safe because the event is inferred rather than identified.",
+      "differentiation": "moderate_differentiation"
+    },
+    {
+      "promptId": "tape-vs-open-interest",
+      "query": "Pick a live market ending soon and tell me whether the tape looks like fresh conviction or churn by combining recent trades with current open interest.",
+      "quotedExcerpts": [
+        "\"I was unable to perform a \\\"fresh conviction vs. churn\\\" analysis because no live markets currently match the search criteria for ending soon ...\"",
+        "\"Because all activity metrics ... are currently empty, the tape read is categorized as **insufficient data**.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 2.8,
+        "dataFreshness": 4.1,
+        "specificity": 3.5,
+        "uniqueness": 2.7,
+        "completeness": 2.4,
+        "dataAccuracy": 4.1
+      },
+      "satisfactionMean": 3.27,
+      "scoreExplanations": {
+        "actionability": "Scored 2.8/5 because the buyer at least learns that the requested screen returned no candidate, but still gets no conviction-versus-churn read.",
+        "dataFreshness": "Scored 4.1/5 because the negative result comes from a live search rather than stale prose.",
+        "specificity": "Scored 3.5/5 because the answer reports zero trades, zero open interest, and the exhausted ending-soon search window.",
+        "uniqueness": "Scored 2.7/5 because this is a somewhat useful negative screen, but much weaker than a real tape analysis.",
+        "completeness": "Scored 2.4/5 because the request to pick a live market and interpret the tape was not fulfilled.",
+        "dataAccuracy": "Scored 4.1/5 because the trace supports the no-match conclusion and does not force an obviously wrong fallback."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 1,
+        "selfHealCount": 1,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": "The workflow stops at a no-match result instead of packaging the closest alternative candidate as clearly separate follow-on help.",
+        "executionIssue": null,
+        "completenessIssue": "No market was selected, so the conviction-versus-churn analysis never actually happened.",
+        "codeIssueDetail": "The execution result returns an empty `selectedMarket` with `searchExhausted: true` and a no-results reason.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "no_candidate_found_for_hard_constraint",
+        "rootCauseEvidence": "The only tool call was `summarize_live_market_activity`, which returned an empty selected market, zero trades, zero open interest, and `No live market matched the current ending-soon window within 7 days (also tried up to 90 days).`",
+        "responseQualityNote": "An honest negative screen with some decision value, but still materially weaker than the requested analysis.",
+        "improvementLever": "When the hard screen returns no candidate, explicitly separate the no-match result from an opt-in closest-alternative suggestion.",
+        "diagnosticBrief": {
+          "toolUsed": "summarize_live_market_activity",
+          "toolShouldHaveUsed": "summarize_live_market_activity",
+          "argsUsed": "{\"sortBy\":\"ending_soon\",\"endingWithinDays\":7,\"tradeLimit\":20}",
+          "argsShouldHaveUsed": "{\"sortBy\":\"ending_soon\",\"endingWithinDays\":7,\"tradeLimit\":20}",
+          "codeSnippet": null,
+          "completenessVerdict": "Accurate negative screen, not the requested tape read.",
+          "toolResultSample": "{\"selectedMarket\":{\"title\":\"\"},\"searchExhausted\":true,\"noResultsReason\":\"No live market matched the current ending-soon window within 7 days (also tried up to 90 days).\"}",
+          "stageTimingBottleneck": "execution"
+        }
+      },
+      "overallVerdict": "A credible no-match result with some value, but still a weak substitute for an actual tape-and-open-interest read.",
+      "differentiation": "low_differentiation"
+    },
+    {
+      "promptId": "event-live-volume-share",
+      "query": "Within this event, which submarkets are taking the biggest share of live trading right now, and what percentage of the event's current flow does each one represent?",
+      "quotedExcerpts": [
+        "\"To provide an accurate breakdown of submarkets and their share of live trading flow, I need to know which specific event you are referring to.\"",
+        "\"Please provide the event details to proceed.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 1.1,
+        "dataFreshness": 1.0,
+        "specificity": 1.5,
+        "uniqueness": 1.0,
+        "completeness": 1.1,
+        "dataAccuracy": 1.6
+      },
+      "satisfactionMean": 1.22,
+      "scoreExplanations": {
+        "actionability": "Scored 1.1/5 because the buyer gets no flow-share table or event selection.",
+        "dataFreshness": "Scored 1.0/5 because no live event-volume computation ran.",
+        "specificity": "Scored 1.5/5 because the limitation is clear, but it is still only a request for more input.",
+        "uniqueness": "Scored 1.0/5 because asking for the event slug again is not differentiated premium output.",
+        "completeness": "Scored 1.1/5 because no submarkets, no percentages, and no event-level flow accounting were returned.",
+        "dataAccuracy": "Scored 1.6/5 because the answer does not invent numbers, but it also ignores viable event-resolution surfaces noted in the trace."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": "The deterministic selection block still identified viable event-level options, yet the workflow never executed any of them.",
+        "planningIssue": "The planner-direct-answer path short-circuited execution even though event-resolution and comparison surfaces were available.",
+        "executionIssue": "No tool calls ran.",
+        "completenessIssue": "The answer never identifies the event or computes current flow share across its submarkets.",
+        "codeIssueDetail": "The clarification diagnostics show a rejected clarification judge and fallback to direct answer rather than running a selected tool.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "deictic_event_not_resolved",
+        "rootCauseEvidence": "The trace has zero tool calls, `planner-direct-answer`, and candidate options including `get_top_markets`, `compare_event_outcome_quotes`, and `search_markets`, but no execution.",
+        "responseQualityNote": "A plain clarification punt that leaves the buyer with no value.",
+        "improvementLever": "Auto-resolve \"this event\" when possible and compute the live flow-share table instead of asking for the slug again.",
+        "diagnosticBrief": {
+          "toolUsed": null,
+          "toolShouldHaveUsed": "compare_event_outcome_quotes or search_markets after event grounding",
+          "argsUsed": null,
+          "argsShouldHaveUsed": "{\"eventQuery\":\"resolved event from context\"}",
+          "codeSnippet": null,
+          "completenessVerdict": "Failed answer; no event-flow breakdown was produced.",
+          "toolResultSample": null,
+          "stageTimingBottleneck": "planning"
+        }
+      },
+      "overallVerdict": "Still just a clarification ask rather than a live event-flow answer.",
+      "differentiation": "low_differentiation"
+    },
+    {
+      "promptId": "single-cross-venue-equivalence",
+      "query": "Find the closest Kalshi equivalent for this Polymarket contract, verify whether the rules and YES meanings actually match, and then tell me which venue is pricing it richer right now.",
+      "quotedExcerpts": [
+        "\"I have retrieved the market data for the Polymarket contract, but I cannot complete the cross-venue comparison because no Kalshi instrument data was returned by the authorized tools.\"",
+        "\"Because no Kalshi lookup tool was available in this execution, I cannot verify if a matching contract exists or which venue is pricing the event \\\"richer.\\\"\""
+      ],
+      "satisfactionScores": {
+        "actionability": 1.9,
+        "dataFreshness": 2.8,
+        "specificity": 3.1,
+        "uniqueness": 1.7,
+        "completeness": 1.6,
+        "dataAccuracy": 1.8
+      },
+      "satisfactionMean": 2.15,
+      "scoreExplanations": {
+        "actionability": "Scored 1.9/5 because the buyer gets no equivalent contract, no rule-match verdict, and no richer-venue conclusion.",
+        "dataFreshness": "Scored 2.8/5 because the Polymarket-side liquidity stats are current, but the cross-venue core of the request never ran.",
+        "specificity": "Scored 3.1/5 because the response is concrete about spread, depth, slippage, and the missing Kalshi leg.",
+        "uniqueness": "Scored 1.7/5 because a cross-venue product that stops after one venue's liquidity check is not meaningfully differentiated.",
+        "completeness": "Scored 1.6/5 because equivalent matching, rules verification, and richer-venue pricing are all missing.",
+        "dataAccuracy": "Scored 1.8/5 because the trace only grounds an inferred Polymarket contract and explicitly lacks the Kalshi evidence required for the promised comparison."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": "The run used `analyze_market_liquidity` on an inferred Polymarket contract instead of starting from a grounded cross-reference path.",
+        "planningIssue": "The workflow attempted a full cross-venue answer without having the Kalshi capability needed to finish it.",
+        "executionIssue": "Only the Polymarket side was grounded; the Kalshi side never materialized.",
+        "completenessIssue": "The answer does not identify the closest Kalshi equivalent, verify rule equivalence, or determine which venue is richer.",
+        "codeIssueDetail": "The execution result ends with `needsDifferentTools: true` and `stopReason` saying authorized tools cannot confirm a Kalshi match or venue-to-venue pricing comparison.",
+        "dataAccuracyRedFlags": "The response treats contract `0xa668...ef60` as though it were the buyer's requested Polymarket contract even though the user never supplied a concrete identifier in the tuple.",
+        "rootCauseCategory": "tooling_gap_plus_ungrounded_contract_selection",
+        "rootCauseEvidence": "Tool history shows only `analyze_market_liquidity`; `executionResult.missingData` explicitly says no authorized Kalshi lookup/cross-reference tool was available and no grounded Kalshi instrument could be verified.",
+        "responseQualityNote": "Honest about the limitation, but still empty-handed on the core buyer job.",
+        "improvementLever": "Do not present a full richer-venue comparison path unless the workflow can both ground the Polymarket contract and retrieve Kalshi rules and pricing evidence.",
+        "diagnosticBrief": {
+          "toolUsed": "analyze_market_liquidity",
+          "toolShouldHaveUsed": "polymarket_crossref_kalshi plus Kalshi rules/pricing after explicit contract grounding",
+          "argsUsed": "{\"marketQuery\":\"full user prompt\"}",
+          "argsShouldHaveUsed": "{\"polymarketSlug|title|conditionId\":\"resolved contract\"}",
+          "codeSnippet": null,
+          "completenessVerdict": "Capability-limited answer with no completed cross-venue execution.",
+          "toolResultSample": "{\"needsDifferentTools\":true,\"stopReason\":\"Authorized tools do not provide the evidence needed to confirm a Kalshi match or venue-to-venue pricing comparison.\"}",
+          "stageTimingBottleneck": "capability"
+        }
+      },
+      "overallVerdict": "A partial one-venue memo is not a satisfactory answer to a cross-venue equivalence request.",
+      "differentiation": "low_differentiation"
+    },
+    {
+      "promptId": "event-momentum-vs-spread",
+      "query": "Inside this event, which outcomes have moved the most over the last week, and what are their current spreads right now?",
+      "quotedExcerpts": [
+        "\"I am unable to identify the specific event you are referring to as no event title or identifier was included in the query context.\"",
+        "\"Please provide the **event name** or **slug**.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 1.1,
+        "dataFreshness": 1.0,
+        "specificity": 1.4,
+        "uniqueness": 1.0,
+        "completeness": 1.0,
+        "dataAccuracy": 1.5
+      },
+      "satisfactionMean": 1.17,
+      "scoreExplanations": {
+        "actionability": "Scored 1.1/5 because the buyer gets neither the weekly movers nor the current spread snapshot.",
+        "dataFreshness": "Scored 1.0/5 because no live event query ran.",
+        "specificity": "Scored 1.4/5 because the limitation is plainly stated, but the response still produces no event-level result.",
+        "uniqueness": "Scored 1.0/5 because this is another clarification-style punt rather than premium analysis.",
+        "completeness": "Scored 1.0/5 because both halves of the prompt remain unanswered.",
+        "dataAccuracy": "Scored 1.5/5 because the answer avoids fabrication, but it also avoids using viable event-comparison paths identified in the trace."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": "The selection block already highlighted event-comparison methods, but the workflow never used them.",
+        "planningIssue": "The planner-direct-answer path bypassed execution even though `compare_event_outcome_quotes` and related paths were available.",
+        "executionIssue": "No tool calls ran.",
+        "completenessIssue": "No weekly movers and no current spreads were returned.",
+        "codeIssueDetail": "The clarification diagnostics show the judge wanted clarification, was rejected for non-distinct options, and the system still defaulted to a direct answer.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "deictic_event_not_resolved",
+        "rootCauseEvidence": "The trace has zero tool calls, `planner-direct-answer`, and a recommended option of `compare_event_outcome_quotes` that was never executed.",
+        "responseQualityNote": "A low-value clarification reply for what should have been a concrete event-analysis surface.",
+        "improvementLever": "Resolve the event automatically and, if weekly history is unavailable, still return the current spread snapshot rather than asking for the event again.",
+        "diagnosticBrief": {
+          "toolUsed": null,
+          "toolShouldHaveUsed": "compare_event_outcome_quotes or search_and_get_outcomes after event grounding",
+          "argsUsed": null,
+          "argsShouldHaveUsed": "{\"eventQuery\":\"resolved event from context\"}",
+          "codeSnippet": null,
+          "completenessVerdict": "Failed answer; no movers or spread table was produced.",
+          "toolResultSample": null,
+          "stageTimingBottleneck": "planning"
+        }
+      },
+      "overallVerdict": "Still one of the weakest buyer outcomes in the batch.",
+      "differentiation": "low_differentiation"
+    },
+    {
+      "promptId": "high-conviction-workflow",
+      "query": "Run a full live Polymarket workflow for me: discover the hottest tradeable markets in this category, validate rule risk, check pricing efficiency, inspect liquidity, and return the top setups with explicit risks.",
+      "quotedExcerpts": [
+        "\"However, **no markets survived the strict high-conviction screening criteria** ...\"",
+        "\"The following \\\"near-miss\\\" setups were identified but ultimately filtered out ...\""
+      ],
+      "satisfactionScores": {
+        "actionability": 3.5,
+        "dataFreshness": 4.1,
+        "specificity": 3.8,
+        "uniqueness": 4.0,
+        "completeness": 3.7,
+        "dataAccuracy": 4.2
+      },
+      "satisfactionMean": 3.88,
+      "scoreExplanations": {
+        "actionability": "Scored 3.5/5 because the buyer gets near-miss candidates and clear blockers, even though no final setups qualified.",
+        "dataFreshness": "Scored 4.1/5 because the workflow summary and near-miss table are clearly from a live run.",
+        "specificity": "Scored 3.8/5 because the answer names discovered and analyzed counts, three near-miss markets, and the main exclusion reasons.",
+        "uniqueness": "Scored 4.0/5 because a full workflow screen with near-miss packaging is meaningfully differentiated premium output.",
+        "completeness": "Scored 3.7/5 because the zero-result case is handled better than prior reruns, though richer per-market evidence would make the decision memo stronger.",
+        "dataAccuracy": "Scored 4.2/5 because the response aligns closely with the workflow output showing zero surviving setups and named near misses."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 1,
+        "selfHealCount": 1,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": "The overall workflow is sound, but the zero-setups package is still somewhat summary-heavy relative to the complexity of the request.",
+        "executionIssue": null,
+        "completenessIssue": "The buyer gets near misses and blockers, but not deeper per-market rule-risk, pricing, and liquidity evidence for each near miss.",
+        "codeIssueDetail": "The tool returned `topSetups: []` alongside analysis notes and near-miss setups, so the final answer had to package a negative result.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "overfiltered_workflow_output",
+        "rootCauseEvidence": "The single `build_high_conviction_workflow` call returned `survivingHighConvictionSetups: 0`, `topSetupsReturned: 0`, and near-miss notes for three markets.",
+        "responseQualityNote": "The strongest result in this batch: still negative, but materially more useful and buyer-oriented than a bare no-setups summary.",
+        "improvementLever": "When zero setups survive, keep the current near-miss packaging and add the exact failed thresholds or headline metrics for each near miss.",
+        "diagnosticBrief": {
+          "toolUsed": "build_high_conviction_workflow",
+          "toolShouldHaveUsed": "build_high_conviction_workflow",
+          "argsUsed": "{\"topSetups\":3,\"candidateCount\":6,\"includeWhaleFlow\":false}",
+          "argsShouldHaveUsed": "{\"topSetups\":3,\"candidateCount\":6,\"includeWhaleFlow\":false}",
+          "codeSnippet": null,
+          "completenessVerdict": "Credible negative workflow result with useful near-miss packaging.",
+          "toolResultSample": "{\"workflowSummary\":{\"discoveredMarkets\":8,\"analyzedMarkets\":6,\"survivingHighConvictionSetups\":0},\"topSetups\":[]}",
+          "stageTimingBottleneck": "synthesis"
+        }
+      },
+      "overallVerdict": "A credible negative workflow memo with actionable near misses; this is the best buyer outcome in the rerun batch.",
+      "differentiation": "high_differentiation"
+    }
+  ],
+  "aggregate": {
+    "satisfactionMean": 2.496,
+    "satisfactionMin": 1.13,
+    "queryCount": 10,
+    "queriesAbove4": 0,
+    "queriesBelow3": 5,
+    "fragilityReport": {
+      "highCount": 8,
+      "mediumCount": 2,
+      "lowCount": 0,
+      "highFragilityRate": 0.8,
+      "highFragilityQueryIds": [
+        "rules-gotchas-single-market",
+        "efficiency-vig-check",
+        "compare-named-outcomes-event",
+        "single-market-whale-consensus",
+        "event-whale-breakdown",
+        "event-live-volume-share",
+        "single-cross-venue-equivalence",
+        "event-momentum-vs-spread"
+      ]
+    },
+    "topImprovementLevers": [
+      "Ground deictic single-market prompts before running rules, efficiency, or whale analysis.",
+      "Auto-run the best-fit event-comparison path instead of returning clarification menus or direct-answer punts.",
+      "Do not synthesize rule text or settlement-source claims from liquidity-only evidence.",
+      "Do not present full cross-venue comparison surfaces unless both venue legs can be grounded and priced.",
+      "Keep the improved near-miss packaging for zero-setup workflows and add exact failed thresholds for each candidate."
+    ],
+    "baselineBeatenRate": null,
+    "differentiationCounts": {
+      "high_differentiation": 1,
+      "moderate_differentiation": 3,
+      "low_differentiation": 6
+    },
+    "gateCheck": {
+      "satisfactionMeanGte3_5": false,
+      "noHighDiffBelow3": true,
+      "highFragilityLte0_3": false,
+      "highDiffBelow3Indices": []
+    }
+  }
+}

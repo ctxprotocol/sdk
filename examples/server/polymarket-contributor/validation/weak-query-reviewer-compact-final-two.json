@@ -1,0 +1,54 @@
+{
+  "evaluations": [
+    {
+      "promptId": "cross-tool-14-execution-microstructure-and-exit-ca",
+      "query": "Use search_and_get_outcomes query \"2026 FIFA World Cup winner\" sortBy volume, take the top six tokenIds, then call get_batch_orderbooks. Report each outcome's name, tokenId, bestBid, bestAsk, spread, bidDepth, askDepth, and flag which outcome has the tightest direct-book spread.",
+      "alphaCategory": "Execution microstructure and exit capacity",
+      "difficultyTier": "cross-tool",
+      "differentiation": "high_differentiation",
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 4.33,
+      "overallVerdict": "Clearly better than the empty free baseline and close to paid quality: the answer is live, specific, and fully populated, but it still falls short of a clean execution-grade result because the trace itself warns that raw direct-book spreads on neg-risk markets should not be ranked across outcomes.",
+      "traceAssessment": {
+        "fragilityRisk": "medium",
+        "rootCauseCategory": "tool_semantics_risk",
+        "responseQualityNote": "The response explicitly says all 6 compared outcomes are tied for the tightest direct-book spread at 0.998 and no single outcome should be flagged as tighter than the others from this direct-book snapshot. That is materially better than the prior bad single-winner claim and much better than the free baseline, but the developer trace still shows the underlying raw orderbook warning that direct raw CLOB spreads should not be ranked across outcomes.",
+        "improvementLever": "Use merged/UI-equivalent books or quote snapshot methods for cross-outcome spread comparison, and keep the structured execution result aligned with the final narrative so no hidden single-outcome ranking remains."
+      }
+    },
+    {
+      "promptId": "cross-tool-15-trade-tape-open-interest-and-live-fl",
+      "query": "Use search_and_get_outcomes query \"2026 FIFA World Cup winner\" to get the eventSlug, then call get_event_by_slug and get_event_live_volume for that event id. Compare the top three submarkets by live volume share of the event total.",
+      "alphaCategory": "Trade tape, open interest, and live flow concentration",
+      "difficultyTier": "cross-tool",
+      "differentiation": "high_differentiation",
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.17,
+      "overallVerdict": "Good paid answer and clearly better than the empty free baseline. The live workflow actually ran and the numbers are grounded, but the result is less buyer-friendly than it could be because it compares opaque submarket IDs instead of named submarkets.",
+      "traceAssessment": {
+        "fragilityRisk": "low",
+        "rootCauseCategory": "synthesis_issue",
+        "responseQualityNote": "The response is trace-backed and specific, with exact total live volume and top-three shares. The weakness is presentation, not execution: buyers get hashes as Submarket ID rather than interpretable market names or a sharper read on concentration.",
+        "improvementLever": "Map the top volume entries to human-readable submarket names when possible and add one sentence on what the concentration pattern implies for where current participation is clustering."
+      }
+    }
+  ],
+  "summary": {
+    "blockingPromptIdsBelow3": [],
+    "meanOfTheseTwo": 4.25
+  }
+}

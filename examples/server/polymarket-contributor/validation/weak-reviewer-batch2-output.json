@@ -1,0 +1,217 @@
+{
+  "reviewedAt": "2026-04-06T00:00:00.000Z",
+  "perQueryEvaluations": [
+    {
+      "query": "get_top_markets sortBy competitive category politics minLiquidity 75000 limit 20: from the returned list, select the three markets whose currentPrice is closest to 0.50 and compare their title, currentPrice, liquidity, and volume24h in a small table.",
+      "quotedExcerpts": [
+        "The search for the top politics markets with a minimum liquidity of 75,000 returned no results as of April 5, 2026.",
+        "Consequently, I cannot select the three markets closest to a current price of 0.50 or provide a comparison table.",
+        "The specific criteria (category: politics, minimum liquidity: 75,000) resulted in an empty list from the data source, meaning no market metadata (titles, prices, or volume) is available for comparison."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 3,
+        "uniqueness": 3,
+        "completeness": 2,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3,
+      "scoreExplanations": {
+        "actionability": "The answer stops at \u201ctry different filters\u201d and never produces the requested comparison table or near-0.50 picks.",
+        "dataFreshness": "It states an as-of date (April 5, 2026), which anchors emptiness in time even though it omits the API\u2019s ISO timestamp.",
+        "specificity": "It names the exact filters (politics, 75k liquidity, competitive sort) but supplies no market rows, prices, liquidity, or volume figures.",
+        "uniqueness": "Explaining an empty tool result is somewhat grounded in paid data, yet the core deliverable (ranked markets) is missing.",
+        "completeness": "It does not perform the required \u201cpick three closest to 0.50\u201d step or tabulate title/currentPrice/liquidity/volume24h because it bails on zero rows.",
+        "dataAccuracy": "The narrative matches the trace: `get_top_markets` returned `markets: []` with a coherent summary string, with no contradictory numbers."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 1,
+        "selfHealCount": 1,
+        "budgetConsumedPct": 3.9,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "Completeness pipeline disagreed with its own raw JSON (`canRetryWithSameTools: true` with a concrete rescore plan) and surfaced `needsDifferentTools`, then skipped bounded rediscovery (`execution_loop_guardrail_partial_answer`), so the run stopped after one empty page instead of a same-tool parameter retry.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "completeness_check_failure",
+        "rootCauseEvidence": "`diagnostics.completeness.triggerNeedsDifferentTools` is true while the embedded raw completeness text still proposed relaxing `minLiquidity`/changing `sortBy`, and `bounded-rediscovery` was skipped per `execution_loop_guardrail_partial_answer`.",
+        "responseQualityNote": "Honest about zero hits and gives sensible next steps, but a paying user still gets none of the requested table or price analysis.",
+        "improvementLever": "Honor the same-tool retry path (or auto-reparameterize `get_top_markets`) when the tool returns an empty competitive set but `searchExhausted` is false and pagination shows more pages or obvious filter tightness.",
+        "diagnosticBrief": {
+          "toolUsed": "get_top_markets",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"sortBy\":\"competitive\",\"category\":\"politics\",\"minLiquidity\":75000,\"limit\":20}",
+          "argsShouldHaveUsed": "Same tool with lowered `minLiquidity` and/or `sortBy` `volume` or `liquidity` (as the trace\u2019s own suggested fix described) before declaring the question unanswerable.",
+          "codeSnippet": "const result = await callMcpSkill({\n    toolId,\n    toolName: \"get_top_markets\",\n    args: {\n      sortBy: \"competitive\",\n      category: \"politics\",\n      minLiquidity: 75000,\n      limit: 20\n    }\n  });",
+          "toolResultSample": "{\"sortedBy\":\"competitive\",\"markets\":[],\"summary\":\"0 most contested markets (40-60% range).\",\"pagination\":{\"offset\":0,\"returned\":0,\"hasMore\":true,\"nextOffset\":40,\"scannedToOffset\":40,\"pagesScanned\":2},\"searchExhausted\":false,\"fetchedAt\":\"2026-04-05T18:28:17.641Z\"}",
+          "completenessVerdict": "`triggerNeedsDifferentTools: true` with missing-capability text echoing the original query; timeline completeness outcome `needs_different_tools` while raw LLM JSON still allowed same-tool retries; rediscovery skipped.",
+          "stageTimingBottleneck": "execution=8839ms"
+        }
+      },
+      "overallVerdict": "I would not pay again because the core deliverable\u2014a three-row comparison table\u2014was never produced."
+    },
+    {
+      "query": "browse_category sports limit 30 sortBy volume: pick the single event with the highest volume, then call find_correlated_markets using that market\u2019s conditionId or slug and list the top 3 correlatedMarkets by correlationScore with hedgeNote.",
+      "quotedExcerpts": [
+        "The correlation search for this event encountered a gap: the primary tool returned unrelated non-sports markets.",
+        "As a result, the following top 3 same-day NBA markets were surfaced as fallback hedges:",
+        "**Execution Note:** The tool returned `10` potential correlations in total, but because of the \"correlation gap\" mentioned in the source data, these specific NBA-wide markets were prioritized to ensure relevance to the basketball category."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 2,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 2,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 2.5,
+      "scoreExplanations": {
+        "actionability": "Instead of actionable correlated hedges for Raptors vs. Celtics, the answer substitutes generic season-long NBA futures with hand-wavy \u201cfallback\u201d notes.",
+        "dataFreshness": "No timestamp or fetch time appears, so the hedges cannot be judged as live relative to the game.",
+        "specificity": "It does identify the correct high-volume event and includes a concrete `conditionId`, plus large volume figures for the fallback markets.",
+        "uniqueness": "Discovery used real venue data, but the correlation portion is effectively replaced by editorial substitution, which a free model could mimic.",
+        "completeness": "It never lists the top three `correlatedMarkets` from `find_correlated_markets` sorted by `correlationScore` with each item\u2019s `hedgeNote` as requested; the table omits correlation scores entirely.",
+        "dataAccuracy": "The trace shows `find_correlated_markets` returning unrelated titles (MicroStrategy, Kraken IPO, Macron) each with `correlationScore` 100 and identical hedge language\u2014classic \u201cmax score junk\u201d paired with a narrative that reframes unrelated rows as basketball hedges."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": 7.8,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "Two `find_correlated_markets` calls on the Raptors/Celtics `conditionId` still yielded macro/political markets with uniform `correlationScore` 100, forcing an LLM patch and synthetic NBA fallback rather than real correlations.",
+        "completenessIssue": "Multiple completeness cycles flagged severe semantic mismatch before a patched program returned substitute markets.",
+        "codeIssueDetail": "Post-patch code added basketball keyword gating and a probe-first NBA fallback after `find_correlated_markets` kept returning off-domain correlations (see execution program revision `rev-2` / `llm_patch` summary in the trace).",
+        "dataAccuracyRedFlags": "`toolCallHistory` shows correlated entries like \u201cMicroStrategy\u2026\u201d, \u201cKraken IPO\u2026\u201d, and \u201cMacron\u2026\u201d each with `correlationScore` 100 and the same hedge boilerplate for an NBA game source market.",
+        "rootCauseCategory": "contributor_tool_bug",
+        "rootCauseEvidence": "`toolCallHistory` entries for `find_correlated_markets` list clearly non-sports `correlatedMarkets` with identical `correlationScore` values for a basketball `conditionId`, which completeness messages also call out as a semantic mismatch.",
+        "responseQualityNote": "Transparent about the correlation failure, but the paid answer still does not satisfy the explicit \u201ctop 3 by correlationScore\u201d contract and risks misleading users by labeling generic futures as correlated hedges.",
+        "improvementLever": "Fix `find_correlated_markets` so sports inputs cannot surface obviously unrelated markets with perfect scores, or have the synthesizer refuse to fabricate substitutes and instead return the raw correlation rows with an explicit failure verdict.",
+        "diagnosticBrief": {
+          "toolUsed": "browse_category; get_top_markets; find_correlated_markets (twice each across retries)",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "browse_category `{\"category\":\"sports\",\"limit\":30,\"sortBy\":\"volume\"}`; get_top_markets `{\"limit\":30,\"sortBy\":\"volume\",\"category\":\"sports\"}`; find_correlated_markets `{\"conditionId\":\"0x4c0348dfc0c77e682c30ebccb0d4662933a81356540bc39ef8992a220f1a93d3\"}`",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "const readBatch = await callMcpSkillsParallel({\n    label: \"sports-high-volume-event-discovery\",\n    calls: [\n      { key: \"browseCategory\", toolName: \"browse_category\", args: { category: \"sports\", limit: 30, sortBy: \"volume\" } },\n      { key: \"topMarkets\", toolName: \"get_top_markets\", args: { limit: 30, sortBy: \"volume\", category: \"sports\" } },\n    ],\n  });",
+          "toolResultSample": "{\"title\":\"MicroStrategy sells any Bitcoin by ___ ?\",\"correlationScore\":100,\"hedgeNote\":\"Strongly correlated - consider for hedging\"} \u2026 (repeated pattern for unrelated markets tied to the NBA game `conditionId`)",
+          "completenessVerdict": "`triggerNeedsDifferentTools: false`; multiple completeness entries marked semantic mismatch between basketball source and generic correlations before an LLM patch produced fallback hedges.",
+          "stageTimingBottleneck": "execution=44274ms"
+        }
+      },
+      "overallVerdict": "I would not pay again because the answer does not deliver the requested correlation-ranked results and substitutes unrelated markets."
+    },
+    {
+      "query": "Using get_event_outcomes with slug democratic-presidential-nominee-2028 sortBy volume limit 6, collect YES tokenIds and call get_batch_orderbooks: for each token report bestBid, bestAsk, spread from the orderbooks map and flag which outcome has the tightest spread.",
+      "quotedExcerpts": [
+        "Based on the data for the **Democratic Presidential Nominee 2028** event, here are the orderbook details for the top 6 outcomes by volume.",
+        "**Tightest Spread:** All listed outcomes currently share the same spread of **0.998**.",
+        "**Chelsea Clinton** is flagged as the primary tightest spread outcome in the underlying data."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 2,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 3,
+      "scoreExplanations": {
+        "actionability": "Every outcome shows a 0.998 spread with 0.001/0.999 quotes, so there is no meaningful tradable microstructure insight or ranking to act on.",
+        "dataFreshness": "The narrative never cites `fetchedAt` or any other freshness marker even though the tools captured timestamps in the trace.",
+        "specificity": "It lists six named nominees with full token IDs and numeric bid/ask/spread fields, tightly matching the requested shape.",
+        "uniqueness": "Pulling six token IDs plus batch order books goes beyond a generic LLM guess, even if the quotes are low quality.",
+        "completeness": "It covers all six tokens yet mishandles the \u201ctightest spread\u201d instruction by singling out Chelsea Clinton despite admitting a six-way tie.",
+        "dataAccuracy": "Uniform `bestBid`/`bestAsk`/`spread` across six distinct tokens is a strong red flag, and the answer contradicts itself between the tie statement and the \u201cprimary tightest\u201d flag; `toolCallHistory` warns these are raw CLOB books that need merged/spread tools."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 4.7,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "`get_batch_orderbooks` results include an explicit warning to use merged books or `get_spreads`, but the planner/synthesis surfaced the raw 0.001/0.999 extremes as if they were comparable quotes.",
+        "completenessIssue": null,
+        "codeIssueDetail": "Generated code calls `get_batch_orderbooks` on YES `tokenIds` without following the tool\u2019s guidance to use merged/UI-equivalent books for realistic spreads (warning embedded in each orderbook object in `toolCallHistory`).",
+        "dataAccuracyRedFlags": "All six tokens share identical best bid/ask/spread values, and the narrative simultaneously claims a universal tie and a unique \u201cprimary\u201d tightest outcome.",
+        "rootCauseCategory": "code_generation_error",
+        "rootCauseEvidence": "`toolCallHistory` for `get_batch_orderbooks` shows each book carrying `view:\"raw\"` plus a warning to prefer merged/`get_spreads` data, yet the program never switches endpoints after reading that signal.",
+        "responseQualityNote": "Structurally faithful (table with token IDs) but the numeric quotes are not credible for decision-making and the tie-break language is internally inconsistent.",
+        "improvementLever": "After seeing the raw-book warning, automatically follow up with `get_orderbook` (`merged=true`) or `get_spreads`/`get_prices` so bids, asks, and spreads reflect tradable liquidity instead of placeholder extremes.",
+        "diagnosticBrief": {
+          "toolUsed": "get_event_outcomes; get_batch_orderbooks",
+          "toolShouldHaveUsed": "get_batch_orderbooks is acceptable only if paired with merged quote tools (`get_orderbook` with merged books, `get_spreads`, or `get_prices` per the warning).",
+          "argsUsed": "get_event_outcomes `{\"slug\":\"democratic-presidential-nominee-2028\",\"sortBy\":\"volume\",\"limit\":6}`; get_batch_orderbooks `{\"tokenIds\":[six YES token IDs from outcomes]}`",
+          "argsShouldHaveUsed": "Same token IDs but routed through quote modes that honor the contributor\u2019s warning (merged/true spread snapshot) before synthesis.",
+          "codeSnippet": "toolName: \"get_batch_orderbooks\",\n    args: {\n      tokenIds: yesTokenIds\n    }\n  });",
+          "toolResultSample": "{\"view\":\"raw\",\"warning\":\"Direct raw CLOB book only. Use get_prices/get_spreads for quote snapshots or get_orderbook with merged=true for a UI-equivalent book.\",\"bestBid\":0.001,\"bestAsk\":0.999,\"spread\":0.998}",
+          "completenessVerdict": "`diagnostics.completeness.triggerNeedsDifferentTools: false`; timeline verification outcome `complete` with empty `missingParts`.",
+          "stageTimingBottleneck": "planning=13528ms"
+        }
+      },
+      "overallVerdict": "I would not pay again because the spread analysis is numerically suspect and self-contradictory despite the correct table format."
+    },
+    {
+      "query": "build_high_conviction_workflow category sports candidateCount 8 topSetups 3 includeWhaleFlow true hoursBack 12: summarize workflowSummary and each top setup\u2019s score, signal, checks, risks, and whaleInsights.",
+      "quotedExcerpts": [
+        "The **high-conviction-sequential** strategy for the **sports** category discovered and analyzed 5 markets, returning the top 3 setups based on liquidity, pricing, and whale activity.",
+        "| 1 | [2026 NCAA Tournament Winner](https://polymarket.com/event/2026-ncaa-tournament-winner) | 80 | YES setup: 1.00% model deficit, excellent liquidity/pricing | **Bullish**: Net volume of $10,744.69; whale flow aligned with retail. |",
+        "*   **Risks**: Multiple \"gotchas\" in rules; resolution source not clearly specified; market has passed end date with resolution pending."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 2,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.8,
+      "scoreExplanations": {
+        "actionability": "Delivers three ranked setups with scores, signals, rule/liquidity checks, and whale color, which is enough to prioritize further research.",
+        "dataFreshness": "No `fetchedAt` or other explicit recency statement appears in the user-facing text even though the tool captured a timestamp in the trace.",
+        "specificity": "Concrete market names, Polymarket URLs, numeric scores, whale net volumes, and detailed check bullets are all present.",
+        "uniqueness": "This level of structured, tool-backed workflow output is unlikely from a free chatbot without live Polymarket integration.",
+        "completeness": "Covers workflow summary plus score, signal, checks, risks, and whale insights for each setup, but it silently analyzes five markets despite `candidateCount: 8` in the prompt.",
+        "dataAccuracy": "Numbers differ across setups (scores 80/78/78, distinct whale flows), and nothing obviously self-contradictory appears, though repeated \u201c0 bps vig\u201d boilerplate is mildly templated."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 5,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "`toolCallHistory` includes `fetchedAt: \"2026-04-05T18:30:56.401Z\"` and richer structured fields, but the response omits that freshness context and glosses over the `candidateCount` vs. \u201c5 markets\u201d discrepancy.",
+        "responseQualityNote": "Polished, information-dense recap that largely mirrors the tool payload, yet it under-delivers on temporal transparency and parameter fidelity.",
+        "improvementLever": "Surface the workflow timestamp, echo `candidateCount` versus actual candidates scanned, and quote any `workflowSummary` string verbatim from the tool when available.",
+        "diagnosticBrief": {
+          "toolUsed": "build_high_conviction_workflow",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"category\":\"sports\",\"candidateCount\":8,\"topSetups\":3,\"includeWhaleFlow\":true,\"hoursBack\":12}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "toolName: \"build_high_conviction_workflow\",\n    args: {\n      category: \"sports\",\n      candidateCount: 8,\n      topSetups: 3,\n      includeWhaleFlow: true,\n      hoursBack: 12\n    }\n  });",
+          "toolResultSample": "{\"fetchedAt\":\"2026-04-05T18:30:56.401Z\",\"topSetups\":[{\"rank\":1,\"market\":\"2026 NCAA Tournament Winner\",\"score\":80,\"signal\":\"YES setup: 1.00% model deficit, excellent liquidity, excellent pricing\",\"whaleInsights\":\"[structured bullish stats]\",\"risks\":[\"Multiple gotchas identified - read rules carefully\",...]}]}",
+          "completenessVerdict": "`diagnostics.completeness.triggerNeedsDifferentTools: false`; verification marked complete with no missing parts in the trace.",
+          "stageTimingBottleneck": "execution=15595ms"
+        }
+      },
+      "overallVerdict": "I might pay again for the structured trade theses, but not without timestamps and a clear explanation of the candidate-count mismatch."
+    }
+  ]
+}

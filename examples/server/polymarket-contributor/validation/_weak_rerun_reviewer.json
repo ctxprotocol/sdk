@@ -1,0 +1,274 @@
+{
+  "reviewedAt": "2026-04-07T12:00:00.000Z",
+  "perQueryEvaluations": [
+    {
+      "traceIndex": 1,
+      "query": "Which live politics markets currently show the widest verified spreads or sub-$1 arbitrage-style pricing, and are any worth working with passive orders right now?",
+      "quotedExcerpts": [
+        "As of **April 7, 2026, at 06:14 UTC**, a scan of 40 live political markets on Polymarket shows that the platform is currently priced very efficiently.",
+        "There are **zero verified sub-$1 arbitrage opportunities** (where Buy Yes + Buy No costs less than $1.00) currently available. The average spread across the political category is a tight **0.1\u00a2**.",
+        "Because the spreads are exceptionally tight (0.1\u00a2 to 0.2\u00a2), working passive orders in these specific 2028 Democratic nomination markets may currently offer the only (minimal) captures."
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.67,
+      "scoreExplanations": {
+        "actionability": "Names concrete 2028 nomination markets, spread widths, and when passive orders might (marginally) make sense, plus next steps to widen the search.",
+        "dataFreshness": "States an explicit as-of timestamp (April 7, 2026, 06:14 UTC) tied to the scan.",
+        "specificity": "Gives counts (40 markets), average spread (0.1\u00a2), per-market spreads and mid prices in a table.",
+        "uniqueness": "Reflects a real arbitrage/orderbook-style scan rather than generic political commentary, though the \u2018no arb\u2019 conclusion is a common efficient-market outcome.",
+        "completeness": "Covers verified sub-$1 arb, widest spreads among politics, and passive-order relevance in one flow.",
+        "dataAccuracy": "Numbers are internally consistent with the trace payload (methodology note, empty arb list, listed wide-spread markets); minor clustering of 0.1\u00a2 spreads is plausible for tight books, not a hard red flag."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 11.8,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Delivers a timestamped, quantitative politics scan with actionable table rows and honest \u2018no arb\u2019 result; the main gap is that edge from passive quoting is explicitly minimal.",
+        "improvementLever": "Add depth-at-price or estimated fill size for passive bids/offers so \u2018worth working\u2019 is grounded in book depth, not only spread ticks.",
+        "diagnosticBrief": {
+          "toolUsed": "find_arbitrage_opportunities",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"category\":\"politics\",\"limit\":20}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "toolName: \"find_arbitrage_opportunities\",\n    args: {\n      category: \"politics\",\n      limit: 20\n    }",
+          "toolResultSample": "{\"scannedMarkets\":40,\"arbitrageOpportunities\":[],\"wideSpreadMarkets\":[...],\"summary\":...,\"methodology\":\"Fetched real CLOB orderbooks... politics\"}",
+          "completenessVerdict": "completeness.evaluations present in trace but redacted as [OMITTED:CIRCULAR_REFERENCE]; no needsDifferentTools flag.",
+          "stageTimingBottleneck": "execution=31936ms"
+        }
+      },
+      "overallVerdict": "I would pay again: the answer is fresh, specific, and directly tied to executable-style checks."
+    },
+    {
+      "traceIndex": 2,
+      "query": "Use the most liquid live multi-outcome politics event on Polymarket right now and compare the top four outcomes by price, spread, and estimated exit slippage. Which outcomes can actually absorb size cleanly?",
+      "quotedExcerpts": [
+        "Based on the available data, a search for the most liquid live multi-outcome politics events on Polymarket currently returns no results for any **resolved** multi-outcome events matching those criteria.",
+        "As of the current telemetry (Batch ID: `fa0182bf-83d7-433d-aa12-8f500ef90c86`), the system was unable to find a market that simultaneously meets all these criteria and provides the granularity for spread and exit slippage comparisons."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 2,
+        "specificity": 2,
+        "uniqueness": 2,
+        "completeness": 1,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 1.83,
+      "scoreExplanations": {
+        "actionability": "Only offers generic workarounds; it never names the actual most-liquid live multi-outcome event or compares outcomes with slippage.",
+        "dataFreshness": "Batch telemetry is not a market timestamp; no live prices, spreads, or slippage as-of time.",
+        "specificity": "Almost no market-level numbers; the only concrete token is a batch ID.",
+        "uniqueness": "A free model could emit the same \u2018broaden search\u2019 guidance without the requested multi-outcome book analytics.",
+        "completeness": "Misses the core deliverables: top event selection, top four outcomes, spread and exit slippage, and size absorption.",
+        "dataAccuracy": "The narrative incorrectly centers **resolved** multi-outcome events while the question asked **live**; this contradicts tool results that include live multi-outcome politics events (e.g., 2028 nominee fields) in browse output."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": 3.6,
+        "fragilityRisk": "medium",
+        "selectionIssue": "Probe used browse_category/get_top_markets but the synthesized stop path never escalated to an event-level multi-outcome liquidity method (e.g., analyze_event_outcome_liquidity) despite the intent contract flagging representative outcome selection.",
+        "planningIssue": "diagnostics.planning.initial.validation passed=false lists deterministic ranking/slippage gaps; rewrite was accepted but the shipped answer still fails the contract.",
+        "executionIssue": "executionResult.stopReason is no_resolved_multi_outcome_event_found, which mismatches the user\u2019s live requirement and available live politics events from browse_category.",
+        "completenessIssue": "High retry/self-heal loop (failureCount 2) indicates brittle execution before the empty conclusion.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "Semantic mismatch: response claims no suitable markets while browse_category results in toolCallHistory include large live politics events suitable for multi-outcome analysis.",
+        "rootCauseCategory": "code_generation_error",
+        "rootCauseEvidence": "developerTrace.executionResult.stopReason and response text focus on resolved multi-outcome events though the query and tool args target live markets (includeResolved:false).",
+        "responseQualityNote": "Honest about inability to produce slippage tables, but the stated reason (resolved-only framing) does not match a paid buyer\u2019s live multi-outcome request.",
+        "improvementLever": "After browse_category, deterministically pick the highest-liquidity live multi-outcome politics event and call an event/outcome liquidity method to return top-four outcomes with spread and estimated exit slippage.",
+        "diagnosticBrief": {
+          "toolUsed": "browse_category; get_top_markets (repeated in probe batch)",
+          "toolShouldHaveUsed": "analyze_event_outcome_liquidity (or equivalent event-level outcome book analytics)",
+          "argsUsed": "browse_category: {\"category\":\"politics\",\"sortBy\":\"liquidity\",\"limit\":25,\"includeResolved\":false}; get_top_markets: {\"category\":\"politics\",\"sortBy\":\"liquidity\",\"limit\":25,\"includeNearResolved\":false,\"includeEnded\":false}",
+          "argsShouldHaveUsed": "After identifying a live multi-outcome slug from browse results, pass that event slug/id into an outcome-liquidity tool with an explicit top-N=4 sort by price or liquidity.",
+          "codeSnippet": "const probeBatch = await callMcpSkillsParallel({\n    label: \"probe-politics-event-candidates\",\n    calls: [\n      { key: \"categoryBrowse\", toolName: \"browse_category\", args: { category: \"politics\", sortBy: \"liquidity\", limit: 25, includeResolved: false } },\n      { key: \"topMarkets\", toolName: \"get_top_markets\", args: { category: \"politics\", sortBy: \"liquidity\", limit: 25, includeNearResolved: false, includeEnded: false } }\n    ]\n  });",
+          "toolResultSample": "{\"category\":\"politics\",\"events\":[{\"title\":\"Democratic Presidential Nominee 2028\",\"slug\":\"democratic-presidential-nominee-2028\",\"liquidity\":47205548.9552,\"status\":\"live\",\"endDate\":\"2028-11-07T00:00:00Z\"}, ...]}",
+          "completenessVerdict": "Planner validation failed on deterministic outcome ranking and slippage; completeness evaluations redacted in export.",
+          "stageTimingBottleneck": "planning=32789ms"
+        }
+      },
+      "overallVerdict": "I would not pay again: the answer does not perform the requested live multi-outcome comparison and misframes the problem as resolved markets."
+    },
+    {
+      "traceIndex": 8,
+      "query": "For live Iran escalation risk, which exact Polymarket contracts matter right now, how do their resolution windows differ, and which contract is the cleanest expression of the thesis?",
+      "quotedExcerpts": [
+        "Based on recent Polymarket data, there are three primary contracts tracking Iran escalation and leadership risks.",
+        "**Iran Leadership Change:** This contract has a fixed end date and resolution window of **December 31, 2026**.",
+        "The **\"US x Iran ceasefire by...?\"** contract is considered the cleanest expression for tracking general escalation/de-escalation risk."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 2,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.67,
+      "scoreExplanations": {
+        "actionability": "Identifies three concrete contract families with resolution criteria and a recommended \u2018cleanest\u2019 thesis expression.",
+        "dataFreshness": "Says \u2018recent\u2019 but responseText lacks an explicit as-of timestamp despite the buyer asking \u2018right now\u2019.",
+        "specificity": "Provides liquidity/volume figures and qualitative resolution rules; slugs/URLs are not all spelled out in the prose table though trace shows slugs were fetched.",
+        "uniqueness": "Uses discovery plus per-slug fetches; not something a generic homepage blurb would replicate cleanly.",
+        "completeness": "Addresses contracts, window differences, and cleanest expression, though date-level \u2018by [date]\u2019 specifics for rolling contracts are only described generically.",
+        "dataAccuracy": "Figures appear plausible and map to tool discovery; leadership liquidity is far below the other two, which matches typical dispersion."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 17.9,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": "diagnostics.planning.initial.validation applied=true, passed=false with multiple issues (semantic targeting, resolution-window comparison depth) yet a confident final answer was still synthesized.",
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "stage_reflection_error",
+        "rootCauseEvidence": "developerTrace.diagnostics.planning.initial.validation.passed is false with substantive plan-quality issues while executionSuccess is true and the response reads fully conclusive.",
+        "responseQualityNote": "Substantively useful Iran-risk mapping, but freshness and planner-validation signals undermine confidence that the selection is the uniquely correct \u2018cleanest\u2019 contract.",
+        "improvementLever": "Surface explicit as-of timestamps and cite the specific rolling end dates for the ceasefire/forces markets from get_event_by_slug payloads, not only generic rolling-language.",
+        "diagnosticBrief": {
+          "toolUsed": "search_markets; discover_trending_markets; get_event_by_slug (x3)",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "search_markets: {\"query\":\"live Iran escalation risk Polymarket\",\"status\":\"live\",\"category\":\"politics\",\"limit\":20}; discover_trending_markets: {\"category\":\"politics\",\"limit\":20,\"sortBy\":\"volume\"}; get_event_by_slug: {\"slug\":\"us-x-iran-ceasefire-by\"} (and us-forces-enter-iran-by, iran-leadership-change-by)",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "toolName: \"search_markets\",\n        args: {\n          query: \"live Iran escalation risk Polymarket\",\n          status: \"live\",\n          category: \"politics\",\n          limit: 20\n        }",
+          "toolResultSample": "{\"results\":[{\"title\":\"US forces enter Iran by..?\",\"slug\":\"us-forces-enter-iran-by\",\"status\":\"live\",\"liquidity\":9385459.32348,\"volume\":211237194.94484225}, ...]}",
+          "completenessVerdict": "Planner validation failed on coverage/semantic-selection rigor; completeness evaluations redacted in export.",
+          "stageTimingBottleneck": "synthesis=24349ms"
+        }
+      },
+      "overallVerdict": "I am on the fence: good substance, but missing hard freshness anchoring and the trace shows the planner already flagged selection rigor problems."
+    },
+    {
+      "traceIndex": 9,
+      "query": "Find a live market ending soon with real activity, summarize the recent trade tape plus open interest, and tell me whether it looks like genuine conviction or just noise.",
+      "quotedExcerpts": [
+        "Please note that since no high-volume markets are ending in the immediate 90-day window, this data reflects a high-liquidity fallback market.",
+        "### Market: Will Gavin Newsom win the 2028 US Presidential Election?",
+        "The data indicates **genuine bullish conviction** based on the tape read and a significant buy volume ($1,666.62 vs $887.10 sell volume in the recent sample)."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 2,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 3.0,
+      "scoreExplanations": {
+        "actionability": "The chosen market is explicitly not \u2018ending soon,\u2019 so the trading read does not answer the user\u2019s timing constraint.",
+        "dataFreshness": "States April 7, 2026 and provides a concrete tape sample; freshness is OK even though the market horizon is wrong.",
+        "specificity": "Tape table with notionals and an open-interest figure is concrete.",
+        "uniqueness": "Tool-backed tape is more than a pure guess, but the fallback selection weakens paid value.",
+        "completeness": "Misses \u2018ending soon\u2019; conviction analysis is therefore mis-scoped despite tape/OI being present.",
+        "dataAccuracy": "executionResult.interpretation warns the fallback market is not ending soon and to treat conviction cautiously, while the prose still pushes \u2018genuine bullish conviction\u2019; tape shows heavy NO buying in multiple rows, so the bullish framing is debatable."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": 6.4,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "summarize_live_market_activity returned a high-volume fallback with selectionReason noting no match in ending-soon windows up to 90d, but synthesis leaned into a strong conviction headline anyway.",
+        "completenessIssue": "repairEvents present (redacted) alongside two completion checks, matching a fragile self-heal path.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "Headline conviction conflicts with tool interpretation note; several large prints are on the NO side in the displayed tape.",
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "developerTrace.executionResult.interpretation.note cautions about fallback and \u2018ending soon,\u2019 while responseText asserts strong bullish conviction.",
+        "responseQualityNote": "Delivers a real tape and OI, and discloses the fallback\u2014yet the core ask (soon-ending market) is not met and the narrative overstates directional conviction.",
+        "improvementLever": "If no ending-soon liquid market exists, return a ranked shortlist of nearest-resolution active markets with their end dates instead of substituting a 2028 presidential market.",
+        "diagnosticBrief": {
+          "toolUsed": "summarize_live_market_activity (called twice)",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"sortBy\":\"ending_soon\",\"tradeLimit\":20}",
+          "argsShouldHaveUsed": "Same tool, but planner should branch to an alternate query (e.g., tighter horizon or category filter) when selectionReason indicates fallback away from ending-soon intent.",
+          "codeSnippet": "toolName: \"summarize_live_market_activity\",\n    args: {\n      sortBy: \"ending_soon\",\n      tradeLimit: 20\n    }",
+          "toolResultSample": "{\"selectedMarket\":{\"title\":\"Will Gavin Newsom win the 2028 US Presidential Election?\",\"endDate\":\"2028-11-07T00:00:00Z\",\"selectionReason\":\"Picked the highest-ranked live market ranked by 24h volume (fallback after no match in ending-soon windows up to 90d)\"},\"interpretation\":{\"tapeRead\":\"genuine bullish conviction\",\"note\":\"The selected market was a fallback market and does not appear to be ending soon; conviction should be treated cautiously.\"}}",
+          "completenessVerdict": "Planner validation passed; completeness evaluations/repairEvents exist but are redacted in export.",
+          "stageTimingBottleneck": "execution=59540ms"
+        }
+      },
+      "overallVerdict": "I would not pay again: the answer violates the \u2018ending soon\u2019 constraint and the conviction headline is not trustworthy given the tool\u2019s own caution."
+    },
+    {
+      "traceIndex": 10,
+      "query": "Which Polymarket tags or categories are hottest right now, and inside them which live markets have the best actual tradable liquidity?",
+      "quotedExcerpts": [
+        "Based on the data from a past query, I currently do not have a list of active Polymarket tags or liquid markets.",
+        "**Trending Markets Search:** The request for trending markets (tags/categories) timed out.",
+        "Because these tools did not return results within the 30-second window, the categories for `hottestTags`, `hottestCategories`, and `topLiquidMarketsOverall` are currently empty."
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 1,
+        "specificity": 1,
+        "uniqueness": 1,
+        "completeness": 1,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 1.17,
+      "scoreExplanations": {
+        "actionability": "No hottest tags, no per-category liquid markets\u2014only retry guidance.",
+        "dataFreshness": "Explicitly no current lists; fetchedAt is null in execution payload.",
+        "specificity": "No rankings, no liquidity numbers, no market names beyond empty arrays.",
+        "uniqueness": "No differentiated Polymarket intelligence was delivered.",
+        "completeness": "Does not answer either clause of the question (hottest tags/categories nor top liquid markets within them).",
+        "dataAccuracy": "Accurately reports timeouts/empties, so it is not inventing false market stats; still fails as paid data."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 54.8,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "Parallel MCP batch recorded two 30s tool timeouts (discover_trending_markets, get_top_markets) yielding empty aggregates.",
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "upstream_api_limitation",
+        "rootCauseEvidence": "developerTrace.executionResult.notes.partialFailures reports 30s MCP timeouts for discover_trending_markets and get_top_markets with successCount 0 / failureCount 2 in batch telemetry.",
+        "responseQualityNote": "Transparent about failure modes, but a paying buyer receives no \u2018hottest\u2019 or liquidity intelligence.",
+        "improvementLever": "Retry with smaller limits/category scoping, stagger calls, or a faster batched endpoint so the hotness and liquidity queries complete under budget.",
+        "diagnosticBrief": {
+          "toolUsed": "discover_trending_markets; get_top_markets (parallel batch polymarket-hotness-and-liquidity)",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "discover_trending_markets: {\"limit\":20,\"sortBy\":\"volume\"}; get_top_markets: {\"limit\":15,\"sortBy\":\"liquidity\"}",
+          "argsShouldHaveUsed": "Smaller limits (e.g., top 3\u20135), optional category filter, or serialized calls if parallel same-endpoint batches amplify latency/timeouts.",
+          "codeSnippet": "calls: [\n      { key: \"trending\", toolName: \"discover_trending_markets\", args: { limit: 20, sortBy: \"volume\" } },\n      { key: \"topLiquidity\", toolName: \"get_top_markets\", args: { limit: 15, sortBy: \"liquidity\" } }\n    ]",
+          "toolResultSample": "partialFailures: discover_trending_markets timed out after 30s; get_top_markets timed out after 30s; hottestTags/hottestCategories/topLiquidMarketsOverall empty",
+          "completenessVerdict": "completeness.evaluations empty; no needsDifferentTools triggered.",
+          "stageTimingBottleneck": "execution=66800ms"
+        }
+      },
+      "overallVerdict": "I would not pay again: the response contains no actual tag heatmap or liquidity leaders."
+    }
+  ]
+}

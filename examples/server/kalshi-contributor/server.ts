@@ -172,9 +172,7 @@ RETURNS: Markets ranked by activity with:
 - category: The market's category
 
 CROSS-PLATFORM COMPOSABILITY:
-  Compare Kalshi predictions with:
-  - Polymarket: Same event at different prices = arbitrage opportunity (use kalshi_crossref_polymarket)
-  - Odds API: Sports predictions vs sportsbook odds`,
+  Compare Kalshi predictions with other marketplace tools for the same event at different prices.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -767,53 +765,31 @@ RETURNS:
     },
   },
 
-  // ==================== CROSS-PLATFORM INTEROPERABILITY ====================
-
   {
     name: "kalshi_crossref_polymarket",
-    description: `[KALSHI SERVER] Search Polymarket for markets equivalent to a Kalshi market.
+    description: `Cross-reference one resolved Kalshi market against Polymarket search results.
 
-This tool belongs to the KALSHI MCP server. Use it when you have a Kalshi market 
-and want to find the corresponding market on Polymarket for comparison.
-
-⚠️ Call this tool with KALSHI's toolId, not Polymarket's.
-
-Uses Polymarket's official /public-search API for reliable text search.
-
-WORKFLOW:
-  1. First resolve a SPECIFIC Kalshi market with search_markets, get_event, get_events, or get_event_by_slug
-  2. Then call: kalshi_crossref_polymarket({ keywords: "supreme court trump tariffs" })
-  3. If multiple direct candidates exist, shortlist the best 1-2 BEFORE cross-referencing
-  4. Returns matching Polymarket markets with prices and rules
-
-⚠️ Do NOT use this as a broad discovery tool or fan it out across many weak candidates.
-It is best for late-stage validation after the direct Kalshi market is already known.
-Weak keyword matches can return related proxy markets rather than the exact equivalent contract.
-
-PRICE COMPARISON:
-  - Polymarket: decimals (0.28 = 28%)
-  - Kalshi: cents (28 = 28%)
-
-⚠️ CRITICAL: Compare 'rules' and 'yesOutcomeMeans' fields!
-Markets may define YES/NO differently - verify before calculating arbitrage.`,
+Use only after resolving an exact Kalshi contract. Returns only credible Polymarket candidates and includes outcome-alignment guidance before comparing prices.`,
     inputSchema: {
       type: "object" as const,
       properties: {
         title: {
           type: "string",
-          description: "The Kalshi market title to search for on Polymarket",
+          description: "Resolved Kalshi market title or question text.",
         },
         keywords: {
-          type: "string",
-          description: "Keywords to search (e.g., 'supreme court tariffs trump'). More specific = better results.",
+          type: ["string", "array"] as const,
+          description:
+            "Optional supplemental keywords. Use concise differentiators such as 'fed rate cut end of year'.",
+          items: { type: "string" },
         },
         kalshiTicker: {
           type: "string",
-          description: "Optional: The Kalshi ticker (for reference in results)",
+          description: "Kalshi market ticker for additional keyword extraction.",
         },
         limit: {
           type: "number",
-          description: "Max results (default: 10)",
+          description: "Maximum results to return (default: 10, max: 25).",
         },
       },
       required: [],
@@ -828,31 +804,31 @@ Markets may define YES/NO differently - verify before calculating arbitrage.`,
             kalshiTicker: { type: "string" },
           },
         },
+        searchMethod: { type: "string" },
         polymarketResults: {
           type: "array",
-          description: "Matching Polymarket markets. Use 'slug' with Polymarket's get_event_by_slug for details.",
           items: {
             type: "object",
             properties: {
-              title: { type: "string", description: "Polymarket market title" },
-              slug: { type: "string", description: "Use this with Polymarket's get_event_by_slug tool" },
+              title: { type: "string" },
+              slug: { type: "string" },
               question: { type: "string" },
-              yesPrice: { type: "number", description: "Current YES price (0-1 scale, e.g., 0.25 = 25%)" },
+              yesPrice: { type: "number" },
               volume: { type: "number" },
               liquidity: { type: "number" },
-              url: { type: "string", description: "Direct Polymarket URL" },
-              matchScore: { type: "number", description: "Keyword match score (higher = better match)" },
-              rules: { type: "string", description: "Full resolution rules text" },
-              yesOutcomeMeans: { type: "string", description: "⚠️ CRITICAL: What does buying YES mean? Compare with Kalshi!" },
-              noOutcomeMeans: { type: "string", description: "⚠️ CRITICAL: What does buying NO mean? Compare with Kalshi!" },
+              url: { type: "string" },
+              matchScore: { type: "number" },
+              rules: { type: "string" },
+              yesOutcomeMeans: { type: "string" },
+              noOutcomeMeans: { type: "string" },
             },
           },
         },
         hint: { type: "string" },
-        comparisonNote: { type: "string", description: "⚠️ MUST READ: Step-by-step guide for comparing outcomes across platforms" },
+        comparisonNote: { type: "string" },
         fetchedAt: { type: "string" },
       },
-      required: ["polymarketResults"],
+      required: ["searchedFor", "searchMethod", "polymarketResults", "hint"],
     },
   },
 
@@ -2116,7 +2092,6 @@ const HEAVY_QUERY_TOOLS = new Set([
   "find_arbitrage_opportunities",
   "find_trading_opportunities",
   "analyze_market_sentiment",
-  "kalshi_crossref_polymarket",
   "browse_category",
   "browse_series",
   "get_all_series",
@@ -2225,9 +2200,7 @@ server.setRequestHandler(
         case "analyze_market_sentiment":
           return await handleAnalyzeMarketSentiment(args);
 
-        // Cross-Platform Interoperability
         case "kalshi_crossref_polymarket":
-        case "search_on_polymarket": // Backward compatibility alias
           return await handleSearchOnPolymarket(args);
 
         // Tier 2: Raw Data Tools
@@ -3007,6 +2980,310 @@ function getSeriesTicker(eventTicker: string): string {
   return cleaned.toLowerCase();
 }
 
+const KALSHI_CATEGORY_ALIASES: Record<string, string> = {
+  climate: "climate and weather",
+  weather: "climate and weather",
+  "climate & weather": "climate and weather",
+  economy: "economics",
+  economic: "economics",
+  finance: "financials",
+};
+
+const KALSHI_CATEGORY_KEYWORDS: Record<string, string[]> = {
+  sports: [
+    "nba",
+    "nfl",
+    "mlb",
+    "nhl",
+    "super bowl",
+    "championship",
+    "playoffs",
+    "football",
+    "basketball",
+    "baseball",
+    "hockey",
+    "soccer",
+    "tennis",
+    "golf",
+    "ufc",
+    "boxing",
+    "f1",
+    "nascar",
+    "olympics",
+    "world cup",
+    "finals",
+    "mvp",
+    "rookie",
+    "draft",
+  ],
+  politics: [
+    "election",
+    "president",
+    "senate",
+    "congress",
+    "vote",
+    "trump",
+    "biden",
+    "democrat",
+    "republican",
+    "governor",
+    "primary",
+    "nominee",
+  ],
+  economics: [
+    "gdp",
+    "inflation",
+    "fed",
+    "interest rate",
+    "rates",
+    "recession",
+    "jobs",
+    "payrolls",
+    "employment",
+    "unemployment",
+    "cpi",
+    "pce",
+    "economic",
+    "tariff",
+    "tariffs",
+  ],
+  financials: [
+    "stock",
+    "s&p",
+    "nasdaq",
+    "bitcoin",
+    "crypto",
+    "price",
+    "market",
+  ],
+  "climate and weather": [
+    "weather",
+    "climate",
+    "temp",
+    "temperature",
+    "rain",
+    "snow",
+    "storm",
+    "hurricane",
+    "wind",
+    "heat",
+    "cold",
+    "precipitation",
+    "forecast",
+    "landfall",
+  ],
+};
+
+const LOW_SIGNAL_SEARCH_WORDS = new Set([
+  "current",
+  "exact",
+  "find",
+  "identify",
+  "latest",
+  "live",
+  "main",
+  "market",
+  "markets",
+  "next",
+  "open",
+  "price",
+  "prices",
+  "release",
+  "resolve",
+  "return",
+  "rule",
+  "rules",
+  "show",
+  "trading",
+  "whether",
+  "will",
+]);
+
+function normalizeKalshiCategoryName(value: string | undefined): string | null {
+  const normalizedValue = value?.trim().toLowerCase();
+  if (!normalizedValue) {
+    return null;
+  }
+
+  return KALSHI_CATEGORY_ALIASES[normalizedValue] ?? normalizedValue;
+}
+
+function getKalshiCategoryKeywords(category: string | undefined): string[] {
+  const normalizedCategory = normalizeKalshiCategoryName(category);
+  if (!normalizedCategory) {
+    return [];
+  }
+
+  return KALSHI_CATEGORY_KEYWORDS[normalizedCategory] || [];
+}
+
+function textLooksLikeSportsMarket(text: string): boolean {
+  return /(winner\?|\bvs\b|points?|goals?|assists?|rebounds?|touchdowns?|innings?|pitcher|strikeouts?|world series|playoffs?|championship|finals)/i.test(
+    text
+  );
+}
+
+function matchesRequestedKalshiCategory(params: {
+  requestedCategory: string | undefined;
+  recordCategory: string | undefined;
+  text: string;
+}): boolean {
+  const normalizedRequested = normalizeKalshiCategoryName(params.requestedCategory);
+  if (!normalizedRequested) {
+    return true;
+  }
+
+  const normalizedRecord = normalizeKalshiCategoryName(params.recordCategory);
+  if (normalizedRecord === normalizedRequested) {
+    return true;
+  }
+
+  if (normalizedRequested !== "sports" && textLooksLikeSportsMarket(params.text)) {
+    return false;
+  }
+
+  const keywords = getKalshiCategoryKeywords(normalizedRequested);
+  return keywords.length === 0
+    ? false
+    : keywords.some((keyword) => params.text.includes(keyword));
+}
+
+function filterMarketsByRequestedCategory(
+  markets: KalshiMarket[],
+  requestedCategory: string | undefined
+): KalshiMarket[] {
+  if (!requestedCategory) {
+    return markets;
+  }
+
+  return markets.filter((market) => {
+    const searchText = [
+      market.title || "",
+      market.subtitle || "",
+      market.yes_sub_title || "",
+      market.event_ticker || "",
+      market.ticker || "",
+    ]
+      .join(" ")
+      .toLowerCase();
+    return matchesRequestedKalshiCategory({
+      requestedCategory,
+      recordCategory: market.category,
+      text: searchText,
+    });
+  });
+}
+
+function filterSeriesByRequestedCategory(
+  series: KalshiSeries[],
+  requestedCategory: string | undefined
+): KalshiSeries[] {
+  if (!requestedCategory) {
+    return series;
+  }
+
+  return series.filter((entry) => {
+    const searchText = [
+      entry.title || "",
+      entry.ticker || "",
+      Array.isArray(entry.tags) ? entry.tags.join(" ") : "",
+    ]
+      .join(" ")
+      .toLowerCase();
+    return matchesRequestedKalshiCategory({
+      requestedCategory,
+      recordCategory: entry.category,
+      text: searchText,
+    });
+  });
+}
+
+function normalizeRequestedKalshiStatus(value: string | undefined): string {
+  const normalizedValue = value?.trim().toLowerCase();
+  if (!normalizedValue) {
+    return "open";
+  }
+  if (normalizedValue === "active") {
+    return "open";
+  }
+  return normalizedValue;
+}
+
+function matchesRequestedKalshiStatus(
+  requestedStatus: string | undefined,
+  recordStatus: string | undefined
+): boolean {
+  const normalizedRequested = normalizeRequestedKalshiStatus(requestedStatus);
+  if (normalizedRequested === "all") {
+    return true;
+  }
+
+  const normalizedRecord = recordStatus?.trim().toLowerCase() || "";
+  if (normalizedRequested === "open") {
+    return (
+      normalizedRecord === "open" ||
+      normalizedRecord === "active" ||
+      normalizedRecord === "initialized"
+    );
+  }
+  if (normalizedRequested === "settled") {
+    return normalizedRecord === "settled" || normalizedRecord === "resolved";
+  }
+  return normalizedRecord === normalizedRequested;
+}
+
+function textMatchesSearchWord(searchText: string, word: string): boolean {
+  const variants = new Set([word]);
+  if (word.length > 4 && word.endsWith("s") && !word.endsWith("ss")) {
+    variants.add(word.slice(0, -1));
+  } else if (word.length > 3 && !word.endsWith("s")) {
+    variants.add(`${word}s`);
+  }
+
+  for (const variant of variants) {
+    if (searchText.includes(variant)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function computeIntentMatchScore(searchText: string, words: string[]): number {
+  return words.reduce((total, word) => {
+    if (!textMatchesSearchWord(searchText, word)) {
+      return total;
+    }
+
+    return total + (word.length >= 6 ? 2 : 1);
+  }, 0);
+}
+
+function hasCredibleIntentMatch(searchText: string, words: string[]): boolean {
+  if (words.length === 0) {
+    return true;
+  }
+
+  let matchCount = 0;
+  let anchorMatchCount = 0;
+  for (const word of words) {
+    if (!textMatchesSearchWord(searchText, word)) {
+      continue;
+    }
+
+    matchCount += 1;
+    if (word.length >= 6) {
+      anchorMatchCount += 1;
+    }
+  }
+
+  const minimumSignalMatches = Math.max(1, Math.ceil(words.length / 2));
+  return (
+    anchorMatchCount > 0 ||
+    (matchCount >= minimumSignalMatches && matchCount / words.length >= 0.5)
+  );
+}
+
 /**
  * Detects if an input looks like a URL slug rather than an event ticker.
  * Slugs are:
@@ -3248,7 +3525,7 @@ async function handleDiscoverTrendingMarkets(
   }
 
   const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
-  let markets = response.markets || [];
+  let markets = filterMarketsByRequestedCategory(response.markets || [], category);
 
   // In Kalshi's public elections endpoint, market volume fields can be zeroed even when
   // there is meaningful live trade flow. When detected, derive "recent activity" from
@@ -3389,37 +3666,7 @@ async function handleDiscoverTrendingMarkets(
     }
   }
 
-  // IMPROVED CATEGORY FILTERING: If category is specified, also filter by keywords
-  // This handles cases where Kalshi's category filter doesn't work as expected
-  if (category) {
-    const rawNormalizedCategory = category.trim().toLowerCase();
-    const normalizedCategory =
-      rawNormalizedCategory === 'climate' || rawNormalizedCategory === 'weather'
-        ? 'climate and weather'
-        : rawNormalizedCategory;
-    const categoryKeywords: Record<string, string[]> = {
-      'sports': ['nba', 'nfl', 'mlb', 'nhl', 'super bowl', 'championship', 'playoffs', 'football', 'basketball', 'baseball', 'hockey', 'soccer', 'tennis', 'golf', 'ufc', 'boxing', 'f1', 'nascar', 'olympics', 'world cup', 'finals', 'mvp', 'rookie', 'draft'],
-      'politics': ['election', 'president', 'senate', 'congress', 'vote', 'trump', 'biden', 'democrat', 'republican', 'governor', 'primary', 'nominee'],
-      'economics': ['gdp', 'inflation', 'fed', 'interest rate', 'recession', 'jobs', 'unemployment', 'cpi', 'economic'],
-      'financials': ['stock', 's&p', 'nasdaq', 'bitcoin', 'crypto', 'price', 'market'],
-      'climate and weather': ['weather', 'climate', 'temp', 'temperature', 'rain', 'snow', 'storm', 'hurricane', 'wind', 'heat', 'cold', 'precipitation', 'forecast', 'landfall'],
-      'climate & weather': ['weather', 'climate', 'temp', 'temperature', 'rain', 'snow', 'storm', 'hurricane', 'wind', 'heat', 'cold', 'precipitation', 'forecast', 'landfall'],
-    };
-
-    const keywords = categoryKeywords[normalizedCategory] || [];
-    if (keywords.length > 0) {
-      // Filter to only markets that match category keywords in title
-      markets = markets.filter(m => {
-        const title = ((m.title || '') + ' ' + (m.subtitle || '') + ' ' + (m.yes_sub_title || '')).toLowerCase();
-        const matchesCategory = m.category?.toLowerCase() === normalizedCategory;
-        const matchesKeywords = keywords.some(kw => title.includes(kw));
-        const looksLikeSportsMarket =
-          normalizedCategory.startsWith('climate') &&
-          /(winner\?| vs | at |points?|goals?|assists?|rebounds?|touchdowns?|innings?|pitcher|strikeouts?)/i.test(title);
-        return matchesCategory || (matchesKeywords && !looksLikeSportsMarket);
-      });
-    }
-  }
+  markets = filterMarketsByRequestedCategory(markets, category);
 
   // Sort by the requested metric
   const sorted = markets.sort((a, b) => {
@@ -3870,7 +4117,10 @@ async function handleCheckMarketEfficiency(
     impliedProbability: (m.yes_ask || m.last_price || 50) / 100,
   }));
 
-  const sumOfYesPrices = outcomes.reduce((sum, o) => sum + o.yesPrice, 0);
+  const sumOfYesPrices =
+    outcomes.length === 1
+      ? outcomes[0].yesPrice + outcomes[0].noPrice
+      : outcomes.reduce((sum, o) => sum + o.yesPrice, 0);
   const vig = sumOfYesPrices - 100;
   const vigPercent = ((vig / 100) * 100).toFixed(2);
 
@@ -3895,9 +4145,13 @@ async function handleCheckMarketEfficiency(
 
   const isEfficient = Math.abs(vig) <= 3;
   const recommendation = vig < -2
-    ? `OPPORTUNITY: Sum of prices is ${sumOfYesPrices}¢ < 100¢. Buying all outcomes guarantees ${Math.abs(vig).toFixed(0)}¢ profit.`
+    ? outcomes.length === 1
+      ? `OPPORTUNITY: YES + NO ask totals ${sumOfYesPrices}¢ < 100¢. Buying both sides guarantees ${Math.abs(vig).toFixed(0)}¢ profit.`
+      : `OPPORTUNITY: Sum of prices is ${sumOfYesPrices}¢ < 100¢. Buying all outcomes guarantees ${Math.abs(vig).toFixed(0)}¢ profit.`
     : vig > 5
-    ? `HIGH VIG: Market has ${vig.toFixed(0)}¢ overround. Consider this when sizing positions.`
+    ? outcomes.length === 1
+      ? `HIGH VIG: YES + NO ask totals ${sumOfYesPrices}¢, implying ${vig.toFixed(0)}¢ of overround on the binary book.`
+      : `HIGH VIG: Market has ${vig.toFixed(0)}¢ overround. Consider this when sizing positions.`
     : "Market is efficiently priced.";
 
   return successResult({
@@ -4002,7 +4256,7 @@ async function handleFindTradingOpportunities(
   }
 
   const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
-  let markets = response.markets || [];
+  let markets = filterMarketsByRequestedCategory(response.markets || [], category);
 
   // Filter by liquidity
   markets = markets.filter(m => (m.liquidity || 0) >= minLiquidity);
@@ -4708,22 +4962,6 @@ async function handleSearchOnPolymarket(
       ...strongTickerAnchors,
       ...matchWords.filter(word => word.length >= 6),
     ])];
-    const textMatchesWord = (searchText: string, word: string): boolean => {
-      const variants = new Set([word]);
-      if (word.length > 4 && word.endsWith('s') && !word.endsWith('ss')) {
-        variants.add(word.slice(0, -1));
-      } else if (word.length > 3 && !word.endsWith('s')) {
-        variants.add(`${word}s`);
-      }
-
-      for (const variant of variants) {
-        if (searchText.includes(variant)) {
-          return true;
-        }
-      }
-
-      return false;
-    };
     const allResults: Array<{
       title: string;
       slug: string;
@@ -4793,12 +5031,12 @@ async function handleSearchOnPolymarket(
         ].join(' ').toLowerCase();
         let matchCount = 0;
         for (const word of matchWords) {
-          if (textMatchesWord(searchText, word)) {
+          if (textMatchesSearchWord(searchText, word)) {
             matchCount++;
           }
         }
         const anchorMatchCount = strongKeywordAnchors.filter(word =>
-          textMatchesWord(searchText, word)
+          textMatchesSearchWord(searchText, word)
         ).length;
         const matchScore = matchWords.length > 0 ? matchCount / matchWords.length : 1;
         const minimumSignalMatches =
@@ -4870,7 +5108,7 @@ async function handleSearchOnPolymarket(
 async function handleGetEvents(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
-  const status = (args?.status as string) || "open";
+  const status = normalizeRequestedKalshiStatus(args?.status as string | undefined);
   const seriesTicker = args?.seriesTicker as string | undefined;
   const withNestedMarkets = args?.withNestedMarkets === true;
   const withMilestones = args?.withMilestones === true;
@@ -4897,13 +5135,36 @@ async function handleGetEvents(
 
   const response = await fetchKalshi(endpoint) as { events: KalshiEvent[]; cursor?: string; next_cursor?: string };
   const nextCursor = response.next_cursor || response.cursor || "";
-  const events = (response.events || []).map(e => ({
-    eventTicker: e.event_ticker,
-    title: e.title || e.event_ticker,
-    category: e.category || "Unknown",
-    status: e.status || "open",
-    marketsCount: Array.isArray(e.markets) ? e.markets.length : 0,
-  }));
+  const events = (response.events || []).map((event) => {
+    const result: Record<string, unknown> = {
+      eventTicker: event.event_ticker,
+      title: event.title || event.event_ticker,
+      category: event.category || "Unknown",
+      status: event.status || "open",
+      marketsCount: Array.isArray(event.markets) ? event.markets.length : 0,
+    };
+
+    if (withNestedMarkets && Array.isArray(event.markets)) {
+      result.markets = event.markets.map((market) => ({
+        ticker: market.ticker,
+        title: market.title || market.yes_sub_title || market.ticker,
+        yesPrice: market.yes_ask || market.last_price || 0,
+        noPrice: market.no_ask || (100 - (market.yes_ask || market.last_price || 50)),
+        yesBid: market.yes_bid || 0,
+        yesAsk: market.yes_ask || 0,
+        noBid: market.no_bid || 0,
+        noAsk: market.no_ask || 0,
+        volume: market.volume || 0,
+        volume24h: market.volume_24h || 0,
+        liquidity: market.liquidity || 0,
+        closeTime: market.close_time || "",
+        status: market.status || "open",
+        url: `https://kalshi.com/markets/${getSeriesTicker(market.event_ticker)}`,
+      }));
+    }
+
+    return result;
+  });
 
   return successResult({
     events,
@@ -4955,7 +5216,7 @@ async function handleGetMarkets(
 
   const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[]; cursor?: string; next_cursor?: string };
   const nextCursor = response.next_cursor || response.cursor || "";
-  const markets = (response.markets || []).map((m) => ({
+  const markets = filterMarketsByRequestedCategory(response.markets || [], category).map((m) => ({
     ticker: m.ticker,
     eventTicker: m.event_ticker,
     title: m.title || m.yes_sub_title || m.ticker,
@@ -5295,8 +5556,9 @@ async function handleSearchMarkets(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
   const query = args?.query as string | undefined;
-  const category = args?.category as string | undefined;
-  const status = (args?.status as string) || "open";
+  const requestedCategory = args?.category as string | undefined;
+  const category = normalizeKalshiCategoryName(requestedCategory) ?? requestedCategory;
+  const status = normalizeRequestedKalshiStatus(args?.status as string | undefined);
   const limit = Math.min((args?.limit as number) || 20, 50);
   const maxSeriesScan = Math.min((args?.maxSeriesScan as number) || 600, 1200);
 
@@ -5319,13 +5581,21 @@ async function handleSearchMarkets(
     'climate': ['weather'],
     'tariff': ['tariffs'],
     'tariffs': ['tariff'],
+    'jobs': ['payrolls', 'employment'],
+    'payrolls': ['jobs', 'employment'],
+    'fomc': ['fed', 'federal', 'reserve'],
+    'nyc': ['new', 'york'],
   };
   const tokenizeQueryWords = (value: string): string[] =>
     value
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, ' ')
       .split(/\s+/)
-      .filter(word => word.length > 2 && !stopWords.has(word));
+      .filter(word =>
+        word.length > 2 &&
+        !stopWords.has(word) &&
+        !LOW_SIGNAL_SEARCH_WORDS.has(word)
+      );
   const expandQueryWords = (words: string[]): string[] => {
     const expandedWords = new Set(words);
     for (const word of words) {
@@ -5342,13 +5612,83 @@ async function handleSearchMarkets(
     return [...expandedWords];
   };
 
+  const queryLower = query?.toLowerCase() || '';
+
   // Parse query words
   let queryWords = query ? expandQueryWords(tokenizeQueryWords(query)) : [];
+  if (queryLower.includes('new york city') || queryLower.includes('new york')) {
+    queryWords = [...queryWords, 'nyc'];
+  }
+  if (/\b\d{2,3}f\b/.test(queryLower)) {
+    queryWords = [...queryWords, 'temperature', 'temp', 'high'];
+  }
+  if (queryLower.includes('jobs report')) {
+    queryWords = [...queryWords, 'payrolls', 'employment'];
+  }
+  queryWords = [...new Set(queryWords)];
+  const intentRequiresWeather =
+    category === "climate and weather" ||
+    /\b(weather|climate|temperature|temp|hurricane|rain|snow|storm|heat)\b/.test(queryLower) ||
+    /\b\d{2,3}f\b/.test(queryLower);
+  const intentRequiresTariffs =
+    /\b(tariff|tariffs|trade war|customs|import|china)\b/.test(queryLower);
+  const intentRequiresJobs =
+    /\b(jobs?|payrolls?|employment|unemployment|nfp)\b/.test(queryLower);
+  const intentRequiresInflation =
+    /\b(cpi|inflation|consumer price index|core cpi|pce)\b/.test(queryLower);
+  const intentRequiresFedRates =
+    /\b(fed|fomc|federal reserve)\b/.test(queryLower) &&
+    /\b(rate|rates|cut|cuts|hike|hikes|funds|basis|bps|decision)\b/.test(queryLower);
+  const matchesStrictIntent = (searchText: string): boolean => {
+    if (
+      intentRequiresWeather &&
+      !/kxhigh|temperature|temp|weather|climate|hurricane|rain|snow|storm|heat|degree/.test(
+        searchText
+      )
+    ) {
+      return false;
+    }
+    if (
+      intentRequiresTariffs &&
+      !/\btariff|tariffs|china|trade|customs|import/.test(searchText)
+    ) {
+      return false;
+    }
+    if (
+      intentRequiresJobs &&
+      !/\bjob|jobs|payroll|payrolls|employment|unemployment|labor/.test(searchText) &&
+      !searchText.includes("kxpayroll")
+    ) {
+      return false;
+    }
+    if (
+      intentRequiresInflation &&
+      !/\bcpi|inflation|consumer price index|core cpi|pce/.test(searchText) &&
+      !searchText.includes("kxcpi")
+    ) {
+      return false;
+    }
+    if (intentRequiresFedRates) {
+      if (!/\bfed|fomc|federal reserve/.test(searchText)) {
+        return false;
+      }
+      if (
+        !/\brate|rates|cut|cuts|hike|hikes|funds|basis|bps|decision/.test(searchText) &&
+        !/kxfed|kxratecut|kxfomc|kxlargecut/.test(searchText)
+      ) {
+        return false;
+      }
+      if (
+        /\bdissent|emergency meeting/.test(searchText) &&
+        !/\brate|cut|hike|funds|decision/.test(searchText)
+      ) {
+        return false;
+      }
+    }
+    return true;
+  };
   const scoreQueryMatches = (searchText: string): number =>
-    queryWords.reduce(
-      (total, word) => total + (searchText.includes(word) ? (word.length >= 6 ? 2 : 1) : 0),
-      0
-    );
+    computeIntentMatchScore(searchText, queryWords);
   const explicitIdentifierTokens = query
     ? [...new Set((query.match(/\bkx[a-z0-9-]{5,}\b/gi) || []).map((token) => token.toUpperCase()))]
     : [];
@@ -5363,10 +5703,7 @@ async function handleSearchMarkets(
       const explicitMatch =
         explicitIdentifierTokens.includes(market.ticker.toUpperCase()) ||
         explicitIdentifierTokens.includes((market.event_ticker || '').toUpperCase());
-      const matchesStatus =
-        status === "all" ||
-        market.status === status ||
-        explicitMatch;
+      const matchesStatus = matchesRequestedKalshiStatus(status, market.status) || explicitMatch;
       if (!matchesStatus) {
         return;
       }
@@ -5468,13 +5805,15 @@ async function handleSearchMarkets(
       }
       
       // Step 4: Match query words to categories/tags and count matches per tag
-      let detectedCategory: string | null = null;
+      let detectedCategory = normalizeKalshiCategoryName(category);
       const tagMatchCounts: Map<string, { category: string; count: number }> = new Map();
       
       for (const word of queryWords) {
         const match = wordToTagMap.get(word);
         if (match) {
-          if (!detectedCategory) detectedCategory = match.category;
+          if (!detectedCategory) {
+            detectedCategory = normalizeKalshiCategoryName(match.category);
+          }
           const existing = tagMatchCounts.get(match.tag);
           if (existing) {
             existing.count++;
@@ -5539,14 +5878,14 @@ async function handleSearchMarkets(
         }
       }
       
-      let allSeries = [...allSeriesMap.values()];
+      let allSeries = filterSeriesByRequestedCategory([...allSeriesMap.values()], category);
       console.log(`[Kalshi Search] Total unique series from tag searches: ${allSeries.length}`);
       
       // If still no results, fall back to broader search
       if (allSeries.length === 0) {
         console.log('[Kalshi Search] No results with filters, falling back to broader search');
         const fallbackResponse = await fetchKalshi(`/series?limit=${maxSeriesScan}`) as { series: KalshiSeries[] };
-        allSeries = fallbackResponse.series || [];
+        allSeries = filterSeriesByRequestedCategory(fallbackResponse.series || [], category);
       }
       
       // Initial filter - any query word matches series title/ticker/tags
@@ -5556,7 +5895,7 @@ async function handleSearchMarkets(
         const tagsText = Array.isArray(s.tags) ? s.tags.join(' ') : '';
         const searchText = ((s.title || '') + ' ' + s.ticker + ' ' + tagsText).toLowerCase();
         const matchScore = scoreQueryMatches(searchText);
-        if (matchScore > 0) {
+        if (matchScore > 0 && hasCredibleIntentMatch(searchText, queryWords)) {
           initialMatches.push({ series: s, score: matchScore });
         }
       }
@@ -5606,7 +5945,9 @@ async function handleSearchMarkets(
             
             // Score based on ALL text: series title + event title + ticker
             const fullText = ((s.title || '') + ' ' + eventTitle + ' ' + s.ticker).toLowerCase();
-            const score = scoreQueryMatches(fullText);
+            const score = hasCredibleIntentMatch(fullText, queryWords)
+              ? scoreQueryMatches(fullText)
+              : 0;
             
             // Bonus for exact phrase matches
             const bonusScore = queryWords.length > 1 && fullText.includes(queryWords.join(' ')) ? 3 : 0;
@@ -5615,7 +5956,14 @@ async function handleSearchMarkets(
           } catch {
             // If all fetches fail, use series data only
             const fullText = ((s.title || '') + ' ' + s.ticker).toLowerCase();
-            return { series: s, eventTitle: s.title || '', score: scoreQueryMatches(fullText), hasMarkets: false };
+            return {
+              series: s,
+              eventTitle: s.title || '',
+              score: hasCredibleIntentMatch(fullText, queryWords)
+                ? scoreQueryMatches(fullText)
+                : 0,
+              hasMarkets: false,
+            };
           }
         });
         
@@ -5684,12 +6032,50 @@ async function handleSearchMarkets(
   if (query) {
     markets = markets.filter(m => {
       const searchText = ((m.title || '') + ' ' + (m.yes_sub_title || '') + ' ' + m.ticker + ' ' + m.event_ticker).toLowerCase();
-      return queryWords.some(word => {
-        const regex = new RegExp(`\\b${word}\\b`, 'i');
-        return regex.test(searchText);
-      });
+      return hasCredibleIntentMatch(searchText, queryWords) && matchesStrictIntent(searchText);
     });
   }
+
+  markets = filterMarketsByRequestedCategory(markets, requestedCategory);
+
+  const timeSensitiveQuery =
+    queryLower.includes('next') ||
+    queryLower.includes('soon') ||
+    queryLower.includes('this week');
+  const scoreMarketResult = (market: KalshiMarket): number => {
+    const searchText = [
+      market.title || '',
+      market.subtitle || '',
+      market.yes_sub_title || '',
+      market.ticker,
+      market.event_ticker,
+    ]
+      .join(' ')
+      .toLowerCase();
+    let score = scoreQueryMatches(searchText);
+    if (matchesRequestedKalshiCategory({
+      requestedCategory: requestedCategory,
+      recordCategory: market.category,
+      text: searchText,
+    })) {
+      score += 2;
+    }
+    if (timeSensitiveQuery && market.close_time) {
+      const closeTs = Date.parse(market.close_time);
+      if (!Number.isNaN(closeTs) && closeTs > Date.now()) {
+        const hoursUntilClose = (closeTs - Date.now()) / (1000 * 60 * 60);
+        score += Math.max(0, 8 - hoursUntilClose / 48);
+      }
+    }
+    score += Math.min((market.volume_24h || 0) / 5000, 2);
+    return score;
+  };
+  markets.sort(
+    (left, right) =>
+      scoreMarketResult(right) - scoreMarketResult(left) ||
+      (right.volume_24h || 0) - (left.volume_24h || 0) ||
+      (right.liquidity || 0) - (left.liquidity || 0)
+  );
 
   let results = markets.slice(0, limit).map(m => ({
     title: m.title || m.yes_sub_title || m.ticker,
@@ -6120,15 +6506,19 @@ async function handleGetAllCategories(
 async function handleGetAllSeries(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
-  const category = args?.category as string | undefined;
+  const requestedCategory = args?.category as string | undefined;
+  const category = normalizeKalshiCategoryName(requestedCategory) ?? requestedCategory;
   const tags = args?.tags as string | undefined;
   const limit = Math.min((args?.limit as number) || 100, 200);
 
-  let endpoint = `/series?limit=${limit}`;
-  if (category) {
+  const shouldHydrateLocally = Boolean(category || tags);
+  let endpoint = shouldHydrateLocally
+    ? `/series?limit=10000`
+    : `/series?limit=${limit}`;
+  if (!shouldHydrateLocally && category) {
     endpoint += `&category=${encodeURIComponent(category)}`;
   }
-  if (tags) {
+  if (!shouldHydrateLocally && tags) {
     endpoint += `&tags=${encodeURIComponent(tags)}`;
   }
 
@@ -6143,7 +6533,30 @@ async function handleGetAllSeries(
     response = { series: [] };
   }
 
-  const series = (response.series || []).map((s) => ({
+  let seriesSnapshot = response.series || [];
+  if (requestedCategory) {
+    seriesSnapshot = filterSeriesByRequestedCategory(seriesSnapshot, requestedCategory);
+  }
+  if (tags) {
+    const wantedTags = tags
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter((value) => value.length > 0);
+    if (wantedTags.length > 0) {
+      seriesSnapshot = seriesSnapshot.filter((seriesEntry) => {
+        const searchText = [
+          seriesEntry.title || "",
+          seriesEntry.ticker || "",
+          Array.isArray(seriesEntry.tags) ? seriesEntry.tags.join(" ") : "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        return wantedTags.every((tag) => searchText.includes(tag));
+      });
+    }
+  }
+
+  const series = seriesSnapshot.slice(0, limit).map((s) => ({
     ticker: s.ticker,
     title: s.title || s.ticker,
     category: s.category || "Unknown",
@@ -6212,12 +6625,14 @@ async function handleGetSeries(
 async function handleBrowseCategory(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
-  const category = args?.category as string;
-  if (!category) {
+  const requestedCategory = args?.category as string;
+  if (!requestedCategory) {
     return errorResult("category is required");
   }
 
-  const status = (args?.status as string) || "open";
+  const category =
+    normalizeKalshiCategoryName(requestedCategory) ?? requestedCategory;
+  const status = normalizeRequestedKalshiStatus(args?.status as string | undefined);
   const sortBy = (args?.sortBy as string) || "volume_24h";
   const limit = Math.min((args?.limit as number) || 50, 100);
 
@@ -6227,7 +6642,9 @@ async function handleBrowseCategory(
   }
 
   const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
-  let markets = response.markets || [];
+  let markets = filterMarketsByRequestedCategory(response.markets || [], requestedCategory).filter(
+    (market) => matchesRequestedKalshiStatus(status, market.status)
+  );
 
   // Sort
   markets.sort((a, b) => {
@@ -6257,7 +6674,7 @@ async function handleBrowseCategory(
   }));
 
   return successResult({
-    category,
+    category: requestedCategory,
     markets: marketsResult,
     totalCount: marketsResult.length,
     fetchedAt: new Date().toISOString(),
@@ -6272,7 +6689,7 @@ async function handleBrowseSeries(
     return errorResult("seriesTicker is required");
   }
 
-  const status = (args?.status as string) || "open";
+  const status = normalizeRequestedKalshiStatus(args?.status as string | undefined);
   const limit = Math.min((args?.limit as number) || 50, 100);
 
   // Get series info
@@ -6286,7 +6703,9 @@ async function handleBrowseSeries(
   }
 
   const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
-  const markets = (response.markets || []).map(m => ({
+  const markets = (response.markets || [])
+    .filter((market) => matchesRequestedKalshiStatus(status, market.status))
+    .map(m => ({
     title: m.title || m.yes_sub_title || m.ticker,
     ticker: m.ticker,
     eventTicker: m.event_ticker,

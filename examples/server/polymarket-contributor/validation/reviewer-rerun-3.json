@@ -1,0 +1,218 @@
+{
+  "reviewedAt": "2026-04-08T11:41:21.989490+00:00",
+  "batchLabel": "rerun-3",
+  "perQueryEvaluations": [
+    {
+      "query": "For the 'Will the U.S. invade Iran before 2027?' market, how concentrated are top holders, how fast is open interest changing, and does recent whale flow agree with the current 24-cent price?",
+      "quotedExcerpts": [
+        "\"The market is heavily influenced by a small number of holders.\"",
+        "\"Data for the velocity or rate of change of OI is currently unavailable, as only a point-in-time snapshot was captured.\"",
+        "\"Whale flow is currently aligned with the upward price movement.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "scoreExplanations": {
+        "actionability": "A trader gets a usable concentration and whale-flow read, even though true OI velocity is still unavailable.",
+        "dataFreshness": "The answer is clearly anchored to same-session live market reads, including the updated 27.5-cent price.",
+        "specificity": "It provides concrete holder concentration, OI level, whale net flow, buy and sell volume, and the largest trade price.",
+        "uniqueness": "Venue-native holder and whale-flow evidence gives real paid value beyond a generic geopolitical take.",
+        "completeness": "It answers two parts directly and is honest that the OI-speed subquestion cannot be fully answered from one snapshot.",
+        "dataAccuracy": "The concentration, OI, price, and whale-flow figures line up with the trace outputs."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 15,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": "The workflow still depended on a point-in-time OI endpoint that cannot produce a true change rate.",
+        "executionIssue": null,
+        "completenessIssue": "No second time-separated OI snapshot was available, so velocity could not be measured.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "capability_gap",
+        "rootCauseEvidence": "The trace explicitly says `changeRateAvailable=false` and notes that a second snapshot is required for a true OI-speed read.",
+        "responseQualityNote": "Good buyer answer: live concentration and whale-flow data were surfaced clearly, with an honest limit on OI velocity.",
+        "improvementLever": "Keep the same synthesis quality and add a second timed OI snapshot when the workflow needs velocity.",
+        "diagnosticBrief": {
+          "toolUsed": "search_markets, analyze_top_holders, analyze_whale_flow, get_market_open_interest",
+          "toolShouldHaveUsed": "a second time-separated open-interest snapshot flow",
+          "argsUsed": "conditionId for the Iran market; hoursBack=24 for whale flow",
+          "argsShouldHaveUsed": "same conditionId across two timed OI reads",
+          "codeSnippet": null,
+          "toolResultSample": "currentPrice=0.275; top5 concentration roughly 43.67% YES / 51.7% NO; totalOpenInterest=1896791.23; netWhaleVolume=2913.46",
+          "completenessVerdict": "Good answer with one structural OI-speed gap.",
+          "stageTimingBottleneck": "OI velocity was blocked by single-snapshot data."
+        }
+      },
+      "overallVerdict": "Strong rerun: the buyer gets a real holder-and-flow read, and the answer clearly marks the one metric that still cannot be measured.",
+      "satisfactionMean": 4.5
+    },
+    {
+      "query": "For the 'Will the Fed decrease interest rates by 50+ bps after the April 2026 meeting?' market, is there any live arbitrage or obvious overpricing/underpricing once depth and related Fed contracts are considered?",
+      "quotedExcerpts": [
+        "\"there is no direct arbitrage opportunity for the \"50+ bps decrease\" market\"",
+        "\"The total price sum across the April Fed decision outcomes is **1.001**\"",
+        "\"The market is efficiently priced based on current data.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "scoreExplanations": {
+        "actionability": "It gives a clear trading takeaway: no clean arb, and poor liquidity weakens any apparent cheapness.",
+        "dataFreshness": "The answer uses live-looking prices, spreads, volumes, and slippage for the current April Fed curve.",
+        "specificity": "Sibling outcome prices, spread, event price sum, and 14.3% slippage are all concrete.",
+        "uniqueness": "This is meaningful venue-specific contract analysis rather than generic macro commentary.",
+        "completeness": "It covers arbitrage, relative pricing, and depth fairly well, though the execution read is mostly on the sell side.",
+        "dataAccuracy": "The main claims line up with the trace, but the efficient-pricing conclusion still compresses some nuance around one-sided liquidity."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 18,
+        "fragilityRisk": "low",
+        "selectionIssue": "One broad market-list call added noise, but the core efficiency, liquidity, and sibling-comparison tools were correct.",
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "The response leans on sell-side slippage and does not show equivalent buy-side execution costs.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "The trace supports the no-arb view, but the final prose turns a more nuanced cheap-but-hard-to-trade setup into a cleaner efficient-pricing verdict.",
+        "responseQualityNote": "Useful and credible buyer-facing answer with only a mild over-compression of the liquidity nuance.",
+        "improvementLever": "Keep the same event-curve comparison, but add both buy-side and sell-side executable-size costs before calling the contract fully efficient.",
+        "diagnosticBrief": {
+          "toolUsed": "search_markets, check_market_efficiency, analyze_market_liquidity, compare_market_against_related_contracts",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "conditionId for the April 50+ bps decrease contract plus sibling-curve comparison",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "50+ bps decrease price=0.0035; spread=0.1 cent; eventPriceSum=1.001; sell-side slippage=14.3%",
+          "completenessVerdict": "Good answer with a small execution-detail caveat.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Good rerun: it gives the buyer a defensible no-arb read with real curve and liquidity evidence.",
+      "satisfactionMean": 4.33
+    },
+    {
+      "query": "Within the 'Democratic Presidential Nominee 2028' event, which candidate submarkets currently combine tight quotes with meaningful whale participation, and which ones are just illiquid headline prices?",
+      "quotedExcerpts": [
+        "\"These candidates have the highest \"Tradability Scores\" (84) because they combine tight spreads with significant institutional or \"whale\" backing.\"",
+        "\"Gavin Newsom is the most tradable submarket with the deepest depth and lowest slippage.\"",
+        "\"Celebrity and veteran politician submarkets ... appear cheap and tight on the spread, but executing even a $5,000 trade would result in double-digit slippage.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "scoreExplanations": {
+        "actionability": "A trader can immediately focus on Newsom and AOC while avoiding the headline-only traps.",
+        "dataFreshness": "It is framed as current market data, though it does not foreground a fetch timestamp.",
+        "specificity": "The answer names spreads, whale counts, whale value, prices, classifications, and $5k slippage.",
+        "uniqueness": "This is strong paid alpha because it translates event-wide market structure into an execution map.",
+        "completeness": "It directly answers both halves of the question: who is tradable and who is just a headline price.",
+        "dataAccuracy": "The rankings and classifications match the ranked-outcomes trace from `rank_event_tradability`."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 5,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": "A single event-level tradability ranking returned exactly the fields needed for a buyer-facing answer.",
+        "responseQualityNote": "Clean, high-signal event map with concrete execution relevance.",
+        "improvementLever": "None meaningful; preserve the direct event-ranking path.",
+        "diagnosticBrief": {
+          "toolUsed": "rank_event_tradability",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "eventQuery=\"Democratic Presidential Nominee 2028\"; limit=10",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "Newsom tradabilityScore=84, spread=0.2 cent, whaleCount=20, slippage5k=3.1%; AOC tradabilityScore=84",
+          "completenessVerdict": "Complete on first pass.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Excellent buyer answer: concise, specific, and directly tradable.",
+      "satisfactionMean": 4.83
+    },
+    {
+      "query": "Within the 'Rockets vs. Suns' event, which live submarkets look genuinely tradable tonight based on spread, depth, and activity rather than just displayed prices?",
+      "quotedExcerpts": [
+        "\"the system analyzed the 2026 NBA Champion market rather than a specific Rockets vs. Suns game-day submarket\"",
+        "\"Within this championship event, only the **Oklahoma City Thunder** outcome is classified as \"tradable_now.\"\"",
+        "\"Teams like the **San Antonio Spurs** and **Charlotte Hornets** show deceptively tight spreads\""
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 1,
+        "specificity": 2,
+        "uniqueness": 1,
+        "completeness": 1,
+        "dataAccuracy": 2
+      },
+      "scoreExplanations": {
+        "actionability": "A buyer still has no idea which Rockets vs Suns submarkets are tradable tonight.",
+        "dataFreshness": "The answer explicitly falls back to a past query and not the requested live game market.",
+        "specificity": "It is numerically specific, but only about an unrelated NBA futures market.",
+        "uniqueness": "There is no paid edge when the response analyzes the wrong event.",
+        "completeness": "The actual Rockets vs Suns question is unanswered.",
+        "dataAccuracy": "The response is at least honest that the wrong market was analyzed, but the detailed follow-on analysis is still irrelevant to the user query."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 1,
+        "selfHealCount": 1,
+        "budgetConsumedPct": 22,
+        "fragilityRisk": "high",
+        "selectionIssue": "The only tool call resolved `Rockets vs. Suns` to the unrelated `2026 NBA Champion` event.",
+        "planningIssue": "The completion checker caught the semantic mismatch and suggested a probe-first rediscovery flow, but that recovery path was not executed.",
+        "executionIssue": "The pipeline still returned a buyer-facing answer based on the wrong event after detecting the mismatch.",
+        "completenessIssue": "No Rockets vs. Suns game submarket was identified or evaluated.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "The trace itself says there was a severe semantic mismatch between the user ask and the returned event.",
+        "rootCauseCategory": "selection_routing_issue",
+        "rootCauseEvidence": "The completion-check metadata explicitly says the wrong event was analyzed and recommends searching for the correct live game event before ranking tradability.",
+        "responseQualityNote": "Very weak buyer outcome: it knows the answer is about the wrong market and still presents the unrelated ranking.",
+        "improvementLever": "Resolve the exact live game event first and abort if it cannot be found instead of answering with a different market.",
+        "diagnosticBrief": {
+          "toolUsed": "rank_event_tradability",
+          "toolShouldHaveUsed": "search_markets or get_events first, then rank_event_tradability on the discovered Rockets vs Suns event",
+          "argsUsed": "eventQuery=\"Rockets vs. Suns\"; limit=6",
+          "argsShouldHaveUsed": "a verified live game event identifier for Rockets vs Suns before tradability ranking",
+          "codeSnippet": null,
+          "toolResultSample": "Returned eventTitle=\"2026 NBA Champion\" instead of a Rockets vs Suns game market.",
+          "completenessVerdict": "Failed; wrong event analyzed.",
+          "stageTimingBottleneck": "No timing issue; this was a semantic-resolution failure."
+        }
+      },
+      "overallVerdict": "Unacceptable rerun for a paying buyer because it delivers a polished answer to the wrong market.",
+      "satisfactionMean": 1.33
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+/**
+ * Context types for portfolio and protocol data injection.
+ *
+ * These types allow MCP tools to receive personalized user context
+ * (wallet addresses, positions, balances) for analysis.
+ *
+ * =============================================================================
+ * DECLARING CONTEXT REQUIREMENTS
+ * =============================================================================
+ *
+ * Context requirements are declared via `_meta.contextRequirements` at the tool level.
+ * This is the primary mechanism that the Context Platform reads.
+ *
+ * Previously, `x-context-requirements` in inputSchema was recommended, but the MCP SDK
+ * may strip extension properties during transport. Use `_meta` instead.
+ *
+ * @example
+ * ```typescript
+ * import { CONTEXT_REQUIREMENTS_KEY, type ContextRequirementType } from "@ctxprotocol/sdk";
+ * import type { HyperliquidContext } from "@ctxprotocol/sdk";
+ *
+ * const tool = {
+ *   name: "analyze_my_positions",
+ *   _meta: {
+ *     contextRequirements: ["hyperliquid"] as ContextRequirementType[],
+ *   },
+ *   inputSchema: {
+ *     type: "object",
+ *     properties: {
+ *       portfolio: { type: "object" }
+ *     },
+ *     required: ["portfolio"]
+ *   }
+ * };
+ *
+ * // Your handler receives the injected context:
+ * function handleAnalyzeMyPositions(args: { portfolio: HyperliquidContext }) {
+ *   const { perpPositions, accountSummary } = args.portfolio;
+ *   // ... analyze and return insights
+ * }
+ * ```
+ *
+ * @packageDocumentation
+ */
+export * from "./wallet.js";
+export * from "./polymarket.js";
+export * from "./hyperliquid.js";
+import type { WalletContext, ERC20Context } from "./wallet.js";
+import type { PolymarketContext } from "./polymarket.js";
+import type { HyperliquidContext } from "./hyperliquid.js";
+/**
+ * @deprecated Use `_meta.contextRequirements` instead (see META_CONTEXT_REQUIREMENTS_KEY).
+ *
+ * This key was designed for embedding requirements in inputSchema,
+ * but the MCP SDK may strip `x-` prefixed extension properties during transport.
+ * The `_meta.contextRequirements` approach is what the Context Platform reads.
+ */
+export declare const CONTEXT_REQUIREMENTS_KEY: "x-context-requirements";
+/**
+ * The key used inside `_meta` to declare context requirements.
+ * This is the PRIMARY mechanism — the Context Platform reads `_meta.contextRequirements`.
+ *
+ * @example
+ * ```typescript
+ * const tool = {
+ *   name: "analyze_my_positions",
+ *   _meta: {
+ *     [META_CONTEXT_REQUIREMENTS_KEY]: ["hyperliquid"] as ContextRequirementType[],
+ *   },
+ *   inputSchema: {
+ *     type: "object",
+ *     properties: { portfolio: { type: "object" } },
+ *     required: ["portfolio"]
+ *   }
+ * };
+ * ```
+ */
+export declare const META_CONTEXT_REQUIREMENTS_KEY: "contextRequirements";
+/**
+ * Context requirement types supported by the Context marketplace.
+ * Maps to protocol-specific context builders on the platform.
+ *
+ * @example
+ * ```typescript
+ * inputSchema: {
+ *   type: "object",
+ *   "x-context-requirements": ["hyperliquid"] as ContextRequirementType[],
+ *   properties: { portfolio: { type: "object" } },
+ *   required: ["portfolio"]
+ * }
+ * ```
+ */
+export type ContextRequirementType = "polymarket" | "hyperliquid" | "wallet";
+/**
+ * @deprecated The `requirements` field at tool level gets stripped by MCP SDK.
+ * Use `x-context-requirements` inside `inputSchema` instead.
+ *
+ * @example
+ * ```typescript
+ * // ❌ OLD (doesn't work - stripped by MCP SDK)
+ * { requirements: { context: ["hyperliquid"] } }
+ *
+ * // ✅ NEW (works - preserved through MCP transport)
+ * { inputSchema: { "x-context-requirements": ["hyperliquid"], ... } }
+ * ```
+ */
+export interface ToolRequirements {
+    /**
+     * @deprecated Use `x-context-requirements` in inputSchema instead.
+     */
+    context?: ContextRequirementType[];
+}
+/**
+ * Composite context for tools that need multiple data sources.
+ *
+ * This is the unified structure that can be passed to MCP tools
+ * to provide comprehensive user context.
+ */
+export interface UserContext {
+    /** Base wallet information */
+    wallet?: WalletContext;
+    /** ERC20 token holdings */
+    erc20?: ERC20Context;
+    /** Polymarket positions and orders */
+    polymarket?: PolymarketContext;
+    /** Hyperliquid perpetual positions and account data */
+    hyperliquid?: HyperliquidContext;
+}
+//# sourceMappingURL=index.d.ts.map

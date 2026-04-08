@@ -1,0 +1,59 @@
+{
+  "reviewedAt": "2026-04-08T11:54:40Z",
+  "batchLabel": "rerun-4",
+  "perQueryEvaluations": [
+    {
+      "query": "Within the 'Rockets vs. Suns' event, which live submarkets look genuinely tradable tonight based on spread, depth, and activity rather than just displayed prices?",
+      "quotedExcerpts": [
+        "\"I am unable to provide a tradability analysis for the Rockets vs. Suns submarkets at this time.\"",
+        "\"The data retrieval process failed to resolve an exact head-to-head event for this matchup\"",
+        "\"the tool output contains no specific market data such as spreads, depth, or activity metrics.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 1,
+        "specificity": 2,
+        "uniqueness": 1,
+        "completeness": 1,
+        "dataAccuracy": 4
+      },
+      "scoreExplanations": {
+        "actionability": "The buyer gets no tradable submarket ranking or execution takeaway, only a failure notice.",
+        "dataFreshness": "No live spread, depth, activity, or submarket data is actually surfaced.",
+        "specificity": "The answer is clear about the failure mode and the missing metrics, but not about the market itself.",
+        "uniqueness": "An unresolved lookup with retry suggestions provides almost no paid differentiation.",
+        "completeness": "The requested tonight-only tradability analysis is entirely unanswered.",
+        "dataAccuracy": "The core failure claim matches the trace, though the suggestion that waiting for tip-off or more liquidity will help is speculative."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 23,
+        "fragilityRisk": "high",
+        "selectionIssue": "The workflow jumped straight to `rank_event_tradability` on a natural-language matchup without first verifying the exact live game event.",
+        "planningIssue": "There was no fallback discovery step once exact event resolution failed.",
+        "executionIssue": "The only tool call errored and the run terminated immediately afterward.",
+        "completenessIssue": "No Rockets vs. Suns submarket was resolved, ranked, or measured on spread, depth, or activity.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "selection_routing_issue",
+        "rootCauseEvidence": "The trace shows `toolCalls=1`, `failureCount=1`, and the single `rank_event_tradability` call returned `Could not resolve an exact head-to-head event for analysis.`",
+        "responseQualityNote": "Honest failure reporting, but still a poor buyer outcome because no market insight reaches the answer.",
+        "improvementLever": "Resolve the exact Rockets vs. Suns game event first, then run tradability analysis only on that verified event.",
+        "diagnosticBrief": {
+          "toolUsed": "rank_event_tradability",
+          "toolShouldHaveUsed": "search_markets or search_and_get_outcomes first, then rank_event_tradability after exact event verification",
+          "argsUsed": "query=\"Within the Rockets vs. Suns event, which live submarkets look genuinely tradable tonight based on spread, depth, and activity rather than just displayed prices?\"",
+          "argsShouldHaveUsed": "a verified Rockets vs. Suns game event slug or other exact event identifier",
+          "codeSnippet": null,
+          "toolResultSample": "error=\"rank_event_tradability failed: Could not resolve an exact head-to-head event for analysis.\"",
+          "completenessVerdict": "Failed before answering.",
+          "stageTimingBottleneck": "No timing bottleneck; exact event resolution failed on the first call."
+        }
+      },
+      "overallVerdict": "Weak rerun: the answer is honest about failure, but a paying buyer still gets no tradability analysis.",
+      "satisfactionMean": 1.67
+    }
+  ]
+}

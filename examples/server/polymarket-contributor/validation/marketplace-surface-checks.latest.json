@@ -1,67 +1,124 @@
 {
-  "generatedAt": "2026-04-03T06:48:17.491Z",
+  "generatedAt": "2026-04-08T12:37:04.810Z",
   "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
   "localMcpUrl": "http://localhost:4003/mcp",
   "localContextBaseUrl": "http://localhost:3000",
   "publicMcpUrl": "https://mcp.ctxprotocol.com/polymarket/mcp",
-  "localToolCount": 45,
+  "localToolCount": 48,
   "sampleMarket": {
-    "title": "US x Iran ceasefire by...?",
-    "slug": "us-x-iran-ceasefire-by",
-    "conditionId": "0x773abaa5fe55e5cde51a261f444b7921652a4e059ead6b3be9fe56499c2d4609",
+    "title": "Will Gavin Newsom win the 2028 Democratic presidential nomination?",
+    "slug": "democratic-presidential-nominee-2028",
+    "conditionId": "0x0f49db97f71c68b1e42a6d16e3de93d85dbf7d4148e3f018eb79e88554be9f75",
     "tokenIds": [
-      "85191934649046129480174964255278880752271767733539167443243111973456166096127",
-      "44149007410374101286260953227333745102128417138356632089802983317837574022801",
-      "82855088893985825781350466813737280564000275725006328179621744619327480699369",
-      "97390751868769233430161550786035197721004217118584051662030655361575807718008"
+      "46211769122513729244602558513001215391004042100934296321661285791281233261657",
+      "2213957649161627793381994368131485505647723208738124952452819345058597751695",
+      "102504892414163237174864879683522880588750452841477290216845150938663289742135",
+      "113510300123120868861281132282742729065975487298059944817273881893086209196585"
     ],
-    "primaryTokenId": "85191934649046129480174964255278880752271767733539167443243111973456166096127"
+    "primaryTokenId": "46211769122513729244602558513001215391004042100934296321661285791281233261657"
   },
   "autoQuerySummary": {
     "promptCount": 5,
-    "passedCount": 5,
-    "failedCount": 0,
-    "routedCount": 5,
+    "passedCount": 4,
+    "failedCount": 1,
+    "routedCount": 4,
     "runs": [
       {
-        "id": "balanced-liquidity-screen",
-        "prompt": "Find live 40% to 60% Polymarket contracts with at least $1M liquidity right now, and rank which ones are actually tradable for a $5,000 position without ugly slippage.",
+        "id": "pm-001",
+        "prompt": "For the 'US forces enter Iran by April 30?' market, what are the current best bid, best ask, midpoint, quoted spread, and estimated slippage to buy or sell $25,000 notional right now?",
         "retryCount": 0,
         "status": "pass",
         "outcomeType": "answer",
-        "toolCalls": 12,
+        "toolCalls": 4,
         "routedToTarget": true,
         "toolsUsed": [
           {
             "id": "294100e8-c648-4e5f-a254-95a14b56e398",
-            "name": "Polymarket",
-            "skillCalls": 12
-          },
-          {
-            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
-            "name": "Polymarket",
-            "skillCalls": 12
+            "name": "Polymarket Intelligence",
+            "skillCalls": 4
           }
         ],
-        "durationMs": 122165,
-        "responsePreview": "Based on current Polymarket data, here are the live contracts with probabilities between 40% and 60% and at least $1M in liquidity, ranked by their tradability for a $5,000 position.\n\nThe following markets all demonstrate excellent liquidity with a tight 1¢ spread, resulting in a manageable ~1.1% slippage for a $5k trade.\n\n| Rank | Market (Slug) | Current Price | Liquidity | Slippage ($5k) | Recommendation |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| 1 | `cbb-uconn-ill-2026-04-04` | 0.445 | $",
+        "durationMs": 98509,
+        "responsePreview": "I've located the market regarding US forces entering Iran, but I am currently unable to provide the specific order book metrics (bid, ask, spread, or slippage) you requested.\n\nWhile the market was identified, the underlying data source did not return a valid **YES token ID**, which is required to fetch real-time liquidity and quote analysis for that specific outcome.\n\nTo get these details, you may want to try:\n*   Checking the market again in a few minutes once liquidity or token data is refresh",
         "hasData": true,
         "actionable": true,
         "looksGeneric": false,
         "developerTraceSummary": {
-          "toolCalls": 12,
-          "retryCount": 2,
-          "selfHealCount": 2,
+          "toolCalls": 4,
+          "retryCount": 1,
+          "selfHealCount": 1,
           "fallbackCount": 0,
           "failureCount": 1,
-          "recoveryCount": 1,
-          "completionChecks": 2,
-          "loopCount": 2
+          "recoveryCount": 0,
+          "completionChecks": 1,
+          "loopCount": 1
         }
       },
       {
-        "id": "politics-passive-spread-capture",
-        "prompt": "Which live politics markets currently show the widest verified spreads or sub-$1 arbitrage-style pricing, and are any worth working with passive orders right now?",
+        "id": "pm-004",
+        "prompt": "Within the 'US forces enter Iran by..?' event, which expiry bucket currently offers the cleanest execution for a directional trader: 'US forces enter Iran by April 30?' or 'US forces enter Iran by December 31?'",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket Intelligence",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 80846,
+        "responsePreview": "Based on data fetched on **April 8, 2026**, the **April 30** expiry bucket currently offers the cleanest execution for a directional trader. This is primarily due to significantly higher liquidity compared to the December 31 bucket, despite both outcomes sharing the same tight spread and pricing.\n\nThe execution metrics for both buckets are compared below:\n\n| Metric | April 30 (Best Choice) | December 31 |\n| :--- | :--- | :--- |\n| **Current Price** | 0.9985 (99.9%) | 0.9985 (99.9%) |\n| **Bid / As",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 1,
+          "loopCount": 0
+        }
+      },
+      {
+        "id": "pm-006",
+        "prompt": "Inside the '2026 FIFA World Cup Winner' event, are the 'Will Congo DR win the 2026 FIFA World Cup?' and 'Will Egypt win the 2026 FIFA World Cup?' markets meaningfully tradable once you compare neg-risk status, spread, midpoint, and orderbook depth?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket Intelligence",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 110741,
+        "responsePreview": "Based on the market data for the **2026 FIFA World Cup Winner** event, both the Egypt and Congo DR markets currently exhibit characteristics typical of \"long-shot\" outcomes, which significantly impacts their tradability.\n\n### Market Comparison\n\n| Attribute | Egypt | Congo DR |\n| :--- | :--- | :--- |\n| **Price** | 0.0045 (0.5%) | 0.0025 (0.3%) |\n| **Total Volume** | $13,210,851.19 | $4,943,494.80 |\n| **Condition ID** | `0x7412...2abe` | `0xcd83...100d` |\n\n### Analysis of Tradability Factors\n\n*   ",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 1,
+          "selfHealCount": 1,
+          "fallbackCount": 0,
+          "failureCount": 1,
+          "recoveryCount": 0,
+          "completionChecks": 1,
+          "loopCount": 1
+        }
+      },
+      {
+        "id": "pm-009",
+        "prompt": "Within the 'What will WTI Crude Oil (WTI) hit in April 2026?' event, which strike buckets currently carry the most live flow and tightest execution, and does the '$200 HIGH' tail strike look mispriced relative to neighboring strikes?",
         "retryCount": 0,
         "status": "pass",
         "outcomeType": "answer",
@@ -70,17 +127,12 @@
         "toolsUsed": [
           {
             "id": "294100e8-c648-4e5f-a254-95a14b56e398",
-            "name": "Polymarket",
-            "skillCalls": 1
-          },
-          {
-            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
-            "name": "Kalshi",
-            "skillCalls": 1
+            "name": "Polymarket Intelligence",
+            "skillCalls": 2
           }
         ],
-        "durationMs": 59179,
-        "responsePreview": "Based on data from a recent query conducted today (April 3, 2026), there are currently no verified arbitrage opportunities or markets with significant spreads across the major platforms analyzed.\n\nPolitics markets are presently showing a high level of pricing efficiency. Here is the breakdown from the data:\n\n| Platform | Markets Analyzed | Arbitrage Count | Average Spread | Notes |\n| :--- | :--- | :--- | :--- | :--- |\n| **Polymarket** | 40 | 0 | 0.1¢ | Efficiently priced; no wide spreads found. ",
+        "durationMs": 117951,
+        "responsePreview": "As of April 8, 2026, the live flow and execution for the WTI Crude Oil event are concentrated in the following strikes:\n\n### Top Tradability and Live Flow\nThe **↑ $120** strike currently leads in execution quality, characterized by the highest whale participation and the lowest slippage for larger orders. While the **↑ $200** strike shows the highest total depth, it suffers from significant slippage.\n\n| Rank | Strike | Current Price | Spread (Cents) | Whale Count | $5k Slippage | Rationale |\n| :",
         "hasData": true,
         "actionable": true,
         "looksGeneric": false,
@@ -96,113 +148,45 @@
         }
       },
       {
-        "id": "multi-outcome-exit-ladder",
-        "prompt": "Use the most liquid live multi-outcome politics event on Polymarket right now and compare the top four outcomes by price, spread, and estimated exit slippage. Which outcomes can actually absorb size cleanly?",
+        "id": "pm-014",
+        "prompt": "Build a tradability memo for the 'Kharg Island no longer under Iranian control by April 15?' market that combines rules risk, live quote quality, whale positioning, and recent activity into a buy / pass / avoid decision.",
         "retryCount": 0,
-        "status": "pass",
-        "outcomeType": "answer",
-        "toolCalls": 13,
-        "routedToTarget": true,
-        "toolsUsed": [
-          {
-            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
-            "name": "Polymarket",
-            "skillCalls": 13
-          }
-        ],
-        "durationMs": 121195,
-        "responsePreview": "The most liquid multi-outcome politics event currently live is **\"US x Iran ceasefire by...?\"** (ID: `0x773abaa5fe55e5cde51a261f444b7921652a4e059ead6b3be9fe56499c2d4609`), which has approximately **$2.5M** in liquidity.\n\nBased on the current order book data, here is the comparison of the top four outcomes:\n\n| Outcome | Price | Spread (Bps) | $1k Exit Slippage | $10k Exit Slippage | Liquidity Score |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| **December 31** | $0.705 | 141.8 | 0.7% | 0.7% | Ex",
+        "status": "fail",
+        "outcomeType": "capability_miss",
+        "toolCalls": 0,
+        "routedToTarget": false,
+        "toolsUsed": [],
+        "durationMs": 48933,
+        "responsePreview": "Build a tradability memo for the 'Kharg Island no longer under Iranian control by April 15?' market that combines rules risk, live quote quality, whale positioning, and recent activity into a buy / pass / avoid decision.\n\nSuggested next steps:\n- Specify the exact market, outcome, venue, or time range you want analyzed.\n- Pin one or more tool IDs if you already know which tool should answer.\n- Rewrite the question into a narrower, single-intent request.",
         "hasData": true,
         "actionable": true,
         "looksGeneric": false,
         "developerTraceSummary": {
-          "toolCalls": 13,
+          "toolCalls": 0,
           "retryCount": 0,
           "selfHealCount": 0,
           "fallbackCount": 0,
           "failureCount": 0,
           "recoveryCount": 0,
-          "completionChecks": 1,
-          "loopCount": 0
-        }
-      },
-      {
-        "id": "fed-whale-concentration-flow",
-        "prompt": "For the most relevant live Fed decision market right now, what are whales doing, how concentrated are positions, and does that line up with recent directional flow?",
-        "retryCount": 0,
-        "status": "pass",
-        "outcomeType": "answer",
-        "toolCalls": 4,
-        "routedToTarget": true,
-        "toolsUsed": [
-          {
-            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
-            "name": "Polymarket",
-            "skillCalls": 4
-          }
-        ],
-        "durationMs": 75360,
-        "responsePreview": "Based on the data for the **\"Fed decision in April?\"** market, whales are overwhelmingly positioned against the possibility of a decision occurring during that month.\n\n### Whale Activity and Sentiment\nThe \"Smart Money\" signal is currently rated as **high confidence** toward the **NO** outcome. The capital disparity between the two sides is significant:\n*   **NO Whales:** 10 whales hold positions totaling **$3,697,785**.\n*   **YES Whales:** 10 whales hold positions totaling **$13,747**.\n\n### Conc",
-        "hasData": true,
-        "actionable": true,
-        "looksGeneric": false,
-        "developerTraceSummary": {
-          "toolCalls": 4,
-          "retryCount": 0,
-          "selfHealCount": 0,
-          "fallbackCount": 0,
-          "failureCount": 0,
-          "recoveryCount": 0,
-          "completionChecks": 1,
-          "loopCount": 0
-        }
-      },
-      {
-        "id": "geopolitics-tape-read",
-        "prompt": "Summarize the hottest live geopolitics market on Polymarket right now and explain what the recent tape implies for short-term positioning.",
-        "retryCount": 0,
-        "status": "pass",
-        "outcomeType": "answer",
-        "toolCalls": 4,
-        "routedToTarget": true,
-        "toolsUsed": [
-          {
-            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
-            "name": "Polymarket",
-            "skillCalls": 4
-          }
-        ],
-        "durationMs": 71076,
-        "responsePreview": "Based on recent Polymarket data, the hottest live geopolitics market is **\"US x Iran ceasefire by...?\"**. This market is currently seeing significant activity with over **$3.36 million** in 24-hour volume and **$2.49 million** in liquidity.\n\n### Market Overview\n| Attribute | Value |\n| :--- | :--- |\n| **Market Title** | US x Iran ceasefire by...? |\n| **Current \"Yes\" Price** | $0.065 (6.5% probability) |\n| **24h Volume** | $3,369,685.37 |\n| **Total Liquidity** | $2,495,401.88 |\n| **Open Interest**",
-        "hasData": true,
-        "actionable": true,
-        "looksGeneric": false,
-        "developerTraceSummary": {
-          "toolCalls": 4,
-          "retryCount": 0,
-          "selfHealCount": 0,
-          "fallbackCount": 0,
-          "failureCount": 0,
-          "recoveryCount": 0,
-          "completionChecks": 1,
+          "completionChecks": 0,
           "loopCount": 0
         }
       }
     ]
   },
   "executeValidation": {
-    "discoveredToolName": "Polymarket",
-    "discoveredMethodCount": 24,
+    "discoveredToolName": "Polymarket Intelligence",
+    "discoveredMethodCount": 23,
     "passedMethodCount": 6,
     "failedMethodCount": 0,
     "methods": [
       {
         "methodName": "search_and_get_outcomes",
         "args": {
-          "query": "US x Iran ceasefire by...?"
+          "query": "Will Gavin Newsom win the 2028 Democratic presidential nomination?"
         },
         "status": "pass",
-        "durationMs": 16252,
+        "durationMs": 17514,
         "executePriceUsd": "0.001",
         "sessionSpentUsd": "0.001000",
         "sessionRemainingUsd": "0.999",
@@ -212,6 +196,7 @@
           "eventUrl",
           "totalVolume",
           "totalOutcomes",
+          "sortedBy",
           "outcomes",
           "searchQuery",
           "searchMethod",
@@ -224,10 +209,10 @@
       {
         "methodName": "get_event_by_slug",
         "args": {
-          "slug": "us-x-iran-ceasefire-by"
+          "slug": "democratic-presidential-nominee-2028"
         },
         "status": "pass",
-        "durationMs": 10374,
+        "durationMs": 13432,
         "executePriceUsd": "0.001",
         "sessionSpentUsd": "0.002000",
         "sessionRemainingUsd": "0.998",
@@ -241,12 +226,12 @@
         "methodName": "get_prices",
         "args": {
           "tokenIds": [
-            "85191934649046129480174964255278880752271767733539167443243111973456166096127",
-            "44149007410374101286260953227333745102128417138356632089802983317837574022801"
+            "46211769122513729244602558513001215391004042100934296321661285791281233261657",
+            "2213957649161627793381994368131485505647723208738124952452819345058597751695"
           ]
         },
         "status": "pass",
-        "durationMs": 10215,
+        "durationMs": 9589,
         "executePriceUsd": "0.001",
         "sessionSpentUsd": "0.003000",
         "sessionRemainingUsd": "0.997",
@@ -259,10 +244,10 @@
       {
         "methodName": "get_market_parameters",
         "args": {
-          "tokenId": "85191934649046129480174964255278880752271767733539167443243111973456166096127"
+          "tokenId": "46211769122513729244602558513001215391004042100934296321661285791281233261657"
         },
         "status": "pass",
-        "durationMs": 9495,
+        "durationMs": 9598,
         "executePriceUsd": "0.001",
         "sessionSpentUsd": "0.004000",
         "sessionRemainingUsd": "0.996",
@@ -279,12 +264,12 @@
         "methodName": "get_spreads",
         "args": {
           "tokenIds": [
-            "85191934649046129480174964255278880752271767733539167443243111973456166096127",
-            "44149007410374101286260953227333745102128417138356632089802983317837574022801"
+            "46211769122513729244602558513001215391004042100934296321661285791281233261657",
+            "2213957649161627793381994368131485505647723208738124952452819345058597751695"
           ]
         },
         "status": "pass",
-        "durationMs": 9607,
+        "durationMs": 9547,
         "executePriceUsd": "0.001",
         "sessionSpentUsd": "0.005000",
         "sessionRemainingUsd": "0.995",
@@ -298,16 +283,18 @@
       {
         "methodName": "get_market_open_interest",
         "args": {
-          "conditionId": "0x773abaa5fe55e5cde51a261f444b7921652a4e059ead6b3be9fe56499c2d4609"
+          "conditionId": "0x0f49db97f71c68b1e42a6d16e3de93d85dbf7d4148e3f018eb79e88554be9f75"
         },
         "status": "pass",
-        "durationMs": 9341,
+        "durationMs": 9066,
         "executePriceUsd": "0.001",
         "sessionSpentUsd": "0.006000",
         "sessionRemainingUsd": "0.994",
         "resultKeys": [
           "openInterest",
           "totalOpenInterest",
+          "changeRateAvailable",
+          "note",
           "fetchedAt"
         ]
       }
@@ -317,7 +304,7 @@
     "initializeStatus": 200,
     "toolsListStatus": 200,
     "toolsCallStatus": 401,
-    "toolCount": 45,
+    "toolCount": 48,
     "rpcAuthBlocked": false,
     "pass": true
   },
@@ -326,16 +313,16 @@
     "overlapTop3": 3,
     "localTopMarkets": [
       {
-        "title": "Democratic Presidential Nominee 2028",
+        "title": "Will Chelsea Clinton win the 2028 Democratic presidential nomination?",
         "slug": "democratic-presidential-nominee-2028"
       },
       {
-        "title": "Republican Presidential Nominee 2028",
-        "slug": "republican-presidential-nominee-2028"
+        "title": "Will Uzbekistan win the 2026 FIFA World Cup?",
+        "slug": "2026-fifa-world-cup-winner-595"
       },
       {
-        "title": "Presidential Election Winner 2028",
-        "slug": "presidential-election-winner-2028"
+        "title": "Will Mike Pence win the 2028 Republican presidential nomination?",
+        "slug": "republican-presidential-nominee-2028"
       }
     ],
     "upstreamTopMarkets": [
@@ -344,12 +331,12 @@
         "slug": "democratic-presidential-nominee-2028"
       },
       {
-        "title": "Republican Presidential Nominee 2028",
-        "slug": "republican-presidential-nominee-2028"
+        "title": "2026 FIFA World Cup Winner ",
+        "slug": "2026-fifa-world-cup-winner-595"
       },
       {
-        "title": "Presidential Election Winner 2028",
-        "slug": "presidential-election-winner-2028"
+        "title": "Republican Presidential Nominee 2028",
+        "slug": "republican-presidential-nominee-2028"
       }
     ],
     "notes": [

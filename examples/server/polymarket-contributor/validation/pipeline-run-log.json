@@ -1,0 +1,192 @@
+{
+  "runId": "2026-04-08T08:52:46.982627Z",
+  "contributor": "polymarket-contributor",
+  "events": [
+    {
+      "timestamp": "2026-04-08T00:00:00.000Z",
+      "phase": "readiness",
+      "event": "server_check",
+      "detail": "localhost:3000 responded on /api/health with 404, treated as reachable app server.",
+      "durationMs": 6364
+    },
+    {
+      "timestamp": "2026-04-08T08:52:46.982627Z",
+      "phase": "prompts",
+      "event": "live_data_discovery",
+      "detail": "Discovered 30 markets, 10 events, and 20 categories into live-market-snapshot.json",
+      "durationMs": 1662
+    },
+    {
+      "timestamp": "2026-04-08T09:01:24.481789Z",
+      "phase": "prompts",
+      "event": "alpha_researcher_complete",
+      "detail": "Generated 18 grounded prompts across 6 alpha categories; 0 dropped after validation.",
+      "promptCount": 18,
+      "droppedCount": 0
+    },
+    {
+      "timestamp": "2026-04-08T09:05:02.969Z",
+      "phase": "evaluation",
+      "event": "free_baseline_complete",
+      "detail": "18/18 Gemini baseline prompts succeeded.",
+      "successCount": 18,
+      "errorCount": 0,
+      "durationMs": 185198
+    },
+    {
+      "timestamp": "2026-04-08T09:27:02.528Z",
+      "phase": "evaluation",
+      "event": "paid_sweep_complete",
+      "detail": "18/18 paid queries completed; 16 answers and 2 clarification_required.",
+      "successCount": 18,
+      "errorCount": 0,
+      "durationMs": 1504757
+    },
+    {
+      "timestamp": "2026-04-08T09:35:49.057Z",
+      "phase": "evaluation",
+      "event": "reviewer_complete",
+      "detail": "Merged reviewer batches into reviewer-evaluation.json.",
+      "satisfactionMean": 3.24,
+      "weakQueryCount": 10,
+      "weakQueryRate": 0.556,
+      "baselineBeatenRate": 0.833
+    },
+    {
+      "timestamp": "2026-04-08T09:35:49.057Z",
+      "phase": "evaluation",
+      "event": "gate_check",
+      "detail": "Release gates: blocked. Improvement gates: continue.",
+      "releaseStatus": "blocked",
+      "iterationAction": "continue",
+      "blockers": [
+        "Reviewer satisfactionMean 3.240 is below 3.5.",
+        "Weak query rate 56% exceeds 20%."
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T10:45:11.440Z",
+      "phase": "improvement",
+      "event": "improver_iteration_1",
+      "detail": "Applied contributor fixes, deployed, refreshed listing schema, and reran 10 weak queries.",
+      "fixedCount": 10,
+      "filesChanged": [
+        "context-sdk/examples/server/polymarket-contributor/server.ts"
+      ],
+      "deployed": true
+    },
+    {
+      "timestamp": "2026-04-08T10:51:05.092Z",
+      "phase": "improvement",
+      "event": "reviewer_rerun_1",
+      "detail": "Re-scored 10 rerun queries and merged them into reviewer-evaluation.json.",
+      "satisfactionMean": 3.381,
+      "weakQueryCount": 9,
+      "weakQueryRate": 0.5,
+      "delta": 0.141
+    },
+    {
+      "timestamp": "2026-04-08T10:51:05.092Z",
+      "phase": "improvement",
+      "event": "gate_check",
+      "detail": "Release gates: blocked. Improvement gates: continue after iteration 1.",
+      "releaseStatus": "blocked",
+      "iterationAction": "continue",
+      "blockers": [
+        "Reviewer satisfactionMean 3.381 is below 3.5.",
+        "Reviewer highFragilityRate 0.444 exceeds 0.3.",
+        "Weak query rate 50% exceeds 20%."
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T11:22:11.727Z",
+      "phase": "improvement",
+      "event": "improver_iteration_2",
+      "detail": "Applied second contributor fix pass, deployed, and reran the remaining weak queries.",
+      "fixedCount": 9,
+      "filesChanged": [
+        "context-sdk/examples/server/polymarket-contributor/server.ts"
+      ],
+      "deployed": true
+    },
+    {
+      "timestamp": "2026-04-08T11:22:11.727Z",
+      "phase": "improvement",
+      "event": "reviewer_rerun_2",
+      "detail": "Re-scored iteration-2 reruns and merged them into reviewer-evaluation.json.",
+      "satisfactionMean": 3.915,
+      "weakQueryCount": 4,
+      "weakQueryRate": 0.222,
+      "delta": 0.534
+    },
+    {
+      "timestamp": "2026-04-08T11:22:11.727Z",
+      "phase": "improvement",
+      "event": "gate_check",
+      "detail": "Release gates: still blocked after iteration 2. Improvement gates: continue.",
+      "releaseStatus": "blocked",
+      "iterationAction": "continue",
+      "blockers": [
+        "Weak query rate 22% exceeds 20%.",
+        "3 high-differentiation prompts remain below 3.0."
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T12:27:23.182Z",
+      "phase": "validation_refresh",
+      "event": "full_enhancement_refresh_complete",
+      "detail": "Refreshed full-enhancement-results.latest.json against the live local MCP server.",
+      "passCount": 16,
+      "promptCount": 18,
+      "passRate": 0.8889,
+      "failedPromptIds": [
+        "pm-003",
+        "pm-017"
+      ],
+      "durationMs": 1736428
+    },
+    {
+      "timestamp": "2026-04-08T12:37:04.872Z",
+      "phase": "validation_refresh",
+      "event": "marketplace_surface_checks_complete",
+      "detail": "Refreshed marketplace-surface-checks.latest.json with fresh auto-query, execute, auth, and external-accuracy checks.",
+      "autoQueryPassedCount": 4,
+      "autoQueryPromptCount": 5,
+      "executePassedCount": 6,
+      "executeMethodCount": 6,
+      "publicAuthProbePassed": true,
+      "externalAccuracyStatus": "PASS",
+      "durationMs": 573525
+    },
+    {
+      "timestamp": "2026-04-08T12:37:15.000Z",
+      "phase": "release_gate",
+      "event": "gate_check",
+      "detail": "Centralized release decision stayed blocked only on local query validation, while reviewer convergence remained passed.",
+      "releaseStatus": "blocked",
+      "iterationAction": "pass",
+      "blockers": [
+        "Local query validation is not green."
+      ]
+    },
+    {
+      "timestamp": "2026-04-08T12:38:10.000Z",
+      "phase": "post_convergence",
+      "event": "code_parity_verified",
+      "detail": "Verified query and chat routes both use the shared agentic execution engine from context/lib/ai/agentic-execution via executeWithSelfHealing/buildMediatorText with no deterministic execution-path divergence found."
+    },
+    {
+      "timestamp": "2026-04-08T12:38:40.826Z",
+      "phase": "post_convergence",
+      "event": "description_update_complete",
+      "detail": "Updated the marketplace listing name/category/description via ContextClient.developer.updateTool using the refreshed showcase prompts.",
+      "updatedAt": "2026-04-08T12:38:40.826Z"
+    },
+    {
+      "timestamp": "2026-04-08T12:38:41.000Z",
+      "phase": "handoff",
+      "event": "browser_qa_handoff_ready",
+      "detail": "Automated work finished in handoff-ready state with limitations; reviewer gates passed, but artifact write remains blocked by 16/18 local query validation."
+    }
+  ]
+}

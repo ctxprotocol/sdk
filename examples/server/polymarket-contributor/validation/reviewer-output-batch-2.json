@@ -1,0 +1,474 @@
+{
+  "reviewedAt": "2026-04-08T09:33:29.583986+00:00",
+  "batchLabel": "batch-2",
+  "perQueryEvaluations": [
+    {
+      "query": "For the 'Will WTI Crude Oil (WTI) hit (HIGH) $200 in April?' market, what exactly has to happen to resolve YES, and does the current quote compensate for the rules and tail-risk profile?",
+      "quotedExcerpts": [
+        "\"How would you like me to look into this WTI Crude Oil prediction market?\"",
+        "\"Reply with one of the options above or send your own wording if none fit exactly.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 1,
+        "specificity": 1,
+        "uniqueness": 1,
+        "completeness": 1,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 1.17,
+      "scoreExplanations": {
+        "actionability": "It gives no trading or rules conclusion, only asks the buyer to choose a workflow.",
+        "dataFreshness": "No live market data, quote, or rule detail is surfaced.",
+        "specificity": "The response never names a price, rule trigger, or risk metric.",
+        "uniqueness": "A paywalled answer that only asks for clarification does not beat a free baseline.",
+        "completeness": "It does not answer either the resolution-rules part or the tail-risk pricing part.",
+        "dataAccuracy": "There are almost no factual claims, so it is not misleading, but it still dodges the question."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 100,
+        "fragilityRisk": "medium",
+        "selectionIssue": "The router asked for clarification even though the buyer question was already specific and answerable.",
+        "planningIssue": "It never committed to a rules-plus-liquidity workflow.",
+        "executionIssue": "No tool calls were made.",
+        "completenessIssue": "Missing the actual resolution criteria and quote/risk assessment.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "clarification_failure",
+        "rootCauseEvidence": "Trace summary shows toolCalls=0 and the only timeline event is clarification-required after about 30 seconds.",
+        "responseQualityNote": "From a buyer perspective this is a non-answer.",
+        "improvementLever": "Skip clarification and directly run market-rules plus liquidity analysis for the named contract.",
+        "diagnosticBrief": {
+          "toolUsed": null,
+          "toolShouldHaveUsed": "check_market_rules + analyze_market_liquidity",
+          "argsUsed": null,
+          "argsShouldHaveUsed": "marketQuery for the exact WTI market",
+          "codeSnippet": null,
+          "toolResultSample": null,
+          "completenessVerdict": "Failed before answering.",
+          "stageTimingBottleneck": "Spent the whole turn on a clarification branch."
+        }
+      },
+      "overallVerdict": "Weak paid response. It burns the turn on unnecessary clarification and gives the buyer nothing actionable."
+    },
+    {
+      "query": "For the 'Will there be no change in Fed interest rates after the April 2026 meeting?' market, does the live quote look efficient once you compare it with the related April Fed decision contracts on Polymarket?",
+      "quotedExcerpts": [
+        "\"it is currently not possible to determine if the live quote is efficient\"",
+        "\"the system could not deterministically select the specific \\\"no-change\\\" outcome\""
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 4,
+        "specificity": 2,
+        "uniqueness": 2,
+        "completeness": 1,
+        "dataAccuracy": 1
+      },
+      "satisfactionMean": 1.83,
+      "scoreExplanations": {
+        "actionability": "The buyer is told the analysis cannot be done, so there is no tradeable conclusion.",
+        "dataFreshness": "It at least refers to the live April 2026 Fed set and recent retrieved data.",
+        "specificity": "The answer names the event structure but omits the actual no-change price and comparison.",
+        "uniqueness": "There is some live-event context, but it still fails to convert that into venue-native insight.",
+        "completeness": "It never answers whether the quote is efficient relative to sibling contracts.",
+        "dataAccuracy": "The trace already contained the exact No change outcome at 0.9845, so the stated missing-data blocker is false."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": 71.88,
+        "fragilityRisk": "high",
+        "selectionIssue": null,
+        "planningIssue": "The plan found the right event but never advanced to the efficiency/comparison tools named by completion checks.",
+        "executionIssue": "It repeated discovery instead of using the returned No change outcome and related contracts.",
+        "completenessIssue": "Missing vig/implied-probability analysis and direct cross-contract comparison.",
+        "codeIssueDetail": "Execution result incorrectly claims it could not deterministically select the no-change outcome.",
+        "dataAccuracyRedFlags": "Tool output already included No change price 0.9845, volume 13,048,430+, and the exact conditionId/tokenId.",
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "search_and_get_outcomes returned \"No change\" at 0.9845, while the final answer says that outcome could not be isolated.",
+        "responseQualityNote": "Buyer sees a false dead end even though the trace had enough evidence to at least do a first-pass efficiency read.",
+        "improvementLever": "Use the discovered April event plus check_market_efficiency and quote-comparison tools before declaring missing data.",
+        "diagnosticBrief": {
+          "toolUsed": "search_and_get_outcomes; search_markets",
+          "toolShouldHaveUsed": "check_market_efficiency; compare_event_outcome_quotes",
+          "argsUsed": "query=\"Will there be no change in Fed interest rates after the April 2026 meeting?\"; query=\"April 2026 Fed decision contracts\"",
+          "argsShouldHaveUsed": "slug=\"fed-decision-in-april\" or conditionId for the No change leg",
+          "codeSnippet": "Completion checks explicitly requested vig/implied-probability and related-contract comparison, but the run repeated discovery.",
+          "toolResultSample": "No change price=0.9845; 25 bps decrease=0.0065; 25+ bps increase=0.0065; 50+ bps decrease=0.0035.",
+          "completenessVerdict": "Incomplete despite sufficient primary-market data.",
+          "stageTimingBottleneck": "Time was spent on redundant rediscovery rather than analysis."
+        }
+      },
+      "overallVerdict": "Weak. The paid answer says the key data is missing even though the trace already fetched it."
+    },
+    {
+      "query": "For the 'Will the Fed decrease interest rates by 50+ bps after the April 2026 meeting?' market, is there any live arbitrage or obvious overpricing/underpricing once depth and related Fed contracts are considered?",
+      "quotedExcerpts": [
+        "\"there are currently no live markets that match your specific criteria for a 50+ bps cut\"",
+        "\"No sufficiently matching live market found.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 3,
+        "specificity": 2,
+        "uniqueness": 1,
+        "completeness": 1,
+        "dataAccuracy": 1
+      },
+      "satisfactionMean": 1.5,
+      "scoreExplanations": {
+        "actionability": "The buyer gets no arbitrage or pricing view, only a suggestion to try broader searches.",
+        "dataFreshness": "It at least frames the issue as live-market discovery, not generic macro commentary.",
+        "specificity": "The answer mentions evaluated branches but provides no usable quote, spread, or depth figures.",
+        "uniqueness": "It does not materially outperform a free answer because it fails at the venue lookup step.",
+        "completeness": "It never addresses arbitrage, overpricing, underpricing, or depth.",
+        "dataAccuracy": "Trace search results clearly found the April Fed event with matchedOutcome \"50+ bps decrease\" at 0.0035, so the no-market claim is wrong."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 1,
+        "selfHealCount": 1,
+        "budgetConsumedPct": 70.01,
+        "fragilityRisk": "high",
+        "selectionIssue": "Deterministic semantic targeting rejected an exact search hit.",
+        "planningIssue": "The plan stalled at market discovery instead of moving into arbitrage and depth checks.",
+        "executionIssue": "Both attempts only re-ran search_markets.",
+        "completenessIssue": "No efficiency, arbitrage, or related-contract comparison was performed.",
+        "codeIssueDetail": "Execution result reports found=false despite an exact matched outcome in the tool result.",
+        "dataAccuracyRedFlags": "search_markets returned fed-decision-in-april with matchedOutcome 50+ bps decrease and outcomePrice 0.0035.",
+        "rootCauseCategory": "selection_routing_issue",
+        "rootCauseEvidence": "The tool returned an exact relevant market, but the semantic selection layer still concluded no sufficiently matching market existed.",
+        "responseQualityNote": "This is a buyer-facing false negative on a live market that plainly exists in the trace.",
+        "improvementLever": "Trust the exact matched outcome from discovery, then run efficiency/liquidity/correlated-market reads.",
+        "diagnosticBrief": {
+          "toolUsed": "search_markets",
+          "toolShouldHaveUsed": "check_market_efficiency; find_arbitrage_opportunities; analyze_market_liquidity",
+          "argsUsed": "query=\"Will the Fed decrease interest rates by 50+ bps after the April 2026 meeting?\", status=\"live\", limit=10",
+          "argsShouldHaveUsed": "conditionId or slug for fed-decision-in-april matchedOutcome=50+ bps decrease",
+          "codeSnippet": "Completion check called for live arbitrage, depth, and related-contract comparison, but retry repeated discovery only.",
+          "toolResultSample": "matchedOutcome=\"50+ bps decrease\", outcomePrice=\"0.0035\", liquidity=4,233,841.22671.",
+          "completenessVerdict": "Failed after discovery.",
+          "stageTimingBottleneck": "Budget was consumed on duplicated search passes."
+        }
+      },
+      "overallVerdict": "Very weak. It denies the existence of a live market that the trace itself already located."
+    },
+    {
+      "query": "On the 'Trump out as President by April 30?' market, has recent tape and whale flow been one-way enough to trust the quote, or is the price sitting on thin, noisy trading?",
+      "quotedExcerpts": [
+        "\"appears to be sitting on thin and noisy trading rather than a reliable, one-way tape\"",
+        "\"10 whales hold $1,490,008 in \\\"No\\\" vs. $14,108 in \\\"Yes\\\"\""
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 4,
+      "scoreExplanations": {
+        "actionability": "The buyer gets a clear practical takeaway: treat the quote as noisy rather than trusting recent tape.",
+        "dataFreshness": "The answer is anchored in live 24h trade flow, open interest, concentration, and current efficiency.",
+        "specificity": "It includes concrete trade counts, dollar flows, concentration percentages, and side-specific whale positioning.",
+        "uniqueness": "This is materially more venue-native than a generic political-market explanation.",
+        "completeness": "It addresses tape, whale flow, and the trustworthiness of the current quote.",
+        "dataAccuracy": "Most figures line up with the trace, but the narrative slightly overstates thin/noisy conditions given a 0.1 cent spread and zero vig."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 53.4,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "The response mixes a 50-trade tape sample with a 24h whale-flow window, and its noisy-trading verdict is harsher than the efficiency/spread data suggests.",
+        "rootCauseCategory": null,
+        "rootCauseEvidence": "The trace supports the quoted numbers: 24h whale net flow about $49.5k, smart money heavily NO, spread 0.1 cent, vig 0.",
+        "responseQualityNote": "Strong live-market color with a usable trader conclusion, even if the final tone is a bit more cautious than the microstructure alone implies.",
+        "improvementLever": "Explicitly reconcile the efficient quote and tight spread with the concentration-risk narrative.",
+        "diagnosticBrief": {
+          "toolUsed": "summarize_live_market_activity; analyze_single_market_whales; check_market_efficiency",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "marketQuery=\"Trump out as President by April 30?\"; hoursBack=24; slug=\"trump-out-as-president-by-april-30\"",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "Open interest=2,381,705.34; whale net flow=49,479.79; spreadCents=0.1; YES=1.55%, NO=98.45%.",
+          "completenessVerdict": "Substantially answered.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Good paid answer. It gives live tape and whale context that a trader could actually use."
+    },
+    {
+      "query": "Build a tradability memo for the 'Kharg Island no longer under Iranian control by April 15?' market that combines rules risk, live quote quality, whale positioning, and recent activity into a buy / pass / avoid decision.",
+      "quotedExcerpts": [
+        "\"Tradability Decision: AVOID\"",
+        "\"Recent capital flow appears to be migrating toward later dates (May 31 and June 30)\""
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 2,
+        "completeness": 2,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 2.83,
+      "scoreExplanations": {
+        "actionability": "At least it lands on AVOID and names alternative expiries, so the buyer can act on the recommendation.",
+        "dataFreshness": "It uses live outcome prices and volumes from the April 15/April 30/May 31/June 30 set.",
+        "specificity": "The memo contains concrete prices, probabilities, and volume comparisons.",
+        "uniqueness": "Beyond the raw prices, most of the memo reads like generic geopolitical-risk synthesis rather than hard venue-native evidence.",
+        "completeness": "Rules risk, whale positioning, and recent activity were requested but not actually evidenced from tools.",
+        "dataAccuracy": "Several statements about rules ambiguity and capital migration are unsupported by the visible trace, which only shows repeated outcome search results."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": 83.76,
+        "fragilityRisk": "high",
+        "selectionIssue": null,
+        "planningIssue": "Completion checks correctly requested rules, liquidity, whale, and recent-activity tools, but the run never executed them.",
+        "executionIssue": "Both tool calls were the same discovery method; no actual tradability workflow ran.",
+        "completenessIssue": "The answer omits evidence-backed whale positioning and recent activity despite claiming to cover them.",
+        "codeIssueDetail": "Execution result says it failed to resolve the specific outcome after deterministic semantic targeting even though April 15 was present in the returned outcomes.",
+        "dataAccuracyRedFlags": "Claims about rules risk and flow migration are not grounded in the supplied trace.",
+        "rootCauseCategory": "execution_self_heal_failure",
+        "rootCauseEvidence": "Trace completion checks twice prescribed check_market_rules, analyze_market_liquidity, and analyze_single_market_whales, but the run ended after two search_and_get_outcomes calls.",
+        "responseQualityNote": "The recommendation may be directionally sensible, but the supporting memo is not properly evidenced.",
+        "improvementLever": "After discovery, force sequential rules/liquidity/whale/activity reads for the resolved April 15 outcome before synthesizing.",
+        "diagnosticBrief": {
+          "toolUsed": "search_and_get_outcomes",
+          "toolShouldHaveUsed": "check_market_rules; analyze_market_liquidity; analyze_top_holders or analyze_single_market_whales",
+          "argsUsed": "query=\"Kharg Island no longer under Iranian control by April 15?\", sortBy=\"volume\"",
+          "argsShouldHaveUsed": "conditionId/tokenId for the April 15 leg and slug for the event",
+          "codeSnippet": "Completion checks explicitly listed the missing rules/liquidity/whale/activity steps.",
+          "toolResultSample": "April 15 price=0.013, volume=3,847,633.38; May 31=0.155; June 30=0.17.",
+          "completenessVerdict": "Partial memo built from discovery only.",
+          "stageTimingBottleneck": "Retry loop spent time rediscovering instead of analyzing the resolved leg."
+        }
+      },
+      "overallVerdict": "Mixed-to-weak. It gives a decision, but much of the memo is unsupported by the trace and misses the requested evidence pillars."
+    },
+    {
+      "query": "Within the 'Democratic Presidential Nominee 2028' event, which candidate submarkets currently combine tight quotes with meaningful whale participation, and which ones are just illiquid headline prices?",
+      "quotedExcerpts": [
+        "\"would you like me to analyze whale activity for a specific candidate\"",
+        "\"Reply with one of the options above or send your own wording if none fit exactly.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 1,
+        "specificity": 1,
+        "uniqueness": 1,
+        "completeness": 1,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 1.17,
+      "scoreExplanations": {
+        "actionability": "The buyer asked for a cross-event ranking and got no ranking at all.",
+        "dataFreshness": "No live candidate-level quote or whale data is shown.",
+        "specificity": "No candidates, spreads, or liquidity values are named.",
+        "uniqueness": "A paid answer that just asks how to proceed adds no marketplace value.",
+        "completeness": "Neither the tradable names nor the illiquid headline names are identified.",
+        "dataAccuracy": "It is not factually wrong, but it is still a refusal rather than an answer."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 60.35,
+        "fragilityRisk": "medium",
+        "selectionIssue": "The system treated a well-scoped event-level comparison as if the buyer needed to narrow to one candidate.",
+        "planningIssue": "It failed to choose an event-wide quote-plus-whale comparison workflow.",
+        "executionIssue": "No tool calls were made.",
+        "completenessIssue": "Entire requested ranking missing.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "clarification_failure",
+        "rootCauseEvidence": "Trace summary shows toolCalls=0 and only a clarification-required event asking the user to choose between one-candidate or all-candidate analysis.",
+        "responseQualityNote": "From a buyer standpoint this is another wasted turn.",
+        "improvementLever": "Directly run event-outcome quote comparison plus whale breakdown across the named event.",
+        "diagnosticBrief": {
+          "toolUsed": null,
+          "toolShouldHaveUsed": "compare_event_outcome_quotes; analyze_event_whale_breakdown",
+          "argsUsed": null,
+          "argsShouldHaveUsed": "eventQuery=\"Democratic Presidential Nominee 2028\"",
+          "codeSnippet": null,
+          "toolResultSample": null,
+          "completenessVerdict": "No answer produced.",
+          "stageTimingBottleneck": "Clarification branch consumed the turn."
+        }
+      },
+      "overallVerdict": "Weak paid response. The question was already specific enough for an event-wide analysis."
+    },
+    {
+      "query": "Within the 'Rockets vs. Suns' event, which live submarkets look genuinely tradable tonight based on spread, depth, and activity rather than just displayed prices?",
+      "quotedExcerpts": [
+        "\"The data retrieval process for market outcomes (including spreads, depth, and volume) timed out\"",
+        "\"you may want to: Searching for a specific player prop or quarter-specific market\""
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 2,
+        "specificity": 1,
+        "uniqueness": 1,
+        "completeness": 1,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 1.83,
+      "scoreExplanations": {
+        "actionability": "The fallback suggestions are mildly useful, but they still leave the buyer without tonight's tradable submarkets.",
+        "dataFreshness": "The timeout itself implies an attempted live read, but no actual market data is surfaced.",
+        "specificity": "No submarket names, spreads, depths, or activity figures are returned.",
+        "uniqueness": "A timeout message is not better than a free answer.",
+        "completeness": "It completely misses the requested ranking of tradable submarkets.",
+        "dataAccuracy": "The trace supports the timeout claim, so the failure is honest rather than fabricated."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 58.31,
+        "fragilityRisk": "high",
+        "selectionIssue": null,
+        "planningIssue": "The plan started with a broad event lookup on a live sports market, which is a fragile first step for a fast-moving game slate.",
+        "executionIssue": "search_and_get_outcomes timed out and the run had no narrower fallback.",
+        "completenessIssue": "No tradability assessment was produced.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "latency_timeout",
+        "rootCauseEvidence": "Execution result says \"search_and_get_outcomes timed out after 30s\" and no subsequent tool results appear.",
+        "responseQualityNote": "Honest failure, but still poor buyer value for a live-trading query.",
+        "improvementLever": "Use a narrower event or submarket-discovery fallback after the first timeout instead of ending empty-handed.",
+        "diagnosticBrief": {
+          "toolUsed": "search_and_get_outcomes",
+          "toolShouldHaveUsed": "narrower live submarket discovery plus batch orderbook/spread reads after timeout",
+          "argsUsed": "query=\"Rockets vs. Suns\", category=\"sports\", sortBy=\"volume\"",
+          "argsShouldHaveUsed": "targeted quarter/player/live outcome queries derived from the event name",
+          "codeSnippet": "The initial plan would have used get_batch_orderbooks and get_spreads, but the very first search timed out and no recovery path ran.",
+          "toolResultSample": "error=\"MCP tool search_and_get_outcomes timed out after 30s\"",
+          "completenessVerdict": "Failed before submarket selection.",
+          "stageTimingBottleneck": "Initial discovery timeout."
+        }
+      },
+      "overallVerdict": "Weak because it returns no tradable market names, though the failure reporting itself is honest."
+    },
+    {
+      "query": "For the 'Will Paris Saint-Germain FC win on 2026-04-08?' market, what are the current midpoint, spread, and orderbook depth, and is there enough liquidity for a fast in-and-out trade before kickoff?",
+      "quotedExcerpts": [
+        "\"Midpoint | 0.525\"",
+        "\"There is more than enough liquidity for a fast entry and exit before kickoff.\""
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.67,
+      "scoreExplanations": {
+        "actionability": "A trader can directly use the midpoint, spread, depth, and slippage takeaways to decide on a quick in-and-out trade.",
+        "dataFreshness": "The answer is explicitly built from live liquidity output with a fetchedAt timestamp in trace.",
+        "specificity": "It gives concrete midpoint, bid, ask, spread, depth, and slippage figures.",
+        "uniqueness": "The live orderbook-style microstructure clearly beats a generic sports-betting explanation.",
+        "completeness": "It answers every part of the question, including the final liquidity judgement.",
+        "dataAccuracy": "The numbers align with the trace, though the depth includes synthetic complement liquidity and that caveat could have been made more prominent."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 32.18,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "Depth note says it includes synthetic liquidity from the complement token, which slightly softens the headline depth number.",
+        "rootCauseCategory": null,
+        "rootCauseEvidence": "analyze_market_liquidity returned midpoint 0.525, bid 0.52, ask 0.53, totalDepthUsd 6,048,419.57, and about 1% slippage for 1k/5k/10k sells.",
+        "responseQualityNote": "This is the kind of live, numeric answer a paying trader expects.",
+        "improvementLever": "Surface the synthetic-liquidity caveat inline with the depth table.",
+        "diagnosticBrief": {
+          "toolUsed": "analyze_market_liquidity",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "marketQuery=\"Will Paris Saint-Germain FC win on 2026-04-08?\"",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": null,
+          "toolResultSample": "currentPrice=0.525; bestBid=0.52; bestAsk=0.53; totalDepthUsd=6048419.57; liquidityScore=excellent.",
+          "completenessVerdict": "Complete.",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Strong paid response with exactly the live microstructure details the buyer asked for."
+    },
+    {
+      "query": "Within 'The Masters - Winner', which golfer winner markets currently have the best combination of depth, tight spread, and whale participation, and which favorites are just expensive but untradeable?",
+      "quotedExcerpts": [
+        "\"Jon Rahm and Scottie Scheffler currently offer the best combination of liquidity and depth\"",
+        "\"specific whale participation data ... returned null across the analyzed favorites\""
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 2,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 3,
+      "scoreExplanations": {
+        "actionability": "The buyer gets some usable names and liquidity metrics, but not a confident answer on whale participation or untradeable favorites.",
+        "dataFreshness": "It is clearly based on current event-level liquidity reads across many outcomes.",
+        "specificity": "The table gives concrete prices, spreads, depth, and slippage for the named golfers.",
+        "uniqueness": "The depth/spread data is valuable, but the missing whale integration limits the paid edge.",
+        "completeness": "The response underdelivers on the whale-participation criterion and does not really identify expensive-but-untradeable favorites.",
+        "dataAccuracy": "Trace whale data highlighted Bryson Dechambeau and Matt Fitzpatrick, while the answer centers Rahm/Scheffler and says whale data was null across analyzed favorites."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 1,
+        "selfHealCount": 1,
+        "budgetConsumedPct": 100,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": "The tool mix was right, but the synthesis target was mismatched: liquidity favorites were not successfully joined with whale data.",
+        "executionIssue": "Self-heal still left whale fields null for Rahm and Scheffler, and the expensive/untradeable bucket remained empty.",
+        "completenessIssue": "Missing the strongest combined depth-plus-whale names and a real answer to the second half of the question.",
+        "codeIssueDetail": "Fallback was skipped because elapsed budget cap was exceeded before a higher-fidelity retry could run.",
+        "dataAccuracyRedFlags": "analyze_event_whale_breakdown showed Bryson Dechambeau whaleCount=7 and totalWhaleValue=28050.2, which is not reflected in the final ranking.",
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "Completion check explicitly noted null whale metrics for Rahm/Scheffler and missing expensive-but-untradeable identification; final response still shipped with those gaps.",
+        "responseQualityNote": "Helpful on liquidity, weak on the whale criterion that made this query premium.",
+        "improvementLever": "Join whale-breakdown results to the liquidity shortlist and force a second-pass classification for favorites with ugly slippage.",
+        "diagnosticBrief": {
+          "toolUsed": "search_and_get_outcomes; analyze_event_outcome_liquidity; analyze_event_whale_breakdown",
+          "toolShouldHaveUsed": "analyze_top_holders for Rahm/Scheffler or a stronger whale-data merge step",
+          "argsUsed": "eventQuery/marketQuery=\"The Masters - Winner\"; maxOutcomes=8; limit=4 sortBy=\"price\"",
+          "argsShouldHaveUsed": "targeted holder reads for the final shortlist golfers",
+          "codeSnippet": "Completion check flagged null whale fields for Rahm/Scheffler, then bounded rediscovery was skipped on elapsed budget cap.",
+          "toolResultSample": "Bryson Dechambeau whaleCount=7 totalWhaleValue=28050.2; Jon Rahm spread=0.2c depth=600244.67; Scottie Scheffler spread=1c depth=315947.36.",
+          "completenessVerdict": "Partially complete.",
+          "stageTimingBottleneck": "Elapsed budget cap blocked a stronger retry."
+        }
+      },
+      "overallVerdict": "Decent liquidity snapshot, but incomplete as a premium answer because whale participation was not properly integrated."
+    }
+  ]
+}

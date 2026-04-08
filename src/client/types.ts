@@ -856,6 +856,27 @@ export interface QueryDeveloperTraceSummary {
 }
 
 /**
+ * Full tool call record (untruncated) for debugging.
+ */
+export interface QueryDeveloperTraceToolCall {
+  toolId?: string;
+  toolName: string;
+  args?: unknown;
+  result: unknown;
+}
+
+/**
+ * MCP method schema exposed in the developer trace.
+ */
+export interface QueryDeveloperTraceToolSchema {
+  serverName: string;
+  toolName: string;
+  description: string;
+  inputSchema?: Record<string, unknown>;
+  outputSchema?: Record<string, unknown>;
+}
+
+/**
  * Developer Mode trace payload returned per query response (opt-in).
  */
 export interface QueryDeveloperTrace {
@@ -865,6 +886,15 @@ export interface QueryDeveloperTrace {
   query?: string;
   source?: string;
   diagnostics?: QueryDeveloperTraceDiagnostics;
+  initialCode?: string;
+  finalCode?: string;
+  executionTrace?: unknown[];
+  executionProgram?: unknown;
+  attemptCount?: number;
+  executionSuccess?: boolean;
+  executionResult?: unknown;
+  toolCallHistory?: QueryDeveloperTraceToolCall[];
+  toolSchemas?: QueryDeveloperTraceToolSchema[];
   [key: string]: unknown;
 }
 

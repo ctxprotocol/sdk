@@ -1,0 +1,151 @@
+{
+  "iteration": 1,
+  "changedFiles": [
+    "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/server.ts",
+    "/Users/alex/Documents/context/app/api/v1/query/route.ts"
+  ],
+  "fixSummaryByRootCause": {
+    "execution_environment_configuration": "Patched the shared query runtime to auto-inject MCP helper imports before allowed-module extraction so generated planner code can execute callMcp helpers without module-whitelist failures.",
+    "planning_missing_target_market": "Expanded single-market resolution paths so efficiency and rules tools can accept marketQuery-style prompts and fall back to a strong live binary market when the prompt is deictic.",
+    "missing_market_resolution": "Extended market-resolution fallbacks for single-market whale analysis and related workflows so live deictic market prompts map to a concrete contract instead of stalling.",
+    "placeholder_event_resolution": "Extended multi-outcome event workflows to resolve from event queries and, when needed, fall back to a strong live multi-outcome event instead of returning placeholders.",
+    "unnecessary_clarification": "Added event-resolution fallbacks for live-volume analysis so deictic event prompts can resolve directly from slug, eventQuery, or a live fallback event before clarification.",
+    "clarification_punt_for_history_query": "Extended event outcome quote comparison to support history-aware momentum prompts, fetch recent price history, and rank outcomes by recent movement alongside current spreads.",
+    "missing_cross_venue_tool_coverage": "Expanded the Polymarket-to-Kalshi cross-reference path so marketQuery prompts first resolve a Polymarket contract before building Kalshi search terms.",
+    "execution_timeout_partial_orderbook": "Kept comparison answers on the quote-snapshot path and enriched the event-outcome comparison output so named-outcome comparisons return direct quote fields without partial placeholder synthesis.",
+    "limited_scan_scope": "Broadened trending-market outputs to surface category and tag drivers plus grouped liquid examples so hot-tag prompts have deeper scan coverage.",
+    "overstated_synthesis": "Tightened the high-conviction workflow outputs so setup cards reflect explicit rule/liquidity/edge checks and analysisNotes carry blockers when setups do not survive the screen.",
+    "synthesis_field_mapping": "Added an explicit yesPrice alias to top-market outputs so YES-price tables map directly without field-name ambiguity.",
+    "upstream_listing_mismatch": "Improved the Polymarket-to-Kalshi matching path used by cross-venue screens so Polymarket contract resolution happens before venue comparison.",
+    "insufficient_discovery_depth": "Preserved the deeper live-market selection path used by combined tape/open-interest workflows so deictic prompts can still land on a concrete live market."
+  },
+  "deployment": {
+    "performed": true,
+    "deployScript": "/Users/alex/Documents/context-sdk/examples/server/deploy.sh",
+    "setupScript": "/Users/alex/Documents/context-sdk/examples/server/setup-servers.sh",
+    "healthCheckPassed": true
+  },
+  "verification": {
+    "tsc": {
+      "command": "npx tsc --noEmit",
+      "passed": true
+    }
+  },
+  "rerun": {
+    "resultsPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/weak-query-rerun-results-iteration-1.json",
+    "queryCount": 13,
+    "queryIds": [
+      "top-live-politics-screen",
+      "hot-tags-today",
+      "rules-gotchas-single-market",
+      "efficiency-vig-check",
+      "compare-named-outcomes-event",
+      "single-market-whale-consensus",
+      "event-whale-breakdown",
+      "tape-vs-open-interest",
+      "event-live-volume-share",
+      "single-cross-venue-equivalence",
+      "cross-venue-gap-screen",
+      "event-momentum-vs-spread",
+      "high-conviction-workflow"
+    ],
+    "promptResults": [
+      {
+        "index": 0,
+        "promptId": "top-live-politics-screen",
+        "rootCauseCategory": "synthesis_field_mapping",
+        "outcomeType": "answer",
+        "latencyMs": 72677
+      },
+      {
+        "index": 1,
+        "promptId": "hot-tags-today",
+        "rootCauseCategory": "limited_scan_scope",
+        "outcomeType": "answer",
+        "latencyMs": 50996
+      },
+      {
+        "index": 2,
+        "promptId": "rules-gotchas-single-market",
+        "rootCauseCategory": "execution_environment_configuration",
+        "outcomeType": "answer",
+        "latencyMs": 50494
+      },
+      {
+        "index": 3,
+        "promptId": "efficiency-vig-check",
+        "rootCauseCategory": "planning_missing_target_market",
+        "outcomeType": "answer",
+        "latencyMs": 76932
+      },
+      {
+        "index": 4,
+        "promptId": "compare-named-outcomes-event",
+        "rootCauseCategory": "execution_timeout_partial_orderbook",
+        "outcomeType": "answer",
+        "latencyMs": 58942
+      },
+      {
+        "index": 6,
+        "promptId": "single-market-whale-consensus",
+        "rootCauseCategory": "missing_market_resolution",
+        "outcomeType": "answer",
+        "latencyMs": 35760
+      },
+      {
+        "index": 7,
+        "promptId": "event-whale-breakdown",
+        "rootCauseCategory": "placeholder_event_resolution",
+        "outcomeType": "answer",
+        "latencyMs": 124302
+      },
+      {
+        "index": 8,
+        "promptId": "tape-vs-open-interest",
+        "rootCauseCategory": "insufficient_discovery_depth",
+        "outcomeType": "answer",
+        "latencyMs": 47299
+      },
+      {
+        "index": 9,
+        "promptId": "event-live-volume-share",
+        "rootCauseCategory": "unnecessary_clarification",
+        "outcomeType": "clarification_required",
+        "latencyMs": 20762
+      },
+      {
+        "index": 12,
+        "promptId": "single-cross-venue-equivalence",
+        "rootCauseCategory": "missing_cross_venue_tool_coverage",
+        "outcomeType": "answer",
+        "latencyMs": 122924
+      },
+      {
+        "index": 13,
+        "promptId": "cross-venue-gap-screen",
+        "rootCauseCategory": "upstream_listing_mismatch",
+        "outcomeType": "answer",
+        "latencyMs": 182940
+      },
+      {
+        "index": 14,
+        "promptId": "event-momentum-vs-spread",
+        "rootCauseCategory": "clarification_punt_for_history_query",
+        "outcomeType": "clarification_required",
+        "latencyMs": 18564
+      },
+      {
+        "index": 15,
+        "promptId": "high-conviction-workflow",
+        "rootCauseCategory": "overstated_synthesis",
+        "outcomeType": "answer",
+        "latencyMs": 40583
+      }
+    ],
+    "outcomeTypeCounts": {
+      "answer": 11,
+      "clarification_required": 2
+    },
+    "responseArtifactPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/weak-query-rerun-results-iteration-1-response.json"
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "iteration": 5,
+  "rerunAt": "2026-04-07T14:18:53.941Z",
+  "totalQueries": 10,
+  "answers": 9,
+  "clarifications": 1,
+  "errors": 0,
+  "perQueryOutcomes": [
+    {
+      "promptId": "rules-gotchas-single-market",
+      "query": "For this Polymarket market, what exactly makes it resolve YES or NO, what source settles it, and what edge-case gotchas could surprise traders?",
+      "priorRootCauseCategory": "missing_grounded_market_reference",
+      "outcomeType": "answer",
+      "latencyMs": 102233,
+      "clarificationOutcomeType": "answer",
+      "clarificationTriggered": false,
+      "responsePreview": "Based on the market data for **\"Kharg Island no longer under Iranian control by...?\"**, here are the details regarding resolution and current market conditions.\n\n### Resolution Criteria\nWhile the specific legal definitio",
+      "error": null
+    },
+    {
+      "promptId": "efficiency-vig-check",
+      "query": "Is this yes/no market efficiently priced right now, or are vig and spread making it unattractive to trade? Show the true implied probabilities after adjusting for the overround.",
+      "priorRootCauseCategory": "plan_without_grounded_execution",
+      "outcomeType": "answer",
+      "latencyMs": 111030,
+      "clarificationOutcomeType": "answer",
+      "clarificationTriggered": false,
+      "responsePreview": "As of April 7, 2026, the **\"Will the San Antonio Spurs win the 2026 NBA Finals?\"** market is considered **efficiently priced** with an \"excellent\" efficiency rating. According to the tool results, there is currently 0% v",
+      "error": null
+    },
+    {
+      "promptId": "compare-named-outcomes-event",
+      "query": "Compare the named outcomes inside this event and show each one's implied probability, best bid, best ask, spread in cents, and volume right now.",
+      "priorRootCauseCategory": "unnecessary_clarification_menu",
+      "outcomeType": "clarification_required",
+      "latencyMs": 24187,
+      "clarificationOutcomeType": "clarification_required",
+      "clarificationTriggered": true,
+      "responsePreview": "I found a few ways to pull market data. Which approach would you like to take?\n\n1. Compare all outcomes within a single event (prices, spreads, and volume) [recommended]\n   Polymarket Intelligence.compare_event_outcome_q",
+      "error": null
+    },
+    {
+      "promptId": "single-market-whale-consensus",
+      "query": "For this live single-outcome market, what side are whales actually on, how concentrated is ownership, and is there a clear smart-money signal?",
+      "priorRootCauseCategory": "deictic_market_substitution",
+      "outcomeType": "answer",
+      "latencyMs": 45022,
+      "clarificationOutcomeType": "answer",
+      "clarificationTriggered": false,
+      "responsePreview": "Based on the analysis of the market **\"Will the US invade Iran before 2027?\"** (Condition ID: `0x5db999...16846`), here is the breakdown of whale activity and ownership as of April 7, 2026:\n\n### Whale Sentiment and Activ",
+      "error": null
+    },
+    {
+      "promptId": "event-whale-breakdown",
+      "query": "In this multi-outcome event, which specific outcome has the most whale money behind it right now, and how large is the gap versus the next closest outcome?",
+      "priorRootCauseCategory": "execution_parse_failure",
+      "outcomeType": "answer",
+      "latencyMs": 139699,
+      "clarificationOutcomeType": "answer",
+      "clarificationTriggered": false,
+      "responsePreview": "Based on the whale analysis for the **2026 NBA Champion** event (fetched on April 7, 2026), the outcome with the most whale money behind it is **the Milwaukee Bucks**.\n\nThe gap between the top two outcomes is **$288,983.",
+      "error": null
+    },
+    {
+      "promptId": "tape-vs-open-interest",
+      "query": "Pick a live market ending soon and tell me whether the tape looks like fresh conviction or churn by combining recent trades with current open interest.",
+      "priorRootCauseCategory": "no_candidate_found_for_hard_constraint",
+      "outcomeType": "answer",
+      "latencyMs": 41328,
+      "clarificationOutcomeType": "answer",
+      "clarificationTriggered": false,
+      "responsePreview": "Based on the current market data, I was unable to perform a \"fresh conviction vs. churn\" analysis because no live markets currently match the search criteria for ending soon (within 7 days, or extended to 90 days).\n\nThe ",
+      "error": null
+    },
+    {
+      "promptId": "event-live-volume-share",
+      "query": "Within this event, which submarkets are taking the biggest share of live trading right now, and what percentage of the event's current flow does each one represent?",
+      "priorRootCauseCategory": "deictic_event_not_resolved",
+      "outcomeType": "answer",
+      "latencyMs": 27722,
+      "clarificationOutcomeType": "answer",
+      "clarificationTriggered": false,
+      "responsePreview": "To provide an accurate breakdown of submarkets and their share of live trading flow, I need to know which specific event you are referring to.\n\nThe current data retrieval returned an empty payload because no event name o",
+      "error": null
+    },
+    {
+      "promptId": "single-cross-venue-equivalence",
+      "query": "Find the closest Kalshi equivalent for this Polymarket contract, verify whether the rules and YES meanings actually match, and then tell me which venue is pricing it richer right now.",
+      "priorRootCauseCategory": "tooling_gap_plus_missing_grounding",
+      "outcomeType": "answer",
+      "latencyMs": 88363,
+      "clarificationOutcomeType": "answer",
+      "clarificationTriggered": false,
+      "responsePreview": "I have retrieved the market data for the Polymarket contract, but I cannot complete the cross-venue comparison because no Kalshi instrument data was returned by the authorized tools.\n\nBased on the data fetched on **2026-",
+      "error": null
+    },
+    {
+      "promptId": "event-momentum-vs-spread",
+      "query": "Inside this event, which outcomes have moved the most over the last week, and what are their current spreads right now?",
+      "priorRootCauseCategory": "deictic_event_not_resolved",
+      "outcomeType": "answer",
+      "latencyMs": 27008,
+      "clarificationOutcomeType": "answer",
+      "clarificationTriggered": false,
+      "responsePreview": "Based on the provided data, I am unable to identify the specific event you are referring to as no event title or identifier was included in the query context.\n\nTo provide the outcome movements and current spreads, please",
+      "error": null
+    },
+    {
+      "promptId": "high-conviction-workflow",
+      "query": "Run a full live Polymarket workflow for me: discover the hottest tradeable markets in this category, validate rule risk, check pricing efficiency, inspect liquidity, and return the top setups with explicit risks.",
+      "priorRootCauseCategory": "overfiltered_workflow_output",
+      "outcomeType": "answer",
+      "latencyMs": 49746,
+      "clarificationOutcomeType": "answer",
+      "clarificationTriggered": false,
+      "responsePreview": "Based on the high-conviction workflow executed on April 7, 2026, the search discovered 8 markets and analyzed 6 in depth. However, **no markets survived the strict high-conviction screening criteria** (which requires man",
+      "error": null
+    }
+  ]
+}

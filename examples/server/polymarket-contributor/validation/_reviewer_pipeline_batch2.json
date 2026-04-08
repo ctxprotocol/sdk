@@ -1,0 +1,314 @@
+{
+  "reviewedAt": "2026-04-07T06:20:00.000Z",
+  "perQueryEvaluations": [
+    {
+      "query": "Scan live sports markets on Polymarket right now for verified arbitrage or extreme spread dislocations, and only return opportunities confirmed from current order books.",
+      "quotedExcerpts": [
+        "As of **April 7, 2026, at 05:49:45 UTC**, a scan of 40 live sports markets on Polymarket found **no verified arbitrage opportunities**.",
+        "The current order books are efficiently priced, with an average spread of only 0.1\u00a2 across the scanned events.",
+        "While no \"Buy Yes + Buy No < $1.00\" opportunities were detected, the following markets show the widest spreads (though still very narrow), primarily within the 2026 FIFA World Cup winner category:"
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.83,
+      "scoreExplanations": {
+        "actionability": "States clearly that no executable arb was found under the book-based test and points to the widest-spread venues as secondary color.",
+        "dataFreshness": "Anchors the scan to an explicit UTC timestamp matching tool metadata.",
+        "specificity": "Gives concrete mid prices, spreads, market titles, and a quantitative average spread across the scanned set.",
+        "uniqueness": "Reflects order-book-backed scanning and structured outputs that a generic web answer would not reliably reproduce.",
+        "completeness": "Directly answers the arbitrage/dislocation ask, cites methodology alignment (executable combo vs midpoints), and adds practical next steps.",
+        "dataAccuracy": "Spreads are plausibly tight for liquid sports markets; no internal contradictions between \u2018no arb\u2019 and the sample table."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 11,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Delivers a defensible negative result with numeric backup rather than hand-waving.",
+        "improvementLever": "Optionally surface raw best bid/ask snippets for the top wide-spread markets so a buyer can sanity-check execution without trusting mids alone.",
+        "diagnosticBrief": null
+      },
+      "overallVerdict": "Yes\u2014this is a paid-grade, timestamped negative scan with numbers I can act on or dismiss quickly."
+    },
+    {
+      "query": "Take a live high-volume Trump or Fed-related Polymarket market, find likely Kalshi matches, and explain whether the current odds gap is real once you line up the YES/NO semantics.",
+      "quotedExcerpts": [
+        "As of April 7, 2026, the high-volume Polymarket event **\"Trump out as President by June 30?\"** shows high efficiency but highlights a significant gap when compared against available Kalshi data.",
+        "**Note: The automated search did not find a direct 1:1 political match on Kalshi for this specific \"Trump out\" event; the current Kalshi candidates are unrelated multi-game sports parlays.",
+        "Because the Kalshi \"best matches\" currently consist of sports-related tickers (e.g., Grigor Dimitrov/Casper Ruud parlays), there is no real-time price gap to exploit for this specific political event."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.17,
+      "scoreExplanations": {
+        "actionability": "Correctly concludes there is no tradable cross-venue edge once semantic mismatch is explained, which is decision-relevant even if negative.",
+        "dataFreshness": "Dated to April 7, 2026, but lacks sub-day freshness markers on the narrative header compared with other answers.",
+        "specificity": "Includes Polymarket YES/NO prices, liquidity, volume, and detailed resolution semantics bullets.",
+        "uniqueness": "Shows real cross-venue matching attempt and interprets junk matches rather than inventing a fake Kalshi twin.",
+        "completeness": "Does not cover the explicit \u201cTrump or Fed\u201d fork: it picks a Trump market but never addresses a live Fed-related Polymarket market or Kalshi mapping for Fed.",
+        "dataAccuracy": "Kalshi side is nonsense candidates with $0 YES, but the prose correctly flags that as non-comparable rather than treating it as a priced leg."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": 12,
+        "fragilityRisk": "medium",
+        "selectionIssue": "polymarket_crossref_kalshi returned low-relevance Kalshi sports multigame strings for a Trump presidency title (toolCallHistory result shows tennis parlay tickers with yesPrice 0).",
+        "planningIssue": null,
+        "executionIssue": "Repeated identical discovery calls (get_top_markets and discover_trending_markets duplicated) before settling on the Trump market.",
+        "completenessIssue": "Planner/user intent included a Fed path that the final synthesis never executes.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "Kalshi matches are unrelated sports parlays with 0 YES price in tool output; not contradictory because the answer disclaims them.",
+        "rootCauseCategory": "contributor_tool_bug",
+        "rootCauseEvidence": "toolCallHistory polymarket_crossref_kalshi result lists unrelated Kalshi sports parlays as best matches for a Trump presidency query.",
+        "responseQualityNote": "Strong semantic write-up on Polymarket rules and honest handling of bad Kalshi matches, but incomplete versus the Trump-or-Fed prompt.",
+        "improvementLever": "Add an explicit second branch: select a live high-volume Fed-related Polymarket market and rerun crossref (or return a clear \u2018no Fed twin found\u2019 with candidates).",
+        "diagnosticBrief": {
+          "toolUsed": "get_top_markets, discover_trending_markets, check_market_efficiency, check_market_rules, polymarket_crossref_kalshi",
+          "toolShouldHaveUsed": "Same stack is directionally right; crossref quality is the weak link\u2014ideally polymarket_crossref_kalshi with better retrieval or a politics-specific matcher if available in toolSchemas.",
+          "argsUsed": "{\"get_top_markets\":{\"limit\":25,\"sortBy\":\"volume\",\"category\":\"politics\"},\"polymarket_crossref_kalshi\":{\"title\":\"Trump out as President by June 30?\",\"polymarketSlug\":\"trump-out-as-president-by-june-30\",\"limit\":10}}",
+          "argsShouldHaveUsed": "Crossref args look correct for the chosen market; missing args for a Fed market branch per the query\u2019s OR condition.",
+          "codeSnippet": "const discoveryBatch = await callMcpSkillsParallel({\n    label: \"polymarket-live-trump-fed-discovery\",\n    calls: [\n      { key: \"top_markets\", toolName: \"get_top_markets\", args: { limit: 25, sortBy: \"volume\", category: \"politics\" } },",
+          "toolResultSample": "{\"searchedFor\":\"[OMITTED:CIRCULAR_REFERENCE]\",\"kalshiResults\":[{\"title\":\"yes Grigor Dimitrov,yes Luciano Darderi,yes Jakub Mensik,yes Casper Ruud,yes Matteo Berrettini,yes Alexander Shevchenko,yes Corentin Moutet,yes Terence Atmane\",\"ticker\":\"KXMVESPORTSMULTIGAMEEXTENDED-S20269213B8CAE89-083013A8133\",\"eventTicker\":\"KXMVESPORTSMULTIGAMEEXTENDED-S20269213B8CAE89\",\"yesPrice\":0,\"volume24h\":0,\"url\":\"https://kalshi.com/markets/kxmvesportsmultigameextended-s20269213b8cae89\",\"matchScore\":0.25,\"rules\":\"\"",
+          "completenessVerdict": "diagnostics.completeness shows repairEvents present (details omitted as circular) and triggerNeedsDifferentTools false; user-facing gap is missing Fed branch, not flagged as needsDifferentTools.",
+          "stageTimingBottleneck": "execution=44477ms"
+        }
+      },
+      "overallVerdict": "Probably not yet\u2014I got real value on the Trump leg, but I paid for Trump-or-Fed and only received one fork."
+    },
+    {
+      "query": "For live Iran escalation risk, which exact Polymarket contracts matter right now, how do their resolution windows differ, and which contract is the cleanest expression of the thesis?",
+      "quotedExcerpts": [
+        "Based on the current Polymarket contracts identified in past queries, there are several active markets tracking Iran escalation.",
+        "While most share a common resolution deadline of **April 30, 2026, 11:59 PM (ET)**, they differ significantly in their specific kinetic triggers.",
+        "The contract **\"Iran military action against ___ by April 30?\"** (slug: `iran-military-action-against-by-april-30`) is considered the cleanest expression of the escalation thesis for the following reasons:"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 3,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.67,
+      "scoreExplanations": {
+        "actionability": "Names concrete contract themes, contrasts trigger standards, and recommends a \u2018cleanest\u2019 slug\u2014useful for focusing risk.",
+        "dataFreshness": "Opening frames the set as coming from \u2018past queries\u2019 rather than a single fresh fetch timestamp for this answer.",
+        "specificity": "Provides multiple contract titles, a concrete slug, and resolution timing, though one row defers to \u2018(Check Description)\u2019.",
+        "uniqueness": "Resolution nuance (proxies, damage requirements, government statements) goes beyond a headline-only free summary.",
+        "completeness": "Does not fully answer \u2018exact contracts matter right now\u2019 with verifiable \u2018live\u2019 proof, and leaves at least one contract row incomplete.",
+        "dataAccuracy": "No uniform-value red flags; differences between contracts are logically coherent."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 19,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "Synthesis cites \u2018past queries\u2019 and leaves a placeholder resolution window for the US-forces contract.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "Final narrative includes hedging (\u2018past queries\u2019) and an incomplete table row despite tool calls returning structured market/rule data.",
+        "responseQualityNote": "Strong comparative framing of triggers and a clear \u2018pick this slug\u2019 recommendation, but weaker on proving liveness and finishing every row.",
+        "improvementLever": "Tie each listed contract to a current liquidity/volume or explicit \u2018as of\u2019 fetch line and remove placeholder rows.",
+        "diagnosticBrief": {
+          "toolUsed": "search_markets, discover_trending_markets, check_market_rules (multiple slugs)",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"search_markets\":{\"query\":\"Iran escalation risk live Polymarket US forces enter Iran strike conflict attack escalation\",\"status\":\"live\",\"category\":\"politics\",\"limit\":25},\"check_market_rules\":[{\"slug\":\"iran-military-action-against-by-april-30\"},{\"slug\":\"what-will-iran-conduct-military-action-against-by-april-30\"},{\"slug\":\"iran-military-action-against-a-gulf-state-on-627\"}]}",
+          "argsShouldHaveUsed": "Add check_market_rules (or equivalent) for the US ground-forces contract instead of leaving resolution timing as \u2018(Check Description)\u2019.",
+          "codeSnippet": "const probeBatch = await callMcpSkillsParallel({\n    label: \"iran-escalation-probe\",\n    calls: [\n      {\n        key: \"search_markets\",\n        toolName: \"search_markets\",",
+          "toolResultSample": "(Omitted circular references in trace; rules calls targeted iran-military-action-against-by-april-30 and related slugs.)",
+          "completenessVerdict": "triggerNeedsDifferentTools false; triggerMissingCapability null; evaluations present but omitted as circular in trace export.",
+          "stageTimingBottleneck": "execution=28228ms"
+        }
+      },
+      "overallVerdict": "On the fence\u2014I learned useful rule distinctions, but I would not fully trust it as a live \u2018what matters now\u2019 briefing without fresher sourcing and completed contract rows."
+    },
+    {
+      "query": "Find a live market ending soon with real activity, summarize the recent trade tape plus open interest, and tell me whether it looks like genuine conviction or just noise.",
+      "quotedExcerpts": [
+        "Based on the market data fetched at **2026-04-07T05:53:58.301Z**, I was unable to find a live market matching your criteria.",
+        "The search for a market ending soon with real activity returned no results for the following reasons:",
+        "The query returned **0 total trades** and **$0** in total volume for the specified period."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 2,
+        "uniqueness": 2,
+        "completeness": 1,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 2.5,
+      "scoreExplanations": {
+        "actionability": "Mostly states inability to comply; suggestions are generic and do not substitute for an actual tape/OI read.",
+        "dataFreshness": "Provides an explicit ISO fetch timestamp for the empty result.",
+        "specificity": "No concrete market slug, prices, trades, or OI numbers beyond zeros\u2014cannot evaluate conviction.",
+        "uniqueness": "An empty tool outcome could be summarized by any model; there is no non-trivial extracted market microstructure.",
+        "completeness": "Does not perform the core task: no ending-soon active market, no trade tape summary, no OI interpretation.",
+        "dataAccuracy": "Zeros are internally consistent with the stated \u2018no match\u2019 reason in tool output."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 1,
+        "selfHealCount": 1,
+        "budgetConsumedPct": 2,
+        "fragilityRisk": "low",
+        "selectionIssue": "summarize_live_market_activity with endingWithinDays=7 returned searchExhausted/noResultsReason indicating no match within window.",
+        "planningIssue": "Single narrow \u2018ending soon\u2019 window may be mismatched to real platform activity distribution.",
+        "executionIssue": "One failed/repaired attempt implied by summary.failureCount/selfHealCount before success-with-empty payload.",
+        "completenessIssue": "diagnostics.completeness.triggerNeedsDifferentTools true with triggerMissingCapability echoing the user query.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "upstream_api_limitation",
+        "rootCauseEvidence": "toolCallHistory result shows noResultsReason/searchExhausted with zero trades/volume and empty selectedMarket fields under the chosen filters.",
+        "responseQualityNote": "Honest empty result with timestamp, but it fails the buyer job-to-be-done for this prompt.",
+        "improvementLever": "Automatically widen ending window, relax activity thresholds, or fall back to top-volume near-term markets when the strict filter returns zero.",
+        "diagnosticBrief": {
+          "toolUsed": "summarize_live_market_activity",
+          "toolShouldHaveUsed": "Potentially get_top_markets/discover_trending_markets with an explicit near-resolution sort if summarize_live_market_activity cannot find candidates.",
+          "argsUsed": "{\"sortBy\":\"ending_soon\",\"endingWithinDays\":7,\"tradeLimit\":20}",
+          "argsShouldHaveUsed": "Try endingWithinDays 14\u201330 or alternate sortBy (volume/liquidity) when initial window yields zero, per the answer\u2019s own suggestions.",
+          "codeSnippet": "const result = await callMcpSkill({\n    toolId,\n    toolName: \"summarize_live_market_activity\",\n    args: {\n      sortBy: \"ending_soon\",\n      endingWithinDays: 7,\n      tradeLimit: 20\n    }\n  });",
+          "toolResultSample": "{\"selectedMarket\":{\"title\":\"\",\"slug\":\"\",\"conditionId\":\"\",\"url\":\"https://polymarket.com\",\"endDate\":\"\",\"category\":\"\",\"liquidity\":0,\"volume24h\":0,\"selectionReason\":\"No live market matched the current selection window within 7 days.\"},\"tradesSummary\":{\"totalTrades\":0,\"totalVolume\":0,\"buyVolume\":0,\"sellVolume\":0,\"avgPrice\":0},\"openInterest\":{\"conditionId\":\"\",\"value\":0},\"recentTrades\":[],\"noResultsReason\":\"No live market matched the current selection window within 7 days.\",\"searchExhausted\":true,\"fetc",
+          "completenessVerdict": "triggerNeedsDifferentTools true; triggerMissingCapability repeats the user query intent; repairEvents present in trace export.",
+          "stageTimingBottleneck": "execution=8948ms"
+        }
+      },
+      "overallVerdict": "No\u2014I paid for a tape plus OI judgment and received an empty search explanation."
+    },
+    {
+      "query": "Which Polymarket tags or categories are hottest right now, and inside them which live markets have the best actual tradable liquidity?",
+      "quotedExcerpts": [
+        "As of April 7, 2026, **Sports** and **Politics** are the hottest categories on Polymarket.",
+        "The following table highlights the most active categories and the markets within them that currently offer the best liquidity:",
+        "If you are looking for the deepest order books across the entire platform regardless of category, these specific contracts lead for liquidity:"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.83,
+      "scoreExplanations": {
+        "actionability": "Points to where liquidity is concentrated and names specific high-liquidity markets for follow-up trading.",
+        "dataFreshness": "Calendar date given; less precise than timestamped fetches elsewhere in the batch.",
+        "specificity": "Large USD liquidity figures and prices, but \u2018hotness score\u2019 is opaque without definition.",
+        "uniqueness": "Tables are helpful but partly read like ranked listings without deep cross-tag analytics beyond hotness integers.",
+        "completeness": "Addresses both \u2018hottest\u2019 and \u2018best liquidity within them\u2019 plus adds a cross-platform liquidity leaderboard.",
+        "dataAccuracy": "Magnitudes look plausible for major sports events; category labeling mixes conventional categories with tag-like rows (e.g., Khamenei)."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 7,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "Response introduces \u2018hotness score\u2019 without trace-backed definition of the metric beyond trending discovery outputs.",
+        "responseQualityNote": "Useful liquidity leaderboard and sensible emphasis on Sports/Politics, but the \u2018hottest tags\u2019 framing is only partially rigorous.",
+        "improvementLever": "Define hotness (volume velocity vs liquidity depth vs open interest) or cite the exact ranking signal returned by tools.",
+        "diagnosticBrief": {
+          "toolUsed": "discover_trending_markets, get_top_markets",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"discover_trending_markets\":{\"limit\":20,\"sortBy\":\"volume\"},\"get_top_markets\":{\"limit\":20,\"sortBy\":\"liquidity\"}}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "const batch = await callMcpSkillsParallel({\n    label: \"polymarket-hot-tags-and-liquidity\",\n    calls: [\n      { key: \"trending\", toolName: \"discover_trending_markets\", args: { limit: 20, sortBy: \"volume\" } },",
+          "toolResultSample": "(Trace omits full results via circular references; outputs drive category tables and liquidity figures in the answer.)",
+          "completenessVerdict": "triggerNeedsDifferentTools false; triggerMissingCapability null.",
+          "stageTimingBottleneck": "execution=11435ms"
+        }
+      },
+      "overallVerdict": "Maybe\u2014I\u2019d pay if I only needed a quick liquidity map, but I\u2019d want clearer \u2018hotness\u2019 methodology for a repeat purchase."
+    },
+    {
+      "query": "Show me live high-probability politics markets that still have enough liquidity for a $5,000 position, and rank which ones are the cleanest lower-volatility ways to express a thesis right now.",
+      "quotedExcerpts": [
+        "Based on recent market data, there are several high-probability political markets (priced >0.65) with sufficient liquidity to support a $5,000 position.",
+        "The following table ranks these markets based on their \"cleanliness\"\u2014a combination of high liquidity, low spreads (lower volatility in execution), and overall depth.",
+        "The **Kevin Warsh confirmation** market is the clear leader."
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "Ranks markets and explicitly ties spread/depth to executing a $5k clip with slippage intuition.",
+        "dataFreshness": "\u2018Recent market data\u2019 is weaker than an explicit ISO timestamp in the prose, though numbers are concrete.",
+        "specificity": "Provides prices, USD liquidity, spreads in bps, and depth totals\u2014strong execution-focused detail.",
+        "uniqueness": "Combines filtering, microstructure metrics, and ranking in a way that is not just a static homepage list.",
+        "completeness": "Addresses probability threshold, liquidity adequacy, and \u2018cleanest/low vol\u2019 ranking with commentary on tail names.",
+        "dataAccuracy": "Looks internally consistent; wider spreads on tail rows match the narrative warning."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": 32,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "High tool churn: repeated get_top_markets variant toggling includeNearResolved and many paired analyze_market_liquidity/check_market_efficiency calls.",
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Strong ranked table aligned to the prompt\u2019s risk/execution framing.",
+        "improvementLever": "Reduce retry/self-heal loops by planning the near-resolved inclusion and candidate shortlist in one pass to cut latency and failure risk.",
+        "diagnosticBrief": {
+          "toolUsed": "get_top_markets, analyze_market_liquidity, check_market_efficiency (paired across multiple conditionIds)",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"get_top_markets\":{\"category\":\"politics\",\"sortBy\":\"liquidity\",\"limit\":100,\"includeNearResolved\":true,\"includeEnded\":false}} (after earlier includeNearResolved false pass)",
+          "argsShouldHaveUsed": "Single planned get_top_markets call with the correct includeNearResolved choice upfront to avoid duplicate scans.",
+          "codeSnippet": "const res = await callMcpSkill({\n    toolId,\n    toolName: \"get_top_markets\",\n    args: {\n      category: \"politics\",\n      sortBy: \"liquidity\",\n      limit: 100,\n      includeNearResolved: true,\n      includeEnded: false\n    }\n  });",
+          "toolResultSample": "(Trace omits full market arrays via circular references; downstream answer encodes liquidity/spread/depth for five ranked markets.)",
+          "completenessVerdict": "triggerNeedsDifferentTools false; repairEvents present in trace export indicating iterative completion/repair.",
+          "stageTimingBottleneck": "execution=72503ms"
+        }
+      },
+      "overallVerdict": "Yes\u2014this is close to what I\u2019d want from a paid liquidity-aware politics scanner, though the trace shows the path was unnecessarily brittle."
+    }
+  ]
+}

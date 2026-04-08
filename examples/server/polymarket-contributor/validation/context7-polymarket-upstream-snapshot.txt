@@ -1,0 +1,31 @@
+# Context7 /llmstxt/polymarket_llms_txt — orchestrator snapshot (2026-04-06)
+
+## Gamma API — events, markets, discovery
+- GET /events — limit, offset, sort, order; returns events[] id, title, creation_date
+- GET /events/{id}
+- GET /markets — event_id filter, pagination
+- GET /markets/{id} — outcomes, outcomePrices
+- GET /public-search?q=&limit=
+- GET /tags, GET /series, GET /sports, GET /teams
+
+## CLOB API (https://clob.polymarket.com)
+OpenAPI 3.1: /sampling-markets with next_cursor; Market schema includes condition_id, question, tokens[], rewards, neg_risk, fees, end_date_iso, etc.
+- GET /price?token_id=
+- GET /prices?token_ids=
+- GET /book?token_id=
+- POST /books — body token_ids[]
+- GET /prices-history?token_id=&resolution=&from=&to=
+- GET /midpoint?token_id=
+- GET /spread?token_id=
+
+## Subgraph (GraphQL via Goldsky)
+POST to https://api.goldsky.com/api/public/project_cl6mb8i9h0003e201j6li0diw/subgraphs/<name>/<version>/<network>
+Body: { "query": "..." } — positions, volume, liquidity, orders, activity, market data
+
+Source references: docs.polymarket.com market-data overview, CLOB API reference, subgraph docs.
+
+---
+
+## Context7 query-docs refetch (orchestrator 2026-04-06, libraryId /llmstxt/polymarket_llms_txt)
+
+Full structured excerpts: Gamma list/get events and markets, public-search, tags, series, sports, teams; CLOB price(s), book(s), prices-history, midpoint, spread; OpenAPI sampling-markets + Market/Token/Rewards schemas; REST L1/L2 headers (POLY_ADDRESS, POLY_SIGNATURE, POLY_TIMESTAMP, POLY_API_KEY, POLY_PASSPHRASE); WebSocket market channel for live orderbook (use WS instead of polling per docs).
