@@ -88,6 +88,9 @@ const HEAVY_ANALYSIS_TOOLS = new Set([
     "analyze_top_holders",
     "analyze_event_whale_breakdown",
     "analyze_event_outcome_liquidity",
+    "rank_event_tradability",
+    "compare_market_against_related_contracts",
+    "build_market_tradability_memo",
     "find_trading_opportunities",
     "find_moderate_probability_bets",
     "find_arbitrage_opportunities",
@@ -108,9 +111,12 @@ const ANSWER_ONLY_TOOLS = new Set([
     "summarize_live_market_activity",
     "analyze_event_whale_breakdown",
     "analyze_event_outcome_liquidity",
+    "rank_event_tradability",
     "compare_event_outcome_quotes",
+    "compare_market_against_related_contracts",
     "find_correlated_markets",
     "check_market_rules",
+    "build_market_tradability_memo",
     "find_arbitrage_opportunities",
     "find_trading_opportunities",
     "build_high_conviction_workflow",
@@ -118,6 +124,7 @@ const ANSWER_ONLY_TOOLS = new Set([
     "get_bets_by_probability",
     "discover_trending_markets",
     "get_top_markets",
+    "get_event_live_volume",
     "polymarket_crossref_kalshi",
     "analyze_my_positions",
     "place_polymarket_order",
@@ -157,7 +164,22 @@ const TOOL_BATCH_HINTS = {
     analyze_single_market_whales: ["get_top_markets"],
     analyze_event_whale_breakdown: ["discover_trending_markets"],
     analyze_event_outcome_liquidity: ["search_and_get_outcomes", "get_event_outcomes"],
+    rank_event_tradability: [
+        "analyze_event_outcome_liquidity",
+        "analyze_event_whale_breakdown",
+        "get_event_live_volume",
+    ],
     compare_event_outcome_quotes: ["search_and_get_outcomes", "get_spreads"],
+    compare_market_against_related_contracts: [
+        "search_and_get_outcomes",
+        "compare_event_outcome_quotes",
+        "check_market_efficiency",
+    ],
+    build_market_tradability_memo: [
+        "check_market_rules",
+        "analyze_market_liquidity",
+        "analyze_single_market_whales",
+    ],
     search_and_get_outcomes: [
         "get_event_by_slug",
         "compare_event_outcome_quotes",
@@ -535,7 +557,7 @@ const POLYMARKET_SEARCH_JUDGE_REFERER = normalizeOptionalString(process.env.POLY
     "https://ctxprotocol.com";
 const POLYMARKET_SEARCH_JUDGE_TITLE = normalizeOptionalString(process.env.POLYMARKET_SEARCH_JUDGE_TITLE) ??
     "Context Polymarket Contributor Search Judge";
-const POLYMARKET_SEARCH_JUDGE_INSTRUCTIONS = "Select the single Polymarket market or event that best grounds the user's request. Prefer exact outcome/entity matching, exact venue scope, and precise resolution timing. Keep broader macro proxies, adjacent escalation markets, and merely related outcomes in related or rejected buckets instead of promoting them to primary. Return a null primaryCandidateId when the shortlist remains genuinely ambiguous.";
+const POLYMARKET_SEARCH_JUDGE_INSTRUCTIONS = "Select the single Polymarket market or event that best grounds the user's request. Prefer exact outcome/entity matching, exact venue scope, and precise resolution timing. Treat explicit dates, named expiries, price strikes, and threshold phrases (for example April 15 vs March 31, $200 HIGH vs $160 HIGH, or 50+ bps decrease vs no change) as identity-level constraints, not optional color. Keep broader macro proxies, adjacent escalation markets, and merely related outcomes in related or rejected buckets instead of promoting them to primary. Return a null primaryCandidateId when the shortlist remains genuinely ambiguous.";
 // ============================================================================
 // TOOL DEFINITIONS
 //
@@ -640,7 +662,7 @@ const TOOLS = [
     },
     {
         name: "check_market_efficiency",
-        description: 'Check if a market is efficiently priced. Calculates the "vig" (sum of YES + NO prices), identifies if fees/spread are eating potential edge, and reports true implied probabilities. Accepts either conditionId OR slug - both work equally well.',
+        description: 'Check if a market is efficiently priced. Calculates the "vig" (sum of YES + NO prices), identifies if fees/spread are eating potential edge, and reports true implied probabilities. This is the direct tool for vig, spread, overround, and true-probability questions on a yes/no market. Accepts conditionId, slug, or marketQuery. If the user asks about "this market" without an identifier, the tool can fall back to the strongest live binary market candidate instead of returning a generic punt. Do not use holder or whale tools for efficiency questions.',
         inputSchema: {
             type: "object",
             properties: {
@@ -651,6 +673,10 @@ const TOOLS = [
                 slug: {
                     type: "string",
                     description: "The event slug (e.g., 'will-trump-release-epstein-files-by'). Alternative to conditionId.",
+                },
+                marketQuery: {
+                    type: "string",
+                    description: "Natural-language market reference or the raw user request. Use when conditionId/slug is unknown or the prompt says 'this market'.",
                 },
             },
             required: [],
@@ -707,6 +733,10 @@ const TOOLS = [
                     description: "Vig-adjusted true probabilities in percent form (0-100)",
                 },
                 recommendation: { type: "string" },
+                selectionReason: {
+                    type: "string",
+                    description: "How the tool chose the analyzed market when no explicit conditionId/slug was supplied.",
+                },
                 fetchedAt: { type: "string" },
             },
             required: ["conditionId", "outcomes", "marketEfficiency"],
@@ -816,6 +846,7 @@ CONVICTIONSCORES: "extreme" (>$10k), "high" ($5k-$10k), "moderate" ($1k-$5k), "l
 USE THIS FOR: Single-outcome markets like "Will Bitcoin hit $100k?" or "Will Trump win?"
 USE analyze_event_whale_breakdown FOR: "Which player are whales betting on in Australian Open?"
 USE analyze_whale_flow FOR: "Recent trades?", "Trading activity in last 24h?"
+DO NOT use this tool for vig, spread, overround, true implied probability, or market-efficiency questions.
 
 ⏱️ PERFORMANCE: This tool performs deep fetching in paced batches. It typically takes ~8-15s.
 ⚠️ Call this tool ALONE (not in parallel with other heavy tools like find_trading_opportunities or analyze_market_liquidity) to avoid timeouts.
@@ -916,7 +947,7 @@ If you need multiple analyses, call them SEQUENTIALLY, not with Promise.all().`,
 
 ⚠️ USE THIS for multi-outcome events like sports tournaments, elections with multiple candidates, World Cup winner, etc.
 ⚠️ analyze_top_holders only shows YES/NO for ONE market. This tool shows whale positions ACROSS ALL outcomes in an event.
-⚠️ CALL THIS TOOL DIRECTLY -- do not chain search_and_get_outcomes first. Pass either a slug or a marketQuery and this tool handles resolution internally.
+⚠️ CALL THIS TOOL DIRECTLY -- do not chain search_and_get_outcomes first. Pass either a slug or a marketQuery and this tool handles resolution internally. It can also choose a strong live fallback event for prompts like "this event" instead of punting.
 
 Example: For "2026 FIFA World Cup Winner" event with 48 outcome markets:
 - Returns: "Whales have $100k on Spain, $80k on England, $50k on France..."
@@ -988,6 +1019,7 @@ Returns:
                     },
                 },
                 smartMoneyConsensus: { type: "string" },
+                selectionReason: { type: "string" },
                 fetchedAt: { type: "string" },
             },
             required: ["eventTitle", "whalesByOutcome", "topWhaleOutcome"],
@@ -1121,6 +1153,256 @@ Best when the user wants liquidity or slippage for a tournament, election, award
         },
     },
     {
+        name: "rank_event_tradability",
+        description: `Rank outcomes inside the SAME multi-outcome event by actionable tradability using live spread, depth, slippage, whale participation, and live event-activity context.
+
+USE THIS for:
+- "Which candidate submarkets combine tight quotes with meaningful whale participation?"
+- "Within the Democratic Presidential Nominee 2028 event, which candidates combine tight quotes with meaningful whale participation, and which are just headline prices?"
+- "Which winner markets are genuinely tradable, and which are just headline prices?"
+- "Which live submarkets in this game/event look tradeable tonight?"
+- "Within the Rockets vs. Suns event, which live submarkets look genuinely tradable tonight?"
+- "Compare these expiry buckets/strikes by execution quality"
+
+This tool is the direct answer-first workflow for event-wide tradability prompts. It resolves the event, bounds the candidate set to a small tradability shortlist, joins whale concentration, and adds live event-volume context when available instead of asking the user to narrow to one outcome.
+
+Use this directly for crowded election, tournament, strike-ladder, and same-game-market prompts even when the event has many outcomes. For candidate screens and same-night matchup prompts, do not ask the user to narrow to one submarket first. The tool should prefer a bounded shortlist over broad whole-event scans when the query asks for "most tradable", "best combination", "tightest execution", or "headline-only" outcomes.`,
+        inputSchema: {
+            type: "object",
+            properties: {
+                query: {
+                    type: "string",
+                    description: "Raw event tradability prompt. Example: 'Within the Democratic Presidential Nominee 2028 event, which candidates combine tight quotes with meaningful whale participation?'",
+                },
+                eventQuery: {
+                    type: "string",
+                    description: "Natural-language event query when you want to pass the event separately.",
+                },
+                slug: {
+                    type: "string",
+                    description: "Direct event slug when already known.",
+                },
+                outcomes: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Optional explicit outcomes to compare. If omitted, the tool ranks the top outcomes by trading activity.",
+                },
+                category: {
+                    type: "string",
+                    description: "Optional category hint for event resolution.",
+                },
+                limit: {
+                    type: "number",
+                    description: "Maximum outcomes to rank when outcomes are omitted (default: 6, max: 10).",
+                },
+            },
+            required: [],
+        },
+        outputSchema: {
+            type: "object",
+            properties: {
+                eventTitle: { type: "string" },
+                eventSlug: { type: "string" },
+                selectionReason: { type: "string" },
+                rankedOutcomes: {
+                    type: "array",
+                    items: {
+                        type: "object",
+                        properties: {
+                            rank: { type: "number" },
+                            matchedName: { type: "string" },
+                            conditionId: { type: "string" },
+                            currentPrice: { type: "number" },
+                            volume: { type: "number" },
+                            spreadCents: { type: "number" },
+                            totalDepthUsd: { type: "number" },
+                            slippage5kPercent: { type: "number" },
+                            whaleValue: { type: "number" },
+                            whaleCount: { type: "number" },
+                            liveVolumeShare: { type: "number" },
+                            tradabilityScore: { type: "number" },
+                            classification: {
+                                type: "string",
+                                enum: ["tradable_now", "watchlist", "headline_only"],
+                            },
+                            rationale: {
+                                type: "array",
+                                items: { type: "string" },
+                            },
+                        },
+                        required: ["rank", "matchedName", "tradabilityScore", "classification"],
+                    },
+                },
+                bestCombinedOutcome: {
+                    type: "object",
+                    properties: {
+                        matchedName: { type: "string" },
+                        tradabilityScore: { type: "number" },
+                        classification: { type: "string" },
+                    },
+                },
+                analyzedOutcomeNames: {
+                    type: "array",
+                    items: { type: "string" },
+                },
+                watchlistOutcomes: {
+                    type: "array",
+                    items: { type: "string" },
+                },
+                headlineOnlyOutcomes: {
+                    type: "array",
+                    items: { type: "string" },
+                },
+                expensiveButUntradeable: {
+                    type: "array",
+                    items: { type: "string" },
+                },
+                analysisNotes: {
+                    type: "array",
+                    items: { type: "string" },
+                },
+                fetchedAt: { type: "string" },
+            },
+            required: ["eventTitle", "rankedOutcomes", "analysisNotes"],
+        },
+    },
+    {
+        name: "compare_market_against_related_contracts",
+        description: `Compare ONE named market against the sibling contracts in the same event so you can judge relative pricing, obvious over/underpricing, and whether there is any simple event-curve arbitrage.
+
+USE THIS for:
+- "Does this Fed outcome look efficient versus the related April contracts?"
+- "For the 'Will the Fed decrease interest rates by 50+ bps after the April 2026 meeting?' market, is there any live arbitrage or obvious overpricing/underpricing once depth and related Fed contracts are considered?"
+- "Is this strike rich/cheap relative to neighboring strikes?"
+- "Compare this named contract to the rest of its event before calling it mispriced"
+
+Pass the raw user prompt or a direct market reference. The tool resolves the primary market, identifies the sibling event, checks direct liquidity on the named leg, compares the relevant outcomes, and packages a bounded relative-value assessment instead of stopping at discovery.
+
+If the user names one leg inside a larger event family, such as "no change", "50+ bps decrease", "$200 HIGH", or a specific expiry bucket, this tool should resolve the parent event and exact leg automatically instead of requiring an exact market-title match first. Use it directly instead of starting with search_markets when the prompt already names the leg to compare.`,
+        inputSchema: {
+            type: "object",
+            properties: {
+                query: {
+                    type: "string",
+                    description: "Raw relative-value prompt. The tool will extract the market reference if needed.",
+                },
+                marketQuery: {
+                    type: "string",
+                    description: "Natural-language reference to the primary market to analyze.",
+                },
+                eventQuery: {
+                    type: "string",
+                    description: "Optional event query when the sibling event should be resolved separately from the primary market wording.",
+                },
+                focusOutcome: {
+                    type: "string",
+                    description: "Optional exact outcome/strike name inside the event when the prompt focuses on one leg.",
+                },
+                slug: { type: "string" },
+                conditionId: { type: "string" },
+                category: { type: "string" },
+            },
+            required: [],
+        },
+        outputSchema: {
+            type: "object",
+            properties: {
+                primaryMarket: {
+                    type: "object",
+                    properties: {
+                        title: { type: "string" },
+                        conditionId: { type: "string" },
+                        eventTitle: { type: "string" },
+                        primaryOutcome: { type: "string" },
+                        currentPrice: { type: "number" },
+                        spreadCents: { type: "number" },
+                        liquidityScore: { type: "string" },
+                    },
+                },
+                siblingOutcomes: {
+                    type: "array",
+                    items: {
+                        type: "object",
+                        properties: {
+                            matchedName: { type: "string" },
+                            currentPrice: { type: "number" },
+                            spread: { type: "number" },
+                            volume: { type: "number" },
+                        },
+                    },
+                },
+                eventPriceSum: { type: "number" },
+                relativeValueAssessment: { type: "string" },
+                arbitrageAssessment: { type: "string" },
+                analysisNotes: {
+                    type: "array",
+                    items: { type: "string" },
+                },
+                fetchedAt: { type: "string" },
+            },
+            required: ["primaryMarket", "siblingOutcomes", "relativeValueAssessment"],
+        },
+    },
+    {
+        name: "build_market_tradability_memo",
+        description: `Build a buy / pass / avoid memo for ONE named market by combining rules risk, quote quality, whale positioning, and recent tape/activity.
+
+USE THIS for:
+- "Does the current quote compensate for the rules and tail-risk profile?"
+- "Build a tradability memo for this market"
+- "Should I buy, pass, or avoid after checking rules, liquidity, whales, and activity?"
+
+This is the direct answer-first workflow for single-market memo prompts. It packages the key evidence pillars in one tool so the answer does not stop at clarification or unsupported synthesis.
+
+If the prompt names one outcome inside a multi-outcome event family, such as a strike bucket, expiry bucket, or candidate bracket, the tool should resolve the parent event and exact leg automatically from the prompt instead of asking the user to restate the contract in a different format.`,
+        inputSchema: {
+            type: "object",
+            properties: {
+                query: {
+                    type: "string",
+                    description: "Raw memo prompt. The tool will extract the named market when possible.",
+                },
+                marketQuery: {
+                    type: "string",
+                    description: "Natural-language reference to the target market.",
+                },
+                slug: { type: "string" },
+                conditionId: { type: "string" },
+                hoursBack: {
+                    type: "number",
+                    description: "Whale-flow/activity lookback window in hours (default: 24).",
+                },
+            },
+            required: [],
+        },
+        outputSchema: {
+            type: "object",
+            properties: {
+                market: {
+                    type: "object",
+                    properties: {
+                        title: { type: "string" },
+                        conditionId: { type: "string" },
+                        currentPrice: { type: "number" },
+                        spreadCents: { type: "number" },
+                        liquidityScore: { type: "string" },
+                    },
+                },
+                rulesRisk: { type: "string" },
+                quoteQuality: { type: "string" },
+                whalePositioning: { type: "string" },
+                recentActivity: { type: "string" },
+                decision: {
+                    type: "string",
+                    enum: ["buy", "speculative_buy", "pass", "avoid"],
+                },
+                memo: { type: "string" },
+                fetchedAt: { type: "string" },
+            },
+            required: ["market", "decision", "memo"],
+        },
+    },
+    {
         name: "find_correlated_markets",
         description: 'Find genuinely related hedge candidates for a market. Prioritizes same-event siblings and same-category/theme contracts with live prices, and avoids loose year/title overlaps that are not actually useful hedges. Accepts either conditionId OR slug - both work equally well.',
         inputSchema: {
@@ -1178,7 +1460,7 @@ Best when the user wants liquidity or slippage for a tournament, election, award
         name: "polymarket_crossref_kalshi",
         description: `Cross-venue comparison helper for matching a resolved Polymarket contract family against likely Kalshi equivalents.
 
-Use this AFTER you have already identified the exact Polymarket market or slug.
+Use this AFTER you have already identified the exact Polymarket market or slug, OR pass marketQuery and let the tool resolve the best live Polymarket candidate first. For deictic prompts like "this contract", prefer passing the resolved Polymarket contract reference rather than a long free-form comparison instruction.
 
 Best for:
 - "Find the Kalshi equivalent of this Polymarket contract"
@@ -1187,7 +1469,7 @@ Best for:
 
 This tool performs the Kalshi lookup itself from the provided Polymarket title/keywords. Prefer calling THIS TOOL directly for Polymarket-vs-Kalshi questions instead of substituting unrelated Polymarket-only liquidity tools.
 
-Returns candidate Kalshi matches with matchScore, rule text, and YES/NO outcome meanings so you can validate whether the contracts are actually equivalent before comparing prices.`,
+Returns candidate Kalshi matches with live Kalshi prices, plus the grounded Polymarket contract metadata/pricing when resolvable, so you can validate whether the contracts are actually equivalent before comparing which venue is richer.`,
         inputSchema: {
             type: "object",
             properties: {
@@ -1198,6 +1480,10 @@ Returns candidate Kalshi matches with matchScore, rule text, and YES/NO outcome 
                 keywords: {
                     type: "string",
                     description: "Optional fallback keyword string when you want to guide the Kalshi lookup more explicitly.",
+                },
+                marketQuery: {
+                    type: "string",
+                    description: "Natural-language Polymarket market reference or raw deictic prompt. When title is missing, the tool can resolve a live Polymarket contract first.",
                 },
                 polymarketSlug: {
                     type: "string",
@@ -1219,6 +1505,18 @@ Returns candidate Kalshi matches with matchScore, rule text, and YES/NO outcome 
                         title: { type: "string" },
                         keywords: { type: "string" },
                         polymarketSlug: { type: "string" },
+                    },
+                },
+                polymarketMarket: {
+                    type: "object",
+                    properties: {
+                        title: { type: "string" },
+                        slug: { type: "string" },
+                        conditionId: { type: "string" },
+                        url: { type: "string", format: "uri" },
+                        currentYesPrice: { type: "number" },
+                        resolutionSource: { type: "string" },
+                        resolvesYesIf: { type: "string" },
                     },
                 },
                 kalshiResults: {
@@ -1254,7 +1552,7 @@ Returns candidate Kalshi matches with matchScore, rule text, and YES/NO outcome 
     },
     {
         name: "check_market_rules",
-        description: 'Parse market resolution rules and highlight potential "gotchas". Extracts the description, resolution source, and edge cases that could cause unexpected resolution. Accepts either conditionId OR slug - both work equally well.',
+        description: 'Parse market resolution rules and highlight potential "gotchas". Extracts the description, resolution source, and edge cases that could cause unexpected resolution. This is the direct tool for prompts like "what makes this market resolve YES or NO?" Accepts conditionId, slug, or marketQuery. If the user asks about "this market" without an identifier, the tool can choose a live fallback contract and state that assumption instead of returning generic market lore.',
         inputSchema: {
             type: "object",
             properties: {
@@ -1265,6 +1563,10 @@ Returns candidate Kalshi matches with matchScore, rule text, and YES/NO outcome 
                 conditionId: {
                     type: "string",
                     description: "The market condition ID (hex string starting with 0x). Works with IDs from discover_trending_markets or other tools.",
+                },
+                marketQuery: {
+                    type: "string",
+                    description: "Natural-language market reference or the raw user request. Use when slug/conditionId is unknown or the prompt says 'this market'.",
                 },
             },
             required: [],
@@ -1296,6 +1598,10 @@ Returns candidate Kalshi matches with matchScore, rule text, and YES/NO outcome 
                 riskFactors: {
                     type: "array",
                     items: { type: "string" },
+                },
+                selectionReason: {
+                    type: "string",
+                    description: "How the tool chose the analyzed market when no explicit conditionId/slug was supplied.",
                 },
                 fetchedAt: { type: "string" },
             },
@@ -1518,6 +1824,7 @@ Why use this:
 - Returns normalized setup cards with entry guidance and risk factors
 - When candidates satisfy the workflow checks, \`topSetups\` contains the surviving high-conviction setups directly
 - When no candidate survives the rule/liquidity/whale-alignment screen, \`analysisNotes\` explains the blocker instead of pretending setups survived
+- If model edge is flat or negative, the workflow should downgrade the setup instead of marketing it as high conviction
 
 ⏱️ PERFORMANCE: Runs several analyses sequentially (~10-25s depending on candidateCount and whale options).`,
         inputSchema: {
@@ -1580,6 +1887,25 @@ Why use this:
                         },
                     },
                 },
+                nearMissSetups: {
+                    type: "array",
+                    items: {
+                        type: "object",
+                        properties: {
+                            rank: { type: "number" },
+                            market: { type: "string" },
+                            url: { type: "string", format: "uri" },
+                            score: { type: "number" },
+                            signal: { type: "string" },
+                            whyRejected: {
+                                type: "array",
+                                items: { type: "string" },
+                            },
+                            checks: { type: "object" },
+                            risks: { type: "array", items: { type: "string" } },
+                        },
+                    },
+                },
                 analysisNotes: { type: "array", items: { type: "string" } },
                 fetchedAt: { type: "string" },
             },
@@ -1595,13 +1921,21 @@ USE THIS for:
 - "Give me the smart-money read on a live yes/no market"
 - "Pick the most liquid live politics market and tell me what whales are doing"
 
-If marketQuery is omitted, this tool uses the category to pick the most liquid live single-outcome market first, then runs both whale analyses and returns a combined smart-money summary.
+If marketQuery is omitted, this tool uses the category to pick the most liquid live single-outcome market first, then runs both whale analyses and returns a combined smart-money summary. If the prompt is deictic ("this market") and no identifier is available, the tool can still choose a strong live single-outcome fallback market and state that assumption.
 
 For broad prompts like "show me whale flow and top holders for a live single-outcome politics market", call THIS TOOL ALONE.
 Do not prefetch get_top_markets or call analyze_top_holders separately unless the user explicitly asks for a specific market shortlist or deeper follow-up.`,
         inputSchema: {
             type: "object",
             properties: {
+                conditionId: {
+                    type: "string",
+                    description: "Direct market condition ID when you already resolved the target market.",
+                },
+                slug: {
+                    type: "string",
+                    description: "Direct market or event slug when you already resolved the target market.",
+                },
                 marketQuery: {
                     type: "string",
                     description: "Natural-language market reference to analyze (preferred when the user names a market)",
@@ -1676,9 +2010,11 @@ USE THIS for:
 - "Find the live market with the highest open interest relative to recent traded volume"
 - "Explain whether the tape looks like fresh conviction or churn using buy/sell volume plus open interest"
 
-If marketQuery/conditionId/slug is omitted, this tool picks a live market automatically using endingWithinDays plus optional category filters. If no market ends inside the requested window, it widens progressively (up to 90 days) and finally falls back to high 24h-volume live markets so tape+OI questions still get data.
+If marketQuery/conditionId/slug is omitted, this tool picks a live market automatically using endingWithinDays plus optional category filters. If the prompt explicitly asks for "ending soon", that requirement stays hard: the tool widens progressively (up to 90 days) but should not silently substitute a far-dated high-volume market.
 
 For prompts that ask for both recent trades and open interest together, call THIS TOOL ALONE instead of chaining get_top_markets + get_market_trades + get_market_open_interest.
+
+Important: the open-interest field is a point-in-time snapshot. Use it for current OI level only, not for a true change rate unless you have a second time-separated snapshot.
 
 If sortBy is set to "open_interest_vs_volume", this tool screens a shortlist of live candidates and picks the market with the highest current openInterest-to-recent-volume ratio before returning the detailed trade/open-interest breakdown.`,
         inputSchema: {
@@ -1750,8 +2086,10 @@ If sortBy is set to "open_interest_vs_volume", this tool screens a shortlist of 
                     properties: {
                         conditionId: { type: "string" },
                         value: { type: "number" },
+                        changeRateAvailable: { type: "boolean" },
+                        note: { type: "string" },
                     },
-                    required: ["conditionId", "value"],
+                    required: ["conditionId", "value", "changeRateAvailable", "note"],
                 },
                 recentTrades: {
                     type: "array",
@@ -1922,7 +2260,7 @@ USE THIS for:
 
 Do not pair this with get_top_markets when the user only needs a direct ranked list or a filtered market screen.
 Use get_top_markets alone for direct retrieval of ranked/filtered markets.
-Use discover_trending_markets when the user wants surge detection, active tags/categories, or an explanation of why activity is unusual relative to baseline.
+Use discover_trending_markets when the user wants surge detection, active tags/categories, or an explanation of why activity is unusual relative to baseline. The result is a broad sampled live-market heat map, not just a tiny top-of-book anecdote.
 
 💡 TIP: For exact categories, call get_all_tags first to see available Polymarket tags, then use browse_by_tag for precise filtering.
 
@@ -2131,6 +2469,10 @@ Returns BOTH total volume AND 24h volume for each market, plus direct Polymarket
                                 description: "NO token ID for the ranked market when available.",
                             },
                             currentPrice: { type: "number", description: "YES price (0-1)" },
+                            yesPrice: {
+                                type: "number",
+                                description: "Explicit alias of currentPrice. Use this field when the user explicitly asks for YES price.",
+                            },
                             volume24h: { type: "number", description: "24h trading volume in USD" },
                             totalVolume: { type: "number", description: "All-time volume" },
                             liquidity: { type: "number", description: "Current liquidity in USD" },
@@ -2566,16 +2908,20 @@ USE THIS for:
 - "Compare Spain, Brazil, and France in the World Cup winner market"
 - "Show the implied odds and spreads for the top three candidates in this election market"
 - "Which named outcomes inside this event have the widest spreads right now?"
+- "Inside this event, which outcomes have moved the most over the last week, and what are their current spreads right now?"
 
 This tool:
 1. Resolves the event from a natural-language query
 2. Matches the requested outcome names
 3. Fetches current spread snapshots for those token IDs
-4. Returns a clean side-by-side comparison with token IDs and best quotes
+4. Optionally fetches recent price-history summaries when the prompt asks about movement or momentum
+5. Returns a clean side-by-side comparison with token IDs and best quotes
 
-Best when the user names 2+ teams, candidates, or outcomes in the same event and wants current implied odds plus spread comparison without brittle multi-tool chaining.
+For prompts like "inside this event..." or "within this event..." this tool should be called directly. It can resolve the event from the prompt or choose a strong live fallback event instead of returning a clarification menu.
 
-Each matched outcome includes price (alias of currentPrice), spreadCentsDisplay, spreadPercentDisplay, and readableQuote — copy those fields into tables instead of N/A placeholders.
+Best when the user names 2+ teams, candidates, or outcomes in the same event and wants current implied odds plus spread comparison without brittle multi-tool chaining. If the prompt asks for top movers without naming outcomes, this tool can rank the event's top active outcomes by recent price change and still return current spreads.
+
+Each matched outcome includes price (alias of currentPrice), spreadCentsDisplay, spreadPercentDisplay, optional priceChange/priceChangePercent fields, and readableQuote — copy those fields into tables instead of N/A placeholders.
 
 If the user wants the FULL event breakdown first, prefer search_and_get_outcomes.`,
         inputSchema: {
@@ -2609,6 +2955,15 @@ If the user wants the FULL event breakdown first, prefer search_and_get_outcomes
                     description: "If outcomes are omitted, compare the top N outcomes by current price (default: 5, max: 10)",
                     default: 5,
                 },
+                includeHistory: {
+                    type: "boolean",
+                    description: "Fetch recent price-history summaries for each selected outcome. Useful for momentum or 'moved the most' prompts.",
+                },
+                historyInterval: {
+                    type: "string",
+                    enum: ["1h", "1d", "1w", "max"],
+                    description: "History window used when includeHistory=true. Defaults to 1w for momentum-style prompts.",
+                },
             },
             required: [],
         },
@@ -2637,6 +2992,9 @@ If the user wants the FULL event breakdown first, prefer search_and_get_outcomes
                             spreadPercent: { type: "number" },
                             spreadPercentDisplay: { type: "string" },
                             spreadCentsDisplay: { type: "string" },
+                            priceChange: { type: "number" },
+                            priceChangePercent: { type: "number" },
+                            historyWindow: { type: "string" },
                             readableQuote: {
                                 type: "string",
                                 description: "Preformatted row for answers — copy instead of N/A placeholders",
@@ -2647,6 +3005,7 @@ If the user wants the FULL event breakdown first, prefer search_and_get_outcomes
                     },
                 },
                 synthesisHint: { type: "string" },
+                selectionReason: { type: "string" },
                 unmatchedOutcomes: {
                     type: "array",
                     items: { type: "string" },
@@ -3463,7 +3822,7 @@ USE analyze_whale_flow FOR: "Break down trading by size bucket", "Are whales buy
     },
     {
         name: "get_market_open_interest",
-        description: "Get open interest from Polymarket Data API /oi for one or more conditionIds.",
+        description: "Get open interest from Polymarket Data API /oi for one or more conditionIds. This is a snapshot endpoint, not a time series, so it can answer current OI level but not true rate-of-change without a second snapshot.",
         inputSchema: {
             type: "object",
             properties: {
@@ -3493,6 +3852,8 @@ USE analyze_whale_flow FOR: "Break down trading by size bucket", "Are whales buy
                     },
                 },
                 totalOpenInterest: { type: "number" },
+                changeRateAvailable: { type: "boolean" },
+                note: { type: "string" },
                 fetchedAt: { type: "string" },
             },
             required: ["openInterest", "totalOpenInterest"],
@@ -3500,7 +3861,7 @@ USE analyze_whale_flow FOR: "Break down trading by size bucket", "Are whales buy
     },
     {
         name: "get_event_live_volume",
-        description: "Get real-time event-level volume breakdown from Polymarket Data API /live-volume. Accepts a numeric event id or a numeric string returned by other Polymarket tools. Use after get_event_by_slug. If total is zero or no markets are returned, treat the live breakdown as unavailable and do not infer submarket shares.",
+        description: "Get real-time event-level volume breakdown from Polymarket Data API /live-volume. Accepts eventId directly, or resolves from slug/eventQuery first. Use this for prompts like 'Within this event, which submarkets are taking the biggest share of live trading right now?' This tool should be called directly for deictic event prompts and can choose a strong live fallback event instead of asking the user to pick an internal method. If total is zero or no markets are returned, treat the live breakdown as unavailable and do not infer submarket shares.",
         inputSchema: {
             type: "object",
             properties: {
@@ -3508,13 +3869,23 @@ USE analyze_whale_flow FOR: "Break down trading by size bucket", "Are whales buy
                     anyOf: [{ type: "number" }, { type: "string" }],
                     description: "Polymarket event id (number or numeric string)",
                 },
+                slug: {
+                    type: "string",
+                    description: "Polymarket event slug. Alternative to eventId when you already know the event URL slug.",
+                },
+                eventQuery: {
+                    type: "string",
+                    description: "Natural-language event reference or raw prompt. Use when the user says 'this event' and eventId is not yet known.",
+                },
             },
-            required: ["eventId"],
+            required: [],
         },
         outputSchema: {
             type: "object",
             properties: {
                 eventId: { type: "number" },
+                eventTitle: { type: "string" },
+                eventSlug: { type: "string" },
                 total: { type: "number" },
                 markets: {
                     type: "array",
@@ -3528,6 +3899,10 @@ USE analyze_whale_flow FOR: "Break down trading by size bucket", "Are whales buy
                             conditionId: {
                                 type: "string",
                                 description: "ConditionId for the submarket row. Join this to get_event_by_slug.markets[].conditionId instead of comparing against question text.",
+                            },
+                            title: {
+                                type: "string",
+                                description: "Best-effort human-readable submarket question/title matched from the event markets array.",
                             },
                             value: { type: "number" },
                             shareOfEventTotal: {
@@ -3544,6 +3919,10 @@ USE analyze_whale_flow FOR: "Break down trading by size bucket", "Are whales buy
                 warning: {
                     type: "string",
                     description: "Present when live-volume share calculations should not be made from this response.",
+                },
+                selectionReason: {
+                    type: "string",
+                    description: "How the tool resolved the target event when no explicit eventId was supplied.",
                 },
                 fetchedAt: { type: "string" },
             },
@@ -4005,12 +4384,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 return await handleAnalyzeEventWhaleBreakdown(args);
             case "analyze_event_outcome_liquidity":
                 return await handleAnalyzeEventOutcomeLiquidity(args);
+            case "rank_event_tradability":
+                return await handleRankEventTradability(args);
             case "compare_event_outcome_quotes":
                 return await handleCompareEventOutcomeQuotes(args);
+            case "compare_market_against_related_contracts":
+                return await handleCompareMarketAgainstRelatedContracts(args);
             case "find_correlated_markets":
                 return await handleFindCorrelatedMarkets(args);
             case "check_market_rules":
                 return await handleCheckMarketRules(args);
+            case "build_market_tradability_memo":
+                return await handleBuildMarketTradabilityMemo(args);
             case "find_arbitrage_opportunities":
                 return await handleFindArbitrageOpportunities(args);
             case "find_trading_opportunities":
@@ -6436,21 +6821,45 @@ function simulateSellMerged(mergedBids, usdAmount, currentPrice) {
     };
 }
 async function handleCheckMarketEfficiency(args) {
-    const conditionId = args?.conditionId;
-    const slug = args?.slug;
-    if (!conditionId && !slug) {
-        return errorResult("Either conditionId or slug is required");
+    let conditionId = typeof args?.conditionId === "string" ? args.conditionId.trim() : "";
+    let slug = typeof args?.slug === "string" ? args.slug.trim() : "";
+    const marketQuery = typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
+    let selectionReason = conditionId.length > 0
+        ? "Used the provided conditionId."
+        : slug.length > 0
+            ? "Used the provided slug."
+            : "";
+    const genericMarketQuery = marketQuery.length > 0 && isGenericMarketReferenceQuery(marketQuery);
+    if (conditionId.length === 0 && slug.length === 0) {
+        if (marketQuery.length > 0 && isGenericMarketReferenceQuery(marketQuery)) {
+            selectionReason =
+                "The prompt referenced a market deictically, so the tool skipped exact-title matching and used a strong live fallback market for an efficiency read.";
+        }
+        const resolvedFromQuery = marketQuery.length > 0 && !genericMarketQuery
+            ? await resolveMarketReference({ marketQuery })
+            : null;
+        if (resolvedFromQuery) {
+            conditionId = resolvedFromQuery.conditionId;
+            slug = resolvedFromQuery.slug || "";
+            selectionReason = "Resolved directly from the provided marketQuery.";
+        }
+        else {
+            const fallbackCandidate = await resolveFallbackTopMarketCandidate({
+                sortBy: "liquidity",
+                preferSingleOutcome: true,
+            });
+            if (!fallbackCandidate) {
+                return errorResult("Provide conditionId, slug, or marketQuery so the tool can resolve a market.");
+            }
+            conditionId = fallbackCandidate.conditionId;
+            slug = fallbackCandidate.slug;
+            selectionReason =
+                "No explicit market identifier was supplied, so the tool analyzed the strongest live single-outcome fallback market.";
+        }
     }
     // Get market data
     let market;
-    if (slug) {
-        const event = (await fetchGamma(`/events/slug/${slug}`));
-        if (!event || !event.markets || event.markets.length === 0) {
-            return errorResult(`Event not found: ${slug}`);
-        }
-        market = event.markets[0];
-    }
-    else {
+    if (conditionId) {
         // Query by conditionId - use Gamma /markets?condition_ids= for direct lookup
         // and CLOB API in parallel for token data. This replaces the old approach of
         // brute-force searching through 100+50 events which caused MCP timeouts.
@@ -6477,6 +6886,18 @@ async function handleCheckMarketEfficiency(args) {
         if (!market) {
             return errorResult(`Market not found for conditionId: ${conditionId}`);
         }
+    }
+    if (!market && slug) {
+        const event = (await fetchGamma(`/events/slug/${slug}`));
+        if (!event || !event.markets || event.markets.length === 0) {
+            return errorResult(`Event not found: ${slug}`);
+        }
+        market = getRepresentativeGammaMarket(event, {
+            preference: "tradable",
+        }) ?? event.markets[0];
+    }
+    if (!market) {
+        return errorResult("Market not found");
     }
     // Get prices for all outcome tokens
     const outcomes = [];
@@ -6602,6 +7023,7 @@ async function handleCheckMarketEfficiency(args) {
         trueProbabilities,
         trueProbabilitiesPercent,
         recommendation,
+        selectionReason,
         fetchedAt: new Date().toISOString(),
     });
 }
@@ -6963,17 +7385,41 @@ async function handleFindCorrelatedMarkets(args) {
     });
 }
 async function handleCheckMarketRules(args) {
-    const slug = args?.slug;
-    const conditionId = args?.conditionId;
-    if (!slug && !conditionId) {
-        return errorResult("Either slug or conditionId is required");
+    let slug = typeof args?.slug === "string" ? args.slug.trim() : "";
+    let conditionId = typeof args?.conditionId === "string" ? args.conditionId.trim() : "";
+    const marketQuery = typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
+    let selectionReason = conditionId.length > 0
+        ? "Used the provided conditionId."
+        : slug.length > 0
+            ? "Used the provided slug."
+            : "";
+    const genericMarketQuery = marketQuery.length > 0 && isGenericMarketReferenceQuery(marketQuery);
+    if (slug.length === 0 && conditionId.length === 0) {
+        const resolvedFromQuery = marketQuery.length > 0 && !genericMarketQuery
+            ? await resolveMarketReference({ marketQuery })
+            : null;
+        if (resolvedFromQuery) {
+            slug = resolvedFromQuery.slug || "";
+            conditionId = resolvedFromQuery.conditionId;
+            selectionReason = "Resolved directly from the provided marketQuery.";
+        }
+        else {
+            const fallbackCandidate = await resolveFallbackTopMarketCandidate({
+                sortBy: "volume",
+                preferSingleOutcome: true,
+            });
+            if (!fallbackCandidate) {
+                return errorResult("Provide slug, conditionId, or marketQuery so the tool can resolve a market.");
+            }
+            slug = fallbackCandidate.slug;
+            conditionId = fallbackCandidate.conditionId;
+            selectionReason =
+                "No explicit market identifier was supplied, so the tool inspected the strongest live single-outcome fallback market.";
+        }
     }
     // Get the event
     let event;
-    if (slug) {
-        event = (await fetchGamma(`/events/slug/${slug}`, 8000));
-    }
-    else {
+    if (conditionId) {
         // Use Gamma /markets?condition_ids= for direct market lookup
         // PERF: Replaces brute-force search through 100+50 events
         try {
@@ -6991,8 +7437,11 @@ async function handleCheckMarketRules(args) {
             }
         }
         catch {
-            return errorResult(`Market not found for conditionId: ${conditionId}`);
+            // Fall through to slug-based lookup below when available.
         }
+    }
+    if (!event && slug) {
+        event = (await fetchGamma(`/events/slug/${slug}`, 8000));
     }
     if (!event) {
         return errorResult("Event not found");
@@ -7105,6 +7554,7 @@ async function handleCheckMarketRules(args) {
             ambiguities,
         },
         riskFactors,
+        selectionReason,
         fetchedAt: new Date().toISOString(),
     });
 }
@@ -7895,10 +8345,76 @@ function workflowExtractComparisonOutcomesFromQuery(value) {
     }
     return [];
 }
+function workflowExtractQuotedFragments(value) {
+    const matches = Array.from(value.matchAll(/["'`](.{2,160}?)["'`]/g))
+        .map((match) => match[1]?.trim() || "")
+        .filter((fragment) => fragment.length > 0);
+    return workflowUniqueStrings(matches);
+}
+function workflowExtractMarketQueryFromRawPrompt(value) {
+    const quoted = workflowExtractQuotedFragments(value);
+    if (quoted.length > 0) {
+        return quoted[0];
+    }
+    return value.trim();
+}
+function workflowExtractLikelyOutcomeFragments(value) {
+    const fragments = new Set();
+    const normalized = normalizeOutcomeLabelDashes(value);
+    const monthDayMatches = normalized.match(/\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}\b/gi);
+    for (const match of monthDayMatches ?? []) {
+        fragments.add(normalizeMarketQueryText(match));
+    }
+    const thresholdMatches = normalized.match(/\b(?:no change|\d+\+?\s*bps\s+(?:increase|decrease)|\$\s*\d+(?:\s*(?:high|low))?)\b/gi);
+    for (const match of thresholdMatches ?? []) {
+        fragments.add(normalizeMarketQueryText(match));
+    }
+    const quoted = workflowExtractQuotedFragments(normalized);
+    for (const fragment of quoted) {
+        const cleaned = normalizeMarketQueryText(fragment);
+        if (cleaned.length > 0) {
+            fragments.add(cleaned);
+        }
+    }
+    return Array.from(fragments).filter((fragment) => fragment.length > 0);
+}
 function workflowExtractEventQueryFromComparison(value) {
     const trimmed = value.trim();
+    const eventMatch = trimmed.match(/\b(?:in|within)\s+(?:the\s+)?["'`]?(.+?)["'`]?\s+event\b/i);
+    if (eventMatch?.[1]) {
+        return eventMatch[1].trim();
+    }
     const match = trimmed.match(/\b(?:in|within)\s+(?:the\s+)?(.+?)(?:\s+market)?[?.!]*$/i);
     return match?.[1]?.trim() || trimmed;
+}
+function workflowExtractHeadToHeadSides(value) {
+    const trimmed = value.trim().replace(/\s+event$/i, "");
+    const match = trimmed.match(/^(.{2,80}?)\s+(?:vs\.?|v\.?|versus|@|at)\s+(.{2,80}?)$/i);
+    if (!match) {
+        return [];
+    }
+    return workflowUniqueStrings(match
+        .slice(1)
+        .map((side) => normalizeMarketQueryText(side))
+        .filter((side) => side.length >= 2));
+}
+function workflowCandidateMatchesHeadToHead(candidateText, headToHeadSides) {
+    if (headToHeadSides.length < 2) {
+        return true;
+    }
+    const normalizedCandidate = normalizeMarketQueryText(candidateText);
+    if (normalizedCandidate.length === 0) {
+        return false;
+    }
+    return headToHeadSides.every((side) => normalizedCandidate.includes(side));
+}
+function workflowResolvedEventMatchesHeadToHead(eventData, headToHeadSides) {
+    if (headToHeadSides.length < 2) {
+        return true;
+    }
+    const eventTitle = typeof eventData.eventTitle === "string" ? eventData.eventTitle : "";
+    const eventSlug = typeof eventData.eventSlug === "string" ? eventData.eventSlug : "";
+    return workflowCandidateMatchesHeadToHead(`${eventTitle} ${eventSlug}`, headToHeadSides);
 }
 function workflowExtractEventQueryFromLiquidity(value) {
     const trimmed = value.trim();
@@ -7918,6 +8434,244 @@ function workflowExtractEventQueryFromLiquidity(value) {
     }
     return trimmed;
 }
+function isGenericMarketReferenceQuery(value) {
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+        return true;
+    }
+    return /\b(?:this|that)\s+(?:polymarket\s+)?(?:market|contract)\b/i.test(trimmed) ||
+        /\b(?:single[-\s]?outcome|yes\/no|live)\s+(?:market|contract)\b/i.test(trimmed);
+}
+function isGenericEventReferenceQuery(value) {
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+        return true;
+    }
+    return /\b(?:this|that)\s+event\b/i.test(trimmed) ||
+        /\bmulti[-\s]?outcome\s+event\b/i.test(trimmed) ||
+        /\blive\s+event\b/i.test(trimmed);
+}
+async function resolveFallbackTopMarketCandidate(params) {
+    try {
+        const fallbackTopMarkets = workflowExtractToolData(await handleGetTopMarkets({
+            sortBy: params?.sortBy || "volume",
+            category: params?.category,
+            limit: 12,
+            includeNearResolved: false,
+        }), "get_top_markets");
+        const candidates = workflowObjectArray(fallbackTopMarkets.markets);
+        let fallbackCandidate = null;
+        for (const candidate of candidates) {
+            const slug = typeof candidate.slug === "string" ? candidate.slug.trim() : "";
+            const conditionId = typeof candidate.conditionId === "string"
+                ? candidate.conditionId.trim()
+                : "";
+            const title = typeof candidate.title === "string" ? candidate.title : "";
+            const eventTitle = typeof candidate.eventTitle === "string"
+                ? candidate.eventTitle
+                : title;
+            const eventId = typeof candidate.eventId === "string" ? candidate.eventId : "";
+            if (slug.length === 0 && conditionId.length === 0) {
+                continue;
+            }
+            let event = null;
+            if (slug.length > 0) {
+                try {
+                    event = (await fetchGamma(`/events/slug/${slug}`, 8_000));
+                }
+                catch {
+                    event = null;
+                }
+            }
+            const normalizedCandidate = {
+                slug,
+                conditionId,
+                title,
+                eventTitle,
+                eventId,
+                event,
+            };
+            if (!fallbackCandidate) {
+                fallbackCandidate = normalizedCandidate;
+            }
+            const tradableMarketCount = Array.isArray(event?.markets)
+                ? event.markets.filter((market) => isTradableGammaMarket(market)).length
+                : 0;
+            const totalMarketCount = event?.markets?.length ?? 0;
+            const effectiveMarketCount = tradableMarketCount > 0 ? tradableMarketCount : totalMarketCount;
+            if (params?.preferSingleOutcome && effectiveMarketCount <= 1) {
+                return normalizedCandidate;
+            }
+            if (params?.preferMultiOutcome && effectiveMarketCount > 1) {
+                return normalizedCandidate;
+            }
+            if (!params?.preferSingleOutcome && !params?.preferMultiOutcome) {
+                return normalizedCandidate;
+            }
+        }
+        return fallbackCandidate;
+    }
+    catch {
+        return null;
+    }
+}
+async function workflowResolveEventDataForAnalysis(params) {
+    const sortBy = params.sortBy ?? "volume";
+    const slug = params.slug?.trim() || "";
+    const eventQuery = params.eventQuery?.trim() || "";
+    const category = params.category?.trim() || "";
+    const headToHeadSides = workflowExtractHeadToHeadSides(eventQuery);
+    if (slug.length > 0) {
+        return {
+            eventData: workflowExtractToolData(await handleGetEventOutcomes({
+                slug,
+                sortBy,
+            }), "get_event_outcomes"),
+            selectionReason: "Used the provided event slug.",
+        };
+    }
+    if (eventQuery.length > 0) {
+        if (headToHeadSides.length >= 2) {
+            try {
+                const searchResults = workflowExtractToolData(await handleSearchMarkets({
+                    query: eventQuery,
+                    status: "live",
+                    limit: 12,
+                    ...(category.length > 0 ? { category } : {}),
+                }), "search_markets");
+                const exactMatch = workflowObjectArray(searchResults.results).find((candidate) => workflowCandidateMatchesHeadToHead(`${typeof candidate.title === "string" ? candidate.title : ""} ${typeof candidate.matchedOutcome === "string" ? candidate.matchedOutcome : ""} ${typeof candidate.slug === "string" ? candidate.slug : ""}`, headToHeadSides));
+                const exactMatchSlug = exactMatch && typeof exactMatch.slug === "string" ? exactMatch.slug.trim() : "";
+                if (exactMatchSlug.length > 0) {
+                    return {
+                        eventData: workflowExtractToolData(await handleGetEventOutcomes({
+                            slug: exactMatchSlug,
+                            sortBy,
+                        }), "get_event_outcomes"),
+                        selectionReason: "Resolved from an exact head-to-head search match.",
+                    };
+                }
+            }
+            catch {
+                // Fall back to the normal event-resolution path below.
+            }
+        }
+        try {
+            const directEventData = workflowExtractToolData(await handleSearchAndGetOutcomes({
+                query: eventQuery,
+                ...(category.length > 0 ? { category } : {}),
+                sortBy,
+            }), "search_and_get_outcomes");
+            if (!workflowResolvedEventMatchesHeadToHead(directEventData, headToHeadSides)) {
+                throw new Error("Resolved event did not preserve both sides of the head-to-head query.");
+            }
+            return {
+                eventData: directEventData,
+                selectionReason: "Resolved directly from the provided event query.",
+            };
+        }
+        catch (error) {
+            console.warn("[polymarket-event-resolve] search_and_get_outcomes failed", {
+                eventQuery: eventQuery.slice(0, 120),
+                category,
+                error: error instanceof Error ? error.message.slice(0, 160) : String(error).slice(0, 160),
+            });
+        }
+        const fallbackTargets = extractPriceTargets(eventQuery);
+        const searchFallbackThreshold = fallbackTargets.length > 0 ? 95 : 60;
+        const searchFallbackCandidates = [];
+        try {
+            const websiteSearch = await searchGammaWebsiteEventCandidates({
+                query: eventQuery,
+                limit: 24,
+                eventsStatus: "active",
+            });
+            searchFallbackCandidates.push(...websiteSearch.candidates);
+        }
+        catch {
+            // Fall through to other event-resolution fallbacks.
+        }
+        try {
+            const indexedSearch = await searchIndexedActiveEventCandidates({
+                query: eventQuery,
+                limit: 24,
+            });
+            searchFallbackCandidates.push(...indexedSearch.candidates);
+        }
+        catch {
+            // Fall through to discovery-based fallback.
+        }
+        const searchFallbackBest = pickBestMarketCandidate(headToHeadSides.length >= 2
+            ? searchFallbackCandidates.filter((candidate) => workflowCandidateMatchesHeadToHead(`${candidate.marketTitle} ${candidate.slug || ""} ${candidate.eventSlug || ""}`, headToHeadSides))
+            : searchFallbackCandidates);
+        const searchFallbackSlug = searchFallbackBest?.eventSlug || searchFallbackBest?.slug || "";
+        if (searchFallbackSlug.length > 0 &&
+            (searchFallbackBest?.score ?? 0) >= searchFallbackThreshold) {
+            return {
+                eventData: workflowExtractToolData(await handleGetEventOutcomes({
+                    slug: searchFallbackSlug,
+                    sortBy,
+                }), "get_event_outcomes"),
+                selectionReason: "Primary event search was slow or ambiguous, so the tool used the best matching active-event search fallback.",
+            };
+        }
+        const discoveryData = workflowExtractToolData(await handleDiscoverTrendingMarkets({
+            ...(category.length > 0 ? { category } : {}),
+            sortBy: "liquidity",
+            limit: 12,
+        }), "discover_trending_markets");
+        const candidates = workflowObjectArray(discoveryData.trendingMarkets);
+        const normalizedQuery = normalizeMarketQueryText(eventQuery);
+        const queryTargets = extractPriceTargets(eventQuery);
+        const queryTokens = extractMarketQueryTokens(eventQuery);
+        let bestCandidate = null;
+        let bestScore = 0;
+        for (const candidate of candidates) {
+            const candidateText = `${typeof candidate.title === "string" ? candidate.title : ""} ${typeof candidate.slug === "string" ? candidate.slug : ""}`;
+            const score = scoreMarketCandidate({
+                queryText: normalizedQuery,
+                queryTokens,
+                queryTargets,
+                candidateText,
+            });
+            if (score > bestScore) {
+                bestScore = score;
+                bestCandidate = candidate;
+            }
+        }
+        const fallbackSlug = bestCandidate && typeof bestCandidate.slug === "string"
+            ? bestCandidate.slug.trim()
+            : "";
+        const fallbackMatchesHeadToHead = headToHeadSides.length < 2 ||
+            workflowCandidateMatchesHeadToHead(`${bestCandidate && typeof bestCandidate.title === "string" ? bestCandidate.title : ""} ${fallbackSlug}`, headToHeadSides);
+        if (fallbackSlug.length > 0 && bestScore >= 35 && fallbackMatchesHeadToHead) {
+            return {
+                eventData: workflowExtractToolData(await handleGetEventOutcomes({
+                    slug: fallbackSlug,
+                    sortBy,
+                }), "get_event_outcomes"),
+                selectionReason: "Primary event search was slow or ambiguous, so the tool used the best matching live discovery fallback.",
+            };
+        }
+    }
+    if (headToHeadSides.length >= 2) {
+        throw new Error("Could not resolve an exact head-to-head event for analysis.");
+    }
+    const fallbackCandidate = await resolveFallbackTopMarketCandidate({
+        category: category || undefined,
+        sortBy: "liquidity",
+        preferMultiOutcome: true,
+    });
+    if (!fallbackCandidate?.slug) {
+        throw new Error("Could not resolve a multi-outcome event for analysis.");
+    }
+    return {
+        eventData: workflowExtractToolData(await handleGetEventOutcomes({
+            slug: fallbackCandidate.slug,
+            sortBy,
+        }), "get_event_outcomes"),
+        selectionReason: "No exact event resolution was available, so the tool used the strongest live multi-outcome fallback event.",
+    };
+}
 function normalizeOutcomeLabelDashes(value) {
     return value.replace(/[\u2013\u2014\u2212]/g, "-");
 }
@@ -7925,15 +8679,68 @@ function workflowScoreOutcomeMatch(requestedName, candidateName) {
     const requestedForMatch = normalizeOutcomeLabelDashes(requestedName);
     const candidateForMatch = normalizeOutcomeLabelDashes(candidateName);
     const normalizedRequested = normalizeMarketQueryText(requestedForMatch);
+    const normalizedCandidate = normalizeMarketQueryText(candidateForMatch);
     if (!normalizedRequested) {
         return 0;
     }
-    return scoreMarketCandidate({
+    let score = scoreMarketCandidate({
         queryText: normalizedRequested,
         queryTokens: extractMarketQueryTokens(requestedForMatch),
         queryTargets: extractPriceTargets(requestedForMatch),
         candidateText: candidateForMatch,
     });
+    if (!normalizedCandidate) {
+        return score;
+    }
+    if (normalizedRequested === normalizedCandidate) {
+        score += 200;
+    }
+    else if (normalizedRequested.includes(normalizedCandidate) ||
+        normalizedCandidate.includes(normalizedRequested)) {
+        score += 120;
+    }
+    const requestedFragments = workflowExtractLikelyOutcomeFragments(requestedForMatch);
+    for (const fragment of requestedFragments) {
+        if (fragment === normalizedCandidate) {
+            score += 180;
+            continue;
+        }
+        if (normalizedCandidate.includes(fragment) || fragment.includes(normalizedCandidate)) {
+            score += 120;
+        }
+    }
+    return score;
+}
+function workflowPickBestOutcomeMatch(outcomes, seeds) {
+    const candidateSeeds = workflowUniqueStrings(seeds.flatMap((seed) => {
+        const trimmed = seed.trim();
+        if (trimmed.length === 0) {
+            return [];
+        }
+        return [trimmed, ...workflowExtractLikelyOutcomeFragments(trimmed)];
+    }));
+    let bestOutcome = null;
+    let matchedName = "";
+    let bestScore = 0;
+    for (const outcome of outcomes) {
+        const candidateName = typeof outcome.name === "string" ? outcome.name.trim() : "";
+        if (candidateName.length === 0) {
+            continue;
+        }
+        for (const seed of candidateSeeds) {
+            const score = workflowScoreOutcomeMatch(seed, candidateName);
+            if (score > bestScore) {
+                bestOutcome = outcome;
+                matchedName = candidateName;
+                bestScore = score;
+            }
+        }
+    }
+    return {
+        outcome: bestOutcome,
+        matchedName,
+        score: bestScore,
+    };
 }
 function workflowGetErrorMessage(result) {
     const firstContent = result.content[0];
@@ -8273,7 +9080,10 @@ async function handleBuildHighConvictionWorkflow(args) {
                 tradabilityReasons.push("Bid/ask spread is too wide");
             }
             const isTradable = tradabilityReasons.length === 0;
-            const passesHighConviction = ruleStatus !== "fail" && isTradable && whaleAlignedWithTrade;
+            const passesHighConviction = ruleStatus !== "fail" &&
+                isTradable &&
+                whaleAlignedWithTrade &&
+                sideEdgePercent >= 1;
             const riskList = Array.from(new Set(risks.filter((risk) => risk.length > 0))).slice(0, 8);
             const takeProfitPrice = workflowClamp(sideMarketPrice + 0.08, 0.05, 0.98);
             const invalidationPrice = workflowClamp(sideMarketPrice - 0.06, 0.01, 0.95);
@@ -8352,8 +9162,36 @@ async function handleBuildHighConvictionWorkflow(args) {
                 rank: index + 1,
             };
         });
+        const nearMissCandidates = highConvictionSetups.length === 0
+            ? (tradableSetups.length > 0 ? tradableSetups : scoredSetups).slice(0, topSetupsLimit)
+            : [];
+        const nearMissSetups = nearMissCandidates.map((setup, index) => {
+            const { internalScore, passesHighConviction, ...visibleSetup } = setup;
+            const checks = workflowObject(visibleSetup.checks);
+            const tradability = workflowObject(checks.tradability);
+            const whyRejected = Array.from(new Set([
+                ...workflowStringArray(tradability.reasons),
+                ...workflowStringArray(visibleSetup.risks),
+                ...(passesHighConviction === true
+                    ? []
+                    : ["Did not clear the high-conviction edge/risk threshold."]),
+            ])).slice(0, 4);
+            return {
+                ...visibleSetup,
+                rank: index + 1,
+                whyRejected,
+            };
+        });
         if (highConvictionSetups.length === 0) {
             analysisNotes.push("No setups survived the high-conviction screen (manageable rule risk, executable $5k exit, and non-contradictory whale flow when enabled).");
+            for (const nearMiss of nearMissSetups) {
+                const nearMissRecord = workflowObject(nearMiss);
+                const nearMissMarket = typeof nearMissRecord.market === "string" &&
+                    nearMissRecord.market.trim().length > 0
+                    ? nearMissRecord.market
+                    : "Unnamed market";
+                analysisNotes.push(`Near miss: "${nearMissMarket}" scored ${String(nearMissRecord.score ?? "n/a")}/99. Blockers: ${workflowStringArray(nearMissRecord.whyRejected).join("; ")}`);
+            }
         }
         if (tradableSetups.length === 0 && scoredSetups.length > 0) {
             analysisNotes.push("No fully tradeable setups met execution/rules thresholds.");
@@ -8371,6 +9209,7 @@ async function handleBuildHighConvictionWorkflow(args) {
                 topSetupsReturned: topSetups.length,
             },
             topSetups,
+            nearMissSetups,
             analysisNotes,
             fetchedAt: new Date().toISOString(),
         });
@@ -8384,6 +9223,16 @@ async function handleCompareEventOutcomeQuotes(args) {
     const explicitEventQuery = typeof args?.eventQuery === "string" ? args.eventQuery.trim() : "";
     const category = typeof args?.category === "string" ? args.category.trim() : "";
     const limit = workflowToBoundedInteger(args?.limit, 5, 2, 10);
+    const includeHistoryExplicit = args?.includeHistory === true;
+    const historyIntervalRaw = typeof args?.historyInterval === "string" ? args.historyInterval : "";
+    const historyInterval = historyIntervalRaw === "1h" ||
+        historyIntervalRaw === "1d" ||
+        historyIntervalRaw === "1w" ||
+        historyIntervalRaw === "max"
+        ? historyIntervalRaw
+        : "1w";
+    const momentumRequested = includeHistoryExplicit ||
+        /\b(momentum|moved?|move|price\s+change|changed?|top movers?|largest movers?)\b/i.test(rawQuery);
     const requestedOutcomes = workflowUniqueStrings([
         ...workflowStringArray(args?.outcomes),
         ...(typeof args?.outcomeNames === "string"
@@ -8396,18 +9245,47 @@ async function handleCompareEventOutcomeQuotes(args) {
     const desiredOutcomes = requestedOutcomes.length > 0
         ? requestedOutcomes
         : workflowExtractComparisonOutcomesFromQuery(rawQuery);
-    if (eventQuery.length === 0) {
-        return errorResult("Provide eventQuery or query so the tool can resolve the event to compare.");
-    }
     try {
-        const searchInput = { query: eventQuery };
-        if (category.length > 0) {
-            searchInput.category = category;
+        let eventData;
+        let selectionReason = "";
+        const shouldUseFallbackEvent = eventQuery.length === 0 || isGenericEventReferenceQuery(eventQuery);
+        if (shouldUseFallbackEvent &&
+            desiredOutcomes.length > 0 &&
+            /\bthis event\b/i.test(rawQuery)) {
+            return errorResult("Could not resolve the referenced event from this query alone. Provide the event title or slug so the requested named outcomes can be grounded correctly.");
         }
-        const eventData = workflowExtractToolData(await handleSearchAndGetOutcomes(searchInput), "search_and_get_outcomes");
+        if (shouldUseFallbackEvent) {
+            const fallbackCandidate = await resolveFallbackTopMarketCandidate({
+                category: category || undefined,
+                sortBy: momentumRequested ? "volume" : "liquidity",
+                preferMultiOutcome: true,
+            });
+            if (!fallbackCandidate || fallbackCandidate.slug.length === 0) {
+                return errorResult("Could not resolve a live multi-outcome event to compare.");
+            }
+            eventData = workflowExtractToolData(await handleGetEventOutcomes({
+                slug: fallbackCandidate.slug,
+                sortBy: "volume",
+            }), "get_event_outcomes");
+            selectionReason =
+                category.length > 0
+                    ? `No concrete event was provided, so the tool picked a high-liquidity live ${category} event fallback.`
+                    : "No concrete event was provided, so the tool picked a high-liquidity live multi-outcome event fallback.";
+        }
+        else {
+            const resolvedEvent = await workflowResolveEventDataForAnalysis({
+                eventQuery,
+                ...(category.length > 0 ? { category } : {}),
+                sortBy: "volume",
+            });
+            eventData = resolvedEvent.eventData;
+            selectionReason = resolvedEvent.selectionReason;
+        }
         const availableOutcomes = workflowObjectArray(eventData.outcomes);
         if (availableOutcomes.length === 0) {
-            return errorResult(`No outcomes found for event query: "${eventQuery}".`);
+            return errorResult(shouldUseFallbackEvent
+                ? "No tokenized outcomes were available for the selected fallback event."
+                : `No outcomes found for event query: "${eventQuery}".`);
         }
         const unmatchedOutcomes = [];
         const selectedOutcomes = [];
@@ -8442,6 +9320,46 @@ async function handleCompareEventOutcomeQuotes(args) {
                 });
             }
         }
+        else if (momentumRequested) {
+            const tokenIdsForHistory = workflowUniqueStrings(availableOutcomes
+                .map((outcome) => typeof outcome.tokenId === "string" ? outcome.tokenId.trim() : "")
+                .filter((tokenId) => tokenId.length > 0));
+            const historySummaries = await Promise.all(tokenIdsForHistory.map(async (tokenId) => {
+                try {
+                    const historyData = workflowExtractToolData(await handleGetPriceHistory({
+                        tokenId,
+                        interval: historyInterval,
+                    }), "get_price_history");
+                    const summary = workflowObject(historyData.summary);
+                    return {
+                        tokenId,
+                        priceChange: workflowToNumber(summary.change, 0),
+                        priceChangePercent: workflowToNumber(summary.changePercent, 0),
+                    };
+                }
+                catch {
+                    return {
+                        tokenId,
+                        priceChange: 0,
+                        priceChangePercent: 0,
+                    };
+                }
+            }));
+            const historyByTokenId = new Map(historySummaries.map((entry) => [entry.tokenId, entry]));
+            const rankedOutcomes = [...availableOutcomes]
+                .map((outcome) => {
+                const tokenId = typeof outcome.tokenId === "string" ? outcome.tokenId.trim() : "";
+                const historyEntry = historyByTokenId.get(tokenId);
+                return {
+                    outcome,
+                    priceChange: historyEntry?.priceChange ?? 0,
+                    priceChangePercent: historyEntry?.priceChangePercent ?? 0,
+                };
+            })
+                .sort((left, right) => Math.abs(right.priceChangePercent) - Math.abs(left.priceChangePercent))
+                .slice(0, limit);
+            selectedOutcomes.push(...rankedOutcomes.map((entry) => entry.outcome));
+        }
         else {
             selectedOutcomes.push(...availableOutcomes.slice(0, limit));
         }
@@ -8455,9 +9373,39 @@ async function handleCompareEventOutcomeQuotes(args) {
             ? workflowExtractToolData(await handleGetSpreads({ tokenIds }), "get_spreads")
             : {};
         const spreadsByTokenId = workflowObject(spreadData.spreads);
+        const historyByTokenId = new Map();
+        if (momentumRequested && tokenIds.length > 0) {
+            const historyResults = await Promise.all(tokenIds.map(async (tokenId) => {
+                try {
+                    const historyData = workflowExtractToolData(await handleGetPriceHistory({
+                        tokenId,
+                        interval: historyInterval,
+                    }), "get_price_history");
+                    const summary = workflowObject(historyData.summary);
+                    return {
+                        tokenId,
+                        priceChange: workflowToNumber(summary.change, 0),
+                        priceChangePercent: workflowToNumber(summary.changePercent, 0),
+                        historyWindow: historyInterval,
+                    };
+                }
+                catch {
+                    return {
+                        tokenId,
+                        priceChange: 0,
+                        priceChangePercent: 0,
+                        historyWindow: historyInterval,
+                    };
+                }
+            }));
+            for (const historyResult of historyResults) {
+                historyByTokenId.set(historyResult.tokenId, historyResult);
+            }
+        }
         const matchedOutcomes = selectedOutcomes.map((outcome) => {
             const tokenId = typeof outcome.tokenId === "string" ? outcome.tokenId : "";
             const spreadInfo = workflowObject(spreadsByTokenId[tokenId]);
+            const historyInfo = historyByTokenId.get(tokenId);
             const currentPrice = workflowToNumber(outcome.price, 0.5);
             const matchedName = typeof outcome.name === "string" ? outcome.name : "Unknown outcome";
             const bestBid = workflowToNumber(spreadInfo.bestBid, 0);
@@ -8484,10 +9432,16 @@ async function handleCompareEventOutcomeQuotes(args) {
                 spreadPercent,
                 spreadPercentDisplay: `${spreadPercent.toFixed(2)}%`,
                 spreadCentsDisplay: `${(spread * 100).toFixed(2)}¢`,
+                priceChange: Number((historyInfo?.priceChange ?? 0).toFixed(4)),
+                priceChangePercent: Number((historyInfo?.priceChangePercent ?? 0).toFixed(2)),
+                historyWindow: historyInfo?.historyWindow || "",
                 volume: workflowToNumber(outcome.volume, 0),
-                readableQuote: `${rowLabel} → matched "${matchedName}": YES mid ${(currentPrice * 100).toFixed(1)}% (0–1: ${currentPrice.toFixed(4)}), bid ${(bestBid * 100).toFixed(1)}¢ / ask ${(bestAsk * 100).toFixed(1)}¢, spread ${(spread * 100).toFixed(2)}¢ (${spreadPercent.toFixed(2)}% pts).`,
+                readableQuote: `${rowLabel} → matched "${matchedName}": YES mid ${(currentPrice * 100).toFixed(1)}% (0–1: ${currentPrice.toFixed(4)}), bid ${(bestBid * 100).toFixed(1)}¢ / ask ${(bestAsk * 100).toFixed(1)}¢, spread ${(spread * 100).toFixed(2)}¢ (${spreadPercent.toFixed(2)}% pts)${historyInfo ? `, ${historyInfo.historyWindow} change ${historyInfo.priceChange >= 0 ? "+" : ""}${historyInfo.priceChange.toFixed(4)} (${historyInfo.priceChangePercent >= 0 ? "+" : ""}${historyInfo.priceChangePercent.toFixed(2)}%).` : "."}`,
             };
         });
+        if (momentumRequested) {
+            matchedOutcomes.sort((left, right) => Math.abs(right.priceChangePercent) - Math.abs(left.priceChangePercent));
+        }
         const widestSpreadOutcome = matchedOutcomes.length > 0
             ? matchedOutcomes.reduce((widest, current) => current.spread > widest.spread ? current : widest)
             : null;
@@ -8497,7 +9451,10 @@ async function handleCompareEventOutcomeQuotes(args) {
                 : eventQuery,
             eventSlug: typeof eventData.eventSlug === "string" ? eventData.eventSlug : "",
             eventUrl: typeof eventData.eventUrl === "string" ? eventData.eventUrl : "",
-            synthesisHint: "Copy numeric fields from each matchedOutcomes row into tables: use currentPrice (or price/yesMid) for implied YES probability, bestBid/bestAsk for quotes, spread and spreadPercent for width. Each row includes readableQuote — paste verbatim for outcome rows instead of placeholders.",
+            synthesisHint: momentumRequested
+                ? "Copy numeric fields from each matchedOutcomes row into tables: use currentPrice (or price/yesMid) for implied YES probability, bestBid/bestAsk for quotes, spread and spreadPercent for width, and priceChange/priceChangePercent for recent movement. Each row includes readableQuote — paste verbatim for outcome rows instead of placeholders."
+                : "Copy numeric fields from each matchedOutcomes row into tables: use currentPrice (or price/yesMid) for implied YES probability, bestBid/bestAsk for quotes, spread and spreadPercent for width. Each row includes readableQuote — paste verbatim for outcome rows instead of placeholders.",
+            selectionReason,
             matchedOutcomes,
             unmatchedOutcomes,
             widestSpreadOutcome: widestSpreadOutcome === null
@@ -8536,15 +9493,13 @@ async function handleAnalyzeEventOutcomeLiquidity(args) {
         return errorResult("Provide slug, eventQuery, or query so the tool can resolve the multi-outcome event.");
     }
     try {
-        const eventData = slug.length > 0
-            ? workflowExtractToolData(await handleGetEventOutcomes({
-                slug,
-                sortBy,
-            }), "get_event_outcomes")
-            : workflowExtractToolData(await handleSearchAndGetOutcomes({
-                query: eventQuery,
-                ...(category.length > 0 ? { category } : {}),
-            }), "search_and_get_outcomes");
+        const resolvedEvent = await workflowResolveEventDataForAnalysis({
+            slug,
+            eventQuery,
+            ...(category.length > 0 ? { category } : {}),
+            sortBy,
+        });
+        const eventData = resolvedEvent.eventData;
         const availableOutcomes = workflowObjectArray(eventData.outcomes).filter((outcome) => typeof outcome.tokenId === "string" &&
             outcome.tokenId.trim().length > 0 &&
             typeof outcome.conditionId === "string" &&
@@ -8725,19 +9680,28 @@ async function handleAnalyzeEventOutcomeLiquidity(args) {
     }
 }
 async function handleAnalyzeSingleMarketWhales(args) {
+    const conditionIdInput = typeof args?.conditionId === "string" ? args.conditionId.trim() : "";
+    const slugInput = typeof args?.slug === "string" ? args.slug.trim() : "";
     const marketQuery = typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
     const category = typeof args?.category === "string" ? args.category.trim() : "";
     const hoursBack = workflowToBoundedInteger(args?.hoursBack, 24, 1, 168);
-    if (marketQuery.length === 0 && category.length === 0) {
-        return errorResult("Provide marketQuery or category so the tool can select a single-outcome market.");
-    }
+    const genericMarketQuery = marketQuery.length > 0 && isGenericMarketReferenceQuery(marketQuery);
     try {
-        let resolved = marketQuery.length > 0
-            ? await resolveMarketReference({ marketQuery })
-            : null;
-        let selectionReason = marketQuery.length > 0
-            ? "Resolved directly from the provided marketQuery."
-            : "";
+        let resolved = conditionIdInput.length > 0 || slugInput.length > 0
+            ? await resolveMarketReference({
+                conditionId: conditionIdInput || undefined,
+                slug: slugInput || undefined,
+            })
+            : marketQuery.length > 0 && !genericMarketQuery
+                ? await resolveMarketReference({ marketQuery })
+                : null;
+        let selectionReason = conditionIdInput.length > 0
+            ? "Used the provided conditionId."
+            : slugInput.length > 0
+                ? "Used the provided slug."
+                : marketQuery.length > 0 && !genericMarketQuery
+                    ? "Resolved directly from the provided marketQuery."
+                    : "";
         if (!resolved && category.length > 0) {
             const discoveryData = workflowExtractToolData(await handleDiscoverTrendingMarkets({
                 category,
@@ -8787,6 +9751,25 @@ async function handleAnalyzeSingleMarketWhales(args) {
             if (!resolved && fallbackResolved) {
                 resolved = fallbackResolved;
                 selectionReason = `Fell back to the most liquid live ${category} market because no clear single-outcome market was detected in the sample.`;
+            }
+        }
+        if (!resolved) {
+            const fallbackCandidate = await resolveFallbackTopMarketCandidate({
+                category: category || undefined,
+                sortBy: "volume",
+                preferSingleOutcome: true,
+            });
+            if (fallbackCandidate) {
+                resolved = await resolveMarketReference({
+                    conditionId: fallbackCandidate.conditionId || undefined,
+                    slug: fallbackCandidate.slug || undefined,
+                });
+                if (resolved) {
+                    selectionReason =
+                        category.length > 0
+                            ? `No concrete market was provided, so whale analysis used a strong live single-outcome ${category} fallback.`
+                            : "No concrete market was provided, so whale analysis used a strong live single-outcome fallback.";
+                }
             }
         }
         if (!resolved) {
@@ -8918,7 +9901,7 @@ async function handleSummarizeLiveMarketActivity(args) {
                         : "Resolved directly from the provided slug.";
         }
         else {
-            const dayTiers = Array.from(new Set([endingWithinDays, 14, 30, 90].filter((d) => d >= 1))).sort((a, b) => a - b);
+            const dayTiers = Array.from(new Set([endingWithinDays, 14, 30].filter((d) => d >= 1))).sort((a, b) => a - b);
             let effectiveEndingDays = endingWithinDays;
             let usedVolumeFallback = false;
             let topMarketsData = {};
@@ -8938,6 +9921,9 @@ async function handleSummarizeLiveMarketActivity(args) {
                     effectiveEndingDays = days;
                     break;
                 }
+            }
+            if (candidates.length === 0 && sortBy === "ending_soon") {
+                return noResultsPayload(`No live market matched the current ending-soon window within ${endingWithinDays} days (also tried up to 90 days).`);
             }
             if (candidates.length === 0) {
                 topMarketsData = workflowExtractToolData(await handleGetTopMarkets({
@@ -9109,6 +10095,8 @@ async function handleSummarizeLiveMarketActivity(args) {
             openInterest: {
                 conditionId: resolved.conditionId,
                 value: matchedOpenInterest,
+                changeRateAvailable: false,
+                note: "This is a point-in-time open-interest snapshot. Use it for current OI level, not for a true change rate without a second time-separated snapshot.",
             },
             recentTrades: workflowObjectArray(tradesData.trades),
             fetchedAt: new Date().toISOString(),
@@ -9116,6 +10104,563 @@ async function handleSummarizeLiveMarketActivity(args) {
     }
     catch (error) {
         return errorResult(`summarize_live_market_activity failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+}
+async function handleRankEventTradability(args) {
+    const rawQuery = typeof args?.query === "string" ? args.query.trim() : "";
+    const explicitEventQuery = typeof args?.eventQuery === "string" ? args.eventQuery.trim() : "";
+    const slug = typeof args?.slug === "string" ? args.slug.trim() : "";
+    const category = typeof args?.category === "string" ? args.category.trim() : "";
+    const limit = workflowToBoundedInteger(args?.limit, 6, 2, 10);
+    const quotedFragments = workflowExtractQuotedFragments(rawQuery);
+    const requestedOutcomes = workflowUniqueStrings([
+        ...workflowStringArray(args?.outcomes),
+        ...(quotedFragments.length > 1 ? quotedFragments.slice(1) : []),
+    ]);
+    const eventQuery = explicitEventQuery ||
+        (slug.length > 0
+            ? ""
+            : quotedFragments[0] ||
+                workflowExtractEventQueryFromComparison(rawQuery) ||
+                rawQuery);
+    try {
+        const resolvedEvent = await workflowResolveEventDataForAnalysis({
+            eventQuery,
+            slug,
+            category,
+            sortBy: "volume",
+        });
+        const eventData = resolvedEvent.eventData;
+        const eventSlug = typeof eventData.eventSlug === "string" ? eventData.eventSlug : slug;
+        const eventTitle = typeof eventData.eventTitle === "string"
+            ? eventData.eventTitle
+            : eventQuery || eventSlug;
+        const selectedOutcomeNames = requestedOutcomes.length > 0
+            ? requestedOutcomes
+            : workflowUniqueStrings([
+                ...workflowObjectArray(eventData.outcomes)
+                    .slice(0, Math.max(limit - 2, 1))
+                    .map((outcome) => typeof outcome.name === "string" ? outcome.name : "")
+                    .filter((name) => name.length > 0),
+                ...[...workflowObjectArray(eventData.outcomes)]
+                    .sort((left, right) => workflowToNumber(right.price, 0) - workflowToNumber(left.price, 0))
+                    .slice(0, Math.min(2, limit))
+                    .map((outcome) => typeof outcome.name === "string" ? outcome.name : "")
+                    .filter((name) => name.length > 0),
+            ]).slice(0, Math.max(limit, 2));
+        const liquidityData = workflowExtractToolData(await handleAnalyzeEventOutcomeLiquidity({
+            slug: eventSlug,
+            outcomes: selectedOutcomeNames,
+            sortBy: "volume",
+        }), "analyze_event_outcome_liquidity");
+        const whaleData = workflowExtractToolData(await handleAnalyzeEventWhaleBreakdown({
+            slug: eventSlug,
+            maxOutcomes: Math.min(Math.max(limit, selectedOutcomeNames.length, 4), 8),
+        }), "analyze_event_whale_breakdown");
+        let liveVolumeData = {};
+        try {
+            liveVolumeData = workflowExtractToolData(await handleGetEventLiveVolume({ slug: eventSlug }), "get_event_live_volume");
+        }
+        catch {
+            liveVolumeData = {};
+        }
+        const whaleByConditionId = new Map();
+        for (const whaleRow of workflowObjectArray(whaleData.whalesByOutcome)) {
+            const conditionId = typeof whaleRow.conditionId === "string" ? whaleRow.conditionId : "";
+            if (conditionId.length > 0) {
+                whaleByConditionId.set(conditionId, whaleRow);
+            }
+        }
+        const liveShareByConditionId = new Map();
+        for (const marketRow of workflowObjectArray(liveVolumeData.markets)) {
+            const conditionId = typeof marketRow.conditionId === "string"
+                ? marketRow.conditionId
+                : typeof marketRow.market === "string"
+                    ? marketRow.market
+                    : "";
+            if (conditionId.length === 0) {
+                continue;
+            }
+            liveShareByConditionId.set(conditionId, workflowToNumber(marketRow.shareOfEventTotal, 0));
+        }
+        const rankedOutcomes = workflowObjectArray(liquidityData.analyzedOutcomes)
+            .map((outcome) => {
+            const matchedName = typeof outcome.matchedName === "string"
+                ? outcome.matchedName
+                : "Unknown outcome";
+            const conditionId = typeof outcome.conditionId === "string" ? outcome.conditionId : "";
+            const spreadCents = workflowToNumber(outcome.spreadCents, 999);
+            const totalDepthUsd = workflowToNumber(outcome.totalDepthUsd, 0);
+            const slippage5kPercent = workflowToNumber(outcome.slippage5kPercent, 999);
+            const currentPrice = workflowToNumber(outcome.currentPrice, 0);
+            const volume = workflowToNumber(outcome.volume, 0);
+            const liquidityScore = typeof outcome.liquidityScore === "string"
+                ? outcome.liquidityScore
+                : "unknown";
+            const whaleRow = whaleByConditionId.get(conditionId) ?? {};
+            const whaleValue = workflowToNumber(whaleRow.totalWhaleValue, 0);
+            const whaleCount = workflowToNumber(whaleRow.whaleCount, 0);
+            const liveVolumeShare = liveShareByConditionId.get(conditionId) ?? 0;
+            const rationale = [];
+            let score = 0;
+            if (liquidityScore === "excellent")
+                score += 32;
+            else if (liquidityScore === "good")
+                score += 24;
+            else if (liquidityScore === "fair")
+                score += 14;
+            else if (liquidityScore === "poor")
+                score += 6;
+            if (spreadCents <= 1) {
+                score += 20;
+                rationale.push("Tight quoted spread.");
+            }
+            else if (spreadCents <= 3) {
+                score += 12;
+                rationale.push("Manageable spread.");
+            }
+            else if (spreadCents <= 6) {
+                score += 4;
+            }
+            else {
+                rationale.push("Wide spread.");
+            }
+            if (totalDepthUsd >= 100_000) {
+                score += 18;
+                rationale.push("Deep displayed depth.");
+            }
+            else if (totalDepthUsd >= 25_000) {
+                score += 12;
+            }
+            else if (totalDepthUsd >= 10_000) {
+                score += 6;
+            }
+            else {
+                rationale.push("Thin depth.");
+            }
+            if (slippage5kPercent <= 2) {
+                score += 15;
+                rationale.push("Low estimated $5k exit slippage.");
+            }
+            else if (slippage5kPercent <= 5) {
+                score += 8;
+            }
+            else if (slippage5kPercent > 10) {
+                rationale.push("High $5k exit slippage.");
+            }
+            if (whaleValue >= 50_000) {
+                score += 10;
+                rationale.push("Meaningful whale participation.");
+            }
+            else if (whaleValue >= 10_000) {
+                score += 6;
+            }
+            if (whaleCount >= 5) {
+                score += 4;
+            }
+            if (liveVolumeShare >= 0.2) {
+                score += 8;
+                rationale.push("Taking a large share of current event flow.");
+            }
+            else if (liveVolumeShare >= 0.1) {
+                score += 4;
+            }
+            let classification;
+            if (spreadCents <= 3 && totalDepthUsd >= 10_000 && slippage5kPercent <= 5) {
+                classification = "tradable_now";
+            }
+            else if (spreadCents > 8 ||
+                totalDepthUsd < 5_000 ||
+                slippage5kPercent > 12) {
+                classification = "headline_only";
+            }
+            else {
+                classification = "watchlist";
+            }
+            return {
+                matchedName,
+                conditionId,
+                currentPrice: Number(currentPrice.toFixed(4)),
+                volume: Number(volume.toFixed(2)),
+                spreadCents: Number(spreadCents.toFixed(2)),
+                totalDepthUsd: Number(totalDepthUsd.toFixed(2)),
+                slippage5kPercent: Number(slippage5kPercent.toFixed(2)),
+                whaleValue: Number(whaleValue.toFixed(2)),
+                whaleCount: Number(whaleCount.toFixed(0)),
+                liveVolumeShare: Number(liveVolumeShare.toFixed(6)),
+                tradabilityScore: Number(score.toFixed(1)),
+                classification,
+                rationale: rationale.length > 0
+                    ? rationale
+                    : ["Tradability score is driven mostly by price-level liquidity."],
+            };
+        })
+            .sort((left, right) => right.tradabilityScore - left.tradabilityScore)
+            .map((outcome, index) => ({
+            rank: index + 1,
+            ...outcome,
+        }));
+        const expensiveButUntradeable = rankedOutcomes
+            .filter((outcome) => outcome.currentPrice >= 0.08 && outcome.classification === "headline_only")
+            .map((outcome) => outcome.matchedName);
+        const watchlistOutcomes = rankedOutcomes
+            .filter((outcome) => outcome.classification === "watchlist")
+            .map((outcome) => outcome.matchedName);
+        const headlineOnlyOutcomes = rankedOutcomes
+            .filter((outcome) => outcome.classification === "headline_only")
+            .map((outcome) => outcome.matchedName);
+        const analysisNotes = workflowStringArray(liquidityData.analysisNotes);
+        if (liveShareByConditionId.size === 0) {
+            analysisNotes.push("Live event-volume share was unavailable, so ranking leaned more heavily on quoted liquidity and whale participation.");
+        }
+        if (requestedOutcomes.length === 0 && selectedOutcomeNames.length > 0) {
+            analysisNotes.push("Checked a bounded mixed shortlist that includes both active names and the highest-priced/front-runner rows, rather than only the first few volume-ranked outcomes.");
+        }
+        if (rankedOutcomes.length > 0 && rankedOutcomes.every((outcome) => outcome.whaleCount === 0)) {
+            analysisNotes.push("No analyzed outcome showed live whale participation in this snapshot, so the ranking is mainly separating cleaner quotes from headline-only liquidity.");
+        }
+        return successResult({
+            eventTitle,
+            eventSlug,
+            selectionReason: resolvedEvent.selectionReason,
+            rankedOutcomes,
+            bestCombinedOutcome: rankedOutcomes.length === 0
+                ? null
+                : {
+                    matchedName: rankedOutcomes[0].matchedName,
+                    tradabilityScore: rankedOutcomes[0].tradabilityScore,
+                    classification: rankedOutcomes[0].classification,
+                },
+            analyzedOutcomeNames: selectedOutcomeNames,
+            watchlistOutcomes,
+            headlineOnlyOutcomes,
+            expensiveButUntradeable,
+            analysisNotes,
+            fetchedAt: new Date().toISOString(),
+        });
+    }
+    catch (error) {
+        return errorResult(`rank_event_tradability failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+}
+async function handleCompareMarketAgainstRelatedContracts(args) {
+    const rawQuery = typeof args?.query === "string" ? args.query.trim() : "";
+    const explicitMarketQuery = typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
+    const explicitEventQuery = typeof args?.eventQuery === "string" ? args.eventQuery.trim() : "";
+    const explicitFocusOutcome = typeof args?.focusOutcome === "string" ? args.focusOutcome.trim() : "";
+    const conditionId = typeof args?.conditionId === "string" ? args.conditionId.trim() : "";
+    const slug = typeof args?.slug === "string" ? args.slug.trim() : "";
+    const category = typeof args?.category === "string" ? args.category.trim() : "";
+    const quotedFragments = workflowExtractQuotedFragments(rawQuery);
+    const marketQuery = explicitMarketQuery || workflowExtractMarketQueryFromRawPrompt(rawQuery);
+    let focusOutcome = explicitFocusOutcome ||
+        (quotedFragments.length > 1 ? quotedFragments.at(-1) || "" : "");
+    try {
+        const directResolved = conditionId.length > 0 || slug.length > 0 || marketQuery.length > 0
+            ? await resolveMarketReference({
+                conditionId: conditionId || undefined,
+                slug: slug || undefined,
+                marketQuery: marketQuery || undefined,
+            })
+            : null;
+        const resolvedEvent = await workflowResolveEventDataForAnalysis({
+            eventQuery: explicitEventQuery || rawQuery || marketQuery,
+            category,
+            sortBy: "volume",
+        });
+        const eventData = resolvedEvent.eventData;
+        const eventTitle = typeof eventData.eventTitle === "string"
+            ? eventData.eventTitle
+            : explicitEventQuery || marketQuery;
+        const eventSlug = typeof eventData.eventSlug === "string" ? eventData.eventSlug : "";
+        const eventOutcomes = workflowObjectArray(eventData.outcomes);
+        if (eventOutcomes.length === 0) {
+            return errorResult("No sibling outcomes were available for comparison.");
+        }
+        const matchedPrimaryOutcome = workflowPickBestOutcomeMatch(eventOutcomes, [
+            focusOutcome,
+            marketQuery,
+            rawQuery,
+            ...quotedFragments.slice(1),
+        ]);
+        const primaryOutcome = matchedPrimaryOutcome.outcome ?? eventOutcomes[0];
+        const primaryOutcomeName = typeof primaryOutcome.name === "string" ? primaryOutcome.name : "";
+        if (!focusOutcome) {
+            focusOutcome = primaryOutcomeName;
+        }
+        const primaryResolved = typeof primaryOutcome.conditionId === "string" &&
+            primaryOutcome.conditionId.trim().length > 0
+            ? {
+                conditionId: primaryOutcome.conditionId.trim(),
+                marketTitle: primaryOutcomeName || directResolved?.marketTitle || marketQuery,
+                slug: eventSlug || directResolved?.slug,
+            }
+            : directResolved;
+        if (!primaryResolved) {
+            return errorResult("Could not resolve the primary market for relative-value analysis.");
+        }
+        const efficiencyData = workflowExtractToolData(await handleCheckMarketEfficiency({
+            conditionId: primaryResolved.conditionId,
+            slug: primaryResolved.slug,
+        }), "check_market_efficiency");
+        const liquidityData = workflowExtractToolData(await handleAnalyzeMarketLiquidity({
+            conditionId: primaryResolved.conditionId,
+        }), "analyze_market_liquidity");
+        const primaryTargets = extractPriceTargets(primaryOutcomeName);
+        let selectedOutcomeNames = [];
+        if (eventOutcomes.length <= 8) {
+            selectedOutcomeNames = workflowUniqueStrings(eventOutcomes
+                .map((outcome) => typeof outcome.name === "string" ? outcome.name : "")
+                .filter((name) => name.length > 0));
+        }
+        else if (primaryTargets.length > 0) {
+            const rankedByTarget = eventOutcomes
+                .map((outcome) => ({
+                outcome,
+                target: extractPriceTargets(typeof outcome.name === "string" ? outcome.name : "")[0],
+            }))
+                .filter((entry) => typeof entry.target === "number")
+                .sort((left, right) => Math.abs(left.target - primaryTargets[0]) -
+                Math.abs(right.target - primaryTargets[0]))
+                .slice(0, 5);
+            selectedOutcomeNames = workflowUniqueStrings(rankedByTarget
+                .map((entry) => typeof entry.outcome.name === "string" ? entry.outcome.name : "")
+                .filter((name) => name.length > 0));
+        }
+        else {
+            selectedOutcomeNames = workflowUniqueStrings(eventOutcomes
+                .slice(0, 5)
+                .map((outcome) => typeof outcome.name === "string" ? outcome.name : "")
+                .filter((name) => name.length > 0));
+            if (primaryOutcomeName.length > 0 &&
+                !selectedOutcomeNames.includes(primaryOutcomeName)) {
+                selectedOutcomeNames.push(primaryOutcomeName);
+            }
+        }
+        const comparisonData = workflowExtractToolData(await handleCompareEventOutcomeQuotes({
+            eventQuery: eventTitle,
+            outcomes: selectedOutcomeNames,
+            ...(category.length > 0 ? { category } : {}),
+        }), "compare_event_outcome_quotes");
+        const siblingOutcomes = workflowObjectArray(comparisonData.matchedOutcomes).map((outcome) => ({
+            matchedName: typeof outcome.matchedName === "string" ? outcome.matchedName : "Unknown",
+            currentPrice: Number(workflowToNumber(outcome.currentPrice, 0).toFixed(4)),
+            spread: Number(workflowToNumber(outcome.spread, 0).toFixed(4)),
+            volume: Number(workflowToNumber(outcome.volume, 0).toFixed(2)),
+        }));
+        const primarySibling = siblingOutcomes.find((outcome) => workflowScoreOutcomeMatch(primaryOutcomeName, outcome.matchedName) >= 120) ?? siblingOutcomes[0];
+        const neighborOutcomes = siblingOutcomes.filter((outcome) => outcome.matchedName !== primarySibling?.matchedName);
+        const eventPriceSum = eventOutcomes.reduce((sum, outcome) => sum + workflowToNumber(outcome.price, 0), 0);
+        const marketEfficiency = workflowObject(efficiencyData.marketEfficiency);
+        const spreadData = workflowObject(liquidityData.spread);
+        const currentPrice = workflowToNumber(primarySibling?.currentPrice, workflowToNumber(primaryOutcome.price, 0));
+        let relativeValueAssessment = "The sibling-event curve does not show an obvious simple relative-value dislocation.";
+        if (neighborOutcomes.length > 0 && primarySibling) {
+            const averageNeighborPrice = neighborOutcomes.reduce((sum, outcome) => sum + outcome.currentPrice, 0) /
+                neighborOutcomes.length;
+            if (currentPrice > averageNeighborPrice * 1.75 && currentPrice > 0.05) {
+                relativeValueAssessment =
+                    `${primarySibling.matchedName} looks rich versus the nearby sibling set, so the market likely needs stronger event-specific conviction than the neighboring contracts imply.`;
+            }
+            else if (currentPrice < averageNeighborPrice * 0.6 &&
+                averageNeighborPrice > 0.01) {
+                relativeValueAssessment =
+                    `${primarySibling.matchedName} screens cheap versus the nearby sibling set, but the quote still needs to be filtered through liquidity and resolution risk before calling it value.`;
+            }
+            else if (Math.abs(eventPriceSum - 1) <= 0.03 &&
+                workflowToNumber(marketEfficiency.vig, 0) <= 0.02) {
+                relativeValueAssessment =
+                    `${primarySibling.matchedName} sits inside an internally coherent event curve, so there is no obvious blunt overpricing or underpricing from sibling quotes alone.`;
+            }
+        }
+        let arbitrageAssessment = "No simple event-curve arbitrage stands out from the current sibling prices.";
+        const efficiencyRecommendation = typeof efficiencyData.recommendation === "string"
+            ? efficiencyData.recommendation
+            : "";
+        if (efficiencyRecommendation.includes("Arbitrage opportunity")) {
+            arbitrageAssessment = efficiencyRecommendation;
+        }
+        else if (Math.abs(eventPriceSum - 1) > 0.03) {
+            arbitrageAssessment =
+                `Sibling outcome prices sum to ${eventPriceSum.toFixed(4)}, so the event curve is wide enough to justify a closer manual check.`;
+        }
+        const primaryMarket = primaryResolved.marketTitle ||
+            (typeof efficiencyData.market === "string" ? efficiencyData.market : primaryOutcomeName);
+        return successResult({
+            primaryMarket: {
+                title: primaryMarket,
+                conditionId: primaryResolved.conditionId,
+                eventTitle,
+                primaryOutcome: primarySibling?.matchedName || primaryOutcomeName,
+                currentPrice: Number(currentPrice.toFixed(4)),
+                spreadCents: Number(workflowToNumber(spreadData.spreadCents, workflowToNumber(spreadData.absolute, 0)).toFixed(2)),
+                liquidityScore: typeof liquidityData.liquidityScore === "string"
+                    ? liquidityData.liquidityScore
+                    : "unknown",
+            },
+            siblingOutcomes,
+            eventPriceSum: Number(eventPriceSum.toFixed(4)),
+            relativeValueAssessment,
+            arbitrageAssessment,
+            analysisNotes: [
+                resolvedEvent.selectionReason,
+                typeof comparisonData.selectionReason === "string"
+                    ? comparisonData.selectionReason
+                    : "Compared the resolved outcome against its sibling contracts.",
+            ],
+            fetchedAt: new Date().toISOString(),
+        });
+    }
+    catch (error) {
+        return errorResult(`compare_market_against_related_contracts failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+}
+async function handleBuildMarketTradabilityMemo(args) {
+    const rawQuery = typeof args?.query === "string" ? args.query.trim() : "";
+    const explicitMarketQuery = typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
+    const slug = typeof args?.slug === "string" ? args.slug.trim() : "";
+    const conditionId = typeof args?.conditionId === "string" ? args.conditionId.trim() : "";
+    const hoursBack = workflowToBoundedInteger(args?.hoursBack, 24, 1, 168);
+    const marketQuery = explicitMarketQuery || workflowExtractMarketQueryFromRawPrompt(rawQuery);
+    try {
+        let resolved = conditionId.length > 0 || slug.length > 0 || marketQuery.length > 0
+            ? await resolveMarketReference({
+                conditionId: conditionId || undefined,
+                slug: slug || undefined,
+                marketQuery: marketQuery || undefined,
+            })
+            : null;
+        if (!resolved && (marketQuery.length > 0 || rawQuery.length > 0)) {
+            const resolvedEvent = await workflowResolveEventDataForAnalysis({
+                eventQuery: rawQuery || marketQuery,
+                sortBy: "volume",
+            });
+            const eventData = resolvedEvent.eventData;
+            const eventSlug = typeof eventData.eventSlug === "string" ? eventData.eventSlug : "";
+            const eventOutcomes = workflowObjectArray(eventData.outcomes);
+            const matchedOutcome = workflowPickBestOutcomeMatch(eventOutcomes, [
+                marketQuery,
+                rawQuery,
+            ]);
+            if (matchedOutcome.score >= 30 &&
+                matchedOutcome.outcome &&
+                typeof matchedOutcome.outcome.conditionId === "string" &&
+                matchedOutcome.outcome.conditionId.trim().length > 0) {
+                resolved = {
+                    conditionId: matchedOutcome.outcome.conditionId.trim(),
+                    marketTitle: matchedOutcome.matchedName || marketQuery || rawQuery,
+                    slug: eventSlug || undefined,
+                };
+            }
+        }
+        if (!resolved) {
+            return errorResult("Could not resolve the market for memo analysis.");
+        }
+        const rulesData = workflowExtractToolData(await handleCheckMarketRules({
+            conditionId: resolved.conditionId,
+        }), "check_market_rules");
+        const liquidityData = workflowExtractToolData(await handleAnalyzeMarketLiquidity({
+            conditionId: resolved.conditionId,
+        }), "analyze_market_liquidity");
+        const whaleData = workflowExtractToolData(await handleAnalyzeSingleMarketWhales({
+            conditionId: resolved.conditionId,
+            hoursBack,
+        }), "analyze_single_market_whales");
+        const activityData = workflowExtractToolData(await handleSummarizeLiveMarketActivity({
+            conditionId: resolved.conditionId,
+            tradeLimit: 40,
+        }), "summarize_live_market_activity");
+        const rulesSummary = workflowObject(rulesData.rulesSummary);
+        const riskFactors = workflowStringArray(rulesData.riskFactors);
+        const ambiguities = workflowStringArray(rulesSummary.ambiguities);
+        const spreadData = workflowObject(liquidityData.spread);
+        const whaleCost = workflowObject(liquidityData.whaleCost);
+        const sell5k = workflowObject(whaleCost.sell5k);
+        const tradesSummary = workflowObject(activityData.tradesSummary);
+        const holderAnalysis = workflowObject(whaleData.holderAnalysis);
+        const marketConcentration = workflowObject(holderAnalysis.marketConcentration);
+        const whaleFlow = workflowObject(whaleData.whaleFlow);
+        const whaleActivity = workflowObject(whaleFlow.whaleActivity);
+        const currentPrice = workflowToNumber(liquidityData.currentPrice, 0);
+        const spreadCents = workflowToNumber(spreadData.spreadCents, 0);
+        const slippage5kPercent = workflowToNumber(sell5k.slippagePercent, 0);
+        const liquidityScore = typeof liquidityData.liquidityScore === "string"
+            ? liquidityData.liquidityScore
+            : "unknown";
+        const whaleSentiment = typeof whaleActivity.sentiment === "string"
+            ? whaleActivity.sentiment
+            : "neutral";
+        const totalTrades = workflowToNumber(tradesSummary.totalTrades, 0);
+        const openInterest = workflowObject(activityData.openInterest);
+        const openInterestValue = workflowToNumber(openInterest.value, 0);
+        const rulesRisk = ambiguities.length >= 2 || riskFactors.length >= 4
+            ? "high"
+            : ambiguities.length > 0 || riskFactors.length >= 2
+                ? "moderate"
+                : "low";
+        const quoteQuality = liquidityScore === "excellent" || liquidityScore === "good"
+            ? spreadCents <= 3 && slippage5kPercent <= 5
+                ? "strong"
+                : "mixed"
+            : liquidityScore === "fair"
+                ? "mixed"
+                : "weak";
+        const whalePositioning = whaleSentiment === "bullish"
+            ? "Whale flow leans with the YES side."
+            : whaleSentiment === "bearish"
+                ? "Whale flow leans against the YES side."
+                : "Whale flow is not showing a strong directional edge.";
+        const recentActivity = totalTrades >= 25
+            ? "Recent tape is active enough to treat the quote as live, not stale."
+            : totalTrades >= 8
+                ? "Recent tape is present but not especially deep."
+                : "Recent tape is thin, so displayed prices deserve extra skepticism.";
+        let decision = "pass";
+        if (rulesRisk === "high" || quoteQuality === "weak") {
+            decision = "avoid";
+        }
+        else if (rulesRisk === "low" &&
+            quoteQuality === "strong" &&
+            whaleSentiment !== "bearish" &&
+            totalTrades >= 20) {
+            decision = "buy";
+        }
+        else if (whaleSentiment === "bullish") {
+            decision = "speculative_buy";
+        }
+        const concentrationRisk = workflowToNumber(marketConcentration.concentrationPercent, 0);
+        const memoParts = [
+            `Rules risk is ${rulesRisk}.`,
+            `Quote quality is ${quoteQuality} with ${spreadCents.toFixed(1)}c spread and estimated $5k exit slippage of ${slippage5kPercent.toFixed(1)}%.`,
+            whalePositioning,
+            recentActivity,
+            openInterestValue > 0
+                ? `Current open interest is $${openInterestValue.toFixed(2)}, but the available upstream endpoint is snapshot-only and does not prove a true OI change rate by itself.`
+                : "Open-interest snapshot is unavailable or minimal.",
+            concentrationRisk > 0
+                ? `Top-holder concentration is elevated at ${concentrationRisk.toFixed(2)}%.`
+                : "Holder concentration did not materially change the memo.",
+            `Decision: ${decision.toUpperCase().replace(/_/g, " ")}.`,
+        ];
+        return successResult({
+            market: {
+                title: typeof rulesData.market === "string" ? rulesData.market : resolved.marketTitle,
+                conditionId: resolved.conditionId,
+                currentPrice: Number(currentPrice.toFixed(4)),
+                spreadCents: Number(spreadCents.toFixed(2)),
+                liquidityScore,
+            },
+            rulesRisk,
+            quoteQuality,
+            whalePositioning,
+            recentActivity,
+            decision,
+            memo: memoParts.join(" "),
+            fetchedAt: new Date().toISOString(),
+        });
+    }
+    catch (error) {
+        return errorResult(`build_market_tradability_memo failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
 }
 /**
@@ -9359,8 +10904,8 @@ async function handleDiscoverTrendingMarkets(args) {
         // Instead, we fetch more events and filter CLIENT-SIDE by checking the tags array.
         // PERF: Capped at 50 events max to avoid MCP transport timeouts (was up to 200).
         const fetchLimit = categoryTagSlug
-            ? Math.min(Math.max(limit * 3, 18), 30)
-            : Math.min(Math.max(limit * 2, 20), 40);
+            ? Math.min(Math.max(limit * 4, 28), 48)
+            : Math.min(Math.max(limit * 3, 36), 72);
         const endpoint = `/events?active=true&closed=false&limit=${fetchLimit}&order=${orderParam}&ascending=false${categoryTagSlug ? `&tag_slug=${categoryTagSlug}` : ""}`;
         // Keep the trend snapshot fast enough that Query mode can recover from a
         // transient Gamma timeout without exhausting the full execution budget.
@@ -9550,13 +11095,13 @@ async function handleDiscoverTrendingMarkets(args) {
         const contestedCount = finalMarkets.filter((market) => market.priceDirection === "Contested").length;
         let marketSummary;
         if (surgingCount > 3) {
-            marketSummary = `🔥 Active day! ${surgingCount} markets with surging volume. News events likely driving activity.`;
+            marketSummary = `🔥 Active day across the sampled live set: ${surgingCount} markets show surging volume. News events are likely driving activity.`;
         }
         else if (contestedCount > 5) {
-            marketSummary = `⚖️ Many contested markets. Good opportunities for traders with information edge.`;
+            marketSummary = `⚖️ Many contested markets in the sampled live set. Good opportunities for traders with information edge.`;
         }
         else if (finalMarkets.length > 0) {
-            marketSummary = `📊 Normal market conditions. ${finalMarkets.length} active markets identified.`;
+            marketSummary = `📊 Normal market conditions across the sampled live set. ${finalMarkets.length} active markets identified.`;
         }
         else {
             marketSummary = "😴 Low market activity. Consider checking back during US market hours.";
@@ -9814,6 +11359,7 @@ async function handleGetTopMarkets(args) {
                     yesTokenId,
                     noTokenId,
                     currentPrice: yesPrice,
+                    yesPrice,
                     volume24h,
                     totalVolume,
                     liquidity,
@@ -10464,14 +12010,58 @@ function buildKalshiSearchQueries(params) {
 }
 // Cross-platform search on Kalshi
 async function handleSearchOnKalshi(args) {
-    const title = args?.title;
-    const keywords = args?.keywords;
-    const polymarketSlug = args?.polymarketSlug;
+    let title = typeof args?.title === "string" ? args.title.trim() : "";
+    let keywords = typeof args?.keywords === "string" ? args.keywords.trim() : "";
+    let polymarketSlug = typeof args?.polymarketSlug === "string" ? args.polymarketSlug.trim() : "";
+    const marketQuery = typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
     const limit = Math.min(args?.limit || 10, 25);
+    let resolvedPolymarket = null;
+    const genericMarketQuery = title.length === 0 &&
+        marketQuery.length > 0 &&
+        isGenericMarketReferenceQuery(marketQuery);
+    if (title.length === 0 && marketQuery.length > 0) {
+        const resolvedFromQuery = genericMarketQuery
+            ? null
+            : await resolveMarketReference({ marketQuery });
+        if (resolvedFromQuery) {
+            resolvedPolymarket = resolvedFromQuery;
+            title = resolvedFromQuery.marketTitle;
+            keywords = keywords || resolvedFromQuery.marketTitle;
+            polymarketSlug = polymarketSlug || resolvedFromQuery.slug || "";
+        }
+        else {
+            const fallbackCandidate = await resolveFallbackTopMarketCandidate({
+                sortBy: "volume",
+                preferSingleOutcome: true,
+            });
+            if (fallbackCandidate) {
+                title = fallbackCandidate.title || fallbackCandidate.eventTitle;
+                keywords = keywords || title;
+                polymarketSlug = polymarketSlug || fallbackCandidate.slug;
+            }
+        }
+    }
+    if (title.length === 0 && marketQuery.length === 0) {
+        const fallbackCandidate = await resolveFallbackTopMarketCandidate({
+            sortBy: "volume",
+            preferSingleOutcome: true,
+        });
+        if (fallbackCandidate) {
+            title = fallbackCandidate.title || fallbackCandidate.eventTitle;
+            keywords = keywords || title;
+            polymarketSlug = polymarketSlug || fallbackCandidate.slug;
+        }
+    }
+    if (!resolvedPolymarket) {
+        resolvedPolymarket = await resolveMarketReference({
+            slug: polymarketSlug || undefined,
+            marketQuery: title || undefined,
+        });
+    }
     const searchQueries = buildKalshiSearchQueries({
-        title,
-        keywords,
-        polymarketSlug,
+        title: title || undefined,
+        keywords: keywords || undefined,
+        polymarketSlug: polymarketSlug || undefined,
     });
     const searchQuery = searchQueries[0] || "";
     if (!searchQuery || searchQueries.length === 0) {
@@ -10588,7 +12178,7 @@ async function handleSearchOnKalshi(args) {
                 noOutcomeMeans: '', // Will be computed after fetching rules
             };
         })
-            .filter(r => r.matchScore > 0.15)
+            .filter(r => r.matchScore > 0.25)
             .sort((a, b) => b.matchScore - a.matchScore || b.volume24h - a.volume24h)
             .slice(0, limit);
         // Fetch rules for top matches (rules_primary is only in individual market endpoint)
@@ -10633,12 +12223,55 @@ async function handleSearchOnKalshi(args) {
 3. Example: If Kalshi YES means "Court rules IN FAVOR" and Polymarket YES means "Court rules AGAINST", then Kalshi YES ≈ Polymarket NO
 4. Only compare prices AFTER confirming outcomes align!`
             : null;
+        let polymarketMarket = null;
+        if (resolvedPolymarket) {
+            try {
+                const [efficiencyData, rulesData] = await Promise.all([
+                    workflowExtractToolData(await handleCheckMarketEfficiency({
+                        conditionId: resolvedPolymarket.conditionId,
+                        slug: resolvedPolymarket.slug || undefined,
+                    }), "check_market_efficiency"),
+                    workflowExtractToolData(await handleCheckMarketRules({
+                        conditionId: resolvedPolymarket.conditionId,
+                        slug: resolvedPolymarket.slug || undefined,
+                    }), "check_market_rules"),
+                ]);
+                const yesOutcome = workflowObjectArray(efficiencyData.outcomes).find((outcome) => typeof outcome.name === "string" &&
+                    outcome.name.toUpperCase() === "YES");
+                const rulesSummary = workflowObject(rulesData.rulesSummary);
+                polymarketMarket = {
+                    title: resolvedPolymarket.marketTitle,
+                    slug: resolvedPolymarket.slug || polymarketSlug || "",
+                    conditionId: resolvedPolymarket.conditionId,
+                    url: getPolymarketUrl(resolvedPolymarket.slug || polymarketSlug, resolvedPolymarket.conditionId),
+                    currentYesPrice: workflowToNumber(yesOutcome?.price, 0),
+                    resolutionSource: typeof rulesData.resolutionSource === "string"
+                        ? rulesData.resolutionSource
+                        : "",
+                    resolvesYesIf: typeof rulesSummary.resolvesYesIf === "string"
+                        ? rulesSummary.resolvesYesIf
+                        : "",
+                };
+            }
+            catch {
+                polymarketMarket = {
+                    title: resolvedPolymarket.marketTitle,
+                    slug: resolvedPolymarket.slug || polymarketSlug || "",
+                    conditionId: resolvedPolymarket.conditionId,
+                    url: getPolymarketUrl(resolvedPolymarket.slug || polymarketSlug, resolvedPolymarket.conditionId),
+                    currentYesPrice: 0,
+                    resolutionSource: "",
+                    resolvesYesIf: "",
+                };
+            }
+        }
         return successResult({
             searchedFor: {
                 title: title || "",
                 keywords: searchQuery,
                 polymarketSlug: polymarketSlug || "",
             },
+            polymarketMarket,
             kalshiResults: scoredResults,
             hint,
             comparisonNote: comparisonNote || "",
@@ -12151,6 +13784,8 @@ async function handleGetMarketOpenInterest(args) {
         return successResult({
             openInterest,
             totalOpenInterest: Number(totalOpenInterest.toFixed(2)),
+            changeRateAvailable: false,
+            note: "This upstream endpoint is a point-in-time open-interest snapshot. It can answer current OI level, but not a true rate-of-change without a second time-separated snapshot.",
             fetchedAt: new Date().toISOString(),
         });
     }
@@ -12160,26 +13795,103 @@ async function handleGetMarketOpenInterest(args) {
 }
 async function handleGetEventLiveVolume(args) {
     const rawEventId = args?.eventId;
-    const eventId = typeof rawEventId === "number"
+    let eventId = typeof rawEventId === "number"
         ? rawEventId
         : typeof rawEventId === "string" && rawEventId.trim().length > 0
             ? Number(rawEventId)
             : Number.NaN;
+    let eventTitle = "";
+    let eventSlug = typeof args?.slug === "string" ? args.slug.trim() : "";
+    const eventQuery = typeof args?.eventQuery === "string" ? args.eventQuery.trim() : "";
+    let selectionReason = Number.isFinite(eventId) && eventId > 0
+        ? "Used the provided eventId."
+        : eventSlug.length > 0
+            ? "Resolved from the provided slug."
+            : "";
     if (!Number.isFinite(eventId) || eventId <= 0) {
-        return errorResult("eventId is required");
+        if (eventSlug.length > 0) {
+            try {
+                const event = (await fetchGamma(`/events/slug/${eventSlug}`, 8_000));
+                const eventIdValue = event?.id !== undefined && event?.id !== null ? Number(event.id) : Number.NaN;
+                if (Number.isFinite(eventIdValue) && eventIdValue > 0) {
+                    eventId = eventIdValue;
+                    eventTitle = event.title || "";
+                    selectionReason = "Resolved eventId from the provided slug.";
+                }
+            }
+            catch {
+                // fall through to broader resolution
+            }
+        }
+    }
+    if ((!Number.isFinite(eventId) || eventId <= 0) && eventQuery.length > 0) {
+        try {
+            const searchData = workflowExtractToolData(await handleSearchAndGetOutcomes({ query: eventQuery }), "search_and_get_outcomes");
+            if (typeof searchData.eventSlug === "string" && searchData.eventSlug.trim().length > 0) {
+                eventSlug = searchData.eventSlug.trim();
+                const event = (await fetchGamma(`/events/slug/${eventSlug}`, 8_000));
+                const eventIdValue = event?.id !== undefined && event?.id !== null ? Number(event.id) : Number.NaN;
+                if (Number.isFinite(eventIdValue) && eventIdValue > 0) {
+                    eventId = eventIdValue;
+                    eventTitle =
+                        typeof searchData.eventTitle === "string" && searchData.eventTitle.trim().length > 0
+                            ? searchData.eventTitle
+                            : event.title || "";
+                    selectionReason = "Resolved the target event from the provided eventQuery.";
+                }
+            }
+        }
+        catch {
+            // fall through to fallback
+        }
+    }
+    if (!Number.isFinite(eventId) || eventId <= 0) {
+        const fallbackCandidate = await resolveFallbackTopMarketCandidate({
+            sortBy: "volume",
+            preferMultiOutcome: true,
+        });
+        if (fallbackCandidate) {
+            const fallbackEventId = Number(fallbackCandidate.eventId);
+            if (Number.isFinite(fallbackEventId) && fallbackEventId > 0) {
+                eventId = fallbackEventId;
+                eventSlug = fallbackCandidate.slug;
+                eventTitle = fallbackCandidate.eventTitle;
+                selectionReason =
+                    "No explicit event identifier was supplied, so the tool used the strongest live multi-outcome fallback event.";
+            }
+        }
+    }
+    if (!Number.isFinite(eventId) || eventId <= 0) {
+        return errorResult("eventId, slug, or eventQuery is required");
     }
     try {
+        let eventDetail = null;
+        if (eventSlug.length > 0) {
+            try {
+                eventDetail = (await fetchGamma(`/events/slug/${eventSlug}`, 8_000));
+            }
+            catch {
+                eventDetail = null;
+            }
+        }
         const liveVolumeResponse = (await fetchDataApi(`/live-volume?id=${eventId}`));
         const first = Array.isArray(liveVolumeResponse)
             ? liveVolumeResponse[0]
             : liveVolumeResponse;
+        const firstRecord = workflowObject(first);
         const markets = Array.isArray(first?.markets)
             ? first.markets.map((row) => {
                 const value = Number(row.value || 0);
                 const safeTotal = Number(first?.total || 0);
+                const matchedMarket = eventDetail?.markets?.find((market) => typeof market.conditionId === "string" &&
+                    market.conditionId === row.market) || null;
                 return {
                     market: row.market || "",
                     conditionId: row.market || "",
+                    title: matchedMarket?.question ||
+                        matchedMarket?.title ||
+                        matchedMarket?.groupItemTitle ||
+                        "",
                     value,
                     shareOfEventTotal: Number.isFinite(safeTotal) && safeTotal > 0 ? Number((value / safeTotal).toFixed(6)) : 0,
                 };
@@ -12192,10 +13904,16 @@ async function handleGetEventLiveVolume(args) {
             : "No live-volume breakdown is currently available for share calculations. Do not infer top submarkets or percentage shares from this response.";
         return successResult({
             eventId,
+            eventTitle: eventTitle ||
+                eventDetail?.title ||
+                (typeof firstRecord.eventTitle === "string" ? firstRecord.eventTitle : "") ||
+                "",
+            eventSlug,
             total: Number.isFinite(total) ? Number(total.toFixed(2)) : 0,
             markets,
             volumeBreakdownAvailable,
             warning,
+            selectionReason,
             fetchedAt: new Date().toISOString(),
         });
     }
@@ -12754,19 +14472,45 @@ async function handleAnalyzeTopHolders(args) {
     });
 }
 async function handleAnalyzeEventWhaleBreakdown(args) {
-    let slug = args?.slug;
-    const marketQuery = args?.marketQuery;
+    let slug = typeof args?.slug === "string" ? args.slug.trim() : "";
+    const marketQuery = typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
     const maxOutcomes = Math.min(args?.maxOutcomes || 10, 20);
+    let selectionReason = slug.length > 0 ? "Used the provided event slug." : "";
     if (!slug && !marketQuery) {
-        return errorResult("Either 'slug' or 'marketQuery' is required. Provide an event slug (e.g., '2026-fifa-world-cup-winner-595') or a natural-language query (e.g., '2026 FIFA World Cup winner').");
+        const fallbackCandidate = await resolveFallbackTopMarketCandidate({
+            sortBy: "volume",
+            preferMultiOutcome: true,
+        });
+        if (!fallbackCandidate?.slug) {
+            return errorResult("Either 'slug' or 'marketQuery' is required. Provide an event slug (e.g., '2026-fifa-world-cup-winner-595') or a natural-language query (e.g., '2026 FIFA World Cup winner').");
+        }
+        slug = fallbackCandidate.slug;
+        selectionReason =
+            "No explicit event reference was supplied, so the tool analyzed the strongest live multi-outcome fallback event.";
     }
     try {
         if (!slug && marketQuery) {
-            const searchResult = await handleSearchAndGetOutcomes({ query: marketQuery });
-            const searchData = JSON.parse(searchResult.content.at(0)?.text || "{}");
-            slug = searchData.eventSlug;
+            const resolvedEvent = await workflowResolveEventDataForAnalysis({
+                eventQuery: marketQuery,
+                sortBy: "volume",
+            });
+            const searchData = resolvedEvent.eventData;
+            slug =
+                typeof searchData.eventSlug === "string" ? searchData.eventSlug.trim() : "";
             if (!slug) {
-                return errorResult(`Could not resolve an event from query: "${marketQuery}". Try providing the event slug directly.`);
+                const fallbackCandidate = await resolveFallbackTopMarketCandidate({
+                    sortBy: "volume",
+                    preferMultiOutcome: true,
+                });
+                if (!fallbackCandidate?.slug) {
+                    return errorResult(`Could not resolve an event from query: "${marketQuery}". Try providing the event slug directly.`);
+                }
+                slug = fallbackCandidate.slug;
+                selectionReason =
+                    "The event query did not map cleanly, so the tool analyzed the strongest live multi-outcome fallback event.";
+            }
+            else {
+                selectionReason = resolvedEvent.selectionReason;
             }
         }
         // Fetch the event with all its markets
@@ -12820,7 +14564,7 @@ async function handleAnalyzeEventWhaleBreakdown(args) {
                     if (holdersResult.isError) {
                         return null;
                     }
-                    const holdersData = JSON.parse(holdersResult.content[0].text);
+                    const holdersData = workflowExtractToolData(holdersResult, "get_top_holders");
                     const topHolders = workflowObject(holdersData.topHolders);
                     const yesHolders = workflowObjectArray(topHolders.yes);
                     const positionValueSummary = workflowObject(holdersData.positionValueSummary);
@@ -12925,6 +14669,7 @@ async function handleAnalyzeEventWhaleBreakdown(args) {
                 confidence,
             } : null,
             smartMoneyConsensus,
+            selectionReason,
             note: `Analyzed ${whaleResults.length} of ${totalMarketsInEvent} markets. Whale totals and whale counts use the full deep holder scan for each outcome; returned holder samples may still be truncated for payload size. The outcome with the most whale money suggests smart money's pick.`,
             fetchedAt: new Date().toISOString(),
         });

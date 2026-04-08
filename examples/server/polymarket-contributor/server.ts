@@ -2275,6 +2275,16 @@ Do not prefetch get_top_markets or call analyze_top_holders separately unless th
     inputSchema: {
       type: "object" as const,
       properties: {
+        conditionId: {
+          type: "string",
+          description:
+            "Direct market condition ID when you already resolved the target market.",
+        },
+        slug: {
+          type: "string",
+          description:
+            "Direct market or event slug when you already resolved the target market.",
+        },
         marketQuery: {
           type: "string",
           description: "Natural-language market reference to analyze (preferred when the user names a market)",
@@ -8063,10 +8073,10 @@ async function handleCheckMarketEfficiency(
   const marketQuery =
     typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
   let selectionReason =
-    slug.length > 0
-      ? "Used the provided slug."
-      : conditionId.length > 0
-        ? "Used the provided conditionId."
+    conditionId.length > 0
+      ? "Used the provided conditionId."
+      : slug.length > 0
+        ? "Used the provided slug."
         : "";
   const genericMarketQuery =
     marketQuery.length > 0 && isGenericMarketReferenceQuery(marketQuery);
@@ -8104,15 +8114,7 @@ async function handleCheckMarketEfficiency(
   // Get market data
   let market: GammaMarket | undefined;
 
-  if (slug) {
-    const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
-    if (!event || !event.markets || event.markets.length === 0) {
-      return errorResult(`Event not found: ${slug}`);
-    }
-    market = getRepresentativeGammaMarket(event, {
-      preference: "tradable",
-    }) ?? event.markets[0];
-  } else {
+  if (conditionId) {
     // Query by conditionId - use Gamma /markets?condition_ids= for direct lookup
     // and CLOB API in parallel for token data. This replaces the old approach of
     // brute-force searching through 100+50 events which caused MCP timeouts.
@@ -8142,6 +8144,20 @@ async function handleCheckMarketEfficiency(
     if (!market) {
       return errorResult(`Market not found for conditionId: ${conditionId}`);
     }
+  }
+
+  if (!market && slug) {
+    const event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
+    if (!event || !event.markets || event.markets.length === 0) {
+      return errorResult(`Event not found: ${slug}`);
+    }
+    market = getRepresentativeGammaMarket(event, {
+      preference: "tradable",
+    }) ?? event.markets[0];
+  }
+
+  if (!market) {
+    return errorResult("Market not found");
   }
 
   // Get prices for all outcome tokens
@@ -8766,10 +8782,10 @@ async function handleCheckMarketRules(
   const marketQuery =
     typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
   let selectionReason =
-    slug.length > 0
-      ? "Used the provided slug."
-      : conditionId.length > 0
-        ? "Used the provided conditionId."
+    conditionId.length > 0
+      ? "Used the provided conditionId."
+      : slug.length > 0
+        ? "Used the provided slug."
         : "";
   const genericMarketQuery =
     marketQuery.length > 0 && isGenericMarketReferenceQuery(marketQuery);
@@ -8803,9 +8819,7 @@ async function handleCheckMarketRules(
   // Get the event
   let event: GammaEvent | undefined;
 
-  if (slug) {
-    event = (await fetchGamma(`/events/slug/${slug}`, 8000)) as GammaEvent;
-  } else {
+  if (conditionId) {
     // Use Gamma /markets?condition_ids= for direct market lookup
     // PERF: Replaces brute-force search through 100+50 events
     try {
@@ -8822,8 +8836,12 @@ async function handleCheckMarketRules(
         } as GammaEvent;
       }
     } catch {
-      return errorResult(`Market not found for conditionId: ${conditionId}`);
+      // Fall through to slug-based lookup below when available.
     }
+  }
+
+  if (!event && slug) {
+    event = (await fetchGamma(`/events/slug/${slug}`, 8000)) as GammaEvent;
   }
 
   if (!event) {
@@ -11714,6 +11732,9 @@ async function handleAnalyzeEventOutcomeLiquidity(
 async function handleAnalyzeSingleMarketWhales(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
+  const conditionIdInput =
+    typeof args?.conditionId === "string" ? args.conditionId.trim() : "";
+  const slugInput = typeof args?.slug === "string" ? args.slug.trim() : "";
   const marketQuery =
     typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
   const category = typeof args?.category === "string" ? args.category.trim() : "";
@@ -11723,13 +11744,22 @@ async function handleAnalyzeSingleMarketWhales(
 
   try {
     let resolved =
-      marketQuery.length > 0 && !genericMarketQuery
-        ? await resolveMarketReference({ marketQuery })
-        : null;
+      conditionIdInput.length > 0 || slugInput.length > 0
+        ? await resolveMarketReference({
+            conditionId: conditionIdInput || undefined,
+            slug: slugInput || undefined,
+          })
+        : marketQuery.length > 0 && !genericMarketQuery
+          ? await resolveMarketReference({ marketQuery })
+          : null;
     let selectionReason =
-      marketQuery.length > 0 && !genericMarketQuery
-        ? "Resolved directly from the provided marketQuery."
-        : "";
+      conditionIdInput.length > 0
+        ? "Used the provided conditionId."
+        : slugInput.length > 0
+          ? "Used the provided slug."
+          : marketQuery.length > 0 && !genericMarketQuery
+            ? "Resolved directly from the provided marketQuery."
+            : "";
 
     if (!resolved && category.length > 0) {
       const discoveryData = workflowExtractToolData(
@@ -12860,7 +12890,6 @@ async function handleBuildMarketTradabilityMemo(
     const rulesData = workflowExtractToolData(
       await handleCheckMarketRules({
         conditionId: resolved.conditionId,
-        slug: resolved.slug,
       }),
       "check_market_rules"
     );
@@ -12873,7 +12902,6 @@ async function handleBuildMarketTradabilityMemo(
     const whaleData = workflowExtractToolData(
       await handleAnalyzeSingleMarketWhales({
         conditionId: resolved.conditionId,
-        slug: resolved.slug,
         hoursBack,
       }),
       "analyze_single_market_whales"
@@ -12881,7 +12909,6 @@ async function handleBuildMarketTradabilityMemo(
     const activityData = workflowExtractToolData(
       await handleSummarizeLiveMarketActivity({
         conditionId: resolved.conditionId,
-        slug: resolved.slug,
         tradeLimit: 40,
       }),
       "summarize_live_market_activity"
