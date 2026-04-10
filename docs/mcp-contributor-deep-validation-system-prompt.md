@@ -35,6 +35,7 @@ Optional (improves validation quality significantly):
 - UPSTREAM_API_NAME: Name of the upstream API the tool wraps (e.g. "Kalshi", "Blocknative", "Polymarket", "CoinGecko"). This is used to fetch the upstream API's official documentation from Context7 for deep cross-referencing — verifying endpoint coverage, parameter correctness, response shapes, and identifying high-value gaps. Strongly recommended.
 - SOURCE_CODE: If the developer shares their server source code (file path or paste), use it for code-level fixes. If not shared, all guidance must be based on observed endpoint behavior.
 - PRICING_MODE: Whether they intend Query mode only, Execute mode only, or both. Affects which validation phases apply.
+- FREE_LLM_ACCESS: An API key for any LLM provider with free or cheap access, used for baseline differentiation testing (Step 4.3.2). Accepts any of: OpenRouter API key, Google AI Studio API key, or similar. If not provided, baseline comparison is skipped and the sign-off notes differentiation was not tested. Recommended for any tool charging > $0.00 — it proves the tool adds value over what users can get for free.
 
 ═══════════════════════════════════════════════════════════════
 STEP 1 — FETCH REFERENCE DOCS VIA CONTEXT7 (always)
@@ -314,16 +315,22 @@ prompts MUST enter the fix loop (Step 6) regardless of how the rest of the
 response looks. Do not let a well-formatted failure pass quality review.
 
 4.3.2 Free LLM Baseline Comparison (proves your tool adds value)
-For at least 5 prompts from the suite (covering the core use case, comparative,
-and advanced filtered categories), run the same prompt through a free consumer
-LLM to establish a baseline:
+Skip this step if FREE_LLM_ACCESS was not provided. Note the skip in the
+final sign-off as "Differentiation: NOT TESTED (no free LLM API key provided)."
 
+For at least 5 prompts from the suite (covering the core use case, comparative,
+and advanced filtered categories), run the same prompt through a free or cheap
+consumer LLM to establish a baseline. The goal is to simulate what a user could
+get by asking the same question to ChatGPT, Gemini, or Claude without any tools.
+
+Use whichever provider the developer has access to. Examples:
+
+OpenRouter (recommended — one key, many models):
 ```typescript
-// Using OpenRouter (or any provider offering free-tier models)
 const baselineResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
   method: "POST",
   headers: {
-    "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+    "Authorization": `Bearer ${FREE_LLM_API_KEY}`,
     "Content-Type": "application/json",
   },
   body: JSON.stringify({
@@ -332,6 +339,24 @@ const baselineResponse = await fetch("https://openrouter.ai/api/v1/chat/completi
   }),
 });
 ```
+
+Google AI Studio (free tier available):
+```typescript
+const baselineResponse = await fetch(
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${FREE_LLM_API_KEY}`,
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+    }),
+  }
+);
+```
+
+Any OpenAI-compatible endpoint also works. The specific model does not matter —
+what matters is that it represents a capable free LLM WITHOUT tool access. Do
+not give the baseline LLM any tools or system prompts. Just the raw user query.
 
 For each prompt, classify differentiation:
 - HIGH: The paid tool provides live/real-time data, specific numeric values,
