@@ -296,8 +296,64 @@ Then rerun the same prompt with `responseShape: "evidence_only"` / `response_sha
 
 If validation targets a local or preview runtime on the developer's machine, prefer `answerModelId: "glm-turbo-model"` for replay runs unless a deliberate model comparison is requested.
 
+4.3.1 Deterministic Failure Gate (run BEFORE subjective quality review)
+For each response, apply these hard-fail checks. A response is an automatic failure
+if ANY of the following are true — no subjective review can override these:
+
+- Response text contains refusal language: "I am unable to", "I cannot provide",
+  "I'm unable to", "I'm not able to", "I do not have", "no data available",
+  "could not fulfill"
+- Response text contains resolution errors: "slug not found", "event not found",
+  "market not found", "could not resolve", "not found"
+- Developer trace shows zero tool calls (the tool was never invoked)
+- HTTP status was not 200 or the response body contains a top-level "error" field
+- The response is a generic apology or disclaimer with no tool-sourced data
+
+Tag each auto-failed response with the specific marker that triggered it. These
+prompts MUST enter the fix loop (Step 6) regardless of how the rest of the
+response looks. Do not let a well-formatted failure pass quality review.
+
+4.3.2 Free LLM Baseline Comparison (proves your tool adds value)
+For at least 5 prompts from the suite (covering the core use case, comparative,
+and advanced filtered categories), run the same prompt through a free consumer
+LLM to establish a baseline:
+
+```typescript
+// Using OpenRouter (or any provider offering free-tier models)
+const baselineResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  method: "POST",
+  headers: {
+    "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    model: "google/gemini-3-flash-preview",
+    messages: [{ role: "user", content: prompt }],
+  }),
+});
+```
+
+For each prompt, classify differentiation:
+- HIGH: The paid tool provides live/real-time data, specific numeric values,
+  structured evidence, or actionable analysis that the free LLM cannot produce
+  (e.g. current prices, on-chain data, live order book state)
+- MODERATE: The paid tool provides better/more specific data but the free LLM
+  gives a partially useful answer (e.g. general market context vs specific odds)
+- LOW: The free LLM answer is roughly equivalent to the paid tool response
+
+Record the classification for each tested prompt.
+
+Reality check: If most prompts are LOW differentiation, the tool may not provide
+enough value over free alternatives to justify marketplace pricing. This is not a
+validation failure — it is a product signal. Flag it to the developer so they can
+strengthen their tool's unique value (e.g. add real-time data, deeper analytics,
+or proprietary computations that free LLMs cannot replicate).
+
+4.3.3 Record Results
 Record per prompt:
 - Pass/Fail (meaningful answer vs generic error/apology)
+- Auto-fail marker (if deterministic gate triggered, which marker)
+- Differentiation vs free baseline (HIGH/MODERATE/LOW, if tested)
 - Response text quality (specific data, not vague)
 - Envelope quality when structured shapes are used:
   - `summary`
@@ -328,14 +384,21 @@ for await (const event of client.query.stream({
 Verify done.result.developerTrace contains the aggregated trace.
 
 4.5 Quality Gate
-A prompt FAILS if:
-- The response is a generic apology/error instead of real data
+A prompt FAILS if any of these are true:
+
+Hard failures (deterministic, from Step 4.3.1 — cannot be overridden):
+- The deterministic failure gate triggered (refusal language, resolution error, zero tool calls, HTTP error)
+
+Soft failures (require judgment):
 - The response doesn't use the target tool (wrong tool routed)
 - Developer trace shows >3 retries or self-healing loops
 - The answer is factually wrong or missing key data the tool should provide
 - `answer_with_evidence` or `evidence_only` is missing the evidence fields the tool claims to support
 
-If any prompt fails, the tool enters the fix loop (Step 6) before re-validation.
+Value flag (not a hard failure but report to developer):
+- The prompt's paid response shows LOW differentiation vs the free baseline
+
+If any prompt fails (hard or soft), the tool enters the fix loop (Step 6) before re-validation.
 
 ═══════════════════════════════════════════════════════════════
 STEP 5 — EXECUTE MODE MARKETPLACE VALIDATION (post-submission + execute pricing enabled)
@@ -435,6 +498,68 @@ Robustness rules (anti-brittle — a pass is incomplete without these):
   reflect them accurately
 
 ═══════════════════════════════════════════════════════════════
+STEP 7 — DESCRIPTION UPDATE VIA SDK (post-submission, after validation passes)
+═══════════════════════════════════════════════════════════════
+
+Once all validation gates pass, push the optimized marketplace description to
+the live listing. The description generated in Step 3 is a starting point — now
+improve it using validated data from Steps 4-5.
+
+7.1 Refine the Description Using Validation Results
+Update the marketplace listing from Step 3 with validated information:
+- "Try asking" section: Replace any prompts that FAILED validation with ones
+  that PASSED. Prioritize prompts that scored HIGH differentiation vs the free
+  baseline (Step 4.3.2). These are the tool's strongest selling points.
+- Features section: If validation revealed capabilities not captured in the
+  original features list, add them. If any claimed features failed validation,
+  remove or qualify them.
+- Agent tips: Update with any learnings from the developer trace analysis
+  (e.g. "Use the 'limit' parameter to control response size for faster queries").
+
+7.2 Push via SDK
+If the tool is already listed and CONTEXT_API_KEY is available:
+
+TypeScript:
+```typescript
+import { ContextClient } from "@ctxprotocol/sdk";
+
+const client = new ContextClient({ apiKey: CONTEXT_API_KEY });
+
+await client.developer.updateTool(TOOL_ID, {
+  description: generatedDescription,
+});
+```
+
+Python:
+```python
+from ctxprotocol import ContextClient
+
+client = ContextClient(api_key=CONTEXT_API_KEY)
+
+await client.developer.update_tool(TOOL_ID, description=generated_description)
+```
+
+Record whether the update succeeded and the timestamp.
+
+If the tool is NOT yet listed (pre-submission stage), store the optimized
+description for the developer to paste into the contribute form. This is not
+a failure — the description is ready for submission.
+
+7.3 Verify the Update
+After pushing, optionally verify the listing updated correctly:
+```typescript
+const tools = await client.discovery.search({
+  query: TOOL_NAME_OR_ID,
+  mode: "query",
+});
+// Confirm the description in the search result matches what was pushed
+```
+
+Note: Marketplace search embeddings may take a few minutes to refresh after
+a description update. If the search result still shows the old description,
+wait and retry.
+
+═══════════════════════════════════════════════════════════════
 FINAL SIGN-OFF
 ═══════════════════════════════════════════════════════════════
 
@@ -444,6 +569,10 @@ Output this exact structure. Mark N/A for phases that don't apply to this develo
   - <1-3 bullets: connection, schema quality, Data Broker Standard>
 - Direct endpoint testing: PASS/FAIL
   - <1-3 bullets: smoke test results, response quality>
+- Deterministic failure gate: PASS/FAIL/N/A
+  - <count of auto-failed responses and which markers triggered>
+- Free baseline differentiation: HIGH/MODERATE/LOW/N/A
+  - <summary: how many prompts beat the free LLM, how many didn't>
 - Query mode marketplace: PASS/FAIL/N/A
   - <1-3 bullets: answer quality, trace health, cost>
   - <prompt-by-prompt summary if applicable>
@@ -451,13 +580,17 @@ Output this exact structure. Mark N/A for phases that don't apply to this develo
   - <1-3 bullets: method coverage, pricing, response shapes>
 - Marketplace listing: PASS/FAIL
   - <1-3 bullets: description quality, Try asking coverage, pricing>
+- Description update: PUSHED/STORED/N/A
+  - <whether description was pushed via SDK or stored for manual submission>
 
 Do not claim PASS if:
 - Any smoke test tool returned empty/error responses
+- Any response triggered the deterministic failure gate (refusal language, zero tool calls, resolution errors, HTTP errors)
 - Any Query mode prompt from the "Try asking" suite produced a generic apology instead of real data
 - Developer traces show excessive retries/loops (>3 retries per prompt average)
 - outputSchema is missing on any tool (Data Broker Standard violation)
 - The "Try asking" questions don't cover all capability clusters discovered in Step 2
+- More than 50% of tested prompts show LOW differentiation vs the free baseline (value proposition concern — flag to the developer even if other gates pass)
 
 If validation is blocked (e.g. tool not yet listed, insufficient API balance, tool not staked), state that explicitly and mark the blocked phase as BLOCKED with the reason.
 ```
