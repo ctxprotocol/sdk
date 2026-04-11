@@ -240,6 +240,14 @@ export interface SearchOptions {
 
   /** Convenience switch to exclude slow methods in query mode */
   excludeSlow?: boolean;
+
+  /**
+   * Restrict discovery to the caller's favorite tools.
+   * - `true`: force favorites-only discovery for this request
+   * - `false`: force unrestricted discovery for this request
+   * - omitted: use the account-level default from Context settings
+   */
+  favoritesOnly?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -597,6 +605,15 @@ export interface QueryOptions {
    * (Manual Mode).
    */
   tools?: string[];
+
+  /**
+   * Restrict auto-discovery to the caller's favorite tools.
+   * Ignored when `tools` is provided because manual tool selection wins.
+   * - `true`: force favorites-only discovery for this request
+   * - `false`: force unrestricted discovery for this request
+   * - omitted: use the account-level default from Context settings
+   */
+  favoritesOnly?: boolean;
 
   /**
    * Resume a prior durable query attempt from its latest checkpoint.

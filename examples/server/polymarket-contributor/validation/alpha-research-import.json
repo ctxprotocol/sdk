@@ -1,681 +1,352 @@
 {
   "alphaCategories": [
     {
-      "name": "Live Quote Quality",
-      "whyItWins": "These prompts force the contributor to use live CLOB books, spreads, midpoints, and depth instead of static probability commentary. A free model cannot answer execution-quality questions without current Polymarket orderbooks.",
-      "exampleEntities": [
-        "US forces enter Iran by April 30?",
-        "Will Paris Saint-Germain FC win on 2026-04-08?",
-        "Will Congo DR win the 2026 FIFA World Cup?"
-      ]
+      "id": "discovery-screening",
+      "title": "Discovery And Screening",
+      "thesis": "Use live event structure and ranked contract families to surface which specific Polymarket submarkets are actually active, still live, and worth deeper analysis."
     },
     {
-      "name": "Whale Positioning And Holder Concentration",
-      "whyItWins": "These prompts depend on live wallet concentration, open interest, and recent tape to show whether a price is broadly supported or dominated by a few accounts. That is venue-native alpha, not web-searchable background knowledge.",
-      "exampleEntities": [
-        "Will the U.S. invade Iran before 2027?",
-        "Trump out as President by April 30?",
-        "Will Vicky D\u00e1vila win the 2026 Colombian presidential election?"
-      ]
+      "id": "quote-liquidity",
+      "title": "Quote Quality And Liquidity",
+      "thesis": "Live bid-ask spreads, merged depth, and exit slippage create alpha that generic models cannot infer from static training data."
     },
     {
-      "name": "Event Rotation And Flow Share",
-      "whyItWins": "These prompts ask which submarkets inside a named event are actually attracting flow and offering tradable quotes right now. That requires current event membership, outcome lists, and live quote comparisons across many related contracts.",
-      "exampleEntities": [
-        "US forces enter Iran by..?",
-        "US x Iran ceasefire by...?",
-        "What will WTI Crude Oil (WTI) hit in April 2026?"
-      ]
+      "id": "whale-positioning",
+      "title": "Whale Positioning",
+      "thesis": "Top-holder concentration and recent whale-vs-retail flow reveal where large wallets are leaning and whether conviction is broad or concentrated."
     },
     {
-      "name": "Neg-Risk And Parameter Edge",
-      "whyItWins": "These prompts exploit live market-parameter differences such as neg-risk support, quote structure, and related-contract consistency. They are hard to fake without fresh venue data and current books.",
-      "exampleEntities": [
-        "2026 FIFA World Cup Winner ",
-        "Will there be no change in Fed interest rates after the April 2026 meeting?",
-        "Will the Fed decrease interest rates by 50+ bps after the April 2026 meeting?"
-      ]
+      "id": "event-structure",
+      "title": "Event Structure And Relative Value",
+      "thesis": "Multi-outcome events create intra-event pricing and tradability questions that require live sibling-contract comparison, not just single-market lookup."
     },
     {
-      "name": "Resolution Risk And Contract Semantics",
-      "whyItWins": "These prompts win by extracting exact contract language, timing, and resolution gotchas from live Polymarket metadata. Buyers care because bad semantic reads can dominate expected value.",
-      "exampleEntities": [
-        "Strait of Hormuz traffic returns to normal by end of April?",
-        "Will WTI Crude Oil (WTI) hit (HIGH) $200 in April?",
-        "Kharg Island no longer under Iranian control by April 15?"
-      ]
+      "id": "rules-risk",
+      "title": "Rules And Resolution Risk",
+      "thesis": "Resolution wording and edge-case gotchas often dominate whether a quoted price is actually tradable at face value."
     },
     {
-      "name": "Workflow-Grade Trade Selection",
-      "whyItWins": "These prompts require combining rules, liquidity, efficiency, holders, and activity into a tradability decision. That multi-step synthesis is much more valuable than a single quote lookup and is difficult for a baseline model to reproduce reliably.",
-      "exampleEntities": [
-        "Kharg Island no longer under Iranian control by April 15?",
-        "Rockets vs. Suns",
-        "The Masters - Winner "
-      ]
+      "id": "trading-parameters",
+      "title": "Trading Parameters",
+      "thesis": "Tick size, fee rate, minimum order size, and neg-risk settings shape actual execution quality beyond headline probability."
+    },
+    {
+      "id": "tape-oi",
+      "title": "Tape And Open Interest",
+      "thesis": "Recent trade flow plus current open interest helps distinguish fresh conviction from churn in active contracts."
+    },
+    {
+      "id": "workflow-synthesis",
+      "title": "Workflow Synthesis",
+      "thesis": "The strongest marketplace value comes from combining live rules, quotes, liquidity, whales, and event context into a concrete trading memo."
     }
   ],
   "mustWinPrompts": [
     {
-      "id": "pm-001",
-      "prompt": "For the 'US forces enter Iran by April 30?' market, what are the current best bid, best ask, midpoint, quoted spread, and estimated slippage to buy or sell $25,000 notional right now?",
+      "id": "q1",
+      "prompt": "Within the 'Paris Saint-Germain FC vs. Liverpool FC' event, what are the current implied probabilities, best bids, best asks, and spreads for 'Will Paris Saint-Germain FC win on 2026-04-08?', 'Will Paris Saint-Germain FC vs. Liverpool FC end in a draw?', and 'Will Liverpool FC win on 2026-04-08?'?",
       "mustWin": true,
       "showcaseCandidate": true,
-      "category": "single-market deep dive",
-      "alphaCategory": "Live Quote Quality",
-      "whyUsersCare": "Execution quality matters more than the headline probability when a trader wants to move real size in the most active market on the venue.",
-      "whyWebSearchBaselineWeak": "Web search cannot see the current CLOB book, midpoint, or depth needed for slippage math.",
-      "upstreamDataFields": [
-        "conditionId",
-        "bids[].price",
-        "bids[].size",
-        "asks[].price",
-        "asks[].size",
-        "midpoint",
-        "spread",
-        "outcomePrices",
-        "volume24hr"
-      ],
-      "expectedMethods": [
-        "get_orderbook",
-        "get_spreads",
-        "get_midpoints",
-        "analyze_market_liquidity"
-      ],
+      "category": "event-level quotes",
+      "alphaCategory": "Event Structure And Relative Value",
+      "whyUsersCare": "A buyer wants the whole live same-event quote board in one answer, not three separate contract lookups.",
+      "whyWebSearchBaselineWeak": "A generic model cannot inspect current same-event Polymarket quotes and spreads for all three outcomes.",
+      "difficulty": "lookup",
+      "groundedEntity": {
+        "type": "event",
+        "title": "Paris Saint-Germain FC vs. Liverpool FC",
+        "slug": "ucl-psg1-liv1-2026-04-08"
+      },
+      "answerabilityNote": "Gamma `/events/slug/{slug}` or contributor `get_event_by_slug` returns the event markets and token IDs; `compare_event_outcome_quotes` can then compute per-outcome `currentPrice`, `bestBid`, `bestAsk`, and `spread` from live quote data."
+    },
+    {
+      "id": "q2",
+      "prompt": "For the 'Will Paris Saint-Germain FC win on 2026-04-08?' market, how much merged depth is available right now and what slippage would a $1k, $5k, and $10k exit face?",
+      "mustWin": true,
+      "showcaseCandidate": true,
+      "category": "single-market liquidity",
+      "alphaCategory": "Quote Quality And Liquidity",
+      "whyUsersCare": "Execution quality matters more than the headline probability when trading real size into a live event market.",
+      "whyWebSearchBaselineWeak": "A free model cannot inspect the current CLOB book or compute live exit slippage from it.",
       "difficulty": "analysis",
       "groundedEntity": {
         "type": "market",
-        "slug": "us-forces-enter-iran-by-april-30-899",
-        "title": "US forces enter Iran by April 30?"
+        "title": "Will Paris Saint-Germain FC win on 2026-04-08?",
+        "slug": "ucl-psg1-liv1-2026-04-08-psg1"
       },
-      "answerabilityNote": "get_orderbook/analyze_market_liquidity call the CLOB GET /book endpoint for the market conditionId and read bids/asks; get_spreads and get_midpoints map to GET /spread and GET /midpoint. Slippage is computable from cumulative size across the returned asks and bids."
+      "answerabilityNote": "Resolve the market via Gamma `/markets/slug/{slug}` or event markets from `/events/slug/{slug}` to get the token ID, then use merged CLOB book data. `analyze_market_liquidity` exposes `bestBid`, `bestAsk`, depth, and `whaleCost.sell1k/sell5k/sell10k`."
     },
     {
-      "id": "pm-002",
-      "prompt": "For the 'Will the U.S. invade Iran before 2027?' market, how concentrated are top holders, how fast is open interest changing, and does recent whale flow agree with the current 24-cent price?",
+      "id": "q3",
+      "prompt": "Within the '2026 FIFA World Cup Winner ' event, compare Spain, France, and England on current implied probability, current spread, and one-week price change.",
       "mustWin": true,
       "showcaseCandidate": false,
-      "category": "single-market deep dive",
-      "alphaCategory": "Whale Positioning And Holder Concentration",
-      "whyUsersCare": "A trader wants to know whether the price is being set by broad participation or by a few large wallets that can reverse the market.",
-      "whyWebSearchBaselineWeak": "A baseline model cannot inspect live holder concentration, open interest, or venue-native whale flow from current market data.",
-      "upstreamDataFields": [
-        "slug",
-        "outcomePrices",
-        "openInterest",
-        "holderAddress",
-        "holderSize",
-        "holderShare",
-        "trade.price",
-        "trade.size",
-        "trade.timestamp",
-        "trade.side"
-      ],
-      "expectedMethods": [
-        "analyze_single_market_whales",
-        "analyze_whale_flow",
-        "get_market_open_interest",
-        "get_top_holders"
-      ],
+      "category": "event-level relative value",
+      "alphaCategory": "Event Structure And Relative Value",
+      "whyUsersCare": "Same-event cross-outcome comparison is how a trader spots which favorites are rich, cheap, or simply easier to trade.",
+      "whyWebSearchBaselineWeak": "A baseline model cannot fuse live same-event quote data with current venue-specific price history.",
       "difficulty": "analysis",
       "groundedEntity": {
-        "type": "market",
-        "slug": "will-the-us-invade-iran-before-2027",
-        "title": "Will the U.S. invade Iran before 2027?"
+        "type": "event",
+        "title": "2026 FIFA World Cup Winner ",
+        "slug": "2026-fifa-world-cup-winner-595"
       },
-      "answerabilityNote": "search_markets can resolve the slug via Gamma GET /public-search or GET /markets; analyze_single_market_whales/analyze_whale_flow then use the contributor's live trade, holder, and open-interest surfaces with price/size/timestamp, holder balances, and openInterest to measure concentration and whether flow is whale-led."
+      "answerabilityNote": "Gamma `/events/slug/{slug}` or `search_and_get_outcomes` provides the event outcomes and token IDs; `compare_event_outcome_quotes` joins current quote fields with `get_price_history` summary fields over `interval=1w`."
     },
     {
-      "id": "pm-003",
-      "prompt": "For the 'Strait of Hormuz traffic returns to normal by end of April?' market, what resolution language, deadline, and current price make this a high- or low-rules-risk trade?",
+      "id": "q4",
+      "prompt": "Within the '2026 FIFA World Cup Winner ' event, which sampled outcomes currently look most tradable and which look headline-only among Spain, France, England, Switzerland, and South Korea?",
+      "mustWin": true,
+      "showcaseCandidate": true,
+      "category": "event tradability ranking",
+      "alphaCategory": "Event Structure And Relative Value",
+      "whyUsersCare": "Large multi-outcome boards hide big differences between visible prices and actually tradable markets.",
+      "whyWebSearchBaselineWeak": "Generic models cannot rank live event outcomes by spread, depth, slippage, and market quality.",
+      "difficulty": "analysis",
+      "groundedEntity": {
+        "type": "event",
+        "title": "2026 FIFA World Cup Winner ",
+        "slug": "2026-fifa-world-cup-winner-595"
+      },
+      "answerabilityNote": "`rank_event_tradability` resolves the event via Gamma event endpoints, then ranks named outcomes using live quote/liquidity fields such as `spreadCents`, `totalDepthUsd`, and `slippage5kPercent`."
+    },
+    {
+      "id": "q5",
+      "prompt": "Within the '2026 FIFA World Cup Winner ' event, which sampled outcome has the strongest whale backing right now among Spain, France, England, Switzerland, New Zealand, and South Korea?",
+      "mustWin": true,
+      "showcaseCandidate": false,
+      "category": "event whale analysis",
+      "alphaCategory": "Whale Positioning",
+      "whyUsersCare": "Buyers want to know where large wallets are concentrating across a crowded event board before trusting a favorite's price.",
+      "whyWebSearchBaselineWeak": "A free model cannot inspect current whale exposure across live sibling contracts in one event.",
+      "difficulty": "analysis",
+      "groundedEntity": {
+        "type": "event",
+        "title": "2026 FIFA World Cup Winner ",
+        "slug": "2026-fifa-world-cup-winner-595"
+      },
+      "answerabilityNote": "`analyze_event_whale_breakdown` resolves the event from Gamma discovery data and scans holder surfaces across outcome markets; it returns `whalesByOutcome[].totalWhaleValue`, `topWhalePosition`, and `whaleCount`."
+    },
+    {
+      "id": "q6",
+      "prompt": "Within the 'Iran x Israel/US conflict ends by...?' event, which date buckets are taking the biggest share of live trading right now, especially 'Iran x Israel/US conflict ends by April 15?' versus 'Iran x Israel/US conflict ends by April 30?' and 'Iran x Israel/US conflict ends by June 30?'",
+      "mustWin": true,
+      "showcaseCandidate": true,
+      "category": "event flow screening",
+      "alphaCategory": "Discovery And Screening",
+      "whyUsersCare": "Crowded event ladders are only useful if you can see which buckets are actually attracting live flow right now.",
+      "whyWebSearchBaselineWeak": "A baseline model cannot rank current event submarkets by live volume share inside the same Polymarket family.",
+      "difficulty": "analysis",
+      "groundedEntity": {
+        "type": "event",
+        "title": "Iran x Israel/US conflict ends by...?",
+        "slug": "iran-x-israelus-conflict-ends-by"
+      },
+      "answerabilityNote": "`get_event_by_slug` returns the numeric `event.id` plus child `markets[].conditionId`; `get_event_live_volume` then uses live volume fields `total`, `markets[].value`, and `markets[].shareOfEventTotal` to rank active buckets."
+    },
+    {
+      "id": "q7",
+      "prompt": "For the 'Iran x Israel/US conflict ends by April 15?' market, what are the current best bid, best ask, midpoint, spread, and vig-adjusted implied probabilities?",
+      "mustWin": true,
+      "showcaseCandidate": false,
+      "category": "single-market efficiency",
+      "alphaCategory": "Quote Quality And Liquidity",
+      "whyUsersCare": "A trader needs the live execution picture plus true implied odds before trusting a geopolitical time-bucket contract.",
+      "whyWebSearchBaselineWeak": "Generic models do not have the current book, midpoint, or vig-adjusted live probabilities for this contract.",
+      "difficulty": "lookup",
+      "groundedEntity": {
+        "type": "market",
+        "title": "Iran x Israel/US conflict ends by April 15?",
+        "slug": "iran-x-israelus-conflict-ends-by-april-15-618-586-982"
+      },
+      "answerabilityNote": "Gamma `/markets/slug/{slug}` or contributor resolution gives the market/conditionId; `check_market_efficiency` uses live outcome prices plus quote data to return `bestBid`, `bestAsk`, `midPrice`, `spread`, `vig`, and `trueProbabilities`."
+    },
+    {
+      "id": "q8",
+      "prompt": "For the 'Will the Iranian regime fall by April 30?' market, what exactly makes the contract resolve YES or NO, and what are the main resolution gotchas?",
       "mustWin": true,
       "showcaseCandidate": false,
       "category": "rules-risk",
-      "alphaCategory": "Resolution Risk And Contract Semantics",
-      "whyUsersCare": "Ambiguous resolution criteria can overwhelm a seemingly attractive probability, especially in geopolitics markets.",
-      "whyWebSearchBaselineWeak": "Search results may discuss the topic but do not expose the live contract wording, market deadline, or exact quote on Polymarket.",
-      "upstreamDataFields": [
-        "question",
-        "slug",
-        "description",
-        "outcomes",
-        "outcomePrices",
-        "endDate",
-        "active",
-        "closed"
-      ],
-      "expectedMethods": [
-        "check_market_rules",
-        "get_prices",
-        "search_markets"
-      ],
+      "alphaCategory": "Rules And Resolution Risk",
+      "whyUsersCare": "Resolution semantics can dominate expected value on politically charged contracts.",
+      "whyWebSearchBaselineWeak": "Search results may discuss the topic, but they do not expose the exact live contract wording and current venue metadata.",
+      "difficulty": "lookup",
+      "groundedEntity": {
+        "type": "market",
+        "title": "Will the Iranian regime fall by April 30?",
+        "slug": "will-the-iranian-regime-fall-by-april-30"
+      },
+      "answerabilityNote": "`check_market_rules` reads market metadata surfaced from Gamma market/event endpoints and returns rule-bearing fields like `description`, `resolutionSource`, `rulesSummary.resolvesYesIf`, `rulesSummary.resolvesNoIf`, and `potentialGotchas`."
+    },
+    {
+      "id": "q9",
+      "prompt": "For the 'Will the next Prime Minister of Hungary be Viktor Orb\u00e1n?' market, are top holders and recent trade flow aligned on YES or NO, or is there whale-versus-retail divergence?",
+      "mustWin": true,
+      "showcaseCandidate": false,
+      "category": "single-market whale analysis",
+      "alphaCategory": "Whale Positioning",
+      "whyUsersCare": "Holder concentration and flow divergence can show whether a price is broadly supported or whale-driven.",
+      "whyWebSearchBaselineWeak": "A free model cannot inspect current holder concentration and live trade-size buckets for this exact market.",
       "difficulty": "analysis",
       "groundedEntity": {
         "type": "market",
-        "slug": "strait-of-hormuz-traffic-returns-to-normal-by-april-30",
-        "title": "Strait of Hormuz traffic returns to normal by end of April?"
+        "title": "Will the next Prime Minister of Hungary be Viktor Orb\u00e1n?",
+        "slug": "will-the-next-prime-minister-of-hungary-be-viktor-orbn"
       },
-      "answerabilityNote": "check_market_rules/search_markets can resolve the named slug via Gamma GET /markets or GET /public-search and inspect market metadata including question, slug, outcomes, endDate, active/closed, and the contributor-exposed rules text; get_prices uses CLOB GET /price or GET /prices for the live quote."
+      "answerabilityNote": "`analyze_single_market_whales` combines recent trade data with holder scans for one live market and returns smart-money, flow-by-size, and divergence outputs grounded in current market data."
     },
     {
-      "id": "pm-004",
-      "prompt": "Within the 'US forces enter Iran by..?' event, which expiry bucket currently offers the cleanest execution for a directional trader: 'US forces enter Iran by April 30?' or 'US forces enter Iran by December 31?'",
+      "id": "q10",
+      "prompt": "For the 'Will the next Prime Minister of Hungary be P\u00e9ter Magyar?' market, how concentrated is the holder base and how much of each side is controlled by the top whales?",
+      "mustWin": true,
+      "showcaseCandidate": false,
+      "category": "holder concentration",
+      "alphaCategory": "Whale Positioning",
+      "whyUsersCare": "A concentrated book behaves differently from one supported by broad participation.",
+      "whyWebSearchBaselineWeak": "Generic models cannot inspect live per-side concentration and whale counts on the current venue.",
+      "difficulty": "analysis",
+      "groundedEntity": {
+        "type": "market",
+        "title": "Will the next Prime Minister of Hungary be P\u00e9ter Magyar?",
+        "slug": "will-the-next-prime-minister-of-hungary-be-pter-magyar"
+      },
+      "answerabilityNote": "`analyze_top_holders` or `get_top_holders` can answer this from holder surfaces; the contributor returns concentration fields like `top5YesPercent`, `top5NoPercent`, `whaleCount`, and `totalUniqueHolders`."
+    },
+    {
+      "id": "q11",
+      "prompt": "Inside the 'The Masters - Winner ' event, compare Xander Schauffele, Cameron Young, and Akshay Bhatia on current price, spread, and which one is easiest to exit size in.",
       "mustWin": true,
       "showcaseCandidate": true,
-      "category": "event-level analysis",
-      "alphaCategory": "Event Rotation And Flow Share",
-      "whyUsersCare": "Related expiry markets can carry very different spreads and depth, so choosing the wrong contract can destroy execution quality.",
-      "whyWebSearchBaselineWeak": "A baseline model cannot compare current books across all live event submarkets on Polymarket.",
-      "upstreamDataFields": [
-        "event.id",
-        "event.slug",
-        "market.slug",
-        "market.question",
-        "outcomePrices",
-        "bids[].price",
-        "asks[].price",
-        "spread",
-        "midpoint",
-        "volume24hr",
-        "endDate"
-      ],
-      "expectedMethods": [
-        "get_event_by_slug",
-        "get_event_outcomes",
-        "compare_event_outcome_quotes",
-        "analyze_event_outcome_liquidity"
-      ],
-      "difficulty": "synthesis",
+      "category": "event liquidity comparison",
+      "alphaCategory": "Quote Quality And Liquidity",
+      "whyUsersCare": "Visible outrights are not equally tradable, especially when a buyer wants to move size.",
+      "whyWebSearchBaselineWeak": "A free model cannot compare current same-event spread and exit-liquidity conditions across live golfer contracts.",
+      "difficulty": "analysis",
       "groundedEntity": {
         "type": "event",
-        "slug": "us-forces-enter-iran-by",
-        "title": "US forces enter Iran by..?"
+        "title": "The Masters - Winner ",
+        "slug": "the-masters-winner-2026"
       },
-      "answerabilityNote": "get_event_by_slug maps to Gamma GET /events/{id} after resolving the event slug from GET /events?active=true&closed=false; get_event_outcomes/compare_event_outcome_quotes then pair the event's child markets with CLOB GET /book, GET /midpoint, and GET /spread fields to compare execution quality across expiries."
+      "answerabilityNote": "Gamma `/events/slug/{slug}` provides the event outcomes and token IDs; `compare_event_outcome_quotes` covers pricing/spreads and `analyze_event_outcome_liquidity` adds `totalDepthUsd` and slippage fields."
     },
     {
-      "id": "pm-005",
-      "prompt": "Within the 'US x Iran ceasefire by...?' event, which live submarket is actually attracting tradable flow right now, and does 'US x Iran ceasefire by May 31?' dominate the event's whale attention?",
+      "id": "q12",
+      "prompt": "For the 'Will Paris Saint-Germain FC win on 2026-04-08?' market, what are the live trading parameters on the token, including tick size, fee rate, minimum order size, and whether negative risk is enabled?",
       "mustWin": true,
       "showcaseCandidate": false,
-      "category": "event-level analysis",
-      "alphaCategory": "Event Rotation And Flow Share",
-      "whyUsersCare": "Traders want to know where the real flow is inside a crowded event before copying a visible headline contract.",
-      "whyWebSearchBaselineWeak": "Web search cannot aggregate live event membership, current activity, and whale concentration across related Polymarket contracts.",
-      "upstreamDataFields": [
-        "event.id",
-        "event.slug",
-        "market.slug",
-        "market.question",
-        "volume24hr",
-        "outcomePrices",
-        "openInterest",
-        "holderAddress",
-        "holderSize"
-      ],
-      "expectedMethods": [
-        "get_event_by_slug",
-        "get_event_outcomes",
-        "summarize_live_market_activity",
-        "analyze_event_whale_breakdown"
-      ],
-      "difficulty": "synthesis",
+      "category": "market parameters",
+      "alphaCategory": "Trading Parameters",
+      "whyUsersCare": "Tick size, fees, and order minimums materially affect how tradable a market is in practice.",
+      "whyWebSearchBaselineWeak": "A generic model cannot inspect current venue-native trading parameters for the resolved token.",
+      "difficulty": "lookup",
       "groundedEntity": {
-        "type": "event",
-        "slug": "us-x-iran-ceasefire-by",
-        "title": "US x Iran ceasefire by...?"
+        "type": "market",
+        "title": "Will Paris Saint-Germain FC win on 2026-04-08?",
+        "slug": "ucl-psg1-liv1-2026-04-08-psg1"
       },
-      "answerabilityNote": "get_event_by_slug/get_event_outcomes use Gamma GET /events/{id} and active event discovery to enumerate child markets; summarize_live_market_activity and analyze_event_whale_breakdown then combine per-market activity, open interest, and holder concentration to show which submarket currently carries the event's real flow."
+      "answerabilityNote": "Use Gamma `/events/slug/{slug}` or `/markets/slug/{slug}` to resolve the market and token, then `get_market_parameters` returns `tickSize`, `feeRateBps`, `minOrderSize`, and `negRisk`."
     },
     {
-      "id": "pm-006",
-      "prompt": "Inside the '2026 FIFA World Cup Winner' event, are the 'Will Congo DR win the 2026 FIFA World Cup?' and 'Will Egypt win the 2026 FIFA World Cup?' markets meaningfully tradable once you compare neg-risk status, spread, midpoint, and orderbook depth?",
-      "mustWin": true,
-      "showcaseCandidate": true,
-      "category": "trading parameters",
-      "alphaCategory": "Neg-Risk And Parameter Edge",
-      "whyUsersCare": "Longshot outright markets often show attractive prices but terrible execution, so a trader needs to know if the venue structure actually makes them usable.",
-      "whyWebSearchBaselineWeak": "Search cannot inspect live neg-risk settings or compare current books across the exact Polymarket contracts.",
-      "upstreamDataFields": [
-        "event.id",
-        "market.slug",
-        "market.question",
-        "negRisk",
-        "outcomePrices",
-        "bids[].price",
-        "asks[].price",
-        "midpoint",
-        "spread",
-        "volume24hr"
-      ],
-      "expectedMethods": [
-        "get_event_by_slug",
-        "compare_event_outcome_quotes",
-        "get_market_parameters",
-        "get_batch_orderbooks",
-        "analyze_event_outcome_liquidity"
-      ],
-      "difficulty": "synthesis",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "2026-fifa-world-cup-winner-595",
-        "title": "2026 FIFA World Cup Winner "
-      },
-      "answerabilityNote": "get_event_by_slug resolves the event via Gamma GET /events/{id}; compare_event_outcome_quotes/get_batch_orderbooks pull live books with POST /books or GET /book, while get_market_parameters inspects market metadata such as negRisk and current outcomePrices to judge actual tradability for the named longshots."
-    },
-    {
-      "id": "pm-007",
-      "prompt": "For the 'Will Congo DR win the 2026 FIFA World Cup?' market, what do neg-risk settings, spread, and depth imply about how much size can be entered without getting trapped in a tiny longshot book?",
+      "id": "q13",
+      "prompt": "For the 'Will Stephen A. Smith win the 2028 Democratic presidential nomination?' market, does the contract look rich or cheap relative to Gretchen Whitmer and Oprah Winfrey in the same 'Democratic Presidential Nominee 2028' event right now?",
       "mustWin": true,
       "showcaseCandidate": false,
-      "category": "trading parameters",
-      "alphaCategory": "Neg-Risk And Parameter Edge",
-      "whyUsersCare": "A buyer considering a cheap longshot needs to know whether there is real exit liquidity before committing capital.",
-      "whyWebSearchBaselineWeak": "Generic models cannot see the current book shape or market-parameter settings for this exact Polymarket contract.",
-      "upstreamDataFields": [
-        "conditionId",
-        "negRisk",
-        "outcomePrices",
-        "bids[].price",
-        "bids[].size",
-        "asks[].price",
-        "asks[].size",
-        "spread",
-        "midpoint"
-      ],
-      "expectedMethods": [
-        "get_market_parameters",
-        "get_spreads",
-        "get_orderbook",
-        "analyze_market_liquidity"
-      ],
+      "category": "relative value",
+      "alphaCategory": "Event Structure And Relative Value",
+      "whyUsersCare": "Relative pricing across sibling contracts is more useful than any one headline probability in isolation.",
+      "whyWebSearchBaselineWeak": "A baseline model cannot compare current same-event quote structure across these exact live contracts.",
       "difficulty": "analysis",
       "groundedEntity": {
         "type": "market",
-        "slug": "will-congo-dr-win-the-2026-fifa-world-cup",
-        "title": "Will Congo DR win the 2026 FIFA World Cup?"
+        "title": "Will Stephen A. Smith win the 2028 Democratic presidential nomination?",
+        "slug": "will-stephen-a-smith-win-the-2028-democratic-presidential-nomination-914"
       },
-      "answerabilityNote": "get_market_parameters resolves metadata such as negRisk and current outcomePrices from Gamma market data; get_orderbook/get_spreads/analyze_market_liquidity use CLOB GET /book and GET /spread for the market conditionId, so usable entry size is computable from the live asks and bids."
+      "answerabilityNote": "`compare_market_against_related_contracts` resolves the parent event from the named market via Gamma event/market discovery, then compares sibling outcomes using live fields like `currentPrice`, `spread`, and `eventPriceSum`."
     },
     {
-      "id": "pm-008",
-      "prompt": "For the 'Will Vicky D\u00e1vila win the 2026 Colombian presidential election?' market, how concentrated are top holders, and is the current price supported by broad participation or by a few wallets?",
+      "id": "q14",
+      "prompt": "For the 'Will there be no change in Fed interest rates after the April 2026 meeting?' market, what do recent trades, current open interest, and the open-interest-to-volume ratio say about whether positioning looks sticky or just churn?",
       "mustWin": true,
       "showcaseCandidate": false,
-      "category": "single-market deep dive",
-      "alphaCategory": "Whale Positioning And Holder Concentration",
-      "whyUsersCare": "Thin political outrights can look informative while actually being driven by a handful of accounts.",
-      "whyWebSearchBaselineWeak": "Search has no access to current holder concentration or open-interest structure on this exact market.",
-      "upstreamDataFields": [
-        "slug",
-        "negRisk",
-        "outcomePrices",
-        "openInterest",
-        "holderAddress",
-        "holderSize",
-        "holderShare"
-      ],
-      "expectedMethods": [
-        "analyze_top_holders",
-        "get_top_holders",
-        "get_market_open_interest"
-      ],
+      "category": "tape and open interest",
+      "alphaCategory": "Tape And Open Interest",
+      "whyUsersCare": "Tape plus open interest reveals whether a move is real positioning or just churn around a macro headline.",
+      "whyWebSearchBaselineWeak": "A free model cannot inspect current venue-specific trade history and open-interest state for this contract.",
       "difficulty": "analysis",
       "groundedEntity": {
         "type": "market",
-        "slug": "will-vicky-dvila-win-the-2026-colombian-presidential-election",
-        "title": "Will Vicky D\u00e1vila win the 2026 Colombian presidential election?"
+        "title": "Will there be no change in Fed interest rates after the April 2026 meeting?",
+        "slug": "will-there-be-no-change-in-fed-interest-rates-after-the-april-2026-meeting"
       },
-      "answerabilityNote": "search_markets or Gamma GET /markets can resolve the named slug; get_top_holders/analyze_top_holders then use holder balances and share concentration, while get_market_open_interest provides the live openInterest context to judge whether the market is broadly owned or wallet-dominated."
+      "answerabilityNote": "`summarize_live_market_activity` uses recent trade records plus open-interest snapshot fields to interpret whether positioning looks sticky or noisy."
     },
     {
-      "id": "pm-009",
-      "prompt": "Within the 'What will WTI Crude Oil (WTI) hit in April 2026?' event, which strike buckets currently carry the most live flow and tightest execution, and does the '$200 HIGH' tail strike look mispriced relative to neighboring strikes?",
-      "mustWin": true,
-      "showcaseCandidate": true,
-      "category": "event-level analysis",
-      "alphaCategory": "Event Rotation And Flow Share",
-      "whyUsersCare": "The real edge in a strike ladder often comes from knowing where flow is concentrated and where a tail contract is misaligned with nearby strikes.",
-      "whyWebSearchBaselineWeak": "A baseline model cannot enumerate live event submarkets or compare their current quotes and depth in one venue-specific workflow.",
-      "upstreamDataFields": [
-        "event.id",
-        "event.slug",
-        "market.question",
-        "market.slug",
-        "outcomePrices",
-        "midpoint",
-        "spread",
-        "volume24hr",
-        "priceHistory.timestamp",
-        "priceHistory.price"
-      ],
-      "expectedMethods": [
-        "get_event_by_slug",
-        "get_event_outcomes",
-        "compare_event_outcome_quotes",
-        "analyze_event_outcome_liquidity",
-        "check_market_efficiency"
-      ],
-      "difficulty": "ceiling",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "what-price-will-wti-hit-in-april-2026",
-        "title": "What will WTI Crude Oil (WTI) hit in April 2026?"
-      },
-      "answerabilityNote": "get_event_by_slug/get_event_outcomes use Gamma GET /events/{id} to enumerate all strike markets; compare_event_outcome_quotes and analyze_event_outcome_liquidity then combine CLOB GET /book, GET /midpoint, GET /spread, and GET /prices-history fields to compare live flow and identify outlier strikes such as the named $200 HIGH contract."
-    },
-    {
-      "id": "pm-010",
-      "prompt": "For the 'Will WTI Crude Oil (WTI) hit (HIGH) $200 in April?' market, what exactly has to happen to resolve YES, and does the current quote compensate for the rules and tail-risk profile?",
-      "mustWin": true,
-      "showcaseCandidate": false,
-      "category": "rules-risk",
-      "alphaCategory": "Resolution Risk And Contract Semantics",
-      "whyUsersCare": "Tail strikes can be deceptively priced if the contract wording is misunderstood or if the path-to-resolution is narrower than traders assume.",
-      "whyWebSearchBaselineWeak": "Search may discuss oil scenarios but cannot show the live contract text, deadline, or current Polymarket quote.",
-      "upstreamDataFields": [
-        "question",
-        "slug",
-        "description",
-        "outcomes",
-        "outcomePrices",
-        "endDate",
-        "priceHistory.timestamp",
-        "priceHistory.price"
-      ],
-      "expectedMethods": [
-        "check_market_rules",
-        "get_prices",
-        "get_price_history",
-        "search_markets"
-      ],
-      "difficulty": "analysis",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "will-wti-crude-oil-wti-hit-high-200-in-april",
-        "title": "Will WTI Crude Oil (WTI) hit (HIGH) $200 in April?"
-      },
-      "answerabilityNote": "check_market_rules/search_markets resolve the named market via Gamma GET /markets or GET /public-search and inspect market metadata including description, outcomes, and endDate; get_prices and get_price_history use CLOB GET /price and GET /prices-history so the current quote can be judged against the contract semantics."
-    },
-    {
-      "id": "pm-011",
-      "prompt": "For the 'Will there be no change in Fed interest rates after the April 2026 meeting?' market, does the live quote look efficient once you compare it with the related April Fed decision contracts on Polymarket?",
-      "mustWin": true,
-      "showcaseCandidate": false,
-      "category": "trading parameters",
-      "alphaCategory": "Neg-Risk And Parameter Edge",
-      "whyUsersCare": "Rate-decision markets should fit together logically, so a misaligned leg can create direct trading edge.",
-      "whyWebSearchBaselineWeak": "A baseline model cannot discover the full related-contract set and compare their live Polymarket prices and spreads in real time.",
-      "upstreamDataFields": [
-        "slug",
-        "outcomePrices",
-        "relatedMarket.slug",
-        "relatedMarket.outcomePrices",
-        "spread",
-        "midpoint",
-        "negRisk"
-      ],
-      "expectedMethods": [
-        "find_correlated_markets",
-        "check_market_efficiency",
-        "search_markets",
-        "get_prices",
-        "get_spreads"
-      ],
-      "difficulty": "synthesis",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "will-there-be-no-change-in-fed-interest-rates-after-the-april-2026-meeting",
-        "title": "Will there be no change in Fed interest rates after the April 2026 meeting?"
-      },
-      "answerabilityNote": "search_markets/find_correlated_markets use Gamma GET /public-search and GET /markets to find the related April Fed contracts; check_market_efficiency then compares the named market's outcomePrices, midpoints, and spreads from GET /prices and GET /spread to see whether the live quote is internally consistent."
-    },
-    {
-      "id": "pm-012",
-      "prompt": "For the 'Will the Fed decrease interest rates by 50+ bps after the April 2026 meeting?' market, is there any live arbitrage or obvious overpricing/underpricing once depth and related Fed contracts are considered?",
-      "mustWin": true,
-      "showcaseCandidate": false,
-      "category": "trading parameters",
-      "alphaCategory": "Neg-Risk And Parameter Edge",
-      "whyUsersCare": "A trader wants to know if a low-probability macro leg is mispriced relative to the rest of the same decision tree.",
-      "whyWebSearchBaselineWeak": "Web search cannot compare current books across related Polymarket contracts or evaluate depth-aware arbitrage.",
-      "upstreamDataFields": [
-        "slug",
-        "negRisk",
-        "outcomePrices",
-        "relatedMarket.slug",
-        "bids[].price",
-        "asks[].price",
-        "spread",
-        "midpoint"
-      ],
-      "expectedMethods": [
-        "find_arbitrage_opportunities",
-        "find_correlated_markets",
-        "get_batch_orderbooks",
-        "get_market_parameters",
-        "check_market_efficiency"
-      ],
-      "difficulty": "synthesis",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "will-the-fed-decrease-interest-rates-by-50-bps-after-the-april-2026-meeting",
-        "title": "Will the Fed decrease interest rates by 50+ bps after the April 2026 meeting?"
-      },
-      "answerabilityNote": "find_correlated_markets resolves the relevant Fed contract family via Gamma search and market discovery; get_batch_orderbooks and check_market_efficiency then use live CLOB books from POST /books or GET /book plus spread/midpoint fields to test whether the named contract is mispriced or creates an arbitrageable combination."
-    },
-    {
-      "id": "pm-013",
-      "prompt": "On the 'Trump out as President by April 30?' market, has recent tape and whale flow been one-way enough to trust the quote, or is the price sitting on thin, noisy trading?",
-      "mustWin": true,
-      "showcaseCandidate": false,
-      "category": "single-market deep dive",
-      "alphaCategory": "Whale Positioning And Holder Concentration",
-      "whyUsersCare": "A trader wants to know if the displayed price is backed by sustained conviction or just sporadic small prints in a headline-driven market.",
-      "whyWebSearchBaselineWeak": "Search results cannot inspect the current trade tape, open interest, or wallet-sized flow on Polymarket.",
-      "upstreamDataFields": [
-        "outcomePrices",
-        "volume24hr",
-        "trade.price",
-        "trade.size",
-        "trade.timestamp",
-        "trade.side",
-        "openInterest"
-      ],
-      "expectedMethods": [
-        "summarize_live_market_activity",
-        "get_market_trades",
-        "analyze_whale_flow",
-        "get_market_open_interest"
-      ],
-      "difficulty": "analysis",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "trump-out-as-president-by-april-30",
-        "title": "Trump out as President by April 30?"
-      },
-      "answerabilityNote": "search_markets can resolve the slug via Gamma GET /public-search or GET /markets; get_market_trades and summarize_live_market_activity then use live trade price, size, side, and timestamp data for the named contract, while analyze_whale_flow and get_market_open_interest add whale-participation and open-interest context to show whether the quote is backed by persistent flow or thin noise."
-    },
-    {
-      "id": "pm-014",
-      "prompt": "Build a tradability memo for the 'Kharg Island no longer under Iranian control by April 15?' market that combines rules risk, live quote quality, whale positioning, and recent activity into a buy / pass / avoid decision.",
+      "id": "q15",
+      "prompt": "Build a buy, speculative buy, pass, or avoid memo for the 'Will the U.S. invade Iran before 2027?' market that combines rules risk, quote quality, whale positioning, and recent tape.",
       "mustWin": true,
       "showcaseCandidate": true,
       "category": "workflow synthesis",
-      "alphaCategory": "Workflow-Grade Trade Selection",
-      "whyUsersCare": "This is the kind of end-to-end decision support a buyer would actually pay for before trading a fast-moving geopolitical market.",
-      "whyWebSearchBaselineWeak": "A baseline model cannot join live rules, books, holders, and tape into a venue-specific tradability memo for one active contract.",
-      "upstreamDataFields": [
-        "question",
-        "slug",
-        "description",
-        "endDate",
-        "outcomePrices",
-        "bids[].price",
-        "asks[].price",
-        "spread",
-        "midpoint",
-        "holderSize",
-        "openInterest",
-        "trade.price",
-        "trade.timestamp"
-      ],
-      "expectedMethods": [
-        "build_high_conviction_workflow",
-        "check_market_rules",
-        "analyze_market_liquidity",
-        "analyze_single_market_whales",
-        "summarize_live_market_activity"
-      ],
+      "alphaCategory": "Workflow Synthesis",
+      "whyUsersCare": "The most valuable answer is a decision-ready memo that fuses multiple live venue-native signals into one view.",
+      "whyWebSearchBaselineWeak": "A generic model cannot produce a grounded memo that combines current rules, quotes, whales, and recent activity for this contract.",
       "difficulty": "ceiling",
       "groundedEntity": {
         "type": "market",
-        "slug": "kharg-island-no-longer-under-iranian-control-by-april-15",
-        "title": "Kharg Island no longer under Iranian control by April 15?"
+        "title": "Will the U.S. invade Iran before 2027?",
+        "slug": "will-the-us-invade-iran-before-2027"
       },
-      "answerabilityNote": "build_high_conviction_workflow can orchestrate Gamma market metadata from GET /markets or GET /public-search with CLOB GET /book, GET /midpoint, GET /spread, plus the contributor's holder, open-interest, and trade-activity surfaces to produce a decision memo for the named slug."
+      "answerabilityNote": "`build_market_tradability_memo` combines Gamma rule metadata, live quote/liquidity fields, whale signals, and recent activity into a final `decision` and `memo`."
     },
     {
-      "id": "pm-015",
-      "prompt": "Within the 'Democratic Presidential Nominee 2028' event, which candidate submarkets currently combine tight quotes with meaningful whale participation, and which ones are just illiquid headline prices?",
-      "mustWin": true,
-      "showcaseCandidate": false,
-      "category": "event-level analysis",
-      "alphaCategory": "Whale Positioning And Holder Concentration",
-      "whyUsersCare": "Large candidate boards often show many nominal prices, but only a subset are actually tradable or institutionally watched.",
-      "whyWebSearchBaselineWeak": "Search cannot enumerate the event's live submarkets and compare current quote quality and whale concentration across them.",
-      "upstreamDataFields": [
-        "event.id",
-        "event.slug",
-        "market.question",
-        "market.slug",
-        "outcomePrices",
-        "bids[].price",
-        "asks[].price",
-        "spread",
-        "holderAddress",
-        "holderSize"
-      ],
-      "expectedMethods": [
-        "get_event_by_slug",
-        "get_event_outcomes",
-        "analyze_event_whale_breakdown",
-        "compare_event_outcome_quotes"
-      ],
-      "difficulty": "ceiling",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "democratic-presidential-nominee-2028",
-        "title": "Democratic Presidential Nominee 2028"
-      },
-      "answerabilityNote": "get_event_by_slug/get_event_outcomes resolve the event via Gamma GET /events/{id} and list all child markets; analyze_event_whale_breakdown adds holder concentration by submarket, while compare_event_outcome_quotes uses live bid/ask, midpoint, and spread data to separate genuinely tradable candidates from illiquid headline rows."
-    },
-    {
-      "id": "pm-016",
-      "prompt": "Within the 'Rockets vs. Suns' event, which live submarkets look genuinely tradable tonight based on spread, depth, and activity rather than just displayed prices?",
-      "mustWin": true,
-      "showcaseCandidate": false,
-      "category": "workflow synthesis",
-      "alphaCategory": "Workflow-Grade Trade Selection",
-      "whyUsersCare": "Sports traders care about which lines and props can actually be entered and exited cleanly before the game moves.",
-      "whyWebSearchBaselineWeak": "A baseline model cannot inspect the current set of live submarkets and compare their Polymarket books and activity in real time.",
-      "upstreamDataFields": [
-        "event.id",
-        "event.slug",
-        "market.question",
-        "market.slug",
-        "outcomePrices",
-        "bids[].price",
-        "asks[].size",
-        "spread",
-        "midpoint",
-        "volume24hr",
-        "trade.timestamp"
-      ],
-      "expectedMethods": [
-        "get_event_by_slug",
-        "get_event_outcomes",
-        "analyze_event_outcome_liquidity",
-        "summarize_live_market_activity"
-      ],
-      "difficulty": "synthesis",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "nba-hou-phx-2026-04-07",
-        "title": "Rockets vs. Suns"
-      },
-      "answerabilityNote": "get_event_by_slug/get_event_outcomes use Gamma GET /events/{id} to enumerate the game's submarkets, and analyze_event_outcome_liquidity plus summarize_live_market_activity combine live CLOB book fields and recent activity to identify which lines are truly tradable tonight."
-    },
-    {
-      "id": "pm-017",
-      "prompt": "For the 'Will Paris Saint-Germain FC win on 2026-04-08?' market, what are the current midpoint, spread, and orderbook depth, and is there enough liquidity for a fast in-and-out trade before kickoff?",
-      "mustWin": true,
-      "showcaseCandidate": false,
-      "category": "single-market deep dive",
-      "alphaCategory": "Live Quote Quality",
-      "whyUsersCare": "Fast sports trading depends on whether the book is actually thick enough to enter and exit before the market moves.",
-      "whyWebSearchBaselineWeak": "Search cannot see the current live orderbook, midpoint, or depth of this exact match market.",
-      "upstreamDataFields": [
-        "conditionId",
-        "outcomePrices",
-        "bids[].price",
-        "bids[].size",
-        "asks[].price",
-        "asks[].size",
-        "midpoint",
-        "spread",
-        "endDate"
-      ],
-      "expectedMethods": [
-        "get_orderbook",
-        "get_midpoints",
-        "get_spreads",
-        "analyze_market_liquidity"
-      ],
-      "difficulty": "analysis",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "ucl-psg1-liv1-2026-04-08-psg1",
-        "title": "Will Paris Saint-Germain FC win on 2026-04-08?"
-      },
-      "answerabilityNote": "get_orderbook/analyze_market_liquidity use the market conditionId with CLOB GET /book to read current bids and asks, while get_midpoints and get_spreads call GET /midpoint and GET /spread; the contract's endDate from market metadata tells whether there is still enough time for a pre-kickoff round trip."
-    },
-    {
-      "id": "pm-018",
-      "prompt": "Within 'The Masters - Winner', which golfer winner markets currently have the best combination of depth, tight spread, and whale participation, and which favorites are just expensive but untradeable?",
+      "id": "q16",
+      "prompt": "Within the 'Iran x Israel/US conflict ends by...?' event, which currently live bucket offers the best mix of clean rules, tradable quotes, and whale support among 'Iran x Israel/US conflict ends by April 15?', 'Iran x Israel/US conflict ends by April 30?', and 'Iran x Israel/US conflict ends by June 30?'",
       "mustWin": true,
       "showcaseCandidate": true,
-      "category": "event-level analysis",
-      "alphaCategory": "Workflow-Grade Trade Selection",
-      "whyUsersCare": "Outright golf boards can be large and misleading, so buyers want help finding the few tradable names rather than browsing dozens of stale prices.",
-      "whyWebSearchBaselineWeak": "A baseline model cannot scan the full live event board on Polymarket and rank current tradability using venue-native quotes and wallet participation.",
-      "upstreamDataFields": [
-        "event.id",
-        "event.slug",
-        "market.question",
-        "market.slug",
-        "outcomePrices",
-        "bids[].price",
-        "asks[].price",
-        "spread",
-        "holderAddress",
-        "holderSize",
-        "volume24hr"
-      ],
-      "expectedMethods": [
-        "get_event_by_slug",
-        "get_event_outcomes",
-        "compare_event_outcome_quotes",
-        "analyze_event_whale_breakdown",
-        "analyze_event_outcome_liquidity"
-      ],
+      "category": "event workflow synthesis",
+      "alphaCategory": "Workflow Synthesis",
+      "whyUsersCare": "This is the kind of same-event trade selection workflow a paying buyer actually wants solved end to end.",
+      "whyWebSearchBaselineWeak": "A baseline model cannot combine current rules, quotes, and whale support across several live sibling contracts.",
       "difficulty": "ceiling",
       "groundedEntity": {
         "type": "event",
-        "slug": "the-masters-winner-2026",
-        "title": "The Masters - Winner "
+        "title": "Iran x Israel/US conflict ends by...?",
+        "slug": "iran-x-israelus-conflict-ends-by"
       },
-      "answerabilityNote": "get_event_by_slug/get_event_outcomes enumerate the event's golfer winner markets from Gamma GET /events/{id}; compare_event_outcome_quotes and analyze_event_outcome_liquidity pull live bid/ask and spread fields, while analyze_event_whale_breakdown adds holder concentration so the contributor can rank which golfer contracts are actually tradable."
+      "answerabilityNote": "Gamma `/events/slug/{slug}` supplies sibling markets and token IDs; quote tools provide `currentPrice`/`spread`, whale tools provide cross-outcome holder signals, and rule tools expose `resolutionSource` and gotchas."
+    },
+    {
+      "id": "q17",
+      "prompt": "Within the 'US x Iran ceasefire by...?' event, which future buckets are still live after the expired dates, and among the live buckets which one currently has the highest quoted probability and the most volume?",
+      "mustWin": true,
+      "showcaseCandidate": false,
+      "category": "discovery screening",
+      "alphaCategory": "Discovery And Screening",
+      "whyUsersCare": "Buyers need to know which contracts in a time-bucket ladder are still relevant and live before doing deeper analysis.",
+      "whyWebSearchBaselineWeak": "Generic models cannot inspect the current live/expired state and quote board of a contract family from the venue.",
+      "difficulty": "analysis",
+      "groundedEntity": {
+        "type": "event",
+        "title": "US x Iran ceasefire by...?",
+        "slug": "us-x-iran-ceasefire-by"
+      },
+      "answerabilityNote": "Gamma `/events/slug/{slug}` returns child markets with `question`, `outcomePrices`, `volume`, `endDate`, and active/closed status. Contributor event tools can filter live buckets and rank by price and volume."
+    },
+    {
+      "id": "q18",
+      "prompt": "Inside the 'Thunder vs. Clippers' event, which submarkets are actually attracting live trading right now: the main 'Thunder vs. Clippers' moneyline, 'Thunder vs. Clippers: O/U 227.5', or props like 'Kris Dunn: Points O/U 5.5'?",
+      "mustWin": true,
+      "showcaseCandidate": false,
+      "category": "submarket flow screening",
+      "alphaCategory": "Discovery And Screening",
+      "whyUsersCare": "A live board is only useful if you can tell whether the action is in the core market, totals, or props.",
+      "whyWebSearchBaselineWeak": "A baseline model cannot compare live event submarket activity shares across moneyline, totals, and props.",
+      "difficulty": "analysis",
+      "groundedEntity": {
+        "type": "event",
+        "title": "Thunder vs. Clippers",
+        "slug": "nba-okc-lac-2026-04-08"
+      },
+      "answerabilityNote": "`get_event_by_slug` provides the event id and child `conditionId`s, while `get_event_live_volume` returns per-submarket `markets[].value` and `shareOfEventTotal` for current activity comparisons."
     }
   ]
 }

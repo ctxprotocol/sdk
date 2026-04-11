@@ -354,11 +354,11 @@ function resolveRateLimitNote(toolName: string, heavy: boolean): string {
   }
 
   if (toolName === "search_and_get_outcomes") {
-    return "Composite query-first tool. Prefer this over chaining search_markets to get_event_outcomes when the user wants one resolved event with current outcomes/prices.";
+    return "Composite query-first tool. Prefer this over chaining search_markets to get_event_outcomes when the user wants one resolved event with current outcomes/prices. If the result collapses to one exact outcome, reuse primaryTokenId/primaryConditionId directly instead of reranking outcomes.";
   }
 
   if (toolName === "compare_event_outcome_quotes") {
-    return "Query-first comparison tool. Best for two or more named outcomes inside the same event after event resolution.";
+    return "Query-first comparison tool. Best for two or more named outcomes inside the same event after event resolution. If the prompt is asking whether one named contract looks rich or cheap versus sibling contracts, prefer compare_market_against_related_contracts.";
   }
 
   if (toolName === "get_event_by_slug") {
@@ -1251,6 +1251,7 @@ If you need multiple analyses, call them SEQUENTIALLY, not with Promise.all().`,
 ⚠️ USE THIS for multi-outcome events like sports tournaments, elections with multiple candidates, World Cup winner, etc.
 ⚠️ analyze_top_holders only shows YES/NO for ONE market. This tool shows whale positions ACROSS ALL outcomes in an event.
 ⚠️ CALL THIS TOOL DIRECTLY -- do not chain search_and_get_outcomes first. Pass either a slug or a marketQuery and this tool handles resolution internally. It can also choose a strong live fallback event for prompts like "this event" instead of punting.
+⚠️ If the user gives a named shortlist (for example "among Spain, France, and England"), pass those names in outcomes so the tool bounds the whale scan to that shortlist instead of timing out on the whole event.
 
 Example: For "2026 FIFA World Cup Winner" event with 48 outcome markets:
 - Returns: "Whales have $100k on Spain, $80k on England, $50k on France..."
@@ -1272,6 +1273,12 @@ Returns:
           type: "string",
           description: "Natural-language event query (e.g., '2026 FIFA World Cup winner'). Use when slug is unknown -- the tool will resolve the event automatically.",
         },
+        outcomes: {
+          type: "array",
+          items: { type: "string" },
+          description:
+            "Optional named shortlist to bound the whale scan to specific outcomes (e.g. ['Spain', 'France', 'England']). Strongly preferred when the user asks 'among X, Y, Z'.",
+        },
         maxOutcomes: {
           type: "number",
           description: "Maximum number of outcomes/markets to analyze (default: 10, max: 20). Higher = slower but more thorough.",
@@ -1286,6 +1293,10 @@ Returns:
         eventSlug: { type: "string" },
         totalMarketsInEvent: { type: "number" },
         totalMarketsAnalyzed: { type: "number" },
+        selectionMode: {
+          type: "string",
+          enum: ["requested_outcomes", "top_volume_outcomes"],
+        },
         whalesByOutcome: {
           type: "array",
           items: {
@@ -1316,6 +1327,10 @@ Returns:
             },
           },
         },
+        unmatchedOutcomes: {
+          type: "array",
+          items: { type: "string" },
+        },
         topWhaleOutcome: {
           type: "object",
           properties: {
@@ -1326,6 +1341,7 @@ Returns:
         },
         smartMoneyConsensus: { type: "string" },
         selectionReason: { type: "string" },
+        synthesisHint: { type: "string" },
         fetchedAt: { type: "string" },
       },
       required: ["eventTitle", "whalesByOutcome", "topWhaleOutcome"],
@@ -1594,6 +1610,7 @@ USE THIS for:
 - "Does this Fed outcome look efficient versus the related April contracts?"
 - "For the 'Will the Fed decrease interest rates by 50+ bps after the April 2026 meeting?' market, is there any live arbitrage or obvious overpricing/underpricing once depth and related Fed contracts are considered?"
 - "Is this strike rich/cheap relative to neighboring strikes?"
+- "For Stephen A. Smith versus Gretchen Whitmer and Oprah Winfrey, does the contract look rich or cheap right now?"
 - "Compare this named contract to the rest of its event before calling it mispriced"
 
 Pass the raw user prompt or a direct market reference. The tool resolves the primary market, identifies the sibling event, checks direct liquidity on the named leg, compares the relevant outcomes, and packages a bounded relative-value assessment instead of stopping at discovery.
@@ -1656,8 +1673,14 @@ If the user names one leg inside a larger event family, such as "no change", "50
           },
         },
         eventPriceSum: { type: "number" },
+        richOrCheap: {
+          type: "string",
+          enum: ["rich", "cheap", "roughly_fair"],
+        },
+        relativeValueDifference: { type: "number" },
         relativeValueAssessment: { type: "string" },
         arbitrageAssessment: { type: "string" },
+        synthesisHint: { type: "string" },
         analysisNotes: {
           type: "array",
           items: { type: "string" },
@@ -3199,14 +3222,18 @@ Use cases:
 - one event plus all current outcomes/prices
 - a full binary or multi-outcome market breakdown in one response
 - a clean follow-up input for compare_event_outcome_quotes or analyze_event_outcome_liquidity
+- a direct token/condition handoff for get_market_parameters, get_spreads, or get_orderbook when the search collapses to one exact outcome
 - an eventSlug to feed into get_event_by_slug for event-level metadata or get_event_live_volume follow-up analysis
+- a live-vs-expired bucket map for date ladder events when the prompt asks which buckets are still live
 
-⚠️ DO NOT use this as the first choice for broad contract-family mapping across multiple related markets. For that, prefer search_markets.
+⚠️ DO NOT use this as the first choice for broad contract-family mapping across multiple related markets or rich-vs-cheap sibling analysis. For those, prefer search_markets or compare_market_against_related_contracts.
 
 This tool:
 1. Searches for the most relevant market matching your query (using Polymarket's website-backed search surface)
 2. Automatically fetches all outcomes for that market
 3. Returns everything in one response
+
+If the response contains exactly one primaryOutcome, treat primaryTokenId and primaryConditionId as the canonical handoff for downstream venue-parameter tools instead of doing another semantic candidate search.
 
 ⚠️ VERIFY THE RETURNED MARKET: Always check that eventTitle matches your intent!
 If the returned market doesn't match (e.g., got a division market instead of championship),
@@ -3243,6 +3270,11 @@ OUTPUT: All outcomes with prices, ready for comparison`,
           description:
             "How to order returned outcomes. Defaults to volume so ranked outcome lists stay faithful to the most-active contracts.",
         },
+        includeInactive: {
+          type: "boolean",
+          description:
+            "Include inactive or expired outcomes in the returned event ladder. Useful when the question explicitly asks which buckets are still live after earlier dates expired.",
+        },
       },
       required: ["query"],
     },
@@ -3255,6 +3287,7 @@ OUTPUT: All outcomes with prices, ready for comparison`,
         totalVolume: { type: "number" },
         totalOutcomes: { type: "number" },
         sortedBy: { type: "string" },
+        synthesisHint: { type: "string" },
         outcomes: {
           type: "array",
           items: {
@@ -3262,6 +3295,15 @@ OUTPUT: All outcomes with prices, ready for comparison`,
             properties: {
               name: { type: "string", description: "Team/candidate/outcome name" },
               price: { type: "number", description: "Current YES price (0-1, treat as probability)" },
+              currentPrice: {
+                type: "number",
+                description:
+                  "Alias of price. Prefer this field when downstream code expects currentPrice.",
+              },
+              impliedProbability: {
+                type: "string",
+                description: "Human-readable YES probability percentage",
+              },
               pricePercent: { type: "string" },
               volume: { type: "number" },
               conditionId: { type: "string" },
@@ -3269,6 +3311,106 @@ OUTPUT: All outcomes with prices, ready for comparison`,
                 type: "string",
                 description:
                   "Primary YES token ID for this outcome. Use directly with get_prices/get_spreads or get_orderbook merged=true for actionable quote comparison. Use get_batch_orderbooks only when you explicitly want raw direct-book snapshots.",
+              },
+              active: { type: "boolean" },
+              closed: { type: "boolean" },
+              endDate: {
+                type: "string",
+                description:
+                  "Parsed bucket deadline when the outcome label itself names a date (for example April 15). Empty when no bucket date was inferred.",
+              },
+              dateStatus: {
+                type: "string",
+                enum: ["future", "expired", "undated"],
+              },
+            },
+          },
+        },
+        primaryOutcome: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            price: { type: "number" },
+            currentPrice: { type: "number" },
+            impliedProbability: { type: "string" },
+            volume: { type: "number" },
+            conditionId: { type: "string" },
+            tokenId: { type: "string" },
+          },
+        },
+        primaryTokenId: { type: "string" },
+        primaryConditionId: { type: "string" },
+        stateSummary: {
+          type: "object",
+          properties: {
+            liveOutcomeCount: { type: "number" },
+            expiredOutcomeCount: { type: "number" },
+            liveOutcomeNames: {
+              type: "array",
+              items: { type: "string" },
+            },
+            expiredOutcomeNames: {
+              type: "array",
+              items: { type: "string" },
+            },
+            liveOutcomes: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  currentPrice: { type: "number" },
+                  volume: { type: "number" },
+                  conditionId: { type: "string" },
+                  tokenId: { type: "string" },
+                  active: { type: "boolean" },
+                  closed: { type: "boolean" },
+                  endDate: { type: "string" },
+                  dateStatus: {
+                    type: "string",
+                    enum: ["future", "expired", "undated"],
+                  },
+                },
+              },
+            },
+            expiredOutcomes: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  currentPrice: { type: "number" },
+                  volume: { type: "number" },
+                  conditionId: { type: "string" },
+                  tokenId: { type: "string" },
+                  active: { type: "boolean" },
+                  closed: { type: "boolean" },
+                  endDate: { type: "string" },
+                  dateStatus: {
+                    type: "string",
+                    enum: ["future", "expired", "undated"],
+                  },
+                },
+              },
+            },
+            highestLiveOutcomeByPrice: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                currentPrice: { type: "number" },
+                volume: { type: "number" },
+                conditionId: { type: "string" },
+                tokenId: { type: "string" },
+              },
+            },
+            highestLiveOutcomeByVolume: {
+              type: "object",
+              properties: {
+                name: { type: "string" },
+                currentPrice: { type: "number" },
+                volume: { type: "number" },
+                conditionId: { type: "string" },
+                tokenId: { type: "string" },
               },
             },
           },
@@ -3309,7 +3451,8 @@ Best when the user names 2+ teams, candidates, or outcomes in the same event and
 
 Each matched outcome includes price (alias of currentPrice), spreadCentsDisplay, spreadPercentDisplay, optional priceChange/priceChangePercent fields, and readableQuote — copy those fields into tables instead of N/A placeholders.
 
-If the user wants the FULL event breakdown first, prefer search_and_get_outcomes.`,
+If the user wants the FULL event breakdown first, prefer search_and_get_outcomes.
+If the prompt is really asking whether one named contract is rich or cheap versus sibling outcomes, prefer compare_market_against_related_contracts instead of recomputing from raw quote rows.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -3788,11 +3931,16 @@ Supports up to 150 token IDs per call.`,
 
   {
     name: "get_market_parameters",
-    description: `Get trading parameters for a market: tick size, fee rate, and negative risk setting.
+    description: `Get trading parameters for a market: tick size, fee rate, minimum order size, and negative risk setting.
 
 - tick_size: Minimum price increment (e.g., 0.01 = 1 cent)
 - fee_rate_bps: Trading fee in basis points (e.g., 100 = 1%)
-- neg_risk: Whether market uses negative risk model`,
+- min_order_size: Minimum order size accepted by the venue
+- neg_risk: Whether market uses negative risk model
+
+Use this directly for prompts asking for token parameters, trading parameters, venue settings, minimum order size, or whether negative risk is enabled.
+
+If search_and_get_outcomes already collapsed the query to one exact outcome, pass primaryTokenId (or primaryConditionId) directly here instead of re-ranking candidates from the outcomes array.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -3800,8 +3948,23 @@ Supports up to 150 token IDs per call.`,
           type: "string",
           description: "Token ID to get parameters for",
         },
+        conditionId: {
+          type: "string",
+          description:
+            "Condition ID when you know the market but not the token ID. The tool resolves the primary YES token automatically.",
+        },
+        slug: {
+          type: "string",
+          description:
+            "Market or event slug when you know the Polymarket URL but not the token ID.",
+        },
+        marketQuery: {
+          type: "string",
+          description:
+            "Natural-language market reference when the user named a contract but no token ID is available yet.",
+        },
       },
-      required: ["tokenId"],
+      required: [],
     },
     outputSchema: {
       type: "object" as const,
@@ -3959,6 +4122,16 @@ Each result includes:
               status: { type: "string", enum: ["live", "resolved"], description: "live=tradeable, resolved=finished" },
               category: { type: "string" },
               conditionId: { type: "string" },
+              yesTokenId: {
+                type: "string",
+                description:
+                  "Primary YES token ID for the matched market when available. Use directly with get_market_parameters, get_prices, or get_spreads.",
+              },
+              tokenId: {
+                type: "string",
+                description:
+                  "Alias of yesTokenId for downstream code that expects tokenId.",
+              },
               volume: { type: "number" },
               liquidity: { type: "number" },
               endDate: { type: "string", description: "When market resolves/resolved" },
@@ -5660,6 +5833,20 @@ function normalizeMarketQueryText(value: string): string {
     .trim();
 }
 
+function deriveEventSearchQuery(value: string): string {
+  const trimmed = value.trim().replace(/[?]+$/g, "");
+  const winOnDateMatch = trimmed.match(
+    /^will\s+(.+?)\s+win(?:\s+on\s+(\d{4}-\d{2}-\d{2}))?$/i
+  );
+  if (winOnDateMatch?.[1]) {
+    return [winOnDateMatch[1].trim(), winOnDateMatch[2]?.trim() ?? ""]
+      .filter((part) => part.length > 0)
+      .join(" ");
+  }
+
+  return trimmed;
+}
+
 function extractMarketQueryTokens(value: string): string[] {
   const normalized = normalizeMarketQueryText(value);
   if (!normalized) {
@@ -5763,6 +5950,12 @@ function buildMarketSearchQueries(value: string): string[] {
   };
 
   addVariant(trimmed);
+  for (const quotedFragment of workflowExtractQuotedFragments(trimmed)) {
+    addVariant(quotedFragment);
+  }
+  for (const likelyFragment of workflowExtractLikelyOutcomeFragments(trimmed)) {
+    addVariant(likelyFragment);
+  }
 
   const namedTokens = context.namedTokens.filter(
     (token) => !MARKET_QUERY_VARIANT_STOP_WORDS.has(token)
@@ -7681,11 +7874,116 @@ type EventOutcomeRow = {
   name: string;
   volume: number;
   price: number;
+  currentPrice: number;
+  impliedProbability: string;
   pricePercent: string;
   conditionId: string;
   tokenId: string;
   active: boolean;
+  closed: boolean;
+  endDate: string;
+  dateStatus: "future" | "expired" | "undated";
 };
+
+function deriveGammaOutcomeName(market: GammaMarket): string {
+  const groupItemTitle =
+    typeof market.groupItemTitle === "string" ? market.groupItemTitle.trim() : "";
+  const question = typeof market.question === "string" ? market.question.trim() : "";
+  const title = typeof market.title === "string" ? market.title.trim() : "";
+
+  if (/\b(?:draw|tie)\b/i.test(question) || /\bend in a draw\b/i.test(question)) {
+    return "Draw";
+  }
+
+  if (groupItemTitle.length > 0) {
+    return groupItemTitle;
+  }
+
+  if (question.length > 0) {
+    return question;
+  }
+
+  if (title.length > 0) {
+    return title;
+  }
+
+  return "Unknown";
+}
+
+function parseOutcomeBucketDeadline(
+  label: string,
+  referenceYear: number
+): Date | null {
+  const normalizedLabel = normalizeOutcomeLabelDashes(label);
+  const match = normalizedLabel.match(
+    /\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(\d{1,2})(?:,?\s*(\d{4}))?\b/i
+  );
+  if (!match) {
+    return null;
+  }
+
+  const monthToken = match[1]?.slice(0, 3).toLowerCase() ?? "";
+  const monthIndexMap: Record<string, number> = {
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
+  };
+  const monthIndex = monthIndexMap[monthToken];
+  const day = Number(match[2]);
+  const year = match[3] ? Number(match[3]) : referenceYear;
+  if (!Number.isFinite(monthIndex) || !Number.isFinite(day) || !Number.isFinite(year)) {
+    return null;
+  }
+
+  const parsed = new Date(Date.UTC(year, monthIndex, day, 23, 59, 59, 999));
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function classifyOutcomeDateState(
+  label: string,
+  event: GammaEvent
+): { endDate: string; dateStatus: "future" | "expired" | "undated" } {
+  const referenceDate = new Date(
+    event.endDate || event.endDateIso || event.startDate || new Date().toISOString()
+  );
+  const referenceYear = Number.isNaN(referenceDate.getTime())
+    ? new Date().getUTCFullYear()
+    : referenceDate.getUTCFullYear();
+  const parsedDeadline = parseOutcomeBucketDeadline(label, referenceYear);
+  if (!parsedDeadline) {
+    return {
+      endDate: "",
+      dateStatus: "undated",
+    };
+  }
+
+  return {
+    endDate: parsedDeadline.toISOString(),
+    dateStatus: parsedDeadline.getTime() >= Date.now() ? "future" : "expired",
+  };
+}
+
+function isCurrentlyTradableEventOutcome(
+  market: GammaMarket,
+  event: GammaEvent
+): boolean {
+  if (!isTradableGammaMarket(market)) {
+    return false;
+  }
+
+  const outcomeName = deriveGammaOutcomeName(market);
+  const { dateStatus } = classifyOutcomeDateState(outcomeName, event);
+  return dateStatus !== "expired";
+}
 
 async function buildEventOutcomeRows(params: {
   event: GammaEvent;
@@ -7701,7 +7999,7 @@ async function buildEventOutcomeRows(params: {
 
   const nonPlaceholderMarkets = markets.filter((market) => {
     const volume = parseFiniteNumber(market.volume) ?? 0;
-    const name = market.groupItemTitle || market.question || "Unknown";
+    const name = deriveGammaOutcomeName(market);
     return !isPlaceholderOutcomeName(name, volume);
   });
   const filteredPlaceholderCount = rawOutcomeCount - nonPlaceholderMarkets.length;
@@ -7710,7 +8008,9 @@ async function buildEventOutcomeRows(params: {
   let filteredInactiveCount = 0;
 
   if (!params.includeInactive) {
-    const activeMarkets = nonPlaceholderMarkets.filter(isTradableGammaMarket);
+    const activeMarkets = nonPlaceholderMarkets.filter((market) =>
+      isCurrentlyTradableEventOutcome(market, params.event)
+    );
     if (activeMarkets.length > 0) {
       filteredInactiveCount = nonPlaceholderMarkets.length - activeMarkets.length;
       visibleMarkets = activeMarkets;
@@ -7725,16 +8025,24 @@ async function buildEventOutcomeRows(params: {
     const volume = parseFiniteNumber(market.volume) ?? 0;
     const price = resolveCurrentOutcomePrice(market, quoteSnapshots);
     const tokenId = extractGammaYesTokenId(market);
+    const name = deriveGammaOutcomeName(market);
+    const { endDate, dateStatus } = classifyOutcomeDateState(name, params.event);
+    const active = isCurrentlyTradableEventOutcome(market, params.event);
 
     return {
       rank: 0,
-      name: market.groupItemTitle || market.question || "Unknown",
+      name,
       volume,
       price,
+      currentPrice: price,
+      impliedProbability: `${(price * 100).toFixed(1)}%`,
       pricePercent: `${(price * 100).toFixed(1)}%`,
       conditionId: market.conditionId || "",
       tokenId,
-      active: isTradableGammaMarket(market),
+      active,
+      closed: isResolvedGammaMarket(market) || dateStatus === "expired",
+      endDate,
+      dateStatus,
     };
   });
 
@@ -9942,6 +10250,7 @@ function workflowExtractComparisonOutcomesFromQuery(value: string): string[] {
     /(?:between|among)\s+(.+?)\s+(?:in|within)\s+/i,
     /compare\s+(.+?)\s+(?:in|within)\s+/i,
     /for\s+(.+?)\s+(?:in|within)\s+/i,
+    /(?:between|among)\s+(.+?)(?:[?.!]|$)/i,
   ];
 
   for (const pattern of patterns) {
@@ -10001,6 +10310,20 @@ function workflowExtractLikelyOutcomeFragments(value: string): string[] {
     if (cleaned.length > 0) {
       fragments.add(cleaned);
     }
+  }
+
+  const winMatches = normalized.matchAll(
+    /\bwill\s+(.+?)\s+win(?:\s+on\b|\s+by\b|\s+before\b|\?|$)/gi
+  );
+  for (const match of winMatches) {
+    const cleaned = normalizeMarketQueryText(match[1] ?? "");
+    if (cleaned.length > 0) {
+      fragments.add(cleaned);
+    }
+  }
+
+  if (/\b(?:end(?:ing)?\s+in\s+a\s+draw|be\s+a\s+draw|draw|tie)\b/i.test(normalized)) {
+    fragments.add("draw");
   }
 
   return Array.from(fragments).filter((fragment) => fragment.length > 0);
@@ -10449,6 +10772,24 @@ function workflowScoreOutcomeMatch(requestedName: string, candidateName: string)
     return 0;
   }
 
+  const requestedDrawLike = /\b(?:draw|tie)\b/i.test(requestedForMatch);
+  const candidateDrawLike = /\b(?:draw|tie)\b/i.test(candidateForMatch);
+  if (requestedDrawLike && !candidateDrawLike) {
+    return -1000;
+  }
+
+  const requestedFragments = workflowExtractLikelyOutcomeFragments(requestedForMatch);
+  const candidateFragments = new Set(
+    workflowExtractLikelyOutcomeFragments(candidateForMatch)
+  );
+  if (
+    requestedFragments.length > 0 &&
+    candidateFragments.size > 0 &&
+    !requestedFragments.some((fragment) => candidateFragments.has(fragment))
+  ) {
+    return -1000;
+  }
+
   let score = scoreMarketCandidate({
     queryText: normalizedRequested,
     queryTokens: extractMarketQueryTokens(requestedForMatch),
@@ -10469,7 +10810,6 @@ function workflowScoreOutcomeMatch(requestedName: string, candidateName: string)
     score += 120;
   }
 
-  const requestedFragments = workflowExtractLikelyOutcomeFragments(requestedForMatch);
   for (const fragment of requestedFragments) {
     if (fragment === normalizedCandidate) {
       score += 180;
@@ -11180,13 +11520,40 @@ async function handleCompareEventOutcomeQuotes(
           ? `No concrete event was provided, so the tool picked a high-liquidity live ${category} event fallback.`
           : "No concrete event was provided, so the tool picked a high-liquidity live multi-outcome event fallback.";
     } else {
-      const resolvedEvent = await workflowResolveEventDataForAnalysis({
-        eventQuery,
-        ...(category.length > 0 ? { category } : {}),
-        sortBy: "volume",
-      });
-      eventData = resolvedEvent.eventData;
-      selectionReason = resolvedEvent.selectionReason;
+      let searchResolvedEvent: Record<string, unknown> | null = null;
+      if (desiredOutcomes.length > 0) {
+        try {
+          searchResolvedEvent = workflowExtractToolData(
+            await handleSearchAndGetOutcomes({
+              query: eventQuery,
+              ...(category.length > 0 ? { category } : {}),
+              sortBy: "name",
+            }),
+            "search_and_get_outcomes"
+          );
+        } catch {
+          searchResolvedEvent = null;
+        }
+      }
+
+      if (
+        searchResolvedEvent &&
+        workflowObjectArray(searchResolvedEvent.outcomes).length > 0
+      ) {
+        eventData = searchResolvedEvent;
+        selectionReason =
+          typeof searchResolvedEvent.note === "string"
+            ? searchResolvedEvent.note
+            : "Resolved the requested event through direct event search.";
+      } else {
+        const resolvedEvent = await workflowResolveEventDataForAnalysis({
+          eventQuery,
+          ...(category.length > 0 ? { category } : {}),
+          sortBy: "volume",
+        });
+        eventData = resolvedEvent.eventData;
+        selectionReason = resolvedEvent.selectionReason;
+      }
     }
 
     const availableOutcomes = workflowObjectArray(eventData.outcomes);
@@ -11198,17 +11565,19 @@ async function handleCompareEventOutcomeQuotes(
       );
     }
 
-    const unmatchedOutcomes: string[] = [];
     const selectedOutcomes: Array<Record<string, unknown>> = [];
     const usedKeys = new Set<string>();
-
-    if (desiredOutcomes.length > 0) {
-      for (const requestedName of desiredOutcomes) {
+    const matchRequestedOutcomes = (
+      requestedNames: string[],
+      candidateOutcomes: Record<string, unknown>[]
+    ): string[] => {
+      const unmatched: string[] = [];
+      for (const requestedName of requestedNames) {
         let bestMatch: Record<string, unknown> | null = null;
         let bestKey = "";
         let bestScore = 0;
 
-        for (const outcome of availableOutcomes) {
+        for (const outcome of candidateOutcomes) {
           const candidateName =
             typeof outcome.name === "string" ? outcome.name : "";
           const tokenId =
@@ -11227,7 +11596,7 @@ async function handleCompareEventOutcomeQuotes(
         }
 
         if (!bestMatch || bestScore < 30) {
-          unmatchedOutcomes.push(requestedName);
+          unmatched.push(requestedName);
           continue;
         }
 
@@ -11236,6 +11605,44 @@ async function handleCompareEventOutcomeQuotes(
           ...bestMatch,
           requestedName,
         });
+      }
+
+      return unmatched;
+    };
+    let unmatchedOutcomes: string[] = [];
+
+    if (desiredOutcomes.length > 0) {
+      unmatchedOutcomes = matchRequestedOutcomes(
+        desiredOutcomes,
+        availableOutcomes
+      );
+
+      if (unmatchedOutcomes.length > 0 && eventQuery.length > 0) {
+        try {
+          const expandedEventData = workflowExtractToolData(
+            await handleSearchAndGetOutcomes({
+              query: eventQuery,
+              ...(category.length > 0 ? { category } : {}),
+              sortBy: "name",
+              includeInactive: true,
+            }),
+            "search_and_get_outcomes"
+          );
+          const expandedOutcomes = workflowObjectArray(expandedEventData.outcomes);
+          if (expandedOutcomes.length > availableOutcomes.length) {
+            unmatchedOutcomes = matchRequestedOutcomes(
+              unmatchedOutcomes,
+              expandedOutcomes
+            );
+            eventData = expandedEventData;
+            selectionReason =
+              typeof expandedEventData.note === "string"
+                ? `${selectionReason} Retried unmatched outcomes against the full event ladder, including inactive rows.`
+                : selectionReason;
+          }
+        } catch {
+          // Keep the original partial result when the broader inactive lookup fails.
+        }
       }
     } else if (momentumRequested) {
       const tokenIdsForHistory = workflowUniqueStrings(
@@ -11423,8 +11830,8 @@ async function handleCompareEventOutcomeQuotes(
         typeof eventData.eventUrl === "string" ? eventData.eventUrl : "",
       synthesisHint:
         momentumRequested
-          ? "Copy numeric fields from each matchedOutcomes row into tables: use currentPrice (or price/yesMid) for implied YES probability, bestBid/bestAsk for quotes, spread and spreadPercent for width, and priceChange/priceChangePercent for recent movement. Each row includes readableQuote — paste verbatim for outcome rows instead of placeholders."
-          : "Copy numeric fields from each matchedOutcomes row into tables: use currentPrice (or price/yesMid) for implied YES probability, bestBid/bestAsk for quotes, spread and spreadPercent for width. Each row includes readableQuote — paste verbatim for outcome rows instead of placeholders.",
+          ? "Copy numeric fields from each matchedOutcomes row into tables: use currentPrice (or price/yesMid) for implied YES probability, bestBid/bestAsk for quotes, spread and spreadPercent for width, and priceChange/priceChangePercent for recent movement. Each row includes readableQuote — paste verbatim for outcome rows instead of placeholders. Do not relabel a row as a different requested outcome if matchedName disagrees; instead surface it as unmatched or unavailable."
+          : "Copy numeric fields from each matchedOutcomes row into tables: use currentPrice (or price/yesMid) for implied YES probability, bestBid/bestAsk for quotes, spread and spreadPercent for width. Each row includes readableQuote — paste verbatim for outcome rows instead of placeholders. If unmatchedOutcomes is non-empty, retry them against the full event ladder (including inactive outcomes when necessary) before concluding the rows are unavailable.",
       selectionReason,
       matchedOutcomes,
       unmatchedOutcomes,
@@ -12760,19 +13167,25 @@ async function handleCompareMarketAgainstRelatedContracts(
       workflowToNumber(primaryOutcome.price, 0)
     );
 
+    let richOrCheap: "rich" | "cheap" | "roughly_fair" = "roughly_fair";
+    let relativeValueDifference: number | null = null;
     let relativeValueAssessment =
       "The sibling-event curve does not show an obvious simple relative-value dislocation.";
     if (neighborOutcomes.length > 0 && primarySibling) {
       const averageNeighborPrice =
         neighborOutcomes.reduce((sum, outcome) => sum + outcome.currentPrice, 0) /
         neighborOutcomes.length;
+      const priceDifference = currentPrice - averageNeighborPrice;
+      relativeValueDifference = Number(priceDifference.toFixed(4));
       if (currentPrice > averageNeighborPrice * 1.75 && currentPrice > 0.05) {
+        richOrCheap = "rich";
         relativeValueAssessment =
           `${primarySibling.matchedName} looks rich versus the nearby sibling set, so the market likely needs stronger event-specific conviction than the neighboring contracts imply.`;
       } else if (
         currentPrice < averageNeighborPrice * 0.6 &&
         averageNeighborPrice > 0.01
       ) {
+        richOrCheap = "cheap";
         relativeValueAssessment =
           `${primarySibling.matchedName} screens cheap versus the nearby sibling set, but the quote still needs to be filtered through liquidity and resolution risk before calling it value.`;
       } else if (
@@ -12818,8 +13231,12 @@ async function handleCompareMarketAgainstRelatedContracts(
       },
       siblingOutcomes,
       eventPriceSum: Number(eventPriceSum.toFixed(4)),
+      richOrCheap,
+      relativeValueDifference,
       relativeValueAssessment,
       arbitrageAssessment,
+      synthesisHint:
+        "Use richOrCheap and relativeValueAssessment directly in the answer. Do not recompute the verdict from raw search rows because siblingOutcomes already normalizes currentPrice aliases.",
       analysisNotes: [
         resolvedEvent.selectionReason,
         typeof comparisonData.selectionReason === "string"
@@ -15173,6 +15590,7 @@ async function handleSearchAndGetOutcomes(
 ): Promise<CallToolResult> {
   const query = args?.query as string;
   const category = args?.category as string | undefined;
+  const includeInactiveExplicit = args?.includeInactive === true;
   const sortByRaw = typeof args?.sortBy === "string" ? args.sortBy : "volume";
   const sortBy =
     sortByRaw === "price" || sortByRaw === "name" ? sortByRaw : "volume";
@@ -15182,12 +15600,26 @@ async function handleSearchAndGetOutcomes(
   }
 
   try {
-    const normalizedQuery = normalizeMarketQueryText(query);
-    const queryTokens = buildMarketQueryScoringTokens(query);
-    const queryTargets = extractPriceTargets(query);
+    const eventSearchSeed = deriveEventSearchQuery(query);
+    const searchQuery =
+      eventSearchSeed
+        .replace(/[.]{3,}/g, " ")
+        .replace(/[?]+$/g, "")
+        .replace(/\s+/g, " ")
+        .trim() || query;
+    const normalizedQuery = normalizeMarketQueryText(searchQuery);
+    const headToHeadSides = workflowExtractHeadToHeadSides(searchQuery);
+    const wantsOutcomeStateView =
+      /\b(expired|future buckets?|still live|remaining live|after the expired dates?)\b/i.test(
+        query
+      );
+    const wantsResolvedOutcomeLookup =
+      /^will\s+.+?\s+win\s+on\s+\d{4}-\d{2}-\d{2}\??$/i.test(query.trim());
+    const queryTokens = buildMarketQueryScoringTokens(searchQuery);
+    const queryTargets = extractPriceTargets(searchQuery);
     const categoryTagSlug = resolveDiscoveryCategoryTagSlug({
       category,
-      query,
+      query: searchQuery,
     });
 
     let searchResults: GammaEvent[] = [];
@@ -15196,7 +15628,7 @@ async function handleSearchAndGetOutcomes(
 
     try {
       const websiteSearch = await searchGammaWebsiteEventCandidates({
-        query,
+        query: searchQuery,
         category,
         limit: 24,
         eventsStatus: "active",
@@ -15217,7 +15649,7 @@ async function handleSearchAndGetOutcomes(
     try {
       if (searchResults.length === 0) {
         const indexedSearch = await searchIndexedActiveEventCandidates({
-          query,
+          query: searchQuery,
           category,
           limit: 24,
         });
@@ -15239,7 +15671,7 @@ async function handleSearchAndGetOutcomes(
     try {
       if (searchResults.length === 0) {
         const searchEvents = await searchGammaEventsByVariants({
-          query,
+          query: searchQuery,
           limitPerType: 12,
           eventsStatus: "active",
         });
@@ -15270,7 +15702,10 @@ async function handleSearchAndGetOutcomes(
       
       if (Array.isArray(events) && events.length > 0) {
         // Filter events by query terms client-side
-        const queryTerms = query.toLowerCase().split(/\s+/).filter(t => t.length > 2);
+        const queryTerms = searchQuery
+          .toLowerCase()
+          .split(/\s+/)
+          .filter((t) => t.length > 2);
         searchResults = events.filter(event => {
           const title = (event.title || "").toLowerCase();
           const matchedTerms = queryTerms.filter(term => title.includes(term));
@@ -15361,13 +15796,13 @@ async function handleSearchAndGetOutcomes(
     }
 
     const searchResolution = await resolvePolymarketContributorSearch({
-      rawRequest: query,
+      rawRequest: searchQuery,
       traceLabel: "polymarket:search_and_get_outcomes",
       instructions:
         "Pick the exact Polymarket market family the user is asking about before returning all its outcomes. Prefer direct ground-entry or invasion contracts over broader ceasefire, strike, or macro-risk proxies when the query is specifically about boots on the ground.",
       candidates: orderedSearchEntries.map((entry, index) =>
         buildPolymarketEventSearchCandidate({
-          query,
+          query: searchQuery,
           rank: index + 1,
           source: entry.source,
           score: entry.score,
@@ -15410,7 +15845,13 @@ async function handleSearchAndGetOutcomes(
     // Step 2: Fetch the event with all its outcomes if the indexed event payload
     // didn't already include them.
     let event = resolvedSearchEntry?.event ?? bestMatch;
-    if (!event || !Array.isArray(event.markets) || event.markets.length === 0) {
+    const shouldRefreshFullEvent =
+      wantsOutcomeStateView ||
+      headToHeadSides.length >= 2 ||
+      !event ||
+      !Array.isArray(event.markets) ||
+      event.markets.length <= 1;
+    if (shouldRefreshFullEvent) {
       event = (await fetchGamma(`/events/slug/${slug}`)) as GammaEvent;
     }
 
@@ -15425,16 +15866,25 @@ async function handleSearchAndGetOutcomes(
 
     const { outcomes: eventOutcomeRows } = await buildEventOutcomeRows({
       event,
-      includeInactive: false,
+      includeInactive:
+        includeInactiveExplicit ||
+        wantsOutcomeStateView ||
+        wantsResolvedOutcomeLookup,
     });
-    const outcomes = eventOutcomeRows
+    const allOutcomes = eventOutcomeRows
       .map((row) => ({
         name: row.name,
         price: Number(row.price.toFixed(4)),
+        currentPrice: Number(row.currentPrice.toFixed(4)),
+        impliedProbability: row.impliedProbability,
         pricePercent: `${(row.price * 100).toFixed(1)}%`,
         volume: row.volume,
         conditionId: row.conditionId,
         tokenId: row.tokenId,
+        active: row.active,
+        closed: row.closed,
+        endDate: row.endDate,
+        dateStatus: row.dateStatus,
       }))
       .sort((left, right) => {
         if (sortBy === "name") {
@@ -15452,7 +15902,50 @@ async function handleSearchAndGetOutcomes(
         return right.price - left.price;
       });
 
-    const totalVolume = outcomes.reduce((sum, o) => sum + o.volume, 0);
+    const liveOutcomes = allOutcomes.filter((outcome) => outcome.active);
+    const expiredOutcomes = allOutcomes.filter(
+      (outcome) => outcome.dateStatus === "expired"
+    );
+    const highestLiveOutcomeByPrice =
+      liveOutcomes.length > 0
+        ? [...liveOutcomes].sort((left, right) => {
+            if (right.currentPrice !== left.currentPrice) {
+              return right.currentPrice - left.currentPrice;
+            }
+            return right.volume - left.volume;
+          })[0]
+        : null;
+    const highestLiveOutcomeByVolume =
+      liveOutcomes.length > 0
+        ? [...liveOutcomes].sort((left, right) => {
+            if (right.volume !== left.volume) {
+              return right.volume - left.volume;
+            }
+            return right.currentPrice - left.currentPrice;
+          })[0]
+        : null;
+    const datedOutcomeCount = allOutcomes.filter(
+      (outcome) => outcome.dateStatus !== "undated"
+    ).length;
+    const isDateLadderEvent = datedOutcomeCount >= 3;
+    const outcomes =
+      (wantsOutcomeStateView || isDateLadderEvent) && !includeInactiveExplicit
+        ? liveOutcomes
+        : allOutcomes;
+    const totalVolume = outcomes.reduce((sum, outcome) => sum + outcome.volume, 0);
+    const primaryOutcome =
+      outcomes.length === 1 && (matchConfidence === "exact" || matchConfidence === "high")
+        ? outcomes[0]
+        : (() => {
+            const inferredPrimaryMatch = workflowPickBestOutcomeMatch(
+              outcomes as unknown as Record<string, unknown>[],
+              [query, searchQuery]
+            );
+            return inferredPrimaryMatch.score >= 120 &&
+              inferredPrimaryMatch.outcome
+              ? (inferredPrimaryMatch.outcome as (typeof outcomes)[number])
+              : null;
+          })();
 
     const responseData = {
       eventTitle: event.title || slug,
@@ -15461,7 +15954,25 @@ async function handleSearchAndGetOutcomes(
       totalVolume,
       totalOutcomes: outcomes.length,
       sortedBy: sortBy,
+      synthesisHint:
+        "Use outcomes[*].currentPrice as the numeric price alias when downstream code expects currentPrice. If primaryOutcome is present, reuse primaryTokenId/primaryConditionId directly for get_market_parameters, get_spreads, or get_orderbook instead of semantic reranking. For date-bucket prompts, trust the explicit active, closed, and dateStatus fields — or stateSummary.liveOutcomes / stateSummary.expiredOutcomes when present — instead of inferring status from label text alone.",
       outcomes,
+      primaryOutcome,
+      primaryTokenId: primaryOutcome?.tokenId || "",
+      primaryConditionId: primaryOutcome?.conditionId || "",
+      stateSummary:
+        wantsOutcomeStateView || includeInactiveExplicit
+          ? {
+              liveOutcomeCount: liveOutcomes.length,
+              expiredOutcomeCount: expiredOutcomes.length,
+              liveOutcomeNames: liveOutcomes.map((outcome) => outcome.name),
+              expiredOutcomeNames: expiredOutcomes.map((outcome) => outcome.name),
+              liveOutcomes,
+              expiredOutcomes,
+              highestLiveOutcomeByPrice,
+              highestLiveOutcomeByVolume,
+            }
+          : undefined,
       searchQuery: query,
       searchMethod: resolvedSearchEntry?.source ?? searchMethod,
       matchConfidence,
@@ -15975,10 +16486,90 @@ async function handleGetBatchOrderbooks(
 async function handleGetMarketParameters(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
-  const tokenId = args?.tokenId as string;
+  const inputTokenId =
+    typeof args?.tokenId === "string" ? args.tokenId.trim() : "";
+  const inputConditionId =
+    typeof args?.conditionId === "string" ? args.conditionId.trim() : "";
+  const slug = typeof args?.slug === "string" ? args.slug.trim() : "";
+  const marketQuery =
+    typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
+  let tokenId = inputTokenId;
+  let conditionId = inputConditionId;
 
   if (!tokenId) {
-    return errorResult("tokenId is required");
+    if (!conditionId && marketQuery) {
+      try {
+        const searchData = workflowExtractToolData(
+          await handleSearchAndGetOutcomes({
+            query: marketQuery,
+            sortBy: "volume",
+          }),
+          "search_and_get_outcomes"
+        );
+        const matchConfidence =
+          typeof searchData.matchConfidence === "string"
+            ? searchData.matchConfidence
+            : "";
+        const directTokenId =
+          typeof searchData.primaryTokenId === "string"
+            ? searchData.primaryTokenId.trim()
+            : "";
+        const directConditionId =
+          typeof searchData.primaryConditionId === "string"
+            ? searchData.primaryConditionId.trim()
+            : "";
+        if (
+          (matchConfidence === "exact" || matchConfidence === "high") &&
+          (directTokenId.length > 0 || directConditionId.length > 0)
+        ) {
+          tokenId = directTokenId;
+          conditionId = directConditionId;
+        }
+      } catch {
+        // Fall through to the direct market resolver below.
+      }
+    }
+
+    if (!conditionId) {
+      const resolved = await resolveMarketReference({
+        slug: slug || undefined,
+        marketQuery: marketQuery || undefined,
+      });
+      if (!resolved?.conditionId) {
+        return errorResult(
+          "Provide tokenId, conditionId, slug, or marketQuery so the tool can resolve a market."
+        );
+      }
+      conditionId = resolved.conditionId;
+    }
+
+    try {
+      const market = (await fetchClob(
+        `/markets/${conditionId}`,
+        undefined,
+        8_000
+      )) as ClobMarket;
+      tokenId = market.tokens?.[0]?.token_id || "";
+    } catch {
+      // Fall through to Gamma fallback below.
+    }
+
+    if (!tokenId) {
+      try {
+        const gammaMarkets = (await fetchGamma(
+          `/markets?condition_ids=${encodeURIComponent(conditionId)}&limit=1`,
+          8_000
+        )) as GammaMarket[];
+        tokenId =
+          gammaMarkets.length > 0 ? extractGammaYesTokenId(gammaMarkets[0]) : "";
+      } catch {
+        // Keep the eventual resolution error below.
+      }
+    }
+  }
+
+  if (!tokenId) {
+    return errorResult("Could not resolve tokenId for the requested market");
   }
 
   try {
@@ -16391,6 +16982,8 @@ async function handleSearchMarkets(
             status: marketStatus,
             category: candidate.event.category,
             conditionId: candidate.conditionId,
+            yesTokenId: extractGammaYesTokenId(candidate.market),
+            tokenId: extractGammaYesTokenId(candidate.market),
             matchedOutcome:
               candidate.market.groupItemTitle ||
               candidate.market.question ||
@@ -16464,6 +17057,8 @@ async function handleSearchMarkets(
               status: marketStatus,
               category: e.category,
               conditionId: matchedMarket?.conditionId,
+              yesTokenId: matchedMarket ? extractGammaYesTokenId(matchedMarket) : "",
+              tokenId: matchedMarket ? extractGammaYesTokenId(matchedMarket) : "",
               matchedOutcome: matchedMarket?.question || matchedMarket?.title,
               outcomePrice: matchedOutcomePrice,
               volume: e.volume,
@@ -17733,10 +18328,15 @@ async function handleAnalyzeTopHolders(
 async function handleAnalyzeEventWhaleBreakdown(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
+  const rawQuery = typeof args?.query === "string" ? args.query.trim() : "";
   let slug =
     typeof args?.slug === "string" ? args.slug.trim() : "";
   const marketQuery =
-    typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
+    typeof args?.marketQuery === "string" ? args.marketQuery.trim() : rawQuery;
+  const requestedOutcomes = workflowUniqueStrings([
+    ...workflowStringArray(args?.outcomes),
+    ...workflowExtractComparisonOutcomesFromQuery(rawQuery || marketQuery),
+  ]).slice(0, 20);
   const maxOutcomes = Math.min((args?.maxOutcomes as number) || 10, 20);
   let selectionReason = slug.length > 0 ? "Used the provided event slug." : "";
 
@@ -17800,12 +18400,81 @@ async function handleAnalyzeEventWhaleBreakdown(
       return volB - volA;
     });
 
-    // Analyze top N markets
-    const marketsToAnalyze = sortedMarkets.slice(0, maxOutcomes);
+    const selectedMarkets: GammaMarket[] = [];
+    const usedConditionIds = new Set<string>();
+    const unmatchedOutcomes: string[] = [];
+
+    if (requestedOutcomes.length > 0) {
+      for (const requestedName of requestedOutcomes) {
+        let bestMatch: GammaMarket | null = null;
+        let bestScore = 0;
+        for (const market of sortedMarkets) {
+          const conditionId = typeof market.conditionId === "string" ? market.conditionId : "";
+          const candidateName = deriveGammaOutcomeName(market);
+          if (!conditionId || usedConditionIds.has(conditionId) || candidateName.length === 0) {
+            continue;
+          }
+
+          const score = workflowScoreOutcomeMatch(requestedName, candidateName);
+          if (score > bestScore) {
+            bestMatch = market;
+            bestScore = score;
+          }
+        }
+
+        if (!bestMatch || bestScore < 30 || !bestMatch.conditionId) {
+          unmatchedOutcomes.push(requestedName);
+          continue;
+        }
+
+        usedConditionIds.add(bestMatch.conditionId);
+        selectedMarkets.push(bestMatch);
+      }
+    }
+
+    const fallbackMarketBudget =
+      selectedMarkets.length > 0 ? maxOutcomes : Math.min(maxOutcomes, 6);
+    const mixedFallbackMarkets: GammaMarket[] = [];
+    const fallbackConditionIds = new Set<string>();
+    const pushFallbackMarket = (market: GammaMarket) => {
+      const conditionId =
+        typeof market.conditionId === "string" ? market.conditionId : "";
+      if (!conditionId || fallbackConditionIds.has(conditionId)) {
+        return;
+      }
+      fallbackConditionIds.add(conditionId);
+      mixedFallbackMarkets.push(market);
+    };
+    if (selectedMarkets.length === 0) {
+      const topByPrice = [...sortedMarkets]
+        .sort(
+          (left, right) =>
+            resolveCurrentOutcomePrice(right) - resolveCurrentOutcomePrice(left)
+        )
+        .slice(0, Math.min(fallbackMarketBudget, 5));
+      for (const market of topByPrice) {
+        pushFallbackMarket(market);
+      }
+      for (const market of sortedMarkets) {
+        if (mixedFallbackMarkets.length >= fallbackMarketBudget) {
+          break;
+        }
+        pushFallbackMarket(market);
+      }
+    }
+    const marketsToAnalyze =
+      selectedMarkets.length > 0 ? selectedMarkets : mixedFallbackMarkets;
+    const selectionMode =
+      selectedMarkets.length > 0 ? "requested_outcomes" : "top_volume_outcomes";
+    if (selectionMode === "requested_outcomes") {
+      selectionReason = `${selectionReason || "Resolved the requested event."} Bounded whale analysis to the named shortlist instead of scanning the whole event.`;
+    } else {
+      selectionReason = `${selectionReason || "Resolved the requested event."} Used a bounded mixed shortlist of high-price and high-volume outcomes to avoid timing out on large events.`;
+    }
     const whaleQuoteSnapshots = await fetchGammaMarketQuoteSnapshots(
       marketsToAnalyze,
       {
-        timeoutMs: "heavy",
+        timeoutMs: marketsToAnalyze.length <= 6 ? "default" : "heavy",
       }
     );
 
@@ -17976,7 +18645,9 @@ async function handleAnalyzeEventWhaleBreakdown(
       eventSlug: slug,
       totalMarketsInEvent,
       totalMarketsAnalyzed: whaleResults.length,
+      selectionMode,
       whalesByOutcome,
+      unmatchedOutcomes,
       topWhaleOutcome: topOutcome ? {
         outcome: topOutcome.outcome,
         totalValue: topOutcome.totalWhaleValue,
@@ -17984,6 +18655,8 @@ async function handleAnalyzeEventWhaleBreakdown(
       } : null,
       smartMoneyConsensus,
       selectionReason,
+      synthesisHint:
+        "Use whalesByOutcome as the only grounded whale-backing evidence. If whalesByOutcome is empty or requested outcomes appear in unmatchedOutcomes, say whale data was unavailable for those names instead of substituting plain trading volume as a whale proxy.",
       note: `Analyzed ${whaleResults.length} of ${totalMarketsInEvent} markets. Whale totals and whale counts use the full deep holder scan for each outcome; returned holder samples may still be truncated for payload size. The outcome with the most whale money suggests smart money's pick.`,
       fetchedAt: new Date().toISOString(),
     });

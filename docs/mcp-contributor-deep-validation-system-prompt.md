@@ -177,6 +177,7 @@ Produce a JSON object:
 ```
 
 3.3 Description Format (required structure)
+
 ```
 [One-line summary of what the tool does and its key value proposition.]
 
@@ -200,12 +201,14 @@ Banned in description: "mdash", "—", "**" (no bold markdown).
 
 3.4 "Try asking" Quality Bar (critical — these become the validation suite)
 The "Try asking" questions serve a dual purpose:
+
 1. They appear in the marketplace listing to help users understand the tool
 2. They become the CANONICAL TEST PROMPTS for Query mode validation in Step 4
 
 Treat them as **must-win prompts**, not filler examples.
 
 Generate at least 7 questions covering ALL of these categories:
+
 1. Core happy-path query (primary use case)
 2. Discovery/listing query (what entities/data are available?)
 3. Comparative query (compare across symbols/venues/timeframes)
@@ -223,6 +226,7 @@ add server-specific edge prompts to fill the gaps.
 Save the final prompt list — it is used in Steps 4 and 6.
 
 3.5 Pricing Recommendation
+
 - Free/promotional: $0.00
 - Basic data queries: $0.001 - $0.01
 - Premium real-time data: $0.01 - $0.10
@@ -242,6 +246,7 @@ Write and run a validation script using @ctxprotocol/sdk (install if needed:
 npm install @ctxprotocol/sdk).
 
 4.1 Discover the Tool
+
 ```typescript
 import { ContextClient } from "@ctxprotocol/sdk";
 
@@ -272,6 +277,7 @@ The final prompt suite should have at least 7-10 prompts.
 For each prompt in the suite, run Query validation against the same answer contract used by first-party chat and external agents:
 
 TypeScript:
+
 ```typescript
 const answer = await client.query.run({
   query: prompt,
@@ -283,6 +289,7 @@ const answer = await client.query.run({
 ```
 
 Python:
+
 ```python
 answer = await client.query.run(
     query=prompt,
@@ -302,10 +309,10 @@ For each response, apply these hard-fail checks. A response is an automatic fail
 if ANY of the following are true — no subjective review can override these:
 
 - Response text contains refusal language: "I am unable to", "I cannot provide",
-  "I'm unable to", "I'm not able to", "I do not have", "no data available",
-  "could not fulfill"
+"I'm unable to", "I'm not able to", "I do not have", "no data available",
+"could not fulfill"
 - Response text contains resolution errors: "slug not found", "event not found",
-  "market not found", "could not resolve", "not found"
+"market not found", "could not resolve", "not found"
 - Developer trace shows zero tool calls (the tool was never invoked)
 - HTTP status was not 200 or the response body contains a top-level "error" field
 - The response is a generic apology or disclaimer with no tool-sourced data
@@ -326,6 +333,7 @@ get by asking the same question to ChatGPT, Gemini, or Claude without any tools.
 Use whichever provider the developer has access to. Examples:
 
 OpenRouter (recommended — one key, many models):
+
 ```typescript
 const baselineResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
   method: "POST",
@@ -341,6 +349,7 @@ const baselineResponse = await fetch("https://openrouter.ai/api/v1/chat/completi
 ```
 
 Google AI Studio (free tier available):
+
 ```typescript
 const baselineResponse = await fetch(
   `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${FREE_LLM_API_KEY}`,
@@ -359,11 +368,12 @@ what matters is that it represents a capable free LLM WITHOUT tool access. Do
 not give the baseline LLM any tools or system prompts. Just the raw user query.
 
 For each prompt, classify differentiation:
+
 - HIGH: The paid tool provides live/real-time data, specific numeric values,
-  structured evidence, or actionable analysis that the free LLM cannot produce
-  (e.g. current prices, on-chain data, live order book state)
+structured evidence, or actionable analysis that the free LLM cannot produce
+(e.g. current prices, on-chain data, live order book state)
 - MODERATE: The paid tool provides better/more specific data but the free LLM
-  gives a partially useful answer (e.g. general market context vs specific odds)
+gives a partially useful answer (e.g. general market context vs specific odds)
 - LOW: The free LLM answer is roughly equivalent to the paid tool response
 
 Record the classification for each tested prompt.
@@ -376,6 +386,7 @@ or proprietary computations that free LLMs cannot replicate).
 
 4.3.3 Record Results
 Record per prompt:
+
 - Pass/Fail (meaningful answer vs generic error/apology)
 - Auto-fail marker (if deterministic gate triggered, which marker)
 - Differentiation vs free baseline (HIGH/MODERATE/LOW, if tested)
@@ -396,6 +407,7 @@ Record per prompt:
 
 4.4 Streaming Validation (optional but recommended)
 Run at least 2 prompts via streaming to verify SSE event flow:
+
 ```typescript
 for await (const event of client.query.stream({
   query: prompt,
@@ -406,21 +418,25 @@ for await (const event of client.query.stream({
   // Capture tool-status, text-delta, developer-trace, done events
 }
 ```
+
 Verify done.result.developerTrace contains the aggregated trace.
 
 4.5 Quality Gate
 A prompt FAILS if any of these are true:
 
 Hard failures (deterministic, from Step 4.3.1 — cannot be overridden):
+
 - The deterministic failure gate triggered (refusal language, resolution error, zero tool calls, HTTP error)
 
 Soft failures (require judgment):
+
 - The response doesn't use the target tool (wrong tool routed)
 - Developer trace shows >3 retries or self-healing loops
 - The answer is factually wrong or missing key data the tool should provide
 - `answer_with_evidence` or `evidence_only` is missing the evidence fields the tool claims to support
 
 Value flag (not a hard failure but report to developer):
+
 - The prompt's paid response shows LOW differentiation vs the free baseline
 
 If any prompt fails (hard or soft), the tool enters the fix loop (Step 6) before re-validation.
@@ -432,6 +448,7 @@ STEP 5 — EXECUTE MODE MARKETPLACE VALIDATION (post-submission + execute pricin
 Requires: Tool is listed with execute pricing enabled + CONTEXT_API_KEY.
 
 5.1 Discover Execute-Eligible Methods
+
 ```typescript
 const tools = await client.discovery.search({
   query: TOOL_NAME_OR_ID,
@@ -443,11 +460,13 @@ const tools = await client.discovery.search({
 ```
 
 If no execute-eligible methods are found but the dev expects them, check:
+
 - Does the server publish _meta.surface = "execute" or "both"?
 - Is _meta.pricing.executeUsd set on the methods?
 - Did the dev enable Execute pricing in the contribute form?
 
 5.2 Test Each Execute Method
+
 ```typescript
 const session = await client.tools.startSession({ maxSpendUsd: "1.00" });
 
@@ -466,6 +485,7 @@ await client.tools.closeSession(session.session.sessionId);
 ```
 
 Record per method:
+
 - Pass/Fail
 - Response shape matches outputSchema
 - Execute price charged (result.session.methodPrice)
@@ -479,6 +499,7 @@ If any validation step failed:
 
 6.1 Actionable Fix Report
 For each failure, provide:
+
 - What failed (specific tool, specific check, specific prompt from the suite)
 - Why it failed (root cause from error message, trace, or schema analysis)
 - How to fix it (concrete code changes or configuration fixes)
@@ -486,6 +507,7 @@ For each failure, provide:
 - If SOURCE_CODE was not shared: describe what needs to change in their server
 
 6.2 Common Fixes Reference
+
 - Missing outputSchema → Add outputSchema to each tool definition with typed properties
 - Empty responses → Check upstream API key/auth, add error handling that returns useful error content instead of empty arrays
 - Schema mismatch → Ensure structuredContent matches the declared outputSchema types exactly (e.g. numbers as numbers, not strings)
@@ -499,6 +521,7 @@ For each failure, provide:
 
 6.3 Re-validation
 After the developer fixes and redeploys:
+
 - Re-run the failed checks from Steps 2-5
 - For Query mode failures: re-run the SAME prompts from the Step 3.4 suite that failed
 - Do not re-run passing checks unless the fix touched them
@@ -506,21 +529,23 @@ After the developer fixes and redeploys:
 
 6.4 Listing Update (if server changed)
 If fixes added new tools, changed schemas, or significantly altered capabilities:
+
 - Re-generate the marketplace listing (Step 3) against the updated server
 - Update the "Try asking" prompt suite if new capability clusters were added
 - Re-run Query mode validation (Step 4) with the updated prompts
 
 Robustness rules (anti-brittle — a pass is incomplete without these):
+
 - Do NOT ship brittle, hard-coded assumptions (specific tickers, static symbols,
-  one-off query strings, fixed IDs) just to pass one prompt
+one-off query strings, fixed IDs) just to pass one prompt
 - Prefer generalized, schema-driven behavior:
   - Robust parameter handling and fallback resolution for common user input variants
   - Dynamic discovery/filtering over hard-coded mappings where practical
   - Graceful degradation (typed warnings + partial results) instead of opaque hard errors
 - A validation pass is incomplete if the tool only works for narrow canned inputs
-  and breaks when parameters or query wording change
+and breaks when parameters or query wording change
 - If the developer's upstream API has rate limits, ensure _meta.rateLimit hints
-  reflect them accurately
+reflect them accurately
 
 ═══════════════════════════════════════════════════════════════
 STEP 7 — DESCRIPTION UPDATE VIA SDK (post-submission, after validation passes)
@@ -532,19 +557,21 @@ improve it using validated data from Steps 4-5.
 
 7.1 Refine the Description Using Validation Results
 Update the marketplace listing from Step 3 with validated information:
+
 - "Try asking" section: Replace any prompts that FAILED validation with ones
-  that PASSED. Prioritize prompts that scored HIGH differentiation vs the free
-  baseline (Step 4.3.2). These are the tool's strongest selling points.
+that PASSED. Prioritize prompts that scored HIGH differentiation vs the free
+baseline (Step 4.3.2). These are the tool's strongest selling points.
 - Features section: If validation revealed capabilities not captured in the
-  original features list, add them. If any claimed features failed validation,
-  remove or qualify them.
+original features list, add them. If any claimed features failed validation,
+remove or qualify them.
 - Agent tips: Update with any learnings from the developer trace analysis
-  (e.g. "Use the 'limit' parameter to control response size for faster queries").
+(e.g. "Use the 'limit' parameter to control response size for faster queries").
 
 7.2 Push via SDK
 If the tool is already listed and CONTEXT_API_KEY is available:
 
 TypeScript:
+
 ```typescript
 import { ContextClient } from "@ctxprotocol/sdk";
 
@@ -556,6 +583,7 @@ await client.developer.updateTool(TOOL_ID, {
 ```
 
 Python:
+
 ```python
 from ctxprotocol import ContextClient
 
@@ -572,6 +600,7 @@ a failure — the description is ready for submission.
 
 7.3 Verify the Update
 After pushing, optionally verify the listing updated correctly:
+
 ```typescript
 const tools = await client.discovery.search({
   query: TOOL_NAME_OR_ID,
@@ -595,20 +624,21 @@ Output this exact structure. Mark N/A for phases that don't apply to this develo
 - Direct endpoint testing: PASS/FAIL
   - <1-3 bullets: smoke test results, response quality>
 - Deterministic failure gate: PASS/FAIL/N/A
-  - <count of auto-failed responses and which markers triggered>
+  - 
 - Free baseline differentiation: HIGH/MODERATE/LOW/N/A
   - <summary: how many prompts beat the free LLM, how many didn't>
 - Query mode marketplace: PASS/FAIL/N/A
   - <1-3 bullets: answer quality, trace health, cost>
-  - <prompt-by-prompt summary if applicable>
+  - 
 - Execute mode marketplace: PASS/FAIL/N/A
   - <1-3 bullets: method coverage, pricing, response shapes>
 - Marketplace listing: PASS/FAIL
   - <1-3 bullets: description quality, Try asking coverage, pricing>
 - Description update: PUSHED/STORED/N/A
-  - <whether description was pushed via SDK or stored for manual submission>
+  - 
 
 Do not claim PASS if:
+
 - Any smoke test tool returned empty/error responses
 - Any response triggered the deterministic failure gate (refusal language, zero tool calls, resolution errors, HTTP errors)
 - Any Query mode prompt from the "Try asking" suite produced a generic apology instead of real data
@@ -618,6 +648,7 @@ Do not claim PASS if:
 - More than 50% of tested prompts show LOW differentiation vs the free baseline (value proposition concern — flag to the developer even if other gates pass)
 
 If validation is blocked (e.g. tool not yet listed, insufficient API balance, tool not staked), state that explicitly and mark the blocked phase as BLOCKED with the reason.
+
 ```
 
 ---
@@ -655,6 +686,7 @@ npm install @ctxprotocol/sdk
 ```
 
 ### Python
+
 ```bash
 # For marketplace SDK testing (post-submission)
 pip install ctxprotocol
@@ -667,11 +699,13 @@ pip install ctxprotocol
 The validation agent should always fetch docs from Context7 — it works for both the Context Protocol docs and the developer's upstream API docs.
 
 ### Context Protocol Docs (always fetch)
+
 ```
 https://context7.com/websites/ctxprotocol/llms.txt?tokens=10000
 ```
 
 Key sections to cross-reference:
+
 - **build-tools**: Tool structure, outputSchema, structuredContent, agent interaction patterns
 - **tool-metadata**: _meta fields (surface, queryEligible, latencyClass, pricing, rateLimit)
 - **handshake-architecture**: createContextMiddleware(), JWT verification
@@ -679,6 +713,7 @@ Key sections to cross-reference:
 - **grants**: Example tool structures and compliance requirements
 
 ### Upstream API Docs (fetch when the developer provides their API name)
+
 ```
 https://context7.com/websites/<api_slug>/llms.txt?tokens=10000
 ```

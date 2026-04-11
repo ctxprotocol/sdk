@@ -1,0 +1,73 @@
+{
+  "runId": "2026-04-09T09:14:00.000Z",
+  "contributor": "kalshi-contributor",
+  "events": [
+    {
+      "timestamp": "2026-04-09T09:13:51.455Z",
+      "phase": "prompts",
+      "event": "live_data_discovery",
+      "detail": "node discover-live-markets.mjs wrote live-market-snapshot.json (60 markets)",
+      "promptCount": 0
+    },
+    {
+      "timestamp": "2026-04-09T09:28:59.018Z",
+      "phase": "evaluation",
+      "event": "paid_sweep_partial",
+      "detail": "First batch: 6/16 prompts (q1-q6), paid+free baseline, 100% script pass rate",
+      "successCount": 6,
+      "errorCount": 0
+    },
+    {
+      "timestamp": "2026-04-09T09:29:30.000Z",
+      "phase": "readiness",
+      "event": "local_mcp_probe",
+      "detail": "localhost:4007/mcp not reachable; Context app root HTTP 200",
+      "durationMs": 0
+    },
+    {
+      "timestamp": "2026-04-09T09:29:49.887Z",
+      "phase": "evaluation",
+      "event": "merge_continuation_started",
+      "detail": "KALSHI_MERGE=1 run for remaining prompt ids (q7-q17, snap-1, snap-2)",
+      "successCount": 0
+    },
+    {
+      "timestamp": "2026-04-09T09:50:08.532Z",
+      "phase": "evaluation",
+      "event": "paid_sweep_complete",
+      "detail": "16/16 prompts merged; script passRate 87.5% (14/16); q16/q17 timeouts; q12 partial refusal in text",
+      "successCount": 14,
+      "errorCount": 2
+    },
+    {
+      "timestamp": "2026-04-09T09:50:15.000Z",
+      "phase": "evaluation",
+      "event": "failure_gate",
+      "detail": "autoWeakCount=5 from reviewer file (refusal/timeout/tool gaps)",
+      "autoWeakCount": 5
+    },
+    {
+      "timestamp": "2026-04-09T09:58:03.816Z",
+      "phase": "evaluation",
+      "event": "reviewer_complete",
+      "detail": "pipeline-reviewer wrote reviewer-evaluation.json",
+      "satisfactionMean": 3.032,
+      "weakQueryCount": 11,
+      "weakQueryRate": 0.688,
+      "baselineBeatenRate": 0.875
+    },
+    {
+      "timestamp": "2026-04-09T09:58:18.087Z",
+      "phase": "evaluation",
+      "event": "gate_check",
+      "detail": "release.status blocked: reviewer mean < 3.5, weak rate > 20%, missing marketplace-surface-checks.latest.json",
+      "releaseStatus": "blocked",
+      "iterationAction": "continue",
+      "blockers": [
+        "Reviewer satisfactionMean 3.032 < 3.5",
+        "Weak query rate 69%",
+        "Missing marketplace-surface-checks.latest.json"
+      ]
+    }
+  ]
+}

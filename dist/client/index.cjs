@@ -119,6 +119,9 @@ var Discovery = class {
     if (options.excludeSlow !== void 0) {
       params.set("excludeSlow", String(options.excludeSlow));
     }
+    if (options.favoritesOnly !== void 0) {
+      params.set("favorites_only", String(options.favoritesOnly));
+    }
     const queryString = params.toString();
     const endpoint = `/api/v1/tools/search${queryString ? `?${queryString}` : ""}`;
     const response = await this.client._fetch(endpoint);
@@ -556,6 +559,7 @@ var Query = class {
         clarificationPolicy: opts.clarificationPolicy,
         answerModelId: opts.answerModelId,
         responseShape: opts.responseShape,
+        favoritesOnly: opts.favoritesOnly,
         includeData: opts.includeData,
         includeDataUrl: opts.includeDataUrl,
         includeDeveloperTrace: opts.includeDeveloperTrace,

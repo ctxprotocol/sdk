@@ -353,6 +353,7 @@ export class Query {
         clarificationPolicy: opts.clarificationPolicy,
         answerModelId: opts.answerModelId,
         responseShape: opts.responseShape,
+        favoritesOnly: opts.favoritesOnly,
         includeData: opts.includeData,
         includeDataUrl: opts.includeDataUrl,
         includeDeveloperTrace: opts.includeDeveloperTrace,

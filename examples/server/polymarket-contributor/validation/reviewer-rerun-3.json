@@ -1,172 +1,180 @@
 {
-  "reviewedAt": "2026-04-08T11:41:21.989490+00:00",
+  "reviewedAt": "2026-04-09T00:00:00Z",
+  "reviewSource": "pipeline-reviewer subagent",
   "batchLabel": "rerun-3",
   "perQueryEvaluations": [
     {
-      "query": "For the 'Will the U.S. invade Iran before 2027?' market, how concentrated are top holders, how fast is open interest changing, and does recent whale flow agree with the current 24-cent price?",
+      "id": "q1",
+      "query": "Within the 'Paris Saint-Germain FC vs. Liverpool FC' event, what are the current implied probabilities, best bids, best asks, and spreads for 'Will Paris Saint-Germain FC win on 2026-04-08?', 'Will Paris Saint-Germain FC vs. Liverpool FC end in a draw?', and 'Will Liverpool FC win on 2026-04-08?'?",
       "quotedExcerpts": [
-        "\"The market is heavily influenced by a small number of holders.\"",
-        "\"Data for the velocity or rate of change of OI is currently unavailable, as only a point-in-time snapshot was captured.\"",
-        "\"Whale flow is currently aligned with the upward price movement.\""
+        "The specific outcomes for \"Will Paris Saint-Germain FC win on 2026-04-08?\" and \"Will Liverpool FC win on 2026-04-08?\" were not returned in the current data slice.",
+        "Will Paris Saint-Germain FC vs. Liverpool FC end in a draw? | 0.0% | 0 | 0 | 0.00c (0.00%)",
+        "Trace result: matchedOutcomes included PSG at 99.9c / 100.0c and Liverpool FC at 0.0c / 0.0c with `unmatchedOutcomes: []`."
       ],
       "satisfactionScores": {
-        "actionability": 4,
+        "actionability": 1,
         "dataFreshness": 5,
-        "specificity": 5,
-        "uniqueness": 4,
-        "completeness": 4,
-        "dataAccuracy": 5
+        "specificity": 3,
+        "uniqueness": 2,
+        "completeness": 1,
+        "dataAccuracy": 1
       },
+      "satisfactionMean": 2.17,
       "scoreExplanations": {
-        "actionability": "A trader gets a usable concentration and whale-flow read, even though true OI velocity is still unavailable.",
-        "dataFreshness": "The answer is clearly anchored to same-session live market reads, including the updated 27.5-cent price.",
-        "specificity": "It provides concrete holder concentration, OI level, whale net flow, buy and sell volume, and the largest trade price.",
-        "uniqueness": "Venue-native holder and whale-flow evidence gives real paid value beyond a generic geopolitical take.",
-        "completeness": "It answers two parts directly and is honest that the OI-speed subquestion cannot be fully answered from one snapshot.",
-        "dataAccuracy": "The concentration, OI, price, and whale-flow figures line up with the trace outputs."
+        "actionability": "A buyer cannot trade off this answer because the requested three-way comparison collapses into a single visible row.",
+        "dataFreshness": "The answer is framed as a same-session April 9 live snapshot.",
+        "specificity": "The one displayed row is numerically specific, but two requested rows are omitted from the buyer-facing table.",
+        "uniqueness": "Live quote detail on a specific sports event is premium in principle, but the value is badly reduced by the synthesis failure.",
+        "completeness": "The user asked for three exact outcomes and only one appears in the response.",
+        "dataAccuracy": "The response incorrectly says PSG and Liverpool were not returned even though the trace shows both matched with full quote rows and no unmatched outcomes."
       },
       "traceAssessment": {
         "toolSelectionClean": true,
         "retryCount": 0,
         "selfHealCount": 0,
-        "budgetConsumedPct": 15,
+        "budgetConsumedPct": 12,
+        "fragilityRisk": "high",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "The tool call resolved all three requested outcomes, but the buyer-facing synthesis only surfaced the draw row.",
+        "completenessIssue": "Two resolved rows disappeared between execution result and final response.",
+        "codeIssueDetail": "The runtime result contains three `matchedOutcomes`, but the execution result handed to synthesis includes only one row while still reporting `unmatchedOutcomes: []`.",
+        "dataAccuracyRedFlags": "Trace rows show PSG at 100.0% with 99.9c / 100.0c quotes and Liverpool at 0.0% with 0.0c / 0.0c quotes, contradicting the answer's claim that those outcomes were not returned.",
+        "rootCauseCategory": "response_synthesis_drop",
+        "rootCauseEvidence": "Tool history for `compare_event_outcome_quotes` contains full matched rows for PSG, Draw, and Liverpool FC, while the final response table contains only Draw.",
+        "responseQualityNote": "Buyer-unsafe because it suppresses available data and then misstates availability.",
+        "improvementLever": "Preserve every resolved matched outcome row verbatim when `unmatchedOutcomes` is empty.",
+        "diagnosticBrief": {
+          "toolUsed": "compare_event_outcome_quotes",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"eventQuery\":\"Paris Saint-Germain FC vs. Liverpool FC\",\"outcomes\":[\"Will Paris Saint-Germain FC win on 2026-04-08?\",\"Will Paris Saint-Germain FC vs. Liverpool FC end in a draw?\",\"Will Liverpool FC win on 2026-04-08?\"],\"includeHistory\":false}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "Tool history returned three `matchedOutcomes`, but the surfaced execution result only retained the draw row.",
+          "toolResultSample": "PSG: 0.9995 mid, 0.999 bid, 1 ask; Draw: 0 / 0; Liverpool FC: 0 / 0; unmatchedOutcomes=[]",
+          "completenessVerdict": "Failed at synthesis, not at data retrieval.",
+          "stageTimingBottleneck": "None; the miss happened after successful retrieval."
+        }
+      },
+      "overallVerdict": "Weak rerun: the system had the full three-row answer in trace, but the buyer only received one row plus a false claim that the other two were unavailable.",
+      "differentiation": "low_differentiation"
+    },
+    {
+      "id": "q5",
+      "query": "Within the '2026 FIFA World Cup Winner ' event, which sampled outcome has the strongest whale backing right now among Spain, France, England, Switzerland, New Zealand, and South Korea?",
+      "quotedExcerpts": [
+        "Spain has the strongest whale backing among the selected teams you mentioned.",
+        "The tool results did not return data for Switzerland, New Zealand, or South Korea, indicating they do not currently have significant whale backing within the sampled top rankings.",
+        "Trace note: Analyzed 6 of 60 markets."
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 2,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 3.5,
+      "scoreExplanations": {
+        "actionability": "A buyer does get a plausible winner among the surfaced names, but not a conclusive answer across the full requested six-team set.",
+        "dataFreshness": "The answer is explicitly based on a live tool query from the same session.",
+        "specificity": "Spain, England, and France are backed by exact whale counts, whale-value totals, and conviction labels.",
+        "uniqueness": "Outcome-level whale positioning is strong venue-native signal that a free answer would usually lack.",
+        "completeness": "Switzerland, New Zealand, and South Korea were requested explicitly and never measured directly in the returned whale table.",
+        "dataAccuracy": "Spain may still be the right sampled leader, but the response overstates confidence by treating omitted teams as effectively lower-ranked when the trace only analyzed six of sixty event markets."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 1,
+        "selfHealCount": 1,
+        "budgetConsumedPct": 17,
         "fragilityRisk": "medium",
-        "selectionIssue": null,
-        "planningIssue": "The workflow still depended on a point-in-time OI endpoint that cannot produce a true change rate.",
-        "executionIssue": null,
-        "completenessIssue": "No second time-separated OI snapshot was available, so velocity could not be measured.",
-        "codeIssueDetail": null,
-        "dataAccuracyRedFlags": null,
-        "rootCauseCategory": "capability_gap",
-        "rootCauseEvidence": "The trace explicitly says `changeRateAvailable=false` and notes that a second snapshot is required for a true OI-speed read.",
-        "responseQualityNote": "Good buyer answer: live concentration and whale-flow data were surfaced clearly, with an honest limit on OI velocity.",
-        "improvementLever": "Keep the same synthesis quality and add a second timed OI snapshot when the workflow needs velocity.",
+        "selectionIssue": "The whale breakdown was bounded to top-volume outcomes rather than forced to cover the six requested names.",
+        "planningIssue": "The completeness checker explicitly flagged the missing Switzerland, New Zealand, and South Korea coverage, but no second targeted lookup was executed.",
+        "executionIssue": "The answer inferred meaning from missing rows instead of saying the six-name comparison remained unresolved.",
+        "completenessIssue": "Only Spain, England, and France from the requested set appear in the whale output.",
+        "codeIssueDetail": "The code filters the returned `whalesByOutcome` array after a `maxOutcomes: 20` top-volume scan, which does not guarantee inclusion of low-volume requested teams.",
+        "dataAccuracyRedFlags": "Trace says `Analyzed 6 of 60 markets`, yet the response implies Switzerland, New Zealand, and South Korea simply lack meaningful whale backing rather than acknowledging missing measurement.",
+        "rootCauseCategory": "bounded_shortlist_gap",
+        "rootCauseEvidence": "Tool output lists only Italy, Spain, England, France, Argentina, and Brazil in `whalesByOutcome`; none of the three omitted requested teams appear.",
+        "responseQualityNote": "Promising whale data, but not enough to fully satisfy the buyer's exact shortlist request.",
+        "improvementLever": "Resolve whale data on the named six outcomes directly instead of inferring from a top-volume subset.",
         "diagnosticBrief": {
-          "toolUsed": "search_markets, analyze_top_holders, analyze_whale_flow, get_market_open_interest",
-          "toolShouldHaveUsed": "a second time-separated open-interest snapshot flow",
-          "argsUsed": "conditionId for the Iran market; hoursBack=24 for whale flow",
-          "argsShouldHaveUsed": "same conditionId across two timed OI reads",
-          "codeSnippet": null,
-          "toolResultSample": "currentPrice=0.275; top5 concentration roughly 43.67% YES / 51.7% NO; totalOpenInterest=1896791.23; netWhaleVolume=2913.46",
-          "completenessVerdict": "Good answer with one structural OI-speed gap.",
-          "stageTimingBottleneck": "OI velocity was blocked by single-snapshot data."
+          "toolUsed": "analyze_event_whale_breakdown",
+          "toolShouldHaveUsed": "A whale breakdown constrained to the six requested teams or a follow-up discovery step for the missing names",
+          "argsUsed": "{\"marketQuery\":\"2026 FIFA World Cup Winner\",\"maxOutcomes\":20}",
+          "argsShouldHaveUsed": "A call or follow-up path that guarantees coverage for Spain, France, England, Switzerland, New Zealand, and South Korea.",
+          "codeSnippet": "const sampled = whalesByOutcome.filter((row) => targetOutcomes.has(row?.outcome));",
+          "toolResultSample": "totalMarketsInEvent=60, totalMarketsAnalyzed=6; Spain $256,568.52, England $228,309.88, France $187,544.70; requested omitted teams absent",
+          "completenessVerdict": "Partially answered but not buyer-complete.",
+          "stageTimingBottleneck": "Coverage was bounded by shortlist logic, not runtime latency."
         }
       },
-      "overallVerdict": "Strong rerun: the buyer gets a real holder-and-flow read, and the answer clearly marks the one metric that still cannot be measured.",
-      "satisfactionMean": 4.5
+      "overallVerdict": "Partially useful rerun: Spain is a credible sampled winner, but the answer still does not conclusively cover the full six-name buyer request.",
+      "differentiation": "moderate_differentiation"
     },
     {
-      "query": "For the 'Will the Fed decrease interest rates by 50+ bps after the April 2026 meeting?' market, is there any live arbitrage or obvious overpricing/underpricing once depth and related Fed contracts are considered?",
+      "id": "q12",
+      "query": "For the 'Will Paris Saint-Germain FC win on 2026-04-08?' market, what are the live trading parameters on the token, including tick size, fee rate, minimum order size, and whether negative risk is enabled?",
       "quotedExcerpts": [
-        "\"there is no direct arbitrage opportunity for the \"50+ bps decrease\" market\"",
-        "\"The total price sum across the April Fed decision outcomes is **1.001**\"",
-        "\"The market is efficiently priced based on current data.\""
+        "The specific trading parameters (tick size, fee rate, and minimum order size) were not provided in the current tool results.",
+        "If you need the specific exchange-level parameters like tick size or negative risk status, I can attempt a more targeted query for that metadata.",
+        "Trace discovery: `primaryOutcome` was Paris Saint-Germain FC with `primaryTokenId`, `primaryConditionId`, and `matchConfidence: exact`."
       ],
       "satisfactionScores": {
-        "actionability": 4,
-        "dataFreshness": 5,
-        "specificity": 5,
-        "uniqueness": 4,
-        "completeness": 4,
-        "dataAccuracy": 4
-      },
-      "scoreExplanations": {
-        "actionability": "It gives a clear trading takeaway: no clean arb, and poor liquidity weakens any apparent cheapness.",
-        "dataFreshness": "The answer uses live-looking prices, spreads, volumes, and slippage for the current April Fed curve.",
-        "specificity": "Sibling outcome prices, spread, event price sum, and 14.3% slippage are all concrete.",
-        "uniqueness": "This is meaningful venue-specific contract analysis rather than generic macro commentary.",
-        "completeness": "It covers arbitrage, relative pricing, and depth fairly well, though the execution read is mostly on the sell side.",
-        "dataAccuracy": "The main claims line up with the trace, but the efficient-pricing conclusion still compresses some nuance around one-sided liquidity."
-      },
-      "traceAssessment": {
-        "toolSelectionClean": true,
-        "retryCount": 0,
-        "selfHealCount": 0,
-        "budgetConsumedPct": 18,
-        "fragilityRisk": "low",
-        "selectionIssue": "One broad market-list call added noise, but the core efficiency, liquidity, and sibling-comparison tools were correct.",
-        "planningIssue": null,
-        "executionIssue": null,
-        "completenessIssue": "The response leans on sell-side slippage and does not show equivalent buy-side execution costs.",
-        "codeIssueDetail": null,
-        "dataAccuracyRedFlags": null,
-        "rootCauseCategory": "synthesis_issue",
-        "rootCauseEvidence": "The trace supports the no-arb view, but the final prose turns a more nuanced cheap-but-hard-to-trade setup into a cleaner efficient-pricing verdict.",
-        "responseQualityNote": "Useful and credible buyer-facing answer with only a mild over-compression of the liquidity nuance.",
-        "improvementLever": "Keep the same event-curve comparison, but add both buy-side and sell-side executable-size costs before calling the contract fully efficient.",
-        "diagnosticBrief": {
-          "toolUsed": "search_markets, check_market_efficiency, analyze_market_liquidity, compare_market_against_related_contracts",
-          "toolShouldHaveUsed": null,
-          "argsUsed": "conditionId for the April 50+ bps decrease contract plus sibling-curve comparison",
-          "argsShouldHaveUsed": null,
-          "codeSnippet": null,
-          "toolResultSample": "50+ bps decrease price=0.0035; spread=0.1 cent; eventPriceSum=1.001; sell-side slippage=14.3%",
-          "completenessVerdict": "Good answer with a small execution-detail caveat.",
-          "stageTimingBottleneck": null
-        }
-      },
-      "overallVerdict": "Good rerun: it gives the buyer a defensible no-arb read with real curve and liquidity evidence.",
-      "satisfactionMean": 4.33
-    },
-    {
-      "query": "Within the 'Democratic Presidential Nominee 2028' event, which candidate submarkets currently combine tight quotes with meaningful whale participation, and which ones are just illiquid headline prices?",
-      "quotedExcerpts": [
-        "\"These candidates have the highest \"Tradability Scores\" (84) because they combine tight spreads with significant institutional or \"whale\" backing.\"",
-        "\"Gavin Newsom is the most tradable submarket with the deepest depth and lowest slippage.\"",
-        "\"Celebrity and veteran politician submarkets ... appear cheap and tight on the spread, but executing even a $5,000 trade would result in double-digit slippage.\""
-      ],
-      "satisfactionScores": {
-        "actionability": 5,
+        "actionability": 1,
         "dataFreshness": 4,
-        "specificity": 5,
-        "uniqueness": 5,
-        "completeness": 5,
-        "dataAccuracy": 5
+        "specificity": 3,
+        "uniqueness": 2,
+        "completeness": 1,
+        "dataAccuracy": 2
       },
+      "satisfactionMean": 2.17,
       "scoreExplanations": {
-        "actionability": "A trader can immediately focus on Newsom and AOC while avoiding the headline-only traps.",
-        "dataFreshness": "It is framed as current market data, though it does not foreground a fetch timestamp.",
-        "specificity": "The answer names spreads, whale counts, whale value, prices, classifications, and $5k slippage.",
-        "uniqueness": "This is strong paid alpha because it translates event-wide market structure into an execution map.",
-        "completeness": "It directly answers both halves of the question: who is tradable and who is just a headline price.",
-        "dataAccuracy": "The rankings and classifications match the ranked-outcomes trace from `rank_event_tradability`."
+        "actionability": "The buyer gets no actual tick size, fee rate, minimum order size, or negative-risk answer.",
+        "dataFreshness": "The discovery data is live same-session market metadata even though the requested parameter call never completed.",
+        "specificity": "The answer is specific about the contract identity and market status, but not about the trading parameters requested.",
+        "uniqueness": "There is limited paid value because the response stops after discovery rather than using the venue-native parameter endpoint.",
+        "completeness": "All four requested trading-parameter items are still missing.",
+        "dataAccuracy": "The response is honest that parameters were not surfaced, but the trace shows the exact token and condition were already resolved and should have enabled a targeted parameter fetch."
       },
       "traceAssessment": {
-        "toolSelectionClean": true,
-        "retryCount": 0,
-        "selfHealCount": 0,
-        "budgetConsumedPct": 5,
-        "fragilityRisk": "low",
-        "selectionIssue": null,
-        "planningIssue": null,
-        "executionIssue": null,
-        "completenessIssue": null,
-        "codeIssueDetail": null,
-        "dataAccuracyRedFlags": null,
-        "rootCauseCategory": null,
-        "rootCauseEvidence": "A single event-level tradability ranking returned exactly the fields needed for a buyer-facing answer.",
-        "responseQualityNote": "Clean, high-signal event map with concrete execution relevance.",
-        "improvementLever": "None meaningful; preserve the direct event-ranking path.",
+        "toolSelectionClean": false,
+        "retryCount": 2,
+        "selfHealCount": 2,
+        "budgetConsumedPct": 24,
+        "fragilityRisk": "high",
+        "selectionIssue": "The planner initially favored partial clause coverage instead of jumping directly to the parameter endpoint once the exact PSG outcome was found.",
+        "planningIssue": "The completeness checker repeatedly identified the right fix, including using `get_market_parameters` with the resolved token and condition IDs.",
+        "executionIssue": "Despite an exact discovery hit and a patched program, the recorded tool history still never shows a successful `get_market_parameters` call.",
+        "completenessIssue": "Tick size, fee rate, minimum order size, and negative-risk status all remain unanswered.",
+        "codeIssueDetail": "The execution result returns `missingData: [\"tokenId\"]` even though discovery contains `primaryTokenId`, `primaryConditionId`, and an exact primary outcome.",
+        "dataAccuracyRedFlags": "Trace says `matchConfidence: exact` and exposes the primary outcome identifiers, yet the final answer still behaves as if the decisive parameter lookup could not be attempted.",
+        "rootCauseCategory": "candidate_resolution_bug",
+        "rootCauseEvidence": "Discovery shows a single exact PSG contract with `primaryTokenId` and `primaryConditionId`, but execution stops on unresolved token selection and never returns parameter fields.",
+        "responseQualityNote": "Buyer-safe in the sense that it does not hallucinate the parameters, but still weak because the needed identifiers were already in hand.",
+        "improvementLever": "When discovery returns an exact primary outcome, skip semantic reranking and call `get_market_parameters` immediately with the resolved token and condition IDs.",
         "diagnosticBrief": {
-          "toolUsed": "rank_event_tradability",
-          "toolShouldHaveUsed": null,
-          "argsUsed": "eventQuery=\"Democratic Presidential Nominee 2028\"; limit=10",
-          "argsShouldHaveUsed": null,
-          "codeSnippet": null,
-          "toolResultSample": "Newsom tradabilityScore=84, spread=0.2 cent, whaleCount=20, slippage5k=3.1%; AOC tradabilityScore=84",
-          "completenessVerdict": "Complete on first pass.",
-          "stageTimingBottleneck": null
+          "toolUsed": "search_and_get_outcomes",
+          "toolShouldHaveUsed": "get_market_parameters, plus a fallback liquidity lookup only if minimum order size remained absent",
+          "argsUsed": "{\"query\":\"Will Paris Saint-Germain FC win on 2026-04-08?\",\"category\":\"sports\"}",
+          "argsShouldHaveUsed": "{\"tokenId\":\"<resolved primaryTokenId>\",\"conditionId\":\"0x1c16b60c7e7ddb559964cd64c8f7d5c33adc83c3fbd0fd124587a8adc1ded8dd\"}",
+          "codeSnippet": "executionResult returns `missingData: [\"tokenId\"]` despite `primaryTokenId` being present in discovery.",
+          "toolResultSample": "primaryOutcome=Paris Saint-Germain FC; primaryConditionId present; matchConfidence=exact; requested parameter fields absent",
+          "completenessVerdict": "Failed the actual parameter lookup despite exact discovery.",
+          "stageTimingBottleneck": "The run stalled on resolution logic rather than external latency."
         }
       },
-      "overallVerdict": "Excellent buyer answer: concise, specific, and directly tradable.",
-      "satisfactionMean": 4.83
+      "overallVerdict": "Weak rerun: the buyer gets identifiers and prices, but not the trading parameters they asked for, even though the trace had enough information to continue.",
+      "differentiation": "low_differentiation"
     },
     {
-      "query": "Within the 'Rockets vs. Suns' event, which live submarkets look genuinely tradable tonight based on spread, depth, and activity rather than just displayed prices?",
+      "id": "q17",
+      "query": "Within the 'US x Iran ceasefire by...?' event, which future buckets are still live after the expired dates, and among the live buckets which one currently has the highest quoted probability and the most volume?",
       "quotedExcerpts": [
-        "\"the system analyzed the 2026 NBA Champion market rather than a specific Rockets vs. Suns game-day submarket\"",
-        "\"Within this championship event, only the **Oklahoma City Thunder** outcome is classified as \"tradable_now.\"\"",
-        "\"Teams like the **San Antonio Spurs** and **Charlotte Hornets** show deceptively tight spreads\""
+        "The search for this specific event returned zero live outcomes and no active buckets.",
+        "Highest Probability Bucket | null ... Highest Volume Bucket | null",
+        "I used a live query result from a past query in this chat, so treat the values as point-in-time and not current real-time data unless you re-run the tool."
       ],
       "satisfactionScores": {
         "actionability": 1,
@@ -174,45 +182,46 @@
         "specificity": 2,
         "uniqueness": 1,
         "completeness": 1,
-        "dataAccuracy": 2
+        "dataAccuracy": 4
       },
+      "satisfactionMean": 1.67,
       "scoreExplanations": {
-        "actionability": "A buyer still has no idea which Rockets vs Suns submarkets are tradable tonight.",
-        "dataFreshness": "The answer explicitly falls back to a past query and not the requested live game market.",
-        "specificity": "It is numerically specific, but only about an unrelated NBA futures market.",
-        "uniqueness": "There is no paid edge when the response analyzes the wrong event.",
-        "completeness": "The actual Rockets vs Suns question is unanswered.",
-        "dataAccuracy": "The response is at least honest that the wrong market was analyzed, but the detailed follow-on analysis is still irrelevant to the user query."
+        "actionability": "A buyer gets no live-bucket map and no ranking of highest-probability or highest-volume live buckets.",
+        "dataFreshness": "The response explicitly disclaims that it is not reliable as current real-time data.",
+        "specificity": "It is clear about the null result and gives the event URL, but no bucket-level market detail is surfaced.",
+        "uniqueness": "There is almost no paid differentiation in returning a null result with follow-up search suggestions.",
+        "completeness": "The central request for current future live buckets and the top bucket by probability and volume is unanswered.",
+        "dataAccuracy": "The null answer matches the trace, which also shows `totalOutcomes: 0` and empty `liveBuckets`, even though that still leaves the buyer unsatisfied."
       },
       "traceAssessment": {
         "toolSelectionClean": false,
         "retryCount": 1,
         "selfHealCount": 1,
-        "budgetConsumedPct": 22,
+        "budgetConsumedPct": 16,
         "fragilityRisk": "high",
-        "selectionIssue": "The only tool call resolved `Rockets vs. Suns` to the unrelated `2026 NBA Champion` event.",
-        "planningIssue": "The completion checker caught the semantic mismatch and suggested a probe-first rediscovery flow, but that recovery path was not executed.",
-        "executionIssue": "The pipeline still returned a buyer-facing answer based on the wrong event after detecting the mismatch.",
-        "completenessIssue": "No Rockets vs. Suns game submarket was identified or evaluated.",
-        "codeIssueDetail": null,
-        "dataAccuracyRedFlags": "The trace itself says there was a severe semantic mismatch between the user ask and the returned event.",
-        "rootCauseCategory": "selection_routing_issue",
-        "rootCauseEvidence": "The completion-check metadata explicitly says the wrong event was analyzed and recommends searching for the correct live game event before ranking tradability.",
-        "responseQualityNote": "Very weak buyer outcome: it knows the answer is about the wrong market and still presents the unrelated ranking.",
-        "improvementLever": "Resolve the exact live game event first and abort if it cannot be found instead of answering with a different market.",
+        "selectionIssue": "The workflow relied on `search_and_get_outcomes` alone for a dated bucket event that may require a different event-fetch path.",
+        "planningIssue": "The completeness checker recommended fetching the full event by slug and then filtering active markets, but that recovery path was not executed.",
+        "executionIssue": "The run ended on an empty event result and still produced a buyer-facing answer with null fields.",
+        "completenessIssue": "No future buckets were enumerated and no live bucket leaders were identified.",
+        "codeIssueDetail": "The code filters `resolved.outcomes`, but the selected query path returned an exact event with `outcomes: []`, leaving no bucket-level analysis at all.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "missing_followup_fetch",
+        "rootCauseEvidence": "Trace says `totalOutcomes: 0`, `liveBuckets: []`, and the completeness repair text explicitly suggests `get_event_by_slug` on `us-x-iran-ceasefire-by` to verify active buckets.",
+        "responseQualityNote": "Honest about the failure state, but still a poor buyer outcome because the core screen was never produced.",
+        "improvementLever": "When an exact event resolves with zero outcomes, immediately follow with a slug-based full event fetch before concluding there are no live buckets.",
         "diagnosticBrief": {
-          "toolUsed": "rank_event_tradability",
-          "toolShouldHaveUsed": "search_markets or get_events first, then rank_event_tradability on the discovered Rockets vs Suns event",
-          "argsUsed": "eventQuery=\"Rockets vs. Suns\"; limit=6",
-          "argsShouldHaveUsed": "a verified live game event identifier for Rockets vs Suns before tradability ranking",
-          "codeSnippet": null,
-          "toolResultSample": "Returned eventTitle=\"2026 NBA Champion\" instead of a Rockets vs Suns game market.",
-          "completenessVerdict": "Failed; wrong event analyzed.",
-          "stageTimingBottleneck": "No timing issue; this was a semantic-resolution failure."
+          "toolUsed": "search_and_get_outcomes",
+          "toolShouldHaveUsed": "get_event_by_slug or equivalent full event retrieval after exact slug resolution",
+          "argsUsed": "{\"query\":\"US x Iran ceasefire by...?\",\"sortBy\":\"volume\"}",
+          "argsShouldHaveUsed": "{\"slug\":\"us-x-iran-ceasefire-by\"} followed by explicit active-bucket filtering",
+          "codeSnippet": "const liveOutcomes = outcomes.filter((o) => !lower.includes(\"expired\"));",
+          "toolResultSample": "eventSlug=us-x-iran-ceasefire-by; totalOutcomes=0; liveBuckets=[]; highestQuotedProbabilityLiveBucket=null",
+          "completenessVerdict": "Failed to deliver the requested live bucket ranking.",
+          "stageTimingBottleneck": "None meaningful; the gap was the missing follow-up fetch."
         }
       },
-      "overallVerdict": "Unacceptable rerun for a paying buyer because it delivers a polished answer to the wrong market.",
-      "satisfactionMean": 1.33
+      "overallVerdict": "Very weak rerun: the response is transparent about getting no live buckets, but a paying buyer still receives no actionable answer to the actual screen they asked for.",
+      "differentiation": "low_differentiation"
     }
   ]
 }

@@ -1,17 +1,883 @@
-/**
- * @ctxprotocol/sdk/client
- *
- * Client module for AI Agents to query marketplace and execute tools.
- *
- * @packageDocumentation
- */
-// Main client export
-export { ContextClient } from "./client.js";
-// Resource exports
-export { Developer } from "./resources/developer.js";
-export { Discovery } from "./resources/discovery.js";
-export { Tools } from "./resources/tools.js";
-export { Query } from "./resources/query.js";
-// Error and constant exports
-export { ContextError, ALLOWED_TOOL_CATEGORIES } from "./types.js";
+// src/client/types.ts
+var ALLOWED_TOOL_CATEGORIES = [
+  "Crypto & DeFi",
+  "Financial Markets",
+  "Business & Sales",
+  "Marketing & SEO",
+  "Legal & Regulatory",
+  "Real World",
+  "Developer Tools",
+  "Research & Academia",
+  "Utility",
+  "Other"
+];
+var ContextError = class _ContextError extends Error {
+  constructor(message, code, statusCode, helpUrl) {
+    super(message);
+    this.code = code;
+    this.statusCode = statusCode;
+    this.helpUrl = helpUrl;
+    this.name = "ContextError";
+    Object.setPrototypeOf(this, _ContextError.prototype);
+  }
+};
+
+// src/client/resources/developer.ts
+var Developer = class {
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Update a tool listing's metadata (name, description, category).
+   *
+   * Requires an API key belonging to the tool's owner.
+   *
+   * @param toolId - The UUID of the tool to update
+   * @param updates - Fields to update (at least one required)
+   * @returns The updated tool metadata
+   *
+   * @throws {ContextError} If authentication fails or the caller does not own the tool
+   *
+   * @example
+   * ```typescript
+   * const updated = await client.developer.updateTool("tool-uuid", {
+   *   description: "Updated description with better showcase prompts",
+   *   category: "crypto",
+   * });
+   * console.log(updated.updatedAt);
+   * ```
+   */
+  async updateTool(toolId, updates) {
+    if (!toolId) {
+      throw new ContextError("toolId is required");
+    }
+    if (updates.name === void 0 && updates.description === void 0 && updates.category === void 0) {
+      throw new ContextError(
+        "At least one field required: name, description, or category"
+      );
+    }
+    if (updates.category !== void 0 && updates.category !== null && !ALLOWED_TOOL_CATEGORIES.includes(updates.category)) {
+      throw new ContextError(
+        `category must be one of: ${ALLOWED_TOOL_CATEGORIES.join(", ")}`
+      );
+    }
+    const encodedToolId = encodeURIComponent(toolId);
+    return this.client._fetch(
+      `/api/v1/tools/${encodedToolId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(updates)
+      },
+      { retry: false }
+    );
+  }
+};
+
+// src/client/resources/discovery.ts
+var Discovery = class {
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Fetch a single marketplace tool by its unique ID.
+   */
+  async get(toolId) {
+    return this.client._fetch(
+      `/api/v1/tools/${encodeURIComponent(toolId)}`
+    );
+  }
+  async search(queryOrOptions, limit) {
+    const options = typeof queryOrOptions === "string" ? { query: queryOrOptions, limit } : queryOrOptions;
+    const params = new URLSearchParams();
+    const query = options.query ?? "";
+    if (query) {
+      params.set("q", query);
+    }
+    if (options.limit !== void 0) {
+      params.set("limit", String(options.limit));
+    }
+    if (options.mode) {
+      params.set("mode", options.mode);
+    }
+    if (options.surface) {
+      params.set("surface", options.surface);
+    }
+    if (options.queryEligible !== void 0) {
+      params.set("queryEligible", String(options.queryEligible));
+    }
+    if (options.requireExecutePricing !== void 0) {
+      params.set(
+        "requireExecutePricing",
+        String(options.requireExecutePricing)
+      );
+    }
+    if (options.excludeLatencyClasses && options.excludeLatencyClasses.length > 0) {
+      params.set("excludeLatency", options.excludeLatencyClasses.join(","));
+    }
+    if (options.excludeSlow !== void 0) {
+      params.set("excludeSlow", String(options.excludeSlow));
+    }
+    if (options.favoritesOnly !== void 0) {
+      params.set("favorites_only", String(options.favoritesOnly));
+    }
+    const queryString = params.toString();
+    const endpoint = `/api/v1/tools/search${queryString ? `?${queryString}` : ""}`;
+    const response = await this.client._fetch(endpoint);
+    return response.tools;
+  }
+  /**
+   * Get featured/popular tools (empty query search)
+   *
+   * @param limit - Maximum number of results (1-50, default 10)
+   * @returns Array of featured tools
+   *
+   * @example
+   * ```typescript
+   * const featured = await client.discovery.getFeatured(5);
+   * ```
+   */
+  async getFeatured(limit, options) {
+    return this.search({
+      ...options ?? {},
+      query: "",
+      ...limit !== void 0 ? { limit } : {}
+    });
+  }
+};
+
+// src/client/resources/tools.ts
+var Tools = class {
+  constructor(client) {
+    this.client = client;
+  }
+  /**
+   * Execute a tool with the provided arguments
+   *
+   * @param options - Execution options
+   * @param options.toolId - The UUID of the tool (from search results)
+   * @param options.toolName - The specific MCP tool method to call (from tool's mcpTools array)
+   * @param options.args - Arguments to pass to the tool
+   * @returns The execution result with the tool's output data
+   *
+   * @throws {ContextError} With code `no_wallet` if wallet not set up
+   * @throws {ContextError} With code `insufficient_allowance` if spending cap not set
+   * @throws {ContextError} With code `payment_failed` if payment settlement fails
+   * @throws {ContextError} With code `execution_failed` if tool execution fails
+   *
+   * @example
+   * ```typescript
+   * // First, search for a tool
+   * const tools = await client.discovery.search("gas prices");
+   * const tool = tools[0];
+   *
+   * // Execute a specific method from the tool's mcpTools
+   * const result = await client.tools.execute({
+   *   toolId: tool.id,
+   *   toolName: tool.mcpTools[0].name, // e.g., "get_gas_prices"
+   *   args: { chainId: 1 }
+   * });
+   *
+   * console.log(result.result); // The tool's output
+   * console.log(result.durationMs); // Execution time
+   * ```
+   */
+  async execute(options) {
+    const {
+      toolId,
+      toolName,
+      args,
+      idempotencyKey,
+      mode,
+      sessionId,
+      maxSpendUsd,
+      closeSession
+    } = options;
+    const headers = idempotencyKey ? { "Idempotency-Key": idempotencyKey } : void 0;
+    const response = await this.client._fetch(
+      "/api/v1/tools/execute",
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          toolId,
+          toolName,
+          args,
+          mode: mode ?? "execute",
+          sessionId,
+          maxSpendUsd,
+          closeSession
+        })
+      }
+    );
+    if ("error" in response) {
+      throw new ContextError(
+        response.error,
+        response.code,
+        void 0,
+        // Don't hardcode - this was a 200 OK with error body
+        response.helpUrl
+      );
+    }
+    if (response.success) {
+      return {
+        mode: response.mode,
+        result: response.result,
+        tool: response.tool,
+        method: response.method,
+        session: response.session,
+        durationMs: response.durationMs
+      };
+    }
+    throw new ContextError("Unexpected response format from API");
+  }
+  /**
+   * Start an execute session with a max spend budget.
+   */
+  async startSession(options) {
+    const response = await this.client._fetch(
+      "/api/v1/tools/execute/sessions",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          mode: "execute",
+          maxSpendUsd: options.maxSpendUsd
+        })
+      }
+    );
+    return this.resolveSessionLifecycleResponse(response);
+  }
+  /**
+   * Fetch current execute session status by ID.
+   */
+  async getSession(sessionId) {
+    if (!sessionId) {
+      throw new ContextError("sessionId is required");
+    }
+    const encodedSessionId = encodeURIComponent(sessionId);
+    const response = await this.client._fetch(
+      `/api/v1/tools/execute/sessions/${encodedSessionId}`
+    );
+    return this.resolveSessionLifecycleResponse(response);
+  }
+  /**
+   * Close an execute session by ID.
+   */
+  async closeSession(sessionId) {
+    if (!sessionId) {
+      throw new ContextError("sessionId is required");
+    }
+    const encodedSessionId = encodeURIComponent(sessionId);
+    const response = await this.client._fetch(
+      `/api/v1/tools/execute/sessions/${encodedSessionId}/close`,
+      {
+        method: "POST",
+        body: JSON.stringify({ mode: "execute" })
+      }
+    );
+    return this.resolveSessionLifecycleResponse(response);
+  }
+  resolveSessionLifecycleResponse(response) {
+    if ("error" in response) {
+      throw new ContextError(
+        response.error,
+        response.code,
+        void 0,
+        response.helpUrl
+      );
+    }
+    if (response.success) {
+      return {
+        mode: response.mode,
+        session: response.session
+      };
+    }
+    throw new ContextError("Unexpected response format from API");
+  }
+};
+
+// src/client/resources/query.ts
+var Query = class {
+  constructor(client) {
+    this.client = client;
+  }
+  normalizeResult(result) {
+    const candidate = result;
+    if (candidate.outcomeType === "clarification_required" && "clarification" in candidate && candidate.clarification) {
+      return candidate;
+    }
+    if (candidate.outcomeType === "capability_miss" && "capabilityMiss" in candidate && candidate.capabilityMiss) {
+      return candidate;
+    }
+    return {
+      ...candidate,
+      outcomeType: "answer"
+    };
+  }
+  buildPolicyErrorEvent(params) {
+    if (params.clarificationPolicy !== "error") {
+      return;
+    }
+    if (params.result.outcomeType === "clarification_required") {
+      return {
+        type: "error",
+        error: params.result.response,
+        code: "clarification_required",
+        reasonCode: "clarification_required",
+        outcomeType: "clarification_required",
+        clarification: params.result.clarification,
+        querySession: params.result.querySession
+      };
+    }
+    if (params.result.outcomeType === "capability_miss") {
+      return {
+        type: "error",
+        error: params.result.response,
+        code: "capability_miss",
+        reasonCode: "capability_miss",
+        outcomeType: "capability_miss",
+        capabilityMiss: params.result.capabilityMiss,
+        querySession: params.result.querySession
+      };
+    }
+    return void 0;
+  }
+  buildSyntheticTraceFromRunResult(params) {
+    const timeline = params.toolsUsed.map((tool, index) => ({
+      stepType: "tool-call",
+      event: "tool-call",
+      status: "success",
+      timestampMs: index,
+      tool: {
+        id: tool.id,
+        name: tool.name
+      },
+      metadata: {
+        skillCalls: tool.skillCalls,
+        synthetic: true
+      }
+    }));
+    const toolCalls = params.toolsUsed.reduce(
+      (sum, tool) => sum + Math.max(tool.skillCalls, 0),
+      0
+    );
+    return {
+      summary: {
+        toolCalls,
+        retryCount: 0,
+        selfHealCount: 0,
+        fallbackCount: 0,
+        failureCount: 0,
+        recoveryCount: 0,
+        completionChecks: 0,
+        loopCount: 0
+      },
+      timeline,
+      source: "sdk-fallback",
+      synthetic: true,
+      reason: "backend_trace_missing",
+      durationMs: params.durationMs
+    };
+  }
+  buildSyntheticTraceFromStreamStatus(params) {
+    const timeline = params.statusTimeline.map((entry, index) => ({
+      stepType: "tool-status",
+      event: "tool-status",
+      status: entry.status,
+      timestampMs: index,
+      tool: entry.tool.name || entry.tool.id ? {
+        id: entry.tool.id || void 0,
+        name: entry.tool.name || void 0
+      } : void 0,
+      metadata: { synthetic: true }
+    }));
+    const toolCallsFromUsage = params.toolsUsed.reduce(
+      (sum, tool) => sum + Math.max(tool.skillCalls, 0),
+      0
+    );
+    const toolCallsFromStatus = params.statusTimeline.filter(
+      (entry) => entry.status === "tool-complete"
+    ).length;
+    const toolCalls = toolCallsFromUsage > 0 ? toolCallsFromUsage : toolCallsFromStatus;
+    const retryCount = params.statusTimeline.filter(
+      (entry) => /(retry|fix|reflect|recover)/i.test(entry.status)
+    ).length;
+    const completionChecks = params.statusTimeline.filter(
+      (entry) => /complet/i.test(entry.status)
+    ).length;
+    return {
+      summary: {
+        toolCalls,
+        retryCount,
+        selfHealCount: retryCount,
+        fallbackCount: 0,
+        failureCount: 0,
+        recoveryCount: 0,
+        completionChecks,
+        loopCount: retryCount
+      },
+      timeline,
+      source: "sdk-fallback",
+      synthetic: true,
+      reason: "backend_trace_missing",
+      durationMs: params.durationMs
+    };
+  }
+  mergeDeveloperTrace(first, second) {
+    if (!first) return second;
+    if (!second) return first;
+    const firstTimeline = Array.isArray(first.timeline) ? first.timeline : [];
+    const secondTimeline = Array.isArray(second.timeline) ? second.timeline : [];
+    const mergedTimeline = [...firstTimeline, ...secondTimeline];
+    return {
+      ...first,
+      ...second,
+      summary: {
+        ...typeof first.summary === "object" && first.summary ? first.summary : {},
+        ...typeof second.summary === "object" && second.summary ? second.summary : {}
+      },
+      ...mergedTimeline.length > 0 ? { timeline: mergedTimeline } : {}
+    };
+  }
+  parseStreamEvent(rawData) {
+    const parsed = JSON.parse(rawData);
+    if (!parsed || typeof parsed !== "object") {
+      return void 0;
+    }
+    const event = parsed;
+    if (typeof event.type !== "string") {
+      return void 0;
+    }
+    return event;
+  }
+  /**
+   * Run an agentic query and wait for the full response.
+   *
+   * The server discovers relevant tools (or uses the ones you specify),
+   * executes the discovery-first pipeline (up to 100 MCP calls per tool),
+   * and returns an AI-synthesized answer. Payment is settled after
+   * successful execution via deferred settlement.
+   *
+   * @param options - Query options or a plain string question
+   * @returns The complete query result with response text, tools used, and cost
+   *
+   * @throws {ContextError} With code `no_wallet` if wallet not set up
+   * @throws {ContextError} With code `insufficient_allowance` if spending cap not set
+   * @throws {ContextError} With code `payment_failed` if payment settlement fails
+   * @throws {ContextError} With code `execution_failed` if the agentic pipeline fails
+   *
+   * @example
+   * ```typescript
+   * // Simple question — server discovers tools automatically
+   * const answer = await client.query.run("What are the top whale movements on Base?");
+   * console.log(answer.response);      // AI-synthesized answer
+   * console.log(answer.toolsUsed);     // Which tools were used
+   * console.log(answer.cost);          // Cost breakdown
+   *
+   * // With specific tools (Manual Mode)
+   * const answer = await client.query.run({
+   *   query: "Analyze whale activity",
+   *   tools: ["tool-uuid-1", "tool-uuid-2"],
+   * });
+   * ```
+   */
+  async run(options) {
+    const opts = typeof options === "string" ? { query: options } : options;
+    let terminalError;
+    let finalResult;
+    for await (const event of this.stream(opts)) {
+      if (event.type === "error") {
+        terminalError = {
+          error: event.error,
+          ...event.code ? { code: event.code } : {},
+          ...event.scope ? { scope: event.scope } : {},
+          ...event.reasonCode ? { reasonCode: event.reasonCode } : {}
+        };
+        continue;
+      }
+      if (event.type === "done") {
+        finalResult = event.result;
+      }
+    }
+    if (finalResult) {
+      return finalResult;
+    }
+    if (terminalError) {
+      throw new ContextError(terminalError.error, terminalError.code);
+    }
+    throw new ContextError("Streaming query ended before done event");
+  }
+  /**
+   * Run an agentic query with streaming. Returns an async iterable that
+   * yields events as the server processes the query in real-time.
+   *
+   * Event types:
+   * - `tool-status` — A tool started executing or changed status
+   * - `text-delta` — A chunk of the AI response text
+   * - `developer-trace` — Runtime trace metadata (when includeDeveloperTrace=true)
+   * - `error` — A structured query/runtime error emitted before stream completion
+   * - `done` — The full response is complete (includes final `QueryResult`)
+   *
+   * @param options - Query options or a plain string question
+   * @returns An async iterable of stream events
+   *
+   * @example
+   * ```typescript
+   * for await (const event of client.query.stream("What are the top whale movements?")) {
+   *   switch (event.type) {
+   *     case "tool-status":
+   *       console.log(`Tool ${event.tool.name}: ${event.status}`);
+   *       break;
+   *     case "text-delta":
+   *       process.stdout.write(event.delta);
+   *       break;
+   *     case "developer-trace":
+   *       console.log("Trace summary:", event.trace.summary);
+   *       break;
+   *     case "done":
+   *       console.log("\nCost:", event.result.cost.totalCostUsd);
+   *       break;
+   *     case "error":
+   *       console.error("Stream error:", event.error);
+   *       break;
+   *   }
+   * }
+   * ```
+   */
+  async *stream(options) {
+    const opts = typeof options === "string" ? { query: options } : options;
+    const headers = opts.idempotencyKey ? { "Idempotency-Key": opts.idempotencyKey } : void 0;
+    const response = await this.client._fetchRaw("/api/v1/query", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        query: opts.query,
+        tools: opts.tools,
+        resumeFrom: opts.resumeFrom,
+        forkFrom: opts.forkFrom,
+        clarificationPolicy: opts.clarificationPolicy,
+        answerModelId: opts.answerModelId,
+        responseShape: opts.responseShape,
+        favoritesOnly: opts.favoritesOnly,
+        includeData: opts.includeData,
+        includeDataUrl: opts.includeDataUrl,
+        includeDeveloperTrace: opts.includeDeveloperTrace,
+        queryDepth: opts.queryDepth,
+        debugScoutDeepMode: opts.debugScoutDeepMode,
+        stream: true
+      })
+    });
+    const body = response.body;
+    if (!body) {
+      throw new ContextError("No response body for streaming query");
+    }
+    const reader = body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let aggregatedTrace;
+    const statusTimeline = [];
+    const parseAndHydrateEvent = (rawData) => {
+      const event = this.parseStreamEvent(rawData);
+      if (!event) {
+        return void 0;
+      }
+      if (event.type === "developer-trace") {
+        aggregatedTrace = this.mergeDeveloperTrace(aggregatedTrace, event.trace);
+        return event;
+      }
+      if (event.type === "tool-status") {
+        statusTimeline.push({
+          status: event.status,
+          tool: {
+            id: event.tool.id,
+            name: event.tool.name
+          }
+        });
+        return event;
+      }
+      if (event.type === "done") {
+        const normalizedResult = this.normalizeResult(event.result);
+        let mergedTrace = this.mergeDeveloperTrace(
+          aggregatedTrace,
+          normalizedResult.developerTrace
+        );
+        if (!mergedTrace && opts.includeDeveloperTrace) {
+          mergedTrace = statusTimeline.length > 0 ? this.buildSyntheticTraceFromStreamStatus({
+            statusTimeline,
+            toolsUsed: normalizedResult.toolsUsed,
+            durationMs: normalizedResult.durationMs
+          }) : this.buildSyntheticTraceFromRunResult({
+            toolsUsed: normalizedResult.toolsUsed,
+            durationMs: normalizedResult.durationMs
+          });
+        }
+        if (mergedTrace) {
+          normalizedResult.developerTrace = mergedTrace;
+        }
+        event.result = normalizedResult;
+        const policyErrorEvent = this.buildPolicyErrorEvent({
+          result: normalizedResult,
+          clarificationPolicy: opts.clarificationPolicy
+        });
+        if (policyErrorEvent) {
+          return policyErrorEvent;
+        }
+      }
+      return event;
+    };
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("data: ")) {
+            const data = trimmed.slice(6);
+            if (data === "[DONE]") return;
+            try {
+              const event = parseAndHydrateEvent(data);
+              if (event) {
+                yield event;
+              }
+            } catch {
+            }
+          }
+        }
+      }
+      if (buffer.trim().startsWith("data: ")) {
+        const data = buffer.trim().slice(6);
+        if (data !== "[DONE]") {
+          try {
+            const event = parseAndHydrateEvent(data);
+            if (event) {
+              yield event;
+            }
+          } catch {
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+};
+
+// src/client/client.ts
+var DEFAULT_BASE_URL = "https://www.ctxprotocol.com";
+var DEFAULT_REQUEST_TIMEOUT_MS = 3e5;
+var DEFAULT_STREAM_TIMEOUT_MS = 6e5;
+var ContextClient = class {
+  apiKey;
+  baseUrl;
+  requestTimeoutMs;
+  streamTimeoutMs;
+  _closed = false;
+  /**
+   * Developer resource for managing tool listings (contributor/developer concerns).
+   */
+  developer;
+  /**
+   * Discovery resource for searching tools
+   */
+  discovery;
+  /**
+   * Tools resource for executing tools (pay-per-request)
+   */
+  tools;
+  /**
+   * Query resource for agentic queries (pay-per-response).
+   *
+   * Unlike `tools.execute()` which calls a single tool once, `query` sends
+   * a natural-language question and lets the server handle tool discovery,
+   * multi-tool orchestration, self-healing, and AI synthesis — one flat fee.
+   */
+  query;
+  /**
+   * Creates a new Context Protocol client
+   *
+   * @param options - Client configuration options
+   * @param options.apiKey - Your Context Protocol API key (format: sk_live_...)
+   * @param options.baseUrl - Optional base URL override (defaults to https://www.ctxprotocol.com)
+   * @param options.requestTimeoutMs - Optional timeout for non-streaming requests (default 300000ms)
+   * @param options.streamTimeoutMs - Optional timeout for establishing stream requests (default 600000ms)
+   */
+  constructor(options) {
+    if (!options.apiKey) {
+      throw new ContextError("API key is required");
+    }
+    const requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    const streamTimeoutMs = options.streamTimeoutMs ?? DEFAULT_STREAM_TIMEOUT_MS;
+    if (!Number.isFinite(requestTimeoutMs) || requestTimeoutMs <= 0) {
+      throw new ContextError("requestTimeoutMs must be a positive number");
+    }
+    if (!Number.isFinite(streamTimeoutMs) || streamTimeoutMs <= 0) {
+      throw new ContextError("streamTimeoutMs must be a positive number");
+    }
+    this.apiKey = options.apiKey;
+    this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/$/, "");
+    this.requestTimeoutMs = requestTimeoutMs;
+    this.streamTimeoutMs = streamTimeoutMs;
+    this.developer = new Developer(this);
+    this.discovery = new Discovery(this);
+    this.tools = new Tools(this);
+    this.query = new Query(this);
+  }
+  /**
+   * Close the client and clean up resources.
+   * After calling close(), any in-flight requests may be aborted.
+   */
+  close() {
+    this._closed = true;
+  }
+  /**
+   * Internal method for making authenticated HTTP requests
+   * Includes timeout and retry with exponential backoff for transient errors
+   *
+   * @internal
+   */
+  async _fetch(endpoint, options = {}, fetchOptions) {
+    if (this._closed) {
+      throw new ContextError("Client has been closed");
+    }
+    const url = `${this.baseUrl}${endpoint}`;
+    const maxRetries = 3;
+    const timeoutMs = this.requestTimeoutMs;
+    const method = (options.method ?? "GET").toUpperCase();
+    const requestHeaders = new Headers(options.headers);
+    const canRetryRequest = fetchOptions?.retry === false ? false : method === "GET" || method === "HEAD" || method === "OPTIONS" || requestHeaders.has("Idempotency-Key");
+    let lastError;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      const mergedHeaders = new Headers(requestHeaders);
+      if (!mergedHeaders.has("Content-Type")) {
+        mergedHeaders.set("Content-Type", "application/json");
+      }
+      mergedHeaders.set("Authorization", `Bearer ${this.apiKey}`);
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          headers: mergedHeaders
+        });
+        clearTimeout(timeout);
+        if (!response.ok) {
+          if (response.status >= 500 && canRetryRequest && attempt < maxRetries) {
+            const delay = Math.min(1e3 * 2 ** attempt, 1e4);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+          let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          let errorCode;
+          let helpUrl;
+          try {
+            const errorBody = await response.json();
+            if (errorBody.error) {
+              errorMessage = errorBody.error;
+              errorCode = errorBody.code;
+              helpUrl = errorBody.helpUrl;
+            }
+          } catch {
+          }
+          throw new ContextError(errorMessage, errorCode, response.status, helpUrl);
+        }
+        try {
+          return await response.json();
+        } catch (error) {
+          const parseError = error instanceof Error ? error : new Error(String(error));
+          throw new ContextError(
+            `Failed to parse JSON response: ${parseError.message}`,
+            void 0,
+            response.status
+          );
+        }
+      } catch (error) {
+        clearTimeout(timeout);
+        if (error instanceof ContextError) {
+          throw error;
+        }
+        lastError = error instanceof Error ? error : new Error(String(error));
+        const isRetryable = lastError.name === "AbortError" || lastError.message.includes("fetch failed") || lastError.message.includes("ECONNRESET") || lastError.message.includes("ETIMEDOUT");
+        if (isRetryable && canRetryRequest && attempt < maxRetries) {
+          const delay = Math.min(1e3 * 2 ** attempt, 1e4);
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          continue;
+        }
+        if (lastError.name === "AbortError") {
+          throw new ContextError(
+            `Request timed out after ${timeoutMs / 1e3}s`,
+            void 0,
+            408
+          );
+        }
+        throw new ContextError(
+          lastError.message,
+          void 0,
+          void 0
+        );
+      }
+    }
+    throw lastError ?? new ContextError("Request failed after retries");
+  }
+  /**
+   * Internal method for making authenticated HTTP requests that returns
+   * the raw Response object. Used for streaming endpoints (SSE).
+   * Includes a configurable timeout for stream setup.
+   *
+   * @internal
+   */
+  async _fetchRaw(endpoint, options = {}) {
+    if (this._closed) {
+      throw new ContextError("Client has been closed");
+    }
+    const url = `${this.baseUrl}${endpoint}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.streamTimeoutMs);
+    let response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.apiKey}`,
+          ...options.headers
+        }
+      });
+    } catch (error) {
+      clearTimeout(timeout);
+      const lastError = error instanceof Error ? error : new Error(String(error));
+      if (lastError.name === "AbortError") {
+        throw new ContextError(
+          `Streaming request timed out after ${this.streamTimeoutMs / 1e3}s`,
+          void 0,
+          408
+        );
+      }
+      throw new ContextError(lastError.message);
+    }
+    clearTimeout(timeout);
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      let errorCode;
+      let helpUrl;
+      try {
+        const errorBody = await response.json();
+        if (errorBody.error) {
+          errorMessage = errorBody.error;
+          errorCode = errorBody.code;
+          helpUrl = errorBody.helpUrl;
+        }
+      } catch {
+      }
+      throw new ContextError(errorMessage, errorCode, response.status, helpUrl);
+    }
+    return response;
+  }
+};
+
+export { ALLOWED_TOOL_CATEGORIES, ContextClient, ContextError, Developer, Discovery, Query, Tools };
+//# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

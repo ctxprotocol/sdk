@@ -1,0 +1,190 @@
+{
+  "traceCount": 18,
+  "dimensionScores": {
+    "toolSelection": 4.39,
+    "scoutDepth": 4.5,
+    "clarification": 5,
+    "planning": 4.17,
+    "execution": 4.33,
+    "synthesis": 4.11,
+    "contextBudget": 4.61,
+    "reasoningDepth": 4.44,
+    "mcpTransport": 4.56,
+    "codeSafety": 4.28,
+    "synthesisBudget": 4.22
+  },
+  "optimizationReadiness": {
+    "toolSelection": {
+      "status": "ready",
+      "reason": "Raw traces show a stable shared-runtime failure class where named targets do not resolve deterministically into the right grounded path; this is visible in the wrong-path and wrong-event traces, plus one zero-grounded-call miss."
+    },
+    "scoutDepth": {
+      "status": "noisy",
+      "reason": "The analyzer penalizes this dimension broadly, but the raw traces usually had enough evidence to execute; the low signal is more calibration-heavy than failure-heavy."
+    },
+    "clarification": {
+      "status": "blocked",
+      "reason": "There is not enough adverse signal here; nearly all prompts had a single grounded interpretation and did not fail because clarification was missing."
+    },
+    "planning": {
+      "status": "ready",
+      "reason": "Multiple traces show the same planner-level issue: overly flexible candidate handling or validation complexity before execution, even when the final answer eventually lands."
+    },
+    "execution": {
+      "status": "ready",
+      "reason": "The retry/self-heal pattern is stable across several traces, including one bounded-budget stop after the runtime picked an imperfect path."
+    },
+    "synthesis": {
+      "status": "ready",
+      "reason": "This is the broadest recurring weakness: grounded data often reached the answer path, but the final response still under-delivered on differentiation, completeness, or buyer-facing actionability."
+    },
+    "contextBudget": {
+      "status": "noisy",
+      "reason": "Most traces had enough raw evidence; lower-scoring cases were usually caused by wrong-target resolution or partial execution, not true context starvation."
+    },
+    "reasoningDepth": {
+      "status": "noisy",
+      "reason": "The signal is coupled to selection and planning failures rather than standing alone as a clean post-experiment bottleneck."
+    },
+    "mcpTransport": {
+      "status": "blocked",
+      "reason": "The post-experiment traces do not show a stable transport-layer failure cluster; misses were primarily upstream of transport or downstream in synthesis."
+    },
+    "codeSafety": {
+      "status": "ready",
+      "reason": "Planner/runtime code validation remains an actionable shared-runtime concern, including a severe failure where a disallowed helper import prevented any grounded execution."
+    },
+    "synthesisBudget": {
+      "status": "ready",
+      "reason": "The runtime often had enough facts, but the final answer budget was not consistently spent on discriminative comparisons, explicit ranking logic, or closing known gaps."
+    }
+  },
+  "dominantFailureClusters": [
+    {
+      "dimension": "synthesis",
+      "label": "grounded_but_low_differentiation",
+      "traceCount": 10
+    },
+    {
+      "dimension": "planning",
+      "label": "noisy_candidate_without_deterministic_targeting",
+      "traceCount": 4
+    },
+    {
+      "dimension": "toolSelection",
+      "label": "named_target_without_resolution",
+      "traceCount": 3
+    }
+  ],
+  "interactionRisks": [
+    {
+      "pair": [
+        "toolSelection",
+        "planning"
+      ],
+      "risk": "When entity resolution is soft, the planner can lock onto the wrong event or insufficient target and then produce a coherent but misgrounded program.",
+      "pairedFixAllowed": true
+    },
+    {
+      "pair": [
+        "planning",
+        "execution"
+      ],
+      "risk": "Over-complex or insufficiently validated plans create retries, bounded-budget exits, or code-generation failures before the runtime reaches a stable grounded answer.",
+      "pairedFixAllowed": true
+    },
+    {
+      "pair": [
+        "execution",
+        "synthesis"
+      ],
+      "risk": "Partial or weakly recovered execution results can still be surfaced as complete-looking answers, which hides residual uncertainty and reduces differentiation.",
+      "pairedFixAllowed": false
+    }
+  ],
+  "summary": {
+    "weakestDimension": "synthesis",
+    "weakestScore": 4.11,
+    "why": "The most stable post-experiment runtime failure is not lack of grounding but failure to convert grounded data into clearly differentiated final answers; 10 of 18 traces fit this pattern, which is broader than the sharper but less frequent selection misses."
+  },
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 4.39,
+      "scoutDepth": 4.5,
+      "clarification": 5,
+      "planning": 4.17,
+      "execution": 4.33,
+      "synthesis": 4.11
+    },
+    "crossCuttingMeans": {
+      "contextBudget": 4.61,
+      "reasoningDepth": 4.44,
+      "mcpTransport": 4.56,
+      "codeSafety": 4.28,
+      "synthesisBudget": 4.22
+    },
+    "optimizationReadiness": {
+      "toolSelection": {
+        "status": "ready",
+        "reason": "Raw traces show a stable shared-runtime failure class where named targets do not resolve deterministically into the right grounded path; this is visible in the wrong-path and wrong-event traces, plus one zero-grounded-call miss."
+      },
+      "scoutDepth": {
+        "status": "noisy",
+        "reason": "The analyzer penalizes this dimension broadly, but the raw traces usually had enough evidence to execute; the low signal is more calibration-heavy than failure-heavy."
+      },
+      "clarification": {
+        "status": "blocked",
+        "reason": "There is not enough adverse signal here; nearly all prompts had a single grounded interpretation and did not fail because clarification was missing."
+      },
+      "planning": {
+        "status": "ready",
+        "reason": "Multiple traces show the same planner-level issue: overly flexible candidate handling or validation complexity before execution, even when the final answer eventually lands."
+      },
+      "execution": {
+        "status": "ready",
+        "reason": "The retry/self-heal pattern is stable across several traces, including one bounded-budget stop after the runtime picked an imperfect path."
+      },
+      "synthesis": {
+        "status": "ready",
+        "reason": "This is the broadest recurring weakness: grounded data often reached the answer path, but the final response still under-delivered on differentiation, completeness, or buyer-facing actionability."
+      },
+      "contextBudget": {
+        "status": "noisy",
+        "reason": "Most traces had enough raw evidence; lower-scoring cases were usually caused by wrong-target resolution or partial execution, not true context starvation."
+      },
+      "reasoningDepth": {
+        "status": "noisy",
+        "reason": "The signal is coupled to selection and planning failures rather than standing alone as a clean post-experiment bottleneck."
+      },
+      "mcpTransport": {
+        "status": "blocked",
+        "reason": "The post-experiment traces do not show a stable transport-layer failure cluster; misses were primarily upstream of transport or downstream in synthesis."
+      },
+      "codeSafety": {
+        "status": "ready",
+        "reason": "Planner/runtime code validation remains an actionable shared-runtime concern, including a severe failure where a disallowed helper import prevented any grounded execution."
+      },
+      "synthesisBudget": {
+        "status": "ready",
+        "reason": "The runtime often had enough facts, but the final answer budget was not consistently spent on discriminative comparisons, explicit ranking logic, or closing known gaps."
+      }
+    },
+    "dominantFailureClusters": [
+      {
+        "dimension": "synthesis",
+        "label": "grounded_but_low_differentiation",
+        "traceCount": 10
+      },
+      {
+        "dimension": "planning",
+        "label": "noisy_candidate_without_deterministic_targeting",
+        "traceCount": 4
+      },
+      {
+        "dimension": "toolSelection",
+        "label": "named_target_without_resolution",
+        "traceCount": 3
+      }
+    ]
+  }
+}

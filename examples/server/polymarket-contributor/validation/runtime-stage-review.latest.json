@@ -1,0 +1,190 @@
+{
+  "traceCount": 18,
+  "dimensionScores": {
+    "toolSelection": 4.78,
+    "scoutDepth": 4,
+    "clarification": 5,
+    "planning": 4.28,
+    "execution": 4.17,
+    "synthesis": 4.67,
+    "contextBudget": 4.56,
+    "reasoningDepth": 4.78,
+    "mcpTransport": 4.33,
+    "codeSafety": 4.22,
+    "synthesisBudget": 4.61
+  },
+  "optimizationReadiness": {
+    "toolSelection": {
+      "status": "noisy",
+      "reason": "One severe shared-runtime miss is real and crisp (`q17` finished answerable work with zero grounded tool calls), but the pattern appears in only 1/18 traces, so it is not yet the primary global optimization target."
+    },
+    "scoutDepth": {
+      "status": "noisy",
+      "reason": "The mean is mechanically low because many traces sit at a stable 4, but the raw traces do not show missing scout coverage as the dominant failure source; optimizing scout depth now would mostly chase score noise."
+    },
+    "clarification": {
+      "status": "blocked",
+      "reason": "Clarification never became the operative bottleneck. In the main miss (`q17`), the runtime already surfaced a good recommended option, but the handoff still produced zero tool calls, so the fix belongs downstream of clarification."
+    },
+    "planning": {
+      "status": "ready",
+      "reason": "This is the strongest shared-runtime optimization target. Raw traces repeatedly show non-deterministic entity/instrument resolution and overly generic planning on answerable prompts (`q6`, `q12`, `q13`, `q15`), which then cascades into wrong-entity answers or under-specified execution."
+    },
+    "execution": {
+      "status": "ready",
+      "reason": "A stable repair failure cluster recurs across answerable prompts (`q5`, `q11`, `q12`, `q13`): the runtime reaches partial grounded data, completeness detects missing pieces, and the repair path still exits incomplete. This is shared-runtime and actionable."
+    },
+    "synthesis": {
+      "status": "blocked",
+      "reason": "Under-differentiated answers recur, but the raw traces show that most synthesis weakness is downstream of plan/execution shape rather than a standalone synthesis-stage defect."
+    },
+    "contextBudget": {
+      "status": "noisy",
+      "reason": "Budget symptoms are present (`q15` truncated context, `q17` empty canonical payload), but they mostly look secondary to upstream planning/selection failures rather than a first-order budget policy problem."
+    },
+    "reasoningDepth": {
+      "status": "blocked",
+      "reason": "The traces show adequate reasoning effort. Failures are driven by deterministic resolution and repair discipline, not by an obvious lack of deliberation depth."
+    },
+    "mcpTransport": {
+      "status": "blocked",
+      "reason": "Transport was not the binding constraint in the weak traces. Lower scores mostly reflect missing or incomplete grounded execution rather than request/transport instability."
+    },
+    "codeSafety": {
+      "status": "blocked",
+      "reason": "Validation is surfacing the right problems, especially around generic or under-specified plans, so the optimization target is planner behavior rather than the safety layer itself."
+    },
+    "synthesisBudget": {
+      "status": "noisy",
+      "reason": "Compression and evidence-budget gaps exist (`q13`, `q15`, `q17`), but they are largely induced by upstream plan/execution defects that either miss required facts or overproduce low-signal context."
+    }
+  },
+  "dominantFailureClusters": [
+    {
+      "dimension": "planning",
+      "label": "named_target_without_resolution",
+      "traceCount": 3
+    },
+    {
+      "dimension": "execution",
+      "label": "completeness_repair_stops_early",
+      "traceCount": 4
+    },
+    {
+      "dimension": "synthesis",
+      "label": "grounded_data_weak_differentiation",
+      "traceCount": 9
+    }
+  ],
+  "interactionRisks": [
+    {
+      "pair": [
+        "planning",
+        "execution"
+      ],
+      "risk": "When planning does not deterministically resolve named entities or direct instruments, execution often reaches partial data and then burns repair effort without ever satisfying completeness on the requested targets.",
+      "pairedFixAllowed": true
+    },
+    {
+      "pair": [
+        "toolSelection",
+        "clarification"
+      ],
+      "risk": "The runtime can identify a viable grounded option but still fail to convert that recommendation into an actual tool call path, producing tool-free answers on answerable prompts.",
+      "pairedFixAllowed": true
+    },
+    {
+      "pair": [
+        "planning",
+        "synthesisBudget"
+      ],
+      "risk": "Generic memo-style plans pull broad evidence without a direct lookup path, which inflates context and forces the final answer to compress or infer instead of presenting tightly verified facts.",
+      "pairedFixAllowed": true
+    }
+  ],
+  "summary": {
+    "weakestDimension": "planning",
+    "weakestScore": 4.28,
+    "why": "`scoutDepth` has the lowest raw mean but looks noisy rather than defective, and `execution` is slightly lower than planning mostly because it inherits planning mistakes. The most actionable shared-runtime bottleneck is planning: raw traces repeatedly show generic or non-deterministic plan structure leading to wrong-entity resolution, missed named comparisons, and downstream completeness failures."
+  },
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 4.78,
+      "scoutDepth": 4,
+      "clarification": 5,
+      "planning": 4.28,
+      "execution": 4.17,
+      "synthesis": 4.67
+    },
+    "crossCuttingMeans": {
+      "contextBudget": 4.56,
+      "reasoningDepth": 4.78,
+      "mcpTransport": 4.33,
+      "codeSafety": 4.22,
+      "synthesisBudget": 4.61
+    },
+    "optimizationReadiness": {
+      "toolSelection": {
+        "status": "noisy",
+        "reason": "One severe shared-runtime miss is real and crisp (`q17` finished answerable work with zero grounded tool calls), but the pattern appears in only 1/18 traces, so it is not yet the primary global optimization target."
+      },
+      "scoutDepth": {
+        "status": "noisy",
+        "reason": "The mean is mechanically low because many traces sit at a stable 4, but the raw traces do not show missing scout coverage as the dominant failure source; optimizing scout depth now would mostly chase score noise."
+      },
+      "clarification": {
+        "status": "blocked",
+        "reason": "Clarification never became the operative bottleneck. In the main miss (`q17`), the runtime already surfaced a good recommended option, but the handoff still produced zero tool calls, so the fix belongs downstream of clarification."
+      },
+      "planning": {
+        "status": "ready",
+        "reason": "This is the strongest shared-runtime optimization target. Raw traces repeatedly show non-deterministic entity/instrument resolution and overly generic planning on answerable prompts (`q6`, `q12`, `q13`, `q15`), which then cascades into wrong-entity answers or under-specified execution."
+      },
+      "execution": {
+        "status": "ready",
+        "reason": "A stable repair failure cluster recurs across answerable prompts (`q5`, `q11`, `q12`, `q13`): the runtime reaches partial grounded data, completeness detects missing pieces, and the repair path still exits incomplete. This is shared-runtime and actionable."
+      },
+      "synthesis": {
+        "status": "blocked",
+        "reason": "Under-differentiated answers recur, but the raw traces show that most synthesis weakness is downstream of plan/execution shape rather than a standalone synthesis-stage defect."
+      },
+      "contextBudget": {
+        "status": "noisy",
+        "reason": "Budget symptoms are present (`q15` truncated context, `q17` empty canonical payload), but they mostly look secondary to upstream planning/selection failures rather than a first-order budget policy problem."
+      },
+      "reasoningDepth": {
+        "status": "blocked",
+        "reason": "The traces show adequate reasoning effort. Failures are driven by deterministic resolution and repair discipline, not by an obvious lack of deliberation depth."
+      },
+      "mcpTransport": {
+        "status": "blocked",
+        "reason": "Transport was not the binding constraint in the weak traces. Lower scores mostly reflect missing or incomplete grounded execution rather than request/transport instability."
+      },
+      "codeSafety": {
+        "status": "blocked",
+        "reason": "Validation is surfacing the right problems, especially around generic or under-specified plans, so the optimization target is planner behavior rather than the safety layer itself."
+      },
+      "synthesisBudget": {
+        "status": "noisy",
+        "reason": "Compression and evidence-budget gaps exist (`q13`, `q15`, `q17`), but they are largely induced by upstream plan/execution defects that either miss required facts or overproduce low-signal context."
+      }
+    },
+    "dominantFailureClusters": [
+      {
+        "dimension": "planning",
+        "label": "named_target_without_resolution",
+        "traceCount": 3
+      },
+      {
+        "dimension": "execution",
+        "label": "completeness_repair_stops_early",
+        "traceCount": 4
+      },
+      {
+        "dimension": "synthesis",
+        "label": "grounded_data_weak_differentiation",
+        "traceCount": 9
+      }
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "hypothesisId": "planning-canonical-target-lookup-2026-04-11",
+  "targetDimension": "planning",
+  "handoffToRunPipeline": false,
+  "reason": "Planning is the weakest ready shared-runtime dimension, and the recurring miss is canonical target resolution before execution. The stage review explicitly calls out non-deterministic entity/instrument resolution on answerable prompts. In q6 and q13, the runtime only succeeded after policy fixes that first resolved the event or exact named outcomes and then executed downstream tools from that resolved set. In q12, the planner used the raw quoted market sentence as the discovery query, failed to anchor the exact target, and drifted into an unrelated Fields Medal event. This pattern spans date buckets, sports, and politics, so it is shared-runtime rather than contributor-scoped.",
+  "smallestFilesToChange": [
+    "/Users/alex/Documents/context/lib/ai/query-planning-heuristics.ts",
+    "/Users/alex/Documents/context/lib/ai/query-policy-guards.ts",
+    "/Users/alex/Documents/context/lib/ai/agentic-execution.ts"
+  ],
+  "supportingEvidence": [
+    "Stage review marks planning as ready and identifies the dominant failure cluster as named_target_without_resolution with repeated wrong-entity or under-specified plans.",
+    "q6 only became correct after a policy fix whose summary was: resolve the event first via search results, then fetch live volume using the resolved slug instead of querying by raw event text in parallel.",
+    "q13 only became complete after a policy fix whose summary was: resolve named outcomes first with bounded semantic ranking, then use the resolved set for downstream comparison instead of discovery-only execution.",
+    "q12 never performed canonical resolution: the plan queried search_and_get_outcomes with \"Will Paris Saint-Germain FC win on 2026-04-08?\", returned the unrelated event \"Who will win the 2026 Fields Medal?\", and stopped with missing tokenId.",
+    "Current shared guards detect first-candidate and unbounded-target patterns, but they do not specifically reject plans that reuse the full narrative question as the lookup key for exact quoted targets/date buckets instead of extracting a canonical event/target handle first."
+  ],
+  "marketplaceRobustness": {
+    "passes": true,
+    "notes": [
+      "The proposal keys off general query structure: quoted named targets, date buckets, and downstream single-target execution, not contributor names or tool names.",
+      "It prefers schema-backed canonical handles such as slug, conditionId, tokenId, or exact resolved names, which generalize across contributors.",
+      "It avoids benchmark-only heuristics and vendor conditionals; any marketplace contributor with noisy search/list outputs and downstream exact-target methods benefits.",
+      "It preserves route parity by strengthening shared planning heuristics and shared policy-repair guidance rather than adding surface-specific patches."
+    ]
+  },
+  "proposedExperiment": {
+    "summary": "Tighten the shared named-target planning guard so exact quoted-target/date-bucket queries must follow a resolve-then-execute skeleton: extract explicit target/event handles, perform one canonical lookup, materialize a bounded resolved-target set, and only then call downstream methods with ids/exact names instead of the raw narrative question.",
+    "affectedFiles": [
+      "/Users/alex/Documents/context/lib/ai/query-planning-heuristics.ts",
+      "/Users/alex/Documents/context/lib/ai/query-policy-guards.ts",
+      "/Users/alex/Documents/context/lib/ai/agentic-execution.ts"
+    ],
+    "edits": [
+      "In query-planning-heuristics.ts, add a reusable signal/helper for exact-target canonical lookup cases: quoted single-market targets and date-bucket queries that require event or market handle resolution before downstream execution.",
+      "In query-policy-guards.ts, extend the named-target diagnostic so plans are flagged when they pass the full user question or quoted market sentence straight into search/list discovery and then feed downstream execution without first materializing slug/conditionId/tokenId/exact outcome names.",
+      "In agentic-execution.ts, strengthen the shared policy-fix guidance for named_target_without_resolution: require explicit eventQuery/requestedTarget(s) variables, one canonical resolution step, and downstream calls driven by resolved handles; allow metadata-based exact selection when semantic ranking is unnecessary so the fix stays contributor-agnostic."
+    ],
+    "focusedValidation": [
+      "Replay q12 and require the plan to resolve the PSG market canonically before get_market_parameters; reject any plan that calls downstream execution from the raw sentence and verify no unrelated event like Fields Medal is accepted.",
+      "Replay q6 and verify the planner still resolves the event first and binds the requested date buckets to a bounded resolved-target set before live-volume analysis.",
+      "Replay q13 and verify the initial plan directly resolves the three named outcomes before compare_event_outcome_quotes, eliminating the later completeness-driven repair.",
+      "Run one ambiguous control where multiple sibling contracts are named imprecisely and confirm the guard does not force false certainty; clarification or bounded missingData should remain allowed."
+    ],
+    "parityChecks": [
+      "Run the same named-target regression prompts through both /api/v1/query and /api/chat and confirm the same shared policy diagnostic fires and the same resolve-then-execute plan shape is produced.",
+      "Verify the repaired plan uses shared code paths only and does not introduce route-specific behavior or contributor-specific conditionals.",
+      "Confirm the final rewritten code stays within allowed shared modules and does not rely on raw discovery order or first-candidate selection anywhere in the resolved-target path."
+    ]
+  }
+}

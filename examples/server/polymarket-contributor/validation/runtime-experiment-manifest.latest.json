@@ -1,0 +1,89 @@
+{
+  "generatedAt": "2026-04-11T10:34:11Z",
+  "manifestVersion": "runtime-experiment.v2",
+  "hypothesisId": "planning-canonical-target-lookup-2026-04-11",
+  "status": "rejected",
+  "snapshotPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-snapshot.latest.json",
+  "needsFinalDecision": false,
+  "filesChanged": [
+    "context/lib/ai/query-planning-heuristics.ts",
+    "context/lib/ai/query-policy-guards.ts",
+    "context/lib/ai/agentic-execution.ts"
+  ],
+  "changeSummary": [
+    "Added a shared canonical-target lookup signal for quoted single-target and date-bucket queries that need handle resolution before downstream execution.",
+    "Extended the named-target policy guard to flag discovery calls that reuse the full narrative question or quoted market sentence instead of extracting canonical lookup variables and resolving exact handles first.",
+    "Strengthened the shared policy-fix guidance so repaired plans define explicit eventQuery/requestedTarget variables, resolve a canonical handle once, and then execute from the bounded resolved-target set."
+  ],
+  "rolloutFlagsTouched": [],
+  "marketplaceRobustnessCheck": {
+    "passed": true,
+    "notes": [
+      "The experiment keys off general query structure: quoted single-target prompts, date buckets, and raw narrative discovery reuse, not contributor names or vendor-specific methods.",
+      "The guard prefers canonical handles such as slug, conditionId, tokenId, or exact resolved names and keeps all logic in shared runtime modules.",
+      "No route wrappers or contributor server files were modified."
+    ]
+  },
+  "focusedValidation": {
+    "testsRun": [
+      {
+        "command": "pnpm exec tsx --import ./tests/unit/server-only-shim.ts --test ./tests/unit/query-policy-guards.test.ts ./tests/unit/query-planning-heuristics.test.ts",
+        "passed": true
+      },
+      {
+        "command": "npx tsc --noEmit",
+        "passed": true
+      },
+      {
+        "command": "ReadLints(paths=[context/lib/ai/query-planning-heuristics.ts, context/lib/ai/query-policy-guards.ts, context/lib/ai/agentic-execution.ts])",
+        "passed": true
+      },
+      {
+        "command": "pnpm exec tsx <<'EOF' ... ContextClient query smoke for PSG market parameters ... EOF",
+        "passed": true
+      },
+      {
+        "command": "pnpm exec tsx <<'EOF' ... ContextClient query smoke for World Cup winner comparison ... EOF",
+        "passed": true
+      }
+    ],
+    "typecheckPassed": true,
+    "lintPassed": true
+  },
+  "focusSurfaceCheck": {
+    "queryPassed": true,
+    "chatPassed": true,
+    "notes": [
+      "SDK smoke query 1 returned a non-error clarification_required result with a non-empty response for the PSG market-parameters prompt; this satisfies the crash-only gate.",
+      "SDK smoke query 2 returned a non-error answer result with a non-empty response for the World Cup comparison prompt.",
+      "Code-path parity passed because both /api/v1/query and /api/chat import the shared execution engine from context/lib/ai/agentic-execution.ts."
+    ]
+  },
+  "parityHeld": true,
+  "revertInstructions": [
+    "Use the snapshot at /Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-snapshot.latest.json to restore the pre-experiment versions of the three changed shared-runtime files if the orchestrator rejects the experiment.",
+    "Do not revert route wrappers or contributor server files; the experiment touched shared runtime code only."
+  ],
+  "finalDecision": {
+    "status": "rejected",
+    "decisionPhase": "regression",
+    "reason": "Decision artifact rejected the planning experiment after regression review: target dimension did not improve and several non-target dimensions regressed beyond tolerance.",
+    "decidedAt": "2026-04-11T11:22:16.047Z",
+    "initialManifestStatus": "pending_judgment",
+    "reverted": true,
+    "restoredFiles": [
+      "/Users/alex/Documents/context/lib/ai/agentic-execution.ts",
+      "/Users/alex/Documents/context/lib/ai/query-planning-heuristics.ts",
+      "/Users/alex/Documents/context/lib/ai/query-policy-guards.ts"
+    ],
+    "removedFiles": [],
+    "snapshotPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-snapshot.latest.json"
+  },
+  "openRisks": [
+    "The raw-narrative lookup detector uses conservative identifier heuristics when the search query is not a literal, so future planner variable naming could still affect whether a weak plan is caught.",
+    "The first smoke prompt remained healthy but clarified instead of answering, which is acceptable for this crash-only gate but means the orchestrator still needs full regression measurement for quality impact.",
+    "Focused validation did not add new test cases because the experiment was constrained to the approved runtime files."
+  ],
+  "finalizedAt": "2026-04-11T11:22:16.047Z",
+  "acceptedForRegression": false
+}

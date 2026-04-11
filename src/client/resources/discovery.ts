@@ -75,6 +75,10 @@ export class Discovery {
       params.set("excludeSlow", String(options.excludeSlow));
     }
 
+    if (options.favoritesOnly !== undefined) {
+      params.set("favorites_only", String(options.favoritesOnly));
+    }
+
     const queryString = params.toString();
     const endpoint = `/api/v1/tools/search${queryString ? `?${queryString}` : ""}`;
 

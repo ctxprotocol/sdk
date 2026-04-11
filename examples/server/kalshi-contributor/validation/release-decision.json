@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T02:56:09.243Z",
+  "generatedAt": "2026-04-09T09:58:18.087Z",
   "contributor": "kalshi-contributor",
   "paths": {
     "contributorDir": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor",
@@ -14,191 +14,146 @@
     "pipelineActive": true,
     "activeContributorPath": "/Users/alex/Documents/.cursor/hooks/state/active-contributor.txt",
     "convergenceFlag": null,
-    "iterationCount": 2,
-    "previousSatisfactionMean": 2.428
+    "iterationCount": 0,
+    "previousSatisfactionMean": null
   },
   "reviewer": {
     "present": true,
     "path": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/reviewer-evaluation.json",
     "blockers": [
-      "Reviewer satisfactionMean 2.428 is below 3.5.",
-      "High-differentiation prompts still below 3.0: q1, q2, q15, q16, q17.",
-      "Differentiation gate failed: there are no high-differentiation wins or too many low-differentiation prompts."
+      "Reviewer satisfactionMean 3.032 is below 3.5.",
+      "Weak query rate 69% (11/16) exceeds 20% threshold."
     ],
     "summary": {
-      "satisfactionMean": 2.428,
-      "highFragilityRate": 0.278,
-      "baselineBeatenRate": 0.444,
-      "queryCount": 18,
-      "queriesBelow3": 12,
-      "blockingHighDifferentiationPromptIds": [
-        "q1",
-        "q2",
-        "q15",
-        "q16",
-        "q17"
-      ],
+      "satisfactionMean": 3.032,
+      "highFragilityRate": 0.188,
+      "baselineBeatenRate": 0.875,
+      "queryCount": 16,
+      "queriesBelow3": 6,
+      "weakQueryCount": 11,
+      "weakQueryRate": 0.688,
+      "blockingHighDifferentiationPromptIds": [],
       "differentiationCounts": {
-        "high_differentiation": 8,
-        "moderate_differentiation": 0,
-        "low_differentiation": 10
+        "high_differentiation": 6,
+        "moderate_differentiation": 5,
+        "low_differentiation": 5
       }
     },
     "passedChecks": {
       "satisfactionMeanGte3_5": false,
       "highFragilityLte0_3": true,
-      "noHighDiffBelow3": false,
-      "differentiationViable": false
+      "noHighDiffBelow3": true,
+      "weakQueryRateLte20": false,
+      "differentiationViable": true
+    },
+    "improvementSkipChecks": {
+      "satisfactionMeanGte4_2": false,
+      "weakQueryRateLte20": false
     },
     "passed": false,
     "weakQueries": {
       "entries": [
         {
-          "index": 6,
-          "promptId": "q7",
-          "query": "Use recent trades, candlesticks, and orderbook depth to determine whether the most active Kalshi market on Atlantic hurr",
-          "score": 1.3,
-          "rootCauseCategory": "contributor_tool_bug",
-          "fixable": true
-        },
-        {
-          "index": 1,
-          "promptId": "q2",
-          "query": "Resolve the Kalshi market covering whether New York City will hit 100F this summer, then summarize the rulesDetailed, ea",
-          "score": 1.4,
-          "rootCauseCategory": "data_accuracy_issue",
-          "fixable": true
-        },
-        {
           "index": 12,
-          "promptId": "q13",
-          "query": "Compare Kalshi and Polymarket prices for whether the Fed will cut rates by the end of the year, identify the largest liv",
-          "score": 1.5,
-          "rootCauseCategory": "contributor_tool_bug",
+          "promptId": "For the next Fed meeting, build a decision memo that starts with the correct Kalshi contracts, summarizes the settlement",
+          "query": "For the next Fed meeting, build a decision memo that starts with the correct Kalshi contracts, summarizes the settlement",
+          "score": 1,
+          "rootCauseCategory": "synthesis_issue",
           "fixable": true
         },
         {
           "index": 13,
-          "promptId": "q14",
-          "query": "Use Kalshi contributor plus Odds API contributor to compare the implied probability of the New York Yankees winning the ",
-          "score": 1.5,
-          "rootCauseCategory": "contributor_tool_bug",
+          "promptId": "Construct a watchlist of 10 live Kalshi markets for this week across macro, tariffs, weather, and sports using close tim",
+          "query": "Construct a watchlist of 10 live Kalshi markets for this week across macro, tariffs, weather, and sports using close tim",
+          "score": 1,
+          "rootCauseCategory": "synthesis_issue",
           "fixable": true
         },
         {
-          "index": 15,
-          "promptId": "q16",
-          "query": "For the next Fed meeting, build a decision memo that starts with the correct Kalshi contracts, summarizes the settlement",
-          "score": 1.9,
-          "rootCauseCategory": "tool_selection_error",
+          "index": 6,
+          "promptId": "Use recent trades, candlesticks, and orderbook depth to determine whether the most active Kalshi market on Atlantic hurr",
+          "query": "Use recent trades, candlesticks, and orderbook depth to determine whether the most active Kalshi market on Atlantic hurr",
+          "score": 1.83,
+          "rootCauseCategory": "upstream_api_limitation",
+          "fixable": false
+        },
+        {
+          "index": 11,
+          "promptId": "Find Kalshi markets near 50% with unusually high liquidity that are tied to U.S. tariff actions or Fed decisions, and te",
+          "query": "Find Kalshi markets near 50% with unusually high liquidity that are tied to U.S. tariff actions or Fed decisions, and te",
+          "score": 1.83,
+          "rootCauseCategory": "execution_self_heal_failure",
           "fixable": true
         },
         {
           "index": 10,
-          "promptId": "q11",
+          "promptId": "Identify Kalshi macro markets where sentiment, recent prints, and candlesticks disagree with the current headline probab",
           "query": "Identify Kalshi macro markets where sentiment, recent prints, and candlesticks disagree with the current headline probab",
           "score": 2,
-          "rootCauseCategory": "stage_reflection_error",
+          "rootCauseCategory": "tool_selection_error",
           "fixable": true
         },
         {
-          "index": 17,
-          "promptId": "q18",
-          "query": "Produce a portfolio-style map of the best current Kalshi opportunities across climate, Fed, tariff, and sports categorie",
-          "score": 2,
+          "index": 1,
+          "promptId": "Resolve the Kalshi market covering whether New York City will hit 100F this summer, then summarize the rulesDetailed, ea",
+          "query": "Resolve the Kalshi market covering whether New York City will hit 100F this summer, then summarize the rulesDetailed, ea",
+          "score": 2.83,
           "rootCauseCategory": "tool_selection_error",
           "fixable": true
         },
         {
           "index": 5,
-          "promptId": "q6",
+          "promptId": "Analyze the orderbook for the main Kalshi market on whether the Fed cuts at the next meeting and tell me how much size I",
           "query": "Analyze the orderbook for the main Kalshi market on whether the Fed cuts at the next meeting and tell me how much size I",
-          "score": 2.1,
-          "rootCauseCategory": "tool_selection_error",
-          "fixable": true
-        },
-        {
-          "index": 14,
-          "promptId": "q15",
-          "query": "Scan for cross-venue arbitrage or disagreement between Kalshi and Polymarket in markets about new U.S. tariffs on China,",
-          "score": 2.1,
-          "rootCauseCategory": "synthesis_issue",
-          "fixable": true
-        },
-        {
-          "index": 11,
-          "promptId": "q12",
-          "query": "Find Kalshi markets near 50% with unusually high liquidity that are tied to U.S. tariff actions or Fed decisions, and te",
-          "score": 2.2,
-          "rootCauseCategory": "tool_selection_error",
-          "fixable": true
-        },
-        {
-          "index": 0,
-          "promptId": "q1",
-          "query": "Find the live Kalshi market for whether the Fed will cut rates at the next FOMC meeting, resolve the correct event and m",
-          "score": 2.7,
-          "rootCauseCategory": "tool_selection_error",
-          "fixable": true
-        },
-        {
-          "index": 16,
-          "promptId": "q17",
-          "query": "Construct a watchlist of 10 live Kalshi markets for this week across macro, tariffs, weather, and sports using close tim",
-          "score": 2.7,
-          "rootCauseCategory": "tool_selection_error",
-          "fixable": true
-        },
-        {
-          "index": 9,
-          "promptId": "q10",
-          "query": "Find current Kalshi trading opportunities in weather and climate markets where liquidity is adequate, the market is stil",
           "score": 3,
-          "rootCauseCategory": "tool_selection_error",
-          "fixable": true
-        },
-        {
-          "index": 3,
-          "promptId": "q4",
-          "query": "Rank the most interesting open Kalshi tariff markets between 20% and 80% probability that also have enough liquidity to ",
-          "score": 3.1,
-          "rootCauseCategory": "tool_selection_error",
+          "rootCauseCategory": "code_generation_error",
           "fixable": true
         },
         {
           "index": 4,
-          "promptId": "q5",
+          "promptId": "Browse Kalshi climate and weather series and identify contracts that are open, liquid, and close soon but do not yet app",
           "query": "Browse Kalshi climate and weather series and identify contracts that are open, liquid, and close soon but do not yet app",
-          "score": 3.2,
-          "rootCauseCategory": "tool_selection_error",
+          "score": 3.17,
+          "rootCauseCategory": "completeness_check_failure",
+          "fixable": true
+        },
+        {
+          "index": 9,
+          "promptId": "Find current Kalshi trading opportunities in weather and climate markets where liquidity is adequate, the market is stil",
+          "query": "Find current Kalshi trading opportunities in weather and climate markets where liquidity is adequate, the market is stil",
+          "score": 3.17,
+          "rootCauseCategory": "stage_reflection_error",
+          "fixable": true
+        },
+        {
+          "index": 14,
+          "promptId": "For Kalshi market ticker KXMVECROSSCATEGORY-S2026A2C21019D0A-8E2D7FD2F50 (title: yes New York Y,yes Golden State,yes Tor",
+          "query": "For Kalshi market ticker KXMVECROSSCATEGORY-S2026A2C21019D0A-8E2D7FD2F50 (title: yes New York Y,yes Golden State,yes Tor",
+          "score": 3.33,
+          "rootCauseCategory": "data_accuracy_issue",
           "fixable": true
         },
         {
           "index": 2,
-          "promptId": "q3",
+          "promptId": "Show me open Kalshi markets tied to the next CPI release, the next jobs report, and the next Fed decision that close wit",
           "query": "Show me open Kalshi markets tied to the next CPI release, the next jobs report, and the next Fed decision that close wit",
-          "score": 3.4,
-          "rootCauseCategory": "tool_selection_error",
-          "fixable": true
-        },
-        {
-          "index": 8,
-          "promptId": "q9",
-          "query": "Run a market efficiency check on the leading Kalshi contract for whether core CPI will come in above consensus on the ne",
-          "score": 3.4,
-          "rootCauseCategory": "data_accuracy_issue",
-          "fixable": true
+          "score": 3.67,
+          "rootCauseCategory": "upstream_api_limitation",
+          "fixable": false
         }
       ],
-      "totalCount": 17,
-      "fixableCount": 17,
-      "fixableBelowFloorCount": 12,
+      "totalCount": 11,
+      "fixableCount": 9,
+      "fixableBelowFloorCount": 5,
       "categoryCounts": {
-        "contributor_tool_bug": 3,
-        "data_accuracy_issue": 2,
-        "tool_selection_error": 10,
+        "synthesis_issue": 2,
+        "upstream_api_limitation": 2,
+        "execution_self_heal_failure": 1,
+        "tool_selection_error": 2,
+        "code_generation_error": 1,
+        "completeness_check_failure": 1,
         "stage_reflection_error": 1,
-        "synthesis_issue": 1
+        "data_accuracy_issue": 1
       }
     }
   },
@@ -209,9 +164,14 @@
       "surfaceChecksPath": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/marketplace-surface-checks.latest.json"
     },
     "blockers": [
-      "Missing local validation input /Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/full-enhancement-results.latest.json.",
       "Missing local validation input /Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/marketplace-surface-checks.latest.json."
     ],
+    "surfaceFailures": {
+      "entries": [],
+      "totalCount": 0,
+      "fixableCount": 0,
+      "promptIds": []
+    },
     "checks": {
       "queryValidationPassed": false,
       "executeValidationPassed": false,
@@ -224,18 +184,16 @@
     "action": "continue",
     "shouldContinue": true,
     "terminalState": null,
-    "iterationCount": 2,
-    "previousSatisfactionMean": 2.428,
-    "reason": "17 fixable weak queries remain."
+    "iterationCount": 0,
+    "previousSatisfactionMean": null,
+    "reason": "9 fixable weak queries remain."
   },
   "release": {
     "status": "blocked",
     "artifactWriteAllowed": false,
     "blockers": [
-      "Reviewer satisfactionMean 2.428 is below 3.5.",
-      "High-differentiation prompts still below 3.0: q1, q2, q15, q16, q17.",
-      "Differentiation gate failed: there are no high-differentiation wins or too many low-differentiation prompts.",
-      "Missing local validation input /Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/full-enhancement-results.latest.json.",
+      "Reviewer satisfactionMean 3.032 is below 3.5.",
+      "Weak query rate 69% (11/16) exceeds 20% threshold.",
       "Missing local validation input /Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/marketplace-surface-checks.latest.json."
     ]
   },
