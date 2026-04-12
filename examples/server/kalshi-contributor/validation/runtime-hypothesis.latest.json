@@ -1,0 +1,92 @@
+{
+  "generatedAt": "2026-04-12T03:05:00Z",
+  "hypothesisVersion": "runtime-hypothesis.v1",
+  "hypothesisId": "2026-04-12-execution-stalled-retry-stop-gate-v1",
+  "targetDimension": "execution",
+  "targetType": "stage",
+  "targetSelectionNote": "Execution remains the weakest ready dimension at 2.62, and the dominant ready cluster is still `answerable_but_unresolved_after_retry` with 7 traces. The two earlier execution experiment classes already tried to add more followthrough or reroute structural failures and were rejected before remeasurement, so this final bounded iteration stays on execution but narrows scope further to one terminal no-progress rule inside the shared executor. The raw traces still show a distinct unrejected failure pattern: same-tool self-heal repeats after the verifier has already identified wrong-owner, wrong-entity, or filter-to-zero failures, yet the second pass does not create real recovery and often drifts to a different wrong answer. Because localhost root and discovery were reachable while SDK query smokes were blocked by missing valid local credentials and required validation gates remained red, this hypothesis must be treated as the last bounded execution opportunity; if it still cannot be measured after those prerequisites are fixed, the remaining blocker should be classified as environmental or infrastructure-bound rather than a new execution-design opportunity.",
+  "selectedFailureCluster": {
+    "label": "answerable_but_unresolved_after_retry",
+    "traceCount": 7
+  },
+  "smallestFilesToChange": [
+    "/Users/alex/Documents/context/lib/ai/agentic-execution.ts"
+  ],
+  "problemStatement": "The shared executor is too willing to spend its bounded self-heal path on repeated same-tool retries even when the completion verifier is signaling no material progress. In several traces, the first completion check already identifies a grounded structural failure such as wrong entity selection, wrong owner resolution, or filter-to-zero after grounded retrieval. The repair then patches the program, but the second completion check still reports the same failure class or drifts to a different wrong entity, while recovery remains zero and retry budget is exhausted. That leaves execution with low-quality terminal behavior: either a misleading answer survives, or the system burns budget without improving completeness.",
+  "runtimeInvariant": "When a same-tool self-heal attempt is followed by another completion check in the same structural failure class and there is no material progress in resolved ownership, grounded coverage, or missing-part reduction, execution must stop and surface a bounded unresolved result with grounded diagnostics instead of spending or justifying another retry path.",
+  "rationale": "This is materially different from the rejected execution classes. It does not add an extra followthrough hop, and it does not reroute same-tool failures into a bounded replan mode. Instead, it adds one smaller terminal gate that uses already available verifier evidence to prevent no-progress retry churn. That directly targets the weakest execution pattern shown in the traces: repeated retry_same_tools decisions with zero recovery. It is also the smallest valid final iteration because it can live entirely in shared execution logic, preserve query/chat parity, and improve failure honesty without broad planning changes. Given the latest blocker state, this proposal should only be treated as actionable if measurability prerequisites are restored; otherwise the loop should stop here and record an environmental or infrastructure blocker.",
+  "evidence": [
+    "One exact-target orderbook trace first selected a wrong niche entity, then after patching selected a different wrong entity on the second completion check, while the program lineage still showed preserved prior logic and no actual recovery.",
+    "One exact-target weather trace first returned one wrong location and then a semantically unrelated sports result on the retry path, yet both completion checks still recommended same-tool retry and the run ended with zero recovery.",
+    "One grounded time-window retrieval trace successfully found a broad candidate set, but filtering collapsed to zero results; the second completion check repeated the same unresolved filter failure instead of producing a materially narrower grounded subset or an explicit bounded gap.",
+    "Across the low-scoring execution traces, the developer summaries repeatedly show `retryCount: 2`, `selfHealCount: 2`, `completionChecks: 2`, and `recoveryCount: 0`, which is strong evidence of no-progress churn rather than a clean missing-capability boundary.",
+    "The latest decision and manifest artifacts show that localhost root and discovery stayed reachable, but live query smokes could not be used to measure changes because valid local credentials were missing and required lint or type gates were still red. That means the design space should now prefer only a very small execution-local change and explicitly reject further iteration if measurability remains blocked."
+  ],
+  "proposedExperiment": {
+    "summary": "Add a shared execution no-progress stop gate after the first same-tool self-heal. Normalize completion-check outcomes into contributor-agnostic structural classes such as `wrong_owner_or_entity`, `filter_to_zero_after_grounded_retrieval`, and `partial_clause_coverage_without_new_grounding`. If the next completion check remains in the same class and the run shows no material progress signal, such as no reduced missing-parts set, no new resolved-owner handoff, no grounded-result narrowing, and no recorded recovery, terminate with a bounded unresolved result plus preserved grounded diagnostics instead of continuing repair churn or letting a drifted answer survive. Do not trigger this gate on the first failure, and do not trigger it when the second attempt materially improves ownership or clause coverage.",
+    "changeType": "execution_logic",
+    "affectedFiles": [
+      "/Users/alex/Documents/context/lib/ai/agentic-execution.ts"
+    ],
+    "usesPairedFixException": false,
+    "pairedDimension": null,
+    "validationPlan": {
+      "targetedChecks": [
+        "Replay a generic exact-target wrong-owner trace where attempt two changes the wrong entity but does not resolve the intended owner, and confirm execution stops with bounded unresolved instead of drifting further.",
+        "Replay a generic grounded retrieval plus filter-to-zero trace where the second completion check stays in the same structural class, and confirm the executor surfaces grounded gaps instead of consuming another same-tool repair path.",
+        "Replay a generic partial-clause-coverage trace where the second attempt genuinely adds the missing grounded fields or resolves ownership, and confirm the new stop gate does not fire on real progress.",
+        "Replay a generic capability-miss trace and confirm the runtime still preserves the `capability_miss` boundary rather than converting it into execution unresolved.",
+        "Run the shared query and chat regression harness to verify the stop gate behaves identically across both routes because both surfaces share the same execution engine.",
+        "Before interpreting any focused runtime result, confirm valid local credentials are present for query smokes and the required lint, typecheck, and focused test gates are green; otherwise record the run as environmental or infrastructure blocked."
+      ],
+      "regressionHarnessRequired": true,
+      "codePathParityRequired": true
+    }
+  },
+  "expectedBenefits": [
+    "Reduces wrong-entity and wrong-owner terminal answers that currently survive after no-progress self-heal churn.",
+    "Improves execution honesty by preferring explicit grounded unresolved outcomes when the bounded repair loop is not actually improving.",
+    "Preserves retry budget for cases that show real progress instead of spending it on repeated same-class failures.",
+    "Keeps the fix contributor-agnostic because it keys off structural progress signals from the verifier rather than any tool, venue, vendor, or prompt wording."
+  ],
+  "riskChecklist": [
+    "Do not treat every second completion check as failure by default; the gate must only fire when the structural failure class persists without material progress.",
+    "Do not use vendor names, benchmark prompt text, ticker patterns, or tool allowlists as control signals for the stop decision.",
+    "Do not collapse genuine capability misses into execution unresolved; preserve the existing distinction between `answer`, `clarification_required`, and `capability_miss`.",
+    "Do not over-fire on exploratory discovery tasks that legitimately refine broad candidate pools across iterations.",
+    "Do not hide grounded evidence when stopping; the unresolved result must preserve the verifier's concrete failure reasons so later planning and reviewer loops stay honest.",
+    "Do not interpret any validation outcome as runtime evidence if local credentials remain invalid or the required lint, typecheck, and focused test gates are still red."
+  ],
+  "marketplaceRobustness": {
+    "generalization": "This proposal applies to any marketplace contributor where a grounded first attempt can still land on the wrong owner, the wrong entity, or an empty filtered set. The stop condition depends only on repeated structural failure plus absent progress, not on tool names, domains, or benchmark-specific queries. Any contributor with search, browse, or detail-fetch flows can exhibit this pattern, so the runtime should terminate repeated no-progress repairs consistently across surfaces.",
+    "forbiddenContributorSpecificSignals": [
+      "vendor or contributor names",
+      "benchmark prompt text",
+      "tool allowlists or denylists",
+      "venue-specific tickers, slugs, or category strings as stop logic"
+    ],
+    "futureContributorThoughtExperiment": "If a future contributor served flights, legal dockets, or biomedical papers, the same invariant would still hold: if retry two is still pointing at the wrong record class or still filtering grounded results to zero without narrowing the target correctly, the executor should stop and surface a bounded unresolved result instead of continuing misleading repairs."
+  },
+  "validationPlan": {
+    "targetedChecks": [
+      "Generic exact-target wrong-owner drift trace.",
+      "Generic grounded retrieval filter-to-zero trace.",
+      "Generic partial-coverage positive-control trace where progress exists.",
+      "Generic capability-miss control trace.",
+      "Shared query and chat regression harness.",
+      "Measurability precheck for valid local credentials plus green lint, typecheck, and focused tests."
+    ],
+    "regressionHarnessRequired": true,
+    "codePathParityRequired": true
+  },
+  "rejectionCriteria": [
+    "Execution does not improve by at least 0.20 after remeasurement or the `answerable_but_unresolved_after_retry` cluster does not shrink materially.",
+    "Wrong-owner, wrong-entity, or filter-to-zero traces still consume the same bounded self-heal pattern with zero recovery after the new stop gate is added.",
+    "The gate over-fires on traces where the second attempt materially improves resolved ownership or clause coverage.",
+    "The runtime starts misclassifying answerable-but-unresolved paths as `capability_miss` or otherwise degrades the outcome-type contract.",
+    "Query and chat route parity does not hold because the new stop behavior diverges between surfaces.",
+    "Focused validation remains unmeasurable because valid local credentials are still missing or the required lint, typecheck, and focused test gates remain red; if that happens, stop the loop and classify the remaining blocker as environmental or infrastructure-bound rather than proposing another execution experiment."
+  ],
+  "handoffToRunPipeline": false,
+  "handoffReason": null
+}

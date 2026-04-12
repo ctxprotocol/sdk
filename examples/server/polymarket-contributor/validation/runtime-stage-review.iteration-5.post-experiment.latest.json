@@ -1,0 +1,140 @@
+{
+  "reviewedAt": "2026-04-12T00:00:00Z",
+  "reviewVersion": "runtime-stage-reviewer.v1",
+  "traceCount": 18,
+  "summary": {
+    "weakestDimension": "scoutDepth",
+    "weakestScore": 3.78
+  },
+  "dimensionScores": {
+    "toolSelection": 4.72,
+    "scoutDepth": 3.78,
+    "clarification": 5,
+    "planning": 4,
+    "execution": 3.83,
+    "synthesis": 4.17,
+    "contextBudget": 4.72,
+    "reasoningDepth": 4.44,
+    "mcpTransport": 4.17,
+    "codeSafety": 4,
+    "synthesisBudget": 4.61
+  },
+  "optimizationReadiness": {
+    "toolSelection": {
+      "status": "monitor",
+      "reason": "Selection is strong overall, but one severe tool-free completion path remains and should be guarded rather than treated as the primary optimization target."
+    },
+    "scoutDepth": {
+      "status": "ready",
+      "reason": "A large share of traces are grounded and current but still stop at low-delta evidence, limiting paid-answer separation even when execution succeeds."
+    },
+    "clarification": {
+      "status": "calibrate",
+      "reason": "This stage rarely activated under genuine ambiguity, so the mean mostly reflects non-applicability rather than proven runtime strength."
+    },
+    "planning": {
+      "status": "ready",
+      "reason": "Named-target resolution, exact-instrument selection, and composite-comparison planning failures recur across multiple answerable traces."
+    },
+    "execution": {
+      "status": "ready",
+      "reason": "A stable failure class remains where bounded retries keep working the same weak target set and exit with a plausible but incomplete or proxy answer."
+    },
+    "synthesis": {
+      "status": "monitor",
+      "reason": "Most synthesis weakness is downstream of shallow discovery or unresolved targeting rather than a standalone summarization bottleneck."
+    },
+    "contextBudget": {
+      "status": "monitor",
+      "reason": "Context packaging is generally sufficient; misses were more about target quality than missing raw budget."
+    },
+    "reasoningDepth": {
+      "status": "monitor",
+      "reason": "Reasoning is usually adequate, but some effort is spent on repair loops instead of stronger retargeting decisions."
+    },
+    "mcpTransport": {
+      "status": "monitor",
+      "reason": "Latency and repeated calls matter, but the dominant misses were caused by targeting and verification behavior rather than transport failures."
+    },
+    "codeSafety": {
+      "status": "monitor",
+      "reason": "Planner validation surfaces real issues, but current guardrails still allow wrong-target final answers after bounded repair."
+    },
+    "synthesisBudget": {
+      "status": "monitor",
+      "reason": "Budget was rarely the main limiter; when answers failed, the issue was usually what got selected and verified, not how much response space remained."
+    }
+  },
+  "dominantFailureClusters": [
+    {
+      "dimension": "scoutDepth",
+      "label": "grounded_but_low_delta_answer",
+      "traceCount": 9
+    },
+    {
+      "dimension": "planning",
+      "label": "named_target_without_resolution",
+      "traceCount": 4
+    },
+    {
+      "dimension": "execution",
+      "label": "repair_without_retargeting",
+      "traceCount": 4
+    },
+    {
+      "dimension": "toolSelection",
+      "label": "zero_tool_call_plan",
+      "traceCount": 1
+    }
+  ],
+  "interactionRisks": [
+    {
+      "pair": ["planning", "execution"],
+      "risk": "If planning does not deterministically resolve exact targets up front, execution tends to spend bounded retries on the same weak candidate set and exits with a plausible proxy answer instead of a clean recovery.",
+      "pairedFixAllowed": true
+    },
+    {
+      "pair": ["scoutDepth", "synthesis"],
+      "risk": "Shallow but grounded discovery leaves synthesis with current facts yet too little differentiating evidence, so the final answer stays close to generic parity even when it is technically correct.",
+      "pairedFixAllowed": false
+    },
+    {
+      "pair": ["toolSelection", "execution"],
+      "risk": "When the runtime can complete without a grounded tool path, execution and verification lose the opportunity to recover, and the final answer degrades into unsupported fallback language.",
+      "pairedFixAllowed": true
+    }
+  ],
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 4.72,
+      "scoutDepth": 3.78,
+      "clarification": 5,
+      "planning": 4,
+      "execution": 3.83,
+      "synthesis": 4.17
+    },
+    "crossCuttingMeans": {
+      "contextBudget": 4.72,
+      "reasoningDepth": 4.44,
+      "mcpTransport": 4.17,
+      "codeSafety": 4,
+      "synthesisBudget": 4.61
+    },
+    "weakestDimension": "scoutDepth",
+    "weakestScore": 3.78,
+    "optimizationReadiness": {
+      "scoutDepth": {
+        "status": "ready",
+        "reason": "A large share of traces are grounded and current but still stop at low-delta evidence, limiting paid-answer separation even when execution succeeds."
+      },
+      "planning": {
+        "status": "ready",
+        "reason": "Named-target resolution, exact-instrument selection, and composite-comparison planning failures recur across multiple answerable traces."
+      },
+      "execution": {
+        "status": "ready",
+        "reason": "A stable failure class remains where bounded retries keep working the same weak target set and exit with a plausible but incomplete or proxy answer."
+      }
+    }
+  }
+}

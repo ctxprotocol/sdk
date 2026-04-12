@@ -1,190 +1,172 @@
 {
+  "reviewedAt": "2026-04-12T00:30:00Z",
+  "reviewVersion": "runtime-stage-reviewer.v1",
   "traceCount": 18,
   "dimensionScores": {
-    "toolSelection": 4.39,
-    "scoutDepth": 4.5,
+    "toolSelection": 4.56,
+    "scoutDepth": 3.61,
     "clarification": 5,
-    "planning": 4.17,
-    "execution": 4.33,
+    "planning": 3.94,
+    "execution": 3.89,
     "synthesis": 4.11,
-    "contextBudget": 4.61,
-    "reasoningDepth": 4.44,
-    "mcpTransport": 4.56,
-    "codeSafety": 4.28,
-    "synthesisBudget": 4.22
+    "contextBudget": 4.44,
+    "reasoningDepth": 4.39,
+    "mcpTransport": 3.83,
+    "codeSafety": 4.17,
+    "synthesisBudget": 4.72
   },
   "optimizationReadiness": {
     "toolSelection": {
-      "status": "ready",
-      "reason": "Raw traces show a stable shared-runtime failure class where named targets do not resolve deterministically into the right grounded path; this is visible in the wrong-path and wrong-event traces, plus one zero-grounded-call miss."
+      "status": "monitor",
+      "reason": "Selection is usually correct, but one answerable trace still terminated without any grounded call, so routing confidence is not yet fully robust."
     },
     "scoutDepth": {
-      "status": "noisy",
-      "reason": "The analyzer penalizes this dimension broadly, but the raw traces usually had enough evidence to execute; the low signal is more calibration-heavy than failure-heavy."
+      "status": "ready",
+      "reason": "The dominant recurring weakness is stable: grounded evidence reaches the pipeline, but discovery does not expand or rank it enough to produce clearly higher-delta answers."
     },
     "clarification": {
-      "status": "blocked",
-      "reason": "There is not enough adverse signal here; nearly all prompts had a single grounded interpretation and did not fail because clarification was missing."
+      "status": "calibrate",
+      "reason": "This dimension rarely activates in this prompt set, so the mean mostly reflects non-applicability rather than demonstrated strength under ambiguity."
     },
     "planning": {
       "status": "ready",
-      "reason": "Multiple traces show the same planner-level issue: overly flexible candidate handling or validation complexity before execution, even when the final answer eventually lands."
+      "reason": "Deterministic target resolution and clause-coverage under-specification recur across multiple traces and are explicit enough to optimize directly."
     },
     "execution": {
       "status": "ready",
-      "reason": "The retry/self-heal pattern is stable across several traces, including one bounded-budget stop after the runtime picked an imperfect path."
+      "reason": "A stable failure class is visible: repair loops often preserve the original weak target and end with wrong-entity or partial-coverage outputs."
     },
     "synthesis": {
-      "status": "ready",
-      "reason": "This is the broadest recurring weakness: grounded data often reached the answer path, but the final response still under-delivered on differentiation, completeness, or buyer-facing actionability."
+      "status": "monitor",
+      "reason": "Synthesis quality is usually acceptable once grounded data exists, but it still inherits low-delta discovery and occasional incomplete repair outcomes."
     },
     "contextBudget": {
-      "status": "noisy",
-      "reason": "Most traces had enough raw evidence; lower-scoring cases were usually caused by wrong-target resolution or partial execution, not true context starvation."
+      "status": "monitor",
+      "reason": "Budgeting is generally healthy, though one tool-free terminal trace exposed an almost empty canonical payload and weak evidence carry-through."
     },
     "reasoningDepth": {
-      "status": "noisy",
-      "reason": "The signal is coupled to selection and planning failures rather than standing alone as a clean post-experiment bottleneck."
+      "status": "monitor",
+      "reason": "Reasoning is usually adequate; lower scores mostly reflect upstream targeting and repair failures rather than shallow reasoning alone."
     },
     "mcpTransport": {
       "status": "blocked",
-      "reason": "The post-experiment traces do not show a stable transport-layer failure cluster; misses were primarily upstream of transport or downstream in synthesis."
+      "reason": "A hard execution-context/tool-free failure remains, and several retry-heavy traces still fail to gain capability or recover the correct grounded target."
     },
     "codeSafety": {
-      "status": "ready",
-      "reason": "Planner/runtime code validation remains an actionable shared-runtime concern, including a severe failure where a disallowed helper import prevented any grounded execution."
+      "status": "monitor",
+      "reason": "Validation usually contains risk, but repeated patched retries against under-specified plans show that safety and correctness are not fully separated."
     },
     "synthesisBudget": {
-      "status": "ready",
-      "reason": "The runtime often had enough facts, but the final answer budget was not consistently spent on discriminative comparisons, explicit ranking logic, or closing known gaps."
+      "status": "monitor",
+      "reason": "Budget is rarely the primary bottleneck; the bigger issue is what evidence gets surfaced, not answer length."
     }
   },
   "dominantFailureClusters": [
     {
-      "dimension": "synthesis",
-      "label": "grounded_but_low_differentiation",
+      "dimension": "scoutDepth",
+      "label": "grounded_but_low_delta_answer",
       "traceCount": 10
     },
     {
       "dimension": "planning",
-      "label": "noisy_candidate_without_deterministic_targeting",
+      "label": "named_target_without_resolution",
       "traceCount": 4
     },
     {
+      "dimension": "execution",
+      "label": "repair_without_retargeting",
+      "traceCount": 5
+    },
+    {
       "dimension": "toolSelection",
-      "label": "named_target_without_resolution",
-      "traceCount": 3
+      "label": "zero_tool_call_plan",
+      "traceCount": 1
     }
   ],
   "interactionRisks": [
     {
-      "pair": [
-        "toolSelection",
-        "planning"
-      ],
-      "risk": "When entity resolution is soft, the planner can lock onto the wrong event or insufficient target and then produce a coherent but misgrounded program.",
+      "pair": ["planning", "execution"],
+      "risk": "When the plan does not force deterministic target resolution, execution spends retries on the same weak branch and completeness repair cannot reliably recover.",
       "pairedFixAllowed": true
     },
     {
-      "pair": [
-        "planning",
-        "execution"
-      ],
-      "risk": "Over-complex or insufficiently validated plans create retries, bounded-budget exits, or code-generation failures before the runtime reaches a stable grounded answer.",
+      "pair": ["toolSelection", "mcpTransport"],
+      "risk": "A routing miss can present as a transport or execution-context failure when the runtime never reaches a grounded call or canonical payload with usable evidence.",
       "pairedFixAllowed": true
     },
     {
-      "pair": [
-        "execution",
-        "synthesis"
-      ],
-      "risk": "Partial or weakly recovered execution results can still be surfaced as complete-looking answers, which hides residual uncertainty and reduces differentiation.",
+      "pair": ["scoutDepth", "synthesis"],
+      "risk": "Shallow discovery leaves synthesis with correct but weakly differentiated evidence, making the final answer look only marginally better than a baseline despite successful retrieval.",
       "pairedFixAllowed": false
     }
   ],
   "summary": {
-    "weakestDimension": "synthesis",
-    "weakestScore": 4.11,
-    "why": "The most stable post-experiment runtime failure is not lack of grounding but failure to convert grounded data into clearly differentiated final answers; 10 of 18 traces fit this pattern, which is broader than the sharper but less frequent selection misses."
+    "weakestDimension": "scoutDepth",
+    "weakestScore": 3.61
   },
   "dimensionSummary": {
     "stageMeans": {
-      "toolSelection": 4.39,
-      "scoutDepth": 4.5,
+      "toolSelection": 4.56,
+      "scoutDepth": 3.61,
       "clarification": 5,
-      "planning": 4.17,
-      "execution": 4.33,
+      "planning": 3.94,
+      "execution": 3.89,
       "synthesis": 4.11
     },
     "crossCuttingMeans": {
-      "contextBudget": 4.61,
-      "reasoningDepth": 4.44,
-      "mcpTransport": 4.56,
-      "codeSafety": 4.28,
-      "synthesisBudget": 4.22
+      "contextBudget": 4.44,
+      "reasoningDepth": 4.39,
+      "mcpTransport": 3.83,
+      "codeSafety": 4.17,
+      "synthesisBudget": 4.72
     },
+    "weakestDimension": "scoutDepth",
+    "weakestScore": 3.61,
     "optimizationReadiness": {
       "toolSelection": {
-        "status": "ready",
-        "reason": "Raw traces show a stable shared-runtime failure class where named targets do not resolve deterministically into the right grounded path; this is visible in the wrong-path and wrong-event traces, plus one zero-grounded-call miss."
+        "status": "monitor",
+        "reason": "Selection is usually correct, but one answerable trace still terminated without any grounded call, so routing confidence is not yet fully robust."
       },
       "scoutDepth": {
-        "status": "noisy",
-        "reason": "The analyzer penalizes this dimension broadly, but the raw traces usually had enough evidence to execute; the low signal is more calibration-heavy than failure-heavy."
+        "status": "ready",
+        "reason": "The dominant recurring weakness is stable: grounded evidence reaches the pipeline, but discovery does not expand or rank it enough to produce clearly higher-delta answers."
       },
       "clarification": {
-        "status": "blocked",
-        "reason": "There is not enough adverse signal here; nearly all prompts had a single grounded interpretation and did not fail because clarification was missing."
+        "status": "calibrate",
+        "reason": "This dimension rarely activates in this prompt set, so the mean mostly reflects non-applicability rather than demonstrated strength under ambiguity."
       },
       "planning": {
         "status": "ready",
-        "reason": "Multiple traces show the same planner-level issue: overly flexible candidate handling or validation complexity before execution, even when the final answer eventually lands."
+        "reason": "Deterministic target resolution and clause-coverage under-specification recur across multiple traces and are explicit enough to optimize directly."
       },
       "execution": {
         "status": "ready",
-        "reason": "The retry/self-heal pattern is stable across several traces, including one bounded-budget stop after the runtime picked an imperfect path."
+        "reason": "A stable failure class is visible: repair loops often preserve the original weak target and end with wrong-entity or partial-coverage outputs."
       },
       "synthesis": {
-        "status": "ready",
-        "reason": "This is the broadest recurring weakness: grounded data often reached the answer path, but the final response still under-delivered on differentiation, completeness, or buyer-facing actionability."
+        "status": "monitor",
+        "reason": "Synthesis quality is usually acceptable once grounded data exists, but it still inherits low-delta discovery and occasional incomplete repair outcomes."
       },
       "contextBudget": {
-        "status": "noisy",
-        "reason": "Most traces had enough raw evidence; lower-scoring cases were usually caused by wrong-target resolution or partial execution, not true context starvation."
+        "status": "monitor",
+        "reason": "Budgeting is generally healthy, though one tool-free terminal trace exposed an almost empty canonical payload and weak evidence carry-through."
       },
       "reasoningDepth": {
-        "status": "noisy",
-        "reason": "The signal is coupled to selection and planning failures rather than standing alone as a clean post-experiment bottleneck."
+        "status": "monitor",
+        "reason": "Reasoning is usually adequate; lower scores mostly reflect upstream targeting and repair failures rather than shallow reasoning alone."
       },
       "mcpTransport": {
         "status": "blocked",
-        "reason": "The post-experiment traces do not show a stable transport-layer failure cluster; misses were primarily upstream of transport or downstream in synthesis."
+        "reason": "A hard execution-context/tool-free failure remains, and several retry-heavy traces still fail to gain capability or recover the correct grounded target."
       },
       "codeSafety": {
-        "status": "ready",
-        "reason": "Planner/runtime code validation remains an actionable shared-runtime concern, including a severe failure where a disallowed helper import prevented any grounded execution."
+        "status": "monitor",
+        "reason": "Validation usually contains risk, but repeated patched retries against under-specified plans show that safety and correctness are not fully separated."
       },
       "synthesisBudget": {
-        "status": "ready",
-        "reason": "The runtime often had enough facts, but the final answer budget was not consistently spent on discriminative comparisons, explicit ranking logic, or closing known gaps."
+        "status": "monitor",
+        "reason": "Budget is rarely the primary bottleneck; the bigger issue is what evidence gets surfaced, not answer length."
       }
-    },
-    "dominantFailureClusters": [
-      {
-        "dimension": "synthesis",
-        "label": "grounded_but_low_differentiation",
-        "traceCount": 10
-      },
-      {
-        "dimension": "planning",
-        "label": "noisy_candidate_without_deterministic_targeting",
-        "traceCount": 4
-      },
-      {
-        "dimension": "toolSelection",
-        "label": "named_target_without_resolution",
-        "traceCount": 3
-      }
-    ]
+    }
   }
 }

@@ -1,0 +1,85 @@
+{
+  "generatedAt": "2026-04-12T00:00:00Z",
+  "hypothesisVersion": "runtime-hypothesis.v1",
+  "hypothesisId": "2026-04-12-execution-repair-requires-retargeting-v1",
+  "targetDimension": "execution",
+  "targetType": "stage",
+  "targetSelectionNote": "Execution is the weakest ready dimension in the latest post-experiment review (3.67). Planning has already been rejected twice in this bounded run, so iteration 5 should target the stable execution failure cluster rather than repeat planning or scoutDepth work.",
+  "selectedFailureCluster": {
+    "label": "repair_without_full_recovery",
+    "traceCount": 6
+  },
+  "smallestFilesToChange": [
+    "/Users/alex/Documents/context/lib/ai/agentic-execution.ts"
+  ],
+  "problemStatement": "The completeness-repair loop currently counts any patch as a valid semantic retry even when the patch does not materially retarget execution. In the weakest traces, the verifier correctly identifies an answerable same-tool recovery path, but the applied repair either repeats the same weak method shape or only adds a guard that returns explicit gaps. That spends the bounded retry budget without actually executing the requested probe-first recovery branch.",
+  "runtimeInvariant": "When completeness says a prompt is answerable with the same authorized tool family, a same-tool retry must materially change target resolution or discovery behavior. Guard-only patches, unchanged tool-call plans, or replaying the same weak retrieval path must not consume the final bounded semantic retry as if recovery was attempted.",
+  "rationale": "The recurring execution weakness is not lack of verifier signal; it is failure to convert that signal into a materially different recovery branch. A small shared-runtime change can enforce that same-tool completeness repairs actually retarget before the loop spends its last semantic retry, which is more bounded and contributor-agnostic than reopening planning or scoutDepth.",
+  "evidence": [
+    "The latest post-experiment stage review marks execution as the weakest ready dimension and explicitly says repair loops repeatedly fail to recover missing named targets or wrong-entity resolutions even when the prompt is answerable.",
+    "The dominant execution failure cluster in the latest review is repair_without_full_recovery with 6 traces, which is stronger and more stable than the earlier noisier execution signal.",
+    "In one latest-measurement trace, the verifier requested a reconcile-first same-tool recovery for a missing named target, but the applied completeness patch only tightened the existing comparison request instead of adding the requested resolution branch.",
+    "In another latest-measurement trace, the first completeness repair only inserted a semantic-mismatch guard and explicit-gap return for a wrong-entity result; the next verifier pass still said retry_same_tools, but the loop had already exhausted semantic retry budget and skipped further recovery.",
+    "Iteration 4 already tried a planning-to-execution paired handoff change and execution regressed by 0.22 with codeSafety down 0.33, so the remaining bounded opportunity is inside execution repair admission rather than another planning-side contract tweak."
+  ],
+  "proposedExperiment": {
+    "summary": "Add a deterministic completeness-repair admission check in the shared execution loop: when the verifier marks a gap as answerable with same tools and the suggested fix implies probe-first or retargeting recovery, only accept a repair as having spent the semantic retry if the repaired program materially changes the retrieval path. If the patch is guard-only or effectively replays the same weak tool-call plan, reject it and escalate immediately to the bounded replan path within the same retry attempt.",
+    "changeType": "execution_logic",
+    "affectedFiles": [
+      "/Users/alex/Documents/context/lib/ai/agentic-execution.ts"
+    ],
+    "usesPairedFixException": false,
+    "pairedDimension": null,
+    "validationPlan": {
+      "targetedChecks": [
+        "Replay a generic named-target unresolved trace where the verifier suggests a probe-first same-tool recovery and confirm that a non-retargeting patch is rejected and escalated to replan within the same semantic retry.",
+        "Replay a generic wrong-entity trace where the first repair only adds a mismatch guard and confirm the loop does not treat that guard-only patch as full recovery.",
+        "Verify that successful completeness patches which genuinely add a search/lookup/resolve step or a bounded resolved-target derivation still pass through without forced replans.",
+        "Run the full runtime regression harness and confirm query/chat parity because this logic sits in shared execution."
+      ],
+      "regressionHarnessRequired": true,
+      "codePathParityRequired": true
+    }
+  },
+  "expectedBenefits": [
+    "Reduces cases where the only semantic retry is wasted on a cosmetic or guard-only patch.",
+    "Improves recovery on answerable named-target and wrong-entity traces without reopening planning scope.",
+    "Keeps the change contributor-agnostic because it keys off repair behavior, not tool names or benchmark entities.",
+    "Should help execution without requiring a global retry-budget increase."
+  ],
+  "riskChecklist": [
+    "Do not over-trigger on legitimate schema-fix patches that keep the same method but truly fix parsing or field access.",
+    "Do not require contributor-specific tool-name heuristics when deciding whether retargeting happened.",
+    "Do not silently convert answerable same-tool retries into needsDifferentTools unless the verifier already points there.",
+    "Watch codeSafety, since forced replans can increase edit scope if the admission check is too strict."
+  ],
+  "marketplaceRobustness": {
+    "generalization": "The proposed guard is based on whether a repair materially changes discovery or target-resolution behavior after a verifier-labeled answerable gap. That applies across arbitrary MCP tools that expose search, lookup, list, resolve, or detail methods, and also across tools that accept raw query fallbacks.",
+    "forbiddenContributorSpecificSignals": [
+      "tool name allowlists or denylists",
+      "benchmark prompt string matches",
+      "venue-specific event or market labels",
+      "hard-coded entity names, sports, elections, or assets"
+    ],
+    "futureContributorThoughtExperiment": "If a future contributor exposes a search method plus a detail method for products, flights, jobs, or legal cases instead of markets, the same guard should still work: a verifier-requested retargeting repair must materially change discovery or target resolution before the runtime counts the retry as spent."
+  },
+  "validationPlan": {
+    "targetedChecks": [
+      "Generic answerable-but-unresolved named-target trace.",
+      "Generic wrong-entity trace with same-tool recovery available.",
+      "Non-regression on a successful completeness patch that already adds a real fallback branch.",
+      "Shared query/chat regression harness."
+    ],
+    "regressionHarnessRequired": true,
+    "codePathParityRequired": true
+  },
+  "rejectionCriteria": [
+    "Execution fails to improve by at least 0.20 or remains below the automation floor after remeasurement.",
+    "The repair_without_full_recovery cluster does not shrink materially.",
+    "CodeSafety drops by more than 0.15 versus baseline.",
+    "The admission check incorrectly rejects successful parse/schema repairs that do not need retargeting.",
+    "The change causes more needsDifferentTools or bounded-answer exits without reducing unresolved same-tool retry churn."
+  ],
+  "handoffToRunPipeline": false,
+  "handoffReason": null
+}

@@ -1,0 +1,191 @@
+{
+  "reviewedAt": "2026-04-12T01:42:49Z",
+  "reviewVersion": "runtime-stage-reviewer.v1",
+  "traceCount": 16,
+  "summary": {
+    "weakestDimension": "execution",
+    "weakestScore": 2.62
+  },
+  "dimensionScores": {
+    "toolSelection": 4.06,
+    "scoutDepth": 4,
+    "clarification": 5,
+    "planning": 3.38,
+    "execution": 2.62,
+    "synthesis": 4.75,
+    "contextBudget": 4.44,
+    "reasoningDepth": 4.5,
+    "mcpTransport": 3.19,
+    "codeSafety": 3.94,
+    "synthesisBudget": 4.62
+  },
+  "optimizationReadiness": {
+    "toolSelection": {
+      "status": "ready",
+      "reason": "Five traces show a stable false-negative routing pattern where answerable requests were treated as lacking a grounded capability or were sent down an over-broad initial path."
+    },
+    "scoutDepth": {
+      "status": "calibrate",
+      "reason": "Scout-depth scores stayed nearly flat across the set, so the mean is not yet discriminative enough to target directly."
+    },
+    "clarification": {
+      "status": "calibrate",
+      "reason": "Clarification did not materially activate in this batch; the perfect mean mostly reflects non-applicability rather than proven ambiguity handling."
+    },
+    "planning": {
+      "status": "ready",
+      "reason": "Named-target resolution and planner-validation churn recur across multiple traces, including wrong-entity selection and repeated replan cycles."
+    },
+    "execution": {
+      "status": "ready",
+      "reason": "This is the weakest dimension, driven by repeated repair loops that still end in wrong-entity answers, filtered-to-zero outputs, or partial completion."
+    },
+    "synthesis": {
+      "status": "monitor",
+      "reason": "When upstream grounding succeeds the final answers are usually coherent; remaining synthesis weakness is mostly inherited from earlier stages."
+    },
+    "contextBudget": {
+      "status": "monitor",
+      "reason": "A few traces were budget-heavy, but context spend was rarely the primary blocker."
+    },
+    "reasoningDepth": {
+      "status": "monitor",
+      "reason": "Reasoning was generally adequate and lower scores mostly followed upstream targeting or repair failures."
+    },
+    "mcpTransport": {
+      "status": "blocked",
+      "reason": "One explicit exact-fetch timeout and several retry cycles without capability gain make transport quality partially blocked rather than cleanly optimizable in isolation."
+    },
+    "codeSafety": {
+      "status": "monitor",
+      "reason": "No major unsafe behavior surfaced; lower scores mainly reflect weak-path retries and overconfident empty-set conclusions."
+    },
+    "synthesisBudget": {
+      "status": "monitor",
+      "reason": "Answer budget was seldom the limiting factor in this batch."
+    }
+  },
+  "dominantFailureClusters": [
+    {
+      "dimension": "execution",
+      "label": "answerable_but_unresolved_after_retry",
+      "traceCount": 7
+    },
+    {
+      "dimension": "planning",
+      "label": "named_target_without_resolution",
+      "traceCount": 5
+    },
+    {
+      "dimension": "toolSelection",
+      "label": "missing_capability_false_negative",
+      "traceCount": 5
+    },
+    {
+      "dimension": "execution",
+      "label": "filter_to_zero_after_grounded_retrieval",
+      "traceCount": 3
+    },
+    {
+      "dimension": "planning",
+      "label": "planner_validation_replan_cycle",
+      "traceCount": 3
+    },
+    {
+      "dimension": "synthesis",
+      "label": "grounded_but_low_delta_answer",
+      "traceCount": 1
+    }
+  ],
+  "interactionRisks": [
+    {
+      "pair": [
+        "planning",
+        "execution"
+      ],
+      "risk": "When planning does not deterministically resolve the intended target and coverage clauses, execution tends to spend retries on the wrong branch and completeness cannot fully recover.",
+      "pairedFixAllowed": true
+    },
+    {
+      "pair": [
+        "toolSelection",
+        "planning"
+      ],
+      "risk": "Early false-negative capability judgments and over-broad routing create ambiguous candidate sets that later planning cannot resolve cleanly.",
+      "pairedFixAllowed": true
+    },
+    {
+      "pair": [
+        "mcpTransport",
+        "execution"
+      ],
+      "risk": "Timeouts and retry-without-capability-gain can present as generic execution weakness unless transport and repair behavior are evaluated together.",
+      "pairedFixAllowed": true
+    }
+  ],
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 4.06,
+      "scoutDepth": 4,
+      "clarification": 5,
+      "planning": 3.38,
+      "execution": 2.62,
+      "synthesis": 4.75
+    },
+    "crossCuttingMeans": {
+      "contextBudget": 4.44,
+      "reasoningDepth": 4.5,
+      "mcpTransport": 3.19,
+      "codeSafety": 3.94,
+      "synthesisBudget": 4.62
+    },
+    "weakestDimension": "execution",
+    "weakestScore": 2.62,
+    "optimizationReadiness": {
+      "toolSelection": {
+        "status": "ready",
+        "reason": "Five traces show a stable false-negative routing pattern where answerable requests were treated as lacking a grounded capability or were sent down an over-broad initial path."
+      },
+      "scoutDepth": {
+        "status": "calibrate",
+        "reason": "Scout-depth scores stayed nearly flat across the set, so the mean is not yet discriminative enough to target directly."
+      },
+      "clarification": {
+        "status": "calibrate",
+        "reason": "Clarification did not materially activate in this batch; the perfect mean mostly reflects non-applicability rather than proven ambiguity handling."
+      },
+      "planning": {
+        "status": "ready",
+        "reason": "Named-target resolution and planner-validation churn recur across multiple traces, including wrong-entity selection and repeated replan cycles."
+      },
+      "execution": {
+        "status": "ready",
+        "reason": "This is the weakest dimension, driven by repeated repair loops that still end in wrong-entity answers, filtered-to-zero outputs, or partial completion."
+      },
+      "synthesis": {
+        "status": "monitor",
+        "reason": "When upstream grounding succeeds the final answers are usually coherent; remaining synthesis weakness is mostly inherited from earlier stages."
+      },
+      "contextBudget": {
+        "status": "monitor",
+        "reason": "A few traces were budget-heavy, but context spend was rarely the primary blocker."
+      },
+      "reasoningDepth": {
+        "status": "monitor",
+        "reason": "Reasoning was generally adequate and lower scores mostly followed upstream targeting or repair failures."
+      },
+      "mcpTransport": {
+        "status": "blocked",
+        "reason": "One explicit exact-fetch timeout and several retry cycles without capability gain make transport quality partially blocked rather than cleanly optimizable in isolation."
+      },
+      "codeSafety": {
+        "status": "monitor",
+        "reason": "No major unsafe behavior surfaced; lower scores mainly reflect weak-path retries and overconfident empty-set conclusions."
+      },
+      "synthesisBudget": {
+        "status": "monitor",
+        "reason": "Answer budget was seldom the limiting factor in this batch."
+      }
+    }
+  }
+}

@@ -1,96 +1,84 @@
 {
-  "decidedAt": "2026-04-11T11:22:09.216Z",
-  "targetDimension": "planning",
+  "decidedAt": "2026-04-11T22:47:22.601Z",
+  "targetDimension": "execution",
   "finalStatus": "rejected",
-  "action": "architectural_blocker",
+  "action": "max_iterations",
   "shouldContinue": false,
-  "nextTargetDimension": null,
+  "nextTargetDimension": "execution",
   "scoreBefore": {
-    "target": 4.28,
+    "target": 3.89,
     "byDimension": {
-      "toolSelection": 4.78,
-      "scoutDepth": 4,
+      "toolSelection": 4.44,
+      "scoutDepth": 3.5,
       "clarification": 5,
-      "planning": 4.28,
-      "execution": 4.17,
-      "synthesis": 4.67,
-      "contextBudget": 4.56,
-      "reasoningDepth": 4.78,
-      "mcpTransport": 4.33,
+      "planning": 3.83,
+      "execution": 3.89,
+      "synthesis": 4.06,
+      "contextBudget": 4.5,
+      "reasoningDepth": 4.33,
+      "mcpTransport": 3.89,
       "codeSafety": 4.22,
-      "synthesisBudget": 4.61
+      "synthesisBudget": 4.67
     }
   },
   "scoreAfter": {
-    "target": 4.17,
+    "target": 3.83,
     "byDimension": {
-      "toolSelection": 4.39,
-      "scoutDepth": 4.5,
+      "toolSelection": 4.72,
+      "scoutDepth": 3.78,
       "clarification": 5,
-      "planning": 4.17,
-      "execution": 4.33,
-      "synthesis": 4.11,
-      "contextBudget": 4.61,
+      "planning": 4,
+      "execution": 3.83,
+      "synthesis": 4.17,
+      "contextBudget": 4.72,
       "reasoningDepth": 4.44,
-      "mcpTransport": 4.56,
-      "codeSafety": 4.28,
-      "synthesisBudget": 4.22
+      "mcpTransport": 4.17,
+      "codeSafety": 4,
+      "synthesisBudget": 4.61
     }
   },
   "dimensionDeltas": {
-    "toolSelection": -0.39,
-    "scoutDepth": 0.5,
+    "toolSelection": 0.28,
+    "scoutDepth": 0.28,
     "clarification": 0,
-    "planning": -0.11,
-    "execution": 0.16,
-    "synthesis": -0.56,
-    "contextBudget": 0.05,
-    "reasoningDepth": -0.34,
-    "mcpTransport": 0.23,
-    "codeSafety": 0.06,
-    "synthesisBudget": -0.39
+    "planning": 0.17,
+    "execution": -0.06,
+    "synthesis": 0.11,
+    "contextBudget": 0.22,
+    "reasoningDepth": 0.11,
+    "mcpTransport": 0.28,
+    "codeSafety": -0.22,
+    "synthesisBudget": -0.06
   },
   "gates": {
     "targetImproved": false,
-    "targetClusterImproved": true,
+    "crossedAutomationFloor": false,
+    "targetClusterImproved": false,
     "targetProgress": false,
-    "noHardRegression": false,
+    "noHardRegression": true,
     "noBaselineDrop": false,
     "harnessGreen": true,
     "parityHeld": true
   },
   "dominantClusterProgress": {
-    "before": {
-      "label": "named_target_without_resolution",
-      "traceCount": 3
-    },
-    "after": {
-      "label": "named_target_without_resolution",
-      "traceCount": 0
-    },
-    "traceCountDelta": 3,
-    "relativeDrop": 1,
-    "improved": true
+    "before": null,
+    "after": null,
+    "traceCountDelta": null,
+    "relativeDrop": null,
+    "improved": null
   },
   "targetRejectedCount": 1,
-  "nextReadyDimensions": [],
-  "primaryBlocker": "planning improved by -0.11, below the 0.20 threshold.",
+  "nextReadyDimensions": [
+    "scoutDepth"
+  ],
+  "primaryBlocker": "execution improved by -0.06, below the 0.20 threshold.",
   "blockers": [
-    "planning improved by -0.11, below the 0.20 threshold.",
-    "Target dimension planning did not clear the target-progress gate.",
-    "toolSelection regressed by 0.39, exceeding the 0.30 limit.",
-    "synthesis regressed by 0.56, exceeding the 0.30 limit.",
-    "reasoningDepth regressed by 0.34, exceeding the 0.30 limit.",
-    "synthesisBudget regressed by 0.39, exceeding the 0.30 limit.",
-    "toolSelection fell from 4.78 to 4.39 (drop 0.39 exceeds 0.15 tolerance), violating noBaselineDrop.",
-    "synthesis fell from 4.67 to 4.11 (drop 0.56 exceeds 0.15 tolerance), violating noBaselineDrop.",
-    "reasoningDepth fell from 4.78 to 4.44 (drop 0.34 exceeds 0.15 tolerance), violating noBaselineDrop.",
-    "synthesisBudget fell from 4.61 to 4.22 (drop 0.39 exceeds 0.15 tolerance), violating noBaselineDrop."
+    "execution improved by -0.06, below the 0.20 threshold.",
+    "Noisy target execution showed neither a score gain nor a material failure-cluster shrink.",
+    "codeSafety fell from 4.22 to 4.00 (drop 0.22 exceeds 0.15 tolerance), violating noBaselineDrop."
   ],
-  "couplingNotes": [
-    "planning -> synthesisBudget: Generic memo-style plans pull broad evidence without a direct lookup path, which inflates context and forces the final answer to compress or infer instead of presenting tightly verified facts. (delta -0.39)."
-  ],
-  "reason": "planning improved by -0.11, below the 0.20 threshold. Target dimension planning did not clear the target-progress gate. toolSelection regressed by 0.39, exceeding the 0.30 limit. synthesis regressed by 0.56, exceeding the 0.30 limit. reasoningDepth regressed by 0.34, exceeding the 0.30 limit. synthesisBudget regressed by 0.39, exceeding the 0.30 limit. toolSelection fell from 4.78 to 4.39 (drop 0.39 exceeds 0.15 tolerance), violating noBaselineDrop. synthesis fell from 4.67 to 4.11 (drop 0.56 exceeds 0.15 tolerance), violating noBaselineDrop. reasoningDepth fell from 4.78 to 4.44 (drop 0.34 exceeds 0.15 tolerance), violating noBaselineDrop. synthesisBudget fell from 4.61 to 4.22 (drop 0.39 exceeds 0.15 tolerance), violating noBaselineDrop. Stop as an architectural blocker because planning has already been rejected 1 time(s), no alternative ready dimension remains below 4.0, and the run did not show enough signal to justify another local tweak.",
+  "couplingNotes": [],
+  "reason": "execution improved by -0.06, below the 0.20 threshold. Noisy target execution showed neither a score gain nor a material failure-cluster shrink. codeSafety fell from 4.22 to 4.00 (drop 0.22 exceeds 0.15 tolerance), violating noBaselineDrop. Stop now because the runtime-research loop exhausted its maximum iteration budget.",
   "thresholds": {
     "targetImprovement": 0.2,
     "hardRegression": -0.3,
@@ -103,12 +91,12 @@
   "traceContext": {
     "preReviewTraceCount": 18,
     "postReviewTraceCount": 18,
-    "iteration": 1,
+    "iteration": 5,
     "maxIterations": 5
   },
   "usedArtifactPaths": {
     "preReviewPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
-    "postReviewPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.post-experiment.latest.json",
+    "postReviewPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.iteration-5.post-experiment.latest.json",
     "regressionPath": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.latest.json",
     "manifestPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
     "runLogPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-log.json"

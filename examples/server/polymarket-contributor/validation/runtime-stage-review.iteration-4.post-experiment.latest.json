@@ -1,0 +1,130 @@
+{
+  "reviewVersion": "runtime-stage-reviewer.v1",
+  "traceCount": 18,
+  "summary": {
+    "weakestDimension": "execution",
+    "weakestScore": 3.67
+  },
+  "dimensionScores": {
+    "toolSelection": 4.44,
+    "scoutDepth": 4,
+    "clarification": 5,
+    "planning": 3.83,
+    "execution": 3.67,
+    "synthesis": 4.56,
+    "contextBudget": 4.56,
+    "reasoningDepth": 4.44,
+    "mcpTransport": 4,
+    "codeSafety": 3.89,
+    "synthesisBudget": 4.61
+  },
+  "optimizationReadiness": {
+    "toolSelection": {
+      "status": "monitor",
+      "reason": "Mean performance is strong, but there are still a few severe tail failures, including one answerable prompt that completed without any grounded tool call."
+    },
+    "scoutDepth": {
+      "status": "monitor",
+      "reason": "Discovery usually reaches grounded data now; the recurring weakness is low-delta differentiation rather than outright retrieval failure."
+    },
+    "clarification": {
+      "status": "calibrate",
+      "reason": "This stage rarely activates, so the perfect mean mostly reflects non-applicability rather than stress-tested ambiguity handling."
+    },
+    "planning": {
+      "status": "ready",
+      "reason": "Deterministic target resolution and clause coverage still recur as stable defects on multi-entity and comparative prompts."
+    },
+    "execution": {
+      "status": "ready",
+      "reason": "This is the weakest mean score, and repair loops repeatedly fail to recover missing named targets or wrong-entity resolutions even when the prompt is answerable."
+    },
+    "synthesis": {
+      "status": "monitor",
+      "reason": "Synthesis is generally strong; most remaining misses are inherited from upstream targeting and discovery limitations."
+    },
+    "contextBudget": {
+      "status": "monitor",
+      "reason": "A small number of dense traces still truncate context, but this is not yet the dominant limiter across the set."
+    },
+    "reasoningDepth": {
+      "status": "monitor",
+      "reason": "Reasoning depth is usually adequate, and lower scores mostly track upstream planning and execution defects rather than a standalone reasoning collapse."
+    },
+    "mcpTransport": {
+      "status": "calibrate",
+      "reason": "Some long-running traces remain, but the current failures are better explained by target-resolution and repair behavior than by transport itself."
+    },
+    "codeSafety": {
+      "status": "monitor",
+      "reason": "The lower mean is mostly driven by repeated validation failures and repair effort, not by unsafe behavior escaping unchecked."
+    },
+    "synthesisBudget": {
+      "status": "monitor",
+      "reason": "Budget is not the main constraint on answer quality for this iteration."
+    }
+  },
+  "dominantFailureClusters": [
+    {
+      "dimension": "scoutDepth",
+      "label": "grounded_but_low_delta_answer",
+      "traceCount": 7
+    },
+    {
+      "dimension": "execution",
+      "label": "repair_without_full_recovery",
+      "traceCount": 6
+    },
+    {
+      "dimension": "planning",
+      "label": "named_target_without_resolution",
+      "traceCount": 4
+    }
+  ],
+  "interactionRisks": [
+    {
+      "pair": ["planning", "execution"],
+      "risk": "When planning does not lock deterministic target resolution, execution spends repair budget on the same weak path and completeness cannot fully recover.",
+      "pairedFixAllowed": true
+    },
+    {
+      "pair": ["scoutDepth", "synthesis"],
+      "risk": "When discovery reaches only minimally differentiated evidence, synthesis can still be correct but remains too low-delta to create strong buyer value.",
+      "pairedFixAllowed": false
+    },
+    {
+      "pair": ["contextBudget", "planning"],
+      "risk": "On dense comparative traces, truncated context can drop required clauses before planning, creating plans that look coherent but under-specify the requested comparison.",
+      "pairedFixAllowed": true
+    }
+  ],
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 4.44,
+      "scoutDepth": 4,
+      "clarification": 5,
+      "planning": 3.83,
+      "execution": 3.67,
+      "synthesis": 4.56
+    },
+    "crossCuttingMeans": {
+      "contextBudget": 4.56,
+      "reasoningDepth": 4.44,
+      "mcpTransport": 4,
+      "codeSafety": 3.89,
+      "synthesisBudget": 4.61
+    },
+    "weakestDimension": "execution",
+    "weakestScore": 3.67,
+    "optimizationReadiness": {
+      "planning": {
+        "status": "ready",
+        "reason": "Deterministic target resolution and clause coverage still recur as stable defects on multi-entity and comparative prompts."
+      },
+      "execution": {
+        "status": "ready",
+        "reason": "This is the weakest mean score, and repair loops repeatedly fail to recover missing named targets or wrong-entity resolutions even when the prompt is answerable."
+      }
+    }
+  }
+}

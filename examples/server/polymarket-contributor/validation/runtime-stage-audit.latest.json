@@ -1,27 +1,27 @@
 {
-  "generatedAt": "2026-04-11T10:22:02.922Z",
+  "generatedAt": "2026-04-11T16:45:51.326Z",
   "version": "2026-04-09.runtime-stage-trace-analysis.v1",
-  "inputPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results-2026-04-11T10-21-52.031Z.json",
+  "inputPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results.latest.json",
   "queryCount": 18,
   "dimensionSummary": {
     "stageMeans": {
       "toolSelection": 4.78,
       "scoutDepth": 4,
       "clarification": 5,
-      "planning": 4.28,
-      "execution": 4.17,
+      "planning": 4.22,
+      "execution": 4.33,
       "synthesis": 4.67
     },
     "crossCuttingMeans": {
-      "contextBudget": 4.56,
+      "contextBudget": 4.72,
       "reasoningDepth": 4.78,
-      "mcpTransport": 4.33,
-      "codeSafety": 4.22,
-      "synthesisBudget": 4.61
+      "mcpTransport": 4.56,
+      "codeSafety": 4.33,
+      "synthesisBudget": 4.72
     },
     "bottleneckCounts": {
-      "scoutDepth": 9,
-      "execution": 5,
+      "scoutDepth": 10,
+      "execution": 4,
       "planning": 2,
       "contextBudget": 1,
       "toolSelection": 1
@@ -49,34 +49,34 @@
         "lowScoreCount": 5,
         "topDrivers": [
           {
-            "queryId": "q5",
-            "score": 3,
-            "issue": "Execution program required 2 revisions (0 patch, 1 replan) before it stabilized."
-          },
-          {
             "queryId": "q6",
             "score": 3,
-            "issue": "Planner validation flagged Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities.."
+            "issue": "Planner validation flagged The plan queries the event broadly but does not explicitly target the three requested date buckets with a deterministic selection step; exact-title matching alone is brittle and can miss semantically equivalent bucket la; It does not ensure a clear direct path from discovered event markets to the requested comparison of April 15 vs April 30 vs June 30 if the initial live-volume response is noisy or partially labeled.; Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities.."
+          },
+          {
+            "queryId": "q7",
+            "score": 3,
+            "issue": "Planner validation flagged The plan does not explicitly derive vig-adjusted implied probabilities from the quoted best bid/ask; it only returns `efficiency.marketEfficiency` and mapped outcome probabilities, so the requested vig-adjusted probabili; The plan relies on a market-query-level efficiency call, but it does not show a direct price-selection step tied to the specific market instrument/token before reporting best bid, best ask, midpoint, and spread.."
           },
           {
             "queryId": "q12",
             "score": 3,
-            "issue": "Planner validation flagged The plan does not deterministically target the correct token after discovery; it simply selects the first outcome from a potentially noisy result set instead of using semantic ranking or explicit outcome targeting.; For a direct token-parameter query, the plan should use a clearer direct-instrument resolution path rather than generic search followed by arbitrary first-result selection.; The requested live trading parameters are covered in the second call, but the upstream selection step is semantically under-specified and may resolve the wrong market/token.; Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities.."
-          },
-          {
-            "queryId": "q13",
-            "score": 3,
-            "issue": "Planner validation flagged The plan does not explicitly target the two named comparison contracts, Gretchen Whitmer and Oprah Winfrey; it relies only on a broad event query, which under-covers the user’s requested relative-value comparison.; For a direct rich/cheap comparison within the same event, the plan should first fetch or compare the specific instruments for Stephen A. Smith, Gretchen Whitmer, and Oprah Winfrey rather than delegating to a generic mark; If the compare tool returns a noisy candidate set, the plan needs deterministic semantic targeting or an equivalent explicit ranking step to select the three named contracts before assessing relative value.."
+            "issue": "Planner validation flagged The plan does not actually retrieve the requested live token trading parameters; it returns null placeholders for tick size, fee rate, minimum order size, and negative risk instead of querying a direct market/token param; The user asked about a specific market, so the plan should resolve the exact market/token first and then fetch its live trading parameters directly; instead it performs vague market comparison and an unused event lookup; The plan includes a generic 'compare_market_against_related_contracts' exploration step that is not clearly tied to the requested structure and does not provide a direct path to the token-level parameters requested.; The attempted 'get_event_outcomes' call is malformed and effectively no-op (`slug` is always undefined), which indicates the plan is not semantically executable toward the user's target.; There is no explicit direct-discovery step for the token/market identifier that would enable a parameter lookup, despite the intent requiring direct instruments first.."
           },
           {
             "queryId": "q15",
             "score": 3,
-            "issue": "Planner validation flagged The plan is too generic: it calls a single memo-building skill with only the market query, but does not show a direct-instrument discovery or quote path for the specified market before summarizing.; User intent requires a memo that combines rules risk, quote quality, whale positioning, and recent tape; the plan does not explicitly demonstrate how those components will be retrieved or validated from market-level data; Because the request is market-specific and requires direct instruments first, the plan should include explicit market/instrument lookup and quote/tape collection steps, not only a generic browsing-style memo call.."
+            "issue": "Planner validation flagged The plan relies on a single generic memo-producing skill and does not explicitly discover or inspect the direct market instrument for 'Will the U.S. invade Iran before 2027?'.; It does not show a clear direct path to the required evidence layers: rules risk, quote quality, whale positioning, and recent tape; these are only implied by the tool name, not explicitly targeted in the code.; Because direct instruments are required, the plan should first resolve the exact market/instrument and then pull the supporting data needed for the memo rather than only requesting an aggregate summary.."
+          },
+          {
+            "queryId": "q17",
+            "score": 3,
+            "issue": "Execution program required 3 revisions (1 patch, 0 replan) before it stabilized."
           }
         ]
       },
       "execution": {
-        "lowScoreCount": 5,
+        "lowScoreCount": 4,
         "topDrivers": [
           {
             "queryId": "q2",
@@ -86,22 +86,17 @@
           {
             "queryId": "q5",
             "score": 2,
-            "issue": "Completeness checks still marked the answer incomplete: Answerable but unresolved: The whale data for Switzerland, New Zealand, and South Korea is missing from the result, as only the top 6 outcomes (Italy, Spain, England, France, Argentina, Brazil) were analyzed by the tool.."
-          },
-          {
-            "queryId": "q13",
-            "score": 2,
-            "issue": "Completeness checks still marked the answer incomplete: Answerable but unresolved: the 'search_and_get_outcomes' tool successfully retrieved the 'Democratic Presidential Nominee 2028' event and its 44 outcomes, but the 'compare_market_against_related_contracts' tool was never executed to perform the relative-value analysis ('rich or cheap') requested by the user.."
-          },
-          {
-            "queryId": "q11",
-            "score": 3,
-            "issue": "Completeness checks still marked the answer incomplete: Data for Akshay Bhatia is missing from the analysis; Only 2 of the 3 requested outcomes (Xander Schauffele and Cameron Young) were analyzed."
+            "issue": "Completeness checks still marked the answer incomplete: The analysis is missing data for Switzerland, New Zealand, and South Korea, which were specifically requested by the user.."
           },
           {
             "queryId": "q12",
-            "score": 3,
-            "issue": "Completeness checks still marked the answer incomplete: User asked about 'Paris Saint-Germain FC' (PSG) win on 2026-04-08, but returned data is about the '2026 Fields Medal' - the search/query returned the wrong entity; Missing trading parameters: tick size, fee rate, minimum order size, and negative risk status for the PSG token."
+            "score": 2,
+            "issue": "Completeness checks still marked the answer incomplete: User asked about 'Paris Saint-Germain FC' but returned data is about 'Yu Deng' (2026 Fields Medal) - the search/query returned the wrong entity."
+          },
+          {
+            "queryId": "q18",
+            "score": 2,
+            "issue": "Completeness checks still marked the answer incomplete: Answerable but unresolved: The search and live volume tools both resolved to the '2026 NBA Champion' event (ID 27830) instead of a specific 'Thunder vs. Clippers' game event.; The submarkets requested (Main Moneyline, O/U 227.5, Kris Dunn Props) returned null for all live trading data (matchedName, liveValue, volume) because they do not exist within the '2026 NBA Champion' season-long futures event.."
           }
         ]
       },
@@ -116,13 +111,8 @@
         ]
       },
       "contextBudget": {
-        "lowScoreCount": 3,
+        "lowScoreCount": 2,
         "topDrivers": [
-          {
-            "queryId": "q13",
-            "score": 2,
-            "issue": null
-          },
           {
             "queryId": "q15",
             "score": 2,
@@ -139,19 +129,19 @@
         "lowScoreCount": 2,
         "topDrivers": [
           {
-            "queryId": "q12",
+            "queryId": "q17",
             "score": 3,
             "issue": null
           },
           {
-            "queryId": "q13",
+            "queryId": "q18",
             "score": 3,
             "issue": null
           }
         ]
       },
       "mcpTransport": {
-        "lowScoreCount": 5,
+        "lowScoreCount": 4,
         "topDrivers": [
           {
             "queryId": "q2",
@@ -164,24 +154,19 @@
             "issue": null
           },
           {
-            "queryId": "q11",
-            "score": 3,
-            "issue": null
-          },
-          {
             "queryId": "q12",
             "score": 3,
             "issue": null
           },
           {
-            "queryId": "q13",
+            "queryId": "q18",
             "score": 3,
             "issue": null
           }
         ]
       },
       "codeSafety": {
-        "lowScoreCount": 5,
+        "lowScoreCount": 4,
         "topDrivers": [
           {
             "queryId": "q2",
@@ -194,33 +179,23 @@
             "issue": null
           },
           {
-            "queryId": "q12",
-            "score": 3,
-            "issue": null
-          },
-          {
-            "queryId": "q13",
-            "score": 3,
-            "issue": null
-          },
-          {
             "queryId": "q17",
+            "score": 3,
+            "issue": null
+          },
+          {
+            "queryId": "q18",
             "score": 3,
             "issue": null
           }
         ]
       },
       "synthesisBudget": {
-        "lowScoreCount": 3,
+        "lowScoreCount": 2,
         "topDrivers": [
           {
             "queryId": "q17",
             "score": 2,
-            "issue": null
-          },
-          {
-            "queryId": "q13",
-            "score": 3,
             "issue": null
           },
           {
@@ -232,47 +207,47 @@
       }
     },
     "promptSetFingerprint": "q1,q10,q11,q12,q13,q14,q15,q16,q17,q18,q2,q3,q4,q5,q6,q7,q8,q9",
-    "finalScoreMean": 4.53,
+    "finalScoreMean": 4.54,
     "weakQueryIds": [
       "q17"
     ]
   },
   "systemicIssues": [
     {
-      "pattern": "9/18 prompts hit grounded data reaching the pipeline without creating strong answer differentiation",
+      "pattern": "10/18 prompts hit grounded data reaching the pipeline without creating strong answer differentiation",
       "rootCause": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness.",
       "fixScope": "planner",
       "affectedPromptIds": [
         "q1",
         "q3",
         "q4",
-        "q7",
         "q8",
         "q9",
         "q10",
+        "q11",
+        "q13",
         "q14",
         "q16"
       ]
     },
     {
-      "pattern": "4/18 prompts hit completeness verification blocking otherwise-grounded answers",
-      "rootCause": "Verification found missing parts and the repair path did not fully recover.",
-      "fixScope": "verifier",
-      "affectedPromptIds": [
-        "q11",
-        "q12",
-        "q13",
-        "q18"
-      ]
-    },
-    {
-      "pattern": "3/18 prompts hit planner validation or program complexity issues",
+      "pattern": "4/18 prompts hit planner validation or program complexity issues",
       "rootCause": "Planner output needed additional validation or simplification before it could answer cleanly.",
       "fixScope": "planner",
       "affectedPromptIds": [
         "q2",
         "q6",
+        "q7",
         "q15"
+      ]
+    },
+    {
+      "pattern": "2/18 prompts hit completeness verification blocking otherwise-grounded answers",
+      "rootCause": "Verification found missing parts and the repair path did not fully recover.",
+      "fixScope": "verifier",
+      "affectedPromptIds": [
+        "q5",
+        "q12"
       ]
     },
     {
@@ -280,7 +255,7 @@
       "rootCause": "Verification found missing parts and the repair path did not fully recover.",
       "fixScope": "verifier",
       "affectedPromptIds": [
-        "q5"
+        "q18"
       ]
     },
     {
@@ -303,7 +278,7 @@
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 40175,
+      "latencyMs": 43341,
       "finalScore": 4.83,
       "buyerScores": {
         "freshness": 5,
@@ -333,7 +308,7 @@
           "evidenceAttachedToPlanning": true,
           "probeConfidence": 0.9908,
           "candidateMethodCount": 48,
-          "shortlistCount": 4,
+          "shortlistCount": 3,
           "budgetReasonCode": null
         },
         "clarification": {
@@ -367,15 +342,15 @@
           "selfHealCount": 0,
           "failureCount": 0,
           "loopCount": 0,
-          "executionMs": 14780,
-          "synthesisMs": 3161,
+          "executionMs": 15873,
+          "synthesisMs": 3175,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
           "issue": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 582,
+          "responseLength": 683,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -407,7 +382,7 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 1640,
+          "canonicalBytes": 2114,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
@@ -421,7 +396,7 @@
         },
         "mcpTransport": {
           "score": 5,
-          "durationMs": 40175,
+          "durationMs": 43341,
           "timeoutBudgetMs": null,
           "toolCallCount": 1,
           "logs": []
@@ -492,7 +467,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 40175,
+          "totalDurationMs": 43341,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -508,7 +483,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "As of **April 11, 2026, at 09:58 UTC**, the market data for the **Liverpool FC vs. Paris Saint-Germain FC** event is as follows:\n\n| Outcome | Implied Probability | Best Bid | Best Ask | Spread (Cents) | Spread (%) |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| **Liverpool FC** | 41.5% | 0.41 | 0.42 | 1.00¢ | 2.41% |\n| **Paris Saint-Germain FC** | 39.5% | 0.39 | 0.40 | 1.00¢ | 2.53% |\n| **Draw** | 21.5% | 0.21 | 0.22 | 1.00¢ | 4.65% |\n\nPlease note that while the query mentions a date of 2026-04-",
+        "responsePreview": "Based on data fetched on April 11, 2026, here are the market details for the **Liverpool FC vs. Paris Saint-Germain FC** match (scheduled for April 14, 2026):\n\n| Outcome | Implied Probability | Best Bid | Best Ask | Spread (Cents) | Spread (%) |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| **Liverpool FC** | 40.5% | $0.40 | $0.41 | 1.00¢ | 2.47% |\n| **Paris Saint-Germain FC** | 39.5% | $0.39 | $0.40 | 1.00¢ | 2.53% |\n| **Draw** | 21.5% | $0.21 | $0.22 | 1.00¢ | 4.65% |\n\n**Key Details:**\n*   **E",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -525,7 +500,7 @@
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 53723,
+      "latencyMs": 56177,
       "finalScore": 4.83,
       "buyerScores": {
         "freshness": 5,
@@ -555,7 +530,7 @@
           "evidenceAttachedToPlanning": true,
           "probeConfidence": 0.9908,
           "candidateMethodCount": 48,
-          "shortlistCount": 2,
+          "shortlistCount": 1,
           "budgetReasonCode": null
         },
         "clarification": {
@@ -589,15 +564,15 @@
           "selfHealCount": 2,
           "failureCount": 1,
           "loopCount": 2,
-          "executionMs": 29569,
-          "synthesisMs": 3301,
+          "executionMs": 32743,
+          "synthesisMs": 3675,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
           "issue": "Planner output needed additional validation or simplification before it could answer cleanly."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 912,
+          "responseLength": 1088,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -629,7 +604,7 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 1206,
+          "canonicalBytes": 1673,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
@@ -643,7 +618,7 @@
         },
         "mcpTransport": {
           "score": 3,
-          "durationMs": 53723,
+          "durationMs": 56177,
           "timeoutBudgetMs": null,
           "toolCallCount": 2,
           "logs": []
@@ -714,7 +689,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 53723,
+          "totalDurationMs": 56177,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -730,7 +705,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "As of April 11, 2026, the market for \"Will Paris Saint-Germain FC win on 2026-04-08?\" is currently **illiquid**. The Central Limit Order Book (CLOB) is unavailable, meaning there is zero active merged depth across standard order book layers.\n\n### Market Depth and Slippage\nBecause there is no available order book depth, any attempt to exit positions at the requested sizes would face 100% slippage, as no orders exist to fill them.\n\n| Exit Size | Amount Filled | Avg Price | Slippage | Can Fill |\n| ",
+        "responsePreview": "As of April 11, 2026, at 16:23 UTC, the market for \"Will Paris Saint-Germain FC win on 2026-04-08?\" is currently classified as **illiquid**.\n\nThe CLOB (Central Limit Order Book) is unavailable for this market, and there is no merged depth recorded. Consequently, any exit attempt of significant size would face total slippage.\n\n### Liquidity and Slippage Profile\n\n| Metric | Value |\n| :--- | :--- |\n| **Merged Depth (USD)** | $0 |\n| **Bid Depth (USD)** | $0 |\n| **Ask Depth (USD)** | $0 |\n| **Current",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -747,7 +722,7 @@
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 37606,
+      "latencyMs": 38961,
       "finalScore": 4.5,
       "buyerScores": {
         "freshness": 5,
@@ -811,15 +786,15 @@
           "selfHealCount": 0,
           "failureCount": 0,
           "loopCount": 0,
-          "executionMs": 13150,
-          "synthesisMs": 4074,
+          "executionMs": 13572,
+          "synthesisMs": 2913,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
           "issue": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 884,
+          "responseLength": 526,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -851,7 +826,7 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 2551,
+          "canonicalBytes": 1850,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
@@ -865,7 +840,7 @@
         },
         "mcpTransport": {
           "score": 5,
-          "durationMs": 37606,
+          "durationMs": 38961,
           "timeoutBudgetMs": null,
           "toolCallCount": 1,
           "logs": []
@@ -936,7 +911,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 37606,
+          "totalDurationMs": 38961,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -954,7 +929,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "Based on the data fetched on **April 11, 2026**, for the **2026 FIFA World Cup Winner** event, here is the comparison between Spain, France, and England:\n\n| Team | Implied Probability | Current Spread (Cents) | Spread (%) | 1-Week Price Change |\n| :--- | :--- | :--- | :--- | :--- |\n| **Spain** | 15.3% | 0.10¢ | 0.65% | +0.00% |\n| **France** | 14.5% | 0.10¢ | 0.69% | +0.00% |\n| **England** | 11.3% | 0.10¢ | 0.88% | +0.00% |\n\n**Key Observations:**\n*   **Ranking:** Spain currently holds the highest",
+        "responsePreview": "As of April 11, 2026, here is the comparison for the **2026 FIFA World Cup Winner** event among the specified teams:\n\n| Team | Implied Probability | Current Spread | One-Week Price Change |\n| :--- | :--- | :--- | :--- |\n| **Spain** | 15.4% | 0.10¢ (0.65%) | 0% |\n| **France** | 14.6% | 0.10¢ (0.68%) | 0% |\n| **England** | 11.3% | 0.10¢ (0.88%) | 0% |\n\nAll three teams have maintained stable pricing over the past week with no recorded change. Spain currently holds the highest implied probability of",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -971,7 +946,7 @@
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 69174,
+      "latencyMs": 68075,
       "finalScore": 4.83,
       "buyerScores": {
         "freshness": 5,
@@ -1035,15 +1010,15 @@
           "selfHealCount": 0,
           "failureCount": 0,
           "loopCount": 0,
-          "executionMs": 46057,
-          "synthesisMs": 4304,
+          "executionMs": 46849,
+          "synthesisMs": 5180,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
           "issue": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 1542,
+          "responseLength": 1693,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -1075,7 +1050,7 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 4921,
+          "canonicalBytes": 3313,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
@@ -1089,7 +1064,7 @@
         },
         "mcpTransport": {
           "score": 5,
-          "durationMs": 69174,
+          "durationMs": 68075,
           "timeoutBudgetMs": null,
           "toolCallCount": 1,
           "logs": []
@@ -1160,7 +1135,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 69174,
+          "totalDurationMs": 68075,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -1176,7 +1151,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "As of April 11, 2026, the tradability for the sampled outcomes in the **2026 FIFA World Cup Winner** event is divided into three distinct categories based on liquidity, whale activity, and slippage.\n\n### Tradability Analysis\n\n| Rank | Team | Classification | Tradability Score | $5k Slippage | Whale Count |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| 1 | Spain | **Tradable Now** | 99 | 0.6% | 20 |\n| 2 | France | **Tradable Now** | 99 | 0.9% | 20 |\n| 3 | England | **Tradable Now** | 99 | 0.7% | ",
+        "responsePreview": "Based on the current market data for the **2026 FIFA World Cup Winner** event, the outcomes for Spain, France, and England are highly tradable, while South Korea and Switzerland are currently categorized as \"watchlist\" (headline-only) due to a lack of whale activity.\n\n### **Tradable Outcomes**\nThese selections feature tight spreads (0.1¢), deep liquidity, and active \"whale\" participation (20 large-scale traders each).\n\n| Rank | Team | Classification | Tradability Score | Current Price | Total De",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -1193,7 +1168,7 @@
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 156301,
+      "latencyMs": 156396,
       "finalScore": 4.67,
       "buyerScores": {
         "freshness": 5,
@@ -1223,7 +1198,7 @@
           "evidenceAttachedToPlanning": true,
           "probeConfidence": 0.9908,
           "candidateMethodCount": 48,
-          "shortlistCount": 4,
+          "shortlistCount": 5,
           "budgetReasonCode": null
         },
         "clarification": {
@@ -1238,34 +1213,34 @@
           ]
         },
         "planning": {
-          "score": 3,
+          "score": 4,
           "plannerReasoningStage": "focused",
           "validationApplied": false,
           "validationPassed": null,
           "validationIssues": [],
           "revisionCount": 2,
-          "patchCount": 0,
-          "replanCount": 1,
+          "patchCount": 1,
+          "replanCount": 0,
           "repairEffort": 3,
           "repairSucceeded": true,
           "compiledFirstTry": false,
-          "issue": "Execution program required 2 revisions (0 patch, 1 replan) before it stabilized."
+          "issue": "Execution program required 2 revisions (1 patch, 0 replan) before it stabilized."
         },
         "execution": {
           "score": 2,
           "retryCount": 2,
           "selfHealCount": 2,
-          "failureCount": 2,
+          "failureCount": 1,
           "loopCount": 2,
-          "executionMs": 133826,
-          "synthesisMs": 3367,
+          "executionMs": 134730,
+          "synthesisMs": 3687,
           "budgetConsumedPct": null,
-          "budgetExhausted": true,
-          "issue": "Completeness checks still marked the answer incomplete: Answerable but unresolved: The whale data for Switzerland, New Zealand, and South Korea is missing from the result, as only the top 6 outcomes (Italy, Spain, England, France, Argentina, Brazil) were analyzed by the tool.."
+          "budgetExhausted": false,
+          "issue": "Completeness checks still marked the answer incomplete: The analysis is missing data for Switzerland, New Zealand, and South Korea, which were specifically requested by the user.."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 890,
+          "responseLength": 1031,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -1297,7 +1272,7 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 3282,
+          "canonicalBytes": 20789,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
@@ -1307,11 +1282,11 @@
           "plannerReasoningStage": "focused",
           "scoutLlmSelectionUsed": true,
           "revisionCount": 2,
-          "replanCount": 1
+          "replanCount": 0
         },
         "mcpTransport": {
           "score": 3,
-          "durationMs": 156301,
+          "durationMs": 156396,
           "timeoutBudgetMs": null,
           "toolCallCount": 5,
           "logs": []
@@ -1321,7 +1296,7 @@
           "validationApplied": false,
           "validationPassed": null,
           "validationIssues": [],
-          "patchCount": 0,
+          "patchCount": 1,
           "retryCount": 2,
           "repairSucceeded": true,
           "repairEffort": 3
@@ -1337,12 +1312,12 @@
       },
       "bottleneckDimension": "execution",
       "bottleneckScore": 2,
-      "bottleneckDetail": "Completeness checks still marked the answer incomplete: Answerable but unresolved: The whale data for Switzerland, New Zealand, and South Korea is missing from the result, as only the top 6 outcomes (Italy, Spain, England, France, Argentina, Brazil) were analyzed by the tool..",
+      "bottleneckDetail": "Completeness checks still marked the answer incomplete: The analysis is missing data for Switzerland, New Zealand, and South Korea, which were specifically requested by the user..",
       "traceDiagnosis": {
         "version": "2026-04-04.trace-informed-diagnosis.v1",
         "promptId": "q5",
         "bottleneckStage": "completeness",
-        "bottleneckReason": "Completeness checks still marked the answer incomplete: Answerable but unresolved: The whale data for Switzerland, New Zealand, and South Korea is missing from the result, as only the top 6 outcomes (Italy, Spain, England, France, Argentina, Brazil) were analyzed by the tool..",
+        "bottleneckReason": "Completeness checks still marked the answer incomplete: The analysis is missing data for Switzerland, New Zealand, and South Korea, which were specifically requested by the user..",
         "retryPattern": {
           "cheapFix": 1,
           "semantic": 1,
@@ -1350,12 +1325,12 @@
         },
         "toolSelectionOptimal": true,
         "toolSelectionIssue": null,
-        "plannerIssue": "Execution program required 2 revisions (0 patch, 1 replan) before it stabilized.",
-        "completenessIssue": "Completeness checks still marked the answer incomplete: Answerable but unresolved: The whale data for Switzerland, New Zealand, and South Korea is missing from the result, as only the top 6 outcomes (Italy, Spain, England, France, Argentina, Brazil) were analyzed by the tool..",
-        "budgetExhausted": true,
+        "plannerIssue": "Execution program required 2 revisions (1 patch, 0 replan) before it stabilized.",
+        "completenessIssue": "Completeness checks still marked the answer incomplete: The analysis is missing data for Switzerland, New Zealand, and South Korea, which were specifically requested by the user..",
+        "budgetExhausted": false,
         "budgetHeadroom": "cheapFix headroom unknown; semantic headroom 0/1",
         "rootCause": "Verification found missing parts and the repair path did not fully recover.",
-        "suggestedFix": "Verifier: preserve more retry headroom or relax the completeness stop condition for this prompt class so one more repair pass can run.",
+        "suggestedFix": "Verifier: tune completeness criteria or retry routing so missing parts trigger a successful repair instead of an early stop.",
         "fixScope": "verifier",
         "evidence": {
           "outcomeType": "answer",
@@ -1382,15 +1357,15 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 156301,
+          "totalDurationMs": 156396,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
           "rediscoveryExecuted": false,
           "planningValidationApplied": false,
           "revisionCount": 2,
-          "patchCount": 0,
-          "replanCount": 1,
+          "patchCount": 1,
+          "replanCount": 0,
           "completionEvaluationCount": 4,
           "lowScoreDimensions": []
         }
@@ -1398,7 +1373,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "Based on the sampled data for the **2026 FIFA World Cup Winner** event, **Spain** has the strongest whale backing among your specifically requested outcomes. \n\nWhile the overall top whale outcome in the event is **Italy** ($1,026,683.20), and there is significant \"Smart Money\" activity betting against **Curaçao**, the breakdown for your selected teams is as follows:\n\n| Outcome | Total Whale Value | Whale Count | Conviction Level | Price |\n| :--- | :--- | :--- | :--- | :--- |\n| **Spain** | **$261",
+        "responsePreview": "As of the data fetched on **April 11, 2026**, **Spain** has the strongest whale backing among the specific outcomes you listed for the 2026 FIFA World Cup Winner.\n\nWhile the \"Smart Money Consensus\" indicates a massive overall lead for **Italy** (not in your list) with over $1 million in positions, the rankings for your requested teams are as follows:\n\n| Outcome | Rank | Total Whale Value | Whale Count | Conviction Level | Current Price |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| **Spain** | ",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -1415,12 +1390,12 @@
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 56544,
-      "finalScore": 4.33,
+      "latencyMs": 66036,
+      "finalScore": 4.67,
       "buyerScores": {
         "freshness": 5,
         "specificity": 5,
-        "actionability": 2,
+        "actionability": 4,
         "completeness": 5,
         "dataAccuracy": 5,
         "uniqueness": 4
@@ -1465,6 +1440,8 @@
           "validationApplied": true,
           "validationPassed": false,
           "validationIssues": [
+            "The plan queries the event broadly but does not explicitly target the three requested date buckets with a deterministic selection step; exact-title matching alone is brittle and can miss semantically equivalent bucket la",
+            "It does not ensure a clear direct path from discovered event markets to the requested comparison of April 15 vs April 30 vs June 30 if the initial live-volume response is noisy or partially labeled.",
             "Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities."
           ],
           "revisionCount": 2,
@@ -1473,7 +1450,7 @@
           "repairEffort": 3,
           "repairSucceeded": true,
           "compiledFirstTry": false,
-          "issue": "Planner validation flagged Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities.."
+          "issue": "Planner validation flagged The plan queries the event broadly but does not explicitly target the three requested date buckets with a deterministic selection step; exact-title matching alone is brittle and can miss semantically equivalent bucket la; It does not ensure a clear direct path from discovered event markets to the requested comparison of April 15 vs April 30 vs June 30 if the initial live-volume response is noisy or partially labeled.; Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities.."
         },
         "execution": {
           "score": 5,
@@ -1481,15 +1458,15 @@
           "selfHealCount": 0,
           "failureCount": 0,
           "loopCount": 0,
-          "executionMs": 23526,
-          "synthesisMs": 3531,
+          "executionMs": 29089,
+          "synthesisMs": 4328,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
           "issue": "Planner output needed additional validation or simplification before it could answer cleanly."
         },
         "synthesis": {
-          "score": 4,
-          "responseLength": 725,
+          "score": 5,
+          "responseLength": 1242,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -1521,7 +1498,7 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 3334,
+          "canonicalBytes": 7770,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
@@ -1535,7 +1512,7 @@
         },
         "mcpTransport": {
           "score": 5,
-          "durationMs": 56544,
+          "durationMs": 66036,
           "timeoutBudgetMs": null,
           "toolCallCount": 2,
           "logs": []
@@ -1545,6 +1522,8 @@
           "validationApplied": true,
           "validationPassed": false,
           "validationIssues": [
+            "The plan queries the event broadly but does not explicitly target the three requested date buckets with a deterministic selection step; exact-title matching alone is brittle and can miss semantically equivalent bucket la",
+            "It does not ensure a clear direct path from discovered event markets to the requested comparison of April 15 vs April 30 vs June 30 if the initial live-volume response is noisy or partially labeled.",
             "Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities."
           ],
           "patchCount": 1,
@@ -1563,12 +1542,12 @@
       },
       "bottleneckDimension": "planning",
       "bottleneckScore": 3,
-      "bottleneckDetail": "Planner validation flagged Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities..",
+      "bottleneckDetail": "Planner validation flagged The plan queries the event broadly but does not explicitly target the three requested date buckets with a deterministic selection step; exact-title matching alone is brittle and can miss semantically equivalent bucket la; It does not ensure a clear direct path from discovered event markets to the requested comparison of April 15 vs April 30 vs June 30 if the initial live-volume response is noisy or partially labeled.; Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities..",
       "traceDiagnosis": {
         "version": "2026-04-04.trace-informed-diagnosis.v1",
         "promptId": "q6",
         "bottleneckStage": "planning",
-        "bottleneckReason": "Planner validation flagged Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities..",
+        "bottleneckReason": "Planner validation flagged The plan queries the event broadly but does not explicitly target the three requested date buckets with a deterministic selection step; exact-title matching alone is brittle and can miss semantically equivalent bucket la; It does not ensure a clear direct path from discovered event markets to the requested comparison of April 15 vs April 30 vs June 30 if the initial live-volume response is noisy or partially labeled.; Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities..",
         "retryPattern": {
           "cheapFix": 0,
           "semantic": 0,
@@ -1576,7 +1555,7 @@
         },
         "toolSelectionOptimal": true,
         "toolSelectionIssue": null,
-        "plannerIssue": "Planner validation flagged Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities..",
+        "plannerIssue": "Planner validation flagged The plan queries the event broadly but does not explicitly target the three requested date buckets with a deterministic selection step; exact-title matching alone is brittle and can miss semantically equivalent bucket la; It does not ensure a clear direct path from discovered event markets to the requested comparison of April 15 vs April 30 vs June 30 if the initial live-volume response is noisy or partially labeled.; Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities..",
         "completenessIssue": null,
         "budgetExhausted": false,
         "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
@@ -1608,7 +1587,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 56544,
+          "totalDurationMs": 66036,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -1618,15 +1597,13 @@
           "patchCount": 1,
           "replanCount": 0,
           "completionEvaluationCount": 1,
-          "lowScoreDimensions": [
-            "actionability"
-          ]
+          "lowScoreDimensions": []
         }
       },
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "As of April 11, 2026, the date bucket with the largest share of live trading in this event is **April 7**, followed by **April 15**.\n\nThe specific breakdown for the buckets you requested, compared to the overall leader, is as follows:\n\n| Date Bucket | Share of Event Total | Trading Value |\n| :--- | :--- | :--- |\n| **April 7?** (Current Leader) | 31.45% | 11,793,614.73 |\n| **April 15?** | 17.90% | 6,711,207.35 |\n| **April 30?** | 8.03% | 3,009,881.17 |\n| **June 30?** | 6.33% | 2,373,152.53 |\n\nOth",
+        "responsePreview": "Based on the live trading data for the **'Iran x Israel/US conflict ends by...?'** event, the total volume across all date buckets is **$38,071,814.29**.\n\nAmong your specifically requested dates, the **April 15** bucket holds the largest share, followed by April 30 and June 30. However, the overall leader for the entire event is currently the **April 7** bucket, which accounts for over 31% of the total trading volume.\n\n| Rank | Date Bucket | Live Trading Volume | Share of Event Total |\n| :--- | ",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -1639,17 +1616,17 @@
       "alphaCategory": "Quote Quality And Liquidity",
       "category": "single-market efficiency",
       "outcomeType": "answer",
-      "toolCalls": 2,
+      "toolCalls": 3,
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 44383,
-      "finalScore": 4.67,
+      "latencyMs": 60246,
+      "finalScore": 4.83,
       "buyerScores": {
         "freshness": 5,
         "specificity": 5,
         "actionability": 5,
-        "completeness": 4,
+        "completeness": 5,
         "dataAccuracy": 5,
         "uniqueness": 4
       },
@@ -1673,7 +1650,7 @@
           "evidenceAttachedToPlanning": true,
           "probeConfidence": 0.9908,
           "candidateMethodCount": 48,
-          "shortlistCount": 3,
+          "shortlistCount": 4,
           "budgetReasonCode": null
         },
         "clarification": {
@@ -1688,18 +1665,21 @@
           ]
         },
         "planning": {
-          "score": 5,
+          "score": 3,
           "plannerReasoningStage": "focused",
           "validationApplied": true,
-          "validationPassed": true,
-          "validationIssues": [],
+          "validationPassed": false,
+          "validationIssues": [
+            "The plan does not explicitly derive vig-adjusted implied probabilities from the quoted best bid/ask; it only returns `efficiency.marketEfficiency` and mapped outcome probabilities, so the requested vig-adjusted probabili",
+            "The plan relies on a market-query-level efficiency call, but it does not show a direct price-selection step tied to the specific market instrument/token before reporting best bid, best ask, midpoint, and spread."
+          ],
           "revisionCount": 1,
           "patchCount": 0,
           "replanCount": 0,
           "repairEffort": 1,
           "repairSucceeded": true,
-          "compiledFirstTry": true,
-          "issue": null
+          "compiledFirstTry": false,
+          "issue": "Planner validation flagged The plan does not explicitly derive vig-adjusted implied probabilities from the quoted best bid/ask; it only returns `efficiency.marketEfficiency` and mapped outcome probabilities, so the requested vig-adjusted probabili; The plan relies on a market-query-level efficiency call, but it does not show a direct price-selection step tied to the specific market instrument/token before reporting best bid, best ask, midpoint, and spread.."
         },
         "execution": {
           "score": 5,
@@ -1707,15 +1687,15 @@
           "selfHealCount": 0,
           "failureCount": 0,
           "loopCount": 0,
-          "executionMs": 18961,
-          "synthesisMs": 2609,
+          "executionMs": 21280,
+          "synthesisMs": 2999,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
-          "issue": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness."
+          "issue": "Planner output needed additional validation or simplification before it could answer cleanly."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 470,
+          "responseLength": 584,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -1741,13 +1721,13 @@
             "synthesis-context-selection",
             "scout-budget-summary"
           ],
-          "issue": "Grounded data reached the answer path, but the final synthesis did not create strong separation from the baseline."
+          "issue": null
         }
       },
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 1161,
+          "canonicalBytes": 2390,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
@@ -1761,16 +1741,19 @@
         },
         "mcpTransport": {
           "score": 5,
-          "durationMs": 44383,
+          "durationMs": 60246,
           "timeoutBudgetMs": null,
-          "toolCallCount": 2,
+          "toolCallCount": 3,
           "logs": []
         },
         "codeSafety": {
-          "score": 5,
+          "score": 4,
           "validationApplied": true,
-          "validationPassed": true,
-          "validationIssues": [],
+          "validationPassed": false,
+          "validationIssues": [
+            "The plan does not explicitly derive vig-adjusted implied probabilities from the quoted best bid/ask; it only returns `efficiency.marketEfficiency` and mapped outcome probabilities, so the requested vig-adjusted probabili",
+            "The plan relies on a market-query-level efficiency call, but it does not show a direct price-selection step tied to the specific market instrument/token before reporting best bid, best ask, midpoint, and spread."
+          ],
           "patchCount": 0,
           "retryCount": 0,
           "repairSucceeded": true,
@@ -1782,17 +1765,17 @@
           "inferredFactCount": 3,
           "gapCount": 0,
           "viewType": "table",
-          "rowCount": 7
+          "rowCount": 8
         }
       },
-      "bottleneckDimension": "scoutDepth",
-      "bottleneckScore": 4,
-      "bottleneckDetail": "Grounded data reached the answer path, but the final synthesis did not create strong separation from the baseline.",
+      "bottleneckDimension": "planning",
+      "bottleneckScore": 3,
+      "bottleneckDetail": "Planner validation flagged The plan does not explicitly derive vig-adjusted implied probabilities from the quoted best bid/ask; it only returns `efficiency.marketEfficiency` and mapped outcome probabilities, so the requested vig-adjusted probabili; The plan relies on a market-query-level efficiency call, but it does not show a direct price-selection step tied to the specific market instrument/token before reporting best bid, best ask, midpoint, and spread..",
       "traceDiagnosis": {
         "version": "2026-04-04.trace-informed-diagnosis.v1",
         "promptId": "q7",
-        "bottleneckStage": "synthesis",
-        "bottleneckReason": "Grounded data reached the answer path, but the final synthesis did not create strong separation from the baseline.",
+        "bottleneckStage": "planning",
+        "bottleneckReason": "Planner validation flagged The plan does not explicitly derive vig-adjusted implied probabilities from the quoted best bid/ask; it only returns `efficiency.marketEfficiency` and mapped outcome probabilities, so the requested vig-adjusted probabili; The plan relies on a market-query-level efficiency call, but it does not show a direct price-selection step tied to the specific market instrument/token before reporting best bid, best ask, midpoint, and spread..",
         "retryPattern": {
           "cheapFix": 0,
           "semantic": 0,
@@ -1800,11 +1783,11 @@
         },
         "toolSelectionOptimal": true,
         "toolSelectionIssue": null,
-        "plannerIssue": null,
+        "plannerIssue": "Planner validation flagged The plan does not explicitly derive vig-adjusted implied probabilities from the quoted best bid/ask; it only returns `efficiency.marketEfficiency` and mapped outcome probabilities, so the requested vig-adjusted probabili; The plan relies on a market-query-level efficiency call, but it does not show a direct price-selection step tied to the specific market instrument/token before reporting best bid, best ask, midpoint, and spread..",
         "completenessIssue": null,
         "budgetExhausted": false,
         "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
-        "rootCause": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness.",
+        "rootCause": "Planner output needed additional validation or simplification before it could answer cleanly.",
         "suggestedFix": "Planner: validate or simplify the generated program so grounded data is surfaced directly into the final answer.",
         "fixScope": "planner",
         "evidence": {
@@ -1832,7 +1815,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 44383,
+          "totalDurationMs": 60246,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -1848,7 +1831,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "Based on the current market data for \"Iran x Israel/US conflict ends by April 15?\", here are the primary trading metrics and implied probabilities as of April 11, 2026:\n\n| Metric | Value |\n| :--- | :--- |\n| **Best Bid** | 0.69 |\n| **Best Ask** | 0.692 |\n| **Midpoint** | 0.691 |\n| **Spread** | 0.2 |\n\nThe market is currently considered highly efficient with a \"vig\" of 0. The vig-adjusted implied probabilities for the outcomes are:\n\n*   **YES**: 69.1%\n*   **NO**: 30.9%",
+        "responsePreview": "For the \"Iran x Israel/US conflict ends by April 15?\" market, the current liquidity and probability metrics are as follows:\n\n| Metric | Value |\n| :--- | :--- |\n| **Best Bid** | 0.725 |\n| **Best Ask** | 0.728 |\n| **Midpoint** | 0.7265 |\n| **Spread** | 0.3 |\n\n### Vig-Adjusted Implied Probabilities\nThe market is currently rated as having \"excellent\" efficiency with a sum of outcomes equal to 1.\n\n| Outcome | Price | Implied Probability |\n| :--- | :--- | :--- |\n| **YES** | 0.7265 | 72.65% |\n| **NO** ",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -1865,7 +1848,7 @@
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 32476,
+      "latencyMs": 32524,
       "finalScore": 4.33,
       "buyerScores": {
         "freshness": 5,
@@ -1929,15 +1912,15 @@
           "selfHealCount": 0,
           "failureCount": 0,
           "loopCount": 0,
-          "executionMs": 10027,
-          "synthesisMs": 3674,
+          "executionMs": 10483,
+          "synthesisMs": 4175,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
           "issue": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness."
         },
         "synthesis": {
           "score": 4,
-          "responseLength": 1611,
+          "responseLength": 1859,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -1983,7 +1966,7 @@
         },
         "mcpTransport": {
           "score": 5,
-          "durationMs": 32476,
+          "durationMs": 32524,
           "timeoutBudgetMs": null,
           "toolCallCount": 1,
           "logs": []
@@ -2054,7 +2037,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 32476,
+          "totalDurationMs": 32524,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -2072,7 +2055,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "Based on the market rules and description as of April 11, 2026, here are the specific requirements for resolution:\n\n### Resolution Criteria\n\n| Result | Condition |\n| :--- | :--- |\n| **YES** | The Islamic Republic of Iran’s current ruling regime is overthrown, collapsed, or ceases to govern by **April 30, 2026, 11:59 PM ET**. |\n| **NO** | The Islamic Republic remains in power, or the criteria for \"falling\" are not confirmed by a consensus of credible reporting by the deadline. |\n\n### What Qualifi",
+        "responsePreview": "Based on the market description and rules, here is the breakdown of how this contract resolves.\n\n### Resolution Criteria\n\n| Outcome | Condition |\n| :--- | :--- |\n| **YES** | The Islamic Republic of Iran’s current ruling regime is overthrown, collapsed, or otherwise ceases to govern by **April 30, 2026, 11:59 PM ET**. |\n| **NO** | The \"YES\" condition is not confirmed by a consensus of credible reporting by the deadline. |\n\n### What Qualifies as a \"Fall\"?\nTo resolve **YES**, there must be a broad ",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -2089,7 +2072,7 @@
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 37871,
+      "latencyMs": 37781,
       "finalScore": 4.83,
       "buyerScores": {
         "freshness": 5,
@@ -2119,7 +2102,7 @@
           "evidenceAttachedToPlanning": true,
           "probeConfidence": 0.9908,
           "candidateMethodCount": 48,
-          "shortlistCount": 4,
+          "shortlistCount": 5,
           "budgetReasonCode": null
         },
         "clarification": {
@@ -2153,15 +2136,15 @@
           "selfHealCount": 0,
           "failureCount": 0,
           "loopCount": 0,
-          "executionMs": 11242,
-          "synthesisMs": 5263,
+          "executionMs": 10058,
+          "synthesisMs": 4235,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
           "issue": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 1732,
+          "responseLength": 1549,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -2193,7 +2176,7 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 4529,
+          "canonicalBytes": 1765,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
@@ -2207,7 +2190,7 @@
         },
         "mcpTransport": {
           "score": 5,
-          "durationMs": 37871,
+          "durationMs": 37781,
           "timeoutBudgetMs": null,
           "toolCallCount": 1,
           "logs": []
@@ -2278,7 +2261,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 37871,
+          "totalDurationMs": 37781,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -2294,7 +2277,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "Based on data fetched on April 11, 2026, there is a **bullish alignment** between recent trade flow and retail sentiment, though top holders remain split. \n\nWhile whales and retail investors have been buying \"YES\" in the last 24 hours, the overall market concentration is high, and the largest historical positions are balanced across both sides.\n\n### **Trade Flow Alignment (Last 24 Hours)**\nRecent activity shows strong alignment across all trader sizes favoring the \"YES\" outcome:\n\n| Trader Catego",
+        "responsePreview": "As of **April 11, 2026**, there is an alignment between recent trade flow and top holders regarding directional momentum, though the overall \"Smart Money\" conviction remains neutral due to existing large positions.\n\n### **Trade Flow vs. Holder Alignment**\nRecent activity across all participant sizes (Small, Medium, and Whale) is consistently **Bullish** (buying YES), showing no divergence between retail and recent whale trades. However, the total market remains highly concentrated.\n\n| Category |",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -2311,7 +2294,7 @@
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 45156,
+      "latencyMs": 44680,
       "finalScore": 4.67,
       "buyerScores": {
         "freshness": 5,
@@ -2341,7 +2324,7 @@
           "evidenceAttachedToPlanning": true,
           "probeConfidence": 0.9908,
           "candidateMethodCount": 48,
-          "shortlistCount": 4,
+          "shortlistCount": 5,
           "budgetReasonCode": null
         },
         "clarification": {
@@ -2375,15 +2358,15 @@
           "selfHealCount": 0,
           "failureCount": 0,
           "loopCount": 0,
-          "executionMs": 14582,
-          "synthesisMs": 4701,
+          "executionMs": 15944,
+          "synthesisMs": 5277,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
           "issue": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 1590,
+          "responseLength": 1650,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -2415,7 +2398,7 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 3413,
+          "canonicalBytes": 2730,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
@@ -2429,7 +2412,7 @@
         },
         "mcpTransport": {
           "score": 5,
-          "durationMs": 45156,
+          "durationMs": 44680,
           "timeoutBudgetMs": null,
           "toolCallCount": 1,
           "logs": []
@@ -2500,7 +2483,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 45156,
+          "totalDurationMs": 44680,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -2516,7 +2499,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "As of April 11, 2026, the holder base for the market \"Péter Magyar\" (regarding the next Prime Minister of Hungary) shows a **high concentration risk**, particularly on the \"No\" side.\n\n### Market Concentration Summary\n| Metric | Value |\n| :--- | :--- |\n| **Whale Count** | 40 |\n| **Concentration Risk** | High |\n| **Top 5 \"Yes\" Holders Control** | 51.41% |\n| **Top 5 \"No\" Holders Control** | 86.14% |\n\n### Top 5 Whales: \"Yes\" Side\nWhale positions on the \"Yes\" side are relatively distributed compared ",
+        "responsePreview": "As of April 11, 2026, the holder base for the market on whether Péter Magyar will be the next Prime Minister of Hungary is highly concentrated, particularly on the **NO** side.\n\n### **Market Concentration Overview**\n*   **Concentration Risk:** High\n*   **Whale Count:** 40\n*   **Smart Money Signal:** Neutral (Low confidence due to balanced whale positions)\n\n### **Whale Control by Side**\nThe top 5 holders on each side control the following percentages of their respective pools:\n\n| Side | Top 5 Con",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -2529,11 +2512,11 @@
       "alphaCategory": "Quote Quality And Liquidity",
       "category": "event liquidity comparison",
       "outcomeType": "answer",
-      "toolCalls": 1,
+      "toolCalls": 2,
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 52745,
+      "latencyMs": 49301,
       "finalScore": 4.5,
       "buyerScores": {
         "freshness": 5,
@@ -2592,20 +2575,20 @@
           "issue": null
         },
         "execution": {
-          "score": 3,
-          "retryCount": 1,
-          "selfHealCount": 1,
-          "failureCount": 1,
-          "loopCount": 1,
-          "executionMs": 29681,
-          "synthesisMs": 3030,
+          "score": 5,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 0,
+          "executionMs": 22702,
+          "synthesisMs": 3596,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
-          "issue": "Completeness checks still marked the answer incomplete: Data for Akshay Bhatia is missing from the analysis; Only 2 of the 3 requested outcomes (Xander Schauffele and Cameron Young) were analyzed."
+          "issue": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 930,
+          "responseLength": 1040,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -2631,13 +2614,13 @@
             "synthesis-context-selection",
             "scout-budget-summary"
           ],
-          "issue": null
+          "issue": "Grounded data existed, but the final answer still lagged on actionability."
         }
       },
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 1154,
+          "canonicalBytes": 1336,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
@@ -2650,10 +2633,10 @@
           "replanCount": 0
         },
         "mcpTransport": {
-          "score": 3,
-          "durationMs": 52745,
+          "score": 5,
+          "durationMs": 49301,
           "timeoutBudgetMs": null,
-          "toolCallCount": 1,
+          "toolCallCount": 2,
           "logs": []
         },
         "codeSafety": {
@@ -2662,7 +2645,7 @@
           "validationPassed": true,
           "validationIssues": [],
           "patchCount": 0,
-          "retryCount": 1,
+          "retryCount": 0,
           "repairSucceeded": true,
           "repairEffort": 1
         },
@@ -2675,28 +2658,28 @@
           "rowCount": 8
         }
       },
-      "bottleneckDimension": "execution",
-      "bottleneckScore": 3,
-      "bottleneckDetail": "Completeness checks still marked the answer incomplete: Data for Akshay Bhatia is missing from the analysis; Only 2 of the 3 requested outcomes (Xander Schauffele and Cameron Young) were analyzed.",
+      "bottleneckDimension": "scoutDepth",
+      "bottleneckScore": 4,
+      "bottleneckDetail": "Grounded data existed, but the final answer still lagged on actionability.",
       "traceDiagnosis": {
         "version": "2026-04-04.trace-informed-diagnosis.v1",
         "promptId": "q11",
-        "bottleneckStage": "completeness",
-        "bottleneckReason": "Completeness checks still marked the answer incomplete: Data for Akshay Bhatia is missing from the analysis; Only 2 of the 3 requested outcomes (Xander Schauffele and Cameron Young) were analyzed.",
+        "bottleneckStage": "synthesis",
+        "bottleneckReason": "Grounded data existed, but the final answer still lagged on actionability.",
         "retryPattern": {
           "cheapFix": 0,
-          "semantic": 1,
-          "total": 1
+          "semantic": 0,
+          "total": 0
         },
         "toolSelectionOptimal": true,
         "toolSelectionIssue": null,
         "plannerIssue": null,
-        "completenessIssue": "Completeness checks still marked the answer incomplete: Data for Akshay Bhatia is missing from the analysis; Only 2 of the 3 requested outcomes (Xander Schauffele and Cameron Young) were analyzed.",
+        "completenessIssue": null,
         "budgetExhausted": false,
-        "budgetHeadroom": "cheapFix headroom unknown; semantic headroom 0/1",
-        "rootCause": "Verification found missing parts and the repair path did not fully recover.",
-        "suggestedFix": "Verifier: tune completeness criteria or retry routing so missing parts trigger a successful repair instead of an early stop.",
-        "fixScope": "verifier",
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness.",
+        "suggestedFix": "Planner: validate or simplify the generated program so grounded data is surfaced directly into the final answer.",
+        "fixScope": "planner",
         "evidence": {
           "outcomeType": "answer",
           "coverageStatus": "answerable",
@@ -2722,7 +2705,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 52745,
+          "totalDurationMs": 49301,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -2731,7 +2714,7 @@
           "revisionCount": 1,
           "patchCount": 0,
           "replanCount": 0,
-          "completionEvaluationCount": 2,
+          "completionEvaluationCount": 1,
           "lowScoreDimensions": [
             "actionability"
           ]
@@ -2740,7 +2723,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "As of April 11, 2026, here is the comparison for the requested outcomes in **The Masters 2026: Winner** event. \n\nPlease note that no data was returned for **Akshay Bhatia**; he may not be listed in this specific market or did not match the search criteria.\n\n### Market Comparison\n\n| Outcome | Current Price | Spread (Cents) | Total Depth (USD) | 1k Slippage |\n| :--- | :--- | :--- | :--- | :--- |\n| **Cameron Young** | 0.031 | 0.2 | $233,633.02 | 18.8% |\n| **Xander Schauffele** | 0.0125 | 0.1 | $63,",
+        "responsePreview": "Based on current data for **The Masters 2026: Winner**, here is the comparison between the three requested outcomes:\n\n| Outcome | Current Price | Spread | Liquidity Score | Total Depth (USD) | 5k Slippage |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| **Cameron Young** | 0.023 | 0.60¢ | illiquid | $240,769.87 | 83.1% |\n| **Xander Schauffele** | 0.0115 | 0.30¢ | illiquid | $59,359.29 | 51.6% |\n| **Akshay Bhatia** | 0 | 0.00¢ | N/A | N/A | N/A |\n\n### Analysis\n*   **Easiest to Exit Size**: **Camer",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -2753,17 +2736,17 @@
       "alphaCategory": "Trading Parameters",
       "category": "market parameters",
       "outcomeType": "answer",
-      "toolCalls": 1,
+      "toolCalls": 4,
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 79907,
-      "finalScore": 4.33,
+      "latencyMs": 67525,
+      "finalScore": 4.17,
       "buyerScores": {
         "freshness": 5,
         "specificity": 5,
         "actionability": 2,
-        "completeness": 5,
+        "completeness": 4,
         "dataAccuracy": 5,
         "uniqueness": 4
       },
@@ -2807,34 +2790,35 @@
           "validationApplied": true,
           "validationPassed": false,
           "validationIssues": [
-            "The plan does not deterministically target the correct token after discovery; it simply selects the first outcome from a potentially noisy result set instead of using semantic ranking or explicit outcome targeting.",
-            "For a direct token-parameter query, the plan should use a clearer direct-instrument resolution path rather than generic search followed by arbitrary first-result selection.",
-            "The requested live trading parameters are covered in the second call, but the upstream selection step is semantically under-specified and may resolve the wrong market/token.",
-            "Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities."
+            "The plan does not actually retrieve the requested live token trading parameters; it returns null placeholders for tick size, fee rate, minimum order size, and negative risk instead of querying a direct market/token param",
+            "The user asked about a specific market, so the plan should resolve the exact market/token first and then fetch its live trading parameters directly; instead it performs vague market comparison and an unused event lookup ",
+            "The plan includes a generic 'compare_market_against_related_contracts' exploration step that is not clearly tied to the requested structure and does not provide a direct path to the token-level parameters requested.",
+            "The attempted 'get_event_outcomes' call is malformed and effectively no-op (`slug` is always undefined), which indicates the plan is not semantically executable toward the user's target.",
+            "There is no explicit direct-discovery step for the token/market identifier that would enable a parameter lookup, despite the intent requiring direct instruments first."
           ],
-          "revisionCount": 3,
+          "revisionCount": 2,
           "patchCount": 1,
-          "replanCount": 1,
-          "repairEffort": 5,
+          "replanCount": 0,
+          "repairEffort": 3,
           "repairSucceeded": true,
           "compiledFirstTry": false,
-          "issue": "Planner validation flagged The plan does not deterministically target the correct token after discovery; it simply selects the first outcome from a potentially noisy result set instead of using semantic ranking or explicit outcome targeting.; For a direct token-parameter query, the plan should use a clearer direct-instrument resolution path rather than generic search followed by arbitrary first-result selection.; The requested live trading parameters are covered in the second call, but the upstream selection step is semantically under-specified and may resolve the wrong market/token.; Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities.."
+          "issue": "Planner validation flagged The plan does not actually retrieve the requested live token trading parameters; it returns null placeholders for tick size, fee rate, minimum order size, and negative risk instead of querying a direct market/token param; The user asked about a specific market, so the plan should resolve the exact market/token first and then fetch its live trading parameters directly; instead it performs vague market comparison and an unused event lookup; The plan includes a generic 'compare_market_against_related_contracts' exploration step that is not clearly tied to the requested structure and does not provide a direct path to the token-level parameters requested.; The attempted 'get_event_outcomes' call is malformed and effectively no-op (`slug` is always undefined), which indicates the plan is not semantically executable toward the user's target.; There is no explicit direct-discovery step for the token/market identifier that would enable a parameter lookup, despite the intent requiring direct instruments first.."
         },
         "execution": {
-          "score": 3,
-          "retryCount": 1,
-          "selfHealCount": 1,
+          "score": 2,
+          "retryCount": 2,
+          "selfHealCount": 2,
           "failureCount": 1,
-          "loopCount": 1,
-          "executionMs": 50739,
-          "synthesisMs": 4855,
+          "loopCount": 2,
+          "executionMs": 38285,
+          "synthesisMs": 2415,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
-          "issue": "Completeness checks still marked the answer incomplete: User asked about 'Paris Saint-Germain FC' (PSG) win on 2026-04-08, but returned data is about the '2026 Fields Medal' - the search/query returned the wrong entity; Missing trading parameters: tick size, fee rate, minimum order size, and negative risk status for the PSG token."
+          "issue": "Completeness checks still marked the answer incomplete: User asked about 'Paris Saint-Germain FC' but returned data is about 'Yu Deng' (2026 Fields Medal) - the search/query returned the wrong entity."
         },
         "synthesis": {
           "score": 4,
-          "responseLength": 1099,
+          "responseLength": 471,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -2866,39 +2850,40 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 5865,
+          "canonicalBytes": 617,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
         },
         "reasoningDepth": {
-          "score": 3,
+          "score": 5,
           "plannerReasoningStage": "focused",
           "scoutLlmSelectionUsed": true,
-          "revisionCount": 3,
-          "replanCount": 1
+          "revisionCount": 2,
+          "replanCount": 0
         },
         "mcpTransport": {
           "score": 3,
-          "durationMs": 79907,
+          "durationMs": 67525,
           "timeoutBudgetMs": null,
-          "toolCallCount": 1,
+          "toolCallCount": 4,
           "logs": []
         },
         "codeSafety": {
-          "score": 3,
+          "score": 4,
           "validationApplied": true,
           "validationPassed": false,
           "validationIssues": [
-            "The plan does not deterministically target the correct token after discovery; it simply selects the first outcome from a potentially noisy result set instead of using semantic ranking or explicit outcome targeting.",
-            "For a direct token-parameter query, the plan should use a clearer direct-instrument resolution path rather than generic search followed by arbitrary first-result selection.",
-            "The requested live trading parameters are covered in the second call, but the upstream selection step is semantically under-specified and may resolve the wrong market/token.",
-            "Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities."
+            "The plan does not actually retrieve the requested live token trading parameters; it returns null placeholders for tick size, fee rate, minimum order size, and negative risk instead of querying a direct market/token param",
+            "The user asked about a specific market, so the plan should resolve the exact market/token first and then fetch its live trading parameters directly; instead it performs vague market comparison and an unused event lookup ",
+            "The plan includes a generic 'compare_market_against_related_contracts' exploration step that is not clearly tied to the requested structure and does not provide a direct path to the token-level parameters requested.",
+            "The attempted 'get_event_outcomes' call is malformed and effectively no-op (`slug` is always undefined), which indicates the plan is not semantically executable toward the user's target.",
+            "There is no explicit direct-discovery step for the token/market identifier that would enable a parameter lookup, despite the intent requiring direct instruments first."
           ],
           "patchCount": 1,
-          "retryCount": 1,
+          "retryCount": 2,
           "repairSucceeded": true,
-          "repairEffort": 5
+          "repairEffort": 3
         },
         "synthesisBudget": {
           "score": 5,
@@ -2909,23 +2894,23 @@
           "rowCount": 8
         }
       },
-      "bottleneckDimension": "planning",
-      "bottleneckScore": 3,
-      "bottleneckDetail": "Planner validation flagged The plan does not deterministically target the correct token after discovery; it simply selects the first outcome from a potentially noisy result set instead of using semantic ranking or explicit outcome targeting.; For a direct token-parameter query, the plan should use a clearer direct-instrument resolution path rather than generic search followed by arbitrary first-result selection.; The requested live trading parameters are covered in the second call, but the upstream selection step is semantically under-specified and may resolve the wrong market/token.; Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities..",
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Completeness checks still marked the answer incomplete: User asked about 'Paris Saint-Germain FC' but returned data is about 'Yu Deng' (2026 Fields Medal) - the search/query returned the wrong entity.",
       "traceDiagnosis": {
         "version": "2026-04-04.trace-informed-diagnosis.v1",
         "promptId": "q12",
         "bottleneckStage": "completeness",
-        "bottleneckReason": "Completeness checks still marked the answer incomplete: User asked about 'Paris Saint-Germain FC' (PSG) win on 2026-04-08, but returned data is about the '2026 Fields Medal' - the search/query returned the wrong entity; Missing trading parameters: tick size, fee rate, minimum order size, and negative risk status for the PSG token.",
+        "bottleneckReason": "Completeness checks still marked the answer incomplete: User asked about 'Paris Saint-Germain FC' but returned data is about 'Yu Deng' (2026 Fields Medal) - the search/query returned the wrong entity.",
         "retryPattern": {
-          "cheapFix": 0,
+          "cheapFix": 1,
           "semantic": 1,
-          "total": 1
+          "total": 2
         },
         "toolSelectionOptimal": true,
         "toolSelectionIssue": null,
-        "plannerIssue": "Planner validation flagged The plan does not deterministically target the correct token after discovery; it simply selects the first outcome from a potentially noisy result set instead of using semantic ranking or explicit outcome targeting.; For a direct token-parameter query, the plan should use a clearer direct-instrument resolution path rather than generic search followed by arbitrary first-result selection.; The requested live trading parameters are covered in the second call, but the upstream selection step is semantically under-specified and may resolve the wrong market/token.; Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities..",
-        "completenessIssue": "Completeness checks still marked the answer incomplete: User asked about 'Paris Saint-Germain FC' (PSG) win on 2026-04-08, but returned data is about the '2026 Fields Medal' - the search/query returned the wrong entity; Missing trading parameters: tick size, fee rate, minimum order size, and negative risk status for the PSG token.",
+        "plannerIssue": "Planner validation flagged The plan does not actually retrieve the requested live token trading parameters; it returns null placeholders for tick size, fee rate, minimum order size, and negative risk instead of querying a direct market/token param; The user asked about a specific market, so the plan should resolve the exact market/token first and then fetch its live trading parameters directly; instead it performs vague market comparison and an unused event lookup; The plan includes a generic 'compare_market_against_related_contracts' exploration step that is not clearly tied to the requested structure and does not provide a direct path to the token-level parameters requested.; The attempted 'get_event_outcomes' call is malformed and effectively no-op (`slug` is always undefined), which indicates the plan is not semantically executable toward the user's target.; There is no explicit direct-discovery step for the token/market identifier that would enable a parameter lookup, despite the intent requiring direct instruments first..",
+        "completenessIssue": "Completeness checks still marked the answer incomplete: User asked about 'Paris Saint-Germain FC' but returned data is about 'Yu Deng' (2026 Fields Medal) - the search/query returned the wrong entity.",
         "budgetExhausted": false,
         "budgetHeadroom": "cheapFix headroom unknown; semantic headroom 0/1",
         "rootCause": "Verification found missing parts and the repair path did not fully recover.",
@@ -2956,16 +2941,16 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 79907,
+          "totalDurationMs": 67525,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
           "rediscoveryExecuted": false,
           "planningValidationApplied": true,
-          "revisionCount": 3,
+          "revisionCount": 2,
           "patchCount": 1,
-          "replanCount": 1,
-          "completionEvaluationCount": 2,
+          "replanCount": 0,
+          "completionEvaluationCount": 4,
           "lowScoreDimensions": [
             "actionability"
           ]
@@ -2974,7 +2959,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "Based on the current market data from a past query, I could not find a specific market for **\"Will Paris Saint-Germain FC win on 2026-04-08?\"**.\n\nThe search results instead returned a different event, **\"Who will win the 2026 Fields Medal?\"**, which contains the following outcomes:\n\n| Name | Price | Volume | Token ID |\n| :--- | :--- | :--- | :--- |\n| Yu Deng | 0.525 | 103,814.74 | 23119677842919557473618751826817403683743402701277223294183020674564478808086 |\n| Jack Thorne | 0.47 | 94,820.54 | 1",
+        "responsePreview": "Based on the live trading parameters for the **Paris Saint-Germain FC** market on 2026-04-08, here are the token's current specifications:\n\n| Parameter | Value |\n| :--- | :--- |\n| **Token ID** | 107465213618836390501776174005739694959470187392142407058085317714613067213535 |\n| **Tick Size** | 0.01 |\n| **Fee Rate (Bps)** | 100,000 |\n| **Minimum Order Size** | 5 |\n| **Negative Risk Enabled** | Yes |\n\nAs of the latest data, the current price for this token is **0.395**.",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -2987,11 +2972,11 @@
       "alphaCategory": "Event Structure And Relative Value",
       "category": "relative value",
       "outcomeType": "answer",
-      "toolCalls": 3,
+      "toolCalls": 1,
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 104754,
+      "latencyMs": 40053,
       "finalScore": 4.5,
       "buyerScores": {
         "freshness": 5,
@@ -3029,49 +3014,45 @@
           "triggered": false,
           "outcomeType": "answer",
           "optionCount": 3,
-          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:compare_event_outcome_quotes",
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:compare_market_against_related_contracts",
           "decisionReasonCode": "single_grounded_interpretation",
           "decisionSignals": [
             "llm_judge"
           ]
         },
         "planning": {
-          "score": 3,
+          "score": 5,
           "plannerReasoningStage": "focused",
           "validationApplied": true,
-          "validationPassed": false,
-          "validationIssues": [
-            "The plan does not explicitly target the two named comparison contracts, Gretchen Whitmer and Oprah Winfrey; it relies only on a broad event query, which under-covers the user’s requested relative-value comparison.",
-            "For a direct rich/cheap comparison within the same event, the plan should first fetch or compare the specific instruments for Stephen A. Smith, Gretchen Whitmer, and Oprah Winfrey rather than delegating to a generic mark",
-            "If the compare tool returns a noisy candidate set, the plan needs deterministic semantic targeting or an equivalent explicit ranking step to select the three named contracts before assessing relative value."
-          ],
-          "revisionCount": 3,
-          "patchCount": 1,
-          "replanCount": 1,
-          "repairEffort": 5,
+          "validationPassed": true,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 1,
           "repairSucceeded": true,
-          "compiledFirstTry": false,
-          "issue": "Planner validation flagged The plan does not explicitly target the two named comparison contracts, Gretchen Whitmer and Oprah Winfrey; it relies only on a broad event query, which under-covers the user’s requested relative-value comparison.; For a direct rich/cheap comparison within the same event, the plan should first fetch or compare the specific instruments for Stephen A. Smith, Gretchen Whitmer, and Oprah Winfrey rather than delegating to a generic mark; If the compare tool returns a noisy candidate set, the plan needs deterministic semantic targeting or an equivalent explicit ranking step to select the three named contracts before assessing relative value.."
+          "compiledFirstTry": true,
+          "issue": null
         },
         "execution": {
-          "score": 2,
-          "retryCount": 2,
-          "selfHealCount": 2,
-          "failureCount": 1,
-          "loopCount": 2,
-          "executionMs": 63884,
-          "synthesisMs": 6757,
+          "score": 5,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 0,
+          "executionMs": 13014,
+          "synthesisMs": 3627,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
-          "issue": "Completeness checks still marked the answer incomplete: Answerable but unresolved: the 'search_and_get_outcomes' tool successfully retrieved the 'Democratic Presidential Nominee 2028' event and its 44 outcomes, but the 'compare_market_against_related_contracts' tool was never executed to perform the relative-value analysis ('rich or cheap') requested by the user.."
+          "issue": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 880,
+          "responseLength": 1143,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
-          "confidenceLevel": "medium",
-          "gapCount": 1,
+          "confidenceLevel": "high",
+          "gapCount": 0,
           "stageArtifactKinds": [
             "query-session-contract",
             "tool-selection",
@@ -3093,78 +3074,72 @@
             "synthesis-context-selection",
             "scout-budget-summary"
           ],
-          "issue": null
+          "issue": "Grounded data existed, but the final answer still lagged on actionability."
         }
       },
       "crossCuttingScores": {
         "contextBudget": {
-          "score": 2,
-          "canonicalBytes": 55985,
-          "gapCount": 1,
-          "gapSignals": [
-            "context_truncated"
-          ],
-          "truncated": true
+          "score": 5,
+          "canonicalBytes": 1887,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
         },
         "reasoningDepth": {
-          "score": 3,
+          "score": 5,
           "plannerReasoningStage": "focused",
           "scoutLlmSelectionUsed": true,
-          "revisionCount": 3,
-          "replanCount": 1
+          "revisionCount": 1,
+          "replanCount": 0
         },
         "mcpTransport": {
-          "score": 3,
-          "durationMs": 104754,
+          "score": 5,
+          "durationMs": 40053,
           "timeoutBudgetMs": null,
-          "toolCallCount": 3,
+          "toolCallCount": 1,
           "logs": []
         },
         "codeSafety": {
-          "score": 3,
+          "score": 5,
           "validationApplied": true,
-          "validationPassed": false,
-          "validationIssues": [
-            "The plan does not explicitly target the two named comparison contracts, Gretchen Whitmer and Oprah Winfrey; it relies only on a broad event query, which under-covers the user’s requested relative-value comparison.",
-            "For a direct rich/cheap comparison within the same event, the plan should first fetch or compare the specific instruments for Stephen A. Smith, Gretchen Whitmer, and Oprah Winfrey rather than delegating to a generic mark",
-            "If the compare tool returns a noisy candidate set, the plan needs deterministic semantic targeting or an equivalent explicit ranking step to select the three named contracts before assessing relative value."
-          ],
-          "patchCount": 1,
-          "retryCount": 2,
+          "validationPassed": true,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
           "repairSucceeded": true,
-          "repairEffort": 5
+          "repairEffort": 1
         },
         "synthesisBudget": {
-          "score": 3,
+          "score": 5,
           "verifiedFactCount": 3,
           "inferredFactCount": 3,
-          "gapCount": 1,
+          "gapCount": 0,
           "viewType": "table",
           "rowCount": 8
         }
       },
-      "bottleneckDimension": "execution",
-      "bottleneckScore": 2,
-      "bottleneckDetail": "Completeness checks still marked the answer incomplete: Answerable but unresolved: the 'search_and_get_outcomes' tool successfully retrieved the 'Democratic Presidential Nominee 2028' event and its 44 outcomes, but the 'compare_market_against_related_contracts' tool was never executed to perform the relative-value analysis ('rich or cheap') requested by the user..",
+      "bottleneckDimension": "scoutDepth",
+      "bottleneckScore": 4,
+      "bottleneckDetail": "Grounded data existed, but the final answer still lagged on actionability.",
       "traceDiagnosis": {
         "version": "2026-04-04.trace-informed-diagnosis.v1",
         "promptId": "q13",
-        "bottleneckStage": "completeness",
-        "bottleneckReason": "Completeness checks still marked the answer incomplete: Answerable but unresolved: the 'search_and_get_outcomes' tool successfully retrieved the 'Democratic Presidential Nominee 2028' event and its 44 outcomes, but the 'compare_market_against_related_contracts' tool was never executed to perform the relative-value analysis ('rich or cheap') requested by the user..",
+        "bottleneckStage": "synthesis",
+        "bottleneckReason": "Grounded data existed, but the final answer still lagged on actionability.",
         "retryPattern": {
-          "cheapFix": 1,
-          "semantic": 1,
-          "total": 2
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
         },
         "toolSelectionOptimal": true,
         "toolSelectionIssue": null,
-        "plannerIssue": "Planner validation flagged The plan does not explicitly target the two named comparison contracts, Gretchen Whitmer and Oprah Winfrey; it relies only on a broad event query, which under-covers the user’s requested relative-value comparison.; For a direct rich/cheap comparison within the same event, the plan should first fetch or compare the specific instruments for Stephen A. Smith, Gretchen Whitmer, and Oprah Winfrey rather than delegating to a generic mark; If the compare tool returns a noisy candidate set, the plan needs deterministic semantic targeting or an equivalent explicit ranking step to select the three named contracts before assessing relative value..",
-        "completenessIssue": "Completeness checks still marked the answer incomplete: Answerable but unresolved: the 'search_and_get_outcomes' tool successfully retrieved the 'Democratic Presidential Nominee 2028' event and its 44 outcomes, but the 'compare_market_against_related_contracts' tool was never executed to perform the relative-value analysis ('rich or cheap') requested by the user..",
+        "plannerIssue": null,
+        "completenessIssue": null,
         "budgetExhausted": false,
-        "budgetHeadroom": "cheapFix headroom unknown; semantic headroom 0/1",
-        "rootCause": "Verification found missing parts and the repair path did not fully recover.",
-        "suggestedFix": "Verifier: tune completeness criteria or retry routing so missing parts trigger a successful repair instead of an early stop.",
-        "fixScope": "verifier",
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness.",
+        "suggestedFix": "Planner: validate or simplify the generated program so grounded data is surfaced directly into the final answer.",
+        "fixScope": "planner",
         "evidence": {
           "outcomeType": "answer",
           "coverageStatus": "answerable",
@@ -3190,16 +3165,16 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 104754,
+          "totalDurationMs": 40053,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
           "rediscoveryExecuted": false,
           "planningValidationApplied": true,
-          "revisionCount": 3,
-          "patchCount": 1,
-          "replanCount": 1,
-          "completionEvaluationCount": 4,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 1,
           "lowScoreDimensions": [
             "actionability"
           ]
@@ -3208,7 +3183,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "As of April 11, 2026, in the \"Democratic Presidential Nominee 2028\" market, **Stephen A. Smith** is priced between Gretchen Whitmer and Oprah Winfrey.\n\nBased on the current market data:\n\n| Candidate | Price (Contract) | Implied Probability | Bid / Ask | Spread |\n| :--- | :--- | :--- | :--- | :--- |\n| **Gretchen Whitmer** | 1.25¢ | 1.3% | 1.2¢ / 1.3¢ | 8.00% |\n| **Stephen A. Smith** | 1.10¢ | 1.1% | 1.0¢ / 1.2¢ | 18.18% |\n| **Oprah Winfrey** | 0.95¢ | 0.9% | 0.9¢ / 1.0¢ | 10.53% |\n\n**Analysis:**\n",
+        "responsePreview": "Based on market data from April 11, 2026, the contract for Stephen A. Smith is currently considered **about fair** relative to Gretchen Whitmer and Oprah Winfrey. His implied probability sits exactly at the average of the two comparison points.\n\n### Market Comparison: Democratic Presidential Nominee 2028\n\n| Candidate | Implied Probability (YES Mid) | Quote (Bid/Ask) | Spread |\n| :--- | :--- | :--- | :--- |\n| **Gretchen Whitmer** | 1.3% | 1.2¢ / 1.3¢ | 0.10¢ (8.00%) |\n| **Stephen A. Smith** | 1.1",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -3225,7 +3200,7 @@
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 35444,
+      "latencyMs": 39313,
       "finalScore": 4.83,
       "buyerScores": {
         "freshness": 5,
@@ -3287,15 +3262,15 @@
           "selfHealCount": 0,
           "failureCount": 0,
           "loopCount": 0,
-          "executionMs": 9751,
-          "synthesisMs": 4391,
+          "executionMs": 14007,
+          "synthesisMs": 4445,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
           "issue": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 1686,
+          "responseLength": 1361,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -3327,7 +3302,7 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 3646,
+          "canonicalBytes": 6411,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
@@ -3341,7 +3316,7 @@
         },
         "mcpTransport": {
           "score": 5,
-          "durationMs": 35444,
+          "durationMs": 39313,
           "timeoutBudgetMs": null,
           "toolCallCount": 1,
           "logs": []
@@ -3412,7 +3387,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 35444,
+          "totalDurationMs": 39313,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -3428,7 +3403,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "As of April 11, 2026, the market for a \"no change\" Fed interest rate decision shows signs of **sticky positioning** rather than high-frequency churn. Despite significant 24-hour volume, the massive accumulation of open interest relative to recent trade activity suggests that most participants are holding their positions into the meeting.\n\n### Market Dynamics and Positioning\n\n| Metric | Value |\n| :--- | :--- |\n| **Open Interest (OI)** | $6,323,125.56 |\n| **24h Volume** | $1,080,480.35 |\n| **OI-to",
+        "responsePreview": "Based on data fetched on **April 11, 2026**, the market positioning for \"no change\" in Fed interest rates after the April 2026 meeting looks **sticky** rather than just churn. \n\nThe primary driver for this read is the high **Open Interest to Volume ratio of 299.37**, indicating that a large amount of capital is being held in fixed positions relative to the amount being actively traded.\n\n### Market Metrics Overview\n| Metric | Value |\n| :--- | :--- |\n| **Open Interest** | 6,417,422.96 |\n| **24h Vo",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -3445,7 +3420,7 @@
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 71640,
+      "latencyMs": 66816,
       "finalScore": 4.83,
       "buyerScores": {
         "freshness": 5,
@@ -3495,9 +3470,9 @@
           "validationApplied": true,
           "validationPassed": false,
           "validationIssues": [
-            "The plan is too generic: it calls a single memo-building skill with only the market query, but does not show a direct-instrument discovery or quote path for the specified market before summarizing.",
-            "User intent requires a memo that combines rules risk, quote quality, whale positioning, and recent tape; the plan does not explicitly demonstrate how those components will be retrieved or validated from market-level data",
-            "Because the request is market-specific and requires direct instruments first, the plan should include explicit market/instrument lookup and quote/tape collection steps, not only a generic browsing-style memo call."
+            "The plan relies on a single generic memo-producing skill and does not explicitly discover or inspect the direct market instrument for 'Will the U.S. invade Iran before 2027?'.",
+            "It does not show a clear direct path to the required evidence layers: rules risk, quote quality, whale positioning, and recent tape; these are only implied by the tool name, not explicitly targeted in the code.",
+            "Because direct instruments are required, the plan should first resolve the exact market/instrument and then pull the supporting data needed for the memo rather than only requesting an aggregate summary."
           ],
           "revisionCount": 2,
           "patchCount": 0,
@@ -3505,7 +3480,7 @@
           "repairEffort": 2,
           "repairSucceeded": true,
           "compiledFirstTry": false,
-          "issue": "Planner validation flagged The plan is too generic: it calls a single memo-building skill with only the market query, but does not show a direct-instrument discovery or quote path for the specified market before summarizing.; User intent requires a memo that combines rules risk, quote quality, whale positioning, and recent tape; the plan does not explicitly demonstrate how those components will be retrieved or validated from market-level data; Because the request is market-specific and requires direct instruments first, the plan should include explicit market/instrument lookup and quote/tape collection steps, not only a generic browsing-style memo call.."
+          "issue": "Planner validation flagged The plan relies on a single generic memo-producing skill and does not explicitly discover or inspect the direct market instrument for 'Will the U.S. invade Iran before 2027?'.; It does not show a clear direct path to the required evidence layers: rules risk, quote quality, whale positioning, and recent tape; these are only implied by the tool name, not explicitly targeted in the code.; Because direct instruments are required, the plan should first resolve the exact market/instrument and then pull the supporting data needed for the memo rather than only requesting an aggregate summary.."
         },
         "execution": {
           "score": 5,
@@ -3513,15 +3488,15 @@
           "selfHealCount": 0,
           "failureCount": 0,
           "loopCount": 0,
-          "executionMs": 32966,
-          "synthesisMs": 10407,
+          "executionMs": 30853,
+          "synthesisMs": 9653,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
           "issue": "Planner output needed additional validation or simplification before it could answer cleanly."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 2347,
+          "responseLength": 2325,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "medium",
@@ -3553,7 +3528,7 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 2,
-          "canonicalBytes": 24546,
+          "canonicalBytes": 12424,
           "gapCount": 1,
           "gapSignals": [
             "context_truncated"
@@ -3569,7 +3544,7 @@
         },
         "mcpTransport": {
           "score": 5,
-          "durationMs": 71640,
+          "durationMs": 66816,
           "timeoutBudgetMs": null,
           "toolCallCount": 5,
           "logs": []
@@ -3579,9 +3554,9 @@
           "validationApplied": true,
           "validationPassed": false,
           "validationIssues": [
-            "The plan is too generic: it calls a single memo-building skill with only the market query, but does not show a direct-instrument discovery or quote path for the specified market before summarizing.",
-            "User intent requires a memo that combines rules risk, quote quality, whale positioning, and recent tape; the plan does not explicitly demonstrate how those components will be retrieved or validated from market-level data",
-            "Because the request is market-specific and requires direct instruments first, the plan should include explicit market/instrument lookup and quote/tape collection steps, not only a generic browsing-style memo call."
+            "The plan relies on a single generic memo-producing skill and does not explicitly discover or inspect the direct market instrument for 'Will the U.S. invade Iran before 2027?'.",
+            "It does not show a clear direct path to the required evidence layers: rules risk, quote quality, whale positioning, and recent tape; these are only implied by the tool name, not explicitly targeted in the code.",
+            "Because direct instruments are required, the plan should first resolve the exact market/instrument and then pull the supporting data needed for the memo rather than only requesting an aggregate summary."
           ],
           "patchCount": 0,
           "retryCount": 0,
@@ -3599,12 +3574,12 @@
       },
       "bottleneckDimension": "contextBudget",
       "bottleneckScore": 2,
-      "bottleneckDetail": "Planner validation flagged The plan is too generic: it calls a single memo-building skill with only the market query, but does not show a direct-instrument discovery or quote path for the specified market before summarizing.; User intent requires a memo that combines rules risk, quote quality, whale positioning, and recent tape; the plan does not explicitly demonstrate how those components will be retrieved or validated from market-level data; Because the request is market-specific and requires direct instruments first, the plan should include explicit market/instrument lookup and quote/tape collection steps, not only a generic browsing-style memo call..",
+      "bottleneckDetail": "Planner validation flagged The plan relies on a single generic memo-producing skill and does not explicitly discover or inspect the direct market instrument for 'Will the U.S. invade Iran before 2027?'.; It does not show a clear direct path to the required evidence layers: rules risk, quote quality, whale positioning, and recent tape; these are only implied by the tool name, not explicitly targeted in the code.; Because direct instruments are required, the plan should first resolve the exact market/instrument and then pull the supporting data needed for the memo rather than only requesting an aggregate summary..",
       "traceDiagnosis": {
         "version": "2026-04-04.trace-informed-diagnosis.v1",
         "promptId": "q15",
         "bottleneckStage": "planning",
-        "bottleneckReason": "Planner validation flagged The plan is too generic: it calls a single memo-building skill with only the market query, but does not show a direct-instrument discovery or quote path for the specified market before summarizing.; User intent requires a memo that combines rules risk, quote quality, whale positioning, and recent tape; the plan does not explicitly demonstrate how those components will be retrieved or validated from market-level data; Because the request is market-specific and requires direct instruments first, the plan should include explicit market/instrument lookup and quote/tape collection steps, not only a generic browsing-style memo call..",
+        "bottleneckReason": "Planner validation flagged The plan relies on a single generic memo-producing skill and does not explicitly discover or inspect the direct market instrument for 'Will the U.S. invade Iran before 2027?'.; It does not show a clear direct path to the required evidence layers: rules risk, quote quality, whale positioning, and recent tape; these are only implied by the tool name, not explicitly targeted in the code.; Because direct instruments are required, the plan should first resolve the exact market/instrument and then pull the supporting data needed for the memo rather than only requesting an aggregate summary..",
         "retryPattern": {
           "cheapFix": 0,
           "semantic": 0,
@@ -3612,7 +3587,7 @@
         },
         "toolSelectionOptimal": true,
         "toolSelectionIssue": null,
-        "plannerIssue": "Planner validation flagged The plan is too generic: it calls a single memo-building skill with only the market query, but does not show a direct-instrument discovery or quote path for the specified market before summarizing.; User intent requires a memo that combines rules risk, quote quality, whale positioning, and recent tape; the plan does not explicitly demonstrate how those components will be retrieved or validated from market-level data; Because the request is market-specific and requires direct instruments first, the plan should include explicit market/instrument lookup and quote/tape collection steps, not only a generic browsing-style memo call..",
+        "plannerIssue": "Planner validation flagged The plan relies on a single generic memo-producing skill and does not explicitly discover or inspect the direct market instrument for 'Will the U.S. invade Iran before 2027?'.; It does not show a clear direct path to the required evidence layers: rules risk, quote quality, whale positioning, and recent tape; these are only implied by the tool name, not explicitly targeted in the code.; Because direct instruments are required, the plan should first resolve the exact market/instrument and then pull the supporting data needed for the memo rather than only requesting an aggregate summary..",
         "completenessIssue": null,
         "budgetExhausted": false,
         "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
@@ -3644,7 +3619,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 71640,
+          "totalDurationMs": 66816,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -3660,7 +3635,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "### **Market Memo: U.S. Invasion of Iran before 2027**\n\n**Recommendation: SPECULATIVE BUY (YES)**\n\nWhile the market carries high concentration risks, the combination of tight spreads, significant buy-side tape momentum, and \"extreme\" whale conviction on the 'Yes' side suggests a tactical opportunity for those betting on geopolitical escalation.\n\n#### **Market Fundamentals**\n| Metric | Value |\n| :--- | :--- |\n| **Current Price** | 0.305 (Yes) |\n| **Best Bid/Ask** | 0.30 / 0.31 |\n| **Spread** | 1 ",
+        "responsePreview": "### Market Memo: Will the U.S. invade Iran before 2027?\n**Decision: PASS**\n\nAs of April 11, 2026, the current market data suggests a high-risk environment with significant divergence between different trader classes. While liquidity is excellent for entry and exit, the lack of smart money conviction and high concentration risk make this a \"Pass\" for now.\n\n#### 1. Rules Risk (High Ambiguity)\nThe market resolves to **\"Yes\"** if the U.S. commences a military offensive intended to establish control ",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -3677,7 +3652,7 @@
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 62467,
+      "latencyMs": 75363,
       "finalScore": 4.83,
       "buyerScores": {
         "freshness": 5,
@@ -3741,15 +3716,15 @@
           "selfHealCount": 0,
           "failureCount": 0,
           "loopCount": 0,
-          "executionMs": 38137,
-          "synthesisMs": 4117,
+          "executionMs": 49861,
+          "synthesisMs": 3760,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
           "issue": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness."
         },
         "synthesis": {
           "score": 5,
-          "responseLength": 1328,
+          "responseLength": 1265,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -3781,7 +3756,7 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 1859,
+          "canonicalBytes": 2144,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
@@ -3795,7 +3770,7 @@
         },
         "mcpTransport": {
           "score": 5,
-          "durationMs": 62467,
+          "durationMs": 75363,
           "timeoutBudgetMs": null,
           "toolCallCount": 1,
           "logs": []
@@ -3866,7 +3841,7 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 62467,
+          "totalDurationMs": 75363,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
@@ -3882,7 +3857,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "Based on the data fetched on **April 11, 2026**, the **\"April 30\"** bucket offers the best overall mix of tradability and whale support. While \"June 30\" shares the highest tradability score, \"April 30\" is ranked first as the most balanced option for current entry. \n\nThe **\"April 15\"** bucket, despite having the highest total liquidity depth, currently lacks any whale support (0 count/value), making it less ideal for those seeking to follow large-scale institutional or \"whale\" flow.\n\n### Comparis",
+        "responsePreview": "Based on current market data for the **'Iran x Israel/US conflict ends by...?'** event, the **April 30** bucket offers the best overall mix of tradability and support.\n\nWhile all three options are currently classified as \"tradable now,\" **April 30** is ranked as the top pick due to its high tradability score and low estimated exit slippage for larger positions.\n\n| Rank | Bucket | Tradability Score | Current Price | Spread | Total Depth (USD) | Whale Count | Whale Value |\n| :--- | :--- | :--- | :",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,
@@ -3897,7 +3872,7 @@
       "outcomeType": "answer",
       "toolCalls": 0,
       "toolNames": [],
-      "latencyMs": 33207,
+      "latencyMs": 35244,
       "finalScore": 2.67,
       "buyerScores": {
         "freshness": 5,
@@ -3925,7 +3900,7 @@
           "evidenceAttachedToPlanning": true,
           "probeConfidence": 0.9908,
           "candidateMethodCount": 48,
-          "shortlistCount": 5,
+          "shortlistCount": 4,
           "budgetReasonCode": null
         },
         "clarification": {
@@ -3940,18 +3915,18 @@
           ]
         },
         "planning": {
-          "score": 4,
+          "score": 3,
           "plannerReasoningStage": "focused",
           "validationApplied": false,
           "validationPassed": null,
           "validationIssues": [],
-          "revisionCount": 2,
+          "revisionCount": 3,
           "patchCount": 1,
           "replanCount": 0,
-          "repairEffort": 3,
+          "repairEffort": 4,
           "repairSucceeded": true,
           "compiledFirstTry": false,
-          "issue": "Execution program required 2 revisions (1 patch, 0 replan) before it stabilized."
+          "issue": "Execution program required 3 revisions (1 patch, 0 replan) before it stabilized."
         },
         "execution": {
           "score": 5,
@@ -3959,15 +3934,15 @@
           "selfHealCount": 0,
           "failureCount": 0,
           "loopCount": 0,
-          "executionMs": 10157,
-          "synthesisMs": 2855,
+          "executionMs": 9523,
+          "synthesisMs": 2555,
           "budgetConsumedPct": null,
           "budgetExhausted": false,
           "issue": "Tool selection did not reliably convert the prompt into the right grounded tool path."
         },
         "synthesis": {
           "score": 2,
-          "responseLength": 967,
+          "responseLength": 692,
           "differentiation": "low_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "low",
@@ -4007,15 +3982,15 @@
           "truncated": false
         },
         "reasoningDepth": {
-          "score": 5,
+          "score": 3,
           "plannerReasoningStage": "focused",
           "scoutLlmSelectionUsed": true,
-          "revisionCount": 2,
+          "revisionCount": 3,
           "replanCount": 0
         },
         "mcpTransport": {
           "score": 5,
-          "durationMs": 33207,
+          "durationMs": 35244,
           "timeoutBudgetMs": null,
           "toolCallCount": 0,
           "logs": []
@@ -4028,7 +4003,7 @@
           "patchCount": 1,
           "retryCount": 0,
           "repairSucceeded": true,
-          "repairEffort": 3
+          "repairEffort": 4
         },
         "synthesisBudget": {
           "score": 2,
@@ -4054,7 +4029,7 @@
         },
         "toolSelectionOptimal": false,
         "toolSelectionIssue": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
-        "plannerIssue": "Execution program required 2 revisions (1 patch, 0 replan) before it stabilized.",
+        "plannerIssue": "Execution program required 3 revisions (1 patch, 0 replan) before it stabilized.",
         "completenessIssue": null,
         "budgetExhausted": false,
         "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
@@ -4084,13 +4059,13 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 33207,
+          "totalDurationMs": 35244,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
           "rediscoveryExecuted": false,
           "planningValidationApplied": false,
-          "revisionCount": 2,
+          "revisionCount": 3,
           "patchCount": 1,
           "replanCount": 0,
           "completionEvaluationCount": 0,
@@ -4105,7 +4080,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "I conducted a search for the 'US x Iran ceasefire' event and the associated market data; however, the data retrieval process returned an empty payload for the specific event buckets and metrics.\n\nBased on the metadata provided:\n*   **Search Status:** The search was performed using relevant keywords (\"iran\", \"ceasefire\", \"live buckets\"), but no active market data (probabilities or volumes) was returned in the final dataset.\n*   **Data Gaps:** There is high uncertainty regarding the current live s",
+        "responsePreview": "Based on the data retrieved, the query for the specific buckets of the 'US x Iran ceasefire' event returned an empty canonical payload. While the system successfully identified the event via keyword lookup, the upstream source did not provide the individual bucket details (probabilities or volumes) for the live segments of this market.\n\nTo get the current rankings for these buckets, I recommend:\n*   Checking for a wider date range or more specific event identifier.\n*   Retrying the query focused",
         "coverageStatus": "answerable",
         "differentiation": "low_differentiation",
         "hasGroundingArtifact": true,
@@ -4118,16 +4093,16 @@
       "alphaCategory": "Discovery And Screening",
       "category": "submarket flow screening",
       "outcomeType": "answer",
-      "toolCalls": 2,
+      "toolCalls": 5,
       "toolNames": [
         "Polymarket Intelligence"
       ],
-      "latencyMs": 78179,
-      "finalScore": 4.5,
+      "latencyMs": 118634,
+      "finalScore": 4.33,
       "buyerScores": {
         "freshness": 5,
         "specificity": 5,
-        "actionability": 3,
+        "actionability": 2,
         "completeness": 5,
         "dataAccuracy": 5,
         "uniqueness": 4
@@ -4152,7 +4127,7 @@
           "evidenceAttachedToPlanning": true,
           "probeConfidence": 0.9908,
           "candidateMethodCount": 48,
-          "shortlistCount": 6,
+          "shortlistCount": 7,
           "budgetReasonCode": null
         },
         "clarification": {
@@ -4167,34 +4142,36 @@
           ]
         },
         "planning": {
-          "score": 4,
+          "score": 3,
           "plannerReasoningStage": "focused",
           "validationApplied": true,
-          "validationPassed": true,
-          "validationIssues": [],
-          "revisionCount": 2,
+          "validationPassed": false,
+          "validationIssues": [
+            "Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities."
+          ],
+          "revisionCount": 3,
           "patchCount": 1,
-          "replanCount": 0,
-          "repairEffort": 3,
+          "replanCount": 1,
+          "repairEffort": 5,
           "repairSucceeded": true,
           "compiledFirstTry": false,
-          "issue": "Execution program required 2 revisions (1 patch, 0 replan) before it stabilized."
+          "issue": "Planner validation flagged Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities.."
         },
         "execution": {
-          "score": 3,
-          "retryCount": 1,
-          "selfHealCount": 1,
+          "score": 2,
+          "retryCount": 3,
+          "selfHealCount": 3,
           "failureCount": 3,
-          "loopCount": 1,
-          "executionMs": 51266,
-          "synthesisMs": 3553,
+          "loopCount": 3,
+          "executionMs": 84018,
+          "synthesisMs": 3287,
           "budgetConsumedPct": null,
-          "budgetExhausted": false,
-          "issue": "Completeness checks still marked the answer incomplete: User asked about the 'Thunder vs. Clippers' game-specific submarkets (Moneyline, O/U 227.5, Kris Dunn props), but the returned data is about the 'NBA Western Conference Champion' futures event - the search/query returned the wrong entity category (Futures instead of a Game Matchup).."
+          "budgetExhausted": true,
+          "issue": "Completeness checks still marked the answer incomplete: Answerable but unresolved: The search and live volume tools both resolved to the '2026 NBA Champion' event (ID 27830) instead of a specific 'Thunder vs. Clippers' game event.; The submarkets requested (Main Moneyline, O/U 227.5, Kris Dunn Props) returned null for all live trading data (matchedName, liveValue, volume) because they do not exist within the '2026 NBA Champion' season-long futures event.."
         },
         "synthesis": {
-          "score": 5,
-          "responseLength": 1149,
+          "score": 4,
+          "responseLength": 1096,
           "differentiation": "moderate_differentiation",
           "hasGroundingArtifact": true,
           "confidenceLevel": "high",
@@ -4226,34 +4203,36 @@
       "crossCuttingScores": {
         "contextBudget": {
           "score": 5,
-          "canonicalBytes": 9405,
+          "canonicalBytes": 3119,
           "gapCount": 0,
           "gapSignals": [],
           "truncated": false
         },
         "reasoningDepth": {
-          "score": 5,
+          "score": 3,
           "plannerReasoningStage": "focused",
           "scoutLlmSelectionUsed": true,
-          "revisionCount": 2,
-          "replanCount": 0
+          "revisionCount": 3,
+          "replanCount": 1
         },
         "mcpTransport": {
           "score": 3,
-          "durationMs": 78179,
+          "durationMs": 118634,
           "timeoutBudgetMs": null,
-          "toolCallCount": 2,
+          "toolCallCount": 5,
           "logs": []
         },
         "codeSafety": {
           "score": 3,
           "validationApplied": true,
-          "validationPassed": true,
-          "validationIssues": [],
+          "validationPassed": false,
+          "validationIssues": [
+            "Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities."
+          ],
           "patchCount": 1,
-          "retryCount": 1,
+          "retryCount": 3,
           "repairSucceeded": true,
-          "repairEffort": 3
+          "repairEffort": 5
         },
         "synthesisBudget": {
           "score": 5,
@@ -4265,26 +4244,26 @@
         }
       },
       "bottleneckDimension": "execution",
-      "bottleneckScore": 3,
-      "bottleneckDetail": "Completeness checks still marked the answer incomplete: User asked about the 'Thunder vs. Clippers' game-specific submarkets (Moneyline, O/U 227.5, Kris Dunn props), but the returned data is about the 'NBA Western Conference Champion' futures event - the search/query returned the wrong entity category (Futures instead of a Game Matchup)..",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Completeness checks still marked the answer incomplete: Answerable but unresolved: The search and live volume tools both resolved to the '2026 NBA Champion' event (ID 27830) instead of a specific 'Thunder vs. Clippers' game event.; The submarkets requested (Main Moneyline, O/U 227.5, Kris Dunn Props) returned null for all live trading data (matchedName, liveValue, volume) because they do not exist within the '2026 NBA Champion' season-long futures event..",
       "traceDiagnosis": {
         "version": "2026-04-04.trace-informed-diagnosis.v1",
         "promptId": "q18",
         "bottleneckStage": "completeness",
-        "bottleneckReason": "Completeness checks still marked the answer incomplete: User asked about the 'Thunder vs. Clippers' game-specific submarkets (Moneyline, O/U 227.5, Kris Dunn props), but the returned data is about the 'NBA Western Conference Champion' futures event - the search/query returned the wrong entity category (Futures instead of a Game Matchup)..",
+        "bottleneckReason": "Completeness checks still marked the answer incomplete: Answerable but unresolved: The search and live volume tools both resolved to the '2026 NBA Champion' event (ID 27830) instead of a specific 'Thunder vs. Clippers' game event.; The submarkets requested (Main Moneyline, O/U 227.5, Kris Dunn Props) returned null for all live trading data (matchedName, liveValue, volume) because they do not exist within the '2026 NBA Champion' season-long futures event..",
         "retryPattern": {
-          "cheapFix": 0,
+          "cheapFix": 2,
           "semantic": 1,
-          "total": 1
+          "total": 3
         },
         "toolSelectionOptimal": true,
         "toolSelectionIssue": null,
-        "plannerIssue": "Execution program required 2 revisions (1 patch, 0 replan) before it stabilized.",
-        "completenessIssue": "Completeness checks still marked the answer incomplete: User asked about the 'Thunder vs. Clippers' game-specific submarkets (Moneyline, O/U 227.5, Kris Dunn props), but the returned data is about the 'NBA Western Conference Champion' futures event - the search/query returned the wrong entity category (Futures instead of a Game Matchup)..",
-        "budgetExhausted": false,
+        "plannerIssue": "Planner validation flagged Plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments or entities..",
+        "completenessIssue": "Completeness checks still marked the answer incomplete: Answerable but unresolved: The search and live volume tools both resolved to the '2026 NBA Champion' event (ID 27830) instead of a specific 'Thunder vs. Clippers' game event.; The submarkets requested (Main Moneyline, O/U 227.5, Kris Dunn Props) returned null for all live trading data (matchedName, liveValue, volume) because they do not exist within the '2026 NBA Champion' season-long futures event..",
+        "budgetExhausted": true,
         "budgetHeadroom": "cheapFix headroom unknown; semantic headroom 0/1",
         "rootCause": "Verification found missing parts and the repair path did not fully recover.",
-        "suggestedFix": "Verifier: tune completeness criteria or retry routing so missing parts trigger a successful repair instead of an early stop.",
+        "suggestedFix": "Verifier: preserve more retry headroom or relax the completeness stop condition for this prompt class so one more repair pass can run.",
         "fixScope": "verifier",
         "evidence": {
           "outcomeType": "answer",
@@ -4311,16 +4290,16 @@
             "check_market_rules"
           ],
           "selectedMethodCount": 48,
-          "totalDurationMs": 78179,
+          "totalDurationMs": 118634,
           "executionDurationMs": null,
           "executionDurationShare": null,
           "selectedDepth": "deep",
           "rediscoveryExecuted": false,
           "planningValidationApplied": true,
-          "revisionCount": 2,
+          "revisionCount": 3,
           "patchCount": 1,
-          "replanCount": 0,
-          "completionEvaluationCount": 2,
+          "replanCount": 1,
+          "completionEvaluationCount": 4,
           "lowScoreDimensions": [
             "actionability"
           ]
@@ -4329,7 +4308,7 @@
       "evidence": {
         "groundedEntity": null,
         "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
-        "responsePreview": "Based on the data fetched as of April 11, 2026, the specific game-level submarkets you mentioned (Moneyline, O/U 227.5, or Kris Dunn props) are not showing active live trading volume in the current dataset.\n\nInstead, the activity is concentrated on the **NBA Western Conference Champion** futures market. In this broader category, both the Clippers and Thunder are being tracked, though they currently have lower live volume shares compared to other contenders.\n\n| Market Name | Classification | Live",
+        "responsePreview": "Based on the current data from the NBA markets, there is no active live trading volume for the specific game-level submarkets requested (Thunder vs. Clippers Moneyline, O/U 227.5, or Kris Dunn props).\n\nWhile the broader **2026 NBA Champion** event (which includes the Thunder and Clippers as participants) shows a total live volume of **$473,106,934.06**, the specific submarkets for a head-to-head matchup between these teams currently return no active matches or live trade values.\n\n| Requested Sub",
         "coverageStatus": "answerable",
         "differentiation": "moderate_differentiation",
         "hasGroundingArtifact": true,

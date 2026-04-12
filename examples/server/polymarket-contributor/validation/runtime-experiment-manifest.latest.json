@@ -1,89 +1,79 @@
 {
-  "generatedAt": "2026-04-11T10:34:11Z",
+  "generatedAt": "2026-04-11T22:01:21Z",
   "manifestVersion": "runtime-experiment.v2",
-  "hypothesisId": "planning-canonical-target-lookup-2026-04-11",
+  "hypothesisId": "2026-04-12-execution-repair-requires-retargeting-v1",
   "status": "rejected",
   "snapshotPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-snapshot.latest.json",
   "needsFinalDecision": false,
   "filesChanged": [
-    "context/lib/ai/query-planning-heuristics.ts",
-    "context/lib/ai/query-policy-guards.ts",
-    "context/lib/ai/agentic-execution.ts"
+    "context/lib/ai/agentic-execution.ts",
+    "context/tests/unit/agentic-execution-heuristics.test.ts"
   ],
   "changeSummary": [
-    "Added a shared canonical-target lookup signal for quoted single-target and date-bucket queries that need handle resolution before downstream execution.",
-    "Extended the named-target policy guard to flag discovery calls that reuse the full narrative question or quoted market sentence instead of extracting canonical lookup variables and resolving exact handles first.",
-    "Strengthened the shared policy-fix guidance so repaired plans define explicit eventQuery/requestedTarget variables, resolve a canonical handle once, and then execute from the bounded resolved-target set."
+    "Added a contributor-agnostic completeness repair admission gate in `context/lib/ai/agentic-execution.ts` that only accepts same-tool repairs as a spent semantic retry when resolve-first or probe-first recovery materially changes discovery or target-resolution behavior.",
+    "When the verifier asks for same-tool retargeting but a patch only adds guards or otherwise fails the deterministic retargeting check, the shared runtime now rejects that patch and immediately escalates to the existing bounded replan path within the same retry attempt.",
+    "Added focused unit coverage in `context/tests/unit/agentic-execution-heuristics.test.ts` for both the rejection case (guard-only same-tool patch) and the acceptance case (discovery-expanded repair with explicit target resolution)."
   ],
   "rolloutFlagsTouched": [],
   "marketplaceRobustnessCheck": {
     "passed": true,
     "notes": [
-      "The experiment keys off general query structure: quoted single-target prompts, date buckets, and raw narrative discovery reuse, not contributor names or vendor-specific methods.",
-      "The guard prefers canonical handles such as slug, conditionId, tokenId, or exact resolved names and keeps all logic in shared runtime modules.",
-      "No route wrappers or contributor server files were modified."
+      "The new gate keys off generic completeness signals such as probe-first or resolve-first recovery, changed discovery behavior, and named-target resolution diagnostics rather than contributor names, venue names, tool allowlists, or benchmark strings.",
+      "The admission logic only evaluates shared runtime code shape and shared policy diagnostics, so it remains reusable for any contributor exposing discovery, lookup, list, search, or detail methods.",
+      "Route wrappers were not edited; parity remains anchored in the shared execution engine under `context/lib/ai/agentic-execution.ts`."
     ]
   },
   "focusedValidation": {
     "testsRun": [
       {
-        "command": "pnpm exec tsx --import ./tests/unit/server-only-shim.ts --test ./tests/unit/query-policy-guards.test.ts ./tests/unit/query-planning-heuristics.test.ts",
+        "command": "pnpm exec tsx --import ./tests/unit/server-only-shim.ts --test ./tests/unit/agentic-execution-heuristics.test.ts",
         "passed": true
       },
       {
-        "command": "npx tsc --noEmit",
-        "passed": true
+        "command": "pnpm exec tsc --noEmit",
+        "passed": false
       },
       {
-        "command": "ReadLints(paths=[context/lib/ai/query-planning-heuristics.ts, context/lib/ai/query-policy-guards.ts, context/lib/ai/agentic-execution.ts])",
-        "passed": true
-      },
-      {
-        "command": "pnpm exec tsx <<'EOF' ... ContextClient query smoke for PSG market parameters ... EOF",
-        "passed": true
-      },
-      {
-        "command": "pnpm exec tsx <<'EOF' ... ContextClient query smoke for World Cup winner comparison ... EOF",
-        "passed": true
+        "command": "pnpm exec biome check \"lib/ai/agentic-execution.ts\" \"tests/unit/agentic-execution-heuristics.test.ts\"",
+        "passed": false
       }
     ],
-    "typecheckPassed": true,
-    "lintPassed": true
+    "typecheckPassed": false,
+    "lintPassed": false
   },
   "focusSurfaceCheck": {
     "queryPassed": true,
     "chatPassed": true,
     "notes": [
-      "SDK smoke query 1 returned a non-error clarification_required result with a non-empty response for the PSG market-parameters prompt; this satisfies the crash-only gate.",
-      "SDK smoke query 2 returned a non-error answer result with a non-empty response for the World Cup comparison prompt.",
-      "Code-path parity passed because both /api/v1/query and /api/chat import the shared execution engine from context/lib/ai/agentic-execution.ts."
+      "SDK smoke query `Show me the most active sports markets on Polymarket today.` against `http://localhost:3000` completed successfully with `outcomeType: \"answer\"`, non-empty output, `status: \"completed\"`, and no completeness repair events.",
+      "SDK smoke query `Compare the current implied odds for Spain, Brazil, and France in the 2026 FIFA World Cup winner market on Polymarket.` against `http://localhost:3000` completed successfully with `outcomeType: \"answer\"`, non-empty output, `status: \"completed\"`, and no completeness repair events.",
+      "Code-path parity held because both `context/app/api/v1/query/route.ts` and `context/app/(chat)/api/chat/route.ts` still import `executeWithSelfHealing` from `@/lib/ai/agentic-execution`.",
+      "No browser chat QA was run; `chatPassed` reflects shared-runtime parity rather than automated live chat interaction."
     ]
   },
-  "parityHeld": true,
   "revertInstructions": [
-    "Use the snapshot at /Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-snapshot.latest.json to restore the pre-experiment versions of the three changed shared-runtime files if the orchestrator rejects the experiment.",
-    "Do not revert route wrappers or contributor server files; the experiment touched shared runtime code only."
+    "If the orchestrator rejects this experiment, restore `/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-snapshot.latest.json` with `context/scripts/runtime-research-experiment-state.ts` before rerunning any validation.",
+    "After restoration, rerun `pnpm exec tsx --import ./tests/unit/server-only-shim.ts --test ./tests/unit/agentic-execution-heuristics.test.ts`, `pnpm exec tsc --noEmit`, `pnpm exec biome check \"lib/ai/agentic-execution.ts\" \"tests/unit/agentic-execution-heuristics.test.ts\"`, and the two SDK smoke queries against `http://localhost:3000`."
   ],
   "finalDecision": {
     "status": "rejected",
-    "decisionPhase": "regression",
-    "reason": "Decision artifact rejected the planning experiment after regression review: target dimension did not improve and several non-target dimensions regressed beyond tolerance.",
-    "decidedAt": "2026-04-11T11:22:16.047Z",
-    "initialManifestStatus": "pending_judgment",
+    "decisionPhase": "net_improvement",
+    "reason": "Rejected after deterministic max-iterations decision: execution did not improve, codeSafety dropped by 0.22, and the loop exhausted its maximum iteration budget.",
+    "decidedAt": "2026-04-11T22:47:30.316Z",
+    "initialManifestStatus": "validation_failed",
     "reverted": true,
     "restoredFiles": [
       "/Users/alex/Documents/context/lib/ai/agentic-execution.ts",
-      "/Users/alex/Documents/context/lib/ai/query-planning-heuristics.ts",
-      "/Users/alex/Documents/context/lib/ai/query-policy-guards.ts"
+      "/Users/alex/Documents/context/tests/unit/agentic-execution-heuristics.test.ts"
     ],
     "removedFiles": [],
     "snapshotPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-snapshot.latest.json"
   },
   "openRisks": [
-    "The raw-narrative lookup detector uses conservative identifier heuristics when the search query is not a literal, so future planner variable naming could still affect whether a weak plan is caught.",
-    "The first smoke prompt remained healthy but clarified instead of answering, which is acceptable for this crash-only gate but means the orchestrator still needs full regression measurement for quality impact.",
-    "Focused validation did not add new test cases because the experiment was constrained to the approved runtime files."
+    "Repository-wide typecheck is still red from pre-existing `context/lib/ai/scout-orchestration.ts` errors about `enableExactTargetExternalProbe`, so focused validation cannot be marked fully green even though the touched-area tests passed.",
+    "The targeted `biome check` remains red from pre-existing style and performance debt already present in `context/lib/ai/agentic-execution.ts`, plus file-formatting drift in the existing test file; IDE lints for the edited files were otherwise clean.",
+    "The retargeting gate currently requires concrete evidence such as added discovery steps, added explicit target-resolution signals, or clearing the shared named-target-resolution diagnostic. Orchestrator remeasurement is still needed to confirm that this heuristic admits the right repairs and shrinks the `repair_without_full_recovery` cluster without over-rejecting legitimate same-tool fixes."
   ],
-  "finalizedAt": "2026-04-11T11:22:16.047Z",
+  "finalizedAt": "2026-04-11T22:47:30.316Z",
   "acceptedForRegression": false
 }

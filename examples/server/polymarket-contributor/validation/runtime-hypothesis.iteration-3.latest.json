@@ -1,0 +1,114 @@
+{
+  "generatedAt": "2026-04-12T02:00:00Z",
+  "hypothesisVersion": "runtime-hypothesis.v1",
+  "hypothesisId": "2026-04-12-planning-partial-clause-named-target-guard-v1",
+  "targetDimension": "planning",
+  "targetType": "stage",
+  "targetSelectionNote": "The latest post-experiment review makes planning the weakest ready dimension at 3.44, with a stable named_target_without_resolution cluster at traceCount 6. The latest deterministic decision already pivoted the fresh run to planning after scoutDepth was rejected twice, so this iteration stays on planning and proposes one smaller shared-runtime policy change rather than another scout-depth experiment.",
+  "selectedFailureCluster": {
+    "label": "named_target_without_resolution",
+    "traceCount": 6
+  },
+  "smallestFilesToChange": [
+    "/Users/alex/Documents/context/lib/ai/query-clarification.ts"
+  ],
+  "rationale": "The strongest repeated planning failure is not missing scout evidence. It is that the runtime still allows a single-answer path when only one clause is grounded, even for queries that already require deterministic named-target resolution. The raw trace contains repeated clarification diagnostics where decisionSignals includes partial_clause_coverage and the recommendation explicitly says uncovered clauses will be noted by the planner. That hands planning an under-resolved target set by design. The shared runtime already has two reusable ingredients for a narrow fix: query-planning-heuristics can detect deterministic named-target resolution requirements, and dual-surface rollout flags already define a strict namedTargetPlanningGuard. The smallest valid contributor-agnostic experiment is to apply that existing guard earlier, at clarification/classification time, so partial-clause coverage can no longer auto-resolve into a single grounded interpretation for named-target queries.",
+  "evidence": [
+    {
+      "source": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.iteration-2.post-experiment.latest.json",
+      "detail": "Planning is the weakest dimension at 3.44 and is marked ready; the review says the failure class is stable because plans repeatedly under-specify deterministic named-target resolution and clause coverage even when scouting is strong."
+    },
+    {
+      "source": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.iteration-2.post-experiment.latest.json",
+      "detail": "The dominant planning failure cluster is named_target_without_resolution with traceCount 6."
+    },
+    {
+      "source": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-decision.latest.json",
+      "detail": "The latest decision rejects the prior scoutDepth experiment, notes planning regressed by 0.39, and explicitly says to retry the loop on planning next because scoutDepth has already been rejected twice."
+    },
+    {
+      "source": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-log.json",
+      "detail": "The only two rejected experiments in this fresh run target scoutDepth, so this proposal avoids repeating bounded shortlist diversity or exact-target external probe gating."
+    },
+    {
+      "source": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results-2026-04-11T19-05-21.617Z.json",
+      "detail": "Multiple traces record decisionSignals containing partial_clause_coverage alongside a recommendation that uncovered clauses will be noted by the planner, which is direct evidence that an under-covered branch is still being converted into an answer path instead of being blocked before planning."
+    },
+    {
+      "source": "/Users/alex/Documents/context/lib/ai/query-planning-heuristics.ts",
+      "detail": "The runtime already exposes queryRequiresDeterministicTargetResolution and resolveDeterministicTargetResolutionSignals, so the guard condition needed for this experiment already exists in shared planning logic."
+    },
+    {
+      "source": "/Users/alex/Documents/context/lib/rollout/dual-surface-flags.ts",
+      "detail": "The shared rollout table already defines namedTargetPlanningGuard and defaults it to strict, so this experiment can reuse an existing shared policy contract instead of introducing contributor-specific branching."
+    },
+    {
+      "source": "/Users/alex/Documents/context/lib/ai/agentic-execution.ts",
+      "detail": "The strict named-target planning guard is currently enforced late as a pre-execution blocking diagnostic, which means the runtime still spends planning and repair budget on branches that should have been rejected earlier."
+    }
+  ],
+  "problemStatement": "Named-target queries are still allowed to pass through a single-answer path when only the strongest-supported clause is grounded. That creates plans that explicitly tolerate uncovered targets instead of materializing a bounded resolved-target set before execution, which matches the stable named_target_without_resolution cluster.",
+  "runtimeInvariant": "If a query requires deterministic named-target resolution under the shared planning heuristics, the runtime must not auto-resolve from partial clause coverage into a single grounded interpretation. It should preserve ambiguity or require clarification until all named targets needed for the answer path are explicitly covered.",
+  "proposedExperiment": {
+    "summary": "Extend the existing strict named-target planning guard to clarification/classification: when decisionSignals would be partial_clause_coverage and the query requires deterministic named-target resolution, suppress the single_grounded_interpretation answer path and force a clarification-preserving outcome instead of handing planning an under-covered branch.",
+    "changeType": "policy_table",
+    "affectedFiles": [
+      "/Users/alex/Documents/context/lib/ai/query-clarification.ts"
+    ],
+    "usesPairedFixException": false,
+    "pairedDimension": null,
+    "validationPlan": {
+      "targetedChecks": [
+        "Re-run the latest planning failure prompts and verify named-target queries no longer produce an answer path with decisionSignals containing partial_clause_coverage.",
+        "Verify the same queries now preserve multiple grounded options or clarification_required when deterministic target resolution is still unmet.",
+        "Verify queries that already have full grounded coverage still return answer without extra clarification churn.",
+        "Verify composable multi-intent cases still pass when complementary clause coverage is genuinely grounded rather than partial.",
+        "Run the regression harness and confirm no contributor mean drops beyond the current rejection thresholds.",
+        "Confirm query/chat parity because the change lives in shared runtime logic."
+      ],
+      "regressionHarnessRequired": true,
+      "codePathParityRequired": true
+    }
+  },
+  "expectedBenefits": [
+    "Reduces the named_target_without_resolution cluster by blocking a known under-resolved handoff before planning starts.",
+    "Improves planning without repeating scout-depth experimentation, because the change targets clause-resolution policy rather than discovery depth.",
+    "Should also reduce downstream repair_without_retargeting pressure by preventing execution from inheriting an invalid single-branch assumption.",
+    "Keeps the experiment contributor-agnostic because activation depends on shared query structure and shared rollout policy, not on contributor or method names."
+  ],
+  "riskChecklist": [
+    "The guard could over-trigger and convert some genuinely answerable single-path queries into clarification_required if deterministic-target detection is too broad.",
+    "If partial coverage sometimes reflects a valid composable answer path, this experiment could suppress useful direct answers.",
+    "Clarification volume could rise without improving planning if the failure cluster is actually caused by later planner code generation rather than earlier selection policy.",
+    "The experiment must not introduce contributor-specific exceptions or benchmark-specific allowlists to recover precision."
+  ],
+  "marketplaceRobustness": {
+    "generalization": "This proposal keys only on shared signals already present in the runtime: deterministic named-target resolution requirement, partial clause coverage, and the existing strict named-target planning guard. It generalizes to any contributor where a query names multiple explicit targets or otherwise requires bounded target resolution.",
+    "forbiddenContributorSpecificSignals": [
+      "contributor-name checks",
+      "tool-name allowlists or denylists",
+      "venue-name string matching",
+      "benchmark entity string matching",
+      "method-name special cases"
+    ],
+    "futureContributorThoughtExperiment": "If a future contributor exposes many similarly plausible grounded methods but only one covers part of a named-target request, the runtime should still avoid auto-answering from that partial branch. It should preserve ambiguity until all named targets required for the intended answer path are grounded, regardless of the contributor's schema vocabulary."
+  },
+  "validationPlan": {
+    "targetedChecks": [
+      "Measure whether the named_target_without_resolution cluster drops from the current traceCount 6 after the change.",
+      "Check that planning mean improves from the current 3.44 without a new hard regression in execution or codeSafety.",
+      "Audit traces for the absence of answer-path recommendations that explicitly say uncovered clauses will be noted later for deterministic named-target queries.",
+      "Confirm the change is shared across query and chat routes."
+    ],
+    "regressionHarnessRequired": true,
+    "codePathParityRequired": true
+  },
+  "rejectionCriteria": [
+    "Reject if planning does not materially improve or the named_target_without_resolution cluster does not shrink.",
+    "Reject if clarification volume rises substantially on queries that already have fully grounded single-path answers.",
+    "Reject if execution or codeSafety regresses past the existing deterministic thresholds.",
+    "Reject if stabilizing the change would require contributor-specific or method-name-specific logic."
+  ],
+  "handoffToRunPipeline": false,
+  "handoffReason": null
+}

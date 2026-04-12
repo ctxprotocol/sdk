@@ -1,0 +1,100 @@
+{
+  "generatedAt": "2026-04-12T00:00:00Z",
+  "hypothesisVersion": "runtime-hypothesis.v1",
+  "hypothesisId": "2026-04-12-planning-resolved-target-contract-handoff-v1",
+  "targetDimension": "planning",
+  "targetType": "stage",
+  "targetSelectionNote": "Planning remains a ready optimization target with a recurring named_target_without_resolution cluster, and the latest decision explicitly recorded planning -> execution coupling. This iteration stays on planning but uses the paired-fix exception because a planner-only prompt tweak would be misleading if the execution repair path can still erase exact-target resolution and re-enter wrong-target retries.",
+  "selectedFailureCluster": {
+    "label": "named_target_without_resolution",
+    "traceCount": 4
+  },
+  "problemStatement": "The shared runtime already infers when a query requires deterministic named-target or date-bucket resolution, and it already flags unresolved execution code. However, the planner and the later repair/replan path still operate mostly on narrative instructions rather than a compact shared exact-target contract. That leaves room for generated code to start from broad discovery, land on a near-miss entity, or lose the intended target set during retries. The result is a small planning gain without enough cluster reduction, followed by execution retry churn on answerable traces.",
+  "runtimeInvariant": "When shared heuristics determine that exact target resolution is required, every generated or repaired execution program must materialize and preserve a bounded resolved-target set with the expected cardinality before downstream analysis or synthesis. Completeness retries must reuse or reconstruct that same resolved-target contract instead of reopening broad discovery from scratch.",
+  "smallestFilesToChange": [
+    "context/lib/ai/prompts.ts",
+    "context/lib/ai/agentic-execution.ts"
+  ],
+  "rationale": "The rejected clarification-time guard improved planning only marginally while execution regressed, which indicates the dominant remaining weakness is not just earlier ambiguity gating. The more surgical next step is to make the exact-target contract explicit at the two places where code is authored or rewritten: initial planning and same-tool repair/replan. This is smaller than changing scout behavior again, avoids contributor-specific logic, and directly addresses the measured coupling note without reopening the previously rejected clarification-first approach.",
+  "evidence": [
+    {
+      "source": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.iteration-3.post-experiment.latest.json",
+      "observation": "Planning stayed ready with recurring exact-target failures on named outcomes, entity-bound prompts, and date-bound prompts, while execution also became ready due to retry exhaustion after wrong-target or missing-target detection."
+    },
+    {
+      "source": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-decision.latest.json",
+      "observation": "Iteration 3 was rejected because planning improved by only 0.11, and execution dropped by 0.17. The decision explicitly noted planning -> execution coupling when named targets are not deterministically resolved."
+    },
+    {
+      "source": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-log.json",
+      "observation": "The two prior scoutDepth experiments were already rejected, and the latest rejected planning experiment focused on an earlier clarification guard rather than preserving exact-target resolution through the downstream repair loop."
+    },
+    {
+      "source": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results-2026-04-11T20-15-15.539Z.json",
+      "observation": "Latest measurement traces include answerable prompts that entered retry_same_tools after wrong-subject or incomplete named-outcome resolution, including one trace that initially returned a semantically unrelated event and another that exhausted retries after failing to lock the requested exact target/date combination."
+    },
+    {
+      "source": "/Users/alex/Documents/context/lib/ai/query-policy-guards.ts",
+      "observation": "Shared policy already detects named_target_without_resolution by checking whether generated code uses discovery output without materializing a bounded resolved-target contract."
+    },
+    {
+      "source": "/Users/alex/Documents/context/lib/ai/agentic-execution.ts",
+      "observation": "Execution already treats named_target_without_resolution as a blocking diagnostic and already has a resolve-first retry doctrine, but the current fix instruction is textual rather than a structured contract that can be preserved across patch and replan attempts."
+    },
+    {
+      "source": "/Users/alex/Documents/context/lib/ai/prompts.ts",
+      "observation": "Planner guidance already recommends shortlist-first discovery and semantic ranking, but it does not enforce a compact named-target contract with explicit expected target count that must survive both initial code generation and later completeness-driven rewrites."
+    }
+  ],
+  "proposedExperiment": {
+    "summary": "Introduce one shared exact-target prompt contract for named-target/date-bucket queries and inject it into both initial planning and completeness repair/replan prompts. The contract should require a materialized resolved-target variable with explicit expected cardinality, require downstream calls to consume that resolved set, and require retries to preserve or reconstruct that set before any follow-up detail calls.",
+    "changeType": "paired_fix",
+    "affectedFiles": [
+      "context/lib/ai/prompts.ts",
+      "context/lib/ai/agentic-execution.ts"
+    ],
+    "usesPairedFixException": true,
+    "pairedDimension": "execution",
+    "validationPlan": {
+      "targetedChecks": [
+        "Verify that exact-target or date-bucket planning prompts now include a compact contract with reasonCode and expectedTargetCount derived from shared heuristics.",
+        "Verify that completeness repair and bounded replan prompts receive the same contract and instruct the model to preserve or rebuild a resolved-target variable before downstream analysis.",
+        "Run a focused regression where a named multi-target query previously drifted to an unrelated subject and confirm the first generated program resolves the exact target set before analysis.",
+        "Run a focused regression where a named outcome/date query previously exhausted retries and confirm the first retry is resolve-first rather than another broad discovery branch.",
+        "Run one broad overview query that should remain answerable without forced singular narrowing to ensure the change does not reintroduce the rejected clarification-style overconstraint."
+      ],
+      "regressionHarnessRequired": true,
+      "codePathParityRequired": true
+    }
+  },
+  "expectedBenefits": [
+    "Improves planning on the dominant named_target_without_resolution cluster without repeating the earlier clarification-time guard.",
+    "Reduces execution retry churn by making same-tool repairs preserve exact-target resolution instead of reopening broad search.",
+    "Keeps the change contributor-agnostic because it relies on shared query heuristics and prompt contract shape rather than any tool, venue, or benchmark string."
+  ],
+  "riskChecklist": [
+    "Do not force exact-target resolution on genuinely broad overview requests that should remain composable.",
+    "Do not require contributor-specific field names or hard-coded entity matching rules.",
+    "Do not widen the experiment into scout-depth behavior, tool selection heuristics, or transport logic.",
+    "Ensure chat/query parity by using the same shared prompt contract shape on both surfaces."
+  ],
+  "marketplaceRobustness": {
+    "generalization": "This proposal generalizes across any contributor where the user names exact outcomes, entities, submarkets, or date buckets and the runtime must turn noisy discovery results into a bounded downstream target set.",
+    "forbiddenContributorSpecificSignals": [
+      "tool names",
+      "venue names",
+      "benchmark prompt strings",
+      "entity allowlists",
+      "contributor-specific slugs or ids"
+    ],
+    "futureContributorThoughtExperiment": "If a new contributor exposes only generic search and detail methods for a large event catalog, the same contract should still help: first resolve the bounded target set from search results, then feed detail/analysis from that resolved set, and preserve that set during retries."
+  },
+  "rejectionCriteria": [
+    "Reject if planning improves by less than the automation threshold again or the named_target_without_resolution cluster does not materially shrink.",
+    "Reject if execution baseline drops beyond tolerance again, indicating the paired repair-path contract still failed to protect downstream retries.",
+    "Reject if generated or repaired code still commonly consumes raw discovery output directly without a bounded resolved-target variable.",
+    "Reject if broad overview prompts start getting overconstrained into exact-target workflows that reduce answerability."
+  ],
+  "handoffToRunPipeline": false,
+  "handoffReason": null
+}

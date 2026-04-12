@@ -1,0 +1,655 @@
+{
+  "runId": "2026-04-12T00:49:26Z",
+  "focusContributor": "kalshi-contributor",
+  "regressionContributors": [
+    "kalshi-contributor",
+    "polymarket-contributor"
+  ],
+  "entries": [
+    {
+      "iteration": 0,
+      "timestamp": "2026-04-12T00:49:26Z",
+      "phase": "grounding",
+      "status": "completed",
+      "targetDimension": null,
+      "hypothesisId": null,
+      "scoreBefore": null,
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": null,
+      "reason": "Resolved Kalshi as the focus contributor, confirmed both contributors have live discovery scripts and prompt pools, and selected Kalshi's unified evaluation script as the focus artifact generator.",
+      "filesChanged": [],
+      "wasReverted": false,
+      "promptCount": null,
+      "durationMs": 0,
+      "artifactPaths": {
+        "stageAudit": null,
+        "stageReview": null,
+        "targetSelection": null,
+        "hypothesis": null,
+        "manifest": null,
+        "regressionArtifact": null,
+        "decisionArtifact": null
+      },
+      "harnessSummary": null
+    },
+    {
+      "iteration": 0,
+      "timestamp": "2026-04-12T01:08:22Z",
+      "phase": "calibration",
+      "status": "completed",
+      "targetDimension": null,
+      "hypothesisId": null,
+      "scoreBefore": null,
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": {
+        "targetImproved": null,
+        "targetClusterImproved": null,
+        "targetProgress": null,
+        "noHardRegression": null,
+        "noBaselineDrop": null,
+        "harnessGreen": true,
+        "parityHeld": null
+      },
+      "reason": "Rebuilt the shared regression baseline because runtime files were newer than the previous baseline artifact.",
+      "filesChanged": [],
+      "wasReverted": false,
+      "promptCount": 6,
+      "durationMs": 1030028,
+      "artifactPaths": {
+        "stageAudit": null,
+        "stageReview": null,
+        "targetSelection": null,
+        "hypothesis": null,
+        "manifest": null,
+        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
+        "decisionArtifact": null
+      },
+      "harnessSummary": {
+        "perContributor": [
+          {
+            "contributor": "kalshi-contributor",
+            "queryMean": 4.37,
+            "deltaFromBaseline": -0.26,
+            "regressionExceeded": false
+          },
+          {
+            "contributor": "polymarket-contributor",
+            "queryMean": 4.77,
+            "deltaFromBaseline": -0.03,
+            "regressionExceeded": false
+          }
+        ],
+        "overfittingWarnings": []
+      }
+    },
+    {
+      "iteration": 0,
+      "timestamp": "2026-04-12T01:38:55Z",
+      "phase": "baseline_capture",
+      "status": "completed",
+      "targetDimension": null,
+      "hypothesisId": null,
+      "scoreBefore": {
+        "target": 2.69,
+        "byDimension": {
+          "toolSelection": 4.06,
+          "scoutDepth": 4,
+          "clarification": 5,
+          "planning": 3.38,
+          "execution": 2.69,
+          "synthesis": 4.75,
+          "contextBudget": 4.44,
+          "reasoningDepth": 4.5,
+          "mcpTransport": 3.38,
+          "codeSafety": 3.94,
+          "synthesisBudget": 4.63
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": null,
+      "reason": "Captured a fresh Kalshi trace-rich evaluation and analyzed it into a stage audit for runtime review.",
+      "filesChanged": [],
+      "wasReverted": false,
+      "promptCount": 16,
+      "durationMs": 1768071,
+      "artifactPaths": {
+        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": null,
+        "targetSelection": null,
+        "hypothesis": null,
+        "manifest": null,
+        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
+        "decisionArtifact": null
+      },
+      "harnessSummary": null
+    },
+    {
+      "iteration": 1,
+      "timestamp": "2026-04-12T01:43:54Z",
+      "phase": "dimension_audit",
+      "status": "completed",
+      "targetDimension": "execution",
+      "hypothesisId": null,
+      "scoreBefore": {
+        "target": 2.62,
+        "byDimension": {
+          "toolSelection": 4.06,
+          "scoutDepth": 4,
+          "clarification": 5,
+          "planning": 3.38,
+          "execution": 2.62,
+          "synthesis": 4.75,
+          "contextBudget": 4.44,
+          "reasoningDepth": 4.5,
+          "mcpTransport": 3.19,
+          "codeSafety": 3.94,
+          "synthesisBudget": 4.62
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": null,
+      "reason": "Stage review marked execution and planning as ready below the automation floor, and deterministic target selection chose execution.",
+      "filesChanged": [],
+      "wasReverted": false,
+      "promptCount": 16,
+      "durationMs": 299054,
+      "artifactPaths": {
+        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": null,
+        "manifest": null,
+        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
+        "decisionArtifact": null
+      },
+      "harnessSummary": null
+    },
+    {
+      "iteration": 1,
+      "timestamp": "2026-04-12T02:20:00Z",
+      "phase": "hypothesis",
+      "status": "completed",
+      "targetDimension": "execution",
+      "hypothesisId": "2026-04-12-execution-bounded-followthrough-hop-v1",
+      "scoreBefore": {
+        "target": 2.62,
+        "byDimension": {
+          "toolSelection": 4.06,
+          "scoutDepth": 4,
+          "clarification": 5,
+          "planning": 3.38,
+          "execution": 2.62,
+          "synthesis": 4.75,
+          "contextBudget": 4.44,
+          "reasoningDepth": 4.5,
+          "mcpTransport": 3.19,
+          "codeSafety": 3.94,
+          "synthesisBudget": 4.62
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": null,
+      "reason": "Generated a contributor-agnostic execution hypothesis that adds one tightly gated followthrough recovery hop after a material first repair when the verifier still reports an answerable same-tool path.",
+      "filesChanged": [],
+      "wasReverted": false,
+      "promptCount": 16,
+      "durationMs": 2166000,
+      "artifactPaths": {
+        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": null,
+        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
+        "decisionArtifact": null
+      },
+      "harnessSummary": null
+    },
+    {
+      "iteration": 1,
+      "timestamp": "2026-04-12T02:01:19Z",
+      "phase": "experiment",
+      "status": "rejected",
+      "targetDimension": "execution",
+      "hypothesisId": "2026-04-12-execution-bounded-followthrough-hop-v1",
+      "scoreBefore": {
+        "target": 2.62,
+        "byDimension": {
+          "toolSelection": 4.06,
+          "scoutDepth": 4,
+          "clarification": 5,
+          "planning": 3.38,
+          "execution": 2.62,
+          "synthesis": 4.75,
+          "contextBudget": 4.44,
+          "reasoningDepth": 4.5,
+          "mcpTransport": 3.19,
+          "codeSafety": 3.94,
+          "synthesisBudget": 4.62
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": {
+        "targetImproved": null,
+        "targetClusterImproved": null,
+        "targetProgress": null,
+        "noHardRegression": null,
+        "noBaselineDrop": null,
+        "harnessGreen": null,
+        "parityHeld": true
+      },
+      "reason": "Focused validation failed before remeasurement because typecheck and Biome remained red; the experiment was auto-reverted from snapshot and the regression harness was skipped after this earlier gate failure.",
+      "filesChanged": [
+        "context/lib/ai/agentic-execution.ts",
+        "context/lib/rollout/dual-surface-flags.ts",
+        "context/tests/unit/agentic-execution-heuristics.test.ts",
+        "context/tests/unit/dual-surface-rollout-flags.test.ts"
+      ],
+      "wasReverted": true,
+      "promptCount": 2,
+      "durationMs": 0,
+      "artifactPaths": {
+        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-experiment-manifest.latest.json",
+        "regressionArtifact": null,
+        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-research-decision.latest.json"
+      },
+      "harnessSummary": null
+    },
+    {
+      "iteration": 2,
+      "timestamp": "2026-04-12T03:05:00Z",
+      "phase": "hypothesis",
+      "status": "completed",
+      "targetDimension": "execution",
+      "hypothesisId": "2026-04-12-execution-structural-repair-mode-v1",
+      "scoreBefore": {
+        "target": 2.62,
+        "byDimension": {
+          "toolSelection": 4.06,
+          "scoutDepth": 4,
+          "clarification": 5,
+          "planning": 3.38,
+          "execution": 2.62,
+          "synthesis": 4.75,
+          "contextBudget": 4.44,
+          "reasoningDepth": 4.5,
+          "mcpTransport": 3.19,
+          "codeSafety": 3.94,
+          "synthesisBudget": 4.62
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": null,
+      "reason": "Generated a second execution hypothesis that avoids retry-budget changes and instead routes structural same-tool completeness failures to the existing bounded replan path.",
+      "filesChanged": [],
+      "wasReverted": false,
+      "promptCount": 16,
+      "durationMs": 0,
+      "artifactPaths": {
+        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": null,
+        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
+        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-research-decision.latest.json"
+      },
+      "harnessSummary": null
+    },
+    {
+      "iteration": 2,
+      "timestamp": "2026-04-12T02:17:38Z",
+      "phase": "experiment",
+      "status": "rejected",
+      "targetDimension": "execution",
+      "hypothesisId": "2026-04-12-execution-structural-repair-mode-v1",
+      "scoreBefore": {
+        "target": 2.62,
+        "byDimension": {
+          "toolSelection": 4.06,
+          "scoutDepth": 4,
+          "clarification": 5,
+          "planning": 3.38,
+          "execution": 2.62,
+          "synthesis": 4.75,
+          "contextBudget": 4.44,
+          "reasoningDepth": 4.5,
+          "mcpTransport": 3.19,
+          "codeSafety": 3.94,
+          "synthesisBudget": 4.62
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": {
+        "targetImproved": null,
+        "targetClusterImproved": null,
+        "targetProgress": null,
+        "noHardRegression": null,
+        "noBaselineDrop": null,
+        "harnessGreen": null,
+        "parityHeld": true
+      },
+      "reason": "Focused validation failed again before remeasurement because the required full typecheck and targeted lint gate were red; the experiment was auto-reverted and the regression harness was skipped after this earlier gate failure.",
+      "filesChanged": [
+        "context/lib/ai/prompts.ts",
+        "context/lib/ai/agentic-execution.ts",
+        "context/tests/unit/agentic-execution-heuristics.test.ts"
+      ],
+      "wasReverted": true,
+      "promptCount": 2,
+      "durationMs": 0,
+      "artifactPaths": {
+        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-experiment-manifest.latest.json",
+        "regressionArtifact": null,
+        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-research-decision.latest.json"
+      },
+      "harnessSummary": null
+    },
+    {
+      "iteration": 3,
+      "timestamp": "2026-04-12T04:20:00Z",
+      "phase": "hypothesis",
+      "status": "completed",
+      "targetDimension": "planning",
+      "hypothesisId": "2026-04-12-planning-resolved-target-proof-gate-v1",
+      "scoreBefore": {
+        "target": 3.38,
+        "byDimension": {
+          "toolSelection": 4.06,
+          "scoutDepth": 4,
+          "clarification": 5,
+          "planning": 3.38,
+          "execution": 2.62,
+          "synthesis": 4.75,
+          "contextBudget": 4.44,
+          "reasoningDepth": 4.5,
+          "mcpTransport": 3.19,
+          "codeSafety": 3.94,
+          "synthesisBudget": 4.62
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": null,
+      "reason": "Generated a planning hypothesis that tightens resolved-target proof so semantic ranking alone no longer satisfies exact-target planning.",
+      "filesChanged": [],
+      "wasReverted": false,
+      "promptCount": 16,
+      "durationMs": 0,
+      "artifactPaths": {
+        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": null,
+        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
+        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-research-decision.latest.json"
+      },
+      "harnessSummary": null
+    },
+    {
+      "iteration": 3,
+      "timestamp": "2026-04-12T02:33:14Z",
+      "phase": "experiment",
+      "status": "rejected",
+      "targetDimension": "planning",
+      "hypothesisId": "2026-04-12-planning-resolved-target-proof-gate-v1",
+      "scoreBefore": {
+        "target": 3.38,
+        "byDimension": {
+          "toolSelection": 4.06,
+          "scoutDepth": 4,
+          "clarification": 5,
+          "planning": 3.38,
+          "execution": 2.62,
+          "synthesis": 4.75,
+          "contextBudget": 4.44,
+          "reasoningDepth": 4.5,
+          "mcpTransport": 3.19,
+          "codeSafety": 3.94,
+          "synthesisBudget": 4.62
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": {
+        "targetImproved": null,
+        "targetClusterImproved": null,
+        "targetProgress": null,
+        "noHardRegression": null,
+        "noBaselineDrop": null,
+        "harnessGreen": null,
+        "parityHeld": true
+      },
+      "reason": "Focused validation failed before remeasurement because the required full typecheck and targeted lint checks were red, and the local query surface returned HTTP 500 during smoke validation; the experiment was auto-reverted and the regression harness was skipped after this earlier gate failure.",
+      "filesChanged": [
+        "context/lib/ai/query-planning-heuristics.ts",
+        "context/lib/ai/prompts.ts",
+        "context/tests/unit/query-policy-guards.test.ts",
+        "context/tests/unit/query-planning-heuristics.test.ts"
+      ],
+      "wasReverted": true,
+      "promptCount": 2,
+      "durationMs": 0,
+      "artifactPaths": {
+        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-experiment-manifest.latest.json",
+        "regressionArtifact": null,
+        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-research-decision.latest.json"
+      },
+      "harnessSummary": null
+    },
+    {
+      "iteration": 4,
+      "timestamp": "2026-04-12T00:00:00Z",
+      "phase": "hypothesis",
+      "status": "completed",
+      "targetDimension": "planning",
+      "hypothesisId": "2026-04-12-planning-material-rewrite-ownership-gate-v1",
+      "scoreBefore": {
+        "target": 3.38,
+        "byDimension": {
+          "toolSelection": 4.06,
+          "scoutDepth": 4,
+          "clarification": 5,
+          "planning": 3.38,
+          "execution": 2.62,
+          "synthesis": 4.75,
+          "contextBudget": 4.44,
+          "reasoningDepth": 4.5,
+          "mcpTransport": 3.19,
+          "codeSafety": 3.94,
+          "synthesisBudget": 4.62
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": null,
+      "reason": "Generated a second planning hypothesis focused on blocking non-material rewrite acceptance and explicitly treating persistent localhost HTTP 500 as an environmental blocker.",
+      "filesChanged": [],
+      "wasReverted": false,
+      "promptCount": 16,
+      "durationMs": 0,
+      "artifactPaths": {
+        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-experiment-manifest.latest.json",
+        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
+        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-research-decision.latest.json"
+      },
+      "harnessSummary": null
+    },
+    {
+      "iteration": 4,
+      "timestamp": "2026-04-12T02:50:25Z",
+      "phase": "experiment",
+      "status": "rejected",
+      "targetDimension": "planning",
+      "hypothesisId": "2026-04-12-planning-material-rewrite-ownership-gate-v1",
+      "scoreBefore": {
+        "target": 3.38,
+        "byDimension": {
+          "toolSelection": 4.06,
+          "scoutDepth": 4,
+          "clarification": 5,
+          "planning": 3.38,
+          "execution": 2.62,
+          "synthesis": 4.75,
+          "contextBudget": 4.44,
+          "reasoningDepth": 4.5,
+          "mcpTransport": 3.19,
+          "codeSafety": 3.94,
+          "synthesisBudget": 4.62
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": {
+        "targetImproved": null,
+        "targetClusterImproved": null,
+        "targetProgress": null,
+        "noHardRegression": null,
+        "noBaselineDrop": null,
+        "harnessGreen": null,
+        "parityHeld": true
+      },
+      "reason": "Focused validation failed before remeasurement because the planning-focused unit tests remained red, the required typecheck and lint gates were red, and SDK query smoke validation was blocked by missing valid local credentials; the experiment was auto-reverted and the regression harness was skipped after this earlier gate failure.",
+      "filesChanged": [
+        "context/lib/ai/agentic-execution.ts",
+        "context/lib/ai/query-planning-heuristics.ts",
+        "context/lib/ai/query-policy-guards.ts",
+        "context/tests/unit/query-planning-heuristics.test.ts",
+        "context/tests/unit/query-policy-guards.test.ts"
+      ],
+      "wasReverted": true,
+      "promptCount": 2,
+      "durationMs": 0,
+      "artifactPaths": {
+        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-experiment-manifest.latest.json",
+        "regressionArtifact": null,
+        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-research-decision.latest.json"
+      },
+      "harnessSummary": null
+    },
+    {
+      "iteration": 5,
+      "timestamp": "2026-04-12T03:05:00Z",
+      "phase": "hypothesis",
+      "status": "completed",
+      "targetDimension": "execution",
+      "hypothesisId": "2026-04-12-execution-stalled-retry-stop-gate-v1",
+      "scoreBefore": {
+        "target": 2.62,
+        "byDimension": {
+          "toolSelection": 4.06,
+          "scoutDepth": 4,
+          "clarification": 5,
+          "planning": 3.38,
+          "execution": 2.62,
+          "synthesis": 4.75,
+          "contextBudget": 4.44,
+          "reasoningDepth": 4.5,
+          "mcpTransport": 3.19,
+          "codeSafety": 3.94,
+          "synthesisBudget": 4.62
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": null,
+      "reason": "Generated a final execution hypothesis that adds a no-progress stop gate for repeated same-tool self-heal churn and explicitly says to stop if measurability remains blocked.",
+      "filesChanged": [],
+      "wasReverted": false,
+      "promptCount": 16,
+      "durationMs": 0,
+      "artifactPaths": {
+        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-experiment-manifest.latest.json",
+        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
+        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-research-decision.latest.json"
+      },
+      "harnessSummary": null
+    },
+    {
+      "iteration": 5,
+      "timestamp": "2026-04-12T03:02:21Z",
+      "phase": "experiment",
+      "status": "rejected",
+      "targetDimension": "execution",
+      "hypothesisId": "2026-04-12-execution-stalled-retry-stop-gate-v1",
+      "scoreBefore": {
+        "target": 2.62,
+        "byDimension": {
+          "toolSelection": 4.06,
+          "scoutDepth": 4,
+          "clarification": 5,
+          "planning": 3.38,
+          "execution": 2.62,
+          "synthesis": 4.75,
+          "contextBudget": 4.44,
+          "reasoningDepth": 4.5,
+          "mcpTransport": 3.19,
+          "codeSafety": 3.94,
+          "synthesisBudget": 4.62
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": {
+        "targetImproved": null,
+        "targetClusterImproved": null,
+        "targetProgress": null,
+        "noHardRegression": null,
+        "noBaselineDrop": null,
+        "harnessGreen": null,
+        "parityHeld": true
+      },
+      "reason": "Focused validation failed before remeasurement because the repository-wide typecheck and lint gates were still red, and SDK query smokes remained blocked by invalid local credentials; the experiment was auto-reverted and the regression harness was skipped after this earlier gate failure.",
+      "filesChanged": [
+        "context/lib/ai/agentic-execution.ts",
+        "context/tests/unit/agentic-execution-heuristics.test.ts"
+      ],
+      "wasReverted": true,
+      "promptCount": 2,
+      "durationMs": 0,
+      "artifactPaths": {
+        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-experiment-manifest.latest.json",
+        "regressionArtifact": null,
+        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-research-decision.latest.json"
+      },
+      "harnessSummary": null
+    }
+  ]
+}

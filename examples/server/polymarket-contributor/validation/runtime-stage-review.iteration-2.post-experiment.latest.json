@@ -1,0 +1,136 @@
+{
+  "reviewedAt": "2026-04-12T00:00:00Z",
+  "reviewVersion": "runtime-stage-reviewer.v1",
+  "traceCount": 18,
+  "dimensionScores": {
+    "toolSelection": 4.61,
+    "scoutDepth": 5,
+    "clarification": 5,
+    "planning": 3.44,
+    "execution": 3.72,
+    "synthesis": 4.72,
+    "contextBudget": 4.72,
+    "reasoningDepth": 4.44,
+    "mcpTransport": 4.22,
+    "codeSafety": 3.78,
+    "synthesisBudget": 4.72
+  },
+  "optimizationReadiness": {
+    "toolSelection": {
+      "status": "monitor",
+      "reason": "Selection is strong overall, but one zero-tool-call miss and one clause-coverage/missing-capability miss show the floor is still too low for answerable prompts."
+    },
+    "scoutDepth": {
+      "status": "monitor",
+      "reason": "The prior shallow-discovery bottleneck appears materially improved in this iteration and is no longer the limiting dimension."
+    },
+    "clarification": {
+      "status": "calibrate",
+      "reason": "This stage rarely had to do real disambiguation, so the high mean is mostly non-activation rather than strong evidence under ambiguity."
+    },
+    "planning": {
+      "status": "ready",
+      "reason": "This is the weakest mean score, and the failure class is stable: plans repeatedly under-specify deterministic named-target resolution and clause coverage even when scouting is strong."
+    },
+    "execution": {
+      "status": "ready",
+      "reason": "A recurring repair-without-retargeting cluster affects a large share of traces, including budget exhaustion and retries that still terminate on the wrong or incomplete target."
+    },
+    "synthesis": {
+      "status": "monitor",
+      "reason": "Synthesis is generally strong; remaining issues mostly inherit from upstream targeting and repair failures rather than synthesis-budget weakness."
+    },
+    "contextBudget": {
+      "status": "monitor",
+      "reason": "Budget use is healthy overall, with only isolated empty-payload or truncated-context outliers."
+    },
+    "reasoningDepth": {
+      "status": "monitor",
+      "reason": "Lower scores are mostly downstream of planning and repair failures rather than a stable standalone reasoning-depth deficit."
+    },
+    "mcpTransport": {
+      "status": "monitor",
+      "reason": "Latency and retry costs still appear in weak traces, but the dominant pattern is upstream mis-targeting rather than transport-only failure."
+    },
+    "codeSafety": {
+      "status": "monitor",
+      "reason": "Validator catches unsafe generic or rejected execution paths reliably, but the repeated warnings point more to planner quality than to a separate safety-system bottleneck."
+    },
+    "synthesisBudget": {
+      "status": "monitor",
+      "reason": "Budget is not a meaningful limiter in this iteration."
+    }
+  },
+  "dominantFailureClusters": [
+    {
+      "dimension": "execution",
+      "label": "repair_without_retargeting",
+      "traceCount": 8
+    },
+    {
+      "dimension": "planning",
+      "label": "named_target_without_resolution",
+      "traceCount": 6
+    },
+    {
+      "dimension": "synthesis",
+      "label": "grounded_but_low_delta_answer",
+      "traceCount": 3
+    },
+    {
+      "dimension": "toolSelection",
+      "label": "zero_tool_call_plan",
+      "traceCount": 1
+    }
+  ],
+  "interactionRisks": [
+    {
+      "pair": ["planning", "execution"],
+      "risk": "When planning does not deterministically resolve the named target, execution retries tend to stay on the same weak branch and completeness cannot fully recover.",
+      "pairedFixAllowed": true
+    },
+    {
+      "pair": ["planning", "codeSafety"],
+      "risk": "When the planner keeps proposing generic or validator-rejected workflows, repair budget is spent on hygiene and patching instead of progressing toward the grounded answer path.",
+      "pairedFixAllowed": true
+    },
+    {
+      "pair": ["toolSelection", "execution"],
+      "risk": "Clause-partial routing or tool-free completion can leave execution with empty or misaligned canonical payloads, making downstream repair look like an execution problem when the root cause starts earlier.",
+      "pairedFixAllowed": true
+    }
+  ],
+  "summary": {
+    "weakestDimension": "planning",
+    "weakestScore": 3.44
+  },
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 4.61,
+      "scoutDepth": 5,
+      "clarification": 5,
+      "planning": 3.44,
+      "execution": 3.72,
+      "synthesis": 4.72
+    },
+    "crossCuttingMeans": {
+      "contextBudget": 4.72,
+      "reasoningDepth": 4.44,
+      "mcpTransport": 4.22,
+      "codeSafety": 3.78,
+      "synthesisBudget": 4.72
+    },
+    "weakestDimension": "planning",
+    "weakestScore": 3.44,
+    "optimizationReadiness": {
+      "planning": {
+        "status": "ready",
+        "reason": "This is the weakest mean score, and the failure class is stable: plans repeatedly under-specify deterministic named-target resolution and clause coverage even when scouting is strong."
+      },
+      "execution": {
+        "status": "ready",
+        "reason": "A recurring repair-without-retargeting cluster affects a large share of traces, including budget exhaustion and retries that still terminate on the wrong or incomplete target."
+      }
+    }
+  }
+}

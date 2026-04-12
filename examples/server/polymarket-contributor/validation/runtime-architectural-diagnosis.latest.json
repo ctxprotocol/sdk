@@ -1,0 +1,89 @@
+{
+  "generatedAt": "2026-04-12T11:00:00Z",
+  "version": "runtime-architectural-advisor.v1",
+  "executiveSummary": "The auto-experiment loop ran 5 iterations targeting execution, planning, and scoutDepth — all rejected. The plateau has two root causes: (1) the scoutDepth scoring function is broken — it caps at 4 because of a deprecated flag that is always false, making 10 of 18 traces appear bottlenecked on a dimension that cannot improve without a scoring fix; (2) the real downstream quality gap is in synthesis differentiation — grounded data reaches the answer path but the final output doesn't create enough separation from what a free baseline would produce. The auto-loop cannot fix either of these because the first is a measurement bug and the second is an architectural decision about how synthesis uses scout evidence.",
+  "scoringArtifacts": [
+    {
+      "dimension": "scoutDepth",
+      "finding": "In analyze-stage-traces.mjs line 372, buildScoutDepthScore caps the score at 4 when selection.scoutEnabled === false. But scoutEnabled is a deprecated compatibility alias in query-depth-policy.ts (line 192-193, 957-958) that is ALWAYS false — even in the deep lane where externalProbeEnabled replaced it. Every deep-mode trace gets scoutDepth=4 by construction, regardless of actual scout quality. This makes scoutDepth appear as the weakest dimension (mean 4.0, bottleneck in 10/18 traces) when it may not be.",
+      "recommendation": "Update buildScoutDepthScore to check evidenceAttachedToPlanning and probeConfidence instead of the deprecated scoutEnabled flag. A trace where the scout found relevant methods, attached evidence to the planner, and the probe confidence was high should score 5 even without the legacy external probe path.",
+      "impactOnDimensionMean": "scoutDepth mean would likely move from 4.0 to 4.5-5.0 for traces with good evidence flow. This would remove scoutDepth as the measured bottleneck and reveal the actual weakest dimension (likely planning at 4.22 or execution at 4.33)."
+    }
+  ],
+  "architecturalRecommendations": [
+    {
+      "id": "rec-1",
+      "rank": 1,
+      "title": "Fix the scoutDepth scoring function to use non-deprecated signals",
+      "targetDimension": "scoutDepth",
+      "changeType": "scoring_fix",
+      "summary": "The scoutDepth scorer checks a deprecated flag that is always false. Fix it to use the actual quality signals: evidenceAttachedToPlanning, probeConfidence, shortlistCount, and candidateMethodCount. This is a measurement fix, not a runtime change — it doesn't change how the system works, just how we measure it.",
+      "rootCause": "query-depth-policy.ts always sets scoutEnabled=false (deprecated alias). analyze-stage-traces.mjs buildScoutDepthScore (line 372) caps at 4 when scoutEnabled===false.",
+      "proposedApproach": "In buildScoutDepthScore: replace the scoutEnabled check with logic that scores based on (a) whether evidenceAttachedToPlanning is true, (b) probeConfidence threshold (e.g., >0.8 = full credit), (c) shortlistCount > 0. A trace with high confidence and evidence attached to planning should score 5. A trace where evidence was gathered but not attached should score 3-4.",
+      "filesLikelyChanged": ["context/scripts/analyze-stage-traces.mjs"],
+      "expectedImpact": "Removes the false bottleneck signal. Reveals the true quality distribution across dimensions. Does not change runtime behavior at all.",
+      "risk": "Low. This only changes measurement, not execution. The regression harness will still catch real quality regressions.",
+      "complexity": "low",
+      "prerequisite": null,
+      "alreadyTriedAndFailed": false,
+      "triedApproachDescription": null
+    },
+    {
+      "id": "rec-2",
+      "rank": 2,
+      "title": "Improve synthesis differentiation by passing scout evidence quality signals to the synthesizer",
+      "targetDimension": "synthesis",
+      "changeType": "architectural",
+      "summary": "In 10 of 18 traces, the diagnosis is 'grounded data reached the answer path but synthesis did not create strong separation from the baseline.' The scout finds data, execution produces results, but synthesis treats all grounded evidence equally. The synthesizer does not know which pieces of evidence are high-confidence vs. low-confidence, or which are unique to the paid path vs. available from free sources.",
+      "rootCause": "The synthesis stage receives execution results but not the scout's evidence quality metadata (probe confidence, shortlist size, method fit scores). It cannot distinguish between a query where the paid path found genuinely unique data and a query where the same data was available from a free search. Without this signal, synthesis produces generically competent but undifferentiated answers.",
+      "proposedApproach": "Thread a 'differentiation signal' from scout evidence through to the synthesis prompt. This could be as simple as a flag like 'highDifferentiationEvidence: true/false' based on whether the scout found methods that a free baseline would not have access to. When the signal is high, the synthesis prompt should emphasize the unique data. When low, it should emphasize analytical depth instead.",
+      "filesLikelyChanged": ["context/lib/ai/query-stage-artifacts.ts", "context/lib/ai/scout-trust-boundary.ts", "context/lib/ai/agentic-execution.ts"],
+      "expectedImpact": "Would improve the actual buyer-facing quality of answers by helping synthesis leverage what makes the paid path valuable. Expected synthesis mean improvement of 0.3-0.5.",
+      "risk": "Medium. Requires threading a new signal through multiple stages. Could over-index on 'differentiation theater' if the signal is too blunt.",
+      "complexity": "medium",
+      "prerequisite": "rec-1 (fix scoring first so we can measure the real impact)",
+      "alreadyTriedAndFailed": false,
+      "triedApproachDescription": null
+    },
+    {
+      "id": "rec-3",
+      "rank": 3,
+      "title": "Improve planning precision for multi-entity and parameter-extraction queries",
+      "targetDimension": "planning",
+      "changeType": "prompt_contract",
+      "summary": "5 of 18 traces show planning scores of 3, all with the pattern 'plan discovers noisy candidate sets but does not use deterministic semantic targeting before selecting final instruments.' The planner generates broad discovery plans when the query asks for specific entities, leading to execution that resolves the wrong entity (e.g., returning '2026 NBA Champion' futures instead of a specific Thunder vs. Clippers game).",
+      "rootCause": "The planner validation flags these issues but the planner's prompt contract does not explicitly require a 'resolve the specific entity first, then fetch parameters' pattern for queries that name specific instruments, markets, or entities. The planner generates exploration-first plans even when the query is specific enough for direct targeting.",
+      "proposedApproach": "Add a pre-planning entity resolution step or strengthen the planner prompt contract to require explicit target resolution before data fetching when the query names specific entities. This is a prompt/contract change, not a code rewrite.",
+      "filesLikelyChanged": ["context/lib/ai/agentic-execution.ts"],
+      "expectedImpact": "Would fix the 5 traces with planning score 3. Expected planning mean improvement from 4.22 to 4.5+.",
+      "risk": "Medium. Entity resolution adds a step that could slow down simple queries or miss when a query is specific vs. exploratory.",
+      "complexity": "medium",
+      "prerequisite": null,
+      "alreadyTriedAndFailed": true,
+      "triedApproachDescription": "The auto-loop tried 'execution' and 'planning' improvements in iterations 1-5 but focused on repair logic and heuristic tuning rather than the entity-resolution pattern. All were rejected because they didn't materially improve the target dimension."
+    },
+    {
+      "id": "rec-4",
+      "rank": 4,
+      "title": "Add a second scout pass for low-confidence initial probes",
+      "targetDimension": "scoutDepth",
+      "changeType": "execution_logic",
+      "summary": "Currently the scout runs one probe pass. When the initial probe returns low-confidence results (few shortlisted methods, low probe confidence), the system proceeds with what it has rather than trying a reformulated probe. A second pass with a narrowed or alternative query could find better methods.",
+      "proposedApproach": "In scout-orchestration.ts, after the initial probe, check if probeConfidence < threshold (e.g., 0.7) and shortlistCount < 3. If both, run a second probe with a reformulated query (e.g., extract the key entity and search more specifically). Gate this behind a rollout flag.",
+      "filesLikelyChanged": ["context/lib/ai/scout-orchestration.ts", "context/lib/rollout/dual-surface-flags.ts"],
+      "expectedImpact": "Would help queries where the initial broad probe misses specific methods. Expected improvement on 3-5 traces.",
+      "risk": "High. Adds latency. The second probe may not find anything better. Needs careful budget management to avoid doubling scout cost.",
+      "complexity": "high",
+      "prerequisite": "rec-1 (need accurate scoutDepth measurement to evaluate impact)",
+      "alreadyTriedAndFailed": false,
+      "triedApproachDescription": null
+    }
+  ],
+  "metaObservations": [
+    "The auto-experiment loop spent 5 iterations trying to improve dimensions whose scores were suppressed by a measurement artifact. This is the strongest argument for human-in-the-loop mode: the scoring bug is obvious to a human reading the code but invisible to a hypothesis generator that only sees score numbers.",
+    "The dominant pattern across bottlenecked traces is 'grounded data exists but synthesis doesn't differentiate from baseline.' This is fundamentally a taste problem — what makes a paid answer worth paying for? The auto-loop cannot develop taste. A human needs to decide what differentiation looks like for each query class.",
+    "The regression harness shows query means of 4.6 (Polymarket) and 4.63 (Kalshi), which are already strong. The remaining improvements are in the long tail of traces where the answer is competent but not clearly better than what free tools produce. This is the hardest 10% and the most valuable for buyer conversion.",
+    "The scoring fix (rec-1) is a prerequisite for everything else. Without it, any future auto-experiment run will waste iterations chasing a phantom scoutDepth bottleneck."
+  ],
+  "recommendedNextStep": "Implement rec-1 (scoring fix) directly — it's a measurement change, not a runtime change, so it doesn't need the full experiment/regression loop. Then re-run /run-runtime-diagnosis to see the true quality distribution with accurate scoring. Then decide between rec-2 (synthesis differentiation) and rec-3 (planning precision) based on which dimension is actually weakest."
+}
