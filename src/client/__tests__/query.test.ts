@@ -211,36 +211,34 @@ const MOCK_DEVELOPER_TRACE = {
   ],
   diagnostics: {
     selection: {
-      selectedDepth: "deep",
-      deepMode: "deep",
-      debugScoutDeepMode: "deep",
-      plannerReasoningStage: "focused",
-      scoutEnabled: false,
-      preserveFastOneShot: false,
-      candidateMethodCount: 12,
-      scoutProbeStatus: "ready",
-      scoutProbeAdequacy: "limited",
-      scoutProbeConfidence: 0.81,
-      scoutMetadataConfidence: 0.74,
-      scoutProbeQuerySafeCandidateCount: 8,
-      scoutProbeRankedMethodCount: 5,
-      scoutProbeAmbiguityPoolCount: 2,
-      scoutProbeShortlistedMethodCount: 2,
-      scoutProbeMissingCapability: null,
-      scoutPrePlanProbeCalls: 0,
-      scoutPrePlanProbeBudgetReasonCode: null,
-      scoutChangedInitialPlan: false,
-      scoutChangedPlannerReasoningStage: false,
-      scoutInitialSelectedDepth: "deep",
-      scoutInitialDeepMode: "deep",
-      scoutInitialPlannerReasoningStage: "focused",
-      scoutInitialReasonCode: "metadata_quality_deep",
-      scoutFinalReasonCode: "deep_lane_enabled",
-      scoutEvidenceAttachedToPlanning: true,
-      scoutLlmSelectionUsed: true,
-      scoutLlmSelectionFallback: false,
-      scoutLlmSelectionLatencyMs: 183,
-      selectedTools: [
+        selectedPolicy: "exploratory",
+        debugScoutDeepMode: "deep",
+        plannerReasoningStage: "focused",
+        scoutEnabled: false,
+        oneShotBias: false,
+        candidateMethodCount: 12,
+        scoutProbeStatus: "ready",
+        scoutProbeAdequacy: "limited",
+        scoutProbeConfidence: 0.81,
+        scoutMetadataConfidence: 0.74,
+        scoutProbeQuerySafeCandidateCount: 8,
+        scoutProbeRankedMethodCount: 5,
+        scoutProbeAmbiguityPoolCount: 2,
+        scoutProbeShortlistedMethodCount: 2,
+        scoutProbeMissingCapability: null,
+        scoutPrePlanProbeCalls: 0,
+        scoutPrePlanProbeBudgetReasonCode: null,
+        scoutChangedInitialPlan: false,
+        scoutChangedPlannerReasoningStage: false,
+        scoutInitialSelectedPolicy: "exploratory",
+        scoutInitialPlannerReasoningStage: "focused",
+        scoutInitialReasonCode: "metadata_quality_deep",
+        scoutFinalReasonCode: "selected_exploratory",
+        scoutEvidenceAttachedToPlanning: true,
+        scoutLlmSelectionUsed: true,
+        scoutLlmSelectionFallback: false,
+        scoutLlmSelectionLatencyMs: 183,
+        selectedTools: [
         {
           toolId: "tool-uuid-1",
           toolName: "Whale Tracker",
@@ -248,7 +246,7 @@ const MOCK_DEVELOPER_TRACE = {
           selectedMethods: ["get_whales", "get_whale_summary"],
           omittedSelectedMethodCount: 1,
         },
-      ],
+        ],
     },
     clarification: {
       orchestrationMode: "query",
@@ -294,7 +292,7 @@ const MOCK_DEVELOPER_TRACE = {
       rewriteError: null,
       candidateSummaries: [],
     },
-    completeness: {
+    verification: {
       evaluations: [
         {
           attempt: 2,
@@ -592,8 +590,6 @@ describe("Query Resource", () => {
         includeData: true,
         includeDataUrl: true,
         includeDeveloperTrace: true,
-        queryDepth: "auto",
-        debugScoutDeepMode: "deep",
       });
 
       const body = JSON.parse(mockFn.mock.calls[0][1].body);
@@ -605,8 +601,6 @@ describe("Query Resource", () => {
         includeData: true,
         includeDataUrl: true,
         includeDeveloperTrace: true,
-        queryDepth: "auto",
-        debugScoutDeepMode: "deep",
         stream: true,
       });
       expect(result.data).toEqual({ summary: "tool output" });
@@ -663,11 +657,17 @@ describe("Query Resource", () => {
 
       const result = await client.query.run("test query");
       expect(result.developerTrace).toEqual(MOCK_DEVELOPER_TRACE);
+      expect(result.developerTrace?.diagnostics?.selection?.selectedPolicy).toBe(
+        "exploratory",
+      );
+      expect(result.developerTrace?.diagnostics?.selection?.oneShotBias).toBe(
+        false,
+      );
       expect(
         result.developerTrace?.diagnostics?.selection?.scoutProbeAmbiguityPoolCount
       ).toBe(2);
       expect(
-        result.developerTrace?.diagnostics?.completeness?.repairEvents?.[1]
+        result.developerTrace?.diagnostics?.verification?.repairEvents?.[1]
           ?.outcome
       ).toBe("patched");
       expect(
@@ -1080,8 +1080,6 @@ describe("Query Resource", () => {
         includeData: true,
         includeDataUrl: true,
         includeDeveloperTrace: true,
-        queryDepth: "deep",
-        debugScoutDeepMode: "deep",
       })) {
         events.push(event);
       }
@@ -1093,8 +1091,6 @@ describe("Query Resource", () => {
       expect(body.includeData).toBe(true);
       expect(body.includeDataUrl).toBe(true);
       expect(body.includeDeveloperTrace).toBe(true);
-      expect(body.queryDepth).toBe("deep");
-      expect(body.debugScoutDeepMode).toBe("deep");
     });
 
     it("forwards clarificationPolicy for stream()", async () => {

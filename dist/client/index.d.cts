@@ -1,5 +1,5 @@
-import { aj as UpdateToolOptions, ak as UpdateToolResult, T as Tool, H as SearchOptions, I as ExecuteOptions, O as ExecutionResult, J as ExecuteSessionStartOptions, N as ExecuteSessionResult, a0 as QueryOptions, a1 as QueryResult, ad as QueryStreamEvent, D as ContextClientOptions } from '../types-Dw_bmVr4.cjs';
-export { at as ALLOWED_TOOL_CATEGORIES, B as ContextError, al as ContextErrorCode, U as ExecuteApiErrorResponse, V as ExecuteApiResponse, P as ExecuteApiSuccessResponse, X as ExecuteSessionApiResponse, W as ExecuteSessionApiSuccessResponse, L as ExecuteSessionSpend, K as ExecuteSessionStatus, M as McpTool, E as McpToolMeta, F as McpToolRateLimitHints, ac as QueryApiResponse, ab as QueryApiSuccessResponse, aq as QueryAssumptionMetadata, Z as QueryAttemptForkReason, _ as QueryAttemptReference, ap as QueryCapabilityMissPayload, an as QueryClarificationOption, am as QueryClarificationPayload, ao as QueryClarificationPolicy, a5 as QueryCompletenessRepairEvent, a4 as QueryCost, Y as QueryDeepMode, Q as QueryDeveloperTrace, a6 as QueryDeveloperTraceDiagnostics, aa as QueryDeveloperTraceLoopInfo, a8 as QueryDeveloperTraceStep, a7 as QueryDeveloperTraceSummary, a9 as QueryDeveloperTraceToolRef, $ as QueryForkReference, ar as QueryOutcomeType, a2 as QuerySessionState, ag as QueryStreamDeveloperTraceEvent, ah as QueryStreamDoneEvent, ai as QueryStreamErrorEvent, af as QueryStreamTextDeltaEvent, ae as QueryStreamToolStatusEvent, a3 as QueryToolUsage, G as SearchResponse, as as ToolCategory } from '../types-Dw_bmVr4.cjs';
+import { aj as UpdateToolOptions, ak as UpdateToolResult, T as Tool, H as SearchOptions, I as ExecuteOptions, O as ExecutionResult, J as ExecuteSessionStartOptions, N as ExecuteSessionResult, a0 as QueryOptions, a1 as QueryResult, ad as QueryStreamEvent, D as ContextClientOptions } from '../types-DPxI353c.cjs';
+export { at as ALLOWED_TOOL_CATEGORIES, B as ContextError, al as ContextErrorCode, U as ExecuteApiErrorResponse, V as ExecuteApiResponse, P as ExecuteApiSuccessResponse, X as ExecuteSessionApiResponse, W as ExecuteSessionApiSuccessResponse, L as ExecuteSessionSpend, K as ExecuteSessionStatus, M as McpTool, E as McpToolMeta, F as McpToolRateLimitHints, ac as QueryApiResponse, ab as QueryApiSuccessResponse, aq as QueryAssumptionMetadata, Z as QueryAttemptForkReason, _ as QueryAttemptReference, ap as QueryCapabilityMissPayload, an as QueryClarificationOption, am as QueryClarificationPayload, ao as QueryClarificationPolicy, a5 as QueryCompletenessRepairEvent, a4 as QueryCost, Y as QueryDeepMode, Q as QueryDeveloperTrace, a6 as QueryDeveloperTraceDiagnostics, aa as QueryDeveloperTraceLoopInfo, a8 as QueryDeveloperTraceStep, a7 as QueryDeveloperTraceSummary, a9 as QueryDeveloperTraceToolRef, $ as QueryForkReference, ar as QueryOutcomeType, a2 as QuerySessionState, ag as QueryStreamDeveloperTraceEvent, ah as QueryStreamDoneEvent, ai as QueryStreamErrorEvent, af as QueryStreamTextDeltaEvent, ae as QueryStreamToolStatusEvent, a3 as QueryToolUsage, G as SearchResponse, as as ToolCategory } from '../types-DPxI353c.cjs';
 
 /**
  * Developer resource for managing tool listings on the Context Protocol marketplace.
@@ -124,8 +124,9 @@ declare class Tools {
  *
  * Unlike `tools.execute()` which calls a single tool once (pay-per-request),
  * the Query resource sends a natural-language question and lets the server
- * handle discovery-first orchestration (`discover/probe -> plan-from-evidence ->
- * execute -> bounded fallback`) plus AI synthesis — all for one flat fee.
+ * handle the live librarian pipeline (`discover -> select -> metadata scout ->
+ * clarify if needed -> iterative execute -> synthesize -> settle`) plus AI
+ * synthesis — all for one flat fee.
  *
  * This is the "prepared meal" vs "raw ingredients" distinction:
  * - `tools.execute()` = raw data, full control, predictable cost
@@ -259,8 +260,9 @@ declare class ContextClient {
      * Query resource for agentic queries (pay-per-response).
      *
      * Unlike `tools.execute()` which calls a single tool once, `query` sends
-     * a natural-language question and lets the server handle tool discovery,
-     * multi-tool orchestration, self-healing, and AI synthesis — one flat fee.
+     * a natural-language question and lets the server handle discovery,
+     * metadata scout, clarification, iterative execution, and AI synthesis —
+     * one flat fee.
      */
     readonly query: Query;
     /**

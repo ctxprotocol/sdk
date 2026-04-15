@@ -15,8 +15,9 @@ import type { ContextClient } from "../client.js";
  *
  * Unlike `tools.execute()` which calls a single tool once (pay-per-request),
  * the Query resource sends a natural-language question and lets the server
- * handle discovery-first orchestration (`discover/probe -> plan-from-evidence ->
- * execute -> bounded fallback`) plus AI synthesis — all for one flat fee.
+ * handle the live librarian pipeline (`discover -> select -> metadata scout ->
+ * clarify if needed -> iterative execute -> synthesize -> settle`) plus AI
+ * synthesis — all for one flat fee.
  *
  * This is the "prepared meal" vs "raw ingredients" distinction:
  * - `tools.execute()` = raw data, full control, predictable cost
@@ -357,8 +358,6 @@ export class Query {
         includeData: opts.includeData,
         includeDataUrl: opts.includeDataUrl,
         includeDeveloperTrace: opts.includeDeveloperTrace,
-        queryDepth: opts.queryDepth,
-        debugScoutDeepMode: opts.debugScoutDeepMode,
         stream: true,
       }),
     });

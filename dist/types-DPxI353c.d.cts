@@ -221,7 +221,7 @@ interface McpToolRateLimitHints {
     supportsBulk?: boolean;
     /** Preferred batch-oriented methods to call instead of fan-out loops */
     recommendedBatchTools?: string[];
-    /** Optional human-readable notes for planning */
+    /** Optional human-readable notes for execution behavior */
     notes?: string;
 }
 type DiscoveryMode = "query" | "execute";
@@ -237,7 +237,7 @@ interface McpToolMeta {
     surface?: McpToolSurface;
     /** Whether this method can be selected in query mode */
     queryEligible?: boolean;
-    /** Declared latency class for planner/runtime gating */
+    /** Declared latency class for metadata-scout/runtime gating */
     latencyClass?: McpToolLatencyClass;
     /** Method-level pricing metadata */
     pricing?: McpToolPricingMeta;
@@ -248,7 +248,7 @@ interface McpToolMeta {
     /** Context injection requirements handled by the Context runtime */
     contextRequirements?: string[];
     /**
-     * Optional planner/runtime pacing hints.
+     * Optional metadata-scout/runtime pacing hints.
      * Tool contributors can publish these to reduce rate-limit failures.
      */
     rateLimit?: McpToolRateLimitHints;
@@ -512,8 +512,6 @@ interface ExecutionResult<T = unknown> {
     /** Execution duration in milliseconds */
     durationMs: number;
 }
-/** Supported orchestration depth modes for query execution. */
-type QueryDepth = "fast" | "auto" | "deep";
 type QueryDeepMode = "deep" | "deep-light" | "deep-heavy";
 type QueryClarificationPolicy = "return" | "auto" | "error";
 type QueryOutcomeType = "answer" | "clarification_required" | "capability_miss";
@@ -609,19 +607,22 @@ interface QueryClarificationDiagnostics {
  * Options for the agentic query endpoint (pay-per-response).
  *
  * Unlike `execute()` which calls a single tool once, `query()` sends a
- * natural-language question and lets the server handle discovery-first
- * orchestration (`discover/probe -> plan-from-evidence -> execute ->
- * bounded fallback`) plus synthesis.
+ * natural-language question and lets the server handle the live librarian
+ * pipeline (`discover -> select -> metadata scout -> clarify if needed ->
+ * iterative execute -> synthesize -> settle`).
  * One flat fee covers up to 100 MCP skill calls per tool.
  */
 interface QueryOptions {
     /** The natural-language question to answer */
     query: string;
     /**
-     * How the SDK should handle clarification-required pre-plan situations:
+     * How the SDK should handle clarification-required situations:
      * - `return`: surface a structured clarification result to the caller
      * - `auto`: enable clarification auto-select and continue with the server's deterministic recommended option
      * - `error`: turn structured clarification/capability outcomes into terminal errors
+     *
+     * Default behavior is surface-dependent: headless SDK and MCP callers default
+     * to `auto`, while first-party chat defaults to `return`.
      */
     clarificationPolicy?: QueryClarificationPolicy;
     /**
@@ -677,23 +678,10 @@ interface QueryOptions {
     /**
      * Include machine-readable developer trace output for this query response.
      * When enabled, the server may return summary counters plus diagnostics
-     * for lane selection, scout probe adequacy, and bounded fallback behavior.
+     * for lane selection, metadata scout adequacy, clarification, and iterative
+     * execution behavior.
      */
     includeDeveloperTrace?: boolean;
-    /**
-     * Query orchestration depth mode:
-     * - `fast`: lower-latency path
-     * - `auto`: server decides between fast/deep
-     * - `deep`: full completeness-oriented path
-     */
-    queryDepth?: QueryDepth;
-    /**
-     * Development/testing only: force the server's internal deep lane.
-     * `deep` is the canonical value. Legacy `deep-light` / `deep-heavy`
-     * aliases are still accepted temporarily for compatibility and normalize
-     * to the same runtime lane. Invalid when `queryDepth` is `fast`.
-     */
-    debugScoutDeepMode?: QueryDeepMode;
     /**
      * Optional idempotency key (UUID recommended).
      * Reuse the same key when retrying the same logical request.
@@ -719,7 +707,7 @@ interface QueryDeveloperTraceLoopInfo {
     [key: string]: unknown;
 }
 /**
- * Tool selection metadata attached to discovery/planning diagnostics.
+ * Tool selection metadata attached to discovery and metadata-scout diagnostics.
  */
 interface QueryDeveloperTraceToolSelection {
     toolId: string;
@@ -730,32 +718,13 @@ interface QueryDeveloperTraceToolSelection {
     priceUsd?: string;
 }
 /**
- * Initial planner diagnostic details.
+ * Execution-contract details handed to the iterative runtime.
  */
 interface QueryPlanningTraceDiagnostic {
     plannerQuery: string;
     scoutEvidenceAttached: boolean;
     scoutEvidencePromptBlock: string | null;
     allowedModules: string[];
-}
-/**
- * Rediscovery/fallback diagnostic details.
- */
-interface QueryRediscoveryTraceDiagnostic {
-    considered: boolean;
-    executed: boolean;
-    skipReason: string | null;
-    missingCapability: string | null;
-    rediscoveryQuery: string | null;
-    capabilityLooksLikeSearchNeed: boolean;
-    allowSearchFallbackOnElapsedCap: boolean;
-    searchFallbackUsed: boolean;
-    preRediscoveryBudgetReasonCode: string | null;
-    candidateSearchResults: QueryDeveloperTraceToolSelection[];
-    selectedAlternatives: QueryDeveloperTraceToolSelection[];
-    mergedTools: QueryDeveloperTraceToolSelection[];
-    usingPaidFallback: boolean;
-    branchPlan: QueryPlanningTraceDiagnostic | null;
 }
 interface QueryCompletenessRepairEvent {
     attempt: number;
@@ -777,16 +746,15 @@ interface QueryCompletenessRepairEvent {
     }>;
 }
 /**
- * Rich developer-trace diagnostics for discovery-first orchestration internals.
+ * Rich developer-trace diagnostics for managed query-runtime internals.
  */
 interface QueryDeveloperTraceDiagnostics {
     selection: {
-        selectedDepth: string;
-        deepMode: string | null;
+        selectedPolicy: string;
         debugScoutDeepMode: string | null;
         plannerReasoningStage: string;
         scoutEnabled: boolean;
-        preserveFastOneShot: boolean;
+        oneShotBias: boolean;
         candidateMethodCount: number;
         scoutProbeStatus: string;
         scoutProbeAdequacy: string;
@@ -801,8 +769,7 @@ interface QueryDeveloperTraceDiagnostics {
         scoutPrePlanProbeBudgetReasonCode: string | null;
         scoutChangedInitialPlan: boolean;
         scoutChangedPlannerReasoningStage: boolean;
-        scoutInitialSelectedDepth: string;
-        scoutInitialDeepMode: string | null;
+        scoutInitialSelectedPolicy: string;
         scoutInitialPlannerReasoningStage: string;
         scoutInitialReasonCode: string;
         scoutFinalReasonCode: string;
@@ -812,9 +779,7 @@ interface QueryDeveloperTraceDiagnostics {
         scoutLlmSelectionLatencyMs: number | null;
         selectedTools: QueryDeveloperTraceToolSelection[];
     };
-    planning: {
-        initial: QueryPlanningTraceDiagnostic;
-    };
+    executionContract?: QueryPlanningTraceDiagnostic;
     cost?: {
         planningCostUsd: number;
         initialExecutionCostUsd: number;
@@ -824,13 +789,20 @@ interface QueryDeveloperTraceDiagnostics {
         toolCostUsd: number;
         totalChargedUsd: number;
     };
-    completeness: {
+    verification: {
         evaluations: unknown[];
         repairEvents: QueryCompletenessRepairEvent[];
         triggerNeedsDifferentTools: boolean;
         triggerMissingCapability: string | null;
     };
-    rediscovery: QueryRediscoveryTraceDiagnostic | null;
+    execution?: {
+        reasoningEnabled: boolean;
+        receivedReasoning: boolean;
+        reasoningChars: number;
+        scoutEvidenceInjected: boolean;
+        stepBudget: number;
+        completedStepCount: number;
+    };
     clarification?: QueryClarificationDiagnostics;
     contributorSearches?: ContributorSearchTraceRecord[];
     [key: string]: unknown;

@@ -369,7 +369,6 @@ async function main(): Promise<void> {
     throw new Error("Set CONTEXT_API_KEY before running this script.");
   }
 
-  const queryDepth = (process.env.QUERY_DEPTH as "fast" | "auto" | "deep" | undefined) ?? "deep";
   const modes = parseModes(process.env.AUDIT_MODES);
   const answerModelId = process.env.CONTEXT_ANSWER_MODEL_ID;
   const client = new ContextClient({ apiKey });
@@ -397,7 +396,6 @@ async function main(): Promise<void> {
           const result = await client.query.run({
             query: prompt,
             ...(mode === "manual" ? { tools: [resolvedTool.id] } : {}),
-            queryDepth,
             includeData: true,
             includeDeveloperTrace: true,
             ...(answerModelId ? { answerModelId } : {}),
@@ -608,7 +606,6 @@ async function main(): Promise<void> {
 
   const output = {
     generatedAt: new Date().toISOString(),
-    queryDepth,
     answerModelId: answerModelId || null,
     thresholds: {
       freshnessThresholdMinutes: FRESHNESS_THRESHOLD_MINUTES,

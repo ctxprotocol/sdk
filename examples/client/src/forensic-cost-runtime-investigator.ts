@@ -618,7 +618,6 @@ async function main(): Promise<void> {
     const walletBefore = lastKnownWalletUsd;
     const body: Record<string, unknown> = {
       query: queryCase.prompt,
-      queryDepth: "deep",
       includeData: true,
       includeDeveloperTrace: true,
       stream: false,

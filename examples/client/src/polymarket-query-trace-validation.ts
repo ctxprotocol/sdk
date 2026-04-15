@@ -150,7 +150,6 @@ async function runStreamProbe(client: ContextClient): Promise<{
   for await (const event of client.query.stream({
     query: "Top 3 politics markets by recent volume",
     tools: [POLYMARKET_TOOL_ID],
-    queryDepth: "deep",
     includeDeveloperTrace: true,
   })) {
     if (event.type === "tool-status") {
@@ -186,7 +185,6 @@ async function main(): Promise<void> {
       const result = await client.query.run({
         query: prompt,
         tools: [POLYMARKET_TOOL_ID],
-        queryDepth: "deep",
         includeData: true,
         includeDeveloperTrace: true,
       });

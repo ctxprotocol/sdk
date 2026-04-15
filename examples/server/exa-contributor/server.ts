@@ -82,6 +82,29 @@ type JsonRpcRequestContext = {
 const EXA_INCLUDE_TEXT_DESCRIPTION =
   "Optional single phrase of up to 5 words (NOT an array of multiple phrases).";
 
+const EXA_TOOL_DESCRIPTION_OVERRIDES: Record<string, string> = {
+  web_search_exa:
+    "Search the live web for current news, articles, headlines, sources, and public webpages. Best for prompts like 'search the web', 'find recent news', 'what explains this move', or 'look up sources about BTC flows'. Returns structured web results the librarian can cite.",
+  web_search_advanced_exa:
+    "Advanced live web and news search with filters for freshness, domains, categories, and result counts. Best when the user explicitly wants recent news, filtered sources, article search, or broader web research with structured results.",
+  deep_search_exa:
+    "Deep web research for harder open-ended questions that need broader source gathering, query expansion, and synthesized findings across multiple web pages and news sources.",
+  crawling_exa:
+    "Fetch and extract the content of specific webpages or articles after discovery. Use this after web search when you need to read the actual page behind a result.",
+  get_code_context_exa:
+    "Search public code, technical docs, examples, and developer resources across the web. Best for code search, API usage, and documentation lookup.",
+  company_research_exa:
+    "Research companies across the web using current public sources, company pages, and coverage. Useful for company background, recent developments, and source gathering.",
+  linkedin_search_exa:
+    "Search LinkedIn-style company and people profiles on the web. Useful for finding organizations, employees, founders, and public profile evidence.",
+  people_search_exa:
+    "Search for people on the public web and gather current profile-style results, references, and source links.",
+  deep_researcher_start:
+    "Start a deeper multi-source web research task when the question needs broader investigation across many web pages, articles, and sources.",
+  deep_researcher_check:
+    "Check the status and results of a previously started deep web research task.",
+};
+
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -443,20 +466,35 @@ function normalizeToolsListResponsePayload(payload: unknown): unknown {
 
   let changed = false;
   const normalizedTools = payload.result.tools.map((tool) => {
-    if (!isObjectRecord(tool) || !isObjectRecord(tool.inputSchema)) {
+    if (!isObjectRecord(tool)) {
       return tool;
     }
 
-    const normalizedSchema = normalizeIncludeTextSchemaNodes(tool.inputSchema);
-    if (!normalizedSchema.changed) {
+    let toolChanged = false;
+    let nextTool: Record<string, unknown> = { ...tool };
+
+    const toolName = hasStringValue(tool.name) ? tool.name : null;
+    const descriptionOverride =
+      toolName === null ? null : EXA_TOOL_DESCRIPTION_OVERRIDES[toolName] ?? null;
+    if (descriptionOverride && tool.description !== descriptionOverride) {
+      nextTool.description = descriptionOverride;
+      toolChanged = true;
+    }
+
+    if (isObjectRecord(tool.inputSchema)) {
+      const normalizedSchema = normalizeIncludeTextSchemaNodes(tool.inputSchema);
+      if (normalizedSchema.changed) {
+        nextTool.inputSchema = normalizedSchema.value;
+        toolChanged = true;
+      }
+    }
+
+    if (!toolChanged) {
       return tool;
     }
 
     changed = true;
-    return {
-      ...tool,
-      inputSchema: normalizedSchema.value,
-    };
+    return nextTool;
   });
 
   if (!changed) {

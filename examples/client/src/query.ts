@@ -34,7 +34,6 @@ async function main() {
     const answer = await client.query.run({
       query:
         "What are the top whale movements on Base, and what confidence checks did you run?",
-      queryDepth: "deep",
       includeDeveloperTrace: true,
     });
     console.log("Response:", answer.response);

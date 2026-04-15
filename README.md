@@ -96,13 +96,12 @@ const result = await client.tools.execute({
 console.log(result.session); // methodPrice, spent, remaining, maxSpend, ...
 ```
 
-**Query mode** gives you a managed librarian contract — the server runs a discovery-first planner contract (`discover/probe -> plan-from-evidence -> execute -> bounded fallback`) with model-aware context budgeting and can return plain answers or structured evidence packages for one flat fee:
+**Query mode** gives you a managed librarian contract — the server runs the live pipeline (`discover -> select -> metadata scout -> clarify if needed -> iterative execute -> synthesize -> settle`) with model-aware context budgeting and can return plain answers or structured evidence packages for one flat fee:
 ```typescript
 const answer = await client.query.run({
   query: "What are the top whale movements on Base?",
   answerModelId: "glm-model", // optional: choose the final synthesis model
   responseShape: "answer_with_evidence", // optional: answer | answer_with_evidence | evidence_only
-  queryDepth: "deep",        // optional: fast | auto | deep
   includeDataUrl: true,      // optional: persist full execution data to blob
   includeDeveloperTrace: true, // optional: include machine-readable runtime trace
 });
@@ -418,17 +417,16 @@ const closed = await client.tools.closeSession("sess_123");
 
 #### `client.query.run(options)`
 
-Run an agentic query. The server applies discovery-first orchestration (`discover/probe -> plan-from-evidence -> execute -> bounded fallback`) with up to 100 MCP calls per response turn, then returns the selected Query response contract (`answer`, `answer_with_evidence`, or `evidence_only`).
+Run an agentic query. The server applies the live librarian pipeline (`discover -> select -> metadata scout -> clarify if needed -> iterative execute -> synthesize -> settle`) with up to 100 MCP calls per response turn, then returns the selected Query response contract (`answer`, `answer_with_evidence`, or `evidence_only`).
 
-`queryDepth` controls orchestration depth:
-- `fast`: lower-latency path for simple lookups.
-- `auto`: server routes to either `fast` or `deep` from query intent + selected tool complexity.
-- `deep`: completeness-oriented path (default when omitted).
+The query runtime now exposes a single managed executor surface.
+The server decides internal budgets, ambiguity handling, and exploration policy
+from the query itself instead of asking SDK callers to choose a lane.
 
 `includeDeveloperTrace` and `orchestrationMetrics` expose optional rollout diagnostics.
 `developerTrace.summary` reports aggregate retry/fallback counters, while
-`developerTrace.diagnostics.selection` exposes runtime lane and scout probe signals
-used by discovery-first planning.
+`developerTrace.diagnostics.selection` exposes the runtime's internal policy
+decision and metadata-scout signals.
 
 ```typescript
 // Simple string
@@ -439,7 +437,6 @@ const answer = await client.query.run({
   query: "Analyze whale activity on Base",
   tools: ["tool-uuid-1", "tool-uuid-2"],  // optional — auto-discover if omitted
   answerModelId: "kimi-model-thinking",    // optional final synthesis model
-  queryDepth: "auto",                      // optional: fast | auto | deep
   includeData: true,                       // optional: include execution data inline
   includeDataUrl: true,                    // optional: include blob URL for full data
   includeDeveloperTrace: true,             // optional: include Developer Mode trace
@@ -452,7 +449,7 @@ console.log(answer.durationMs);   // Total time
 console.log(answer.data);         // Optional execution data (when includeData=true)
 console.log(answer.dataUrl);      // Optional blob URL (when includeDataUrl=true)
 console.log(answer.developerTrace?.summary); // Optional trace summary (retries/fallbacks/loops)
-console.log(answer.developerTrace?.diagnostics?.selection?.deepMode); // Optional deep lane trace
+console.log(answer.developerTrace?.diagnostics?.selection); // Optional internal runtime diagnostics
 console.log(answer.orchestrationMetrics); // Optional high-level first-pass metrics
 ```
 
@@ -471,7 +468,6 @@ Event types:
 ```typescript
 for await (const event of client.query.stream({
   query: "What are the top whale movements?",
-  queryDepth: "fast",
 })) {
   switch (event.type) {
     case "tool-status":
@@ -839,7 +835,7 @@ const TOOLS = [{
 
   // ⭐ `_meta` is standard MCP metadata:
   // - contextRequirements => context injection contract
-  // - rateLimit => planner/runtime pacing hints for agentic loops
+  // - rateLimit => metadata-scout/runtime pacing hints for agentic loops
   _meta: {
     contextRequirements: ["wallet"] as ContextRequirementType[],
     rateLimit: {
@@ -870,7 +866,7 @@ const TOOLS = [{
 
 The `_meta` field is part of the [MCP specification](https://modelcontextprotocol.io/specification/2025-11-25/server/tools#tool-definition) for arbitrary tool metadata. The Context platform reads:
 - `_meta.contextRequirements` for user-context injection
-- `_meta.rateLimit` / `_meta.rateLimitHints` for planner + runtime pacing guidance
+- `_meta.rateLimit` / `_meta.rateLimitHints` for metadata-scout + runtime pacing guidance
 
 Because `_meta` is an MCP-standard field, these hints survive normal MCP transport and discovery.
 

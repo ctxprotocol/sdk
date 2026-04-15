@@ -1,15 +1,21 @@
 # Exa AI MCP Server
 
 A proxy server that exposes Exa's official hosted MCP server via your own endpoint.
+It is especially useful as a marketplace contributor for:
+- live web search
+- recent news and article search
+- headlines and source discovery
+- webpage crawling after discovery
+- code and documentation lookup
 
 > 🔒 **Security**: This server is secured with Context Protocol Request Signing. Requests must come from the Context Platform or a client with a valid signing key.
 
 ## What is Exa?
 
 Exa is an AI-powered search engine that provides:
-- **Web Search**: Real-time web searches with optimized results
+- **Web Search**: Real-time web searches for news, articles, headlines, sources, and public webpages
 - **Code Search**: Find code snippets, documentation, and examples from GitHub, docs, and StackOverflow
-- **Deep Search**: Smart query expansion with high-quality summaries
+- **Deep Search**: Smart query expansion with high-quality summaries across many sources
 - **Company Research**: Comprehensive company information
 - **LinkedIn Search**: Search for companies and people on LinkedIn
 
@@ -26,6 +32,7 @@ This approach:
 - Always up-to-date with Exa's latest features
 - Consistent `/mcp` endpoint like other MCP servers
 - Keeps legacy callers working while surfacing `web_search_advanced_exa` for richer structured search
+- Makes Exa easier for Context marketplace discovery to identify as a web-search and news-search tool
 
 ## Setup
 
@@ -50,11 +57,11 @@ Server runs on `http://localhost:4004`.
 
 | Tool | Description |
 |------|-------------|
-| `web_search_exa` | Real-time web searches with optimized results |
-| `web_search_advanced_exa` | Structured search with richer filters and JSON-style results |
-| `get_code_context_exa` | Search code snippets, docs, and examples |
-| `deep_search_exa` | Deep web search with smart query expansion |
-| `crawling_exa` | Extract content from specific URLs |
+| `web_search_exa` | Search the live web for current news, articles, headlines, sources, and public webpages |
+| `web_search_advanced_exa` | Advanced live web and news search with freshness, domain, category, and result-count filters |
+| `get_code_context_exa` | Search code snippets, docs, examples, and technical references |
+| `deep_search_exa` | Deep web research with broader source gathering and query expansion |
+| `crawling_exa` | Extract and read content from specific URLs after discovery |
 | `company_research_exa` | Comprehensive company research |
 | `linkedin_search_exa` | Search LinkedIn for companies and people |
 | `people_search_exa` | Current people-search surface when enabled upstream |

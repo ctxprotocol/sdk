@@ -48,7 +48,7 @@ export interface McpToolRateLimitHints {
   /** Preferred batch-oriented methods to call instead of fan-out loops */
   recommendedBatchTools?: string[];
 
-  /** Optional human-readable notes for planning */
+  /** Optional human-readable notes for execution behavior */
   notes?: string;
 }
 
@@ -69,7 +69,7 @@ export interface McpToolMeta {
   /** Whether this method can be selected in query mode */
   queryEligible?: boolean;
 
-  /** Declared latency class for planner/runtime gating */
+  /** Declared latency class for metadata-scout/runtime gating */
   latencyClass?: McpToolLatencyClass;
 
   /** Method-level pricing metadata */
@@ -85,7 +85,7 @@ export interface McpToolMeta {
   contextRequirements?: string[];
 
   /**
-   * Optional planner/runtime pacing hints.
+   * Optional metadata-scout/runtime pacing hints.
    * Tool contributors can publish these to reduce rate-limit failures.
    */
   rateLimit?: McpToolRateLimitHints;
@@ -582,9 +582,9 @@ export interface QueryClarificationDiagnostics {
  * Options for the agentic query endpoint (pay-per-response).
  *
  * Unlike `execute()` which calls a single tool once, `query()` sends a
- * natural-language question and lets the server handle discovery-first
- * orchestration (`discover/probe -> plan-from-evidence -> execute ->
- * bounded fallback`) plus synthesis.
+ * natural-language question and lets the server handle the live librarian
+ * pipeline (`discover -> select -> metadata scout -> clarify if needed ->
+ * iterative execute -> synthesize -> settle`).
  * One flat fee covers up to 100 MCP skill calls per tool.
  */
 export interface QueryOptions {
@@ -592,10 +592,13 @@ export interface QueryOptions {
   query: string;
 
   /**
-   * How the SDK should handle clarification-required pre-plan situations:
+   * How the SDK should handle clarification-required situations:
    * - `return`: surface a structured clarification result to the caller
    * - `auto`: enable clarification auto-select and continue with the server's deterministic recommended option
    * - `error`: turn structured clarification/capability outcomes into terminal errors
+   *
+   * Default behavior is surface-dependent: headless SDK and MCP callers default
+   * to `auto`, while first-party chat defaults to `return`.
    */
   clarificationPolicy?: QueryClarificationPolicy;
 
@@ -660,25 +663,10 @@ export interface QueryOptions {
   /**
    * Include machine-readable developer trace output for this query response.
    * When enabled, the server may return summary counters plus diagnostics
-   * for lane selection, scout probe adequacy, and bounded fallback behavior.
+   * for lane selection, metadata scout adequacy, clarification, and iterative
+   * execution behavior.
    */
   includeDeveloperTrace?: boolean;
-
-  /**
-   * Query orchestration depth mode:
-   * - `fast`: lower-latency path
-   * - `auto`: server decides between fast/deep
-   * - `deep`: full completeness-oriented path
-   */
-  queryDepth?: QueryDepth;
-
-  /**
-   * Development/testing only: force the server's internal deep lane.
-   * `deep` is the canonical value. Legacy `deep-light` / `deep-heavy`
-   * aliases are still accepted temporarily for compatibility and normalize
-   * to the same runtime lane. Invalid when `queryDepth` is `fast`.
-   */
-  debugScoutDeepMode?: QueryDeepMode;
 
   /**
    * Optional idempotency key (UUID recommended).
@@ -708,7 +696,7 @@ export interface QueryDeveloperTraceLoopInfo {
 }
 
 /**
- * Tool selection metadata attached to discovery/planning diagnostics.
+ * Tool selection metadata attached to discovery and metadata-scout diagnostics.
  */
 export interface QueryDeveloperTraceToolSelection {
   toolId: string;
@@ -720,7 +708,7 @@ export interface QueryDeveloperTraceToolSelection {
 }
 
 /**
- * Initial planner diagnostic details.
+ * Execution-contract details handed to the iterative runtime.
  */
 export interface QueryPlanningTraceDiagnostic {
   plannerQuery: string;
@@ -782,16 +770,15 @@ export interface QueryCompletenessRepairEvent {
 }
 
 /**
- * Rich developer-trace diagnostics for discovery-first orchestration internals.
+ * Rich developer-trace diagnostics for managed query-runtime internals.
  */
 export interface QueryDeveloperTraceDiagnostics {
   selection: {
-    selectedDepth: string;
-    deepMode: string | null;
+    selectedPolicy: string;
     debugScoutDeepMode: string | null;
     plannerReasoningStage: string;
     scoutEnabled: boolean;
-    preserveFastOneShot: boolean;
+    oneShotBias: boolean;
     candidateMethodCount: number;
     scoutProbeStatus: string;
     scoutProbeAdequacy: string;
@@ -806,8 +793,7 @@ export interface QueryDeveloperTraceDiagnostics {
     scoutPrePlanProbeBudgetReasonCode: string | null;
     scoutChangedInitialPlan: boolean;
     scoutChangedPlannerReasoningStage: boolean;
-    scoutInitialSelectedDepth: string;
-    scoutInitialDeepMode: string | null;
+    scoutInitialSelectedPolicy: string;
     scoutInitialPlannerReasoningStage: string;
     scoutInitialReasonCode: string;
     scoutFinalReasonCode: string;
@@ -817,9 +803,7 @@ export interface QueryDeveloperTraceDiagnostics {
     scoutLlmSelectionLatencyMs: number | null;
     selectedTools: QueryDeveloperTraceToolSelection[];
   };
-  planning: {
-    initial: QueryPlanningTraceDiagnostic;
-  };
+  executionContract?: QueryPlanningTraceDiagnostic;
   cost?: {
     planningCostUsd: number;
     initialExecutionCostUsd: number;
@@ -829,13 +813,20 @@ export interface QueryDeveloperTraceDiagnostics {
     toolCostUsd: number;
     totalChargedUsd: number;
   };
-  completeness: {
+  verification: {
     evaluations: unknown[];
     repairEvents: QueryCompletenessRepairEvent[];
     triggerNeedsDifferentTools: boolean;
     triggerMissingCapability: string | null;
   };
-  rediscovery: QueryRediscoveryTraceDiagnostic | null;
+  execution?: {
+    reasoningEnabled: boolean;
+    receivedReasoning: boolean;
+    reasoningChars: number;
+    scoutEvidenceInjected: boolean;
+    stepBudget: number;
+    completedStepCount: number;
+  };
   clarification?: QueryClarificationDiagnostics;
   contributorSearches?: ContributorSearchTraceRecord[];
   [key: string]: unknown;

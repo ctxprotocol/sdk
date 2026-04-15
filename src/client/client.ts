@@ -60,8 +60,9 @@ export class ContextClient {
    * Query resource for agentic queries (pay-per-response).
    *
    * Unlike `tools.execute()` which calls a single tool once, `query` sends
-   * a natural-language question and lets the server handle tool discovery,
-   * multi-tool orchestration, self-healing, and AI synthesis — one flat fee.
+   * a natural-language question and lets the server handle discovery,
+   * metadata scout, clarification, iterative execution, and AI synthesis —
+   * one flat fee.
    */
   public readonly query: Query;
 
