@@ -1,0 +1,140 @@
+{
+  "iteration": 3,
+  "contributor": "kalshi-contributor",
+  "diagnosedAt": "2026-04-19T06:00:00Z",
+  "weakQueriesByEvaluationSet": {
+    "train": ["kalshi-001", "kalshi-011", "kalshi-014", "kalshi-016"],
+    "holdout": ["kalshi-005", "kalshi-008", "kalshi-013", "kalshi-018"]
+  },
+  "perQuery": {
+    "kalshi-001": {
+      "evaluationSet": "train",
+      "rootCauseCategory": "iterative_recovery_failure",
+      "satisfactionMean": 2.83,
+      "summary": "After search_markets surfaced KXMAMDANIEO as candidate series, loop terminated without calling resolve_slug or get_markets({seriesTicker})."
+    },
+    "kalshi-005": {
+      "evaluationSet": "holdout",
+      "rootCauseCategory": "argument_or_extraction_error",
+      "satisfactionMean": 3.17,
+      "summary": "Used category='Politics' instead of 'Elections' and probability='coinflip'/'unlikely' instead of numeric 10-40% band filter."
+    },
+    "kalshi-008": {
+      "evaluationSet": "holdout",
+      "rootCauseCategory": "tool_selection_error",
+      "satisfactionMean": 2.17,
+      "summary": "Economics slippage/depth query never fanned out get_market_orderbook across candidates to compute $-depth per cent."
+    },
+    "kalshi-011": {
+      "evaluationSet": "train",
+      "rootCauseCategory": "argument_or_extraction_error",
+      "satisfactionMean": 3.67,
+      "summary": "Called get_market({ticker:'KXOAIANTH-40'}) and get_market_candlesticks({ticker:'KXOAIANTH-40'}) on EVENT-shape tickers. get_market fell through to Strategy 2's /-0+\\d*$/ regex (doesn't match -40/-30), wasted 4 calls before resolve_slug recovery. get_market_candlesticks returned a 124-byte empty /markets/candlesticks response silently.",
+      "trainFixHypothesis": "Detect event-ticker shape /^KX[A-Z0-9]+-\\d+$/ in handleGetMarket and handleGetMarketCandlesticks. On 404 (get_market) or shape-detection (candlesticks), auto-fetch /events/{ticker}?with_nested_markets=true and return a structured response listing child markets + recoveryHints.nextTools pointing at the correct per-child call. Saves 4+ wasted calls and preserves budget for reconstruction."
+    },
+    "kalshi-013": {
+      "evaluationSet": "holdout",
+      "rootCauseCategory": "synthesis_issue",
+      "satisfactionMean": 2.83,
+      "summary": "Metrics named in query didn't all appear as columns in result table before naming a winner."
+    },
+    "kalshi-014": {
+      "evaluationSet": "train",
+      "rootCauseCategory": "data_accuracy_issue",
+      "satisfactionMean": 3.5,
+      "summary": "Many candidates share identical floor prices; synthesis didn't distinguish 'true minimum-tick orderbook' from 'no-bid fallback'."
+    },
+    "kalshi-016": {
+      "evaluationSet": "train",
+      "rootCauseCategory": "iterative_recovery_failure",
+      "satisfactionMean": 2.5,
+      "summary": "Re-ran discovery tools on same category 3× instead of partitioning budget and probing orderbook depth per candidate."
+    },
+    "kalshi-018": {
+      "evaluationSet": "holdout",
+      "rootCauseCategory": "tool_selection_error",
+      "satisfactionMean": 1.5,
+      "summary": "30-day MA query never called get_market_candlesticks with periodInterval=1440 on candidates."
+    }
+  },
+  "categoryPriorityEvaluation": {
+    "tool_selection_error": {
+      "priorityRank": 1,
+      "trainCount": 0,
+      "holdoutCount": 2,
+      "eligible": false,
+      "skipReason": "Holdout-only — would constitute fitting to the generalization set."
+    },
+    "stage_reflection_error": {
+      "priorityRank": 2,
+      "trainCount": 0,
+      "holdoutCount": 0,
+      "eligible": false,
+      "skipReason": "No weak queries this iteration."
+    },
+    "argument_or_extraction_error": {
+      "priorityRank": 3,
+      "trainCount": 1,
+      "holdoutCount": 1,
+      "eligible": true,
+      "skipListStatus": "not on recommendedSkipList",
+      "priorHistory": "Untouched in iterations 1-2.",
+      "selected": true
+    },
+    "data_accuracy_issue": {
+      "priorityRank": 4,
+      "trainCount": 1,
+      "holdoutCount": 0,
+      "eligible": true,
+      "note": "Would be picked if argument_or_extraction_error were unavailable."
+    },
+    "iterative_recovery_failure": {
+      "priorityRank": 6,
+      "trainCount": 2,
+      "holdoutCount": 0,
+      "eligible": true,
+      "skipReason": "Iteration 2 already fixed recoveryHints for this category; task brief says 'STRONGLY CONSIDER avoiding this category again unless you have a materially new hypothesis'. No materially new hypothesis this iteration beyond what iter2 already tried."
+    },
+    "synthesis_issue": {
+      "priorityRank": 8,
+      "trainCount": 0,
+      "holdoutCount": 1,
+      "eligible": false,
+      "skipReason": "Holdout-only."
+    }
+  },
+  "fixedRootCauseCategory": "argument_or_extraction_error",
+  "fixPlan": {
+    "scope": "contributor/server.ts",
+    "contributorReason": "The failing pattern (event-ticker shape KX<SERIES>-<N>) is Kalshi-specific — hardcoding this in shared runtime would not be contributor-agnostic. Other venues (Polymarket, Hyperliquid) have entirely different ticker grammars.",
+    "surgical": true,
+    "changes": [
+      {
+        "file": "server.ts",
+        "fn": "handleGetMarket",
+        "edit": "Before falling through to Strategy 4 (fuzzy market search), add a Strategy 2.5 that detects event-ticker shape /^KX[A-Z0-9]+-\\d+$/ and, if matched, fetches /events/{ticker}?with_nested_markets=true. On success, return a structured response with kind='event_ticker_not_market', childMarkets list, and recoveryHints.nextTools suggesting get_market({ticker: <child>}) and get_market_candlesticks({ticker: <child>, periodInterval: 1440}) per child."
+      },
+      {
+        "file": "server.ts",
+        "fn": "handleGetMarketCandlesticks",
+        "edit": "Before issuing the /markets/candlesticks batch call, detect event-ticker shape /^KX[A-Z0-9]+-\\d+$/ without child suffix. If matched, auto-fetch the event via /events/{ticker}?with_nested_markets=true and return a structured error with kind='event_ticker_not_market', childMarkets, and recoveryHints.nextTools suggesting per-child get_market_candlesticks calls."
+      },
+      {
+        "file": "server.ts",
+        "fn": "isEventLevelTicker",
+        "edit": "New helper that returns true when the ticker matches the event-shape pattern and is NOT a market ticker (no trailing letter suffix after the numeric tail)."
+      }
+    ]
+  },
+  "skippedRootCauseCategories": [
+    {"category": "tool_selection_error", "reason": "Holdout-only (kalshi-008, kalshi-018) — targeting would overfit to generalization set."},
+    {"category": "iterative_recovery_failure", "reason": "Fixed in iter2 (recoveryHints); kalshi-001/016 residuals need materially new hypothesis which is not yet identified."},
+    {"category": "data_accuracy_issue", "reason": "Lower priority (priorityRank=4) than argument_or_extraction_error; only 1 train weak query (kalshi-014)."},
+    {"category": "synthesis_issue", "reason": "Holdout-only (kalshi-013)."}
+  ],
+  "expectedImpact": {
+    "primary": "kalshi-011 (train): eliminate 4 wasted calls chasing ticker-shape errors; preserve budget so reconstruction from candlesticks completes within budget. Expected satisfaction lift: +0.5 to +1.0.",
+    "generalization": "Any other prompt that passes a KX*-<N> event ticker to get_market or get_market_candlesticks will now auto-resolve to child tickers instead of burning calls. Could help kalshi-003 (event trajectory) and kalshi-006 (event fan-out) indirectly if they ever hit event-shape first.",
+    "differentiation": "Indirect — by freeing up budget in event-ticker queries, more time is available for orderbook depth/candlesticks drill-downs that free LLMs cannot match."
+  }
+}

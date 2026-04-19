@@ -1,0 +1,3132 @@
+===== BEGIN DOCSET 1: https://context7.com/websites/kalshi/llms.txt?tokens=10000 =====
+### Install Kalshi TypeScript SDK
+
+Source: https://docs.kalshi.com/sdks/typescript/quickstart
+
+Installs the necessary package for the Kalshi TypeScript SDK via npm.
+
+```bash
+npm install kalshi-typescript
+```
+
+--------------------------------
+
+### Install TypeScript SDK
+
+Source: https://docs.kalshi.com/changelog
+
+Install the official TypeScript SDK via NPM. Documentation and examples are available separately.
+
+```bash
+npm install kalshi-typescript
+```
+
+--------------------------------
+
+### Get Trades Example - Python SDK
+
+Source: https://docs.kalshi.com/python-sdk/api/MarketsApi
+
+Demonstrates how to retrieve trade data using the Kalshi Python SDK. It shows the function signature for get_trades and basic setup for API interaction. Requires the kalshi_python library.
+
+```python
+import kalshi_python
+from kalshi_python.models.get_trades_response import GetTradesResponse
+from kalshi_python.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://api.elections.kalshi.com/trade-api/v2
+
+```
+
+--------------------------------
+
+### GET /portfolio/orders
+
+Source: https://docs.kalshi.com/getting_started/quick_start_create_order
+
+Retrieve a list of all orders associated with the user's portfolio.
+
+```APIDOC
+## GET /portfolio/orders
+
+### Description
+Returns a list of all orders placed by the user.
+
+### Method
+GET
+
+### Endpoint
+/portfolio/orders
+
+### Response
+#### Success Response (200)
+- **orders** (array) - List of order objects
+
+#### Response Example
+{
+  "orders": []
+}
+```
+
+--------------------------------
+
+### Example Usage for Subscribing to Markets in Python
+
+Source: https://docs.kalshi.com/getting_started/quick_start_websockets
+
+Demonstrates how to use the subscribe_to_markets function to get orderbook updates for specific markets or subscribe to the trade feed.
+
+```python
+# Example usage:
+# Subscribe to orderbook updates
+await subscribe_to_markets(["orderbook_delta"], ["KXFUT24-LSV", "KXHARRIS24-LSV"])
+
+# Subscribe to trade feed
+await subscribe_to_markets(["trade"], ["KXFUT24-LSV"])
+```
+
+--------------------------------
+
+### GET /portfolio/orders/{order_id}
+
+Source: https://docs.kalshi.com/getting_started/quick_start_create_order
+
+Retrieve the status and details of a specific order by its ID.
+
+```APIDOC
+## GET /portfolio/orders/{order_id}
+
+### Description
+Fetches the current status and details for a specific order.
+
+### Method
+GET
+
+### Endpoint
+/portfolio/orders/{order_id}
+
+### Parameters
+#### Path Parameters
+- **order_id** (string) - Required - The unique identifier of the order
+
+### Response
+#### Success Response (200)
+- **order** (object) - Order details
+
+#### Response Example
+{
+  "order": { "id": "123", "status": "filled" }
+}
+```
+
+--------------------------------
+
+### Install Kalshi Python SDKs
+
+Source: https://docs.kalshi.com/python-sdk
+
+Use pip to install the required package for either synchronous or asynchronous operations.
+
+```bash
+pip install kalshi_python_sync
+```
+
+```bash
+pip install kalshi_python_async
+```
+
+--------------------------------
+
+### Fetch Kalshi Account Balance
+
+Source: https://docs.kalshi.com/getting_started/quick_start_authenticated_requests
+
+This example demonstrates how to make an authenticated GET request to the Kalshi API to retrieve your account balance. It utilizes the `sign_request` function from Step 2 and requires your API Key ID, a valid signature, and the current timestamp.
+
+```python
+import requests
+import datetime
+
+# Set up the request
+timestamp = str(int(datetime.datetime.now().timestamp() * 1000))
+method = "GET"
+path = "/trade-api/v2/portfolio/balance"
+
+# Create signature (using function from Step 2)
+signature = sign_request(private_key, timestamp, method, path)
+
+# Make the request
+headers = {
+    'KALSHI-ACCESS-KEY': 'your-api-key-id',
+    'KALSHI-ACCESS-SIGNATURE': signature,
+    'KALSHI-ACCESS-TIMESTAMP': timestamp
+}
+
+response = requests.get('https://demo-api.kalshi.co' + path, headers=headers)
+balance = response.json()
+
+print(f"Your balance: ${balance['balance'] / 100:.2f}")
+```
+
+--------------------------------
+
+### GET /trade-api/v2/markets
+
+Source: https://docs.kalshi.com/getting_started/quick_start_create_order
+
+Retrieves a list of available markets on the Kalshi platform, allowing users to filter by status and limit results.
+
+```APIDOC
+## GET /trade-api/v2/markets
+
+### Description
+Fetch a list of open markets to identify trading opportunities.
+
+### Method
+GET
+
+### Endpoint
+/trade-api/v2/markets
+
+### Parameters
+#### Query Parameters
+- **limit** (integer) - Optional - Number of markets to return.
+- **status** (string) - Optional - Filter by market status (e.g., "open").
+
+### Request Example
+GET https://demo-api.kalshi.co/trade-api/v2/markets?limit=1&status=open
+
+### Response
+#### Success Response (200)
+- **markets** (array) - List of market objects.
+
+#### Response Example
+{
+  "markets": [
+    {
+      "ticker": "TICKER-NAME",
+      "title": "Market Title"
+    }
+  ]
+}
+```
+
+--------------------------------
+
+### Minimal Kalshi Balance Fetch Example
+
+Source: https://docs.kalshi.com/getting_started/quick_start_authenticated_requests
+
+This is a consolidated example showing the minimal code required to fetch your Kalshi account balance. It includes all necessary imports for making authenticated API requests.
+
+```python
+import requests
+import datetime
+import base64
+from urllib.parse import urlparse
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import padding
+
+```
+
+--------------------------------
+
+### Send Kalshi API Request - Javascript
+
+Source: https://docs.kalshi.com/getting_started/api_keys
+
+Sends a GET request to the Kalshi API with necessary authentication headers. This example demonstrates how to combine private key loading, text signing, and Axios for making authenticated API calls. Ensure you replace placeholders with your actual API key and file path.
+
+```javascript
+const axios = require('axios');
+
+const currentTimeMilliseconds = Date.now();
+const timestampStr = currentTimeMilliseconds.toString();
+
+const privateKeyPem = loadPrivateKeyFromFile('path/to/your/private-key.pem');
+
+const method = "GET";
+const baseUrl = 'https://demo-api.kalshi.co';
+const path = '/trade-api/v2/portfolio/balance';
+
+// Strip query parameters from path before signing
+const pathWithoutQuery = path.split('?')[0];
+const msgString = timestampStr + method + pathWithoutQuery;
+const sig = signPssText(privateKeyPem, msgString);
+
+const headers = {
+    'KALSHI-ACCESS-KEY': 'your-api-key-id',
+    'KALSHI-ACCESS-SIGNATURE': sig,
+    'KALSHI-ACCESS-TIMESTAMP': timestampStr
+};
+axios.get(baseUrl + path, { headers })
+    .then(response => {
+        console.log(response.data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+```
+
+--------------------------------
+
+### Install Kalshi SDKs
+
+Source: https://docs.kalshi.com/sdks/overview
+
+Installation commands for the official Kalshi SDKs. Users can choose between synchronous or asynchronous Python clients, or the TypeScript/JavaScript client for Node.js and browser environments.
+
+```bash
+pip install kalshi_python_sync
+```
+
+```bash
+pip install kalshi_python_async
+```
+
+```bash
+npm install kalshi-typescript
+```
+
+--------------------------------
+
+### Example Event Payload
+
+Source: https://docs.kalshi.com/websockets/order-group-updates
+
+This is an example of a JSON payload for a 'limit_updated' event, showing relevant order group details.
+
+```json
+{
+              "event_type": "limit_updated",
+              "order_group_id": "og_123",
+              "contracts_limit_fp": "150.00"
+            }
+```
+
+--------------------------------
+
+### New Order FIX Example
+
+Source: https://docs.kalshi.com/fix/order-entry
+
+This example demonstrates the structure of a FIX message for a new order. Ensure all required fields are correctly populated for successful order submission.
+
+```fix
+8=FIXT.1.1|9=200|35=D|34=5|52=20230809-12:34:56.789|49=your-api-key|56=KalshiNR|
+11=550e8400-e29b-41d4-a716-446655440000|38=10|40=2|54=1|55=HIGHNY-23DEC31|44=75|
+59=1|10=123|
+```
+
+--------------------------------
+
+### Multivariate Market Lifecycle Event Example
+
+Source: https://docs.kalshi.com/websockets/multivariate-market-%26-event-lifecycle
+
+This is an example of a multivariate market lifecycle event payload. It includes details about the event type, timestamps, and additional metadata.
+
+```json
+{
+  "type": "multivariate_market_lifecycle",
+  "sid": 14,
+  "msg": {
+    "market_ticker": "KXMVE-TEST-EVENT-M1",
+    "event_type": "created",
+    "open_ts": 1773936000,
+    "close_ts": 1774022400,
+    "additional_metadata": {
+      "name": "MVE One",
+      "title": "Market 1",
+      "yes_sub_title": "YES 1",
+      "no_sub_title": "NO 1",
+      "rules_primary": "Rule 1",
+      "rules_secondary": "Rule 2",
+      "can_close_early": true,
+      "event_ticker": "KXMVE-TEST-EVENT",
+      "expected_expiration_ts": 1774029600
+    }
+  }
+}
+```
+
+--------------------------------
+
+### Execute WebSocket Example
+
+Source: https://docs.kalshi.com/getting_started/quick_start_websockets
+
+Entry point to run the asynchronous WebSocket client.
+
+```python
+# Run the example
+if __name__ == "__main__":
+    asyncio.run(orderbook_websocket())
+```
+
+--------------------------------
+
+### GET /milestones
+
+Source: https://docs.kalshi.com/api-reference/milestone/get-milestones
+
+Retrieves a list of milestones, optionally filtered by a start date.
+
+```APIDOC
+## GET /milestones
+
+### Description
+Retrieves a list of milestones from the Kalshi platform.
+
+### Method
+GET
+
+### Endpoint
+/milestones
+
+### Parameters
+#### Query Parameters
+- **start_date** (string) - Optional - Minimum start date to filter milestones. Format: RFC3339 timestamp
+
+### Response
+#### Success Response (200)
+- **milestones** (array) - A list of milestone objects.
+```
+
+--------------------------------
+
+### Initialize and Use Kalshi API
+
+Source: https://docs.kalshi.com/sdks/typescript/quickstart
+
+Demonstrates how to configure the SDK with credentials and perform a basic API call to retrieve the account balance. It requires an API key and a private key for authentication.
+
+```typescript
+import { Configuration, PortfolioApi } from 'kalshi-typescript';
+
+// Configure the SDK
+const config = new Configuration({
+    apiKey: 'your-api-key-id',
+    privateKeyPath: 'path/to/your/private-key.pem', // or use privateKeyPem
+    basePath: 'https://api.elections.kalshi.com/trade-api/v2'
+});
+
+// Create API instance
+const portfolioApi = new PortfolioApi(config);
+
+// Make API calls
+const balance = await portfolioApi.getBalance();
+console.log(`Balance: $${(balance.data.balance || 0) / 100}`);
+```
+
+--------------------------------
+
+### Initialize Kalshi Client
+
+Source: https://docs.kalshi.com/python-sdk
+
+Configure the client with API credentials and perform a basic balance check.
+
+```python
+from kalshi_python_sync import Configuration, KalshiClient
+
+# Configure the client
+config = Configuration(
+    host="https://api.elections.kalshi.com/trade-api/v2"
+)
+
+# For authenticated requests
+# Read private key from file
+with open("path/to/private_key.pem", "r") as f:
+    private_key = f.read()
+
+config.api_key_id = "your-api-key-id"
+config.private_key_pem = private_key
+
+# Initialize the client
+client = KalshiClient(config)
+
+# Make API calls
+balance = client.get_balance()
+print(f"Balance: ${balance.balance / 100:.2f}")
+```
+
+--------------------------------
+
+### Execute API Call
+
+Source: https://docs.kalshi.com/getting_started/quick_start_authenticated_requests
+
+Example usage to load the key and fetch the portfolio balance.
+
+```python
+# Load private key
+private_key = load_private_key(PRIVATE_KEY_PATH)
+
+# Get balance
+response = get(private_key, API_KEY_ID, "/portfolio/balance")
+print(f"Your balance: ${response.json()['balance'] / 100:.2f}")
+```
+
+--------------------------------
+
+### Configure Authentication Methods
+
+Source: https://docs.kalshi.com/sdks/typescript/quickstart
+
+Shows the two supported methods for providing RSA-PSS private keys: via a file path or directly as a PEM string.
+
+```typescript
+// Using file path
+const config = new Configuration({
+    apiKey: 'your-api-key-id',
+    privateKeyPath: 'path/to/private-key.pem',
+    basePath: 'https://api.elections.kalshi.com/trade-api/v2'
+});
+
+// Using PEM string
+const config = new Configuration({
+    apiKey: 'your-api-key-id',
+    privateKeyPem: '-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----',
+    basePath: 'https://api.elections.kalshi.com/trade-api/v2'
+});
+```
+
+--------------------------------
+
+### Retrieve Markets via Kalshi Python SDK
+
+Source: https://docs.kalshi.com/python-sdk/api/MarketsApi
+
+Demonstrates how to initialize the Kalshi client using API credentials and call the get_markets method. The example includes optional parameters for filtering results and handling pagination via cursors.
+
+```python
+import kalshi_python
+from kalshi_python.models.get_markets_response import GetMarketsResponse
+from kalshi_python.rest import ApiException
+from pprint import pprint
+
+# Configure the API client
+configuration = kalshi_python.Configuration(
+    host = "https://api.elections.kalshi.com/trade-api/v2"
+)
+
+# Load authentication credentials
+with open('path/to/private_key.pem', 'r') as f:
+    private_key = f.read()
+
+configuration.api_key_id = "your-api-key-id"
+configuration.private_key_pem = private_key
+
+# Initialize the Kalshi client
+client = kalshi_python.KalshiClient(configuration)
+
+# Define optional filters
+params = {
+    "limit": 100,
+    "cursor": 'cursor_example',
+    "event_ticker": 'event_ticker_example',
+    "status": 'open'
+}
+
+try:
+    # Execute the request
+    api_response = client.get_markets(**params)
+    print("The response of MarketsApi->get_markets:")
+    pprint(api_response)
+except Exception as e:
+    print("Exception when calling MarketsApi->get_markets: %s" % e)
+```
+
+--------------------------------
+
+### GET /markets and GET /markets/{ticker} - Settlement Timestamp Added
+
+Source: https://docs.kalshi.com/changelog/index
+
+The `settlement_ts` field has been added to the responses of `GET /markets` and `GET /markets/{ticker}`.
+
+```APIDOC
+## GET /markets and GET /markets/{ticker}
+
+### Description
+Added `settlement_ts` field to `GET /markets` and `GET /markets/{ticker}` responses.
+
+### Method
+GET
+
+### Endpoint
+/markets
+/markets/{ticker}
+
+### Parameters
+None
+
+### Request Example
+None
+
+### Response
+#### Success Response (200)
+- **settlement_ts** (integer) - The Unix timestamp for when the market settles.
+- **...** (other fields)
+
+#### Response Example
+{
+  "market_data": {
+    "id": "a1b2c3d4",
+    "ticker": "GOOG",
+    "title": "Google Stock",
+    "settlement_ts": 1672531200,
+    "status": "active"
+  }
+}
+
+### Release Date
+December 25, 2025
+```
+
+--------------------------------
+
+### GET /markets and GET /markets/{ticker} - Deprecated Fields Removal
+
+Source: https://docs.kalshi.com/changelog/index
+
+The deprecated fields `category` and `risk_limit_cents` have been removed from the responses of `GET /markets` and `GET /markets/{ticker}`.
+
+```APIDOC
+## GET /markets and GET /markets/{ticker}
+
+### Description
+Deprecated fields `category` and `risk_limit_cents` have been removed from Market responses.
+
+### Method
+GET
+
+### Endpoint
+/markets
+/markets/{ticker}
+
+### Parameters
+None
+
+### Request Example
+None
+
+### Response
+#### Success Response (200)
+- **market_data** (object) - Details about the market.
+- **...** (other fields)
+
+#### Response Example
+{
+  "market_data": {
+    "id": "a1b2c3d4",
+    "ticker": "GOOG",
+    "title": "Google Stock",
+    "contracts": [
+      {
+        "strike_price": 100,
+        "last_price": 0.50,
+        "volume": 1000,
+        "open_interest": 500
+      }
+    ],
+    "status": "active",
+    "last_update_ts": 1672531200
+  }
+}
+
+### Release Date
+January 8, 2026
+```
+
+--------------------------------
+
+### Complete Order Creation Script (Python)
+
+Source: https://docs.kalshi.com/getting_started/quick_start_create_order
+
+A comprehensive Python script that combines finding an open market and placing a buy order. It includes the necessary `post` function for authenticated requests and demonstrates the use of `client_order_id` for reliable order submission.
+
+```python
+import requests
+import uuid
+import datetime
+
+# Placeholder for authentication function (assumed to be defined elsewhere)
+def create_signature(private_key, timestamp, method, path):
+    # This is a placeholder. Replace with actual signature creation logic.
+    return "dummy_signature"
+
+BASE_URL = "https://demo-api.kalshi.co"
+private_key = "YOUR_PRIVATE_KEY"
+API_KEY_ID = "YOUR_API_KEY_ID"
+
+def post(private_key, api_key_id, path, data, base_url=BASE_URL):
+    """Make an authenticated POST request to the Kalshi API."""
+    timestamp = str(int(datetime.datetime.now().timestamp() * 1000))
+    signature = create_signature(private_key, timestamp, "POST", path)
+
+    headers = {
+        'KALSHI-ACCESS-KEY': api_key_id,
+        'KALSHI-ACCESS-SIGNATURE': signature,
+        'KALSHI-ACCESS-TIMESTAMP': timestamp,
+        'Content-Type': 'application/json'
+    }
+
+    return requests.post(base_url + path, headers=headers, json=data)
+
+# Step 1: Find an open market
+print("Finding an open market...")
+response = requests.get('https://demo-api.kalshi.co/trade-api/v2/markets?limit=1&status=open')
+market = response.json()['markets'][0]
+print(f"Selected: {market['ticker']} - {market['title']}")
+
+# Step 2: Place a buy order
+print("\nPlacing order...")
+client_order_id = str(uuid.uuid4())
+order_data = {
+    "ticker": market['ticker'],
+    "action": "buy",
+    "side": "yes",
+    "count": 1,
+    "type": "limit",
+    "yes_price": 1,
+    "client_order_id": client_order_id
+}
+
+response = post(private_key, API_KEY_ID, '/trade-api/v2/portfolio/orders', order_data)
+
+if response.status_code == 201:
+    order = response.json()['order']
+    print(f"Order placed successfully!")
+    print(f"Order ID: {order['order_id']}")
+    print(f"Client Order ID: {client_order_id}")
+    print(f"Status: {order['status']}")
+else:
+    print(f"Error: {response.status_code} - {response.text}")
+```
+
+--------------------------------
+
+### GET /live_data/{type}/milestone/{milestone_id} and GET /live_data/batch - Milestone ID Added
+
+Source: https://docs.kalshi.com/changelog/index
+
+`GET /live_data/{type}/milestone/{milestone_id}` and `GET /live_data/batch` now return `milestone_id` in the response.
+
+```APIDOC
+## GET /live_data/{type}/milestone/{milestone_id} and GET /live_data/batch
+
+### Description
+Live Data responses now include the `milestone_id`.
+
+### Method
+GET
+
+### Endpoint
+/live_data/{type}/milestone/{milestone_id}
+/live_data/batch
+
+### Parameters
+#### Path Parameters
+- **type** (string) - Required - The type of live data requested.
+- **milestone_id** (string) - Required - The ID of the milestone.
+
+### Request Example
+None
+
+### Response
+#### Success Response (200)
+- **milestone_id** (string) - The ID of the milestone.
+- **...** (other live data fields)
+
+#### Response Example
+{
+  "milestone_id": "ms_abc123",
+  "data": [
+    {
+      "field": "value"
+    }
+  ]
+}
+
+### Release Date
+December 4, 2025
+```
+
+--------------------------------
+
+### Best Practices
+
+Source: https://docs.kalshi.com/fix/session-management
+
+Recommended practices for session configuration, error recovery, and security.
+
+```APIDOC
+## Best Practices
+
+### Session Configuration
+- Use unique ClOrdIDs across all message types
+- Implement proper heartbeat handling
+- Monitor sequence numbers carefully
+
+### Error Recovery
+- Implement automatic reconnection logic
+- Store order state locally for recovery
+- Use a [listener session](/fix/listener-sessions) for real-time backup feeds, or the [drop copy session](/fix/drop-copy) to query missed messages
+
+### Security
+- Rotate API keys periodically
+- Monitor for unauthorized access
+- Use secure storage for private keys
+```
+
+--------------------------------
+
+### GET /events - Multivariate Events Excluded
+
+Source: https://docs.kalshi.com/changelog/index
+
+The `GET /events` endpoint now excludes all multivariate events. Use `GET /events/multivariate` for MVE events.
+
+```APIDOC
+## GET /events
+
+### Description
+This endpoint now excludes all multivariate events. Use `GET /events/multivariate` for MVE events.
+
+### Method
+GET
+
+### Endpoint
+/events
+
+### Parameters
+None
+
+### Request Example
+None
+
+### Response
+#### Success Response (200)
+- **...** (event data, excluding multivariate events)
+
+#### Response Example
+{
+  "events": [
+    {
+      "id": "e9f0g1h2",
+      "title": "Example Event",
+      "..."
+    }
+  ]
+}
+
+### Release Date
+December 4, 2025
+```
+
+--------------------------------
+
+### Get Quotes API
+
+Source: https://docs.kalshi.com/python-sdk/api/CommunicationsApi
+
+Endpoint for getting quotes.
+
+```APIDOC
+## GET /get_quotes
+
+### Description
+Endpoint for getting quotes.
+
+### Method
+GET
+
+### Endpoint
+/get_quotes
+
+### Parameters
+#### Query Parameters
+- **cursor** (str) - Optional - Cursor for pagination.
+- **event_ticker** (str) - Optional - Filter by event ticker.
+- **market_ticker** (str) - Optional - Filter by market ticker.
+- **limit** (int) - Optional - Maximum number of quotes to return.
+- **status** (str) - Optional - Filter by quote status.
+- **quote_creator_user_id** (str) - Optional - Filter by quote creator user ID.
+- **rfq_creator_user_id** (str) - Optional - Filter by RFQ creator user ID.
+- **rfq_creator_subtrader_id** (str) - Optional - Filter by RFQ creator subtrader ID.
+- **rfq_id** (str) - Optional - Filter by RFQ ID.
+
+### Response
+#### Success Response (200)
+- **GetQuotesResponse** - A list of quotes matching the criteria.
+```
+
+--------------------------------
+
+### GET /portfolio/positions - Settled Positions Removed
+
+Source: https://docs.kalshi.com/changelog/index
+
+The `GET /portfolio/positions` endpoint will now only return unsettled positions. Use `GET /portfolio/settlements` for fetching settled market positions.
+
+```APIDOC
+## GET /portfolio/positions
+
+### Description
+This endpoint now only returns unsettled positions. For fetching settled market positions, switch to `GET /portfolio/settlements`.
+
+### Method
+GET
+
+### Endpoint
+/portfolio/positions
+
+### Parameters
+None
+
+### Request Example
+None
+
+### Response
+#### Success Response (200)
+- **...** (unsettled position data)
+
+#### Response Example
+{
+  "positions": [
+    {
+      "id": "p5y6z7a8",
+      "ticker": "AMZN",
+      "quantity": 10,
+      "..."
+    }
+  ]
+}
+
+### Release Date
+December 11, 2025
+```
+
+--------------------------------
+
+### Get Settlements
+
+Source: https://docs.kalshi.com/api-reference/portfolio/get-settlements
+
+Endpoint for getting the member's settlements historical track.
+
+```APIDOC
+## Get Settlements
+
+### Description
+Endpoint for getting the member's settlements historical track.
+
+### Method
+GET
+
+### Endpoint
+/websites/kalshi/settlements
+
+### Response
+#### Success Response (200)
+- **settlements** (array) - An array of settlement objects.
+  - **settlement_id** (string) - The ID of the settlement.
+  - **market_id** (string) - The ID of the market.
+  - **event_id** (string) - The ID of the event.
+  - **resolved_at** (string) - The timestamp when the settlement was resolved.
+  - **status** (string) - The status of the settlement (e.g., "won", "lost").
+```
+
+--------------------------------
+
+### Initialize and Fetch Markets via Kalshi TypeScript SDK
+
+Source: https://docs.kalshi.com/typescript-sdk/api/MarketsApi
+
+Demonstrates how to configure the Kalshi API client using an API key and private key, and how to retrieve market data using the getMarkets method. It supports optional filtering parameters like status, tickers, and time ranges for precise data retrieval.
+
+```typescript
+import {
+    MarketsApi,
+    Configuration
+} from 'kalshi-typescript';
+
+const configuration = new Configuration({
+    apiKey: 'your-api-key-id',
+    privateKeyPath: '/path/to/private-key.pem'
+});
+const apiInstance = new MarketsApi(configuration);
+
+let limit: number;
+let cursor: string;
+let eventTicker: string;
+let seriesTicker: string;
+let maxCloseTs: number;
+let minCloseTs: number;
+let status: string;
+let tickers: string;
+
+const { status: responseStatus, data } = await apiInstance.getMarkets(
+    limit,
+    cursor,
+    eventTicker,
+    seriesTicker,
+    maxCloseTs,
+    minCloseTs,
+    status,
+    tickers
+);
+```
+
+--------------------------------
+
+### Place a Buy Order (Python)
+
+Source: https://docs.kalshi.com/getting_started/quick_start_create_order
+
+Places a limit buy order for a specific market on Kalshi. It utilizes a `client_order_id` for deduplication and requires authentication credentials and a pre-defined `post` function for authenticated requests.
+
+```python
+import requests
+import uuid
+import datetime
+
+# Placeholder for authentication function (assumed to be defined elsewhere)
+def create_signature(private_key, timestamp, method, path):
+    # This is a placeholder. Replace with actual signature creation logic.
+    return "dummy_signature"
+
+BASE_URL = "https://demo-api.kalshi.co"
+private_key = "YOUR_PRIVATE_KEY"
+API_KEY_ID = "YOUR_API_KEY_ID"
+
+def post(private_key, api_key_id, path, data, base_url=BASE_URL):
+    """Make an authenticated POST request to the Kalshi API."""
+    timestamp = str(int(datetime.datetime.now().timestamp() * 1000))
+    signature = create_signature(private_key, timestamp, "POST", path)
+
+    headers = {
+        'KALSHI-ACCESS-KEY': api_key_id,
+        'KALSHI-ACCESS-SIGNATURE': signature,
+        'KALSHI-ACCESS-TIMESTAMP': timestamp,
+        'Content-Type': 'application/json'
+    }
+
+    return requests.post(base_url + path, headers=headers, json=data)
+
+# Assume 'market' dictionary is already populated from Step 1
+market = {
+    "ticker": "SOME_TICKER",
+    "title": "Some Market Title"
+}
+
+# Place a buy order for 1 YES contract at 1 cent
+order_data = {
+    "ticker": market['ticker'],
+    "action": "buy",
+    "side": "yes",
+    "count": 1,
+    "type": "limit",
+    "yes_price": 1,
+    "client_order_id": str(uuid.uuid4())  # Unique ID for deduplication
+}
+
+response = post(private_key, API_KEY_ID, '/trade-api/v2/portfolio/orders', order_data)
+
+if response.status_code == 201:
+    order = response.json()['order']
+    print(f"Order placed successfully!")
+    print(f"Order ID: {order['order_id']}")
+    print(f"Client Order ID: {order_data['client_order_id']}")
+    print(f"Status: {order['status']}")
+else:
+    print(f"Error: {response.status_code} - {response.text}")
+```
+
+--------------------------------
+
+### Get Communications ID API
+
+Source: https://docs.kalshi.com/python-sdk/api/CommunicationsApi
+
+Endpoint for getting the communications ID of the logged-in user.
+
+```APIDOC
+## GET /get_communications_id
+
+### Description
+Endpoint for getting the communications ID of the logged-in user.
+
+### Method
+GET
+
+### Endpoint
+/get_communications_id
+
+### Parameters
+This endpoint does not need any parameters.
+
+### Response
+#### Success Response (200)
+- **GetCommunicationsIDResponse** - The communications ID of the logged-in user.
+
+#### Error Responses
+- **401** - Unauthorized - authentication required
+- **500** - Internal server error
+```
+
+--------------------------------
+
+### GET /markets and GET /markets/{ticker}
+
+Source: https://docs.kalshi.com/changelog/index
+
+Endpoints for retrieving market data. A new `min_updated_ts` filter has been added to `GET /markets` to filter markets by their last update time. Market responses now include `updated_time`.
+
+```APIDOC
+## GET /markets and GET /markets/{ticker}
+
+### Description
+Retrieves market data. The `GET /markets` endpoint now supports a `min_updated_ts` query parameter to filter markets updated after a specific Unix timestamp. Market responses include an `updated_time` field.
+
+### Method
+GET
+
+### Endpoint
+`/markets`
+`/markets/{ticker}`
+
+### Query Parameters (for GET /markets)
+- **min_updated_ts** (integer) - Optional - Unix timestamp to filter markets updated after this time.
+```
+
+--------------------------------
+
+### GET /llms.txt
+
+Source: https://docs.kalshi.com/api-reference/communications/get-rfq
+
+Fetches the complete documentation index for the Kalshi API.
+
+```APIDOC
+## GET /llms.txt
+
+### Description
+Fetches the complete documentation index to discover available API pages.
+
+### Method
+GET
+
+### Endpoint
+https://docs.kalshi.com/llms.txt
+```
+
+--------------------------------
+
+### Initialize WebSocket Connection in Python
+
+Source: https://docs.kalshi.com/getting_started/quick_start_websockets
+
+Basic imports required to establish a secure WebSocket connection and handle cryptographic signing for the Kalshi API.
+
+```python
+import asyncio
+import base64
+import json
+import time
+import websockets
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+```
+
+--------------------------------
+
+### GET /incentive_programs Update
+
+Source: https://docs.kalshi.com/changelog/index
+
+The GET /incentive_programs endpoint now includes a market_id field for each incentive program.
+
+```APIDOC
+## GET /incentive_programs
+
+### Description
+Retrieves a list of incentive programs. The response now includes a `market_id` field for each program.
+
+### Method
+GET
+
+### Endpoint
+/incentive_programs
+
+### Response
+#### Success Response (200)
+- **market_id** (string) - The unique identifier for the market associated with the incentive program.
+```
+
+--------------------------------
+
+### Perform Authenticated GET Request
+
+Source: https://docs.kalshi.com/getting_started/quick_start_authenticated_requests
+
+Constructs headers and executes an authenticated GET request to the Kalshi API.
+
+```python
+def get(private_key, api_key_id, path, base_url=BASE_URL):
+    """Make an authenticated GET request to the Kalshi API."""
+    timestamp = str(int(datetime.datetime.now().timestamp() * 1000))
+    # Signing requires the full URL path from root (e.g. /trade-api/v2/portfolio/balance)
+    sign_path = urlparse(base_url + path).path
+    signature = create_signature(private_key, timestamp, "GET", sign_path)
+
+    headers = {
+        'KALSHI-ACCESS-KEY': api_key_id,
+        'KALSHI-ACCESS-SIGNATURE': signature,
+        'KALSHI-ACCESS-TIMESTAMP': timestamp
+    }
+
+    return requests.get(base_url + path, headers=headers)
+```
+
+--------------------------------
+
+### Configure API Credentials
+
+Source: https://docs.kalshi.com/getting_started/quick_start_authenticated_requests
+
+Define the API key, private key path, and base URL for the Kalshi environment.
+
+```python
+API_KEY_ID = 'your-api-key-id-here'
+PRIVATE_KEY_PATH = 'path/to/your/kalshi-key.key'
+BASE_URL = 'https://demo-api.kalshi.co/trade-api/v2'  # or 'https://api.elections.kalshi.com/trade-api/v2' for production
+```
+
+--------------------------------
+
+### Get Exchange Announcements OpenAPI Specification
+
+Source: https://docs.kalshi.com/api-reference/exchange/get-exchange-announcements
+
+Defines the GET /exchange/announcements endpoint and the associated Announcement schema.
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Kalshi Trade API Manual Endpoints
+  version: 3.13.0
+  description: >-
+    Manually defined OpenAPI spec for endpoints being migrated to spec-first
+    approach
+servers:
+  - url: https://api.elections.kalshi.com/trade-api/v2
+    description: Production server
+security: []
+tags:
+  - name: api-keys
+    description: API key management endpoints
+  - name: orders
+    description: Order management endpoints
+  - name: order-groups
+    description: Order group management endpoints
+  - name: portfolio
+    description: Portfolio and balance information endpoints
+  - name: communications
+    description: Request-for-quote (RFQ) endpoints
+  - name: multivariate
+    description: Multivariate event collection endpoints
+  - name: exchange
+    description: Exchange status and information endpoints
+  - name: live-data
+    description: Live data endpoints
+  - name: markets
+    description: Market data endpoints
+  - name: milestone
+    description: Milestone endpoints
+  - name: search
+    description: Search and filtering endpoints
+  - name: incentive-programs
+    description: Incentive program endpoints
+  - name: fcm
+    description: FCM member specific endpoints
+  - name: events
+    description: Event endpoints
+  - name: structured-targets
+    description: Structured targets endpoints
+paths:
+  /exchange/announcements:
+    get:
+      tags:
+        - exchange
+      summary: Get Exchange Announcements
+      description: ' Endpoint for getting all exchange-wide announcements.'
+      operationId: GetExchangeAnnouncements
+      responses:
+        '200':
+          description: Exchange announcements retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetExchangeAnnouncementsResponse'
+        '500':
+          description: Internal server error
+components:
+  schemas:
+    GetExchangeAnnouncementsResponse:
+      type: object
+      required:
+        - announcements
+      properties:
+        announcements:
+          type: array
+          description: A list of exchange-wide announcements.
+          items:
+            $ref: '#/components/schemas/Announcement'
+    Announcement:
+      type: object
+      required:
+        - type
+        - message
+        - delivery_time
+        - status
+      properties:
+        type:
+          type: string
+          enum:
+            - info
+            - warning
+            - error
+          description: The type of the announcement.
+        message:
+          type: string
+          description: The message contained within the announcement.
+        delivery_time:
+          type: string
+          format: date-time
+          description: The time the announcement was delivered.
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+          description: The current status of this announcement.
+```
+
+--------------------------------
+
+### Amend Order Request Example
+
+Source: https://docs.kalshi.com/changelog/index
+
+Example payload for amending an order without requiring client_order_id fields.
+
+```json
+{
+  "ticker": "MARKET-TICKER",
+  "side": "yes",
+  "action": "buy",
+  "count_fp": "50.00",
+  "yes_price": 30
+}
+```
+
+--------------------------------
+
+### Event Lifecycle JSON Payload Example
+
+Source: https://docs.kalshi.com/websockets/market-%26-event-lifecycle
+
+Example of a valid JSON payload for an event lifecycle notification.
+
+```json
+{
+  "type": "event_lifecycle",
+  "sid": 5,
+  "msg": {
+    "event_ticker": "KXQUICKSETTLE-26JAN25H2150",
+    "title": "What will 1+1 equal on Jan 25 at 21:50?",
+    "subtitle": "Jan 25 at 21:50",
+    "collateral_return_type": "MECNET",
+    "series_ticker": "KXQUICKSETTLE"
+  }
+}
+```
+
+--------------------------------
+
+### API Discovery
+
+Source: https://docs.kalshi.com/python-sdk/models/CreateQuoteResponse
+
+Instructions for fetching the complete documentation index for the Kalshi API.
+
+```APIDOC
+## GET /llms.txt
+
+### Description
+Fetch the complete documentation index to discover all available pages.
+
+### Endpoint
+https://docs.kalshi.com/llms.txt
+```
+
+--------------------------------
+
+### Error Handling Best Practices: Comprehensive Logging
+
+Source: https://docs.kalshi.com/fix/error-handling
+
+Provides a Python code example for comprehensive logging of different rejection types.
+
+```APIDOC
+## Error Handling Best Practices
+
+### 1. Comprehensive Logging
+
+```python
+def handle_message(msg):
+    if msg.type == 'Reject':
+        log.error(f"Session reject: {msg.Text} (Tag: {msg.RefTagID}, Reason: {msg.SessionRejectReason})")
+    elif msg.type == 'BusinessMessageReject':
+        log.error(f"Business reject: {msg.Text} (Reason: {msg.BusinessRejectReason})")
+    elif msg.type == 'ExecutionReport' and msg.ExecType == 'Rejected':
+        log.error(f"Order rejected: {msg.Text} (Reason: {msg.OrdRejReason})")
+```
+```
+
+--------------------------------
+
+### GET /portfolio/settlements - Event Ticker Added
+
+Source: https://docs.kalshi.com/changelog/index
+
+The `GET /portfolio/settlements` endpoint now returns each settled position's Event Ticker.
+
+```APIDOC
+## GET /portfolio/settlements
+
+### Description
+Returns each settled position's Event Ticker.
+
+### Method
+GET
+
+### Endpoint
+/portfolio/settlements
+
+### Parameters
+None
+
+### Request Example
+None
+
+### Response
+#### Success Response (200)
+- **event_ticker** (string) - The ticker symbol for the event associated with the settled position.
+- **...** (other fields)
+
+#### Response Example
+{
+  "settlements": [
+    {
+      "id": "s1t2u3v4",
+      "event_ticker": "TSLA-20260115-100",
+      "..."
+    }
+  ]
+}
+
+### Release Date
+December 18, 2025
+```
+
+--------------------------------
+
+### Example 3: Order Rejection (Insufficient Balance)
+
+Source: https://docs.kalshi.com/fix/error-handling
+
+Shows an order rejection due to insufficient balance, indicated by a specific reason code in the ExecutionReport.
+
+```APIDOC
+## Example 3: Order Rejection
+
+**Scenario**: Insufficient balance
+
+```fix
+// Response: ExecutionReport
+8=FIXT.1.1|35=8|11=789|150=8|39=8|58=INSUFFICIENT_BALANCE|103=3|...
+```
+```
+
+--------------------------------
+
+### Find Open Market Data (Python)
+
+Source: https://docs.kalshi.com/getting_started/quick_start_create_order
+
+Fetches the first available open market from the Kalshi API. This request does not require authentication and is used to retrieve public market data.
+
+```python
+# Get the first open market (no auth required for public market data)
+response = requests.get('https://demo-api.kalshi.co/trade-api/v2/markets?limit=1&status=open')
+market = response.json()['markets'][0]
+
+print(f"Selected market: {market['ticker']}")
+print(f"Title: {market['title']}")
+```
+
+--------------------------------
+
+### Get Event Forecast Percentile History
+
+Source: https://docs.kalshi.com/api-reference/events/get-event-forecast-percentile-history
+
+Endpoint for getting the historical raw and formatted forecast numbers for an event at specific percentiles.
+
+```APIDOC
+## Get Event Forecast Percentile History
+
+### Description
+Endpoint for getting the historical raw and formatted forecast numbers for an event at specific percentiles.
+
+### Method
+GET
+
+### Endpoint
+/websites/kalshi/events/forecast/history
+
+### Parameters
+#### Query Parameters
+- **event_id** (string) - Required - The unique identifier for the event.
+- **percentile** (number) - Required - The percentile for which to retrieve forecast history (e.g., 0.5 for median).
+- **start_date** (string) - Optional - The start date for the forecast history (YYYY-MM-DD).
+- **end_date** (string) - Optional - The end date for the forecast history (YYYY-MM-DD).
+
+### Response
+#### Success Response (200)
+- **timestamp** (string) - The date and time of the forecast.
+- **forecast_raw** (number) - The raw forecast number.
+- **forecast_formatted** (number) - The formatted forecast number.
+
+#### Response Example
+{
+  "forecast_history": [
+    {
+      "timestamp": "2023-10-27T10:00:00Z",
+      "forecast_raw": 0.75,
+      "forecast_formatted": 75.0
+    }
+  ]
+}
+```
+
+--------------------------------
+
+### Subaccount Number in Order Responses
+
+Source: https://docs.kalshi.com/changelog/index
+
+Order responses from `GET /portfolio/orders` and `GET /portfolio/orders/{order_id}` now include the `subaccount_number` field for direct users.
+
+```APIDOC
+## Order Responses Include Subaccount Number
+
+### Description
+Order responses now contain the `subaccount_number` field, indicating the subaccount associated with the order.
+
+### Affected Endpoints
+- `GET /portfolio/orders`
+- `GET /portfolio/orders/{order_id}`
+
+### Response Fields
+- **subaccount_number** (integer) - The subaccount number (0 for primary, 1-32 for subaccounts) associated with the order.
+```
+
+--------------------------------
+
+### PUT /portfolio/orders/{order_id}
+
+Source: https://docs.kalshi.com/getting_started/quick_start_create_order
+
+Amend the price or quantity of an existing open order.
+
+```APIDOC
+## PUT /portfolio/orders/{order_id}
+
+### Description
+Updates the price or quantity of an existing order.
+
+### Method
+PUT
+
+### Endpoint
+/portfolio/orders/{order_id}
+
+### Parameters
+#### Path Parameters
+- **order_id** (string) - Required - The unique identifier of the order
+
+#### Request Body
+- **price** (integer) - Optional - New price in cents (1-99)
+- **quantity** (integer) - Optional - New quantity
+
+### Response
+#### Success Response (200)
+- **status** (string) - Success message
+```
+
+--------------------------------
+
+### Get Balance OpenAPI Specification
+
+Source: https://docs.kalshi.com/api-reference/portfolio/get-balance
+
+Defines the /portfolio/balance GET endpoint, including security requirements and response schemas for balance and portfolio value.
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Kalshi Trade API Manual Endpoints
+  version: 3.13.0
+  description: >-
+    Manually defined OpenAPI spec for endpoints being migrated to spec-first
+    approach
+servers:
+  - url: https://api.elections.kalshi.com/trade-api/v2
+    description: Production server
+security: []
+tags:
+  - name: api-keys
+    description: API key management endpoints
+  - name: orders
+    description: Order management endpoints
+  - name: order-groups
+    description: Order group management endpoints
+  - name: portfolio
+    description: Portfolio and balance information endpoints
+  - name: communications
+    description: Request-for-quote (RFQ) endpoints
+  - name: multivariate
+    description: Multivariate event collection endpoints
+  - name: exchange
+    description: Exchange status and information endpoints
+  - name: live-data
+    description: Live data endpoints
+  - name: markets
+    description: Market data endpoints
+  - name: milestone
+    description: Milestone endpoints
+  - name: search
+    description: Search and filtering endpoints
+  - name: incentive-programs
+    description: Incentive program endpoints
+  - name: fcm
+    description: FCM member specific endpoints
+  - name: events
+    description: Event endpoints
+  - name: structured-targets
+    description: Structured targets endpoints
+paths:
+  /portfolio/balance:
+    get:
+      tags:
+        - portfolio
+      summary: Get Balance
+      description: ' Endpoint for getting the balance and portfolio value of a member. Both values are returned in cents.'
+      operationId: GetBalance
+      parameters:
+        - $ref: '#/components/parameters/SubaccountQueryDefaultPrimary'
+      responses:
+        '200':
+          description: Balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBalanceResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - kalshiAccessKey: []
+          kalshiAccessSignature: []
+          kalshiAccessTimestamp: []
+components:
+  parameters:
+    SubaccountQueryDefaultPrimary:
+      name: subaccount
+      in: query
+      description: Subaccount number (0 for primary, 1-32 for subaccounts). Defaults to 0.
+      schema:
+        type: integer
+  schemas:
+    GetBalanceResponse:
+      type: object
+      required:
+        - balance
+        - portfolio_value
+        - updated_ts
+      properties:
+        balance:
+          type: integer
+          format: int64
+          description: >-
+            Member's available balance in cents. This represents the amount
+            available for trading.
+        portfolio_value:
+          type: integer
+          format: int64
+          description: >-
+            Member's portfolio value in cents. This is the current value of all
+            positions held.
+        updated_ts:
+          type: integer
+          format: int64
+          description: Unix timestamp of the last update to the balance.
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: string
+          description: Additional details about the error, if available
+        service:
+          type: string
+          description: The name of the service that generated the error
+  responses:
+    UnauthorizedError:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  securitySchemes:
+    kalshiAccessKey:
+      type: apiKey
+      in: header
+      name: KALSHI-ACCESS-KEY
+      description: Your API key ID
+    kalshiAccessSignature:
+      type: apiKey
+      in: header
+      name: KALSHI-ACCESS-SIGNATURE
+      description: RSA-PSS signature of the request
+    kalshiAccessTimestamp:
+      type: apiKey
+      in: header
+      name: KALSHI-ACCESS-TIMESTAMP
+      description: Request timestamp in milliseconds
+```
+===== BEGIN DOCSET 2: https://context7.com/websites/kalshi_websockets/llms.txt?tokens=10000 =====
+### OK Response Example
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+This is an example of a successful update operation response. It includes an ID, subscription ID, sequence number, type, and a message payload which can contain market tickers or market IDs.
+
+```json
+{
+  "id": 123,
+  "sid": 456,
+  "seq": 222,
+  "type": "ok",
+  "msg": {
+    "market_tickers": [
+      "MARKET-1",
+      "MARKET-2",
+      "MARKET-3"
+    ]
+  }
+}
+```
+
+--------------------------------
+
+### List Subscriptions Response Example
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+This JSON object represents a response containing a list of all active subscriptions. It includes a unique ID for the request, the type 'ok', and a message array detailing each subscription's channel and server-generated subscription identifier (sid).
+
+```json
+{
+  "id": 1,
+  "type": "ok",
+  "msg": [
+    {
+      "channel": "trades",
+      "sid": 12345
+    }
+  ]
+}
+```
+
+--------------------------------
+
+### Quote Accepted Notification Payload
+
+Source: https://docs.kalshi.com/websockets/communications
+
+Example JSON payload received when a quote is accepted.
+
+```json
+{
+  "type": "quote_accepted",
+  "sid": 15,
+  "msg": {
+    "quote_id": "quote_456",
+    "rfq_id": "rfq_123",
+    "quote_creator_id": "comm_def456",
+    "market_ticker": "FED-23DEC-T3.00",
+    "event_ticker": "FED-23DEC",
+    "yes_bid_dollars": "0.35",
+    "no_bid_dollars": "0.65",
+    "accepted_side": "yes",
+    "contracts_accepted_fp": "50.00",
+    "yes_contracts_offered_fp": "100.00",
+    "no_contracts_offered_fp": "200.00",
+    "rfq_target_cost_dollars": "0.35"
+  }
+}
+```
+
+--------------------------------
+
+### Update Subscription - Add Markets
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+Use this command to add new markets to an existing subscription. Ensure the 'action' parameter is set to 'add_markets'.
+
+```json
+{
+  "id": 124,
+  "cmd": "update_subscription",
+  "params": {
+    "sids": [
+      456
+    ],
+    "market_tickers": [
+      "NEW-MARKET-1",
+      "NEW-MARKET-2"
+    ],
+    "action": "add_markets"
+  }
+}
+```
+
+--------------------------------
+
+### Trade Update JSON Payload
+
+Source: https://docs.kalshi.com/websockets/public-trades
+
+Example of a trade update message received from the WebSocket stream.
+
+```json
+{
+  "type": "trade",
+  "sid": 11,
+  "msg": {
+    "trade_id": "d91bc706-ee49-470d-82d8-11418bda6fed",
+    "market_ticker": "HIGHNY-22DEC23-B53.5",
+    "yes_price_dollars": "0.360",
+    "no_price_dollars": "0.640",
+    "count_fp": "136.00",
+    "taker_side": "no",
+    "ts": 1669149841,
+    "ts_ms": 1669149841000
+  }
+}
+```
+
+--------------------------------
+
+### WebSocket Connection
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+Establishes the main WebSocket connection to the Kalshi API. Authentication is required via headers during the handshake.
+
+```APIDOC
+## GET /
+
+### Description
+Main WebSocket connection endpoint. All communication happens through this single connection. Authentication is required to establish the connection; include API key headers during the WebSocket handshake.
+
+### Method
+GET
+
+### Endpoint
+wss://api.elections.kalshi.com/
+```
+
+--------------------------------
+
+### Subscribe to Channels
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+Sends a subscription command to the WebSocket to receive updates for specific market data channels.
+
+```APIDOC
+## SUBSCRIBE
+
+### Description
+Subscribe to one or more market data channels.
+
+### Request Body
+- **id** (integer) - Required - Unique ID of the command request.
+- **cmd** (string) - Required - Must be "subscribe".
+- **params** (object) - Required - Subscription parameters.
+  - **channels** (array) - Optional - List of channels to subscribe to.
+  - **market_ticker** (string) - Optional - Subscribe to a single market.
+  - **market_tickers** (array) - Optional - Subscribe to multiple markets.
+  - **market_id** (string) - Optional - Subscribe to a single market by UUID.
+  - **market_ids** (array) - Optional - Subscribe to multiple markets by UUID.
+  - **send_initial_snapshot** (boolean) - Optional - If true, receive an initial snapshot.
+  - **skip_ticker_ack** (boolean) - Optional - If true, OK responses omit the market lists.
+  - **shard_factor** (integer) - Optional - Number of shards for fanout.
+  - **shard_key** (integer) - Optional - Shard key for fanout.
+
+### Request Example
+{
+  "id": 1,
+  "cmd": "subscribe",
+  "params": {
+    "market_ticker": "KXBTCD-25AUG0517-T114999.99"
+  }
+}
+```
+
+--------------------------------
+
+### Market Lifecycle Events (market_lifecycle_v2)
+
+Source: https://docs.kalshi.com/websockets/market-%26-event-lifecycle
+
+This endpoint provides real-time updates on market lifecycle events, including creation, activation, deactivation, settlement, and more. It is crucial for tracking the state of markets on the Kalshi platform.
+
+```APIDOC
+## SUBSCRIBE market_lifecycle_v2
+
+### Description
+Subscribes to real-time market lifecycle events. This channel provides updates on various stages of a market's life, from creation to settlement.
+
+### Method
+SUBSCRIBE
+
+### Endpoint
+/websites/kalshi_websockets
+
+### Parameters
+#### Query Parameters
+- **type** (string) - Required - Must be 'market_lifecycle_v2'.
+- **sid** (integer) - Required - Server-generated subscription identifier.
+- **msg** (object) - Required - Contains event details.
+  - **event_type** (string) - Required - Type of market event (e.g., 'created', 'settled', 'activated').
+  - **market_ticker** (string) - Required - The ticker symbol of the market.
+
+### Request Example
+```json
+{
+  "type": "market_lifecycle_v2",
+  "sid": 1,
+  "msg": {
+    "event_type": "created",
+    "market_ticker": "$ES24"
+  }
+}
+```
+
+### Response
+#### Success Response (200)
+- **type** (string) - The type of message, 'market_lifecycle_v2'.
+- **sid** (integer) - The subscription identifier.
+- **event** (object) - Contains detailed information about the market event.
+ - **id** (integer) - Unique identifier for the market.
+ - **ticker** (string) - The ticker symbol of the market.
+ - **title** (string) - The full title of the market.
+ - **short_description** (string) - A brief description of the market.
+ - **long_description** (string) - A detailed description of the market.
+ - **expiration_ts** (integer) - Unix timestamp for market expiration.
+ - **strike_price** (number) - The strike price of the market.
+ - **is_active** (boolean) - Indicates if the market is currently active.
+ - **is_resolved** (boolean) - Indicates if the market has been resolved.
+ - **is_settled** (boolean) - Indicates if the market has been settled.
+ - **created_ts** (integer) - Unix timestamp for market creation.
+ - **last_updated_ts** (integer) - Unix timestamp for the last market update.
+ - **market_status** (string) - The current status of the market.
+ - **contracts_דול** (string) - The currency of the contracts.
+ - **venue** (string) - The exchange or venue where the market is listed.
+ - **settled_ts** (integer) - Unix timestamp for when the market is settled (only present when settled).
+ - **is_deactivated** (boolean) - Boolean flag indicating if trading is paused (only present when paused/unpaused).
+ - **fractional_trading_enabled** (boolean) - Whether fractional trading is enabled for the market.
+ - **price_level_structure** (string) - The price level structure of the market (e.g., 'linear_cent', 'deci_cent').
+ - **additional_metadata** (object) - Additional metadata about the market (only present when created).
+ - **name** (string) - Name of the market.
+ - **title** (string) - Title of the market.
+ - **yes_sub_title** (string) - Subtitle for 'yes' outcome.
+ - **no_sub_title** (string) - Subtitle for 'no' outcome.
+ - **rules_primary** (string) - Primary rules description.
+ - **rules_secondary** (string) - Secondary rules description.
+ - **can_close_early** (boolean) - Whether the market can be closed early.
+ - **event_ticker** (string) - Ticker symbol for the underlying event.
+ - **expected_expiration_ts** (integer) - Expected expiration timestamp.
+ - **strike_type** (string) - Type of strike price (e.g., 'fixed', 'float').
+ - **floor_strike** (number) - The floor strike price.
+ - **cap_strike** (number) - The cap strike price.
+ - **custom_strike** (object) - Custom strike price details.
+
+#### Response Example
+```json
+{
+  "type": "market_lifecycle_v2",
+  "sid": 1,
+  "event": {
+    "id": 12345,
+    "ticker": "$ES24",
+    "title": "S&P 500 E-mini Futures",
+    "short_description": "S&P 500 E-mini",
+    "long_description": "Contract based on the S&P 500 E-mini futures index.",
+    "expiration_ts": 1700000000,
+    "strike_price": 4500.00,
+    "is_active": true,
+    "is_resolved": false,
+    "is_settled": false,
+    "created_ts": 1690000000,
+    "last_updated_ts": 1695000000,
+    "market_status": "open",
+    "contracts_דול": "USD",
+    "venue": "CME",
+    "settled_ts": null,
+    "is_deactivated": false,
+    "fractional_trading_enabled": true,
+    "price_level_structure": "linear_cent",
+    "additional_metadata": {
+      "name": "S&P 500 E-mini",
+      "title": "S&P 500 E-mini Futures",
+      "yes_sub_title": "Will expire above",
+      "no_sub_title": "Will expire below",
+      "rules_primary": "Based on CME S&P 500 E-mini futures.",
+      "rules_secondary": "Settlement based on the official settlement price.",
+      "can_close_early": false,
+      "event_ticker": "ES",
+      "expected_expiration_ts": 1700000000,
+      "strike_type": "fixed",
+      "floor_strike": 0,
+      "cap_strike": 10000,
+      "custom_strike": {}
+    }
+  }
+}
+```
+```
+
+--------------------------------
+
+### WebSocket: receiveMultivariateMarketLifecycle
+
+Source: https://docs.kalshi.com/websockets/multivariate-market-%26-event-lifecycle
+
+Receive real-time updates regarding the lifecycle of multivariate markets, such as creation, status changes, and settlement.
+
+```APIDOC
+## WebSocket: receiveMultivariateMarketLifecycle
+
+### Description
+Receive multivariate market lifecycle updates including open, close, determination, and settlement events.
+
+### Endpoint
+wss://api.elections.kalshi.com/multivariate_market_lifecycle
+
+### Response
+- **type** (string) - Constant: "market_lifecycle_v2"
+- **sid** (integer) - Server-generated subscription identifier.
+- **msg** (object) - The event payload.
+  - **event_type** (string) - Type of event: created, deactivated, activated, close_date_updated, determined, settled, fractional_trading_updated, price_level_structure_updated.
+  - **market_ticker** (string) - Unique market identifier.
+  - **open_ts** (integer) - Optional: Unix timestamp for when the market opened (only on creation).
+  - **close_ts** (integer) - Optional: Unix timestamp for when the market is scheduled to close (on creation or update).
+  - **result** (string) - Optional: Result of the market (only on determination).
+
+### Response Example
+{
+  "type": "market_lifecycle_v2",
+  "sid": 12345,
+  "msg": {
+    "event_type": "created",
+    "market_ticker": "FED-23DEC-T3.00",
+    "open_ts": 1700000000,
+    "close_ts": 1703000000
+  }
+}
+```
+
+--------------------------------
+
+### User Fills Subscription
+
+Source: https://docs.kalshi.com/websockets/user-fills
+
+Endpoint for subscribing to real-time order fill notifications.
+
+```APIDOC
+## SUBSCRIBE User Fills
+
+### Description
+Subscribe to receive real-time notifications whenever your orders are filled. Requires authentication.
+
+### Parameters
+#### Request Body
+- **market_ticker** (string) - Optional - Filter fills by a specific market.
+- **market_tickers** (array) - Optional - Filter fills by a list of markets.
+
+### Request Example
+{
+  "action": "subscribe",
+  "channel": "fills",
+  "market_tickers": ["AAPL-24-DEC-100"]
+}
+
+### Response
+#### Success Response (200)
+- **fill_id** (string) - Unique identifier for the fill.
+- **market_ticker** (string) - The market where the fill occurred.
+- **size** (integer) - The number of contracts filled.
+- **price** (integer) - The price at which the order was filled.
+```
+
+```APIDOC
+## UPDATE_SUBSCRIPTION User Fills
+
+### Description
+Modify an existing subscription to add or remove specific markets for fill notifications.
+
+### Parameters
+#### Request Body
+- **add_markets** (array) - Optional - List of market tickers to add to the subscription.
+- **delete_markets** (array) - Optional - List of market tickers to remove from the subscription.
+
+### Request Example
+{
+  "action": "update_subscription",
+  "channel": "fills",
+  "add_markets": ["TSLA-24-DEC-200"],
+  "delete_markets": ["AAPL-24-DEC-100"]
+}
+```
+
+--------------------------------
+
+### Event Lifecycle
+
+Source: https://docs.kalshi.com/websockets/market-%26-event-lifecycle
+
+Receive notifications when new events are created.
+
+```APIDOC
+## Event Lifecycle
+
+### Description
+Receive event creation notifications via the websocket channel.
+
+### Parameters
+#### Request Body
+- **type** (string) - Required - event_lifecycle
+- **sid** (integer) - Required - Server-generated subscription identifier (sid) used to identify the channel
+- **msg** (object) - Required
+  - **event_ticker** (string) - Optional - Unique identifier for the event being created
+  - **title** (string) - Optional - Title of event
+  - **subtitle** (string) - Optional - Subtitle of event
+  - **collateral_return_type** (string) - Optional - Collateral return type (MECNET, DIRECNET, or empty)
+  - **series_ticker** (string) - Optional - Series ticker for the event
+```
+
+--------------------------------
+
+### WebSocket Channel: fill
+
+Source: https://docs.kalshi.com/websockets/user-fills
+
+Receive real-time notifications for your order fills. Requires authentication and supports market-specific filtering.
+
+```APIDOC
+## WebSocket Channel: fill
+
+### Description
+Receive notifications for your fills. Updates are sent immediately when your orders are filled. Requires authentication.
+
+### Endpoint
+`wss://api.elections.kalshi.com/fill`
+
+### Parameters
+#### Query Parameters
+- **market_ticker** (string) - Optional - Filter fills by a specific market ticker.
+- **market_tickers** (array) - Optional - Filter fills by a list of market tickers.
+
+### Response
+#### Success Response
+- **type** (string) - The message type (always 'fill').
+- **sid** (integer) - Server-generated subscription identifier.
+- **msg** (object) - The fill details:
+  - **trade_id** (string) - Unique identifier for the fill.
+  - **order_id** (string) - Unique identifier for the order.
+  - **market_ticker** (string) - Unique market identifier.
+  - **is_taker** (boolean) - If you were a taker on this fill.
+  - **side** (string) - Market side ('yes' or 'no').
+  - **yes_price_dollars** (string) - Price for the yes side in dollars.
+  - **count_fp** (string) - Fixed-point contracts filled (2 decimals).
+  - **fee_cost** (string) - Exchange fee paid in fixed-point dollars.
+  - **action** (string) - Order action type ('buy' or 'sell').
+  - **ts_ms** (integer) - Unix timestamp in milliseconds.
+  - **client_order_id** (string) - Optional client-provided order ID.
+  - **post_position_fp** (string) - Fixed-point position after the fill.
+  - **purchased_side** (string) - Market side ('yes' or 'no').
+  - **subaccount** (integer) - Optional subaccount number.
+
+### Response Example
+{
+  "type": "fill",
+  "sid": 12345,
+  "msg": {
+    "trade_id": "trade_abc",
+    "order_id": "order_xyz",
+    "market_ticker": "MARKET-1",
+    "is_taker": true,
+    "side": "yes",
+    "yes_price_dollars": "0.50",
+    "count_fp": "1000",
+    "fee_cost": "0.05",
+    "action": "buy",
+    "ts_ms": 1672531200000
+  }
+}
+```
+
+--------------------------------
+
+### API Key Authentication
+
+Source: https://docs.kalshi.com/websockets/public-trades
+
+Details on how to authenticate WebSocket connections using an API key.
+
+```APIDOC
+## API Key Authentication
+
+### Description
+API key authentication is required for WebSocket connections. The API key should be provided during the WebSocket handshake.
+
+### Method
+Not Applicable (Handshake parameter)
+
+### Endpoint
+Not Applicable
+
+### Parameters
+#### Query Parameters
+- **apiKey** (string) - Required - The API key for authentication.
+
+### Request Example
+Not Applicable
+
+### Response
+#### Success Response (101 Switching Protocols)
+- Connection established successfully.
+
+#### Response Example
+Not Applicable
+```
+
+--------------------------------
+
+### OK Response
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+Represents a successful update operation response from the server.
+
+```APIDOC
+## OK Response
+
+### Description
+Successful update operation response.
+
+### Request Body
+- **id** (integer) - Optional - Unique ID of the command request.
+- **sid** (integer) - Optional - Server-generated subscription identifier (sid) used to identify the channel.
+- **seq** (integer) - Optional - Sequential number used for snapshot/delta consistency.
+- **type** (string) - Required - Must be "ok".
+- **msg** (object) - Optional - Contains update details.
+  - **market_tickers** (array) - Optional - Full list of market tickers after update.
+  - **market_ids** (array) - Optional - Full list of market IDs after update.
+
+### Response Example
+{
+  "id": 123,
+  "sid": 456,
+  "seq": 222,
+  "type": "ok",
+  "msg": {
+    "market_tickers": [
+      "MARKET-1",
+      "MARKET-2",
+      "MARKET-3"
+    ]
+  }
+}
+```
+
+--------------------------------
+
+### POST Subscribe Command
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+The subscribe command allows clients to register for updates on specific channels such as orderbooks, tickers, trades, and market lifecycle events.
+
+```APIDOC
+## SUBSCRIBE Command
+
+### Description
+Subscribe to one or more channels to receive real-time data updates.
+
+### Method
+WebSocket Command
+
+### Request Body
+- **id** (integer) - Optional - Unique ID of the command request. Should be unique within a session.
+- **cmd** (string) - Required - Must be set to "subscribe".
+- **params** (object) - Required - Subscription parameters.
+  - **channels** (array) - Required - List of channels to subscribe to (e.g., orderbook_delta, ticker, trade, fill, market_positions, market_lifecycle_v2, multivariate_market_lifecycle, multivariate, communications, order_group_updates, user_orders).
+  - **market_ticker** (string) - Optional - Subscribe to a single market by ticker.
+  - **market_tickers** (array) - Optional - Subscribe to multiple markets by ticker.
+  - **market_id** (string) - Optional - Subscribe to a single market by UUID.
+  - **market_ids** (array) - Optional - Subscribe to multiple markets by UUID.
+  - **send_initial_snapshot** (boolean) - Optional - If true, receive an initial snapshot for requested market tickers on the ticker channel. Default: false.
+  - **skip_ticker_ack** (boolean) - Optional - If true, OK responses omit the market_tickers/market_ids lists. Default: false.
+  - **shard_factor** (integer) - Optional - Number of shards for communications channel fanout.
+  - **shard_key** (integer) - Optional - Shard key for communications channel fanout.
+
+### Request Example
+{
+  "id": 1,
+  "cmd": "subscribe",
+  "params": {
+    "channels": ["ticker"],
+    "market_ticker": "KXBTCD-25AUG0517-T114999.99"
+  }
+}
+```
+
+--------------------------------
+
+### Update Subscription - Delete Markets
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+Use this command to remove markets from an existing subscription. The 'action' parameter should be set to 'delete_markets'.
+
+```json
+{
+  "id": 125,
+  "cmd": "update_subscription",
+  "params": {
+    "sids": [
+      456
+    ],
+    "market_tickers": [
+      "MARKET-TO-REMOVE-1",
+      "MARKET-TO-REMOVE-2"
+    ],
+    "action": "delete_markets"
+  }
+}
+```
+
+--------------------------------
+
+### List Subscriptions Response
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+Receive a list of all active subscriptions from the server.
+
+```APIDOC
+## List Subscriptions Response
+
+### Description
+Receive list of all active subscriptions.
+
+### Request Body
+- **id** (integer) - Required - Unique ID of the command request.
+- **type** (string) - Required - Must be "ok".
+- **msg** (array) - Required - List of active subscriptions.
+  - **channel** (string) - Required - Name of the subscribed channel.
+  - **sid** (integer) - Required - Server-generated subscription identifier.
+```
+
+--------------------------------
+
+### Update Subscription - Add Markets
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+Adds specified markets to an existing subscription channel.
+
+```APIDOC
+## POST update_subscription (Add Markets)
+
+### Description
+Add markets to an existing subscription.
+
+### Request Body
+- **id** (integer) - Required - Unique ID of the command request.
+- **cmd** (string) - Required - Must be "update_subscription".
+- **params** (object) - Required
+  - **sids** (array) - Optional - Array containing exactly one subscription ID.
+  - **market_tickers** (array) - Optional - Array of strings for markets to add.
+  - **action** (string) - Optional - Must be "add_markets".
+
+### Request Example
+{
+  "id": 124,
+  "cmd": "update_subscription",
+  "params": {
+    "sids": [456],
+    "market_tickers": ["NEW-MARKET-1", "NEW-MARKET-2"],
+    "action": "add_markets"
+  }
+}
+```
+
+--------------------------------
+
+### List Subscriptions
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+List all active subscriptions on the websocket connection.
+
+```APIDOC
+## POST /api/v2/ws
+
+### Description
+List all active subscriptions.
+
+### Method
+POST
+
+### Endpoint
+/api/v2/ws
+
+### Request Body
+- **id** (integer) - Required - Unique ID of the command request. Generated by the client and should be unique within a WS session. If the id is set to 0, the server treats it the same way as if there was no id.
+- **cmd** (string) - Required - Must be 'list_subscriptions'.
+
+### Request Example
+```json
+{
+  "id": 3,
+  "cmd": "list_subscriptions"
+}
+```
+
+### Response
+(Success response details not provided in the source text)
+
+### Error Handling
+(Error handling details not provided in the source text)
+```
+
+--------------------------------
+
+### Multivariate Market Lifecycle Events
+
+Source: https://docs.kalshi.com/websockets/multivariate-market-%26-event-lifecycle
+
+This endpoint provides real-time notifications for multivariate market lifecycle events, including creation, activation, deactivation, close date updates, determination, and settlement.
+
+```APIDOC
+## POST /websites/kalshi_websockets
+
+### Description
+Receives real-time notifications for multivariate market lifecycle events.
+
+### Method
+POST
+
+### Endpoint
+/websites/kalshi_websockets
+
+### Request Body
+- **type** (string) - Required - The type of the event, must be "multivariate_market_lifecycle".
+- **sid** (integer) - Required - Server-generated subscription identifier.
+- **msg** (object) - Required - Contains details about the market lifecycle event.
+  - **market_ticker** (string) - Optional - The ticker symbol for the market.
+  - **event_type** (string) - Optional - The type of lifecycle event (e.g., "created", "activated").
+  - **open_ts** (integer) - Optional - Unix timestamp for when the market opens.
+  - **close_ts** (integer) - Optional - Unix timestamp for when the market closes.
+  - **additional_metadata** (object) - Optional - Additional metadata about the event.
+    - **name** (string) - Optional - The name of the event.
+    - **title** (string) - Optional - The title of the market.
+    - **yes_sub_title** (string) - Optional - Subtitle for the 'yes' outcome.
+    - **no_sub_title** (string) - Optional - Subtitle for the 'no' outcome.
+    - **rules_primary** (string) - Optional - Primary rules description.
+    - **rules_secondary** (string) - Optional - Secondary rules description.
+    - **can_close_early** (boolean) - Optional - Indicates if the market can be closed early.
+    - **event_ticker** (string) - Optional - The ticker symbol for the event.
+    - **expected_expiration_ts** (integer) - Optional - Unix timestamp for the expected expiration.
+
+### Request Example
+```json
+{
+  "type": "multivariate_market_lifecycle",
+  "sid": 14,
+  "msg": {
+    "market_ticker": "KXMVE-TEST-M1",
+    "event_type": "created",
+    "open_ts": 1773936000,
+    "close_ts": 1774022400,
+    "additional_metadata": {
+      "name": "MVE One",
+      "title": "Market 1",
+      "yes_sub_title": "YES 1",
+      "no_sub_title": "NO 1",
+      "rules_primary": "Rule 1",
+      "rules_secondary": "Rule 2",
+      "can_close_early": true,
+      "event_ticker": "KXMVE-TEST-EVENT",
+      "expected_expiration_ts": 1774029600
+    }
+  }
+}
+```
+
+### Response
+#### Success Response (200)
+- **status** (string) - Indicates the success of the operation.
+
+#### Response Example
+```json
+{
+  "status": "ok"
+}
+```
+```
+
+--------------------------------
+
+### Market Lifecycle V2
+
+Source: https://docs.kalshi.com/websockets/market-%26-event-lifecycle
+
+Receive updates regarding market lifecycle events such as creation, activation, settlement, and price level structure updates.
+
+```APIDOC
+## Market Lifecycle V2
+
+### Description
+Receive notifications for market lifecycle events including created, activated, deactivated, close_date_updated, determined, settled, fractional_trading_updated, and price_level_structure_updated.
+
+### Response Example
+{
+  "type": "market_lifecycle_v2",
+  "sid": 13,
+  "msg": {
+    "market_ticker": "INXD-23SEP14-B4487",
+    "event_type": "created",
+    "open_ts": 1694635200,
+    "close_ts": 1694721600,
+    "fractional_trading_enabled": false,
+    "price_level_structure": "linear_cent",
+    "additional_metadata": {
+      "name": "S&P 500 daily return on Sep 14",
+      "title": "S&P 500 closes up by 0.02% or more",
+      "yes_sub_title": "S&P 500 closes up 0.02%+",
+      "no_sub_title": "S&P 500 closes up <0.02%",
+      "rules_primary": "The S&P 500 index level at 4:00 PM ET...",
+      "rules_secondary": "",
+      "can_close_early": true,
+      "event_ticker": "INXD-23SEP14",
+      "expected_expiration_ts": 1694721600,
+      "strike_type": "greater",
+      "floor_strike": 4487
+    }
+  }
+}
+```
+
+--------------------------------
+
+### Orderbook Snapshot
+
+Source: https://docs.kalshi.com/websockets/orderbook-updates
+
+Provides a complete view of the order book's aggregated price levels for a given market.
+
+```APIDOC
+## Orderbook Snapshot
+
+### Description
+Complete view of the order book's aggregated price levels.
+
+### Method
+SUBSCRIBE (WebSocket)
+
+### Endpoint
+/websites/kalshi_websockets
+
+### Request Body
+```json
+{
+  "type": "subscribe",
+  "models": ["orderbook_snapshot"],
+  "params": {
+    "market_id": "<market_id>"
+  }
+}
+```
+
+### Response
+#### Success Response (200)
+- **type** (string) - "orderbook_snapshot"
+- **sid** (integer) - Server-generated subscription identifier.
+- **seq** (integer) - Sequential message number.
+- **msg** (object) - Contains orderbook data.
+ - **market_ticker** (string) - Unique market identifier.
+ - **market_id** (string) - Unique market UUID.
+ - **yes_dollars_fp** (array) - Optional. Price levels for the 'Yes' side of the orderbook. Format: [price_in_dollars, contract_count_fp].
+ - **no_dollars_fp** (array) - Optional. Price levels for the 'No' side of the orderbook. Format: [price_in_dollars, contract_count_fp].
+
+#### Response Example
+```json
+{
+  "type": "orderbook_snapshot",
+  "sid": 2,
+  "seq": 2,
+  "msg": {
+    "market_ticker": "FED-23DEC-T3.00",
+    "market_id": "9b0f6b43-5b68-4f9f-9f02-9a2d1b8ac1a1",
+    "yes_dollars_fp": [
+      [
+        "0.0800",
+        "300.00"
+      ],
+      [
+        "0.2200",
+        "333.00"
+      ]
+    ],
+    "no_dollars_fp": [
+      [
+        "0.5400",
+        "20.00"
+      ],
+      [
+        "0.5600",
+        "146.00"
+      ]
+    ]
+  }
+}
+```
+```
+
+--------------------------------
+
+### WebSocket Control Frames API
+
+Source: https://docs.kalshi.com/websockets/connection-keep-alive
+
+This section covers the WebSocket control frames for connection management. Kalshi sends Ping frames every 10 seconds, and clients should respond with Pong frames. Clients can also send Ping frames, to which Kalshi will respond.
+
+```APIDOC
+## WebSocket Control Frames
+
+### Description
+WebSocket control frames for connection management. Kalshi sends Ping frames (`0x9`) every 10 seconds with body `heartbeat` to maintain the connection. Clients should respond with Pong frames (`0xA`). Clients may also send Ping frames to which Kalshi will respond with Pong.
+
+### Server
+- **Protocol**: wss
+- **Host**: api.elections.kalshi.com
+- **Address**: /
+
+### Operations
+
+#### Client Sends Ping
+
+##### Description
+Client sends Ping control frame to elicit Pong from Kalshi.
+
+##### Method
+RECEIVE (Client to Server)
+
+##### Message Type
+`incomingPing`
+
+##### Payload
+- **Ping** (string) - const: '' - Client sends Ping frame (0x9) to elicit Pong from Kalshi
+
+##### Example
+```
+""
+```
+
+#### Client Sends Pong
+
+##### Description
+Client sends Pong control frame in response to Kalshi Ping.
+
+##### Method
+RECEIVE (Client to Server)
+
+##### Message Type
+`incomingPong`
+
+##### Payload
+- **Pong** (string) - const: '' - Client replies to Ping with Pong Frame (0xA)
+
+##### Example
+```
+""
+```
+
+#### Kalshi Sends Ping
+
+##### Description
+Kalshi sends Ping control frame with body 'heartbeat'.
+
+##### Method
+SEND (Server to Client)
+
+##### Message Type
+`outgoingPing`
+
+##### Payload
+- **Ping** (string) - const: heartbeat - Kalshi sends Ping (0x9) with body 'heartbeat' to elicit Pong from client
+
+##### Example
+```
+"heartbeat"
+```
+
+#### Kalshi Sends Pong
+
+##### Description
+Kalshi sends Pong control frame in response to client Ping.
+
+##### Method
+SEND (Server to Client)
+
+##### Message Type
+`outgoingPong`
+
+##### Payload
+- **Pong** (string) - const: '' - Kalshi responds to client Ping with Pong frame (0xA)
+
+##### Example
+```
+""
+```
+
+### Security
+- **Type**: apiKey
+- **Description**: API key authentication required for WebSocket connections. The API key should be provided during the WebSocket handshake.
+- **In**: user
+```
+
+--------------------------------
+
+### Multivariate Lookup AsyncAPI Specification
+
+Source: https://docs.kalshi.com/websockets/multivariate-lookups
+
+Defines the AsyncAPI schema for multivariate collection lookup notifications. Requires an authenticated WebSocket connection.
+
+```yaml
+id: multivariate
+title: Multivariate Lookups
+description: >
+  Multivariate collection lookup notifications.
+
+  **Requirements:**
+
+  - No additional channel-level authentication beyond the authenticated
+  WebSocket connection
+
+  - No filtering parameters; subscription is global
+
+  **Use case:** Tracking multivariate market relationships
+servers:
+  - id: production
+    protocol: wss
+    host: api.elections.kalshi.com
+    bindings: []
+    variables: []
+address: multivariate
+parameters: []
+bindings: []
+operations:
+  - &ref_0
+    id: receiveMultivariateLookup
+    title: Multivariate Lookup
+    description: Receive multivariate collection lookup notifications
+    type: send
+    messages:
+      - &ref_1
+        id: multivariateLookup
+        contentType: application/json
+        payload:
+          - name: Multivariate Lookup
+            description: Multivariate collection lookup notification
+            type: object
+            properties:
+              - name: type
+                type: string
+                description: multivariate_lookup
+                required: true
+              - name: sid
+                type: integer
+                description: >-
+                  Server-generated subscription identifier (sid) used to
+                  identify the channel
+                required: true
+              - name: msg
+                type: object
+                required: true
+                properties:
+                  - name: collection_ticker
+                    type: string
+                    required: false
+                  - name: event_ticker
+                    type: string
+                    required: false
+                  - name: market_ticker
+                    type: string
+                    required: false
+                  - name: selected_markets
+                    type: array
+                    required: false
+        headers: []
+        jsonPayloadSchema:
+          type: object
+          required:
+            - type
+            - sid
+            - msg
+          properties:
+            type:
+              type: string
+              const: multivariate_lookup
+              x-parser-schema-id: <anonymous-schema-147>
+            sid:
+              type: integer
+              description: >-
+                Server-generated subscription identifier (sid) used to identify
+                the channel
+              minimum: 1
+              x-parser-schema-id: subscriptionId
+            msg:
+              type: object
+              required:
+                - collection_ticker
+                - event_ticker
+                - market_ticker
+                - selected_markets
+              properties:
+                collection_ticker:
+                  type: string
+                  x-parser-schema-id: <anonymous-schema-149>
+                event_ticker:
+                  type: string
+                  x-parser-schema-id: <anonymous-schema-150>
+                market_ticker:
+                  type: string
+                  x-parser-schema-id: <anonymous-schema-151>
+                selected_markets:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - event_ticker
+                      - market_ticker
+                      - side
+                    properties:
+                      event_ticker:
+                        type: string
+                        x-parser-schema-id: <anonymous-schema-154>
+                      market_ticker:
+                        type: string
+                        x-parser-schema-id: <anonymous-schema-155>
+                      side:
+                        type: string
+                        description: Market side
+                        enum:
+                          - 'yes'
+                          - 'no'
+                        x-parser-schema-id: marketSide
+                    x-parser-schema-id: <anonymous-schema-153>
+                  x-parser-schema-id: <anonymous-schema-152>
+              x-parser-schema-id: <anonymous-schema-148>
+          x-parser-schema-id: multivariateLookupPayload
+        title: Multivariate Lookup
+        description: Multivariate collection lookup notification
+        example: |-
+          {
+            "type": "multivariate_lookup",
+            "sid": 13,
+            "msg": {
+              "collection_ticker": "KXOSCARWINNERS-25",
+              "event_ticker": "KXOSCARWINNERS-25C0CE5",
+              "market_ticker": "KXOSCARWINNERS-25C0CE5-36353",
+              "selected_markets": [
+                {
+                  "event_ticker": "KXOSCARACTO-25",
+                  "market_ticker": "KXOSCARACTO-25-AB",
+                  "side": "yes"
+                },
+                {
+                  "event_ticker": "KXOSCARACTR-25",
+                  "market_ticker": "KXOSCARACTR-25-DM",
+                  "side": "yes"
+                }
+              ]
+            }
+          }
+```
+
+--------------------------------
+
+### Update Subscription - Add Markets
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+This endpoint allows you to add markets to an existing subscription. You can specify markets by their ticker symbol or UUID.
+
+```APIDOC
+## POST /websites/kalshi_websockets
+
+### Description
+Add markets to an existing subscription.
+
+### Method
+POST
+
+### Endpoint
+/websites/kalshi_websockets
+
+### Parameters
+#### Request Body
+- **id** (integer) - Required - Unique ID of the command request. Generated by the client and should be unique within a WS session. If the id is set to 0, the server treats it the same way as if there was no id.
+- **cmd** (string) - Required - Must be 'update_subscription'.
+- **params** (object) - Required
+  - **sid** (integer) - Optional - Server-generated subscription identifier (sid) used to identify the channel.
+  - **sids** (array) - Optional - Array containing exactly one subscription ID (alternative to sid). Either sid or sids must be provided, not both.
+  - **market_ticker** (string) - Optional - Add/remove a single market by ticker symbol.
+  - **market_tickers** (array) - Optional - Add/remove multiple markets by ticker symbol.
+  - **market_id** (string) - Optional - Add/remove a single market by UUID.
+  - **market_ids** (array) - Optional - Add/remove multiple markets by UUID.
+  - **send_initial_snapshot** (boolean) - Optional - If true, receive an initial snapshot for newly added market tickers on the ticker channel.
+  - **action** (string) - Required - Enum values: 'add_markets', 'delete_markets'.
+
+### Request Example
+```json
+{
+  "id": 1,
+  "cmd": "update_subscription",
+  "params": {
+    "action": "add_markets",
+    "market_tickers": ["BTC-20221230", "ETH-20221230"]
+  }
+}
+```
+
+### Response
+#### Success Response (200)
+- **id** (integer) - The ID of the command request.
+- **type** (string) - The type of the response, e.g., 'subscription_update'.
+- **event** (string) - The event related to the subscription update.
+
+#### Response Example
+```json
+{
+  "id": 1,
+  "type": "subscription_update",
+  "event": "markets_added"
+}
+```
+```
+
+--------------------------------
+
+### WebSocket Event: RFQ Created
+
+Source: https://docs.kalshi.com/websockets/communications
+
+Receive notifications when a new Request for Quote (RFQ) is created.
+
+```APIDOC
+## WebSocket Event: rfq_created
+
+### Description
+Receive notifications when an RFQ is created.
+
+### Payload
+- **type** (string) - Required - Must be 'rfq_created'
+- **sid** (integer) - Required - Server-generated subscription identifier
+- **msg** (object) - Required - The RFQ details
+  - **id** (string) - Required - Unique identifier for the RFQ
+  - **creator_id** (string) - Required - Public communications ID of the RFQ creator
+  - **market_ticker** (string) - Required - Market ticker for the RFQ
+  - **event_ticker** (string) - Optional - Event ticker
+  - **contracts_fp** (string) - Optional - Fixed-point contracts requested
+  - **target_cost_dollars** (string) - Optional - Target cost in dollars
+  - **created_ts** (string) - Optional - Timestamp when the RFQ was created
+
+### Response Example
+{
+  "type": "rfq_created",
+  "sid": 1,
+  "msg": {
+    "id": "rfq_123",
+    "creator_id": "",
+    "market_ticker": "TICKER",
+    "created_ts": "2023-10-27T10:00:00Z"
+  }
+}
+```
+
+--------------------------------
+
+### List Subscriptions Response
+
+Source: https://docs.kalshi.com/websockets/websocket-connection
+
+Response containing all active subscriptions.
+
+```APIDOC
+## List Subscriptions Response
+
+### Description
+Response containing all active subscriptions.
+
+### Method
+N/A (This is a response payload structure)
+
+### Endpoint
+N/A
+
+### Request Body
+N/A
+
+### Response
+#### Success Response (200)
+- **id** (integer) - Unique ID of the subscription.
+- **type** (string) - Indicates the type of message, e.g., "ok".
+- **msg** (array) - An array of active subscriptions.
+  - **channel** (string) - The type of channel subscribed to (e.g., "orderbook_delta", "ticker", "fill").
+  - **sid** (integer) - The unique subscription ID.
+
+#### Response Example
+```json
+{
+  "id": 3,
+  "type": "ok",
+  "msg": [
+    {
+      "channel": "orderbook_delta",
+      "sid": 1
+    },
+    {
+      "channel": "ticker",
+      "sid": 2
+    },
+    {
+      "channel": "fill",
+      "sid": 3
+    }
+  ]
+}
+```
+```
+
+--------------------------------
+
+### Receive Multivariate Event Lifecycle Notifications
+
+Source: https://docs.kalshi.com/websockets/multivariate-market-%26-event-lifecycle
+
+This endpoint allows clients to subscribe to and receive real-time notifications for multivariate event lifecycle events.
+
+```APIDOC
+## SUBSCRIBE /websites/kalshi_websockets
+
+### Description
+Subscribe to receive real-time notifications for multivariate event lifecycle events.
+
+### Method
+SUBSCRIBE (or equivalent WebSocket message)
+
+### Endpoint
+/websites/kalshi_websockets
+
+### Parameters
+#### Query Parameters
+- **topic** (string) - Required - Specifies the subscription topic, e.g., "multivariate_event_lifecycle".
+
+### Request Body (for subscription)
+This section is typically handled by the WebSocket connection establishment and subscription message, not a direct request body in the traditional sense. The payload structure for received messages is defined below.
+
+### Response
+#### Success Response (on subscription)
+- A confirmation message indicating successful subscription.
+
+#### Received Message Payload (Event Lifecycle Notification)
+- **type** (string) - Required - The type of the event, must be "event_lifecycle".
+- **sid** (integer) - Required - Server-generated subscription identifier used to identify the channel.
+- **msg** (object) - Required - Contains details about the event lifecycle.
+  - **event_ticker** (string) - Optional - Unique identifier for the event being created.
+  - **title** (string) - Optional - Title of the event.
+  - **subtitle** (string) - Optional - Subtitle of the event.
+  - **collateral_return_type** (string) - Optional - Collateral return type (MECNET, DIRECNET, or empty).
+  - **series_ticker** (string) - Optional - Series ticker for the event.
+  - **strike_date** (integer) - Optional - Unix timestamp to indicate the strike date of the event.
+  - **strike_period** (string) - Optional - String to indicate the strike period of the event.
+
+### Response Example (Received Notification)
+```json
+{
+  "type": "event_lifecycle",
+  "sid": 12345,
+  "msg": {
+    "event_ticker": "KXMVE-TEST-EVENT-M1",
+    "title": "Test Event M1",
+    "subtitle": "Market 1",
+    "collateral_return_type": "MECNET",
+    "series_ticker": "KXMVE-TEST-EVENT",
+    "strike_date": 1774029600,
+    "strike_period": "daily"
+  }
+}
+```
+```

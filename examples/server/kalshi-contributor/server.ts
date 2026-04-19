@@ -162,6 +162,7 @@ IMPROVED CATEGORY FILTERING: When filtering by category (e.g., 'Sports'), this t
 PLANNER GUIDANCE:
   - If the user asks for the hottest markets in a named Kalshi category, call this tool first with that exact category.
   - Prefer this ranked discovery path over raw get_markets or broad browse flows when the request is "hottest", "trending", "most active", or "right now".
+  - If the user names an explicit anchor market and asks whether it is hot relative to its own peers, first call get_market to recover the anchor's canonical series/category identifiers, then compare with browse_series before using this broad category leaderboard as secondary context.
   - For climate/weather prompts, do not substitute unrelated sports, crypto, or general commodity markets unless they are explicitly returned here.
 
 RETURNS: Markets ranked by activity with:
@@ -1265,6 +1266,7 @@ It returns the event plus per-market rules, detailed rules text, and direct URLs
 Use this for prompts like:
 - "Get the exact market snapshot for KXHIGHNY-26MAR19-B47.5"
 - "Show me this market's current yes/no prices, status, close time, and rules"
+- "Use this market as the anchor, then compare it against its own series peers"
 
 ⚠️ CRITICAL: Use EXACT ticker values from API responses. DO NOT construct or guess tickers!
 
@@ -1282,7 +1284,11 @@ EXAMPLE - WRONG (DO NOT DO THIS):
   get_market({ "ticker": "kxdjtvostariffs" })      ❌ Wrong case
 
 The ticker field from API responses is the EXACT string to use. Copy it exactly, don't modify it.
-This method is the best single-call source for current market state, resolution rules, and canonical URLs.
+This method is the best single-call source for current market state, resolution rules, canonical URLs, and cohort identifiers.
+
+PLANNER GUIDANCE:
+  - If a prompt gives an explicit market ticker and asks whether that market is unusually active, liquid, near resolution, overshadowed, or hot relative to peers, call get_market first.
+  - The response includes both category and seriesTicker so you can route follow-up peer comparison to browse_series (same-series cohort) or discover_trending_markets (broad category leaders).
 
 🆕 FALLBACK: If a ticker fails, this tool will auto-attempt to fix common mistakes.`,
     inputSchema: {
@@ -1303,6 +1309,11 @@ This method is the best single-call source for current market state, resolution 
           properties: {
             ticker: { type: "string" },
             eventTicker: { type: "string" },
+            seriesTicker: {
+              type: "string",
+              description:
+                "Canonical series ticker derived from the market's event ticker. Use this for same-series peer comparisons with browse_series.",
+            },
             title: { type: "string" },
             subtitle: { type: "string" },
             yesPrice: { type: "number" },
@@ -1989,23 +2000,35 @@ CROSS-PLATFORM:
 
 ⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent markets or construct URLs. Each result includes a real 'url' field - use ONLY those URLs.
 
-INPUT: series_ticker from get_all_series
+INPUT: series_ticker from get_all_series, get_series, or get_market.seriesTicker
 
-RETURNS: All events and markets in the series with direct URLs, current yes prices, 24h volume, and close times.
+RETURNS: All events and markets in the series with direct URLs, current yes/no prices, 24h volume, liquidity, and close times.
 
 Example: browse_series({ seriesTicker: "KXHIGHNY" }) → all NYC high temp events
-Use this for prompts like "List open markets in the KXHIGHNY series with tickers, current yes prices, and close times."`,
+Use this for prompts like "List open markets in the KXHIGHNY series with tickers, current yes prices, and close times."
+
+PLANNER GUIDANCE:
+  - Use this as the primary peer-comparison tool when the user gives an explicit anchor market and asks about series peers, same-family contracts, or whether the anchor is unusually active/liquid/close to resolution relative to comparable contracts.
+  - If the prompt already includes a series-like prefix such as KXMVECROSSCATEGORY, or get_market returned seriesTicker, pass that exact seriesTicker here instead of asking for clarification.
+  - Prefer this over discover_trending_markets when the user wants like-for-like cohort comparison rather than the broadest category leaderboard.`,
     inputSchema: {
       type: "object" as const,
       properties: {
         seriesTicker: {
           type: "string",
-          description: "Series ticker from get_all_series",
+          description:
+            "Series ticker from get_all_series/get_series, or from get_market.seriesTicker. Many Kalshi market and event tickers start with this series prefix (for example KXMVECROSSCATEGORY-...).",
         },
         status: {
           type: "string",
           enum: ["open", "closed", "settled", "all"],
           description: "Filter by status (default: open)",
+        },
+        sortBy: {
+          type: "string",
+          enum: ["volume_24h", "liquidity", "close_time"],
+          description:
+            "Optional ranking for peer comparison. Use volume_24h or liquidity for hottest/overshadowed prompts, or close_time for near-resolution prompts.",
         },
         limit: {
           type: "number",
@@ -2029,9 +2052,12 @@ Use this for prompts like "List open markets in the KXHIGHNY series with tickers
               eventTicker: { type: "string" },
               url: { type: "string", format: "uri", description: "Direct Kalshi URL - always use this, never construct URLs" },
               yesPrice: { type: "number" },
+              noPrice: { type: "number" },
               volume24h: { type: "number" },
+              liquidity: { type: "number" },
               closeTime: { type: "string" },
               status: { type: "string" },
+              category: { type: "string" },
             },
           },
         },
@@ -2263,6 +2289,376 @@ function successResult(data: Record<string, unknown>): CallToolResult {
   return {
     content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
     structuredContent: data,
+  };
+}
+
+// ----------------------------------------------------------------------------
+// Recovery hints: structured pivot guidance emitted by discovery/listing tools
+// when their result set is empty, weakly-matched, or obviously incomplete. The
+// iterative planner reads tool responses on each step to decide the next call,
+// so explicit `recoveryHints.nextTools` with concrete args drastically reduces
+// premature refusals ("no markets found") and shallow pagination exits.
+// ----------------------------------------------------------------------------
+interface RecoveryHintTool {
+  toolName: string;
+  suggestedArgs?: Record<string, unknown>;
+  reason: string;
+}
+
+interface RecoveryHints {
+  reason: string;
+  nextTools: RecoveryHintTool[];
+  escalationNote: string;
+  shouldSynthesizeRefusal: false;
+}
+
+function buildSearchRecoveryHints(params: {
+  query: string | undefined;
+  category: string | undefined;
+  resultCount: number;
+  lowConfidence: boolean;
+  selectedTitle?: string | null;
+}): RecoveryHints | null {
+  const { query, category, resultCount, lowConfidence, selectedTitle } = params;
+  const isEmpty = resultCount === 0;
+  if (!isEmpty && !lowConfidence) {
+    return null;
+  }
+
+  const q = (query || "").trim();
+  const keywordGuess = q
+    .replace(/[^A-Za-z0-9 ]+/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 4)
+    .slice(-1)[0];
+  const slugGuess = q
+    ? `kx${q.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 24)}`
+    : undefined;
+
+  const nextTools: RecoveryHintTool[] = [];
+
+  if (q) {
+    nextTools.push({
+      toolName: "search_markets",
+      suggestedArgs: {
+        query: keywordGuess || q.split(/\s+/).slice(0, 2).join(" "),
+        status: "open",
+        maxSeriesScan: 1500,
+      },
+      reason:
+        "Retry with a reduced keyword (e.g. the main entity name) and NO category filter to widen the series-search scope.",
+    });
+  }
+
+  if (slugGuess) {
+    nextTools.push({
+      toolName: "resolve_slug",
+      suggestedArgs: { slug: slugGuess },
+      reason:
+        "Attempt slug resolution for direct event lookup. Slug format is the lowercase series ticker (e.g. 'kxmamdani', 'kxoaianth').",
+    });
+    nextTools.push({
+      toolName: "get_event_by_slug",
+      suggestedArgs: { slug: slugGuess },
+      reason:
+        "If you have any plausible slug guess from the user's query, call this for a one-shot event + markets snapshot.",
+    });
+  }
+
+  if (category) {
+    nextTools.push({
+      toolName: "browse_category",
+      suggestedArgs: { category, status: "open", sortBy: "volume_24h", limit: 100 },
+      reason:
+        "List all active markets in the category so you can scan titles for a semantic match when keyword search missed it.",
+    });
+    nextTools.push({
+      toolName: "discover_trending_markets",
+      suggestedArgs: { category, sortBy: "volume_24h", limit: 50 },
+      reason:
+        "Ranked view of the category's most active markets — useful when search returned irrelevant results.",
+    });
+  } else {
+    nextTools.push({
+      toolName: "get_all_series",
+      suggestedArgs: { limit: 200 },
+      reason:
+        "If no category was provided, scan the series catalog (titles) for a plausible match, then call browse_series on the matched seriesTicker.",
+    });
+  }
+
+  const reason = isEmpty
+    ? `search_markets returned 0 results for query=${JSON.stringify(q)}${category ? ` category=${JSON.stringify(category)}` : ""}. Do NOT synthesize a refusal — the next step MUST be one of nextTools.`
+    : `search_markets returned ${resultCount} low-confidence result(s)${selectedTitle ? ` (top hit: ${JSON.stringify(selectedTitle)})` : ""} that may not match the user's intent. Do NOT synthesize an answer yet — pivot via nextTools.`;
+
+  return {
+    reason,
+    nextTools,
+    escalationNote:
+      "Only after ALL nextTools above have been attempted AND returned empty/irrelevant results may you tell the buyer the market does not exist on Kalshi.",
+    shouldSynthesizeRefusal: false,
+  };
+}
+
+function buildCategoryRecoveryHints(params: {
+  category: string;
+  status: string;
+  resultCount: number;
+}): RecoveryHints | null {
+  const { category, status, resultCount } = params;
+  if (resultCount > 0) {
+    return null;
+  }
+
+  const nextTools: RecoveryHintTool[] = [
+    {
+      toolName: "get_all_series",
+      suggestedArgs: { category, limit: 100 },
+      reason:
+        "Category browse returned zero. Enumerate series under this category and then call browse_series on the returned seriesTicker values — categories can be empty at the /markets endpoint even when series exist.",
+    },
+    {
+      toolName: "discover_trending_markets",
+      suggestedArgs: { category, sortBy: "volume_24h", limit: 50 },
+      reason:
+        "Ranked discovery uses a broader market pool + trades fallback, so it often surfaces active markets when category browse is empty.",
+    },
+    {
+      toolName: "get_markets",
+      suggestedArgs: { category, status: status === "open" ? "all" : "open", limit: 100 },
+      reason:
+        "Broaden the status filter (open → all, or vice versa) to catch markets that are pending/closed/settled but still relevant to the question.",
+    },
+    {
+      toolName: "get_all_categories",
+      reason:
+        "If you are unsure whether the category name is canonical, re-fetch the taxonomy and confirm spelling/capitalization (e.g. 'Economics' vs 'Economy').",
+    },
+  ];
+
+  return {
+    reason: `browse_category for ${JSON.stringify(category)} status=${status} returned 0 markets. Do NOT conclude the category is empty on Kalshi — call the tools in nextTools below before synthesizing a refusal.`,
+    nextTools,
+    escalationNote:
+      "Only after get_all_series + discover_trending_markets + get_markets(status='all') all return empty may you tell the buyer this category has no qualifying markets right now.",
+    shouldSynthesizeRefusal: false,
+  };
+}
+
+function buildSeriesRecoveryHints(params: {
+  seriesTicker: string;
+  status: string;
+  resultCount: number;
+}): RecoveryHints | null {
+  const { seriesTicker, status, resultCount } = params;
+  if (resultCount > 0) {
+    return null;
+  }
+
+  const nextTools: RecoveryHintTool[] = [
+    {
+      toolName: "browse_series",
+      suggestedArgs: { seriesTicker, status: "all", limit: 100 },
+      reason:
+        "Retry with status='all' — the series may have only closed/settled markets currently, which are excluded by the default 'open' filter.",
+    },
+    {
+      toolName: "get_events",
+      suggestedArgs: { seriesTicker, limit: 50 },
+      reason:
+        "List events under this series directly; the event-level endpoint may return records even when the market-level endpoint is empty.",
+    },
+    {
+      toolName: "get_series",
+      suggestedArgs: { seriesTicker },
+      reason:
+        "Confirm the series ticker itself is valid. If it returns a warning, the ticker may be malformed and you should call get_all_series to enumerate valid tickers.",
+    },
+  ];
+
+  return {
+    reason: `browse_series for ${JSON.stringify(seriesTicker)} status=${status} returned 0 markets. The series may be dormant, closed, or the ticker may be wrong — try nextTools before concluding.`,
+    nextTools,
+    escalationNote:
+      "Only after all nextTools return empty may you tell the buyer this series has no qualifying markets.",
+    shouldSynthesizeRefusal: false,
+  };
+}
+
+function buildTrendingRecoveryHints(params: {
+  category: string | undefined;
+  resultCount: number;
+}): RecoveryHints | null {
+  const { category, resultCount } = params;
+  if (resultCount > 0) {
+    return null;
+  }
+
+  const nextTools: RecoveryHintTool[] = [];
+  if (category) {
+    nextTools.push({
+      toolName: "browse_category",
+      suggestedArgs: { category, status: "open", sortBy: "volume_24h", limit: 100 },
+      reason:
+        "Unranked list of all markets in this category — useful when the trending-ranked pool is empty.",
+    });
+    nextTools.push({
+      toolName: "get_all_series",
+      suggestedArgs: { category, limit: 100 },
+      reason:
+        "Enumerate series under this category and call browse_series on each seriesTicker to surface active markets.",
+    });
+  } else {
+    nextTools.push({
+      toolName: "get_all_categories",
+      reason:
+        "No category was provided — load the taxonomy first, then call discover_trending_markets per category.",
+    });
+  }
+
+  return {
+    reason: `discover_trending_markets returned 0 trendingMarkets${category ? ` for category=${JSON.stringify(category)}` : ""}. Pivot via nextTools before telling the buyer nothing is active.`,
+    nextTools,
+    escalationNote: "Do not refuse until browse_category + get_all_series both come back empty.",
+    shouldSynthesizeRefusal: false,
+  };
+}
+
+function buildMarketsListRecoveryHints(params: {
+  args: Record<string, unknown> | undefined;
+  resultCount: number;
+  nextCursor: string;
+}): RecoveryHints | null {
+  const { args, resultCount, nextCursor } = params;
+  const category = (args?.category as string) ?? undefined;
+  const status = (args?.status as string) ?? "open";
+  const seriesTicker = (args?.seriesTicker as string) ?? undefined;
+  const eventTicker = (args?.eventTicker as string) ?? undefined;
+
+  const isEmpty = resultCount === 0;
+  const hasMorePages = typeof nextCursor === "string" && nextCursor.length > 0;
+
+  if (!isEmpty && !hasMorePages) {
+    return null;
+  }
+
+  const nextTools: RecoveryHintTool[] = [];
+
+  if (isEmpty) {
+    if (eventTicker) {
+      nextTools.push({
+        toolName: "get_event",
+        suggestedArgs: { eventTicker, withNestedMarkets: true },
+        reason:
+          "The event may exist but have no markets at the requested status — fetch the event directly for nested markets.",
+      });
+    }
+    if (seriesTicker) {
+      nextTools.push({
+        toolName: "browse_series",
+        suggestedArgs: { seriesTicker, status: "all", limit: 100 },
+        reason:
+          "Broaden the series status filter to include closed/settled markets.",
+      });
+    }
+    if (category) {
+      nextTools.push({
+        toolName: "browse_category",
+        suggestedArgs: { category, status: "open", sortBy: "volume_24h", limit: 100 },
+        reason: "Category browse may surface markets missed by the raw markets listing.",
+      });
+      nextTools.push({
+        toolName: "get_all_series",
+        suggestedArgs: { category, limit: 100 },
+        reason:
+          "Enumerate series under this category, then browse_series on each seriesTicker.",
+      });
+    }
+    if (status === "open") {
+      nextTools.push({
+        toolName: "get_markets",
+        suggestedArgs: { ...(args || {}), status: "all", limit: 100 },
+        reason: "Retry with status='all' to catch non-open markets that still match the filter.",
+      });
+    }
+    if (nextTools.length === 0) {
+      nextTools.push({
+        toolName: "discover_trending_markets",
+        suggestedArgs: { sortBy: "volume_24h", limit: 50 },
+        reason: "Fallback to ranked global discovery when specific filters return empty.",
+      });
+    }
+  }
+
+  if (hasMorePages) {
+    nextTools.push({
+      toolName: "get_markets",
+      suggestedArgs: { ...(args || {}), cursor: nextCursor, limit: 200 },
+      reason:
+        "Result is paginated — call again with the provided cursor to fetch the next page before synthesizing. Alternatively, pivot to discover_trending_markets / browse_category for a pre-ranked view and stop paginating.",
+    });
+    nextTools.push({
+      toolName: "discover_trending_markets",
+      suggestedArgs: category
+        ? { category, sortBy: "volume_24h", limit: 100 }
+        : { sortBy: "volume_24h", limit: 100 },
+      reason:
+        "If you are paginating to find 'top N' by activity, a single discover_trending_markets call is a better ranked shortcut.",
+    });
+  }
+
+  const reason = isEmpty
+    ? `get_markets returned 0 markets for filters=${JSON.stringify({ category, status, seriesTicker, eventTicker })}. Do NOT refuse — pivot via nextTools.`
+    : `get_markets returned ${resultCount} markets but nextCursor is non-empty (more pages available). Either paginate or pivot to a ranked tool to avoid premature shortlisting.`;
+
+  return {
+    reason,
+    nextTools,
+    escalationNote:
+      "Premature refusal after one get_markets call is the #1 failure mode on Kalshi — always attempt at least one nextTools pivot before concluding.",
+    shouldSynthesizeRefusal: false,
+  };
+}
+
+function buildEventFanoutHint(params: {
+  eventTicker: string;
+  markets: Array<{ ticker: string }>;
+}): {
+  reason: string;
+  recommendedPerMarketTools: RecoveryHintTool[];
+  escalationNote: string;
+} | null {
+  const tickers = params.markets.map((m) => m.ticker).filter(Boolean);
+  if (tickers.length < 2) {
+    return null;
+  }
+
+  return {
+    reason: `Event ${params.eventTicker} has ${tickers.length} sub-markets. If the user asked about arbitrage, liquidity, orderbook depth, spread, or a top-N / per-candidate comparison, you MUST fan out (preferably in parallel) across ALL sub-market tickers — partial coverage will produce a wrong answer.`,
+    recommendedPerMarketTools: [
+      {
+        toolName: "get_market_orderbook",
+        suggestedArgs: { ticker: "<each markets[].ticker>", depth: 50, preferFixedPoint: true },
+        reason: "Per-candidate bid/ask for spread, arbitrage, and liquidity analyses.",
+      },
+      {
+        toolName: "get_market",
+        suggestedArgs: { ticker: "<each markets[].ticker>" },
+        reason: "Per-candidate yes/no prices, volume, open interest for ranking.",
+      },
+      {
+        toolName: "get_market_candlesticks",
+        suggestedArgs: {
+          ticker: "<each markets[].ticker>",
+          periodInterval: 1440,
+          startTs: "<now - 30d>",
+          endTs: "<now>",
+        },
+        reason:
+          "Per-candidate historical trajectories for momentum, re-pricing, or time-series comparisons.",
+      },
+    ],
+    escalationNote: `Fan out over all ${tickers.length} tickers (use Promise.all-style parallel calls) before synthesizing. Tickers: ${tickers.slice(0, 20).join(", ")}${tickers.length > 20 ? ", ..." : ""}.`,
   };
 }
 
@@ -3303,6 +3699,62 @@ function isSlug(input: string): boolean {
   return isLowercase && !looksLikeTickerFormat;
 }
 
+// Event-level ticker shape: `KX<SERIES>-<N>` with NO trailing letter child suffix.
+// Examples: "KXOAIANTH-40", "KXRAMPBREX-40", "KXNEXTUKPM-30", "KXTRILLIONAIRE-30".
+// These are NOT market tickers — they identify an event whose sub-markets have the
+// form "KX<SERIES>-<N>-<CHILD>" (e.g. "KXOAIANTH-40-OAI"). Agents that pass event
+// tickers to get_market or get_market_candlesticks waste 2-4 calls before recovery.
+function isEventLevelTicker(input: string): boolean {
+  return /^KX[A-Z0-9]+-\d+$/.test(input);
+}
+
+// Fetch an event by its UPPERCASE event ticker (e.g. "KXOAIANTH-40") and return the
+// normalized child-market list plus a structured recovery-hint payload the iterative
+// planner can read to auto-pivot to the correct per-child tool call.
+async function resolveEventTickerToChildren(
+  eventTicker: string,
+): Promise<{
+  found: boolean;
+  eventTitle: string | null;
+  seriesTicker: string;
+  childMarkets: Array<{
+    ticker: string;
+    title: string;
+    yesPrice: number;
+    noPrice: number;
+    volume24h: number;
+    status: string;
+  }>;
+} | null> {
+  try {
+    const response = await fetchKalshi(
+      `/events/${encodeURIComponent(eventTicker)}?with_nested_markets=true`,
+    ) as { event?: KalshiEvent };
+    const event = response.event;
+    if (!event) {
+      return null;
+    }
+
+    const childMarkets = (event.markets || []).map((m) => ({
+      ticker: m.ticker,
+      title: m.title || m.yes_sub_title || m.ticker,
+      yesPrice: m.yes_ask || m.last_price || 0,
+      noPrice: m.no_ask || (100 - (m.yes_ask || m.last_price || 50)),
+      volume24h: m.volume_24h || 0,
+      status: m.status || "open",
+    }));
+
+    return {
+      found: true,
+      eventTitle: event.title || null,
+      seriesTicker: getSeriesTicker(event.event_ticker),
+      childMarkets,
+    };
+  } catch (_error) {
+    return null;
+  }
+}
+
 /**
  * Resolves a URL slug to market/event information by searching markets.
  * Returns the best matching event ticker and associated markets.
@@ -3740,7 +4192,12 @@ async function handleDiscoverTrendingMarkets(
     category ? ` in ${category}` : ""
   }. Combined 24h contract volume: ${formattedVolume}`;
 
-  return successResult({
+  const trendingRecoveryHints = buildTrendingRecoveryHints({
+    category,
+    resultCount: trendingMarkets.length,
+  });
+
+  const trendingResponse: Record<string, unknown> = {
     marketSummary,
     trendingMarkets,
     totalActive: markets.length,
@@ -3755,7 +4212,14 @@ async function handleDiscoverTrendingMarkets(
       usedTradeFallback: needsTradeFallback,
     },
     fetchedAt: new Date().toISOString(),
-  });
+  };
+
+  if (trendingRecoveryHints) {
+    trendingResponse.hint = `⚠️ discover_trending_markets returned 0 markets${category ? ` for category=${JSON.stringify(category)}` : ""}. Follow recoveryHints.nextTools before concluding nothing is active.`;
+    trendingResponse.recoveryHints = trendingRecoveryHints;
+  }
+
+  return successResult(trendingResponse);
 }
 
 async function handleAnalyzeMarketLiquidity(
@@ -5238,7 +5702,13 @@ async function handleGetMarkets(
     url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
   }));
 
-  return successResult({
+  const marketsRecoveryHints = buildMarketsListRecoveryHints({
+    args,
+    resultCount: markets.length,
+    nextCursor,
+  });
+
+  const marketsResponse: Record<string, unknown> = {
     markets,
     nextCursor,
     cursor: nextCursor,
@@ -5251,7 +5721,17 @@ async function handleGetMarkets(
       tickersCount: tickers.length,
     },
     fetchedAt: new Date().toISOString(),
-  });
+  };
+
+  if (marketsRecoveryHints) {
+    marketsResponse.hint =
+      markets.length === 0
+        ? `⚠️ get_markets returned 0 markets for the given filters. DO NOT refuse — follow recoveryHints.nextTools (broaden status, pivot to browse_category / discover_trending_markets, or fetch get_event directly).`
+        : `ℹ️ More pages available (nextCursor='${nextCursor.slice(0, 24)}...'). Paginate with cursor OR pivot to a ranked tool (recoveryHints.nextTools) before shortlisting a 'top N'.`;
+    marketsResponse.recoveryHints = marketsRecoveryHints;
+  }
+
+  return successResult(marketsResponse);
 }
 
 async function handleGetEvent(
@@ -5310,6 +5790,14 @@ async function handleGetEvent(
       result.resolvedFrom = resolvedFrom;
     }
 
+    const fanoutHint = buildEventFanoutHint({
+      eventTicker: event.event_ticker,
+      markets,
+    });
+    if (fanoutHint) {
+      result.fanoutHint = fanoutHint;
+    }
+
     return successResult(result);
   } catch (error) {
     // If direct fetch fails and we haven't tried slug resolution, try it now
@@ -5331,7 +5819,7 @@ async function handleGetEvent(
           status: m.status || "open",
         }));
 
-        return successResult({
+        const fallbackResult: Record<string, unknown> = {
           event: {
             eventTicker: event.event_ticker,
             title: event.title || event.event_ticker,
@@ -5341,7 +5829,15 @@ async function handleGetEvent(
           markets,
           resolvedFrom: `fallback:${eventTicker}`,
           fetchedAt: new Date().toISOString(),
+        };
+        const fallbackFanoutHint = buildEventFanoutHint({
+          eventTicker: event.event_ticker,
+          markets,
         });
+        if (fallbackFanoutHint) {
+          fallbackResult.fanoutHint = fallbackFanoutHint;
+        }
+        return successResult(fallbackResult);
       }
     }
     throw error;
@@ -5428,7 +5924,7 @@ async function handleGetEventBySlug(
     earlyCloseCondition: m.early_close_condition || ""
   }));
 
-  return successResult({
+  const slugResult: Record<string, unknown> = {
     event: {
       eventTicker: event.event_ticker,
       seriesTicker: resolved.seriesTicker,
@@ -5439,7 +5935,15 @@ async function handleGetEventBySlug(
     markets,
     resolvedFrom: `slug:${slug}`,
     fetchedAt: new Date().toISOString(),
+  };
+  const slugFanoutHint = buildEventFanoutHint({
+    eventTicker: event.event_ticker,
+    markets,
   });
+  if (slugFanoutHint) {
+    slugResult.fanoutHint = slugFanoutHint;
+  }
+  return successResult(slugResult);
 }
 
 async function handleGetMarket(
@@ -5456,6 +5960,7 @@ async function handleGetMarket(
       market: {
         ticker: m.ticker,
         eventTicker: m.event_ticker,
+        seriesTicker: getSeriesTicker(m.event_ticker),
         title: m.title || m.yes_sub_title || m.ticker,
         subtitle: m.subtitle || m.no_sub_title || "",
         yesPrice: m.yes_ask || m.last_price || 0,
@@ -5491,6 +5996,62 @@ async function handleGetMarket(
   } catch (error) {
     if (!(error instanceof Error && error.message.includes('404'))) {
       throw error;
+    }
+  }
+
+  // Strategy 1.5: Auto-resolve event-level tickers (e.g. "KXOAIANTH-40") that buyers/
+  // agents sometimes pass to get_market. Without this, calls fall through to Strategy
+  // 2's regex (which only strips -0-prefixed suffixes) and waste 2-4 follow-up calls
+  // before eventually hitting resolve_slug. Returning the child market list + a
+  // recoveryHints payload lets the iterative planner pick the correct per-candidate
+  // ticker on its next step.
+  if (isEventLevelTicker(ticker)) {
+    const eventResolution = await resolveEventTickerToChildren(ticker);
+    if (eventResolution?.found && eventResolution.childMarkets.length > 0) {
+      const childMarkets = eventResolution.childMarkets;
+      const topChildren = [...childMarkets]
+        .sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0))
+        .slice(0, 10);
+
+      const payload = {
+        kind: "event_ticker_not_market" as const,
+        eventTicker: ticker,
+        eventTitle: eventResolution.eventTitle,
+        seriesTicker: eventResolution.seriesTicker,
+        resolvedFrom: `event:${ticker}`,
+        childMarketCount: childMarkets.length,
+        childMarkets,
+        recoveryHints: {
+          reason: `"${ticker}" is an EVENT ticker, not a MARKET ticker. Events have multiple sub-markets (one per candidate/outcome) and do not have their own yes/no price. Use one of the child tickers listed in childMarkets for get_market, get_market_orderbook, or get_market_candlesticks.`,
+          nextTools: [
+            {
+              toolName: "get_market",
+              suggestedArgs: { ticker: topChildren[0]?.ticker ?? childMarkets[0].ticker },
+              reason: `Call get_market per child ticker (highest 24h volume first: ${topChildren.slice(0, 3).map((c) => c.ticker).join(", ")}) to get yes/no prices and liquidity.`,
+            },
+            {
+              toolName: "get_market_candlesticks",
+              suggestedArgs: {
+                ticker: topChildren[0]?.ticker ?? childMarkets[0].ticker,
+                periodInterval: 1440,
+                startTs: Math.floor(Date.now() / 1000) - 86400 * 30,
+                endTs: Math.floor(Date.now() / 1000),
+              },
+              reason: "For 30-day trajectories / re-pricing / moving averages, call get_market_candlesticks per child ticker with periodInterval=1440 (daily).",
+            },
+            {
+              toolName: "get_event",
+              suggestedArgs: { eventTicker: ticker, withNestedMarkets: true },
+              reason: "Call get_event for the full event view (all child markets with prices and volume in one response).",
+            },
+          ],
+          escalationNote: `Fan out the per-child call over ALL ${childMarkets.length} childMarkets if the query asks for a ranking, comparison, arbitrage, or 'tightest spread / strongest aggression / highest volume' across the event.`,
+          shouldSynthesizeRefusal: false as const,
+        },
+        fetchedAt: new Date().toISOString(),
+      };
+
+      return successResult(payload);
     }
   }
 
@@ -5625,6 +6186,15 @@ async function handleSearchMarkets(
   if (queryLower.includes('jobs report')) {
     queryWords = [...queryWords, 'payrolls', 'employment'];
   }
+  // Preserve US jurisdiction signal. Tokenizer drops "U.S." / "US" (length <=2 after
+  // punctuation stripping) which lets non-US elections (e.g. Turkish, UK) win ranking
+  // on queries like "2028 U.S. Presidential Election". Re-inject strong US tokens.
+  const intentRequiresUSJurisdiction =
+    /\bu\.s\.|\busa\b|\bunited states\b|\bamericans?\b/.test(queryLower) ||
+    (/\bpresident(?:ial)?\b/.test(queryLower) && /\bu\.?\s?s\.?\b/.test(queryLower));
+  if (intentRequiresUSJurisdiction) {
+    queryWords = [...queryWords, 'usa', 'america', 'american', 'united', 'states'];
+  }
   queryWords = [...new Set(queryWords)];
   const intentRequiresWeather =
     category === "climate and weather" ||
@@ -5667,6 +6237,18 @@ async function handleSearchMarkets(
       !searchText.includes("kxcpi")
     ) {
       return false;
+    }
+    if (intentRequiresUSJurisdiction) {
+      const nonUSCountryPattern =
+        /\b(turkey|turkish|uk|united kingdom|british|france|french|germany|german|japan|japanese|india|indian|mexico|mexican|brazil|brazilian|korea|korean|russia|russian|china|chinese|canada|canadian|argentina|argentine|pakistan|pakistani|taiwan|taiwanese|philippines|filipino|iran|iranian|israel|israeli|spain|spanish|italy|italian|poland|polish|venezuela|venezuelan|nigeria|nigerian|egypt|egyptian|saudi|australia|australian|south korea|north korea|indonesia|indonesian|thailand|thai|vietnam|vietnamese)\b/;
+      const hasUSSignal =
+        /\b(us|u\.s\.|usa|united states|america|american)\b/.test(searchText) ||
+        /kx(pres|potus|djt|trump|gop|dem|senate|house|congress|biden|harris|vance|election)/.test(
+          searchText
+        );
+      if (nonUSCountryPattern.test(searchText) && !hasUSSignal) {
+        return false;
+      }
     }
     if (intentRequiresFedRates) {
       if (!/\bfed|fomc|federal reserve/.test(searchText)) {
@@ -6126,14 +6708,30 @@ async function handleSearchMarkets(
     ? ` Best match: ${selectedResult.title} (${selectedResult.ticker}, status: ${selectedResult.status}).`
     : "";
 
+  const selectedConfidence =
+    (searchResolution as unknown as { confidence?: string } | null)?.confidence ?? null;
+  const lowConfidence =
+    selectedConfidence === "low" ||
+    (results.length > 0 && !selectedResult && !!query);
+
+  const recoveryHints = buildSearchRecoveryHints({
+    query,
+    category: requestedCategory,
+    resultCount: results.length,
+    lowConfidence,
+    selectedTitle: selectedResult?.title ?? null,
+  });
+
   // Build helpful hint
   const hint = results.length === 0 && query
-    ? `⚠️ No Kalshi markets found for "${query}". Try: (1) Different keywords, (2) Check kalshi.com for the exact URL, (3) Use get_event_by_slug with the slug from the URL.`
-    : matchedSeries.length > 0 
-      ? `✅ Found ${results.length} markets via series search. Matched series: ${matchedSeries.slice(0, 5).join(', ')}.${selectedHint}`
-      : `Found ${results.length} markets matching "${query || 'all'}".${selectedHint}`;
+    ? `⚠️ No Kalshi markets found for "${query}". DO NOT synthesize a refusal. Next: call one of recoveryHints.nextTools — e.g. resolve_slug / get_event_by_slug for a slug guess, or search_markets again with a single-keyword query and NO category filter.`
+    : lowConfidence
+      ? `⚠️ Low-confidence match${selectedHint ? ` (${selectedHint.trim()})` : ""}. Results may be semantically irrelevant — call recoveryHints.nextTools before answering.`
+      : matchedSeries.length > 0
+        ? `✅ Found ${results.length} markets via series search. Matched series: ${matchedSeries.slice(0, 5).join(', ')}.${selectedHint}`
+        : `Found ${results.length} markets matching "${query || 'all'}".${selectedHint}`;
 
-  const responseData = {
+  const responseData: Record<string, unknown> = {
     results,
     count: results.length,
     matchedSeries: matchedSeries.slice(0, 10),
@@ -6145,6 +6743,10 @@ async function handleSearchMarkets(
     hint,
     fetchedAt: new Date().toISOString(),
   };
+
+  if (recoveryHints) {
+    responseData.recoveryHints = recoveryHints;
+  }
 
   return successResult(
     searchResolution
@@ -6268,6 +6870,56 @@ async function handleGetMarketCandlesticks(
   const endTs = (args?.endTs as number) || Math.floor(Date.now() / 1000);
   const periodInterval = (args?.periodInterval as number) || 60;
   const includeLatestBeforeStart = args?.includeLatestBeforeStart === true;
+
+  // Detect event-level tickers (e.g. "KXOAIANTH-40", "KXRAMPBREX-40") before issuing
+  // the batch call. The upstream /markets/candlesticks endpoint silently returns an
+  // empty markets array for event-level tickers (no error, ~124 bytes) which wastes a
+  // tool call without giving the iterative planner anything to pivot on. Auto-resolve
+  // to child markets here so the planner can fan out per-child on the next step.
+  if (isEventLevelTicker(ticker)) {
+    const eventResolution = await resolveEventTickerToChildren(ticker);
+    if (eventResolution?.found && eventResolution.childMarkets.length > 0) {
+      const childMarkets = eventResolution.childMarkets;
+      const topChildren = [...childMarkets]
+        .sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0))
+        .slice(0, 10);
+      const primaryChild = topChildren[0]?.ticker ?? childMarkets[0].ticker;
+
+      return successResult({
+        kind: "event_ticker_not_market",
+        requestedTicker: ticker,
+        eventTitle: eventResolution.eventTitle,
+        seriesTicker: eventResolution.seriesTicker,
+        resolvedFrom: `event:${ticker}`,
+        childMarketCount: childMarkets.length,
+        childMarkets,
+        candlesticks: [],
+        recoveryHints: {
+          reason: `"${ticker}" is an EVENT ticker, not a MARKET ticker. get_market_candlesticks returns one time-series per child market, not per event. Call this tool again with a child ticker from childMarkets.`,
+          nextTools: [
+            {
+              toolName: "get_market_candlesticks",
+              suggestedArgs: {
+                ticker: primaryChild,
+                periodInterval,
+                startTs,
+                endTs,
+              },
+              reason: `Retry with the highest-24h-volume child ticker first (${topChildren.slice(0, 3).map((c) => c.ticker).join(", ")}). Fan out over additional children if the query needs per-candidate comparison.`,
+            },
+            {
+              toolName: "get_event",
+              suggestedArgs: { eventTicker: ticker, withNestedMarkets: true },
+              reason: "Full event snapshot with all child markets (yes/no prices, volume) in a single call.",
+            },
+          ],
+          escalationNote: `Fan out per-child candlesticks over ALL ${childMarkets.length} childMarkets for event-level trajectory / re-pricing / moving-average analyses.`,
+          shouldSynthesizeRefusal: false as const,
+        },
+        fetchedAt: new Date().toISOString(),
+      });
+    }
+  }
 
   const baseBatchEndpoint = `/markets/candlesticks?market_tickers=${encodeURIComponent(
     ticker
@@ -6673,12 +7325,25 @@ async function handleBrowseCategory(
     status: m.status || "open",
   }));
 
-  return successResult({
+  const recoveryHints = buildCategoryRecoveryHints({
+    category: requestedCategory,
+    status,
+    resultCount: marketsResult.length,
+  });
+
+  const browseCategoryResponse: Record<string, unknown> = {
     category: requestedCategory,
     markets: marketsResult,
     totalCount: marketsResult.length,
     fetchedAt: new Date().toISOString(),
-  });
+  };
+
+  if (recoveryHints) {
+    browseCategoryResponse.hint = `⚠️ browse_category returned 0 markets for ${JSON.stringify(requestedCategory)} (status=${status}). DO NOT conclude the category is empty — follow recoveryHints.nextTools (get_all_series + discover_trending_markets + get_markets with broader status).`;
+    browseCategoryResponse.recoveryHints = recoveryHints;
+  }
+
+  return successResult(browseCategoryResponse);
 }
 
 async function handleBrowseSeries(
@@ -6690,6 +7355,7 @@ async function handleBrowseSeries(
   }
 
   const status = normalizeRequestedKalshiStatus(args?.status as string | undefined);
+  const sortBy = args?.sortBy as string | undefined;
   const limit = Math.min((args?.limit as number) || 50, 100);
 
   // Get series info
@@ -6705,24 +7371,61 @@ async function handleBrowseSeries(
   const response = await fetchKalshi(endpoint) as { markets: KalshiMarket[] };
   const markets = (response.markets || [])
     .filter((market) => matchesRequestedKalshiStatus(status, market.status))
-    .map(m => ({
-    title: m.title || m.yes_sub_title || m.ticker,
-    ticker: m.ticker,
-    eventTicker: m.event_ticker,
-    url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
-    yesPrice: m.yes_ask || m.last_price || 0,
-    volume24h: m.volume_24h || 0,
-    closeTime: m.close_time || "",
-    status: m.status || "open",
-  }));
+    .map((m) => ({
+      title: m.title || m.yes_sub_title || m.ticker,
+      ticker: m.ticker,
+      eventTicker: m.event_ticker,
+      url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
+      yesPrice: m.yes_ask || m.last_price || 0,
+      noPrice: m.no_ask || (100 - (m.yes_ask || m.last_price || 50)),
+      volume24h: m.volume_24h || 0,
+      liquidity: m.liquidity || 0,
+      closeTime: m.close_time || "",
+      status: m.status || "open",
+      category: m.category || "Unknown",
+    }));
 
-  return successResult({
+  if (sortBy === "volume_24h") {
+    markets.sort((a, b) => b.volume24h - a.volume24h);
+  } else if (sortBy === "liquidity") {
+    markets.sort((a, b) => b.liquidity - a.liquidity);
+  } else if (sortBy === "close_time") {
+    markets.sort((a, b) => {
+      const aTime = Date.parse(a.closeTime);
+      const bTime = Date.parse(b.closeTime);
+      if (!Number.isFinite(aTime) && !Number.isFinite(bTime)) {
+        return 0;
+      }
+      if (!Number.isFinite(aTime)) {
+        return 1;
+      }
+      if (!Number.isFinite(bTime)) {
+        return -1;
+      }
+      return aTime - bTime;
+    });
+  }
+
+  const seriesRecoveryHints = buildSeriesRecoveryHints({
+    seriesTicker,
+    status,
+    resultCount: markets.length,
+  });
+
+  const browseSeriesResponse: Record<string, unknown> = {
     seriesTicker,
     seriesTitle: series?.title || seriesTicker,
     markets,
     totalCount: markets.length,
     fetchedAt: new Date().toISOString(),
-  });
+  };
+
+  if (seriesRecoveryHints) {
+    browseSeriesResponse.hint = `⚠️ browse_series returned 0 markets for ${JSON.stringify(seriesTicker)} (status=${status}). Follow recoveryHints.nextTools before concluding.`;
+    browseSeriesResponse.recoveryHints = seriesRecoveryHints;
+  }
+
+  return successResult(browseSeriesResponse);
 }
 
 // ============================================================================

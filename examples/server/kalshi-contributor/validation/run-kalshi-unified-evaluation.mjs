@@ -443,32 +443,7 @@ async function main() {
   }
 
   const { toolId, records: baseRecords } = buildPromptRecords();
-  const markets = await loadSnapshotMarkets();
-  const extra = [];
-  if (markets.length > 0) {
-    const a = markets[0];
-    const b = markets[Math.min(10, markets.length - 1)];
-    extra.push({
-      id: "snap-1",
-      prompt: `For Kalshi market ticker ${a.ticker} (title: ${a.title.slice(0, 200)}), return status, close time, and best available yes/no prices or bids/asks from live Kalshi data.`,
-      mustWin: true,
-      category: "kalshi",
-      alphaCategory: "Time-Bounded Market Discovery",
-      showcaseCandidate: false,
-      groundedEntity: a.ticker,
-    });
-    extra.push({
-      id: "snap-2",
-      prompt: `For Kalshi market ticker ${b.ticker} (title: ${b.title.slice(0, 200)}), summarize what the contract is about and whether it still has open interest or liquidity signals worth trading.`,
-      mustWin: true,
-      category: "kalshi",
-      alphaCategory: "Contract Rule And Settlement Risk Analysis",
-      showcaseCandidate: false,
-      groundedEntity: b.ticker,
-    });
-  }
-
-  const fullPromptRecords = [...baseRecords, ...extra];
+  const fullPromptRecords = [...baseRecords];
   const latestPath = path.join(OUTPUT_DIR, "full-enhancement-results.latest.json");
 
   let previousById = new Map();

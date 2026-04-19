@@ -1,72 +1,161 @@
 {
-  "runId": "2026-04-09T09:14:00.000Z",
+  "runId": "2026-04-19T01:24:00Z",
   "contributor": "kalshi-contributor",
   "events": [
     {
-      "timestamp": "2026-04-09T09:13:51.455Z",
+      "timestamp": "2026-04-19T01:24:00Z",
+      "phase": "readiness",
+      "event": "server_check",
+      "detail": "localhost:3000 responded 200 on first attempt"
+    },
+    {
+      "timestamp": "2026-04-19T01:24:02Z",
       "phase": "prompts",
       "event": "live_data_discovery",
-      "detail": "node discover-live-markets.mjs wrote live-market-snapshot.json (60 markets)",
-      "promptCount": 0
+      "detail": "discover-live-markets.mjs wrote 60 markets to live-market-snapshot.json",
+      "marketCount": 60
     },
     {
-      "timestamp": "2026-04-09T09:28:59.018Z",
-      "phase": "evaluation",
-      "event": "paid_sweep_partial",
-      "detail": "First batch: 6/16 prompts (q1-q6), paid+free baseline, 100% script pass rate",
-      "successCount": 6,
-      "errorCount": 0
+      "timestamp": "2026-04-19T01:32:41.017Z",
+      "phase": "prompts",
+      "event": "alpha_researcher_complete",
+      "detail": "18 prompts generated; all have groundedEntity + answerabilityNote; all slugs verified against live snapshot; 6 alpha categories",
+      "promptCount": 18,
+      "droppedCount": 0
     },
     {
-      "timestamp": "2026-04-09T09:29:30.000Z",
-      "phase": "readiness",
-      "event": "local_mcp_probe",
-      "detail": "localhost:4007/mcp not reachable; Context app root HTTP 200",
-      "durationMs": 0
-    },
-    {
-      "timestamp": "2026-04-09T09:29:49.887Z",
-      "phase": "evaluation",
-      "event": "merge_continuation_started",
-      "detail": "KALSHI_MERGE=1 run for remaining prompt ids (q7-q17, snap-1, snap-2)",
-      "successCount": 0
-    },
-    {
-      "timestamp": "2026-04-09T09:50:08.532Z",
+      "timestamp": "2026-04-19T01:55:57.652Z",
       "phase": "evaluation",
       "event": "paid_sweep_complete",
-      "detail": "16/16 prompts merged; script passRate 87.5% (14/16); q16/q17 timeouts; q12 partial refusal in text",
+      "detail": "18/18 prompts executed; 14 pass, 4 fail (clarification-only responses w/ 0 tools)",
       "successCount": 14,
-      "errorCount": 2
+      "errorCount": 0,
+      "durationMs": 1229831
     },
     {
-      "timestamp": "2026-04-09T09:50:15.000Z",
+      "timestamp": "2026-04-19T01:55:57.655Z",
+      "phase": "evaluation",
+      "event": "free_baseline_complete",
+      "detail": "18/18 Gemini baseline succeeded",
+      "successCount": 18
+    },
+    {
+      "timestamp": "2026-04-19T01:55:57.655Z",
       "phase": "evaluation",
       "event": "failure_gate",
-      "detail": "autoWeakCount=5 from reviewer file (refusal/timeout/tool gaps)",
-      "autoWeakCount": 5
+      "detail": "6 prompts tagged autoWeak (4 zero_tool_calls clarification, 2 refusal_language)",
+      "autoWeakCount": 6,
+      "autoWeakPromptIds": [
+        "kalshi-007",
+        "kalshi-008",
+        "kalshi-010",
+        "kalshi-013",
+        "kalshi-014",
+        "kalshi-017"
+      ]
     },
     {
-      "timestamp": "2026-04-09T09:58:03.816Z",
+      "timestamp": "2026-04-19T02:07:06.805Z",
       "phase": "evaluation",
       "event": "reviewer_complete",
-      "detail": "pipeline-reviewer wrote reviewer-evaluation.json",
-      "satisfactionMean": 3.032,
-      "weakQueryCount": 11,
-      "weakQueryRate": 0.688,
-      "baselineBeatenRate": 0.875
+      "detail": "Reviewer evaluation written",
+      "satisfactionMean": 2.64,
+      "weakQueryCount": 12,
+      "weakQueryRate": 0.67,
+      "baselineBeatenRate": 0.78
     },
     {
-      "timestamp": "2026-04-09T09:58:18.087Z",
+      "timestamp": "2026-04-19T02:07:06.805Z",
       "phase": "evaluation",
-      "event": "gate_check",
-      "detail": "release.status blocked: reviewer mean < 3.5, weak rate > 20%, missing marketplace-surface-checks.latest.json",
+      "event": "release_decision_computed",
+      "detail": "Release blocked; 12 fixable weak queries; 4 categories: stage_reflection_error(4), contributor_tool_bug(3), argument_or_extraction_error(3), iterative_recovery_failure(2)",
       "releaseStatus": "blocked",
-      "iterationAction": "continue",
+      "iterationAction": "continue"
+    },
+    {
+      "timestamp": "2026-04-19T02:07:06.805Z",
+      "phase": "evaluation",
+      "event": "schema_validation_ok",
+      "detail": "release-decision schema 2026-04-17 valid"
+    },
+    {
+      "timestamp": "2026-04-19T02:07:06.805Z",
+      "phase": "evaluation",
+      "event": "north_star_check",
+      "detail": "weightedBuyerValue logged for iteration 0"
+    },
+    {
+      "timestamp": "2026-04-19T02:07:06.805Z",
+      "phase": "evaluation",
+      "event": "generalization_check",
+      "detail": "train 8 weak, holdout 4 weak"
+    },
+    {
+      "timestamp": "2026-04-19T02:42:54.112Z",
+      "phase": "improvement",
+      "event": "improver_iteration_1",
+      "detail": "Fixed stage_reflection_error in context/lib/ai/query-clarification.ts (shared runtime); re-ran 12 weak queries",
+      "fixedRootCauseCategory": "stage_reflection_error",
+      "skippedRootCauseCategories": [
+        "contributor_tool_bug",
+        "argument_or_extraction_error",
+        "iterative_recovery_failure"
+      ],
+      "filesChanged": [
+        "context/lib/ai/query-clarification.ts"
+      ],
+      "deployed": false,
+      "deployNote": "shared runtime hot-reloads on localhost:3000"
+    },
+    {
+      "timestamp": "2026-04-19T02:42:54.112Z",
+      "phase": "improvement",
+      "event": "reviewer_rerun_1",
+      "detail": "Re-scored 12 queries; 1 autoWeak cap applied (kalshi-011 refusal)",
+      "satisfactionMean": 3.4356,
+      "weakQueryCount": 9,
+      "weakQueryRate": 0.5,
+      "delta": 0.8
+    },
+    {
+      "timestamp": "2026-04-19T02:42:54.112Z",
+      "phase": "improvement",
+      "event": "north_star_check",
+      "detail": "weightedBuyerValue 0.5328 -> 0.6789 (+0.146)",
+      "weightedBuyerValueBefore": 0.5328,
+      "weightedBuyerValueAfter": 0.6789
+    },
+    {
+      "timestamp": "2026-04-19T02:42:54.112Z",
+      "phase": "improvement",
+      "event": "generalization_check",
+      "detail": "train=3.638 holdout=3.030 ok=false informational",
+      "trainMean": 3.638,
+      "holdoutMean": 3.03,
+      "ok": false
+    },
+    {
+      "timestamp": "2026-04-19T02:42:54.112Z",
+      "phase": "improvement",
+      "event": "release_decision_computed",
+      "detail": "iteration.action=continue; sat 3.44 below 3.5; 9 fixable weak",
+      "releaseStatus": "blocked",
+      "iterationAction": "continue"
+    },
+    {
+      "event": "reviewer_rerun_2",
+      "ts": "2026-04-19T03:16:17.758Z",
+      "satisfactionMean": 3.639,
+      "weakQueryCount": 8,
+      "weightedBuyerValue": 0.7034
+    },
+    {
+      "event": "release_decision_iter_2",
+      "ts": "2026-04-19T03:16:17.759Z",
+      "action": "continue",
       "blockers": [
-        "Reviewer satisfactionMean 3.032 < 3.5",
-        "Weak query rate 69%",
-        "Missing marketplace-surface-checks.latest.json"
+        "weak_query_rate_44",
+        "no_high_differentiation"
       ]
     }
   ]

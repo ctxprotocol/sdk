@@ -1,0 +1,456 @@
+{
+  "reviewedAt": "2026-04-19T04:10:00Z",
+  "perQueryEvaluations": [
+    {
+      "promptId": "kalshi-001",
+      "query": "What is the current YES price and implied probability on the 'Will Zohran Mamdani become President of the United States before 2045?' event on Kalshi?",
+      "quotedExcerpts": [
+        "As of April 19, 2026 (03:25 UTC), the current market data for Zohran Mamdani's presidential prospects on Kalshi is as follows:",
+        "| **Ticker** | KXPERSONPRESMAM-45 |",
+        "| **YES Price** | 9.5¢ |\n| **Implied Probability** | 9.5% |\n| **24h Volume** | 27.5 |\n| **Close Time** | 2045-01-29T15:00:00Z |"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 3,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.33,
+      "scoreExplanations": {
+        "actionability": "Buyer gets exactly what they asked for: the specific YES price (9.5¢) and implied probability (9.5%) they can act on. Only minor ding is the unnecessary closing paragraph about 'partial data' that could confuse whether the headline numbers are reliable.",
+        "dataFreshness": "Explicit timestamp 'April 19, 2026 (03:25 UTC)' pins the data to within minutes of query time. Matches tool-call fetchedAt in trace (2026-04-19T03:25:*Z).",
+        "specificity": "Contains ticker (KXPERSONPRESMAM-45), exact YES price in cents, implied probability, 24h volume, and ISO close timestamp — every structured field a buyer would want.",
+        "uniqueness": "Live market data a free LLM cannot retrieve, but the question itself is narrow lookup; the answer does not add cross-market screening or comparative depth a buyer couldn't get with one Kalshi API call. Capped at 3.",
+        "completeness": "Answers both parts of the question (YES price AND implied probability) and provides bonus context (close time, 24h volume).",
+        "dataAccuracy": "YES price 9.5¢ maps cleanly to 9.5% implied probability — internally consistent. Volume of 27.5 is tiny but plausible for a 20-year-horizon speculative market. No red flags such as uniform values across markets or impossible magnitudes."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 38,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "First search_markets call with category='Politics' and specific query text returned a bunch of Trump-state markets, not Mamdani. A second call with different query succeeded — avoidable extra call.",
+        "completenessIssue": "Response text includes a 'bounded search execution' / 'session limit was reached' caveat that is not warranted by the trace (only 2 tool calls, 38% budget). This is synthesis hedging that may erode buyer trust.",
+        "codeIssueDetail": "toolCallHistory[0].args.query='Will Zohran Mamdani become President...' with category='Politics' returned zero relevant matches; toolCallHistory[1] with simpler query 'Zohran Mamdani 2045 president' and category='' found the target market on result[0] with exact ticker KXPERSONPRESMAM-45.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "summary.toolCalls=2, loopCount=2, no failures — yet the final responseText adds a 'partial data' disclaimer inconsistent with a clean 2-call lookup.",
+        "responseQualityNote": "Strong factual answer with every requested field. Weakened by an unwarranted 'partial data / session limit' paragraph the trace does not justify — buyer may wonder whether to trust the numbers.",
+        "improvementLever": "Have synthesis suppress 'partial data / bounded search' caveats when retryBudget and failureCount are both zero and the answered question is a narrow lookup.",
+        "diagnosticBrief": {
+          "toolUsed": "search_markets (x2)",
+          "toolShouldHaveUsed": "resolve_slug or direct get_event for KXPERSONPRESMAM-45 once the headline is known, but search_markets is acceptable",
+          "argsUsed": "{\"query\":\"Will Zohran Mamdani become President...\",\"category\":\"Politics\",\"status\":\"open\"} then {\"query\":\"Zohran Mamdani 2045 president\",\"category\":\"\"}",
+          "argsShouldHaveUsed": "A single search_markets call with shorter query 'Zohran Mamdani president' and no category filter would have worked in one shot.",
+          "codeSnippet": "search_markets -> 0 relevant hits (Trump-state noise); search_markets #2 -> ticker KXPERSONPRESMAM-45, yesPrice 9.5, volume24h 27.5",
+          "toolResultSample": "{\"results\":[{\"title\":\"Will Zohran Mamdani become President of the United States before 2045?\",\"ticker\":\"KXPERSONPRESMAM-45\",\"yesPrice\":9.5,\"volume24h\":27.5,\"category\":\"Unknown\",\"status\":\"active\",\"closeTime\":\"2045-01-29T15:00:00Z\"}]",
+          "completenessVerdict": "No completeness evaluations were recorded (diagnostics.completeness is empty); synthesis hedged anyway.",
+          "stageTimingBottleneck": "executionMs=59104ms (86% of accounted time) — acceptable for a two-call lookup but slow per call."
+        }
+      },
+      "overallVerdict": "Yes — I'd pay again for this; the answer is live, specific, and correct, just with an unnecessary caveat that dents trust slightly."
+    },
+    {
+      "promptId": "kalshi-005",
+      "query": "Find all active Kalshi markets in the Elections category with YES implied probability between 10% and 40% and 24h volume above $10,000, ranked by 24h volume.",
+      "quotedExcerpts": [
+        "I could not find any active Kalshi markets in the **Elections** category that meet your specific criteria.",
+        "Based on data from a query on **April 19, 2026**, the search for markets with a YES implied probability between 10% and 40% and 24h volume above $10,000 yielded no results.",
+        "While several series are currently active (such as the Nevada Senate race and the Pennsylvania Senate race), the markets inspected within those series currently report $0 in 24h volume."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 3,
+        "uniqueness": 3,
+        "completeness": 3,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 3.0,
+      "scoreExplanations": {
+        "actionability": "Null result — no market is returned that a buyer can act on. The offer to 'see markets with lower volume thresholds' is boilerplate, not a concrete alternative trade.",
+        "dataFreshness": "Explicit 'April 19, 2026' date; trace fetchedAt timestamps corroborate. No per-market timestamps, so not a 5.",
+        "specificity": "Only two series (SENATENV, Pennsylvania Senate race) are named; no specific market tickers, prices, or volume numbers are cited as evidence of the null result.",
+        "uniqueness": "A null result after category + probability + volume filtering is something a free LLM cannot assert; but the response doesn't show the sample size it screened, so the uniqueness of the finding is weak.",
+        "completeness": "Does respond to the question (the answer is 'none'), but omits evidence: how many Elections markets were examined, what their actual 24h volumes were, and whether the discover_trending_markets tradeSnapshot.allVolume24hZero=true was a data artifact vs. real.",
+        "dataAccuracy": "tradeSnapshot from trace says 'allVolume24hZero: true' across 298 tickers with recent trades — this is a suspicious uniform pattern. Either Kalshi's /markets endpoint is not populating volume_24h (likely an upstream/contributor bug) or the filter is wrong. This is a data-quality red flag that caps dataAccuracy at 3."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 37,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": "planner diagnostics object is empty — no planner query or validation trace recorded.",
+        "executionIssue": "get_markets with category='Elections' was paginated 7 times (calls 3-8), every page returning count=0 with empty markets array — agent continued paginating despite consistent empty results, burning ~20s of execution time.",
+        "completenessIssue": "completeness.evaluations is empty; no check that 'null result' was evidence-backed.",
+        "codeIssueDetail": "toolCallHistory[3-8]: get_markets {category:'Elections', status:'open'} always returns {markets:[], count:0, nextCursor:...}. discover_trending_markets (call 9) returned 'Showing 0 of 0 active markets in Elections' with tradeSnapshot.allVolume24hZero=true, tradeSnapshot.tickersWithRecentTrades=298. This contradicts the 'zero markets' claim — there ARE markets trading, but the volume_24h field is empty across the universe.",
+        "dataAccuracyRedFlags": "discover_trending_markets result.tradeSnapshot: {tickersWithRecentTrades:298, allVolume24hZero:true, allVolumeZero:true, usedTradeFallback:true} across Elections — uniform-zero-volume across 298 tickers with real trades is the classic sign of a broken volume_24h aggregation, not an empty market set.",
+        "rootCauseCategory": "contributor_tool_bug",
+        "rootCauseEvidence": "tradeSnapshot shows 298 tickers with recent trades but 0 tickers with nonzero volume_24h — the contributor's 24h-volume derivation is not wiring real trade data into the volume_24h field consumed by filters.",
+        "responseQualityNote": "Honest about the null result but does not explain that the null result is likely tool-driven rather than market-driven; a sophisticated buyer would suspect the data, not Kalshi.",
+        "improvementLever": "Either fix the contributor's 24h-volume aggregation (derive from recent trades when the raw field is 0), or have synthesis surface the volume-aggregation caveat so buyers can evaluate the null result honestly.",
+        "diagnosticBrief": {
+          "toolUsed": "get_markets_by_probability, browse_category, get_all_series, get_markets (paginated x6), discover_trending_markets, browse_series",
+          "toolShouldHaveUsed": "find_trading_opportunities or a tool that filters by derived 24h volume from trades — get_markets volume_24h field is unreliable per tradeSnapshot",
+          "argsUsed": "{category:'Elections', status:'open'} repeated with cursors; discover_trending_markets {sortBy:'volume_24h', category:'Elections'}",
+          "argsShouldHaveUsed": "Should have called get_market_trades or a time-bucketed trade aggregation to compute 24h volume from trades where raw field is zeroed.",
+          "codeSnippet": "get_markets x7 -> {markets:[], count:0}; discover_trending_markets -> 'Showing 0 of 0 active markets' but tradeSnapshot reports 298 tickers with recent trades",
+          "toolResultSample": "\"marketSummary\":\"Showing 0 of 0 active markets in Elections. Combined 24h contract volume: 0\",\"tradeSnapshot\":{\"tickersWithRecentTrades\":298,\"allVolume24hZero\":true,\"allVolumeZero\":true,\"usedTradeFallback\":true}",
+          "completenessVerdict": "No completeness evaluations recorded; the check 'did we actually enumerate the Elections universe?' was skipped.",
+          "stageTimingBottleneck": "executionMs=58740ms (89% of accounted time) consumed largely by 7 paginated empty get_markets calls."
+        }
+      },
+      "overallVerdict": "On the fence — the null result is honest but probably a tool artifact, not reality; buyer may not discover this without reading diagnostics."
+    },
+    {
+      "promptId": "kalshi-008",
+      "query": "Screen the Kalshi Economics category for active markets whose orderbook depth can absorb a $5,000 YES order at <= 2 cents of slippage, and list the top 5 by available depth.",
+      "quotedExcerpts": [
+        "Based on a past query of active Economics markets on Kalshi, no markets were found that meet your specific criteria of absorbing a $5,000 YES order at $\\le$ 2 cents of slippage.",
+        "| 1 | KXRATECUTCOUNT-26DEC31-T3 | Will the Fed cut rates 3 times? | $43,931 | Best depth; 29% slippage at $1,000 order size. |",
+        "**Slippage Verification:** The analysis tools only simulate orders up to $1,000. However, because the top market already exceeded 2 cents of slippage at the $1,000 level, it would not qualify for a $5,000 order."
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 2,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 3.17,
+      "scoreExplanations": {
+        "actionability": "Gives the buyer one real Economics market (Fed rate-cut count) with depth $43,931 and the fact that $1,000 already blows the slippage budget — so the buyer knows not to place the $5,000 order. But no actionable alternative or sizing guidance.",
+        "dataFreshness": "Response text says 'past query' without an explicit timestamp in the prose. No ISO date is cited, capping freshness at 2.",
+        "specificity": "KXRATECUTCOUNT-26DEC31-T3 with $43,931 depth and 29% slippage is specific; the other two rows are obvious noise (cross-category multi-game aggregations) but still carry tickers.",
+        "uniqueness": "Multi-market orderbook screening is exactly the cross-entity filtering a free LLM cannot reproduce without tool access.",
+        "completeness": "Query asked for top 5 by available depth; response gives 3. Second and third entries are 'yes Bayern Munich, yes Manchester City, etc.' — cross-category sports/soccer aggregates masquerading as Economics, which the agent should have filtered out.",
+        "dataAccuracy": "Two of three surfaced 'Economics' markets are labeled 'yes Bayern Munich, yes Manchester City, yes Real Madrid, yes Detroit…' — these are clearly not Economics. This is a category-labeling red flag on the contributor side; dataAccuracy capped at 3."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 40,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "get_markets with category='Economics' was paginated 11 times (calls 3-14), most returning count=0; the only non-empty pages returned cross-category multi-game sports aggregates tagged as Economics, which were then surfaced to the user.",
+        "completenessIssue": "completeness.evaluations empty; nothing caught that the 'Economics' results were in fact Sports aggregates mislabeled.",
+        "codeIssueDetail": "analyze_market_liquidity on KXMVECROSSCATEGORY-S2026198F84131E4-FED99B79843 returned depth $0; the agent still listed it as a top-3 result. Filter should have dropped any market with depth=0 before synthesis.",
+        "dataAccuracyRedFlags": "Markets titled 'yes Bayern Munich, yes Manchester City, yes Real Madrid, yes Detroit, yes Boston, yes Oklahoma City, yes San Antonio, yes New York, yes Denver, yes Cleveland, yes Juventus, yes Milan, yes Fiorentina' appearing under Economics filter — either the contributor's category filter is broken or Kalshi's upstream categorization is polluted.",
+        "rootCauseCategory": "contributor_tool_bug",
+        "rootCauseEvidence": "get_markets {category:'Economics'} returned KXMVECROSSCATEGORY and KXMVESPORTSMULTIGAMEEXTENDED (sports multi-game) markets; the category filter is either not applied server-side or the markets are miscategorized upstream with no contributor-side guard.",
+        "responseQualityNote": "Honest transparency about the $1,000 slippage-tool limit and the top candidate failing criteria. Hurt by surfacing obviously-non-Economics markets in the shortlist.",
+        "improvementLever": "Either fix the category filter to exclude cross-category pseudo-markets (KXMVE* prefixes), or have completeness evaluation reject results whose titles don't plausibly match the requested category.",
+        "diagnosticBrief": {
+          "toolUsed": "browse_category, get_all_series, discover_trending_markets, get_markets (paginated x11), analyze_market_liquidity (x2)",
+          "toolShouldHaveUsed": "find_trading_opportunities or get_markets_by_probability with a tighter category guard; analyze_market_liquidity with larger max order size to simulate $5,000",
+          "argsUsed": "{category:'Economics', status:'open', limit:100} paginated; analyze_market_liquidity {ticker:'KXRATECUTCOUNT-26DEC31-T3'}",
+          "argsShouldHaveUsed": "analyze_market_liquidity needs to support order sizes up to the requested $5,000, or the agent should have computed depth from get_market_orderbook directly rather than stopping at $1,000 simulation.",
+          "codeSnippet": "analyze_market_liquidity -> 29% slippage at $1,000 order size; agent stops rather than simulating $5,000 via raw orderbook walk",
+          "toolResultSample": "{\"market\":\"Will the Fed cut rates 3 times?\",\"ticker\":\"KXRATECUTCOUNT-26DEC31-T3\",\"currentPrices\":{\"yesBid\":8.1,\"yesAsk\":8.2,\"noBid\":91.8,\"noAsk\":91.9,\"lastPrice\":8.2}",
+          "completenessVerdict": "No completeness check fired; agent accepted cross-category pollution into the shortlist.",
+          "stageTimingBottleneck": "executionMs=58876ms (82% of accounted time) — 11 empty paginated calls dominated."
+        }
+      },
+      "overallVerdict": "On the fence — the one real finding (Fed rate market depth insufficient) is useful, but two of three ranked rows are sports aggregates, which feels sloppy for a paid answer."
+    },
+    {
+      "promptId": "kalshi-011",
+      "query": "Compare 30-day YES-price trajectories on 'Will OpenAI or Anthropic IPO first?' (KXOAIANTH-40) and 'Will Ramp or Brex IPO first?' (KXRAMPBREX-40). Which event has re-priced more over the last 30 days, and in which direction?",
+      "quotedExcerpts": [
+        "Based on the current market data as of April 19, 2026, the current YES prices for the candidates in these events are as follows:",
+        "A precise 30-day trajectory comparison—including the specific direction and the exact number of cents re-priced—cannot be provided at this time. The historical candlestick data for all four child markets was unavailable in the source results, meaning the starting prices from 30 days ago could not be established.",
+        "While the **Ramp vs. Brex** event currently shows a much wider price spread (86¢) compared to the **OpenAI vs. Anthropic** event (37¢), indicating a more decisive market lead for Ramp, the specific 30-day movement cannot be measured without the missing historical time-series data."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 3,
+        "completeness": 2,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.33,
+      "scoreExplanations": {
+        "actionability": "Does not answer the actual question: which event re-priced more over 30 days, and in which direction. Buyer cannot act on the comparison they paid for.",
+        "dataFreshness": "Explicit 'As of April 19, 2026' timestamp; current prices are fresh. Not a 5 because no per-candlestick timestamps.",
+        "specificity": "Exact tickers (KXOAIANTH-40-ANTH/OAI, KXRAMPBREX-40-RAMP/BREX) and exact YES prices (74¢, 37¢, 94¢, 8¢).",
+        "uniqueness": "Current prices are tool-fetched, but the comparative/analytical finding the buyer paid for is absent, so the paid answer doesn't exceed a free Kalshi UI visit.",
+        "completeness": "Explicitly fails to deliver the 30-day trajectory comparison that is the entire point of the question.",
+        "dataAccuracy": "YES/NO prices for each child market sum near 100¢ (Anthropic 74+NO31=105 which is wide spread, OpenAI 37+NO68=105 wide, Ramp 94+NO13=107 wide — bid/ask spread is wide but prices are internally plausible for thin prediction markets)."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 28,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "get_market_candlesticks called with startTs=1713139200 (April 15, 2024) and endTs=1715731200 (May 15, 2024) — these are almost exactly 2 years before the actual query date of April 19, 2026. The correct 30-day window should have been ~1774828800 to 1777420800 (March 20 – April 19, 2026). All four candlestick calls returned empty arrays because the requested range predates market existence.",
+        "completenessIssue": "completeness.evaluations empty — nothing caught that the empty candlestick arrays were due to wrong timestamps, not missing data.",
+        "codeIssueDetail": "toolCallHistory[2-5] all pass {startTs:1713139200, endTs:1715731200} and receive {candlesticks:[]}. The agent never retried with corrected timestamps; it concluded 'historical data unavailable' instead.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "argument_or_extraction_error",
+        "rootCauseEvidence": "startTs=1713139200 (2024-04-14) and endTs=1715731200 (2024-05-15) are fixed at year-2024 values regardless of current date; this is an argument-generation bug where the agent computed '30 days ago' from a stale reference, or hard-coded an example from training data.",
+        "responseQualityNote": "Current prices are correct and well-formatted. The core analytical deliverable (30-day re-pricing comparison) is missing because of a timestamp bug the agent did not diagnose.",
+        "improvementLever": "The agent (or tool) should compute startTs/endTs from the server's current time (`now - 30d`), and if candlesticks return empty, retry with a sanity-checked window before declaring data unavailable.",
+        "diagnosticBrief": {
+          "toolUsed": "get_market_candlesticks (x6, all empty), get_market (x4, successful)",
+          "toolShouldHaveUsed": "get_market_candlesticks with startTs/endTs derived from current server time (now - 30d to now), not hardcoded 2024 values",
+          "argsUsed": "{endTs:1715731200, startTs:1713139200, ticker:'KXOAIANTH-40-OAI', periodInterval:1440}",
+          "argsShouldHaveUsed": "{endTs:1777420800, startTs:1774828800, ticker:'KXOAIANTH-40-OAI', periodInterval:1440} — i.e., 2026-03-20 to 2026-04-19 Unix seconds",
+          "codeSnippet": "get_market_candlesticks {startTs:1713139200, endTs:1715731200} -> {candlesticks:[]} for all 4 tickers; agent gives up and reports 'unavailable'",
+          "toolResultSample": "{\"ticker\":\"KXOAIANTH-40-OAI\",\"candlesticks\":[],\"sourceEndpoint\":\"/markets/candlesticks\",\"fetchedAt\":\"2026-04-19T03:28:12.708Z\"}",
+          "completenessVerdict": "No completeness check; empty candlesticks + valid current prices should have triggered 'try a different ts window' repair.",
+          "stageTimingBottleneck": "synthesisMs=10795ms — synthesis took longer than needed to conclude 'data unavailable', even though the tool calls returned in ~2s each."
+        }
+      },
+      "overallVerdict": "No — the buyer asked for a 30-day trajectory comparison and paid to not get one; this is a bug in argument generation, not a real data gap."
+    },
+    {
+      "promptId": "kalshi-013",
+      "query": "For the 'Who will be named as Xi Jinping's successor?' event (KXXISUCCESSOR-45JAN01), identify the candidate sub-market that best combines high 24h volume, tight bid-ask spread, and positive 7-day YES-price trend — essentially the 'smart-money plus momentum' pick.",
+      "quotedExcerpts": [
+        "Based on the market data from the most recent query, the \"smart-money plus momentum\" pick for the Xi Jinping successor event is **Li Qiang**.",
+        "| Li Qiang | 1 | 10919.23 | 16 |",
+        "| Ding Xuexiang | 4 | 3,555 | 27 |"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 2,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.5,
+      "scoreExplanations": {
+        "actionability": "Gives a single named pick (Li Qiang) with supporting metrics across 14 candidates — buyer can act on it. Ding on actionability because the 7-day momentum dimension is not justified in the response text.",
+        "dataFreshness": "No 'as of' timestamp anywhere in the response prose, and no dates on the orderbook/candlestick data displayed. Capped at 2 by the freshness rule.",
+        "specificity": "14-candidate table with spread, volume, and YES price in each row; candidate names cited; but no sub-market tickers (e.g., KXXISUCCESSOR-45JAN01-LQIA) shown to the buyer.",
+        "uniqueness": "Cross-candidate ranking of spread + volume + yes price inside a single event is the kind of screening a free LLM cannot do without the contributor's orderbook tools.",
+        "completeness": "Query asked for a 'smart-money plus momentum' pick combining THREE dimensions: 24h volume, tight spread, AND positive 7-day YES-price trend. Response shows the first two columns but never displays or discusses the 7-day trend for any candidate, despite the trace fetching 14 candlestick series.",
+        "dataAccuracy": "Spread, volume, and yes-price values differ meaningfully across candidates (no uniform-value red flag). Li Qiang spread=1¢ with volume 10919 is consistent with the orderbook bids 23@105, 22@1025 showing tight top-of-book. Numbers look internally consistent."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 53,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "29 tool calls — 14 orderbooks + 14 candlesticks + 1 event fetch. The candlestick data (calls 15-28) was fetched with correct ts window (1775964541 to 1776569341 = April 12–19, 2026, ~7 days) but the resulting 7-day trajectories were not surfaced in the synthesis.",
+        "completenessIssue": "completeness.evaluations empty — no check caught that the third criterion (7-day trend) was missing from the final output.",
+        "codeIssueDetail": "get_market_candlesticks for KXXISUCCESSOR-45JAN01-LQIA returned {open:21, close:? ... yesBid open_dollars:'0.2100' high_dollars:'0.21...'} — real 7-day data exists, but the synthesis table only shows 'Spread Cents / Volume24h / Yes Price', not 7-day delta.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "toolCallHistory[15-28] contains 14 populated candlestick responses but the final response table has no 7-day trend column; the synthesis step dropped a dimension the retrieval step paid for.",
+        "responseQualityNote": "Solid two-dimensional screen (spread + volume), but the 'momentum' half of 'smart-money plus momentum' is silently missing. The Li Qiang pick may still be right, but the reasoning the buyer paid for is absent.",
+        "improvementLever": "Synthesis should explicitly check that every criterion in the query (enumerated: volume, spread, trend) maps to a column in the output table; if not, inject a 7-day delta column computed from already-fetched candlesticks.",
+        "diagnosticBrief": {
+          "toolUsed": "get_event, get_market_orderbook (x14), get_market_candlesticks (x14)",
+          "toolShouldHaveUsed": "Correct tools used; just underutilized — candlestick responses should have been aggregated into a 7-day %-change column",
+          "argsUsed": "{eventTicker:'KXXISUCCESSOR-45JAN01', withNestedMarkets:true}; {ticker:'KXXISUCCESSOR-45JAN01-LQIA', startTs:1775964541, endTs:1776569341, periodInterval:1440}",
+          "argsShouldHaveUsed": "Args are fine; synthesis prompt needs to consume candlestick data, not only orderbook data",
+          "codeSnippet": "14 candlestick fetches returned populated data (e.g. LQIA open 21 → close data per day); synthesis renders only 3-column table with no trend column",
+          "toolResultSample": "{\"ticker\":\"KXXISUCCESSOR-45JAN01-LQIA\",\"candlesticks\":[{\"endPeriodTs\":1775966400,\"yesBid\":{\"open\":21,\"high\":21,\"low\":21,\"close\":21,\"open_dollars\":\"0.2100\",...}}]}",
+          "completenessVerdict": "No completeness evaluation performed — 3-criterion query delivered with 2 criteria shown.",
+          "stageTimingBottleneck": "executionMs=81589ms (86% of accounted time) — 29 sequential tool calls dominate."
+        }
+      },
+      "overallVerdict": "On the fence — Li Qiang looks defensible, but the 7-day momentum analysis I paid for was fetched and then silently dropped from the answer."
+    },
+    {
+      "promptId": "kalshi-014",
+      "query": "Using only Kalshi data, find any candidate sub-market inside 'Who will be the next Prime Minister of the UK?' (KXNEXTUKPM-30) where best YES-ask + best NO-ask is strictly less than 100 cents (implied within-leg arbitrage), and show the arbitrage edge in cents.",
+      "quotedExcerpts": [
+        "Based on Kalshi orderbook data as of **April 19, 2026**, there are currently **no sub-markets** within the \"Who will be the next Prime Minister of the UK?\" (KXNEXTUKPM-30) event that meet the strict within-leg arbitrage condition (best YES-ask + best NO-ask < 100 cents).",
+        "All 20 analyzed candidate legs currently have a combined ask sum of 100.1 cents or higher. The following table shows the five sub-markets closest to an arbitrage opportunity:",
+        "| Will Andy Burnham be the next Prime Minister of United Kingdom? | 8.1¢ | 92.0¢ | -0.1¢ |"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "Confirms no within-leg arbitrage exists and gives the five closest legs with exact edge (-0.1¢ to -0.9¢). Buyer knows exactly how far each leg is from crossing.",
+        "dataFreshness": "Explicit 'as of April 19, 2026' timestamp; orderbook data is live from tool calls.",
+        "specificity": "Per-leg YES-ask, NO-ask, and arbitrage edge in cents; exact candidate names. Minor text truncation in one row ('Will Lucy Powell be the next of United Kingdom?') but numbers are intact.",
+        "uniqueness": "Multi-leg within-event arbitrage screen across 20 candidates — exactly the kind of tool-driven screening a free LLM cannot reproduce from memory.",
+        "completeness": "Answers the 'any sub-market where sum < 100¢' question for all 20 legs, gives edges for the closest five, and summarizes the rest with a 100.9¢ to 111.8¢ range.",
+        "dataAccuracy": "Edges are computed consistently (8.1 + 92.0 = 100.1, so edge = -0.1¢ ✓). Ask prices across 20 legs are differentiated (no uniform values). Orderbook bids include weird fractional quantities (e.g., 2186.49) which is odd but not impossible."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 46,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Clean, textbook execution: event fetched, 20 orderbooks pulled, arbitrage edge computed, sorted, top 5 and summary returned with timestamp. Only nit is the truncated candidate text in one row.",
+        "improvementLever": "Fix the minor truncation in the Lucy Powell row ('be the next of United Kingdom?') — synthesis should normalize candidate titles consistently.",
+        "diagnosticBrief": {
+          "toolUsed": "get_event, get_market_orderbook (x20)",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{eventTicker:'KXNEXTUKPM-30', withNestedMarkets:true}; {depth:50, ticker:'KXNEXTUKPM-30-*', preferFixedPoint:true}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "get_market_orderbook(KXNEXTUKPM-30-ABUR) -> asks top=92.0 bids top=8 -> sum 100.1 edge -0.1",
+          "toolResultSample": "{\"ticker\":\"KXNEXTUKPM-30-ABUR\",\"bids\":[{\"price\":8,\"quantity\":32}],\"asks\":[{\"price\":92.0,...}]}",
+          "completenessVerdict": "No completeness check fired; not needed — criterion was explicit and screenable.",
+          "stageTimingBottleneck": "synthesisMs=20393ms (25% of accounted time) — noticeably long for a straightforward arithmetic + sort task."
+        }
+      },
+      "overallVerdict": "Yes — this is the kind of live, multi-leg arbitrage screen I can't get anywhere else, and the arithmetic and presentation are clean."
+    },
+    {
+      "promptId": "kalshi-016",
+      "query": "Build a risk-diversified 5-market Kalshi shortlist of actively trading contracts priced between 15% and 40% YES where each market (a) has orderbook depth sufficient for a $2,500 YES position at <= 3 cents of slippage, (b) has cumulative 7-day volume >= $50K, and (c) covers at least three distinct categories across the 5 picks.",
+      "quotedExcerpts": [
+        "As of April 19, 2026, I cannot provide a full 5-market shortlist because no markets currently meet all your criteria for price, liquidity, and category diversity.",
+        "| Will a new nuclear reactor be approved by Dec 31, 2026? | KXREACTOR-26DEC31 | 27.6¢ | **Failed**: Orderbook depth only supports ~4,400 contracts under 30.6¢; ~$2,500 position requires ~8,900+ contracts. |",
+        "**Volume & Category Gaps:** Standard category browses for **Elections**, **Economics**, and **Science and Technology** did not surface markets with the required 7-day cumulative volume of $\\ge$ $50K during the current session."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 3,
+        "specificity": 4,
+        "uniqueness": 2,
+        "completeness": 1,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 2.5,
+      "scoreExplanations": {
+        "actionability": "Explicit refusal to provide the 5-market shortlist that is the entire deliverable. Three inspected-and-failed markets plus three boilerplate 'Recommendations' don't let the buyer put on any trade.",
+        "dataFreshness": "'As of April 19, 2026' is cited once at the top; no per-market trade/orderbook timestamps in the response prose. Capped at 3.",
+        "specificity": "Three concrete tickers with YES prices and specific slippage math (e.g., '~4,400 contracts under 30.6¢; ~$2,500 requires ~8,900+ contracts') — this is genuinely specific per-market analysis.",
+        "uniqueness": "Orderbook depth simulation for a $2,500 YES order is tool-driven screening, but because no shortlist is produced the paid answer does not exceed what a buyer could manually infer from the Kalshi UI for 3 markets. Capped at 2.",
+        "completeness": "The 5-market shortlist criterion is unmet; the category diversity criterion is untested; the 7-day volume criterion is acknowledged as unverified. The response answers essentially none of the query.",
+        "dataAccuracy": "The depth math on KXREACTOR looks consistent (27.6¢ current price, orderbook bids 26.2@41+26.1@140+26@560 = ~741 contracts near the top), but the response's claim of '~4,400 contracts under 30.6¢' cannot be fully reconciled from the 10-level orderbook shown. dataAccuracy capped at 3 due to refusal language cap."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 88,
+        "fragilityRisk": "high",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "executionMs=143707ms consumed ~88% of the 180s budget; loopCount=12 with 29 tool calls but only 3 markets actually analyzed for slippage. Most of the budget was spent on browse_category returning 0 and get_market_trades paginating 5 times on a single ticker (KXREACTOR-26DEC31).",
+        "completenessIssue": "completeness.evaluations empty; no check forced the agent to keep searching when the shortlist was only 0/5.",
+        "codeIssueDetail": "toolCallHistory[22-26] are 5 sequential get_market_trades calls on KXREACTOR-26DEC31 — the agent burned ~20% of execution budget paginating trades on a single failed market instead of widening the search to other categories/series.",
+        "dataAccuracyRedFlags": "browse_category returns count=0 for Elections, Economics, Science and Technology all three — same tradeSnapshot pattern seen in kalshi-005 (tickersWithRecentTrades in the hundreds, allVolume24hZero:true). Again points to contributor-side 24h/7d volume aggregation bug.",
+        "rootCauseCategory": "iterative_recovery_failure",
+        "rootCauseEvidence": "loopCount=12 but only 3 markets tested for slippage; recoveryCount=0 despite 3 failed markets; agent paginated trades on KXREACTOR 5 times (calls 22-26) instead of recovering by trying new series or computing 7-day volume from trades.",
+        "responseQualityNote": "Refusal language ('I cannot provide a full 5-market shortlist') combined with only 3 markets inspected in 143s of execution — buyer gets almost nothing actionable for the price.",
+        "improvementLever": "Add a recovery heuristic: when the shortlist is below target after N markets and budget >70% consumed, broaden the candidate pool (more series or different sortBy) rather than deepen analysis on already-failed markets.",
+        "diagnosticBrief": {
+          "toolUsed": "get_markets_by_probability, get_all_categories, browse_category (x3), get_all_series (x3), discover_trending_markets (x3), browse_series (x5), get_market_orderbook (x4), get_market_trades (x8)",
+          "toolShouldHaveUsed": "find_trading_opportunities or kalshi_crossref_polymarket to broaden candidate pool across all probability ranges with derived volume; fewer redundant trade paginations",
+          "argsUsed": "{category:'Elections/Economics/Science and Technology'}; then ticker-by-ticker orderbook and trade paginations on 3 markets",
+          "argsShouldHaveUsed": "After 3 category browses returned zero, pivot to volume-sorted all-markets query with derived 7-day volume, not continued pagination on failing markets.",
+          "codeSnippet": "get_market_trades {ticker:'KXREACTOR-26DEC31', cursor:...} x5 — each returning 20 trades, burning budget without widening shortlist",
+          "toolResultSample": "{\"ticker\":\"KXREACTOR-26DEC31\",\"trades\":[{\"timestamp\":\"2026-04-19T02:48:25.06198Z\",\"price\":27.6,\"count\":2.41,\"takerSide\":\"yes\"},...]}",
+          "completenessVerdict": "No completeness evaluation triggered; no 'shortlist < 5, expand search' heuristic.",
+          "stageTimingBottleneck": "executionMs=143707ms (91% of accounted time) — near-total budget consumption for near-zero delivered value."
+        }
+      },
+      "overallVerdict": "No — 143 seconds of execution to deliver 3 failed markets and no shortlist is the clearest 'ripped off' experience in this batch."
+    },
+    {
+      "promptId": "kalshi-018",
+      "query": "Identify the 3 Kalshi markets closing within the next 14 days with (a) cumulative 30-day volume > $100K and (b) the largest absolute gap between current YES midpoint and the 30-day implied-probability mean. Say for each whether the current market is 'rich' or 'cheap' vs the 30-day mean.",
+      "quotedExcerpts": [
+        "I can only provide a partial answer as the current tools do not expose a **30-day implied-probability moving average** or a pre-calculated **30-day cumulative volume** metric for the full Kalshi universe.",
+        "However, based on the latest market data (as of April 19, 2026), I have identified three markets that close within the next 14 days and have exceeded your $100K volume threshold in the last 24 hours alone.",
+        "| San Diego vs Los Angeles A Winner? | KXMLBGAME-26APR182138SDLAA-SD | 62¢ | 2026-04-22 | $2,660,225.06 |"
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 3,
+        "completeness": 2,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.33,
+      "scoreExplanations": {
+        "actionability": "Three specific markets with tickers and prices, but the 'rich vs cheap' rating the buyer asked for is explicitly not provided. No trade decision can be made from this response.",
+        "dataFreshness": "Explicit 'as of April 19, 2026' timestamp; market close dates given as ISO (2026-04-22).",
+        "specificity": "Exact tickers (KXMLBGAME-26APR182138SDLAA-SD, -LAA, KXMLBSPREAD-...-SD2), YES prices, close dates, and dollar volumes to the cent.",
+        "uniqueness": "Filtering by close-within-14-days + volume threshold is tool-driven, but the delivered slice is just 'trending sports markets' — buyer could approximate it with the Kalshi trending page. Capped at 3 because the analytical overlay (30d mean comparison) is missing.",
+        "completeness": "Explicitly punts on the 30-day mean and the gap calculation — the two metrics that define the question. Also punts on universe-wide search (Economics returned zero).",
+        "dataAccuracy": "Volume figures are differentiated ($2.66M, $1.54M, $303K), prices sum to ~100¢ for the SD/LAA winner pair (62 + 41 = 103 — slight overlap consistent with wide bid/ask). Internally consistent."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 62,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "13 tool calls but zero get_market_candlesticks calls — the 30-day implied-probability mean is directly computable from candlesticks at periodInterval=1440 over 30 days, which the contributor does expose (used successfully in kalshi-011/013). The agent never attempted it.",
+        "completenessIssue": "completeness.evaluations empty; no check forced the agent to attempt a candlestick-based 30d mean before declaring it 'unavailable'.",
+        "codeIssueDetail": "Flow: get_markets_by_probability (0 results) → browse_category Economics (0) → discover_trending Economics (0) → 6 paginated get_markets calls (all empty) → get_all_series Economics → discover_trending Politics (4 markets) → discover_trending Sports (5 markets). Zero candlestick attempts even though 3 candidate markets were identified.",
+        "dataAccuracyRedFlags": "Same browse_category=0 + tradeSnapshot 297 tickersWithRecentTrades, allVolume24hZero:true pattern as kalshi-005/008/016 — contributor 24h/30d volume derivation is broken across Economics.",
+        "rootCauseCategory": "stage_reflection_error",
+        "rootCauseEvidence": "summary.loopCount=12 but no candlestick tool ever invoked, despite the 30-day mean being computable from existing candlestick tool; reflection failed to recognize that 'tools do not expose 30-day mean' is false.",
+        "responseQualityNote": "Honest about the gap in the answer and gives 3 real markets, but the analytical core (30-day mean + rich/cheap classification) was feasible with existing tools and was not attempted.",
+        "improvementLever": "Add a reflection check: if the query asks for a 'N-day mean' and the execution set does NOT include candlesticks, inject candlestick fetches for each candidate ticker before concluding unavailability.",
+        "diagnosticBrief": {
+          "toolUsed": "get_markets_by_probability, browse_category, discover_trending_markets (x3), get_markets (paginated x6), get_all_categories, get_all_series",
+          "toolShouldHaveUsed": "get_market_candlesticks with 30-day window on each of the 3 surfaced MLB tickers to compute mean implied probability and the gap",
+          "argsUsed": "{category:'Economics', status:'open'} paginated x6 all empty; discover_trending_markets {sortBy:'volume_24h', category:'Sports'}",
+          "argsShouldHaveUsed": "get_market_candlesticks {ticker:'KXMLBGAME-26APR182138SDLAA-SD', startTs:now-30d, endTs:now, periodInterval:1440} to derive 30d mean YES-midpoint",
+          "codeSnippet": "13 tool calls — 0 candlestick calls — agent concludes '30-day mean unavailable' without attempting the tool that would produce it",
+          "toolResultSample": "{\"trendingMarkets\":[{\"title\":\"San Diego vs Los Angeles A Winner?\",\"ticker\":\"KXMLBGAME-26APR182138SDLAA-SD\",\"yesPrice\":62,\"volume24h\":2660225.06,\"closeTime\":\"2026-04-22\"}]}",
+          "completenessVerdict": "No completeness evaluation; key deliverable (rich/cheap classification) silently dropped.",
+          "stageTimingBottleneck": "executionMs=100349ms (89% of accounted time), dominated by 6 empty paginated get_markets calls in Economics."
+        }
+      },
+      "overallVerdict": "No — the buyer paid for a 'rich vs cheap' classification that was tool-feasible and wasn't attempted; the 3 surfaced markets alone don't justify the spend."
+    }
+  ],
+  "aggregate": {
+    "satisfactionMean": 3.46,
+    "satisfactionMin": 2.5,
+    "queryCount": 8,
+    "queriesAbove4": 2,
+    "queriesBelow3": 1,
+    "fragilityReport": {
+      "highCount": 1,
+      "mediumCount": 4,
+      "lowCount": 3,
+      "highFragilityRate": 0.125,
+      "highFragilityQueryIds": ["kalshi-016"]
+    },
+    "topImprovementLevers": [
+      "Fix contributor-side 24h/7d/30d volume aggregation so filters and discover_trending_markets return nonzero volume when tradeSnapshot shows real trades (blocks kalshi-005, 008, 016, 018).",
+      "Generate candlestick startTs/endTs from the current server time rather than hardcoded values, and retry with a corrected window on empty candlesticks (blocks kalshi-011 entirely; could promote kalshi-013/018 to full answers).",
+      "Add a synthesis-time completeness check that maps every explicit criterion in the query to an output column or paragraph; inject missing computations from already-fetched tool data before falling back to 'unavailable' (blocks kalshi-013 and 018 from reaching full score)."
+    ]
+  }
+}
