@@ -1,0 +1,23 @@
+{
+  "iteration": 2,
+  "fixedRootCauseCategory": "argument_or_extraction_error",
+  "skippedRootCauseCategories": [
+    "stage_reflection_error: only affects holdout (p12, p18) — can't target a holdout-only category.",
+    "synthesis_issue: only affects holdout (p19) — can't target a holdout-only category.",
+    "completeness_check_failure: no current train weak query in this category; deferred."
+  ],
+  "filesChanged": [
+    "examples/server/polymarket-contributor/server.ts"
+  ],
+  "tscPassed": true,
+  "deployed": true,
+  "deployTarget": "ubuntu@62.72.22.174 (mcp-polymarket :4003)",
+  "reRunPromptIds": ["p12", "p13", "p18", "p19"],
+  "reRunOutcomes": [
+    { "promptId": "p12", "outcomeType": "answer", "toolCalls": 3, "autoWeak": false },
+    { "promptId": "p13", "outcomeType": "answer", "toolCalls": 3, "autoWeak": false },
+    { "promptId": "p18", "outcomeType": "answer", "toolCalls": 7, "autoWeak": false },
+    { "promptId": "p19", "outcomeType": "answer", "toolCalls": 11, "autoWeak": false }
+  ],
+  "note": "p13 (the only train weak left) regressed under iter 1 because the planner passed placeholder conditionIds ('0xthunder', '0xcavs', '0xknicks') to get_top_holders and the tool returned structured zero-value responses — a false 'no whales' answer. Fix: extended get_top_holders at the contributor boundary to accept slug and marketQuery as alternatives to conditionId, and to auto-resolve via resolveMarketReference when conditionId is missing or doesn't match the 0x+64hex pattern (treating a bogus placeholder as a marketQuery hint rather than a hard fail). If resolution still fails it returns a structured error pointing to search_markets / marketQuery. This is argument_or_extraction_error again but structurally different from iter 1's change (which added positionSizeUsd/side to analyze_market_liquidity); it targets tool-boundary input robustness in get_top_holders specifically. Re-run: p13 now uses analyze_top_holders with marketQuery for each of the three NBA Finals markets and returns real whale concentration data instead of a three-way zero tie. Holdout queries (p12/p18/p19) also completed cleanly with answer outcomes."
+}

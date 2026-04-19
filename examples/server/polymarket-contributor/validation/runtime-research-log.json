@@ -1,14 +1,11 @@
 {
-  "runId": "2026-04-11T16:21:37.105475+00:00",
+  "runId": "2026-04-19T04:00:00.000Z",
   "focusContributor": "polymarket-contributor",
-  "regressionContributors": [
-    "polymarket-contributor",
-    "kalshi-contributor"
-  ],
+  "regressionContributors": ["polymarket-contributor", "kalshi-contributor"],
   "entries": [
     {
       "iteration": 0,
-      "timestamp": "2026-04-11T16:21:37.105475+00:00",
+      "timestamp": "2026-04-19T04:00:00.000Z",
       "phase": "calibration",
       "status": "completed",
       "targetDimension": null,
@@ -16,16 +13,8 @@
       "scoreBefore": null,
       "scoreAfter": null,
       "dimensionDeltas": null,
-      "gates": {
-        "targetImproved": null,
-        "targetClusterImproved": null,
-        "targetProgress": null,
-        "noHardRegression": null,
-        "noBaselineDrop": null,
-        "harnessGreen": null,
-        "parityHeld": null
-      },
-      "reason": "Fresh run started. Reused existing regression calibration baseline because it is newer than the shared runtime directories.",
+      "gates": null,
+      "reason": "Reused preserved regression baseline at context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json. polymarket queryMean=4.77, kalshi queryMean=4.37, promptLimit=6.",
       "filesChanged": [],
       "wasReverted": false,
       "promptCount": 6,
@@ -36,799 +25,218 @@
         "targetSelection": null,
         "hypothesis": null,
         "manifest": null,
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
+        "regressionArtifact": "context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
+        "decisionArtifact": null
+      },
+      "harnessSummary": {
+        "perContributor": [
+          { "contributor": "kalshi-contributor", "queryMean": 4.37, "deltaFromBaseline": 0, "regressionExceeded": false },
+          { "contributor": "polymarket-contributor", "queryMean": 4.77, "deltaFromBaseline": 0, "regressionExceeded": false }
+        ],
+        "overfittingWarnings": []
+      }
+    },
+    {
+      "iteration": 1,
+      "timestamp": "2026-04-19T13:10:00.000Z",
+      "phase": "baseline_capture",
+      "status": "completed",
+      "targetDimension": "toolSelection",
+      "hypothesisId": null,
+      "scoreBefore": {
+        "target": 3.67,
+        "byDimension": {
+          "toolSelection": 3.67,
+          "scoutDepth": 5,
+          "clarification": 3.9,
+          "planning": 5,
+          "execution": 3.33,
+          "synthesis": 3.78,
+          "contextBudget": 4.17,
+          "reasoningDepth": 5,
+          "mcpTransport": 4.78,
+          "codeSafety": 5,
+          "synthesisBudget": 3.44
+        }
+      },
+      "scoreAfter": null,
+      "dimensionDeltas": null,
+      "gates": null,
+      "reason": "Focus contributor trace-rich evaluation (run-full-enhancement.mjs, 18 prompts) produced full-enhancement-results.latest.json; analyze-stage-traces.mjs produced runtime-stage-audit.latest.json; runtime-stage-reviewer produced runtime-stage-review.latest.json; target-selection proceed on toolSelection (3.67 < 4.0 automation floor). Dominant failure cluster named_target_without_resolution, traceCount=6 (q2,q8,q9,q10,q12,q17).",
+      "filesChanged": [],
+      "wasReverted": false,
+      "promptCount": 18,
+      "durationMs": 0,
+      "artifactPaths": {
+        "stageAudit": "context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": null,
+        "manifest": null,
+        "regressionArtifact": null,
         "decisionArtifact": null
       },
       "harnessSummary": null
     },
     {
-      "iteration": 0,
-      "timestamp": "2026-04-11T16:46:03.587501+00:00",
-      "phase": "baseline_capture",
+      "iteration": 1,
+      "timestamp": "2026-04-19T13:00:00.000Z",
+      "phase": "experiment",
       "status": "completed",
-      "targetDimension": null,
-      "hypothesisId": null,
+      "targetDimension": "toolSelection",
+      "hypothesisId": "H-2026-04-19-01-named-target-autobind-on-single-resolved",
       "scoreBefore": null,
       "scoreAfter": null,
       "dimensionDeltas": null,
-      "gates": {
-        "targetImproved": null,
-        "targetClusterImproved": null,
-        "targetProgress": null,
-        "noHardRegression": null,
-        "noBaselineDrop": null,
-        "harnessGreen": null,
-        "parityHeld": null
-      },
-      "reason": "Captured fresh Polymarket trace-rich baseline evaluation and generated the stage audit artifact.",
-      "filesChanged": [],
-      "wasReverted": false,
-      "promptCount": 18,
-      "durationMs": 1427496,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
-        "stageReview": null,
-        "targetSelection": null,
-        "hypothesis": null,
-        "manifest": null,
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
-        "decisionArtifact": null
-      },
-      "harnessSummary": null
-    },
-    {
-      "iteration": 0,
-      "timestamp": "2026-04-11T16:57:18.897730+00:00",
-      "phase": "dimension_audit",
-      "status": "completed",
-      "targetDimension": "scoutDepth",
-      "hypothesisId": null,
-      "scoreBefore": {
-        "target": 3.5,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
-        }
-      },
-      "scoreAfter": null,
-      "dimensionDeltas": null,
-      "gates": {
-        "targetImproved": null,
-        "targetClusterImproved": null,
-        "targetProgress": null,
-        "noHardRegression": null,
-        "noBaselineDrop": null,
-        "harnessGreen": null,
-        "parityHeld": null
-      },
-      "reason": "Fresh stage review selected scoutDepth as the weakest ready dimension below the automation floor; planning is also ready but secondary.",
-      "filesChanged": [],
-      "wasReverted": false,
-      "promptCount": 18,
-      "durationMs": 0,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": null,
-        "manifest": null,
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
-        "decisionArtifact": null
-      },
-      "harnessSummary": null
-    },
-    {
-      "iteration": 1,
-      "timestamp": "2026-04-11T17:00:38.013954+00:00",
-      "phase": "hypothesis",
-      "status": "completed",
-      "targetDimension": "scoutDepth",
-      "hypothesisId": "2026-04-12-scoutdepth-bounded-shortlist-diversity-v1",
-      "scoreBefore": {
-        "target": 3.5,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
-        }
-      },
-      "scoreAfter": null,
-      "dimensionDeltas": null,
-      "gates": {
-        "targetImproved": null,
-        "targetClusterImproved": null,
-        "targetProgress": null,
-        "noHardRegression": null,
-        "noBaselineDrop": null,
-        "harnessGreen": null,
-        "parityHeld": null
-      },
-      "reason": "Generated a contributor-agnostic scoutDepth hypothesis: diversify bounded execution shortlists with a distinct semantic-cluster candidate when exact targeting is active.",
-      "filesChanged": [],
-      "wasReverted": false,
-      "promptCount": 18,
-      "durationMs": 0,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.latest.json",
-        "manifest": null,
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
-        "decisionArtifact": null
-      },
-      "harnessSummary": null
-    },
-    {
-      "iteration": 1,
-      "timestamp": "2026-04-11T17:11:16.729848+00:00",
-      "phase": "experiment",
-      "status": "completed",
-      "targetDimension": "scoutDepth",
-      "hypothesisId": "2026-04-12-scoutdepth-bounded-shortlist-diversity-v1",
-      "scoreBefore": {
-        "target": 3.5,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
-        }
-      },
-      "scoreAfter": null,
-      "dimensionDeltas": null,
-      "gates": {
-        "targetImproved": null,
-        "targetClusterImproved": null,
-        "targetProgress": null,
-        "noHardRegression": null,
-        "noBaselineDrop": null,
-        "harnessGreen": null,
-        "parityHeld": true
-      },
-      "reason": "Experimenter applied the single-file scoutDepth experiment, wrote a pending_judgment manifest, and focused validation passed without hard errors.",
-      "filesChanged": [
-        "context/lib/ai/scout-orchestration.ts",
-        "context/tests/unit/scout-orchestration.test.ts"
-      ],
-      "wasReverted": false,
-      "promptCount": 2,
-      "durationMs": 0,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.latest.json",
-        "manifest": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
-        "decisionArtifact": null
-      },
-      "harnessSummary": null
-    },
-    {
-      "iteration": 1,
-      "timestamp": "2026-04-11T18:04:14.851405+00:00",
-      "phase": "regression",
-      "status": "rejected",
-      "targetDimension": "scoutDepth",
-      "hypothesisId": "2026-04-12-scoutdepth-bounded-shortlist-diversity-v1",
-      "scoreBefore": {
-        "target": 3.5,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
-        }
-      },
-      "scoreAfter": {
-        "target": 3.61,
-        "byDimension": {
-          "toolSelection": 4.56,
-          "scoutDepth": 3.61,
-          "clarification": 5.0,
-          "planning": 3.94,
-          "execution": 3.89,
-          "synthesis": 4.11,
-          "contextBudget": 4.44,
-          "reasoningDepth": 4.39,
-          "mcpTransport": 3.83,
-          "codeSafety": 4.17,
-          "synthesisBudget": 4.72
-        }
-      },
-      "dimensionDeltas": {
-        "toolSelection": 0.12,
-        "scoutDepth": 0.11,
-        "clarification": 0.0,
-        "planning": 0.11,
-        "execution": 0.0,
-        "synthesis": 0.05,
-        "contextBudget": -0.06,
-        "reasoningDepth": 0.06,
-        "mcpTransport": -0.06,
-        "codeSafety": -0.05,
-        "synthesisBudget": 0.05
-      },
-      "gates": {
-        "targetImproved": false,
-        "targetClusterImproved": false,
-        "targetProgress": false,
-        "noHardRegression": true,
-        "noBaselineDrop": true,
-        "harnessGreen": false,
-        "parityHeld": true
-      },
-      "reason": "Rejected by deterministic decision: scoutDepth improved by only 0.11 and the regression harness failed because polymarket-contributor regressed by 0.37 versus baseline. Snapshot finalize auto-reverted the experiment.",
-      "filesChanged": [
-        "context/lib/ai/scout-orchestration.ts",
-        "context/tests/unit/scout-orchestration.test.ts"
-      ],
-      "wasReverted": true,
-      "promptCount": 6,
-      "durationMs": 0,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.post-experiment.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.post-experiment.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.latest.json",
-        "manifest": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.latest.json",
-        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-decision.latest.json"
-      },
-      "harnessSummary": {
-        "perContributor": [
-          {
-            "contributor": "polymarket-contributor",
-            "queryMean": 4.43,
-            "deltaFromBaseline": -0.37,
-            "regressionExceeded": true
-          },
-          {
-            "contributor": "kalshi-contributor",
-            "queryMean": 4.7,
-            "deltaFromBaseline": 0.07,
-            "regressionExceeded": false
-          }
-        ],
-        "overfittingWarnings": []
-      }
-    },
-    {
-      "iteration": 2,
-      "timestamp": "2026-04-11T18:14:00.128659+00:00",
-      "phase": "hypothesis",
-      "status": "completed",
-      "targetDimension": "scoutDepth",
-      "hypothesisId": "2026-04-12-scoutdepth-exact-target-external-probe-gate-v1",
-      "scoreBefore": {
-        "target": 3.5,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
-        }
-      },
-      "scoreAfter": null,
-      "dimensionDeltas": null,
-      "gates": {
-        "targetImproved": null,
-        "targetClusterImproved": null,
-        "targetProgress": null,
-        "noHardRegression": null,
-        "noBaselineDrop": null,
-        "harnessGreen": null,
-        "parityHeld": null
-      },
-      "reason": "Generated a new scoutDepth hypothesis that avoids the rejected shortlist-diversity change and instead gates one exact-target external pre-plan confirmation probe.",
-      "filesChanged": [],
-      "wasReverted": false,
-      "promptCount": 18,
-      "durationMs": 0,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.iteration-2.latest.json",
-        "manifest": null,
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
-        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-decision.latest.json"
-      },
-      "harnessSummary": null
-    },
-    {
-      "iteration": 2,
-      "timestamp": "2026-04-11T19:33:08.621643+00:00",
-      "phase": "regression",
-      "status": "rejected",
-      "targetDimension": "scoutDepth",
-      "hypothesisId": "2026-04-12-scoutdepth-exact-target-external-probe-gate-v1",
-      "scoreBefore": {
-        "target": 3.5,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
-        }
-      },
-      "scoreAfter": {
-        "target": 5.0,
-        "byDimension": {
-          "toolSelection": 4.61,
-          "scoutDepth": 5.0,
-          "clarification": 5.0,
-          "planning": 3.44,
-          "execution": 3.72,
-          "synthesis": 4.72,
-          "contextBudget": 4.72,
-          "reasoningDepth": 4.44,
-          "mcpTransport": 4.22,
-          "codeSafety": 3.78,
-          "synthesisBudget": 4.72
-        }
-      },
-      "dimensionDeltas": {
-        "toolSelection": 0.17,
-        "scoutDepth": 1.5,
-        "clarification": 0.0,
-        "planning": -0.39,
-        "execution": -0.17,
-        "synthesis": 0.66,
-        "contextBudget": 0.22,
-        "reasoningDepth": 0.11,
-        "mcpTransport": 0.33,
-        "codeSafety": -0.44,
-        "synthesisBudget": 0.05
-      },
-      "gates": {
-        "targetImproved": true,
-        "targetClusterImproved": false,
-        "targetProgress": true,
-        "noHardRegression": false,
-        "noBaselineDrop": false,
-        "harnessGreen": false,
-        "parityHeld": true
-      },
-      "reason": "Rejected by deterministic decision: scoutDepth crossed the automation floor, but planning and codeSafety regressed past thresholds and the regression harness failed for both contributors. Snapshot finalize auto-reverted the experiment.",
+      "gates": null,
+      "reason": "runtime-experimenter applied the hypothesis: added namedTargetGuardAutoBindOnResolved rollout sub-flag + classifier escape hatch in query-clarification.ts. Focused tests (6/6 new + 60/60 existing) passed. Typecheck green. Crash-gate smoke test passed (HTTP 200). Manifest status pending_judgment; awaiting post-experiment re-measurement.",
       "filesChanged": [
         "context/lib/rollout/dual-surface-flags.ts",
-        "context/lib/ai/query-depth-policy.ts",
-        "context/lib/ai/query-preplan-probe.ts"
-      ],
-      "wasReverted": true,
-      "promptCount": 6,
-      "durationMs": 0,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.iteration-2.post-experiment.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.iteration-2.post-experiment.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.iteration-2.latest.json",
-        "manifest": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.latest.json",
-        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-decision.latest.json"
-      },
-      "harnessSummary": {
-        "perContributor": [
-          {
-            "contributor": "polymarket-contributor",
-            "queryMean": 3.97,
-            "deltaFromBaseline": -0.83,
-            "regressionExceeded": true
-          },
-          {
-            "contributor": "kalshi-contributor",
-            "queryMean": 3.9,
-            "deltaFromBaseline": -0.73,
-            "regressionExceeded": true
-          }
-        ],
-        "overfittingWarnings": []
-      }
-    },
-    {
-      "iteration": 3,
-      "timestamp": "2026-04-11T19:37:29.444711+00:00",
-      "phase": "hypothesis",
-      "status": "completed",
-      "targetDimension": "planning",
-      "hypothesisId": "2026-04-12-planning-partial-clause-named-target-guard-v1",
-      "scoreBefore": {
-        "target": 3.83,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
-        }
-      },
-      "scoreAfter": null,
-      "dimensionDeltas": null,
-      "gates": {
-        "targetImproved": null,
-        "targetClusterImproved": null,
-        "targetProgress": null,
-        "noHardRegression": null,
-        "noBaselineDrop": null,
-        "harnessGreen": null,
-        "parityHeld": null
-      },
-      "reason": "Generated iteration 3 planning hypothesis to apply the strict named-target guard earlier at clarification time and block partial-clause auto-answer paths.",
-      "filesChanged": [],
-      "wasReverted": false,
-      "promptCount": 18,
-      "durationMs": 0,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.iteration-3.latest.json",
-        "manifest": null,
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
-        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-decision.latest.json"
-      },
-      "harnessSummary": null
-    },
-    {
-      "iteration": 3,
-      "timestamp": "2026-04-11T19:49:22.332520+00:00",
-      "phase": "experiment",
-      "status": "completed",
-      "targetDimension": "planning",
-      "hypothesisId": "2026-04-12-planning-partial-clause-named-target-guard-v1",
-      "scoreBefore": {
-        "target": 3.83,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
-        }
-      },
-      "scoreAfter": null,
-      "dimensionDeltas": null,
-      "gates": {
-        "targetImproved": null,
-        "targetClusterImproved": null,
-        "targetProgress": null,
-        "noHardRegression": null,
-        "noBaselineDrop": null,
-        "harnessGreen": null,
-        "parityHeld": true
-      },
-      "reason": "Applied iteration 3 planning experiment. Manifest reported validation_failed, but changed-file lint was clean, query-surface smoke passed, parity held, and the manifest recorded the red test/typecheck signals as unrelated pre-existing workspace failures, so re-measurement will proceed.",
-      "filesChanged": [
         "context/lib/ai/query-clarification.ts",
-        "context/tests/unit/query-clarification.test.ts"
+        "context/lib/ai/__tests__/query-clarification.named-target-autobind.test.ts"
       ],
       "wasReverted": false,
       "promptCount": 2,
       "durationMs": 0,
       "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.iteration-3.latest.json",
-        "manifest": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
+        "stageAudit": "context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
+        "stageReview": "context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
+        "targetSelection": "context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": "context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
+        "regressionArtifact": null,
         "decisionArtifact": null
       },
       "harnessSummary": null
     },
     {
-      "iteration": 3,
-      "timestamp": "2026-04-11T20:40:15.252951+00:00",
-      "phase": "regression",
-      "status": "rejected",
-      "targetDimension": "planning",
-      "hypothesisId": "2026-04-12-planning-partial-clause-named-target-guard-v1",
+      "iteration": 1,
+      "timestamp": "2026-04-19T14:05:00.000Z",
+      "phase": "re_measurement",
+      "status": "completed",
+      "targetDimension": "toolSelection",
+      "hypothesisId": "H-2026-04-19-01-named-target-autobind-on-single-resolved",
       "scoreBefore": {
-        "target": 3.83,
+        "target": 3.67,
         "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
+          "toolSelection": 3.67,
+          "scoutDepth": 5,
+          "clarification": 3.9,
+          "planning": 5,
+          "execution": 3.33,
+          "synthesis": 3.78,
+          "contextBudget": 4.17,
+          "reasoningDepth": 5,
+          "mcpTransport": 4.78,
+          "codeSafety": 5,
+          "synthesisBudget": 3.44
         }
       },
       "scoreAfter": {
-        "target": 3.94,
+        "target": 3.67,
         "byDimension": {
-          "toolSelection": 4.67,
-          "scoutDepth": 3.72,
-          "clarification": 5.0,
-          "planning": 3.94,
-          "execution": 3.72,
-          "synthesis": 4.17,
-          "contextBudget": 4.72,
-          "reasoningDepth": 4.44,
-          "mcpTransport": 4.17,
-          "codeSafety": 4.06,
-          "synthesisBudget": 4.5
+          "toolSelection": 3.67,
+          "scoutDepth": 5,
+          "clarification": 5,
+          "planning": 5,
+          "execution": 2.17,
+          "synthesis": 3.67,
+          "contextBudget": 4.5,
+          "reasoningDepth": 5,
+          "mcpTransport": 4.56,
+          "codeSafety": 5,
+          "synthesisBudget": 3.5
         }
       },
       "dimensionDeltas": {
-        "toolSelection": 0.23,
-        "scoutDepth": 0.22,
-        "clarification": 0.0,
-        "planning": 0.11,
-        "execution": -0.17,
-        "synthesis": 0.11,
-        "contextBudget": 0.22,
-        "reasoningDepth": 0.11,
-        "mcpTransport": 0.28,
-        "codeSafety": -0.16,
-        "synthesisBudget": -0.17
+        "toolSelection": 0,
+        "scoutDepth": 0,
+        "clarification": 1.1,
+        "planning": 0,
+        "execution": -1.16,
+        "synthesis": -0.11,
+        "contextBudget": 0.33,
+        "reasoningDepth": 0,
+        "mcpTransport": -0.22,
+        "codeSafety": 0,
+        "synthesisBudget": 0.06
       },
-      "gates": {
-        "targetImproved": false,
-        "targetClusterImproved": false,
-        "targetProgress": false,
-        "noHardRegression": true,
-        "noBaselineDrop": false,
-        "harnessGreen": false,
-        "parityHeld": true
-      },
-      "reason": "Rejected by deterministic decision: planning improved by only 0.11, execution/codeSafety/synthesisBudget slipped past baseline-drop tolerance, and polymarket-contributor regressed by 0.57 on the regression harness. Snapshot finalize auto-reverted the experiment.",
+      "gates": null,
+      "reason": "Post-experiment re-run with DUAL_SURFACE_NAMED_TARGET_GUARD_AUTOBIND_ON_RESOLVED=on. Named_target_without_resolution cluster unchanged at 6 (q2,q8,q9,q10,q12,q17). Inspection of clarification options showed each target trace has optionCount=3 with three distinct methodNames under a single toolId; the hypothesis's escape-hatch predicate (length<=1 OR same-(toolId,methodName)) never fired. Clarification mean rose 3.9 -> 5.0 as an analyzer scoring-shape change, not a runtime improvement; execution dropped 3.33 -> 2.17 due to known analyzer calibration artifact (uniform execution=2 on successful iterative-execution traces).",
       "filesChanged": [
+        "context/lib/rollout/dual-surface-flags.ts",
         "context/lib/ai/query-clarification.ts",
-        "context/tests/unit/query-clarification.test.ts"
+        "context/lib/ai/__tests__/query-clarification.named-target-autobind.test.ts"
       ],
-      "wasReverted": true,
-      "promptCount": 6,
-      "durationMs": 0,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.iteration-3.post-experiment.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.iteration-3.post-experiment.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.iteration-3.latest.json",
-        "manifest": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.latest.json",
-        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-decision.latest.json"
-      },
-      "harnessSummary": {
-        "perContributor": [
-          {
-            "contributor": "polymarket-contributor",
-            "queryMean": 4.23,
-            "deltaFromBaseline": -0.57,
-            "regressionExceeded": true
-          },
-          {
-            "contributor": "kalshi-contributor",
-            "queryMean": 4.53,
-            "deltaFromBaseline": -0.1,
-            "regressionExceeded": false
-          }
-        ],
-        "overfittingWarnings": []
-      }
-    },
-    {
-      "iteration": 4,
-      "timestamp": "2026-04-11T20:42:43.899560+00:00",
-      "phase": "hypothesis",
-      "status": "completed",
-      "targetDimension": "planning",
-      "hypothesisId": "2026-04-12-planning-resolved-target-contract-handoff-v1",
-      "scoreBefore": {
-        "target": 3.83,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
-        }
-      },
-      "scoreAfter": null,
-      "dimensionDeltas": null,
-      "gates": {
-        "targetImproved": null,
-        "targetClusterImproved": null,
-        "targetProgress": null,
-        "noHardRegression": null,
-        "noBaselineDrop": null,
-        "harnessGreen": null,
-        "parityHeld": null
-      },
-      "reason": "Generated iteration 4 planning hypothesis using the paired-fix exception to preserve resolved-target contracts across both initial planning and same-tool repair/replan.",
-      "filesChanged": [],
       "wasReverted": false,
       "promptCount": 18,
-      "durationMs": 0,
+      "durationMs": 1216000,
       "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.iteration-4.latest.json",
-        "manifest": null,
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
-        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-decision.latest.json"
-      },
-      "harnessSummary": null
-    },
-    {
-      "iteration": 4,
-      "timestamp": "2026-04-11T20:49:17.370872+00:00",
-      "phase": "experiment",
-      "status": "completed",
-      "targetDimension": "planning",
-      "hypothesisId": "2026-04-12-planning-resolved-target-contract-handoff-v1",
-      "scoreBefore": {
-        "target": 3.83,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
-        }
-      },
-      "scoreAfter": null,
-      "dimensionDeltas": null,
-      "gates": {
-        "targetImproved": null,
-        "targetClusterImproved": null,
-        "targetProgress": null,
-        "noHardRegression": null,
-        "noBaselineDrop": null,
-        "harnessGreen": null,
-        "parityHeld": true
-      },
-      "reason": "Applied iteration 4 planning paired-fix experiment. Manifest reported validation_failed, but focused unit tests passed, query-surface smoke passed, parity held, changed-file IDE lints were clean, and the remaining tsc/Ultracite failures were recorded as pre-existing workspace debt outside this experiment scope.",
-      "filesChanged": [
-        "context/lib/ai/prompts.ts",
-        "context/lib/ai/agentic-execution.ts",
-        "context/tests/unit/prompts-debloat.test.ts"
-      ],
-      "wasReverted": false,
-      "promptCount": 2,
-      "durationMs": 0,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.iteration-4.latest.json",
-        "manifest": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
+        "stageAudit": "context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.post-experiment.json",
+        "stageReview": "context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.post-experiment.json",
+        "targetSelection": "context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": "context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
+        "regressionArtifact": null,
         "decisionArtifact": null
       },
       "harnessSummary": null
     },
     {
-      "iteration": 4,
-      "timestamp": "2026-04-11T21:40:38.374043+00:00",
+      "iteration": 1,
+      "timestamp": "2026-04-19T14:20:00.000Z",
       "phase": "regression",
       "status": "rejected",
-      "targetDimension": "planning",
-      "hypothesisId": "2026-04-12-planning-resolved-target-contract-handoff-v1",
+      "targetDimension": "toolSelection",
+      "hypothesisId": "H-2026-04-19-01-named-target-autobind-on-single-resolved",
       "scoreBefore": {
-        "target": 3.83,
+        "target": 3.67,
         "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
+          "toolSelection": 3.67,
+          "scoutDepth": 5,
+          "clarification": 3.9,
+          "planning": 5,
+          "execution": 3.33,
+          "synthesis": 3.78,
+          "contextBudget": 4.17,
+          "reasoningDepth": 5,
+          "mcpTransport": 4.78,
+          "codeSafety": 5,
+          "synthesisBudget": 3.44
         }
       },
       "scoreAfter": {
-        "target": 3.83,
+        "target": 3.67,
         "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 4.0,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.67,
-          "synthesis": 4.56,
-          "contextBudget": 4.56,
-          "reasoningDepth": 4.44,
-          "mcpTransport": 4.0,
-          "codeSafety": 3.89,
-          "synthesisBudget": 4.61
+          "toolSelection": 3.67,
+          "scoutDepth": 5,
+          "clarification": 5,
+          "planning": 5,
+          "execution": 2.17,
+          "synthesis": 3.67,
+          "contextBudget": 4.5,
+          "reasoningDepth": 5,
+          "mcpTransport": 4.56,
+          "codeSafety": 5,
+          "synthesisBudget": 3.5
         }
       },
       "dimensionDeltas": {
-        "toolSelection": 0.0,
-        "scoutDepth": 0.5,
-        "clarification": 0.0,
-        "planning": 0.0,
-        "execution": -0.22,
-        "synthesis": 0.5,
-        "contextBudget": 0.06,
-        "reasoningDepth": 0.11,
-        "mcpTransport": 0.11,
-        "codeSafety": -0.33,
-        "synthesisBudget": -0.06
+        "toolSelection": 0,
+        "scoutDepth": 0,
+        "clarification": 1.1,
+        "planning": 0,
+        "execution": -1.16,
+        "synthesis": -0.11,
+        "contextBudget": 0.33,
+        "reasoningDepth": 0,
+        "mcpTransport": -0.22,
+        "codeSafety": 0,
+        "synthesisBudget": 0.06
       },
       "gates": {
         "targetImproved": false,
+        "crossedAutomationFloor": false,
         "targetClusterImproved": false,
         "targetProgress": false,
         "noHardRegression": false,
@@ -836,240 +244,53 @@
         "harnessGreen": false,
         "parityHeld": true
       },
-      "reason": "Rejected by deterministic decision: planning showed no measurable gain, codeSafety regressed past threshold, and polymarket-contributor regressed by 0.80 on the regression harness. Snapshot finalize auto-reverted the experiment.",
+      "reason": "REJECTED. Primary blocker: toolSelection delta = 0.00 (below 0.20 threshold); named_target_without_resolution cluster unchanged. Secondary: polymarket queryMean 4.77 -> 4.33 (-0.44, exceeds 0.30 hard regression threshold); kalshi queryMean 4.37 -> 4.67 (+0.30, overfitting-warning only, non-blocking). noBaselineDrop violated by execution (-1.16) and mcpTransport (-0.22) beyond the 0.15 tolerance; execution drop is partly a known analyzer calibration artifact, but the decision script treats it as hard. Hypothesis's escape-hatch predicate was incompatible with the observed clarification shape: each of q2/q8/q9/q10/q12/q17 has optionCount=3 with distinct methodNames under one toolId. Manifest finalized as rejected via runtime-research-experiment-state.ts; snapshot restored automatically (dual-surface-flags.ts + query-clarification.ts reverted; named-target-autobind test file removed). Removed DUAL_SURFACE_NAMED_TARGET_GUARD_AUTOBIND_ON_RESOLVED line from context/.env.local since the flag no longer exists.",
       "filesChanged": [
-        "context/lib/ai/prompts.ts",
-        "context/lib/ai/agentic-execution.ts",
-        "context/tests/unit/prompts-debloat.test.ts"
+        "context/lib/rollout/dual-surface-flags.ts",
+        "context/lib/ai/query-clarification.ts",
+        "context/lib/ai/__tests__/query-clarification.named-target-autobind.test.ts"
       ],
       "wasReverted": true,
       "promptCount": 6,
-      "durationMs": 0,
+      "durationMs": 1116000,
       "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.iteration-4.post-experiment.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.iteration-4.post-experiment.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.iteration-4.latest.json",
-        "manifest": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.latest.json",
-        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-decision.latest.json"
+        "stageAudit": "context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
+        "stageAuditPost": "context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.post-experiment.json",
+        "stageReview": "context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
+        "stageReviewPost": "context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.post-experiment.json",
+        "targetSelection": "context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
+        "hypothesis": "context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.latest.json",
+        "manifest": "context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
+        "snapshot": "context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-snapshot.latest.json",
+        "regressionArtifact": "context/artifacts/validation/runtime-research-regression/runtime-research-regression.latest.json",
+        "decisionArtifact": "context-sdk/examples/server/polymarket-contributor/validation/runtime-research-decision.latest.json"
       },
       "harnessSummary": {
         "perContributor": [
-          {
-            "contributor": "polymarket-contributor",
-            "queryMean": 4.0,
-            "deltaFromBaseline": -0.8,
-            "regressionExceeded": true
-          },
-          {
-            "contributor": "kalshi-contributor",
-            "queryMean": 4.63,
-            "deltaFromBaseline": 0.0,
-            "regressionExceeded": false
-          }
+          { "contributor": "polymarket-contributor", "queryMean": 4.33, "deltaFromBaseline": -0.44, "regressionExceeded": true },
+          { "contributor": "kalshi-contributor", "queryMean": 4.67, "deltaFromBaseline": 0.3, "regressionExceeded": false }
         ],
-        "overfittingWarnings": []
-      }
-    },
-    {
-      "iteration": 5,
-      "timestamp": "2026-04-11T21:43:22.995602+00:00",
-      "phase": "hypothesis",
-      "status": "completed",
-      "targetDimension": "execution",
-      "hypothesisId": "2026-04-12-execution-repair-requires-retargeting-v1",
-      "scoreBefore": {
-        "target": 3.89,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
+        "overfittingWarnings": [
+          "kalshi-contributor improved by 0.30 while polymarket-contributor regressed by 0.44; review for contributor-specific overfitting."
+        ]
+      },
+      "decision": {
+        "finalStatus": "rejected",
+        "action": "reject_and_retry",
+        "nextTargetDimension": "toolSelection",
+        "primaryBlocker": "toolSelection improved by 0.00, below the 0.20 threshold.",
+        "northStar": {
+          "weightedRuntimeValueBefore": 0.5991,
+          "weightedRuntimeValueAfter": 0.5991,
+          "delta": 0
         }
       },
-      "scoreAfter": null,
-      "dimensionDeltas": null,
-      "gates": {
-        "targetImproved": null,
-        "targetClusterImproved": null,
-        "targetProgress": null,
-        "noHardRegression": null,
-        "noBaselineDrop": null,
-        "harnessGreen": null,
-        "parityHeld": null
-      },
-      "reason": "Generated iteration 5 execution hypothesis to stop counting guard-only or non-retargeting completeness patches as a consumed semantic retry.",
-      "filesChanged": [],
-      "wasReverted": false,
-      "promptCount": 18,
-      "durationMs": 0,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.iteration-5.latest.json",
-        "manifest": null,
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
-        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-decision.latest.json"
-      },
-      "harnessSummary": null
-    },
-    {
-      "iteration": 5,
-      "timestamp": "2026-04-11T22:02:25.852999+00:00",
-      "phase": "experiment",
-      "status": "completed",
-      "targetDimension": "execution",
-      "hypothesisId": "2026-04-12-execution-repair-requires-retargeting-v1",
-      "scoreBefore": {
-        "target": 3.89,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
-        }
-      },
-      "scoreAfter": null,
-      "dimensionDeltas": null,
-      "gates": {
-        "targetImproved": null,
-        "targetClusterImproved": null,
-        "targetProgress": null,
-        "noHardRegression": null,
-        "noBaselineDrop": null,
-        "harnessGreen": null,
-        "parityHeld": true
-      },
-      "reason": "Applied iteration 5 execution experiment. Manifest reported validation_failed, but the targeted unit test passed, query-surface smoke passed, parity held, changed-file IDE lints were clean, and the remaining tsc/Biome failures were recorded as pre-existing workspace debt outside this narrow experiment.",
-      "filesChanged": [
-        "context/lib/ai/agentic-execution.ts",
-        "context/tests/unit/agentic-execution-heuristics.test.ts"
-      ],
-      "wasReverted": false,
-      "promptCount": 2,
-      "durationMs": 0,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.iteration-5.latest.json",
-        "manifest": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json",
-        "decisionArtifact": null
-      },
-      "harnessSummary": null
-    },
-    {
-      "iteration": 5,
-      "timestamp": "2026-04-11T22:47:47.994247+00:00",
-      "phase": "complete",
-      "status": "rejected",
-      "targetDimension": "execution",
-      "hypothesisId": "2026-04-12-execution-repair-requires-retargeting-v1",
-      "scoreBefore": {
-        "target": 3.89,
-        "byDimension": {
-          "toolSelection": 4.44,
-          "scoutDepth": 3.5,
-          "clarification": 5.0,
-          "planning": 3.83,
-          "execution": 3.89,
-          "synthesis": 4.06,
-          "contextBudget": 4.5,
-          "reasoningDepth": 4.33,
-          "mcpTransport": 3.89,
-          "codeSafety": 4.22,
-          "synthesisBudget": 4.67
-        }
-      },
-      "scoreAfter": {
-        "target": 3.83,
-        "byDimension": {
-          "toolSelection": 4.72,
-          "scoutDepth": 3.78,
-          "clarification": 5.0,
-          "planning": 4.0,
-          "execution": 3.83,
-          "synthesis": 4.17,
-          "contextBudget": 4.72,
-          "reasoningDepth": 4.44,
-          "mcpTransport": 4.17,
-          "codeSafety": 4.0,
-          "synthesisBudget": 4.61
-        }
-      },
-      "dimensionDeltas": {
-        "toolSelection": 0.28,
-        "scoutDepth": 0.28,
-        "clarification": 0.0,
-        "planning": 0.17,
-        "execution": -0.06,
-        "synthesis": 0.11,
-        "contextBudget": 0.22,
-        "reasoningDepth": 0.11,
-        "mcpTransport": 0.28,
-        "codeSafety": -0.22,
-        "synthesisBudget": -0.06
-      },
-      "gates": {
-        "targetImproved": false,
-        "targetClusterImproved": false,
-        "targetProgress": false,
-        "noHardRegression": true,
-        "noBaselineDrop": false,
-        "harnessGreen": true,
-        "parityHeld": true
-      },
-      "reason": "Rejected by deterministic decision at max iterations: execution did not improve, codeSafety fell below the baseline-drop tolerance, the regression harness was green, and snapshot finalize auto-reverted the experiment. The run stops on MAX_ITERATIONS.",
-      "filesChanged": [
-        "context/lib/ai/agentic-execution.ts",
-        "context/tests/unit/agentic-execution-heuristics.test.ts"
-      ],
-      "wasReverted": true,
-      "promptCount": 6,
-      "durationMs": 0,
-      "artifactPaths": {
-        "stageAudit": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.iteration-5.post-experiment.latest.json",
-        "stageReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.iteration-5.post-experiment.latest.json",
-        "targetSelection": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-target-selection.latest.json",
-        "hypothesis": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.iteration-5.latest.json",
-        "manifest": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-experiment-manifest.latest.json",
-        "regressionArtifact": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.latest.json",
-        "decisionArtifact": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-research-decision.latest.json"
-      },
-      "harnessSummary": {
-        "perContributor": [
-          {
-            "contributor": "polymarket-contributor",
-            "queryMean": 4.6,
-            "deltaFromBaseline": -0.2,
-            "regressionExceeded": false
-          },
-          {
-            "contributor": "kalshi-contributor",
-            "queryMean": 4.63,
-            "deltaFromBaseline": 0.0,
-            "regressionExceeded": false
-          }
-        ],
-        "overfittingWarnings": []
-      }
+      "notesForNextIteration": [
+        "The fix site (preserveNamedTargetClarification partial-coverage branch in query-clarification.ts) was wrong for this cluster. Each of q2/q8/q9/q10/q12/q17 produces clarification_required with 3 materially-distinct methods under one toolId, so the same-(toolId,methodName) predicate cannot fire.",
+        "Next hypothesis should target a different decision site: either (a) auto-bind clarification.recommendedOptionId when decisionReasonCode=contract_scope_ambiguity and the recommendation resolves to a grounded method with no unresolvedRequiredParams, regardless of sibling method diversity; or (b) upstream named-target resolution in query-preplan-probe.ts / query-planning-heuristics.ts / tool-selection.ts before partial_clause_coverage is computed.",
+        "Given rejectionEscalation policy in the hypothesis (escalate to architectural blocker after 2 closely-related rejections on the same deterministic-resolution path), the next hypothesis should clearly pivot to a different predicate surface or escalate.",
+        "Note: baseline may be stale (2026-04-12). Consider fresh calibration (Phase 0.5 with --write-baseline) before iteration 2 since polymarket regressed 0.44 on an experiment that structurally never fired, suggesting reviewer/model drift or calibration-baseline staleness may account for part of the observed regression."
+      ]
     }
   ]
 }

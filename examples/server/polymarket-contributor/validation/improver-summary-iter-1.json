@@ -1,0 +1,28 @@
+{
+  "iteration": 1,
+  "fixedRootCauseCategory": "argument_or_extraction_error",
+  "skippedRootCauseCategories": [
+    "tool_selection_error: only appears in holdout (p12); can't target a holdout-only category.",
+    "iterative_recovery_failure: only appears in holdout (p19); can't target a holdout-only category.",
+    "completeness_check_failure: lower priority than argument_or_extraction_error per taxonomy (rank 7 vs 3); deferred to a later iteration.",
+    "synthesis_issue: lower priority than argument_or_extraction_error per taxonomy (rank 8 vs 3); deferred to a later iteration."
+  ],
+  "filesChanged": [
+    "examples/server/polymarket-contributor/server.ts"
+  ],
+  "tscPassed": true,
+  "deployed": true,
+  "deployTarget": "ubuntu@62.72.22.174 (mcp-polymarket :4003)",
+  "reRunPromptIds": ["p5", "p10", "p12", "p13", "p14", "p16", "p18", "p19"],
+  "reRunOutcomes": [
+    { "promptId": "p5", "outcomeType": "answer", "toolCalls": 1, "autoWeak": false },
+    { "promptId": "p10", "outcomeType": "answer", "toolCalls": 1, "autoWeak": false },
+    { "promptId": "p12", "outcomeType": "answer", "toolCalls": 3, "autoWeak": false },
+    { "promptId": "p13", "outcomeType": "answer", "toolCalls": 3, "autoWeak": false },
+    { "promptId": "p14", "outcomeType": "answer", "toolCalls": 2, "autoWeak": false },
+    { "promptId": "p16", "outcomeType": "answer", "toolCalls": 1, "autoWeak": false },
+    { "promptId": "p18", "outcomeType": "answer", "toolCalls": 8, "autoWeak": false },
+    { "promptId": "p19", "outcomeType": "answer", "toolCalls": 8, "autoWeak": false }
+  ],
+  "note": "Fixed argument_or_extraction_error (p5, train) by adding positionSizeUsd + side parameters to analyze_market_liquidity and a simulateBuyMerged walk-the-book helper, so size-specific buy/sell slippage simulations are first-class tool output instead of synthesis approximations. Priority-first pick per taxonomy (rank 3 beats synthesis_issue rank 8); synthesis_issue's 2 train prompts only win on the tie-breaker which is not applicable here."
+}

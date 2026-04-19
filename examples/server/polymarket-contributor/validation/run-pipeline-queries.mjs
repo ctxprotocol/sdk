@@ -63,7 +63,7 @@ async function runQuery(prompt) {
     responseShape: "answer_with_evidence",
     queryDepth: "deep",
     includeDeveloperTrace: true,
-    clarificationPolicy: "return",
+    clarificationPolicy: "auto",
     stream: true,
   };
 

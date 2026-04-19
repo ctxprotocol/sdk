@@ -1,85 +1,145 @@
 {
-  "generatedAt": "2026-04-12T00:00:00Z",
+  "generatedAt": "2026-04-19T05:05:00.000Z",
   "hypothesisVersion": "runtime-hypothesis.v1",
-  "hypothesisId": "2026-04-12-execution-repair-requires-retargeting-v1",
-  "targetDimension": "execution",
+  "hypothesisId": "H-2026-04-19-01-named-target-autobind-on-single-resolved",
+  "iteration": 1,
+  "focusContributor": "polymarket-contributor",
+  "regressionContributors": ["polymarket-contributor", "kalshi-contributor"],
+  "targetDimension": "toolSelection",
   "targetType": "stage",
-  "targetSelectionNote": "Execution is the weakest ready dimension in the latest post-experiment review (3.67). Planning has already been rejected twice in this bounded run, so iteration 5 should target the stable execution failure cluster rather than repeat planning or scoutDepth work.",
+  "targetSelectionNote": "Stage review marks toolSelection as `ready` with high measurement confidence. The weakest overall dimension (execution, 3.33) is explicitly flagged as a downstream, noisy symptom of toolSelection failures plus a calibration artifact. Synthesis and synthesisBudget are also downstream/noisy. toolSelection at 3.67 < 4.0 automation floor with a stable, reproducible failure cluster is the correct Layer 3 target.",
   "selectedFailureCluster": {
-    "label": "repair_without_full_recovery",
-    "traceCount": 6
+    "label": "named_target_without_resolution",
+    "traceCount": 6,
+    "traceIds": ["q2", "q8", "q9", "q10", "q12", "q17"],
+    "commonDecisionSignals": [
+      "contract_scope_ambiguity",
+      "deterministic_named_target_resolution_required",
+      "partial_clause_coverage"
+    ]
+  },
+  "rootCause": "In context/lib/ai/query-clarification.ts, the partial-clause-coverage branch gated by preserveNamedTargetClarification (the strict named-target planning guard) unconditionally returns triggerClarification: true with decisionReasonCode: 'contract_scope_ambiguity' whenever (a) the query matches the quoted-literal regex, (b) deterministic target resolution is required, and (c) at least one clause is unsupported. It performs that branch even when the surviving viable/partial-coverage candidate set collapses to a single grounded method whose schema required params are already fully bound and whose semantic profile is querySafe. Result: six answerable named-target prompts exit with zero grounded tool calls despite the clarification menu already listing exactly one executable recommendation. The guard is correct in principle but has no escape hatch for the materially-one-grounded-method case.",
+  "problemStatement": "When a named-target query reaches the strict named-target planning guard and the partial-clause-coverage branch determines that only one grounded method is materially viable AND its schema required params are already resolved, the runtime should bind and execute that method instead of emitting clarification_required.",
+  "runtimeInvariant": "If the deterministic named-target analysis leaves exactly one materially-distinct grounded method that is queryEligible, queryReadOnlySafe, semanticProfile.querySafe, and has no unresolvedRequiredParams, that method is a single grounded interpretation by contract definition and must not be blocked on clarification regardless of clause-coverage partiality. Clarification is only warranted when two or more materially-distinct grounded methods remain.",
+  "proposedExperiment": {
+    "summary": "Add a narrowly scoped, schema-driven escape hatch inside the strict named-target planning guard's partial-clause-coverage branch that falls through to the existing single_grounded_interpretation return path when the partial-coverage clarification set collapses to a single resolvable grounded method. Gate behind a new rollout sub-flag.",
+    "changeType": "rollout_flag",
+    "affectedFiles": [
+      "context/lib/ai/query-clarification.ts",
+      "context/lib/rollout/dual-surface-flags.ts",
+      "context/lib/ai/__tests__/query-clarification.named-target-autobind.test.ts"
+    ],
+    "designNotes": [
+      "In classifyClarificationNeed (query-clarification.ts), before the existing `if (preserveNamedTargetClarification) { return triggerClarification: true ... }` block, compute singleResolvedGroundedMethod from contract signals only: partialCoverageClarificationCandidates.length <= 1 OR every surviving candidate shares the same (toolId, methodName); AND partialCoverageRecommended.unresolvedRequiredParams.length === 0; AND partialCoverageRecommended.meta.queryEligible && queryReadOnlySafe && semanticProfile.querySafe; AND partialCoverageRecommended is identical to viableCandidates[0].",
+      "When singleResolvedGroundedMethod is true AND the new namedTargetGuardAutoBindOnResolved rollout sub-flag is 'on', return the existing shape: triggerClarification: false, decisionReasonCode: 'single_grounded_interpretation', decisionSignals: ['named_target_guard_auto_bind_on_resolved','partial_clause_coverage'], with the same recommendedCandidate.",
+      "Add namedTargetGuardAutoBindOnResolved: 'off'|'on' to DualSurfaceRolloutFlags, parsed from env DUAL_SURFACE_NAMED_TARGET_GUARD_AUTOBIND_ON_RESOLVED. Default 'off'. Export shouldAutoBindSingleResolvedNamedTarget(flags).",
+      "Emit logDualSurfaceRolloutTelemetry('named-target-guard-auto-bind', { reasonCode, toolId, methodName }) so the regression harness can count fires per contributor.",
+      "Keep the strict named-target planning guard fully active for all other cases: 2+ materially-distinct grounded methods, unresolved required params, non-querySafe semantic profiles, cross-tool ambiguity."
+    ],
+    "rolloutFlagIfAny": {
+      "name": "namedTargetGuardAutoBindOnResolved",
+      "envVar": "DUAL_SURFACE_NAMED_TARGET_GUARD_AUTOBIND_ON_RESOLVED",
+      "values": ["off", "on"],
+      "defaultValue": "off",
+      "experimentValue": "on",
+      "killSwitch": "Unset env var or set to 'off' to fully restore prior clarification behavior."
+    },
+    "contributorAgnosticRationale": "All gating signals are derived from the shared ClarificationCandidate contract: toolId, methodName, unresolvedRequiredParams, meta.queryEligible, queryReadOnlySafe, semanticProfile.querySafe. None reference vendor, tool, or venue names, market slugs, or prompt wording.",
+    "usesPairedFixException": false,
+    "pairedDimension": null
   },
   "smallestFilesToChange": [
-    "/Users/alex/Documents/context/lib/ai/agentic-execution.ts"
+    "context/lib/ai/query-clarification.ts",
+    "context/lib/rollout/dual-surface-flags.ts"
   ],
-  "problemStatement": "The completeness-repair loop currently counts any patch as a valid semantic retry even when the patch does not materially retarget execution. In the weakest traces, the verifier correctly identifies an answerable same-tool recovery path, but the applied repair either repeats the same weak method shape or only adds a guard that returns explicit gaps. That spends the bounded retry budget without actually executing the requested probe-first recovery branch.",
-  "runtimeInvariant": "When completeness says a prompt is answerable with the same authorized tool family, a same-tool retry must materially change target resolution or discovery behavior. Guard-only patches, unchanged tool-call plans, or replaying the same weak retrieval path must not consume the final bounded semantic retry as if recovery was attempted.",
-  "rationale": "The recurring execution weakness is not lack of verifier signal; it is failure to convert that signal into a materially different recovery branch. A small shared-runtime change can enforce that same-tool completeness repairs actually retarget before the loop spends its last semantic retry, which is more bounded and contributor-agnostic than reopening planning or scoutDepth.",
-  "evidence": [
-    "The latest post-experiment stage review marks execution as the weakest ready dimension and explicitly says repair loops repeatedly fail to recover missing named targets or wrong-entity resolutions even when the prompt is answerable.",
-    "The dominant execution failure cluster in the latest review is repair_without_full_recovery with 6 traces, which is stronger and more stable than the earlier noisier execution signal.",
-    "In one latest-measurement trace, the verifier requested a reconcile-first same-tool recovery for a missing named target, but the applied completeness patch only tightened the existing comparison request instead of adding the requested resolution branch.",
-    "In another latest-measurement trace, the first completeness repair only inserted a semantic-mismatch guard and explicit-gap return for a wrong-entity result; the next verifier pass still said retry_same_tools, but the loop had already exhausted semantic retry budget and skipped further recovery.",
-    "Iteration 4 already tried a planning-to-execution paired handoff change and execution regressed by 0.22 with codeSafety down 0.33, so the remaining bounded opportunity is inside execution repair admission rather than another planning-side contract tweak."
+  "focusedTestsToAdd": [
+    {
+      "file": "context/lib/ai/__tests__/query-clarification.named-target-autobind.test.ts",
+      "cases": [
+        "regression: named-target query with ONE viable grounded candidate whose unresolvedRequiredParams is empty and semanticProfile.querySafe is true -> triggerClarification:false and decisionReasonCode:'single_grounded_interpretation' when the flag is 'on'. Flag 'off' preserves today's contract_scope_ambiguity clarification.",
+        "generalization: synthetic vendor-agnostic named-target fixture with the same shape produces the same auto-bind outcome; must not reference Polymarket/Kalshi/any real tool name.",
+        "ambiguity preserved: two materially-distinct grounded candidates from the SAME tool with an unsupported clause still clarify even with the flag 'on'.",
+        "unresolved schema: single grounded candidate but unresolvedRequiredParams non-empty still clarifies with the flag 'on'.",
+        "capability-miss preserved: no queryEligible candidates -> still capability_miss regardless of flag.",
+        "cross-tool ambiguity preserved: two candidates from DIFFERENT toolIds -> still clarifies with flag 'on'."
+      ]
+    }
   ],
-  "proposedExperiment": {
-    "summary": "Add a deterministic completeness-repair admission check in the shared execution loop: when the verifier marks a gap as answerable with same tools and the suggested fix implies probe-first or retargeting recovery, only accept a repair as having spent the semantic retry if the repaired program materially changes the retrieval path. If the patch is guard-only or effectively replays the same weak tool-call plan, reject it and escalate immediately to the bounded replan path within the same retry attempt.",
-    "changeType": "execution_logic",
-    "affectedFiles": [
-      "/Users/alex/Documents/context/lib/ai/agentic-execution.ts"
-    ],
-    "usesPairedFixException": false,
-    "pairedDimension": null,
-    "validationPlan": {
-      "targetedChecks": [
-        "Replay a generic named-target unresolved trace where the verifier suggests a probe-first same-tool recovery and confirm that a non-retargeting patch is rejected and escalated to replan within the same semantic retry.",
-        "Replay a generic wrong-entity trace where the first repair only adds a mismatch guard and confirm the loop does not treat that guard-only patch as full recovery.",
-        "Verify that successful completeness patches which genuinely add a search/lookup/resolve step or a bounded resolved-target derivation still pass through without forced replans.",
-        "Run the full runtime regression harness and confirm query/chat parity because this logic sits in shared execution."
-      ],
-      "regressionHarnessRequired": true,
-      "codePathParityRequired": true
+  "expectedDelta": {
+    "dimensionScoresBefore": {
+      "toolSelection": 3.67,
+      "clarification": 3.9,
+      "execution": 3.33,
+      "synthesis": 3.78,
+      "synthesisBudget": 3.44
+    },
+    "dimensionScoresAfterHypothesis": {
+      "toolSelection": ">= 4.4 (6 traces flip from zero-grounded-calls to grounded answers)",
+      "clarification": ">= 4.3 (paired; gate no longer misfires on materially-single grounded method)",
+      "execution": ">= 3.8 (downstream lift)",
+      "synthesis": ">= 4.1 (downstream lift)",
+      "synthesisBudget": ">= 3.9 (downstream lift)"
+    },
+    "regressionGuardrails": {
+      "polymarketQueryMean": ">= 4.77 baseline; must not drop",
+      "kalshiQueryMean": ">= 4.37 baseline; must not drop",
+      "overfittingWarning": "Reject if only polymarket improves while kalshi regresses or stays flat."
     }
   },
-  "expectedBenefits": [
-    "Reduces cases where the only semantic retry is wasted on a cosmetic or guard-only patch.",
-    "Improves recovery on answerable named-target and wrong-entity traces without reopening planning scope.",
-    "Keeps the change contributor-agnostic because it keys off repair behavior, not tool names or benchmark entities.",
-    "Should help execution without requiring a global retry-budget increase."
-  ],
+  "riskOfRegression": {
+    "primary": "Auto-bind could fire when unresolvedRequiredParams is empty only because the schema is under-specified, causing a weakly-bound call. Mitigated by also requiring semanticProfile.querySafe and by preserving the full guard for any multi-candidate case.",
+    "secondary": "Synthesis could inherit partially-covered answers when some clauses have no grounded method. Mitigated because the non-guard branch today already treats this as single_grounded_interpretation; we are only aligning guard-on with guard-off behavior.",
+    "tertiary": "Leaving the sub-flag 'on' by default in production could silently relax the guard on future contributors. Mitigated by default 'off' + explicit opt-in from the experiment runner."
+  },
   "riskChecklist": [
-    "Do not over-trigger on legitimate schema-fix patches that keep the same method but truly fix parsing or field access.",
-    "Do not require contributor-specific tool-name heuristics when deciding whether retargeting happened.",
-    "Do not silently convert answerable same-tool retries into needsDifferentTools unless the verifier already points there.",
-    "Watch codeSafety, since forced replans can increase edit scope if the admission check is too strict."
+    "No tool/venue/prompt string matching.",
+    "Do not relax the guard for multi-tool candidate sets.",
+    "Do not relax the guard when unresolvedRequiredParams is non-empty.",
+    "Do not collapse capability_miss vs clarification_required vs answer categories.",
+    "Do not bypass semanticProfile.querySafe or queryReadOnlySafe.",
+    "Do not modify any contributor server.ts.",
+    "Do not change benchmark thresholds or scoring."
   ],
-  "marketplaceRobustness": {
-    "generalization": "The proposed guard is based on whether a repair materially changes discovery or target-resolution behavior after a verifier-labeled answerable gap. That applies across arbitrary MCP tools that expose search, lookup, list, resolve, or detail methods, and also across tools that accept raw query fallbacks.",
+  "pairedFix": null,
+  "marketplaceRobustnessCheck": {
+    "generalization": "Keys on shared-schema invariants (unresolvedRequiredParams, semanticProfile.querySafe, queryEligible, queryReadOnlySafe, toolId/methodName identity). Future contributors with rich schemas benefit automatically; those with under-specified schemas retain stricter clarification.",
     "forbiddenContributorSpecificSignals": [
-      "tool name allowlists or denylists",
-      "benchmark prompt string matches",
-      "venue-specific event or market labels",
-      "hard-coded entity names, sports, elections, or assets"
+      "tool-name string match",
+      "method-name substring match",
+      "venue hostname or URL match",
+      "market slug or event-name heuristics",
+      "prediction-market-specific prompt wording"
     ],
-    "futureContributorThoughtExperiment": "If a future contributor exposes a search method plus a detail method for products, flights, jobs, or legal cases instead of markets, the same guard should still work: a verifier-requested retargeting repair must materially change discovery or target resolution before the runtime counts the retry as spent."
+    "futureContributorThoughtExperiment": "Contributor A with get_quote_snapshot(requiredParams:['symbol']) and a quoted-symbol query auto-binds as intended. Contributor B with the same method name but no requiredParams metadata or no querySafe profile will NOT auto-bind and will keep clarifying. Contributor C whose query mentions two materially-distinct grounded methods still clarifies.",
+    "codePathParity": "All changes live in context/lib/ai/ and context/lib/rollout/, shared by /api/query and /api/chat. Both surfaces inherit the fix.",
+    "docsAlignment": "No user-visible contract in @context-docs/ changes; we are aligning the guard with the already-documented single_grounded_interpretation semantics."
   },
   "validationPlan": {
     "targetedChecks": [
-      "Generic answerable-but-unresolved named-target trace.",
-      "Generic wrong-entity trace with same-tool recovery available.",
-      "Non-regression on a successful completeness patch that already adds a real fallback branch.",
-      "Shared query/chat regression harness."
+      "All focused unit tests pass.",
+      "Re-run runtime-stage-audit on polymarket-contributor: q2, q8, q9, q10, q12, q17 each produce >=1 grounded tool call and a grounded synthesis outcome.",
+      "contract_scope_ambiguity count across the 18-trace set drops by >=5.",
+      "No new capability_miss outcomes on previously-grounded traces."
     ],
     "regressionHarnessRequired": true,
-    "codePathParityRequired": true
+    "codePathParityRequired": true,
+    "regressionContributors": ["polymarket-contributor", "kalshi-contributor"],
+    "regressionGates": [
+      "polymarket queryMean >= 4.77",
+      "kalshi queryMean >= 4.37",
+      "no increase in capability_miss on either contributor"
+    ]
   },
   "rejectionCriteria": [
-    "Execution fails to improve by at least 0.20 or remains below the automation floor after remeasurement.",
-    "The repair_without_full_recovery cluster does not shrink materially.",
-    "CodeSafety drops by more than 0.15 versus baseline.",
-    "The admission check incorrectly rejects successful parse/schema repairs that do not need retargeting.",
-    "The change causes more needsDifferentTools or bounded-answer exits without reducing unresolved same-tool retry churn."
+    "polymarket queryMean drops below 4.77 after the change.",
+    "kalshi queryMean drops below 4.37 after the change.",
+    "Any of q2, q8, q9, q10, q12, q17 still exits with zero grounded tool calls.",
+    "Auto-bind telemetry fires on a case that has 2+ materially-distinct grounded candidates.",
+    "Any previously-clarified trace silently becomes capability_miss instead of clarification.",
+    "Code change touches a contributor server.ts or introduces a tool/venue-name string match.",
+    "The generalization test referencing a synthetic vendor-agnostic fixture fails."
   ],
+  "rejectionEscalation": "If two closely-related experiments targeting this same deterministic-resolution path are rejected, escalate to the orchestrator as a potential architectural blocker in the strict named-target planning guard rather than iterating again on the same cluster.",
   "handoffToRunPipeline": false,
   "handoffReason": null
 }

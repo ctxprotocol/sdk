@@ -866,7 +866,7 @@ const TOOLS = [
   {
     name: "analyze_market_liquidity",
     description:
-      'Analyze market liquidity and calculate "Whale Cost" for ONE specific outcome token - simulates the slippage for selling $1k, $5k, and $10k positions. Answers: "Can I exit this position if I put $X in?" Merges direct + synthetic liquidity from both YES and NO orderbooks for accurate depth.\n\nUse this when the user already means ONE named team/candidate/outcome or when you already have tokenId/conditionId. Do NOT use this as the first choice for event-level multi-outcome requests like "World Cup winner market" or "election market" when no specific outcome was named. For those categorical-market prompts, prefer analyze_event_outcome_liquidity.\n\nAccepts tokenId, conditionId, slug, or marketQuery. If you only know the single market by name, pass marketQuery and this tool will resolve the best live match first.\n\n⏱️ PERFORMANCE: Makes 3 CLOB API calls (~3-5s). Safe to call in parallel with 1-2 other lightweight tools, but avoid calling alongside find_trading_opportunities or analyze_top_holders.',
+      'Analyze market liquidity and calculate "Whale Cost" for ONE specific outcome token - simulates the slippage for selling $1k, $5k, and $10k positions. Answers: "Can I exit this position if I put $X in?" Merges direct + synthetic liquidity from both YES and NO orderbooks for accurate depth.\n\n**SIZE-SPECIFIC SIMULATION:** When the user asks about a specific dollar size (e.g. "slippage for a $50,000 buy") or a specific side (buy vs sell), pass `positionSizeUsd` and optionally `side` ("buy" or "sell") to get a walk-the-book fill simulation at that exact size. The result will include `whaleCost.custom` with the avgPrice, worstPrice, slippagePercent, and canFill for that specific size/side. This is how you answer "estimate slippage for a $X buy/sell" questions accurately.\n\nUse this when the user already means ONE named team/candidate/outcome or when you already have tokenId/conditionId. Do NOT use this as the first choice for event-level multi-outcome requests like "World Cup winner market" or "election market" when no specific outcome was named. For those categorical-market prompts, prefer analyze_event_outcome_liquidity.\n\nAccepts tokenId, conditionId, slug, or marketQuery. If you only know the single market by name, pass marketQuery and this tool will resolve the best live match first.\n\n⏱️ PERFORMANCE: Makes 3 CLOB API calls (~3-5s). Safe to call in parallel with 1-2 other lightweight tools, but avoid calling alongside find_trading_opportunities or analyze_top_holders.',
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -886,6 +886,17 @@ const TOOLS = [
           type: "string",
           description:
             "Natural-language SINGLE-market reference (e.g. 'Will Trump win Pennsylvania?' or 'Fed decision in April'). For categorical event-level requests like 'World Cup winner market', prefer analyze_event_outcome_liquidity unless the exact outcome is named.",
+        },
+        positionSizeUsd: {
+          type: "number",
+          description:
+            "Optional specific USD notional to simulate (e.g. 50000 for a $50k buy/sell). When provided, the tool walks the merged book and returns avgPrice, worstPrice, slippagePercent, and canFill under whaleCost.custom. Use this whenever the user asks about a specific dollar size.",
+        },
+        side: {
+          type: "string",
+          enum: ["buy", "sell"],
+          description:
+            "Optional side for positionSizeUsd simulation. 'buy' walks the asks (YES buy). 'sell' walks the bids (YES sell / exit). Defaults to 'buy' when positionSizeUsd is set and side is not specified.",
         },
       },
       required: [],
@@ -932,6 +943,21 @@ const TOOLS = [
             sell1k: { type: "object" },
             sell5k: { type: "object" },
             sell10k: { type: "object" },
+            custom: {
+              type: "object",
+              description: "Walk-the-book simulation for a caller-specified positionSizeUsd / side. Present only when positionSizeUsd was passed.",
+              properties: {
+                sizeUsd: { type: "number" },
+                side: { type: "string", enum: ["buy", "sell"] },
+                amountFilled: { type: "number" },
+                avgPrice: { type: "number" },
+                worstPrice: { type: "number" },
+                slippagePercent: { type: "number" },
+                canFill: { type: "boolean" },
+                referencePrice: { type: "number" },
+                estimatedShares: { type: "number" },
+              },
+            },
           },
         },
         liquidityScore: {
@@ -3214,6 +3240,8 @@ Use cases:
     name: "search_and_get_outcomes",
     description: `🔍 Query-first composite for resolving ONE Polymarket event and returning all current outcomes in ONE CALL.
 
+🚨 ROUTING CONTRACT (READ FIRST — APPLIES EVEN IF AN EARLIER SCOUT/DISCOVERY SEARCH RETURNED EMPTY OR IRRELEVANT RESULTS): Whenever the user names an event, even loosely (e.g. "Paris Saint-Germain FC vs. Liverpool FC", "The Masters - Winner", "2026 FIFA World Cup winner", "US recession in 2026", any "within/inside <event> event…" phrasing), and asks about outcomes, prices, bids, asks, spreads, probabilities, liquidity, or comparisons inside it, YOU MUST CALL THIS TOOL AT LEAST ONCE before emitting any clarification. This tool runs its own independent resolution pipeline (Polymarket /search-v2 + /events + /markets index + LLM-assisted candidate judge) that is STRONGER than the upstream scout/discovery pass; a scout/discovery miss does NOT mean this tool will miss — call it anyway. Pass the event name EXACTLY as the user wrote it (trailing spaces, punctuation, and quotes included). When this tool returns a substitute event (matchConfidence is "high", "medium", or "low", or eventTitle differs from what the user typed), DO NOT ask the user "should I proceed with the substitute?" or present a confirmation menu — PROCEED with the returned data, prepend a one-sentence assumption preamble to the final answer (e.g. "No exact match for 'X'; closest live event is 'Y'. Proceeding with that event."), and render the tool's outcomes inline. Do not ask the user to confirm the slug, paste a Polymarket URL, or pick between menu options before invoking this tool. This tool runs fuzzy search against live Polymarket discovery data and — if no exact match exists — proceeds with the closest live substitute event and labels the assumption inside its response (eventTitle, searchMethod, matchConfidence, note). Returning a clarification to the user with zero contributor tool calls for an event/outcome prompt is an EXPLICIT FAILURE MODE; always try this tool first and only surface a clarification if this tool itself comes back with no plausible match.
+
 ✅ Uses Polymarket's website-backed /search-v2 discovery surface first, with local reranking and fallback search if needed.
 
 ⚠️ USE THIS INSTEAD OF: search_markets → get_event_outcomes (which requires chaining calls)
@@ -3431,6 +3459,8 @@ OUTPUT: All outcomes with prices, ready for comparison`,
   {
     name: "compare_event_outcome_quotes",
     description: `Compare specific named outcomes inside the SAME multi-outcome event in one call.
+
+🚨 ROUTING CONTRACT (READ FIRST — APPLIES EVEN IF AN EARLIER SCOUT/DISCOVERY SEARCH RETURNED EMPTY OR IRRELEVANT RESULTS): For prompts of the form "inside the '<Event>' event, compare/show <Outcome A>, <Outcome B>, <Outcome C> on price/spread/liquidity" (e.g. "Inside 'The Masters - Winner' event, compare Xander Schauffele, Cameron Young, and Akshay Bhatia"; "Within 'PSG vs Liverpool', compare the draw, PSG, and Liverpool quotes"; "Compare <candidate A>, <candidate B>, <candidate C> in the <election/tournament> market"), YOU MUST CALL THIS TOOL AT LEAST ONCE before emitting any clarification. Do not pre-emptively ask the user to confirm the slug, paste a URL, or pick between menu options. This tool runs its own independent event-resolution pipeline (Polymarket /search-v2 + /events + /markets index + LLM-assisted candidate judge) that is STRONGER than the upstream scout/discovery pass — a scout/discovery miss does NOT mean this tool will miss, so call it even if earlier searches looked empty or returned unrelated categories (e.g. "we only found esports markets"). This tool fuzzy-matches the event, falls back to the closest live substitute event when the named event is not live or is historically expired, matches the named outcomes against that event's actual outcome titles (including loose/nickname matches), and labels any assumption it had to make in its response (eventTitle, matchConfidence, searchMethod, note). Pass the event name EXACTLY as the user wrote it in the eventQuery field (trailing spaces and quotes included), and pass the outcome names in outcomeNames. Returning a clarification with zero contributor tool calls on these prompts is an EXPLICIT FAILURE MODE; always call this tool first. When this tool returns a substitute event (matchConfidence is "high", "medium", or "low", or eventTitle differs from what the user typed), DO NOT ask the user "should I proceed with the substitute?" or present a confirmation menu — just PROCEED with the returned data, prepend a one-sentence assumption preamble to the final answer (for example: "No exact match for 'PSG vs Liverpool' on 2026-04-08; closest live event is 'Paris Saint-Germain vs FC Bayern München'. Proceeding with that event."), and render the tool's matchedOutcomes quotes inline. Only surface a clarification if this tool itself returns no plausible event AND no plausible outcome matches.
 
 USE THIS for:
 - "Compare Spain, Brazil, and France in the World Cup winner market"
@@ -4546,7 +4576,15 @@ Set deepFetch=false for faster but shallower results (20 per side max).
       properties: {
         conditionId: {
           type: "string",
-          description: "The market condition ID",
+          description: "The market condition ID (0x-prefixed 66-char hex). Preferred when known. If you only have a market name, pass marketQuery instead and the tool will resolve the conditionId automatically.",
+        },
+        slug: {
+          type: "string",
+          description: "Optional event/market slug (e.g. 'will-okc-win-2026-nba-finals'). Used when conditionId is not known.",
+        },
+        marketQuery: {
+          type: "string",
+          description: "Natural-language market title/question (e.g. 'Will the Oklahoma City Thunder win the 2026 NBA Finals?'). Used when conditionId and slug are unknown — the tool resolves this to a real conditionId before fetching holders. Pass this instead of fabricating a placeholder conditionId.",
         },
         outcome: {
           type: "string",
@@ -4562,7 +4600,7 @@ Set deepFetch=false for faster but shallower results (20 per side max).
           description: "Use multi-tier fetching to get more holders (default: true). Set to false for faster but limited results.",
         },
       },
-      required: ["conditionId"],
+      required: [],
     },
     outputSchema: {
       type: "object" as const,
@@ -8068,6 +8106,20 @@ async function handleAnalyzeMarketLiquidity(
   const marketQuery =
     typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
   let conditionId = inputConditionId;
+  const positionSizeUsdRaw =
+    typeof args?.positionSizeUsd === "number"
+      ? args.positionSizeUsd
+      : typeof args?.positionSizeUsd === "string"
+        ? Number(args.positionSizeUsd)
+        : NaN;
+  const positionSizeUsd =
+    Number.isFinite(positionSizeUsdRaw) && positionSizeUsdRaw > 0
+      ? positionSizeUsdRaw
+      : 0;
+  const rawSide =
+    typeof args?.side === "string" ? args.side.trim().toLowerCase() : "";
+  const side: "buy" | "sell" =
+    rawSide === "sell" ? "sell" : "buy";
 
   if (!tokenId && !conditionId) {
     const resolved = await resolveMarketReference({
@@ -8264,11 +8316,47 @@ async function handleAnalyzeMarketLiquidity(
   }
 
   // Whale cost simulation using MERGED bids
-  const whaleCost = {
+  const whaleCost: {
+    sell1k: ReturnType<typeof simulateSellMerged>;
+    sell5k: ReturnType<typeof simulateSellMerged>;
+    sell10k: ReturnType<typeof simulateSellMerged>;
+    custom?: {
+      sizeUsd: number;
+      side: "buy" | "sell";
+      amountFilled: number;
+      avgPrice: number;
+      worstPrice: number;
+      slippagePercent: number;
+      canFill: boolean;
+      referencePrice: number;
+      estimatedShares: number;
+    };
+  } = {
     sell1k: simulateSellMerged(mergedBids, 1000, currentPrice),
     sell5k: simulateSellMerged(mergedBids, 5000, currentPrice),
     sell10k: simulateSellMerged(mergedBids, 10000, currentPrice),
   };
+
+  if (positionSizeUsd > 0) {
+    const customSim =
+      side === "buy"
+        ? simulateBuyMerged(mergedAsks, positionSizeUsd, currentPrice)
+        : simulateSellMerged(mergedBids, positionSizeUsd, currentPrice);
+    whaleCost.custom = {
+      sizeUsd: Number(positionSizeUsd.toFixed(2)),
+      side,
+      amountFilled: customSim.amountFilled,
+      avgPrice: customSim.avgPrice,
+      worstPrice: customSim.worstPrice,
+      slippagePercent: customSim.slippagePercent,
+      canFill: customSim.canFill,
+      referencePrice: Number(currentPrice.toFixed(4)),
+      estimatedShares:
+        customSim.avgPrice > 0
+          ? Number((customSim.amountFilled / customSim.avgPrice).toFixed(2))
+          : 0,
+    };
+  }
 
   // Determine liquidity score
   let liquidityScore: string;
@@ -8372,6 +8460,57 @@ function simulateSellMerged(
   };
 }
 
+/**
+ * Simulate buying on the MERGED asks (walk the book upward).
+ * Returns avgPrice paid, worstPrice, and slippage vs currentPrice (midpoint or reference).
+ */
+function simulateBuyMerged(
+  mergedAsks: Array<{ price: number; size: number; source: string }>,
+  usdAmount: number,
+  currentPrice: number
+): { amountFilled: number; avgPrice: number; worstPrice: number; slippagePercent: number; canFill: boolean } {
+  if (mergedAsks.length === 0 || currentPrice <= 0) {
+    return {
+      amountFilled: 0,
+      avgPrice: 0,
+      worstPrice: 0,
+      slippagePercent: 100,
+      canFill: false,
+    };
+  }
+
+  let remainingUsd = usdAmount;
+  let totalShares = 0;
+  let worstPrice = currentPrice;
+
+  for (const ask of mergedAsks) {
+    if (remainingUsd <= 0) break;
+
+    const levelValueUsd = ask.size * ask.price;
+    const fillValueUsd = Math.min(remainingUsd, levelValueUsd);
+    const fillShares = ask.price > 0 ? fillValueUsd / ask.price : 0;
+
+    totalShares += fillShares;
+    remainingUsd -= fillValueUsd;
+    worstPrice = ask.price;
+  }
+
+  const filledAmount = usdAmount - remainingUsd;
+  const avgPrice = totalShares > 0 ? filledAmount / totalShares : 0;
+
+  // For a buy, slippage is how much MORE you pay vs currentPrice.
+  const slippagePercent =
+    currentPrice > 0 ? ((avgPrice - currentPrice) / currentPrice) * 100 : 0;
+
+  return {
+    amountFilled: Number(filledAmount.toFixed(2)),
+    avgPrice: Number(avgPrice.toFixed(4)),
+    worstPrice: Number(worstPrice.toFixed(4)),
+    slippagePercent: Number(Math.max(0, slippagePercent).toFixed(1)),
+    canFill: remainingUsd <= 0,
+  };
+}
+
 async function handleCheckMarketEfficiency(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
@@ -8415,7 +8554,7 @@ async function handleCheckMarketEfficiency(
       conditionId = fallbackCandidate.conditionId;
       slug = fallbackCandidate.slug;
       selectionReason =
-        "No explicit market identifier was supplied, so the tool analyzed the strongest live single-outcome fallback market.";
+        "Committed to analyzing the strongest live single-outcome Polymarket market as a best-effort substitute when an explicit market identifier was absent.";
     }
   }
 
@@ -9120,7 +9259,7 @@ async function handleCheckMarketRules(
       slug = fallbackCandidate.slug;
       conditionId = fallbackCandidate.conditionId;
       selectionReason =
-        "No explicit market identifier was supplied, so the tool inspected the strongest live single-outcome fallback market.";
+        "Committed to inspecting the strongest live single-outcome Polymarket market as a best-effort substitute when an explicit market identifier was absent.";
     }
   }
 
@@ -10671,7 +10810,7 @@ async function workflowResolveEventDataForAnalysis(params: {
           "get_event_outcomes"
         ),
         selectionReason:
-          "Primary event search was slow or ambiguous, so the tool used the best matching active-event search fallback.",
+          "Committed to the best-matching active-event Polymarket search result as a best-effort substitute for the user's requested entity.",
       };
     }
 
@@ -10728,7 +10867,7 @@ async function workflowResolveEventDataForAnalysis(params: {
           "get_event_outcomes"
         ),
         selectionReason:
-          "Primary event search was slow or ambiguous, so the tool used the best matching live discovery fallback.",
+          "Committed to the best-matching live discovery Polymarket event as a best-effort substitute for the user's requested entity.",
       };
     }
   }
@@ -10755,7 +10894,7 @@ async function workflowResolveEventDataForAnalysis(params: {
       "get_event_outcomes"
     ),
     selectionReason:
-      "No exact event resolution was available, so the tool used the strongest live multi-outcome fallback event.",
+      "Committed to the strongest live multi-outcome Polymarket event as a best-effort substitute for the user's requested entity.",
   };
 }
 
@@ -11442,6 +11581,63 @@ async function handleBuildHighConvictionWorkflow(
   }
 }
 
+function buildCommittedSubstitutePayload(params: {
+  requestedEntity: string;
+  substitutedEventTitle: string;
+  substitutedEventSlug: string;
+  matchConfidence: "exact" | "high" | "medium" | "low";
+  reason: string;
+}): {
+  assumption: {
+    type: "substituted_event";
+    requestedEntity: string;
+    substitutedEventTitle: string;
+    substitutedEventSlug: string;
+    reason: string;
+    confidence: "high" | "medium";
+  };
+  note: string;
+  synthesisHint: string;
+} {
+  const title = params.substitutedEventTitle || params.substitutedEventSlug;
+  const confidence: "high" | "medium" =
+    params.matchConfidence === "low" ? "medium" : "medium";
+  return {
+    assumption: {
+      type: "substituted_event",
+      requestedEntity: params.requestedEntity,
+      substitutedEventTitle: title,
+      substitutedEventSlug: params.substitutedEventSlug,
+      reason: params.reason,
+      confidence,
+    },
+    note: `committed_substitute: returning best-effort answer for ${title}; user should treat assumption.requestedEntity/substitutedEventTitle as the disclosed substitution.`,
+    synthesisHint: `Handler already committed to "${title}" as the closest live Polymarket event for the user's requested "${params.requestedEntity}". Present the substitute's real live data directly and open with a one-line assumption preface naming both the requested entity and the substituted event title, for example: 'Assumption: Polymarket has "${title}" live as the closest match for the user's asked "${params.requestedEntity}"; using it as the committed best-effort answer. Current numbers follow:'. Answer with the substitute's live data; skip clarification requests entirely.`,
+  };
+}
+
+function requestedEntityDiffersMeaningfullyFromTitle(
+  requested: string,
+  title: string
+): boolean {
+  if (!requested || !title) {
+    return false;
+  }
+  const requestedTokens = extractMarketQueryTokens(requested).filter(
+    (token) => token.length >= 4
+  );
+  if (requestedTokens.length === 0) {
+    return false;
+  }
+  const titleTokens = new Set(extractMarketQueryTokens(title));
+  for (const token of requestedTokens) {
+    if (!titleTokens.has(token)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 async function handleCompareEventOutcomeQuotes(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
@@ -11819,20 +12015,78 @@ async function handleCompareEventOutcomeQuotes(
           )
         : null;
 
-    return successResult({
-      eventTitle:
-        typeof eventData.eventTitle === "string"
-          ? eventData.eventTitle
-          : eventQuery,
-      eventSlug:
-        typeof eventData.eventSlug === "string" ? eventData.eventSlug : "",
+    const resolvedEventTitle =
+      typeof eventData.eventTitle === "string"
+        ? eventData.eventTitle
+        : eventQuery;
+    const resolvedEventSlug =
+      typeof eventData.eventSlug === "string" ? eventData.eventSlug : "";
+    const inheritedMatchConfidenceRaw =
+      typeof eventData.matchConfidence === "string"
+        ? eventData.matchConfidence
+        : "";
+    const inheritedMatchConfidence:
+      | "exact"
+      | "high"
+      | "medium"
+      | "low"
+      | "" =
+      inheritedMatchConfidenceRaw === "exact" ||
+      inheritedMatchConfidenceRaw === "high" ||
+      inheritedMatchConfidenceRaw === "medium" ||
+      inheritedMatchConfidenceRaw === "low"
+        ? inheritedMatchConfidenceRaw
+        : "";
+    const originalRequestedEntity =
+      rawQuery || explicitEventQuery || eventQuery;
+    const selectionReasonLower = (selectionReason || "").toLowerCase();
+    const compareTitleMismatchFromQuery =
+      inheritedMatchConfidence !== "exact" &&
+      requestedEntityDiffersMeaningfullyFromTitle(
+        originalRequestedEntity,
+        resolvedEventTitle
+      );
+    const isSubstituteCompare =
+      originalRequestedEntity.length > 0 &&
+      resolvedEventTitle.length > 0 &&
+      (inheritedMatchConfidence === "medium" ||
+        inheritedMatchConfidence === "low" ||
+        shouldUseFallbackEvent ||
+        compareTitleMismatchFromQuery ||
+        /fallback|did not map|strongest live|slow or ambiguous/.test(
+          selectionReasonLower
+        ));
+    const substitutePayloadCompare = isSubstituteCompare
+      ? buildCommittedSubstitutePayload({
+          requestedEntity: originalRequestedEntity,
+          substitutedEventTitle: resolvedEventTitle,
+          substitutedEventSlug: resolvedEventSlug,
+          matchConfidence:
+            inheritedMatchConfidence === ""
+              ? "medium"
+              : inheritedMatchConfidence,
+          reason:
+            selectionReason && selectionReason.length > 0
+              ? selectionReason
+              : "Closest live multi-outcome Polymarket event selected as a committed best-effort substitute for the user's requested entity.",
+        })
+      : null;
+    const baseCompareHint = momentumRequested
+      ? "Copy numeric fields from each matchedOutcomes row into tables: use currentPrice (or price/yesMid) for implied YES probability, bestBid/bestAsk for quotes, spread and spreadPercent for width, and priceChange/priceChangePercent for recent movement. Each row includes readableQuote — paste verbatim for outcome rows instead of placeholders. Do not relabel a row as a different requested outcome if matchedName disagrees; instead surface it as unmatched or unavailable."
+      : "Copy numeric fields from each matchedOutcomes row into tables: use currentPrice (or price/yesMid) for implied YES probability, bestBid/bestAsk for quotes, spread and spreadPercent for width. Each row includes readableQuote — paste verbatim for outcome rows instead of placeholders. If unmatchedOutcomes is non-empty, retry them against the full event ladder (including inactive outcomes when necessary) before concluding the rows are unavailable.";
+
+    const comparePayload: Record<string, unknown> = {
+      eventTitle: resolvedEventTitle,
+      eventSlug: resolvedEventSlug,
       eventUrl:
         typeof eventData.eventUrl === "string" ? eventData.eventUrl : "",
-      synthesisHint:
-        momentumRequested
-          ? "Copy numeric fields from each matchedOutcomes row into tables: use currentPrice (or price/yesMid) for implied YES probability, bestBid/bestAsk for quotes, spread and spreadPercent for width, and priceChange/priceChangePercent for recent movement. Each row includes readableQuote — paste verbatim for outcome rows instead of placeholders. Do not relabel a row as a different requested outcome if matchedName disagrees; instead surface it as unmatched or unavailable."
-          : "Copy numeric fields from each matchedOutcomes row into tables: use currentPrice (or price/yesMid) for implied YES probability, bestBid/bestAsk for quotes, spread and spreadPercent for width. Each row includes readableQuote — paste verbatim for outcome rows instead of placeholders. If unmatchedOutcomes is non-empty, retry them against the full event ladder (including inactive outcomes when necessary) before concluding the rows are unavailable.",
-      selectionReason,
+      synthesisHint: substitutePayloadCompare
+        ? `${substitutePayloadCompare.synthesisHint} ${baseCompareHint}`
+        : baseCompareHint,
+      selectionReason: substitutePayloadCompare
+        ? substitutePayloadCompare.note
+        : selectionReason,
+      note: substitutePayloadCompare ? substitutePayloadCompare.note : undefined,
       matchedOutcomes,
       unmatchedOutcomes,
       widestSpreadOutcome:
@@ -11843,7 +12097,11 @@ async function handleCompareEventOutcomeQuotes(
               spread: widestSpreadOutcome.spread,
             },
       fetchedAt: new Date().toISOString(),
-    });
+    };
+    if (substitutePayloadCompare) {
+      comparePayload.assumption = substitutePayloadCompare.assumption;
+    }
+    return successResult(comparePayload);
   } catch (error) {
     return errorResult(
       `compare_event_outcome_quotes failed: ${error instanceof Error ? error.message : "Unknown error"}`
@@ -15947,15 +16205,42 @@ async function handleSearchAndGetOutcomes(
               : null;
           })();
 
-    const responseData = {
+    const baseSynthesisHintSearch =
+      "Use outcomes[*].currentPrice as the numeric price alias when downstream code expects currentPrice. If primaryOutcome is present, reuse primaryTokenId/primaryConditionId directly for get_market_parameters, get_spreads, or get_orderbook instead of semantic reranking. For date-bucket prompts, trust the explicit active, closed, and dateStatus fields — or stateSummary.liveOutcomes / stateSummary.expiredOutcomes when present — instead of inferring status from label text alone.";
+    const resolvedTitleForSubstituteCheck = event.title || slug;
+    const titleMismatchFromQuery =
+      matchConfidence !== "exact" &&
+      requestedEntityDiffersMeaningfullyFromTitle(
+        query,
+        resolvedTitleForSubstituteCheck
+      );
+    const isSubstituteSearch =
+      (matchConfidence !== "exact" && matchConfidence !== "high") ||
+      titleMismatchFromQuery;
+    const substituteConfidence: "exact" | "high" | "medium" | "low" =
+      titleMismatchFromQuery && matchConfidence === "high"
+        ? "medium"
+        : matchConfidence;
+    const substitutePayloadSearch = isSubstituteSearch
+      ? buildCommittedSubstitutePayload({
+          requestedEntity: query,
+          substitutedEventTitle: resolvedTitleForSubstituteCheck,
+          substitutedEventSlug: slug,
+          matchConfidence: substituteConfidence,
+          reason: `Closest live Polymarket event match (matchConfidence=${matchConfidence}) via ${resolvedSearchEntry?.source ?? searchMethod}. Handler committed to this substitute and returned its real live outcome data rather than asking the user to clarify.`,
+        })
+      : null;
+
+    const responseData: Record<string, unknown> = {
       eventTitle: event.title || slug,
       eventSlug: slug,
       eventUrl: `https://polymarket.com/event/${slug}`,
       totalVolume,
       totalOutcomes: outcomes.length,
       sortedBy: sortBy,
-      synthesisHint:
-        "Use outcomes[*].currentPrice as the numeric price alias when downstream code expects currentPrice. If primaryOutcome is present, reuse primaryTokenId/primaryConditionId directly for get_market_parameters, get_spreads, or get_orderbook instead of semantic reranking. For date-bucket prompts, trust the explicit active, closed, and dateStatus fields — or stateSummary.liveOutcomes / stateSummary.expiredOutcomes when present — instead of inferring status from label text alone.",
+      synthesisHint: substitutePayloadSearch
+        ? `${substitutePayloadSearch.synthesisHint} ${baseSynthesisHintSearch}`
+        : baseSynthesisHintSearch,
       outcomes,
       primaryOutcome,
       primaryTokenId: primaryOutcome?.tokenId || "",
@@ -15976,13 +16261,16 @@ async function handleSearchAndGetOutcomes(
       searchQuery: query,
       searchMethod: resolvedSearchEntry?.source ?? searchMethod,
       matchConfidence,
-      note: matchConfidence === "exact" 
-        ? "Found exact match for your search query."
-        : matchConfidence === "high"
-        ? "Found high-confidence match. Verify this is the market you wanted."
-        : "Best match found. If this isn't the right market, try a different query.",
+      note: substitutePayloadSearch
+        ? substitutePayloadSearch.note
+        : matchConfidence === "exact"
+          ? "Found exact match for your search query."
+          : "Found high-confidence match. Verify this is the market you wanted.",
       fetchedAt: new Date().toISOString(),
     };
+    if (substitutePayloadSearch) {
+      responseData.assumption = substitutePayloadSearch.assumption;
+    }
 
     return successResult(
       searchResolution
@@ -17551,7 +17839,7 @@ async function handleGetEventLiveVolume(
         eventSlug = fallbackCandidate.slug;
         eventTitle = fallbackCandidate.eventTitle;
         selectionReason =
-          "No explicit event identifier was supplied, so the tool used the strongest live multi-outcome fallback event.";
+          "Committed to the strongest live multi-outcome Polymarket event as a best-effort substitute when an explicit event identifier was absent.";
       }
     }
   }
@@ -17632,7 +17920,9 @@ async function handleGetEventLiveVolume(
 async function handleGetTopHolders(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
-  const conditionId = args?.conditionId as string;
+  const rawConditionId = getNonEmptyString(args?.conditionId) || "";
+  const rawSlug = getNonEmptyString(args?.slug) || "";
+  const rawMarketQuery = getNonEmptyString(args?.marketQuery) || "";
   const outcome = (args?.outcome as string) || "BOTH";
   // User-requested limit (we can return more than 20 via multi-tier fetching)
   const requestedLimit = (args?.limit as number) || 50;
@@ -17642,8 +17932,43 @@ async function handleGetTopHolders(
     ? "heavy"
     : "default";
 
+  const validConditionIdPattern = /^0x[0-9a-f]{64}$/i;
+  let conditionId = "";
+  let resolvedVia: string | null = null;
+
+  if (rawConditionId && validConditionIdPattern.test(rawConditionId.trim())) {
+    conditionId = rawConditionId.trim();
+  } else {
+    // Either no conditionId, or a placeholder like "0xthunder" / "will-okc-win".
+    // Try to resolve from slug or marketQuery (or treat the placeholder as a
+    // freeform marketQuery hint) instead of failing closed or returning an
+    // all-zero shell that looks like a real "no whales" answer.
+    const queryHint =
+      rawMarketQuery ||
+      (rawConditionId && !validConditionIdPattern.test(rawConditionId)
+        ? rawConditionId
+        : "");
+    const resolved = await resolveMarketReference({
+      slug: rawSlug || undefined,
+      marketQuery: queryHint || undefined,
+    });
+    if (resolved?.conditionId && validConditionIdPattern.test(resolved.conditionId)) {
+      conditionId = resolved.conditionId;
+      resolvedVia = rawSlug
+        ? "slug"
+        : rawMarketQuery
+          ? "marketQuery"
+          : "conditionId-fallback-as-query";
+    }
+  }
+
   if (!conditionId) {
-    return errorResult("conditionId is required");
+    return errorResult(
+      `Could not resolve a valid Polymarket conditionId. ` +
+        `Provide one of: conditionId (0x-prefixed 66-char hex), slug, or marketQuery (natural-language market title). ` +
+        `Received: conditionId='${rawConditionId}', slug='${rawSlug}', marketQuery='${rawMarketQuery}'. ` +
+        `Hint: call search_markets or search_and_get_outcomes first to get a real conditionId, or pass the market title as marketQuery and let this tool resolve it.`
+    );
   }
 
   try {
@@ -18350,7 +18675,7 @@ async function handleAnalyzeEventWhaleBreakdown(
     }
     slug = fallbackCandidate.slug;
     selectionReason =
-      "No explicit event reference was supplied, so the tool analyzed the strongest live multi-outcome fallback event.";
+      "Committed to analyzing the strongest live multi-outcome Polymarket event as a best-effort substitute when an explicit event reference was absent.";
   }
 
   try {
@@ -18372,7 +18697,7 @@ async function handleAnalyzeEventWhaleBreakdown(
         }
         slug = fallbackCandidate.slug;
         selectionReason =
-          "The event query did not map cleanly, so the tool analyzed the strongest live multi-outcome fallback event.";
+          "Committed to analyzing the strongest live multi-outcome Polymarket event as a best-effort substitute for the user's event query.";
       } else {
         selectionReason = resolvedEvent.selectionReason;
       }

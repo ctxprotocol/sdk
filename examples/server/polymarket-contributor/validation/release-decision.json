@@ -1,5 +1,6 @@
 {
-  "generatedAt": "2026-04-09T07:03:05.663Z",
+  "schemaVersion": "2026-04-17",
+  "generatedAt": "2026-04-18T13:09:39.083Z",
   "contributor": "polymarket-contributor",
   "paths": {
     "contributorDir": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor",
@@ -8,92 +9,86 @@
     "artifactPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/marketplace-validation-artifact.json",
     "releaseDecisionPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/release-decision.json",
     "resultsPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results.latest.json",
-    "surfaceChecksPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/marketplace-surface-checks.latest.json"
+    "surfaceChecksPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/marketplace-surface-checks.latest.json",
+    "checkpointPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/pipeline-checkpoint.json",
+    "runLogPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/pipeline-run-log.json"
   },
   "state": {
     "pipelineActive": true,
     "activeContributorPath": "/Users/alex/Documents/.cursor/hooks/state/active-contributor.txt",
-    "convergenceFlag": null,
-    "iterationCount": 0,
-    "previousSatisfactionMean": null
+    "iterationCount": 2,
+    "previousSatisfactionMean": 3.895,
+    "iterationStateSource": "run-log"
   },
   "reviewer": {
     "present": true,
     "path": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/reviewer-evaluation.json",
-    "blockers": [
-      "Weak query rate 22% (4/18) exceeds 20% threshold."
-    ],
+    "blockers": [],
     "summary": {
-      "satisfactionMean": 4.12,
-      "highFragilityRate": 0.167,
-      "baselineBeatenRate": 0.833,
-      "queryCount": 18,
-      "queriesBelow3": 3,
-      "weakQueryCount": 4,
-      "weakQueryRate": 0.222,
+      "satisfactionMean": 4.211,
+      "highFragilityRate": 0.053,
+      "baselineBeatenRate": 0.737,
+      "queryCount": 19,
+      "queriesBelow3": 1,
+      "weakQueryCount": 1,
+      "weakQueryRate": 0.053,
       "blockingHighDifferentiationPromptIds": [],
       "differentiationCounts": {
         "high_differentiation": 14,
-        "moderate_differentiation": 1,
-        "low_differentiation": 3
+        "moderate_differentiation": 0,
+        "low_differentiation": 5
+      },
+      "promptSetFingerprint": "p1,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p2,p3,p4,p5,p6,p7,p8,p9",
+      "weightedBuyerValue": 0.8631,
+      "generalization": {
+        "active": true,
+        "ok": false,
+        "holdoutRatio": 0.4,
+        "holdoutGateMinCount": 5,
+        "holdoutGeneralizationTolerance": 0.3,
+        "trainQueryCount": 11,
+        "holdoutQueryCount": 8,
+        "trainSatisfactionMean": 4.379,
+        "holdoutSatisfactionMean": 3.98,
+        "trainWeakQueryRate": 0,
+        "holdoutWeakQueryRate": 0.125
       }
     },
     "passedChecks": {
       "satisfactionMeanGte3_5": true,
       "highFragilityLte0_3": true,
       "noHighDiffBelow3": true,
-      "weakQueryRateLte20": false,
-      "differentiationViable": true
+      "weakQueryRateLte20": true,
+      "differentiationViable": true,
+      "holdoutGeneralizationOk": false
     },
     "improvementSkipChecks": {
-      "satisfactionMeanGte4_2": false,
-      "weakQueryRateLte20": false
+      "satisfactionMeanGte4_2": true,
+      "weakQueryRateLte20": true
     },
-    "passed": false,
+    "passed": true,
     "weakQueries": {
       "entries": [
         {
-          "index": 16,
-          "promptId": "q17",
-          "query": "Within the 'US x Iran ceasefire by...?' event, which future buckets are still live after the expired dates, and among th",
-          "score": 1.67,
-          "rootCauseCategory": "missing_followup_fetch",
-          "fixable": true
-        },
-        {
-          "index": 0,
-          "promptId": "q1",
-          "query": "Within the 'Paris Saint-Germain FC vs. Liverpool FC' event, what are the current implied probabilities, best bids, best ",
-          "score": 2.17,
-          "rootCauseCategory": "response_synthesis_drop",
-          "fixable": true
-        },
-        {
-          "index": 11,
-          "promptId": "q12",
-          "query": "For the 'Will Paris Saint-Germain FC win on 2026-04-08?' market, what are the live trading parameters on the token, incl",
-          "score": 2.17,
-          "rootCauseCategory": "candidate_resolution_bug",
-          "fixable": true
-        },
-        {
-          "index": 4,
-          "promptId": "q5",
-          "query": "Within the '2026 FIFA World Cup Winner ' event, which sampled outcome has the strongest whale backing right now among Sp",
-          "score": 3.5,
-          "rootCauseCategory": "bounded_shortlist_gap",
+          "index": 18,
+          "promptId": "p19",
+          "evaluationSet": "holdout",
+          "query": "Construct a portfolio of 5 moderate-probability (30-60% Yes) Polymarket bets ending within 60 days, drawn from current t",
+          "score": 1.33,
+          "rootCauseCategory": "iterative_recovery_failure",
           "fixable": true
         }
       ],
-      "totalCount": 4,
-      "fixableCount": 4,
-      "fixableBelowFloorCount": 3,
+      "totalCount": 1,
+      "fixableCount": 1,
+      "fixableBelowFloorCount": 1,
       "categoryCounts": {
-        "missing_followup_fetch": 1,
-        "response_synthesis_drop": 1,
-        "candidate_resolution_bug": 1,
-        "bounded_shortlist_gap": 1
-      }
+        "iterative_recovery_failure": 1
+      },
+      "trainCount": 0,
+      "holdoutCount": 1,
+      "fixableTrainCount": 0,
+      "fixableHoldoutCount": 1
     }
   },
   "localValidation": {
@@ -102,7 +97,9 @@
       "resultsPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results.latest.json",
       "surfaceChecksPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/marketplace-surface-checks.latest.json"
     },
-    "blockers": [],
+    "blockers": [
+      "Local query validation is not green."
+    ],
     "surfaceFailures": {
       "entries": [],
       "totalCount": 0,
@@ -110,26 +107,28 @@
       "promptIds": []
     },
     "checks": {
-      "queryValidationPassed": true,
+      "queryValidationPassed": false,
       "executeValidationPassed": true,
       "authContractPassed": true,
       "directValidationPassed": true
     },
-    "passed": true
+    "passed": false
   },
   "iteration": {
-    "action": "continue",
-    "shouldContinue": true,
-    "terminalState": null,
-    "iterationCount": 0,
-    "previousSatisfactionMean": null,
-    "reason": "Mean passed 3.5 but 3 fixable weak queries remain below 3.0."
+    "action": "pass",
+    "shouldContinue": false,
+    "terminalState": "converged",
+    "iterationCount": 2,
+    "previousSatisfactionMean": 3.895,
+    "iterationStateSource": "run-log",
+    "weakQueryRate": 0.053,
+    "reason": "Release gates passed, mean 4.211 >= 4.2, and only 5% weak queries (<= 20%)."
   },
   "release": {
     "status": "blocked",
     "artifactWriteAllowed": false,
     "blockers": [
-      "Weak query rate 22% (4/18) exceeds 20% threshold."
+      "Local query validation is not green."
     ]
   },
   "artifact": {

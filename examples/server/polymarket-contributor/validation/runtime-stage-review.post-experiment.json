@@ -1,0 +1,157 @@
+{
+  "generatedAt": "2026-04-19T05:55:00.000Z",
+  "reviewer": "runtime-stage-reviewer (readonly subagent)",
+  "reviewVersion": "runtime-stage-reviewer.v1",
+  "phase": "post-experiment",
+  "iteration": 1,
+  "focusContributor": "polymarket-contributor",
+  "traceCount": 18,
+  "inputPaths": {
+    "rawTraces": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results.latest.json",
+    "analyzer": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.post-experiment.json",
+    "preExperimentReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-review.latest.json",
+    "hypothesisApplied": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-hypothesis.latest.json",
+    "calibrationBaseline": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json"
+  },
+  "hypothesisSummary": {
+    "targetDimension": "toolSelection",
+    "change": "Escape hatch in query-clarification.ts gated by namedTargetGuardAutoBindOnResolved, activated via env DUAL_SURFACE_NAMED_TARGET_GUARD_AUTOBIND_ON_RESOLVED=on. Collapses partialCoverageClarificationCandidates when length<=1 OR all share same (toolId, methodName).",
+    "flagState": "on",
+    "gateConditionsObserved": "Not met for any of q2/q8/q9/q10/q12/q17. Each has optionCount=3 with three distinct methodNames under the single toolId 294100e8-c648-4e5f-a254-95a14b56e398. length>1 fails; same-(toolId,methodName) fails because methodName varies. Auto-bind branch never fired."
+  },
+  "dimensionScores": {
+    "toolSelection": 3.67,
+    "scoutDepth": 5.0,
+    "clarification": 5.0,
+    "planning": 5.0,
+    "execution": 2.17,
+    "synthesis": 3.67,
+    "contextBudget": 4.5,
+    "reasoningDepth": 5.0,
+    "mcpTransport": 4.56,
+    "codeSafety": 5.0,
+    "synthesisBudget": 3.5
+  },
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 3.67,
+      "scoutDepth": 5.0,
+      "clarification": 5.0,
+      "planning": 5.0,
+      "execution": 2.17,
+      "synthesis": 3.67
+    },
+    "crossCuttingMeans": {
+      "contextBudget": 4.5,
+      "reasoningDepth": 5.0,
+      "mcpTransport": 4.56,
+      "codeSafety": 5.0,
+      "synthesisBudget": 3.5
+    },
+    "weakestDimension": "execution",
+    "weakestScore": 2.17,
+    "optimizationReadiness": {
+      "dimension": "toolSelection",
+      "status": "ready",
+      "measurementConfidence": "high",
+      "reason": "Cluster named_target_without_resolution unchanged at 6 traces. Experiment 1 escape-hatch predicate never fired on the observed shape (optionCount=3 with distinct methodNames under one toolId)."
+    }
+  },
+  "dimensionDetails": [
+    {
+      "dimension": "toolSelection",
+      "score": 3.67,
+      "optimizationReadiness": {
+        "status": "ready",
+        "reason": "Same failure cluster size and IDs as pre. Next hypothesis needs a predicate that handles optionCount>1 with distinct methodNames under a single toolId, or resolves the named target upstream of clarification."
+      },
+      "dominantFailureCluster": {
+        "label": "named_target_without_resolution",
+        "traceCount": 6,
+        "traceIds": ["q2", "q8", "q9", "q10", "q12", "q17"],
+        "commonDecisionSignals": [
+          "contract_scope_ambiguity",
+          "deterministic_named_target_resolution_required"
+        ]
+      }
+    },
+    {
+      "dimension": "clarification",
+      "score": 5.0,
+      "optimizationReadiness": {
+        "status": "noisy",
+        "reason": "Clarification mean rose 3.9 -> 5.0 due to analyzer scoring shape (gate firing per contract), not a runtime improvement. Do not mean-chase."
+      }
+    },
+    {
+      "dimension": "execution",
+      "score": 2.17,
+      "optimizationReadiness": {
+        "status": "noisy",
+        "reason": "Analyzer calibration artifact: uniform execution=2 on successful iterative-execution traces depresses the mean. The drop 3.33 -> 2.17 reflects scoring-shape, not a real runtime regression."
+      }
+    },
+    {
+      "dimension": "synthesis",
+      "score": 3.67,
+      "optimizationReadiness": {
+        "status": "noisy",
+        "reason": "Downstream of toolSelection; cluster unchanged."
+      }
+    },
+    {
+      "dimension": "synthesisBudget",
+      "score": 3.5,
+      "optimizationReadiness": {
+        "status": "noisy",
+        "reason": "Downstream; minor lift within noise."
+      }
+    },
+    {
+      "dimension": "contextBudget",
+      "score": 4.5,
+      "optimizationReadiness": {
+        "status": "ready",
+        "reason": "Above automation floor. Minor lift vs pre (4.17)."
+      }
+    }
+  ],
+  "dominantFailureClusters": [
+    {
+      "dimension": "toolSelection",
+      "label": "named_target_without_resolution",
+      "traceCount": 6,
+      "traceIds": ["q2", "q8", "q9", "q10", "q12", "q17"],
+      "description": "Unchanged from pre-experiment. Each trace has optionCount=3 with three distinct methodNames under one toolId; the experiment's escape-hatch predicate could not fire."
+    },
+    {
+      "dimension": "contextBudget",
+      "label": "canonical_dataset_truncation",
+      "traceCount": 3,
+      "traceIds": ["q1", "q11", "q16"],
+      "description": "Secondary; above automation floor."
+    }
+  ],
+  "preVsPostDelta": {
+    "targetDimension": "toolSelection",
+    "preMean": 3.67,
+    "postMean": 3.67,
+    "delta": 0.0,
+    "improved": false,
+    "namedTargetClusterPre": 6,
+    "namedTargetClusterPost": 6,
+    "clusterShrank": false,
+    "verdict": "No measurable improvement. Gate predicate incompatible with observed clarification shape (optionCount=3 with distinct methodNames under one toolId)."
+  },
+  "interactionRisks": [
+    "toolSelection <-> clarification: paired coupling unchanged; right dimension, wrong predicate.",
+    "Analyzer execution calibration artifact exaggerates the execution delta (3.33 -> 2.17); do not treat as a hard regression."
+  ],
+  "calibrationNotes": [
+    "analyze-stage-traces.mjs assigns uniform execution=2 on successful iterative-execution traces (known artifact).",
+    "Clarification=5 is the gate firing per contract, not a runtime improvement."
+  ],
+  "paredFixHypothesisNotes": [
+    "Next hypothesis should either (a) auto-bind clarification.recommendedOptionId when outcomeType=clarification_required AND recommendedOptionId is non-null AND the prompt is answerable AND the recommendation resolves to a grounded method on the already-selected toolId with no unresolvedRequiredParams; or (b) resolve the named target upstream so partial_clause_coverage does not trigger. Must remain contributor-agnostic and flag-gated."
+  ]
+}

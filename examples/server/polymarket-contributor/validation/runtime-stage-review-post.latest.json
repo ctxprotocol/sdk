@@ -1,0 +1,124 @@
+{
+  "generatedAt": "2026-04-19T05:25:00.000Z",
+  "reviewer": "runtime-stage-reviewer (readonly; artifact persisted by orchestrator)",
+  "focusContributor": "polymarket-contributor",
+  "traceCount": 18,
+  "inputPaths": {
+    "rawTraces": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results.latest.json",
+    "analyzer": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit-post.latest.json",
+    "calibrationBaseline": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json"
+  },
+  "dimensionScores": {
+    "toolSelection": 3.67,
+    "scoutDepth": 5,
+    "clarification": 3.9,
+    "planning": 5,
+    "execution": 3.33,
+    "synthesis": 3.94,
+    "contextBudget": 4.5,
+    "reasoningDepth": 5,
+    "mcpTransport": 4.78,
+    "codeSafety": 5,
+    "synthesisBudget": 3.67
+  },
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 3.67,
+      "scoutDepth": 5,
+      "clarification": 3.9,
+      "planning": 5,
+      "execution": 3.33,
+      "synthesis": 3.94
+    },
+    "crossCuttingMeans": {
+      "contextBudget": 4.5,
+      "reasoningDepth": 5,
+      "mcpTransport": 4.78,
+      "codeSafety": 5,
+      "synthesisBudget": 3.67
+    },
+    "weakestDimension": "execution",
+    "weakestScore": 3.33,
+    "optimizationReadiness": {
+      "dimension": "toolSelection",
+      "status": "ready",
+      "measurementConfidence": "high",
+      "reason": "Experiment did not move the target. The same 6-trace cluster (q2, q8, q9, q10, q12, q17) still exits with zero grounded tool calls. The auto-bind escape hatch was not triggered for these traces, indicating these queries do not reach the `preserveNamedTargetClarification` partial-coverage branch in query-clarification.ts. The root cause for this cluster lies at an earlier decision point (likely the upstream clarification-trigger gate before viable-candidate analysis, or the model's own early-return-without-tools behavior before the deterministic gate fires)."
+    }
+  },
+  "dimensionDetails": [
+    {
+      "dimension": "toolSelection",
+      "score": 3.67,
+      "optimizationReadiness": {
+        "status": "ready",
+        "reason": "Same dominant cluster, same traceCount. No movement."
+      },
+      "dominantFailureCluster": {
+        "label": "named_target_without_resolution",
+        "traceCount": 6,
+        "traceIds": ["q2", "q8", "q9", "q10", "q12", "q17"],
+        "commonDecisionSignals": [
+          "contract_scope_ambiguity",
+          "deterministic_named_target_resolution_required"
+        ]
+      }
+    },
+    {
+      "dimension": "clarification",
+      "score": 3.9,
+      "optimizationReadiness": {
+        "status": "noisy",
+        "reason": "Paired with toolSelection, unchanged."
+      }
+    },
+    {
+      "dimension": "execution",
+      "score": 3.33,
+      "optimizationReadiness": {
+        "status": "noisy",
+        "reason": "Unchanged. Same downstream symptom of toolSelection failures plus calibration artifact."
+      }
+    },
+    {
+      "dimension": "synthesis",
+      "score": 3.94,
+      "optimizationReadiness": {
+        "status": "noisy",
+        "reason": "Small positive drift within reviewer noise; not attributable to the experiment."
+      }
+    },
+    {
+      "dimension": "synthesisBudget",
+      "score": 3.67,
+      "optimizationReadiness": {
+        "status": "noisy",
+        "reason": "Small positive drift within reviewer noise; not attributable to the experiment."
+      }
+    },
+    {
+      "dimension": "contextBudget",
+      "score": 4.5,
+      "optimizationReadiness": {
+        "status": "ready",
+        "reason": "Above floor. Slight improvement; not attributable to the experiment (reviewer/analyzer noise)."
+      }
+    }
+  ],
+  "dominantFailureClusters": [
+    {
+      "dimension": "toolSelection",
+      "label": "named_target_without_resolution",
+      "traceCount": 6,
+      "traceIds": ["q2", "q8", "q9", "q10", "q12", "q17"],
+      "description": "Identical cluster before and after. The auto-bind escape hatch did not fire because these traces do not reach the partial-clause-coverage branch in query-clarification.ts — the clarification signal originates earlier in the pipeline."
+    }
+  ],
+  "interactionRisks": [
+    "Fix site was wrong: the cluster's control flow does not pass through `preserveNamedTargetClarification` partial-coverage branch. Next hypothesis should target the earlier decision site that emits clarification_required with zero grounded tool calls (likely pre-plan probe + planner short-circuit path).",
+    "Retries in the test harness show 0 tool calls twice then clarification_required — the model itself is exiting without calling tools before any clarification gate runs."
+  ],
+  "calibrationNotes": [
+    "Same analyzer calibration artifact as baseline (uniform execution=2 on successful iterative traces)."
+  ]
+}

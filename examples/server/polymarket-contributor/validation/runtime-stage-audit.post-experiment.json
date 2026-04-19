@@ -1,0 +1,4201 @@
+{
+  "generatedAt": "2026-04-19T05:43:41.925Z",
+  "version": "2026-04-09.runtime-stage-trace-analysis.v1",
+  "queryCount": 18,
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 3.67,
+      "scoutDepth": 5,
+      "clarification": 5,
+      "planning": 5,
+      "execution": 2.17,
+      "synthesis": 3.67
+    },
+    "crossCuttingMeans": {
+      "contextBudget": 4.5,
+      "reasoningDepth": 5,
+      "mcpTransport": 4.56,
+      "codeSafety": 5,
+      "synthesisBudget": 3.5
+    },
+    "bottleneckCounts": {
+      "execution": 10,
+      "toolSelection": 7,
+      "synthesis": 1
+    },
+    "dimensionDrivers": {
+      "toolSelection": {
+        "lowScoreCount": 5,
+        "topDrivers": [
+          {
+            "queryId": "q2",
+            "score": 1,
+            "issue": "The trace ended with zero grounded tool calls even though the prompt was answerable."
+          },
+          {
+            "queryId": "q8",
+            "score": 1,
+            "issue": "The trace ended with zero grounded tool calls even though the prompt was answerable."
+          },
+          {
+            "queryId": "q9",
+            "score": 1,
+            "issue": "The trace ended with zero grounded tool calls even though the prompt was answerable."
+          },
+          {
+            "queryId": "q10",
+            "score": 1,
+            "issue": "The trace ended with zero grounded tool calls even though the prompt was answerable."
+          },
+          {
+            "queryId": "q12",
+            "score": 1,
+            "issue": "The trace ended with zero grounded tool calls even though the prompt was answerable."
+          }
+        ]
+      },
+      "scoutDepth": {
+        "lowScoreCount": 0,
+        "topDrivers": []
+      },
+      "clarification": {
+        "lowScoreCount": 0,
+        "topDrivers": []
+      },
+      "planning": {
+        "lowScoreCount": 0,
+        "topDrivers": []
+      },
+      "execution": {
+        "lowScoreCount": 5,
+        "topDrivers": [
+          {
+            "queryId": "q1",
+            "score": 2,
+            "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+          },
+          {
+            "queryId": "q2",
+            "score": 2,
+            "issue": "Tool selection did not reliably convert the prompt into the right grounded tool path."
+          },
+          {
+            "queryId": "q3",
+            "score": 2,
+            "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+          },
+          {
+            "queryId": "q4",
+            "score": 2,
+            "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+          },
+          {
+            "queryId": "q5",
+            "score": 2,
+            "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+          }
+        ]
+      },
+      "synthesis": {
+        "lowScoreCount": 5,
+        "topDrivers": [
+          {
+            "queryId": "q18",
+            "score": 1,
+            "issue": null
+          },
+          {
+            "queryId": "q2",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q8",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q9",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q10",
+            "score": 2,
+            "issue": null
+          }
+        ]
+      },
+      "contextBudget": {
+        "lowScoreCount": 3,
+        "topDrivers": [
+          {
+            "queryId": "q1",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q11",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q16",
+            "score": 2,
+            "issue": null
+          }
+        ]
+      },
+      "reasoningDepth": {
+        "lowScoreCount": 0,
+        "topDrivers": []
+      },
+      "mcpTransport": {
+        "lowScoreCount": 4,
+        "topDrivers": [
+          {
+            "queryId": "q4",
+            "score": 3,
+            "issue": null
+          },
+          {
+            "queryId": "q6",
+            "score": 3,
+            "issue": null
+          },
+          {
+            "queryId": "q11",
+            "score": 3,
+            "issue": null
+          },
+          {
+            "queryId": "q18",
+            "score": 3,
+            "issue": null
+          }
+        ]
+      },
+      "codeSafety": {
+        "lowScoreCount": 0,
+        "topDrivers": []
+      },
+      "synthesisBudget": {
+        "lowScoreCount": 5,
+        "topDrivers": [
+          {
+            "queryId": "q2",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q8",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q9",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q10",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q12",
+            "score": 2,
+            "issue": null
+          }
+        ]
+      }
+    },
+    "promptSetFingerprint": "q1,q10,q11,q12,q13,q14,q15,q16,q17,q18,q2,q3,q4,q5,q6,q7,q8,q9",
+    "finalScoreMean": 3.42,
+    "weakQueryIds": [
+      "q2",
+      "q8",
+      "q9",
+      "q10",
+      "q12",
+      "q17",
+      "q18"
+    ]
+  },
+  "systemicIssues": [
+    {
+      "pattern": "17/18 prompts hit selection or routing misses on answerable prompts",
+      "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "fixScope": "runtime",
+      "affectedPromptIds": [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5",
+        "q6",
+        "q8",
+        "q9",
+        "q10",
+        "q11",
+        "q12",
+        "q13",
+        "q14",
+        "q15",
+        "q16",
+        "q17",
+        "q18"
+      ]
+    },
+    {
+      "pattern": "1/18 prompts hit grounded data reaching the pipeline without creating strong answer differentiation",
+      "rootCause": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness.",
+      "fixScope": "planner",
+      "affectedPromptIds": [
+        "q7"
+      ]
+    }
+  ],
+  "perQueryAnalyses": [
+    {
+      "id": "q1",
+      "query": "Within the 'Paris Saint-Germain FC vs. Liverpool FC' event, what are the current implied probabilities, best bids, best asks, and spreads for 'Will Paris Saint-Germain FC win on 2026-04-08?', 'Will Paris Saint-Germain FC vs. Liverpool FC end in a draw?', and 'Will Liverpool FC win on 2026-04-08?'?",
+      "alphaCategory": "Event Structure And Relative Value",
+      "category": "event-level quotes",
+      "outcomeType": "answer",
+      "toolCalls": 5,
+      "toolNames": [
+        "Polymarket Intelligence"
+      ],
+      "latencyMs": 102000,
+      "finalScore": 4.83,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 5,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:compare_event_outcome_quotes",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_composite_intent_match"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 8,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 8,
+          "toolStepCount": 8,
+          "iterativeExecution": true,
+          "executionMs": 83164,
+          "synthesisMs": 8241,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 958,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "medium",
+          "gapCount": 1,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 2,
+          "canonicalBytes": 43935,
+          "gapCount": 1,
+          "gapSignals": [
+            "context_truncated"
+          ],
+          "truncated": true
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 102000,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 5,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 3,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 1,
+          "viewType": "table",
+          "rowCount": 5
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q1",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 363% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": 102000,
+          "executionDurationMs": 370412,
+          "executionDurationShare": 3.6315,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "The specific match between Paris Saint-Germain FC and Liverpool FC on 2026-04-08 was not found in the current market data. However, data is available for the upcoming **Paris Saint-Germain FC vs. FC Bayern München** match (scheduled for April 28, 2026), which was identified as the closest relevant event.\n\nAs of April 19, 2026, the current market data for this event is as follows:\n\n| Outcome | Implied Probability | Best Bid | Best Ask | Spread |\n| :--- | :--- | :--- | :--- | :--- |\n| **Paris Sain",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q2",
+      "query": "For the 'Will Paris Saint-Germain FC win on 2026-04-08?' market, how much merged depth is available right now and what slippage would a $1k, $5k, and $10k exit face?",
+      "alphaCategory": "Quote Quality And Liquidity",
+      "category": "single-market liquidity",
+      "outcomeType": "clarification_required",
+      "toolCalls": 0,
+      "toolNames": [],
+      "latencyMs": 4485,
+      "finalScore": 1.5,
+      "buyerScores": {
+        "freshness": 2,
+        "specificity": 1,
+        "actionability": 2,
+        "completeness": 2,
+        "dataAccuracy": 1,
+        "uniqueness": 1
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 1,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": "The trace ended with zero grounded tool calls even though the prompt was answerable."
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 5,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": true,
+          "outcomeType": "clarification_required",
+          "optionCount": 3,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:find_moderate_probability_bets",
+          "decisionReasonCode": "contract_scope_ambiguity",
+          "decisionSignals": [
+            "partial_clause_coverage",
+            "deterministic_named_target_resolution_required"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 1,
+          "repairSucceeded": false,
+          "compiledFirstTry": true,
+          "issue": null,
+          "executionMode": "codegen"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 0,
+          "toolStepCount": null,
+          "iterativeExecution": false,
+          "executionMs": null,
+          "synthesisMs": null,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Tool selection did not reliably convert the prompt into the right grounded tool path."
+        },
+        "synthesis": {
+          "score": 2,
+          "responseLength": 825,
+          "differentiation": "low_differentiation",
+          "hasGroundingArtifact": false,
+          "confidenceLevel": null,
+          "gapCount": null,
+          "stageArtifactKinds": [],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": null,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 4485,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 0,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": false,
+          "repairEffort": 1
+        },
+        "synthesisBudget": {
+          "score": 2,
+          "verifiedFactCount": null,
+          "inferredFactCount": null,
+          "gapCount": 0,
+          "viewType": null,
+          "rowCount": 0
+        }
+      },
+      "bottleneckDimension": "toolSelection",
+      "bottleneckScore": 1,
+      "bottleneckDetail": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q2",
+        "bottleneckStage": "selection",
+        "bottleneckReason": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": false,
+        "toolSelectionIssue": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Tool selection did not reliably convert the prompt into the right grounded tool path.",
+        "suggestedFix": "Runtime: require grounded tool calls or strengthen shortlist validation so answerable prompts cannot finish tool-free.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "clarification_required",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": null,
+          "executionDurationMs": null,
+          "executionDurationShare": null,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 0,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability",
+            "dataFreshness",
+            "specificity",
+            "uniqueness",
+            "completeness",
+            "dataAccuracy"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "I found multiple grounded interpretations for this request. Which one should I use?\n\n1. View the full Polymarket Intelligence market [recommended]\n   Polymarket Intelligence.find_moderate_probability_bets - 🎯 BEST TOOL for 'likely bets', 'safer bets', or 'bets that will probably win'. Finds prediction marke…\n2. Inspect one specific Polymarket Intelligence market\n   Polymarket Intelligence.analyze_market_liquidity - Analyze market liquidity and calculate \"Whale Cost\" for ONE specific outcome tok",
+        "coverageStatus": "answerable",
+        "differentiation": "low_differentiation",
+        "hasGroundingArtifact": false,
+        "hasFreshnessEvidence": false
+      }
+    },
+    {
+      "id": "q3",
+      "query": "Within the '2026 FIFA World Cup Winner ' event, compare Spain, France, and England on current implied probability, current spread, and one-week price change.",
+      "alphaCategory": "Event Structure And Relative Value",
+      "category": "event-level relative value",
+      "outcomeType": "answer",
+      "toolCalls": 1,
+      "toolNames": [
+        "Polymarket Intelligence"
+      ],
+      "latencyMs": 35759,
+      "finalScore": 4.5,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 3,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 9,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 3,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:analyze_event_whale_breakdown",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_intent_description_match"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 2,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 2,
+          "toolStepCount": 2,
+          "iterativeExecution": true,
+          "executionMs": 22479,
+          "synthesisMs": 7055,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 660,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 6144,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 35759,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 1,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q3",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 100% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": 35759,
+          "executionDurationMs": 35608,
+          "executionDurationShare": 0.9958,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "As of April 19, 2026, here is the comparison for Spain, France, and England in the **2026 FIFA World Cup Winner** event based on recent market data. Spain and France are currently tied for the highest implied probability among these three.\n\n| Outcome | Implied Probability | Current Spread | 1-Week Price Change |\n| :--- | :--- | :--- | :--- |\n| **Spain** | 16.0% | 0.10¢ (0.63%) | 0.00% |\n| **France** | 16.0% | 0.10¢ (0.63%) | 0.00% |\n| **England** | 10.9% | 0.10¢ (0.91%) | 0.00% |\n\nAll three team",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q4",
+      "query": "Within the '2026 FIFA World Cup Winner ' event, which sampled outcomes currently look most tradable and which look headline-only among Spain, France, England, Switzerland, and South Korea?",
+      "alphaCategory": "Event Structure And Relative Value",
+      "category": "event tradability ranking",
+      "outcomeType": "answer",
+      "toolCalls": 3,
+      "toolNames": [
+        "Polymarket Intelligence"
+      ],
+      "latencyMs": 59651,
+      "finalScore": 4.83,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 5,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:analyze_event_whale_breakdown",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_intent_description_match"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 4,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 1,
+          "loopCount": 4,
+          "toolStepCount": 4,
+          "iterativeExecution": true,
+          "executionMs": 43111,
+          "synthesisMs": 7717,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 1688,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 38626,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 3,
+          "durationMs": 59651,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 3,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q4",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 159% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": 59651,
+          "executionDurationMs": 94745,
+          "executionDurationShare": 1.5883,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "Based on data fetched on Sunday, April 19, 2026, for the **2026 FIFA World Cup Winner** event, the outcomes for **Spain**, **France**, and **England** are the most tradable due to tight relative spreads and active liquidity. **Switzerland** and **South Korea** are classified as headline-only because their low prices result in extreme relative costs for execution.\n\n| Outcome | Implied Probability | Bid | Ask | Spread (Abs.) | Spread (%) | Volume | Verdict |\n| :--- | :--- | :--- | :--- | :--- | :-",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q5",
+      "query": "Within the '2026 FIFA World Cup Winner ' event, which sampled outcome has the strongest whale backing right now among Spain, France, England, Switzerland, New Zealand, and South Korea?",
+      "alphaCategory": "Whale Positioning",
+      "category": "event whale analysis",
+      "outcomeType": "answer",
+      "toolCalls": 3,
+      "toolNames": [
+        "Polymarket Intelligence"
+      ],
+      "latencyMs": 70965,
+      "finalScore": 4.33,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 2,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:analyze_event_whale_breakdown",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_intent_description_match"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 4,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 4,
+          "toolStepCount": 4,
+          "iterativeExecution": true,
+          "executionMs": 48740,
+          "synthesisMs": 11099,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 4,
+          "responseLength": 1649,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 44092,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 70965,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 3,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q5",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 202% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": 70965,
+          "executionDurationMs": 143092,
+          "executionDurationShare": 2.0164,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "Based on the current data for the **2026 FIFA World Cup Winner** event, a direct per-outcome whale holder breakdown is not available for the specific teams you requested. The whale analysis tools instead provided a detailed snapshot for a different outcome (Curaçao), creating a gap in the available metrics for Spain, France, England, Switzerland, New Zealand, and South Korea.\n\nHowever, based on the general market data as of April 19, 2026, here is how the requested outcomes compare in terms of p",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q6",
+      "query": "Within the 'Iran x Israel/US conflict ends by...?' event, which date buckets are taking the biggest share of live trading right now, especially 'Iran x Israel/US conflict ends by April 15?' versus 'Iran x Israel/US conflict ends by April 30?' and 'Iran x Israel/US conflict ends by June 30?'",
+      "alphaCategory": "Discovery And Screening",
+      "category": "event flow screening",
+      "outcomeType": "answer",
+      "toolCalls": 2,
+      "toolNames": [
+        "Polymarket Intelligence"
+      ],
+      "latencyMs": 72496,
+      "finalScore": 4.33,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 2,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:get_event_live_volume",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_composite_intent_match"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 12,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 1,
+          "loopCount": 12,
+          "toolStepCount": 12,
+          "iterativeExecution": true,
+          "executionMs": 58298,
+          "synthesisMs": 8222,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 4,
+          "responseLength": 1537,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 7925,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 3,
+          "durationMs": 72496,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 2,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q6",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 562% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": 72496,
+          "executionDurationMs": 407544,
+          "executionDurationShare": 5.6216,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "As of April 19, 2026, the market for \"Iran x Israel/US conflict ends by April 7?\" holds the largest share of live trading volume within the event. Regarding the specific dates you requested, the **April 15** bucket is significantly more active than the **April 30** and **June 30** buckets.\n\nThe following table provides the breakdown of live trading volume and share for each date bucket:\n\n| Market Title | Live Trading Volume | Share of Event Total |\n| :--- | :--- | :--- |\n| Iran x Israel/US confl",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q7",
+      "query": "For the 'Iran x Israel/US conflict ends by April 15?' market, what are the current best bid, best ask, midpoint, spread, and vig-adjusted implied probabilities?",
+      "alphaCategory": "Quote Quality And Liquidity",
+      "category": "single-market efficiency",
+      "outcomeType": "answer",
+      "toolCalls": 1,
+      "toolNames": [
+        "Polymarket Intelligence"
+      ],
+      "latencyMs": 74708,
+      "finalScore": 4.5,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 3,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "one_shot",
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "one_shot",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 8,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 3,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:check_market_efficiency",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "exact_quote_snapshot_overlap"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 2,
+          "completedStepCount": 2,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 5,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 2,
+          "toolStepCount": 2,
+          "iterativeExecution": true,
+          "executionMs": 57212,
+          "synthesisMs": 11318,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 664,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": "Grounded data existed, but the final answer still lagged on actionability."
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 3160,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 74708,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 1,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "toolSelection",
+      "bottleneckScore": 5,
+      "bottleneckDetail": "Grounded data existed, but the final answer still lagged on actionability.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q7",
+        "bottleneckStage": "synthesis",
+        "bottleneckReason": "Grounded data existed, but the final answer still lagged on actionability.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness.",
+        "suggestedFix": "Planner: validate or simplify the generated program so grounded data is surfaced directly into the final answer.",
+        "fixScope": "planner",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": 74708,
+          "executionDurationMs": 20257,
+          "executionDurationShare": 0.2711,
+          "selectedPolicy": "one_shot",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "As of April 19, 2026, at 05:30 UTC, the following data was retrieved from a past query regarding the market \"Iran x Israel/US conflict ends by April 15?\":\n\n| Metric | YES Outcome | NO Outcome |\n| :--- | :--- | :--- |\n| **Price** | 0.769 | 0.231 |\n| **Vig-Adjusted Implied Probability** | 76.9% | 23.1% |\n\n| Market Statistic | Value |\n| :--- | :--- |\n| **Bid-Ask Spread** | 0.012 (1.2 cents) |\n| **Midpoint** | 0.769 |\n| **Vig (Sum of Outcomes)** | 0% (0 bps) |\n\nThis data is based on a partial execut",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q8",
+      "query": "For the 'Will the Iranian regime fall by April 30?' market, what exactly makes the contract resolve YES or NO, and what are the main resolution gotchas?",
+      "alphaCategory": "Rules And Resolution Risk",
+      "category": "rules-risk",
+      "outcomeType": "clarification_required",
+      "toolCalls": 0,
+      "toolNames": [],
+      "latencyMs": 6377,
+      "finalScore": 1.5,
+      "buyerScores": {
+        "freshness": 2,
+        "specificity": 1,
+        "actionability": 2,
+        "completeness": 2,
+        "dataAccuracy": 1,
+        "uniqueness": 1
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 1,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": "The trace ended with zero grounded tool calls even though the prompt was answerable."
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 7,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": true,
+          "outcomeType": "clarification_required",
+          "optionCount": 3,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:check_market_rules",
+          "decisionReasonCode": "contract_scope_ambiguity",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 1,
+          "repairSucceeded": false,
+          "compiledFirstTry": true,
+          "issue": null,
+          "executionMode": "codegen"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 0,
+          "toolStepCount": null,
+          "iterativeExecution": false,
+          "executionMs": null,
+          "synthesisMs": null,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Tool selection did not reliably convert the prompt into the right grounded tool path."
+        },
+        "synthesis": {
+          "score": 2,
+          "responseLength": 836,
+          "differentiation": "low_differentiation",
+          "hasGroundingArtifact": false,
+          "confidenceLevel": null,
+          "gapCount": null,
+          "stageArtifactKinds": [],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": null,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 6377,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 0,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": false,
+          "repairEffort": 1
+        },
+        "synthesisBudget": {
+          "score": 2,
+          "verifiedFactCount": null,
+          "inferredFactCount": null,
+          "gapCount": 0,
+          "viewType": null,
+          "rowCount": 0
+        }
+      },
+      "bottleneckDimension": "toolSelection",
+      "bottleneckScore": 1,
+      "bottleneckDetail": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q8",
+        "bottleneckStage": "selection",
+        "bottleneckReason": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": false,
+        "toolSelectionIssue": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Tool selection did not reliably convert the prompt into the right grounded tool path.",
+        "suggestedFix": "Runtime: require grounded tool calls or strengthen shortlist validation so answerable prompts cannot finish tool-free.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "clarification_required",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": null,
+          "executionDurationMs": null,
+          "executionDurationShare": null,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 0,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability",
+            "dataFreshness",
+            "specificity",
+            "uniqueness",
+            "completeness",
+            "dataAccuracy"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "I found multiple grounded interpretations for this request. Which one should I use?\n\n1. Inspect one specific Polymarket Intelligence market [recommended]\n   Polymarket Intelligence.check_market_rules - Parse market resolution rules and highlight potential \"gotchas\". Extracts the description, resolution source, and…\n2. Inspect one specific Polymarket Intelligence market\n   Polymarket Intelligence.analyze_market_liquidity - Analyze market liquidity and calculate \"Whale Cost\" for ONE specific outco",
+        "coverageStatus": "answerable",
+        "differentiation": "low_differentiation",
+        "hasGroundingArtifact": false,
+        "hasFreshnessEvidence": false
+      }
+    },
+    {
+      "id": "q9",
+      "query": "For the 'Will the next Prime Minister of Hungary be Viktor Orbán?' market, are top holders and recent trade flow aligned on YES or NO, or is there whale-versus-retail divergence?",
+      "alphaCategory": "Whale Positioning",
+      "category": "single-market whale analysis",
+      "outcomeType": "clarification_required",
+      "toolCalls": 0,
+      "toolNames": [],
+      "latencyMs": 4476,
+      "finalScore": 1.5,
+      "buyerScores": {
+        "freshness": 2,
+        "specificity": 1,
+        "actionability": 2,
+        "completeness": 2,
+        "dataAccuracy": 1,
+        "uniqueness": 1
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 1,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": "The trace ended with zero grounded tool calls even though the prompt was answerable."
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": true,
+          "outcomeType": "clarification_required",
+          "optionCount": 3,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:analyze_whale_flow",
+          "decisionReasonCode": "contract_scope_ambiguity",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 1,
+          "repairSucceeded": false,
+          "compiledFirstTry": true,
+          "issue": null,
+          "executionMode": "codegen"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 0,
+          "toolStepCount": null,
+          "iterativeExecution": false,
+          "executionMs": null,
+          "synthesisMs": null,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Tool selection did not reliably convert the prompt into the right grounded tool path."
+        },
+        "synthesis": {
+          "score": 2,
+          "responseLength": 835,
+          "differentiation": "low_differentiation",
+          "hasGroundingArtifact": false,
+          "confidenceLevel": null,
+          "gapCount": null,
+          "stageArtifactKinds": [],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": null,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 4476,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 0,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": false,
+          "repairEffort": 1
+        },
+        "synthesisBudget": {
+          "score": 2,
+          "verifiedFactCount": null,
+          "inferredFactCount": null,
+          "gapCount": 0,
+          "viewType": null,
+          "rowCount": 0
+        }
+      },
+      "bottleneckDimension": "toolSelection",
+      "bottleneckScore": 1,
+      "bottleneckDetail": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q9",
+        "bottleneckStage": "selection",
+        "bottleneckReason": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": false,
+        "toolSelectionIssue": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Tool selection did not reliably convert the prompt into the right grounded tool path.",
+        "suggestedFix": "Runtime: require grounded tool calls or strengthen shortlist validation so answerable prompts cannot finish tool-free.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "clarification_required",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": null,
+          "executionDurationMs": null,
+          "executionDurationShare": null,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 0,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability",
+            "dataFreshness",
+            "specificity",
+            "uniqueness",
+            "completeness",
+            "dataAccuracy"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "I found multiple grounded interpretations for this request. Which one should I use?\n\n1. Inspect one specific Polymarket Intelligence market [recommended]\n   Polymarket Intelligence.analyze_whale_flow - Track recent trading activity by analyzing trade sizes. Buckets trades into Small (<$50), Medium ($50-$500), and W…\n2. Inspect one specific Polymarket Intelligence market\n   Polymarket Intelligence.analyze_top_holders - 🐋 WHALE POSITIONS: Find who holds the largest positions and WHAT SIDE (YES/NO",
+        "coverageStatus": "answerable",
+        "differentiation": "low_differentiation",
+        "hasGroundingArtifact": false,
+        "hasFreshnessEvidence": false
+      }
+    },
+    {
+      "id": "q10",
+      "query": "For the 'Will the next Prime Minister of Hungary be Péter Magyar?' market, how concentrated is the holder base and how much of each side is controlled by the top whales?",
+      "alphaCategory": "Whale Positioning",
+      "category": "holder concentration",
+      "outcomeType": "clarification_required",
+      "toolCalls": 0,
+      "toolNames": [],
+      "latencyMs": 4435,
+      "finalScore": 1.5,
+      "buyerScores": {
+        "freshness": 2,
+        "specificity": 1,
+        "actionability": 2,
+        "completeness": 2,
+        "dataAccuracy": 1,
+        "uniqueness": 1
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 1,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": "The trace ended with zero grounded tool calls even though the prompt was answerable."
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": true,
+          "outcomeType": "clarification_required",
+          "optionCount": 3,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:get_top_holders",
+          "decisionReasonCode": "contract_scope_ambiguity",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 1,
+          "repairSucceeded": false,
+          "compiledFirstTry": true,
+          "issue": null,
+          "executionMode": "codegen"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 0,
+          "toolStepCount": null,
+          "iterativeExecution": false,
+          "executionMs": null,
+          "synthesisMs": null,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Tool selection did not reliably convert the prompt into the right grounded tool path."
+        },
+        "synthesis": {
+          "score": 2,
+          "responseLength": 835,
+          "differentiation": "low_differentiation",
+          "hasGroundingArtifact": false,
+          "confidenceLevel": null,
+          "gapCount": null,
+          "stageArtifactKinds": [],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": null,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 4435,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 0,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": false,
+          "repairEffort": 1
+        },
+        "synthesisBudget": {
+          "score": 2,
+          "verifiedFactCount": null,
+          "inferredFactCount": null,
+          "gapCount": 0,
+          "viewType": null,
+          "rowCount": 0
+        }
+      },
+      "bottleneckDimension": "toolSelection",
+      "bottleneckScore": 1,
+      "bottleneckDetail": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q10",
+        "bottleneckStage": "selection",
+        "bottleneckReason": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": false,
+        "toolSelectionIssue": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Tool selection did not reliably convert the prompt into the right grounded tool path.",
+        "suggestedFix": "Runtime: require grounded tool calls or strengthen shortlist validation so answerable prompts cannot finish tool-free.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "clarification_required",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": null,
+          "executionDurationMs": null,
+          "executionDurationShare": null,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 0,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability",
+            "dataFreshness",
+            "specificity",
+            "uniqueness",
+            "completeness",
+            "dataAccuracy"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "I found multiple grounded interpretations for this request. Which one should I use?\n\n1. Inspect one specific Polymarket Intelligence market [recommended]\n   Polymarket Intelligence.get_top_holders - Get the top holders (biggest positions) for a specific market. Shows who the whales are, their position sizes, and im…\n2. Inspect one specific Polymarket Intelligence market\n   Polymarket Intelligence.analyze_top_holders - 🐋 WHALE POSITIONS: Find who holds the largest positions and WHAT SIDE (YES/NO",
+        "coverageStatus": "answerable",
+        "differentiation": "low_differentiation",
+        "hasGroundingArtifact": false,
+        "hasFreshnessEvidence": false
+      }
+    },
+    {
+      "id": "q11",
+      "query": "Inside the 'The Masters - Winner ' event, compare Xander Schauffele, Cameron Young, and Akshay Bhatia on current price, spread, and which one is easiest to exit size in.",
+      "alphaCategory": "Quote Quality And Liquidity",
+      "category": "event liquidity comparison",
+      "outcomeType": "answer",
+      "toolCalls": 5,
+      "toolNames": [
+        "Polymarket Intelligence"
+      ],
+      "latencyMs": 97283,
+      "finalScore": 4.5,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 3,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:compare_event_outcome_quotes",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_composite_intent_match"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 7,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 1,
+          "loopCount": 7,
+          "toolStepCount": 7,
+          "iterativeExecution": true,
+          "executionMs": 81227,
+          "synthesisMs": 7592,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 921,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "medium",
+          "gapCount": 1,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 2,
+          "canonicalBytes": 40516,
+          "gapCount": 1,
+          "gapSignals": [
+            "context_truncated"
+          ],
+          "truncated": true
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 3,
+          "durationMs": 97283,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 5,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 3,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 1,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q11",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 326% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": 97283,
+          "executionDurationMs": 316828,
+          "executionDurationShare": 3.2568,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "The exact event \"The Masters - Winner\" was not found; however, these players are currently trading in the **PGA Tour: RBC Heritage Winner** market. As of April 19, 2026, the comparison is as follows:\n\n| Player | Current Price (Mid) | Spread (Cents) | Spread (%) | Volume |\n| :--- | :--- | :--- | :--- | :--- |\n| **Xander Schauffele** | $0.020 (2.0%) | 0.00¢ | 0.00% | $37,235.52 |\n| **Cameron Young** | $0.001 (0.1%) | 0.00¢ | 0.00% | $11,506.12 |\n| **Akshay Bhatia** | $0.031 (3.1%) | 6.00¢ | 193.55",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q12",
+      "query": "For the 'Will Paris Saint-Germain FC win on 2026-04-08?' market, what are the live trading parameters on the token, including tick size, fee rate, minimum order size, and whether negative risk is enabled?",
+      "alphaCategory": "Trading Parameters",
+      "category": "market parameters",
+      "outcomeType": "clarification_required",
+      "toolCalls": 0,
+      "toolNames": [],
+      "latencyMs": 4442,
+      "finalScore": 1.5,
+      "buyerScores": {
+        "freshness": 2,
+        "specificity": 1,
+        "actionability": 2,
+        "completeness": 2,
+        "dataAccuracy": 1,
+        "uniqueness": 1
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 1,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": "The trace ended with zero grounded tool calls even though the prompt was answerable."
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 7,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": true,
+          "outcomeType": "clarification_required",
+          "optionCount": 3,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:get_market_parameters",
+          "decisionReasonCode": "contract_scope_ambiguity",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 1,
+          "repairSucceeded": false,
+          "compiledFirstTry": true,
+          "issue": null,
+          "executionMode": "codegen"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 0,
+          "toolStepCount": null,
+          "iterativeExecution": false,
+          "executionMs": null,
+          "synthesisMs": null,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Tool selection did not reliably convert the prompt into the right grounded tool path."
+        },
+        "synthesis": {
+          "score": 2,
+          "responseLength": 829,
+          "differentiation": "low_differentiation",
+          "hasGroundingArtifact": false,
+          "confidenceLevel": null,
+          "gapCount": null,
+          "stageArtifactKinds": [],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": null,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 4442,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 0,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": false,
+          "repairEffort": 1
+        },
+        "synthesisBudget": {
+          "score": 2,
+          "verifiedFactCount": null,
+          "inferredFactCount": null,
+          "gapCount": 0,
+          "viewType": null,
+          "rowCount": 0
+        }
+      },
+      "bottleneckDimension": "toolSelection",
+      "bottleneckScore": 1,
+      "bottleneckDetail": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q12",
+        "bottleneckStage": "selection",
+        "bottleneckReason": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": false,
+        "toolSelectionIssue": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Tool selection did not reliably convert the prompt into the right grounded tool path.",
+        "suggestedFix": "Runtime: require grounded tool calls or strengthen shortlist validation so answerable prompts cannot finish tool-free.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "clarification_required",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": null,
+          "executionDurationMs": null,
+          "executionDurationShare": null,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 0,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability",
+            "dataFreshness",
+            "specificity",
+            "uniqueness",
+            "completeness",
+            "dataAccuracy"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "I found multiple grounded interpretations for this request. Which one should I use?\n\n1. Inspect one specific Polymarket Intelligence market [recommended]\n   Polymarket Intelligence.get_market_parameters - Get trading parameters for a market: tick size, fee rate, and negative risk setting. - tick_size: Minimum price…\n2. View the full Polymarket Intelligence market\n   Polymarket Intelligence.summarize_live_market_activity - Select a live market and return recent trades plus current open interest i",
+        "coverageStatus": "answerable",
+        "differentiation": "low_differentiation",
+        "hasGroundingArtifact": false,
+        "hasFreshnessEvidence": false
+      }
+    },
+    {
+      "id": "q13",
+      "query": "For the 'Will Stephen A. Smith win the 2028 Democratic presidential nomination?' market, does the contract look rich or cheap relative to Gretchen Whitmer and Oprah Winfrey in the same 'Democratic Presidential Nominee 2028' event right now?",
+      "alphaCategory": "Event Structure And Relative Value",
+      "category": "relative value",
+      "outcomeType": "answer",
+      "toolCalls": 1,
+      "toolNames": [
+        "Polymarket Intelligence"
+      ],
+      "latencyMs": 42392,
+      "finalScore": 4.5,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 3,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 3,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 3,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:compare_market_against_related_contracts",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "non_material_viable_options"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 2,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 2,
+          "toolStepCount": 2,
+          "iterativeExecution": true,
+          "executionMs": 31228,
+          "synthesisMs": 5597,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 1290,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 4393,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 42392,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 1,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q13",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 131% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": 42392,
+          "executionDurationMs": 55397,
+          "executionDurationShare": 1.3068,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "As of April 19, 2026, the contract for Stephen A. Smith winning the 2028 Democratic presidential nomination is considered **roughly fair** relative to other outcomes in the same event. It does not show an obvious relative-value dislocation.\n\nWhile Stephen A. Smith is trading at a slightly higher price (1.05%) than Oprah Winfrey (0.85%), he remains within a standard range for celebrity/outsider candidates in this market.\n\n### Price Comparison: Democratic Presidential Nominee 2028\n| Candidate | Cu",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q14",
+      "query": "For the 'Will there be no change in Fed interest rates after the April 2026 meeting?' market, what do recent trades, current open interest, and the open-interest-to-volume ratio say about whether positioning looks sticky or just churn?",
+      "alphaCategory": "Tape And Open Interest",
+      "category": "tape and open interest",
+      "outcomeType": "answer",
+      "toolCalls": 1,
+      "toolNames": [
+        "Polymarket Intelligence"
+      ],
+      "latencyMs": 42267,
+      "finalScore": 4.83,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 5,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:summarize_live_market_activity",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 3,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 3,
+          "toolStepCount": 3,
+          "iterativeExecution": true,
+          "executionMs": 28817,
+          "synthesisMs": 7265,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 1885,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 11800,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 42267,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 1,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q14",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 135% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": 42267,
+          "executionDurationMs": 57074,
+          "executionDurationShare": 1.3503,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "As of April 19, 2026, the market for \"no change\" in Fed interest rates after the April meeting shows signs of **sticky, established positioning** dominated by long-term holders, though recent activity reflects some profit-taking and churn.\n\nThe high Open Interest relative to daily and sampled volume suggests that the vast majority of capital is parked in existing positions rather than moving rapidly in and out of the market.\n\n### Market Activity Summary\n| Metric | Value |\n| :--- | :--- |\n| **Ope",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q15",
+      "query": "Build a buy, speculative buy, pass, or avoid memo for the 'Will the U.S. invade Iran before 2027?' market that combines rules risk, quote quality, whale positioning, and recent tape.",
+      "alphaCategory": "Workflow Synthesis",
+      "category": "workflow synthesis",
+      "outcomeType": "answer",
+      "toolCalls": 1,
+      "toolNames": [
+        "Polymarket Intelligence"
+      ],
+      "latencyMs": 30456,
+      "finalScore": 4.83,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 5,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 7,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 2,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:build_market_tradability_memo",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_intent_description_match"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 2,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 2,
+          "toolStepCount": 2,
+          "iterativeExecution": true,
+          "executionMs": 19805,
+          "synthesisMs": 4487,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 1288,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 2239,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 30456,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 1,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q15",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 110% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": 30456,
+          "executionDurationMs": 33645,
+          "executionDurationShare": 1.1047,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "Based on data from a past query (fetched April 19, 2026), here is the investment memo for the market regarding a U.S. invasion of Iran before 2027.\n\n### **Market Memo: Will the U.S. invade Iran before 2027?**\n\n**Recommendation: PASS**\n\n| Category | Assessment | Details |\n| :--- | :--- | :--- |\n| **Current Price** | 0.325 | Represents a ~32.5% implied probability. |\n| **Rules Risk** | Low | Market definitions and resolution criteria are clear. |\n| **Quote Quality** | Strong | Excellent liquidity ",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q16",
+      "query": "Within the 'Iran x Israel/US conflict ends by...?' event, which currently live bucket offers the best mix of clean rules, tradable quotes, and whale support among 'Iran x Israel/US conflict ends by April 15?', 'Iran x Israel/US conflict ends by April 30?', and 'Iran x Israel/US conflict ends by June 30?'",
+      "alphaCategory": "Workflow Synthesis",
+      "category": "event workflow synthesis",
+      "outcomeType": "answer",
+      "toolCalls": 3,
+      "toolNames": [
+        "Polymarket Intelligence"
+      ],
+      "latencyMs": 76070,
+      "finalScore": 4.83,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 5,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:rank_event_tradability",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_composite_intent_match"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 4,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 4,
+          "toolStepCount": 4,
+          "iterativeExecution": true,
+          "executionMs": 59798,
+          "synthesisMs": 6942,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 1216,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "medium",
+          "gapCount": 1,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 2,
+          "canonicalBytes": 24875,
+          "gapCount": 1,
+          "gapSignals": [
+            "context_truncated"
+          ],
+          "truncated": true
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 76070,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 3,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 3,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 1,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q16",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 261% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": 76070,
+          "executionDurationMs": 198821,
+          "executionDurationShare": 2.6137,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "Based on the market analysis as of April 19, 2026, the **April 15?** bucket offers the best overall mix of tradability, quote quality, and whale support within the \"Iran x Israel/US conflict ends by...?\" event.\n\nHere is the complete returned collection for fullLiveSearchResults (9 items).\n\n| Title | End Date | Liquidity | Outcome Price |\n| :--- | :--- | :--- | :--- |\n| Iran x Israel/US conflict ends by...? | 2026-03-31T00:00:00Z | 457620.6778 | 0.7670 |\n| Israel military action against Iran by..",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q17",
+      "query": "Within the 'US x Iran ceasefire by...?' event, which future buckets are still live after the expired dates, and among the live buckets which one currently has the highest quoted probability and the most volume?",
+      "alphaCategory": "Discovery And Screening",
+      "category": "discovery screening",
+      "outcomeType": "clarification_required",
+      "toolCalls": 0,
+      "toolNames": [],
+      "latencyMs": 4412,
+      "finalScore": 1.5,
+      "buyerScores": {
+        "freshness": 2,
+        "specificity": 1,
+        "actionability": 2,
+        "completeness": 2,
+        "dataAccuracy": 1,
+        "uniqueness": 1
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 1,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": "The trace ended with zero grounded tool calls even though the prompt was answerable."
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": true,
+          "outcomeType": "clarification_required",
+          "optionCount": 3,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:rank_event_tradability",
+          "decisionReasonCode": "contract_scope_ambiguity",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 1,
+          "repairSucceeded": false,
+          "compiledFirstTry": true,
+          "issue": null,
+          "executionMode": "codegen"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 0,
+          "toolStepCount": null,
+          "iterativeExecution": false,
+          "executionMs": null,
+          "synthesisMs": null,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Tool selection did not reliably convert the prompt into the right grounded tool path."
+        },
+        "synthesis": {
+          "score": 2,
+          "responseLength": 822,
+          "differentiation": "low_differentiation",
+          "hasGroundingArtifact": false,
+          "confidenceLevel": null,
+          "gapCount": null,
+          "stageArtifactKinds": [],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": null,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 4412,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 0,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": false,
+          "repairEffort": 1
+        },
+        "synthesisBudget": {
+          "score": 2,
+          "verifiedFactCount": null,
+          "inferredFactCount": null,
+          "gapCount": 0,
+          "viewType": null,
+          "rowCount": 0
+        }
+      },
+      "bottleneckDimension": "toolSelection",
+      "bottleneckScore": 1,
+      "bottleneckDetail": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q17",
+        "bottleneckStage": "selection",
+        "bottleneckReason": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": false,
+        "toolSelectionIssue": "The trace ended with zero grounded tool calls even though the prompt was answerable.",
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Tool selection did not reliably convert the prompt into the right grounded tool path.",
+        "suggestedFix": "Runtime: require grounded tool calls or strengthen shortlist validation so answerable prompts cannot finish tool-free.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "clarification_required",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": null,
+          "executionDurationMs": null,
+          "executionDurationShare": null,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 0,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability",
+            "dataFreshness",
+            "specificity",
+            "uniqueness",
+            "completeness",
+            "dataAccuracy"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "I found multiple grounded interpretations for this request. Which one should I use?\n\n1. Get Polymarket Intelligence outcomes and prices [recommended]\n   Polymarket Intelligence.rank_event_tradability - Rank outcomes inside the SAME multi-outcome event by actionable tradability using live spread, depth, slippage…\n2. Get Polymarket Intelligence outcomes and prices\n   Polymarket Intelligence.get_event_outcomes - 📊 Get ALL outcomes in a multi-outcome event with their individual volumes. ⚠️ PREFER s",
+        "coverageStatus": "answerable",
+        "differentiation": "low_differentiation",
+        "hasGroundingArtifact": false,
+        "hasFreshnessEvidence": false
+      }
+    },
+    {
+      "id": "q18",
+      "query": "Inside the 'Thunder vs. Clippers' event, which submarkets are actually attracting live trading right now: the main 'Thunder vs. Clippers' moneyline, 'Thunder vs. Clippers: O/U 227.5', or props like 'Kris Dunn: Points O/U 5.5'?",
+      "alphaCategory": "Discovery And Screening",
+      "category": "submarket flow screening",
+      "outcomeType": "answer",
+      "toolCalls": 5,
+      "toolNames": [
+        "Polymarket Intelligence"
+      ],
+      "latencyMs": 167524,
+      "finalScore": 1.67,
+      "buyerScores": {
+        "freshness": 1,
+        "specificity": 5,
+        "actionability": 1,
+        "completeness": 1,
+        "dataAccuracy": 1,
+        "uniqueness": 1
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodCount": 48,
+          "scoutConfidence": 0.9908,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9908,
+          "candidateMethodCount": 48,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "294100e8-c648-4e5f-a254-95a14b56e398:get_event_live_volume",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_composite_intent_match"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 8,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 1,
+          "loopCount": 8,
+          "toolStepCount": 8,
+          "iterativeExecution": true,
+          "executionMs": 150823,
+          "synthesisMs": 10082,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 1,
+          "responseLength": 1452,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 37699,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 3,
+          "durationMs": 167524,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 5,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 2,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "synthesis",
+      "bottleneckScore": 1,
+      "bottleneckDetail": "Execution consumed 343% of the measured query time.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q18",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 343% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedToolNames": [
+            "Polymarket Intelligence"
+          ],
+          "selectedMethodNames": [
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "analyze_whale_flow",
+            "analyze_top_holders",
+            "analyze_event_whale_breakdown",
+            "analyze_event_outcome_liquidity",
+            "rank_event_tradability",
+            "compare_market_against_related_contracts",
+            "build_market_tradability_memo",
+            "find_correlated_markets",
+            "polymarket_crossref_kalshi",
+            "check_market_rules"
+          ],
+          "selectedMethodCount": 48,
+          "totalDurationMs": 167524,
+          "executionDurationMs": 574329,
+          "executionDurationShare": 3.4283,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability",
+            "dataFreshness",
+            "uniqueness",
+            "completeness",
+            "dataAccuracy"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "Direct MCP checks returned live structured data for the intended answer path.",
+        "responsePreview": "Based on current live market data, I could not verify a \"Thunder vs. Clippers\" event or the specific submarkets you mentioned (Moneyline, O/U 227.5, or Kris Dunn player props). \n\nInstead, the primary active game-level market involving the Thunder is a matchup against the Phoenix Suns. As of April 19, 2026, the following Thunder-related markets are attracting significant activity:\n\n| Market Title | Matched Outcome | Volume | Liquidity | Price |\n| :--- | :--- | :--- | :--- | :--- |\n| Suns vs. Thun",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    }
+  ],
+  "inputPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results.latest.json"
+}

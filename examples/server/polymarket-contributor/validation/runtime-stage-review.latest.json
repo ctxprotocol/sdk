@@ -1,186 +1,134 @@
 {
-  "reviewedAt": "2026-04-12T00:00:00Z",
-  "reviewVersion": "runtime-stage-reviewer.v1",
+  "generatedAt": "2026-04-19T04:45:00.000Z",
+  "reviewer": "runtime-stage-reviewer (readonly subagent; artifact persisted by orchestrator)",
+  "focusContributor": "polymarket-contributor",
   "traceCount": 18,
-  "summary": {
-    "weakestDimension": "scoutDepth",
-    "weakestScore": 3.5
+  "inputPaths": {
+    "rawTraces": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results.latest.json",
+    "analyzer": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/runtime-stage-audit.latest.json",
+    "calibrationBaseline": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json"
   },
   "dimensionScores": {
-    "toolSelection": 4.44,
-    "scoutDepth": 3.5,
-    "clarification": 5.0,
-    "planning": 3.83,
-    "execution": 3.89,
-    "synthesis": 4.06,
-    "contextBudget": 4.5,
-    "reasoningDepth": 4.33,
-    "mcpTransport": 3.89,
-    "codeSafety": 4.22,
-    "synthesisBudget": 4.67
+    "toolSelection": 3.67,
+    "scoutDepth": 5,
+    "clarification": 3.9,
+    "planning": 5,
+    "execution": 3.33,
+    "synthesis": 3.78,
+    "contextBudget": 4.17,
+    "reasoningDepth": 5,
+    "mcpTransport": 4.78,
+    "codeSafety": 5,
+    "synthesisBudget": 3.44
   },
-  "optimizationReadiness": {
-    "toolSelection": {
-      "status": "monitor",
-      "reason": "Mostly strong, with only two clear misses."
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 3.67,
+      "scoutDepth": 5,
+      "clarification": 3.9,
+      "planning": 5,
+      "execution": 3.33,
+      "synthesis": 3.78
     },
-    "scoutDepth": {
+    "crossCuttingMeans": {
+      "contextBudget": 4.17,
+      "reasoningDepth": 5,
+      "mcpTransport": 4.78,
+      "codeSafety": 5,
+      "synthesisBudget": 3.44
+    },
+    "weakestDimension": "execution",
+    "weakestScore": 3.33,
+    "optimizationReadiness": {
+      "dimension": "toolSelection",
       "status": "ready",
-      "reason": "Recurring low-delta discovery pattern across a large fraction of traces."
-    },
-    "clarification": {
-      "status": "calibrate",
-      "reason": "This stage rarely activates; current mean mostly reflects non-applicability rather than proven excellence under ambiguity."
-    },
-    "planning": {
-      "status": "ready",
-      "reason": "Named-target resolution and clause-coverage defects recur with explicit validator evidence."
-    },
-    "execution": {
-      "status": "noisy",
-      "reason": "Execution weakness exists, but it mixes clean successes, incomplete repair loops, and one blocked run."
-    },
-    "synthesis": {
-      "status": "monitor",
-      "reason": "Synthesis is somewhat dragged down by shallow discovery, but it is not the main upstream bottleneck."
-    },
-    "contextBudget": {
-      "status": "monitor",
-      "reason": "Mostly strong, with one expensive memo-style outlier."
-    },
-    "reasoningDepth": {
-      "status": "monitor",
-      "reason": "Reasoning is generally adequate; its lower scores mostly follow upstream targeting failures."
-    },
-    "mcpTransport": {
-      "status": "blocked",
-      "reason": "One hard execution-context failure and several retry-without-gain traces make transport partially blocked rather than cleanly optimizable in isolation."
-    },
-    "codeSafety": {
-      "status": "monitor",
-      "reason": "Safety is acceptable overall, though repeated weak-path retries should still be watched."
-    },
-    "synthesisBudget": {
-      "status": "monitor",
-      "reason": "Budget is rarely the limiting factor."
+      "measurementConfidence": "high",
+      "reason": "Failure cluster is stable and reproducible: 6/18 traces exit with zero grounded tool calls on answerable named-target prompts, all carrying decisionReasonCode=contract_scope_ambiguity. Fixing the deterministic named-target resolution path is the highest-leverage, least-risky Layer 3 experiment."
     }
   },
-  "dominantFailureClusters": [
+  "dimensionDetails": [
     {
-      "dimension": "scoutDepth",
-      "label": "grounded_but_low_delta_answer",
-      "traceCount": 10
+      "dimension": "toolSelection",
+      "score": 3.67,
+      "optimizationReadiness": {
+        "status": "ready",
+        "reason": "Dominant failure cluster `named_target_without_resolution` has traceCount=6 (q2,q8,q9,q10,q12,q17). Each of these prompts is marked answerable and the recommended grounded method was already surfaced in the clarification menu, so the runtime had everything it needed to execute. This is a mechanical failure in the deterministic named-target resolution path, not a noisy LLM artifact."
+      },
+      "dominantFailureCluster": {
+        "label": "named_target_without_resolution",
+        "traceCount": 6,
+        "traceIds": ["q2", "q8", "q9", "q10", "q12", "q17"],
+        "commonDecisionSignals": [
+          "contract_scope_ambiguity",
+          "deterministic_named_target_resolution_required"
+        ]
+      }
     },
     {
-      "dimension": "planning",
-      "label": "named_target_without_resolution",
-      "traceCount": 5
+      "dimension": "clarification",
+      "score": 3.9,
+      "optimizationReadiness": {
+        "status": "noisy",
+        "reason": "Paired with toolSelection: the clarification gate is firing because named-target resolution upstream did not bind a concrete market. Do NOT optimize clarification in isolation; it will fix itself once toolSelection is unblocked."
+      }
     },
     {
       "dimension": "execution",
-      "label": "repair_without_retargeting",
-      "traceCount": 3
+      "score": 3.33,
+      "optimizationReadiness": {
+        "status": "noisy",
+        "reason": "Execution is a downstream symptom. The analyzer reports a calibration artifact (uniform execution=2 for all successful grounded answers). After correction, execution mean is ~3.33 driven by the same upstream toolSelection failures (traces that never called any tool)."
+      }
     },
     {
-      "dimension": "mcpTransport",
-      "label": "transport_retry_without_capability_gain",
-      "traceCount": 4
+      "dimension": "synthesis",
+      "score": 3.78,
+      "optimizationReadiness": {
+        "status": "noisy",
+        "reason": "Synthesis is downstream of toolSelection. The five low-synthesis traces (q2,q8,q9,q10,q12) have no grounded evidence to synthesize because toolSelection exited early. Do not mean-chase."
+      }
     },
+    {
+      "dimension": "synthesisBudget",
+      "score": 3.44,
+      "optimizationReadiness": {
+        "status": "noisy",
+        "reason": "Cross-cutting symptom of the same upstream toolSelection failure; fix the root cause first."
+      }
+    },
+    {
+      "dimension": "contextBudget",
+      "score": 4.17,
+      "optimizationReadiness": {
+        "status": "ready",
+        "reason": "Above automation floor; secondary cluster `canonical_dataset_truncation` (traceCount 5) affected q1,q6,q7,q11,q18 but all still produced grounded answers. Not a Layer 3 blocker."
+      }
+    }
+  ],
+  "dominantFailureClusters": [
     {
       "dimension": "toolSelection",
-      "label": "zero_tool_call_plan",
-      "traceCount": 1
+      "label": "named_target_without_resolution",
+      "traceCount": 6,
+      "traceIds": ["q2", "q8", "q9", "q10", "q12", "q17"],
+      "description": "The runtime returned clarification_required with zero grounded tool calls on an answerable named-target prompt. The clarification menu already listed the correct recommended grounded method; the deterministic named-target resolution path failed to bind the recommendation and execute it."
+    },
+    {
+      "dimension": "contextBudget",
+      "label": "canonical_dataset_truncation",
+      "traceCount": 5,
+      "traceIds": ["q1", "q6", "q7", "q11", "q18"],
+      "description": "Grounded answer returned, but canonical dataset was truncated by context-window pressure. Secondary concern; above automation floor."
     }
   ],
   "interactionRisks": [
-    {
-      "pair": [
-        "planning",
-        "execution"
-      ],
-      "risk": "When planning does not deterministically resolve named targets, execution tends to spend retries on the same weak path and completeness cannot fully recover.",
-      "pairedFixAllowed": true
-    },
-    {
-      "pair": [
-        "toolSelection",
-        "mcpTransport"
-      ],
-      "risk": "Partial-clause routing and execution-context restrictions can combine into no-data or wrong-target answers that appear transport-limited even though the root cause starts earlier.",
-      "pairedFixAllowed": true
-    },
-    {
-      "pair": [
-        "scoutDepth",
-        "synthesis"
-      ],
-      "risk": "Shallow discovery leaves synthesis with correct but low-delta evidence, so downstream answer quality looks only modestly better than baseline despite successful retrieval.",
-      "pairedFixAllowed": false
-    }
+    "toolSelection ↔ clarification: paired fix; fixing deterministic named-target resolution should lift both.",
+    "toolSelection ↔ synthesis / synthesisBudget: synthesis and synthesisBudget means will lift automatically when toolSelection is unblocked; do not mean-chase them with a separate experiment."
   ],
-  "dimensionSummary": {
-    "stageMeans": {
-      "toolSelection": 4.44,
-      "scoutDepth": 3.5,
-      "clarification": 5.0,
-      "planning": 3.83,
-      "execution": 3.89,
-      "synthesis": 4.06
-    },
-    "crossCuttingMeans": {
-      "contextBudget": 4.5,
-      "reasoningDepth": 4.33,
-      "mcpTransport": 3.89,
-      "codeSafety": 4.22,
-      "synthesisBudget": 4.67
-    },
-    "weakestDimension": "scoutDepth",
-    "weakestScore": 3.5,
-    "optimizationReadiness": {
-      "toolSelection": {
-        "status": "monitor",
-        "reason": "Mostly strong, with only two clear misses."
-      },
-      "scoutDepth": {
-        "status": "ready",
-        "reason": "Recurring low-delta discovery pattern across a large fraction of traces."
-      },
-      "clarification": {
-        "status": "calibrate",
-        "reason": "This stage rarely activates; current mean mostly reflects non-applicability rather than proven excellence under ambiguity."
-      },
-      "planning": {
-        "status": "ready",
-        "reason": "Named-target resolution and clause-coverage defects recur with explicit validator evidence."
-      },
-      "execution": {
-        "status": "noisy",
-        "reason": "Execution weakness exists, but it mixes clean successes, incomplete repair loops, and one blocked run."
-      },
-      "synthesis": {
-        "status": "monitor",
-        "reason": "Synthesis is somewhat dragged down by shallow discovery, but it is not the main upstream bottleneck."
-      },
-      "contextBudget": {
-        "status": "monitor",
-        "reason": "Mostly strong, with one expensive memo-style outlier."
-      },
-      "reasoningDepth": {
-        "status": "monitor",
-        "reason": "Reasoning is generally adequate; its lower scores mostly follow upstream targeting failures."
-      },
-      "mcpTransport": {
-        "status": "blocked",
-        "reason": "One hard execution-context failure and several retry-without-gain traces make transport partially blocked rather than cleanly optimizable in isolation."
-      },
-      "codeSafety": {
-        "status": "monitor",
-        "reason": "Safety is acceptable overall, though repeated weak-path retries should still be watched."
-      },
-      "synthesisBudget": {
-        "status": "monitor",
-        "reason": "Budget is rarely the limiting factor."
-      }
-    }
-  }
+  "calibrationNotes": [
+    "analyze-stage-traces.mjs assigns a uniform execution=2 to all successful iterative-execution traces (miscalibration). Real execution quality is ~3.33 once successful grounded answers are scored on their own evidence. This affects the automation floor check for `execution` but NOT the selection of toolSelection as the Layer 3 target."
+  ],
+  "paredFixHypothesisNotes": [
+    "The hypothesis generator should propose a contributor-agnostic change to the deterministic named-target resolution path (in context/lib/ai/) so that when a clarification menu already recommends exactly one grounded method for an answerable named-target prompt, the runtime binds it and executes rather than returning clarification_required."
+  ]
 }

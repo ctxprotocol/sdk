@@ -1,11 +1,16 @@
 {
-  "phase": "blocked",
-  "iteration": 3,
-  "satisfactionMean": 4.12,
-  "weakQueryCount": 4,
-  "gatesPassed": false,
-  "promptCount": 18,
-  "lastAction": "Stopped after iteration 3 because weak query count stayed at 4/18 and overall satisfaction regressed from 4.203 to 4.12",
-  "nextAction": "Resume only if attempting a manual plateau-breaker iteration focused on q1, q5, q12, and q17 from the latest rerun-3 artifacts",
-  "timestamp": "2026-04-09T07:03:33.959429Z"
+  "phase": "post-improvement-loop",
+  "iteration": 4,
+  "satisfactionMean": 4.211,
+  "weightedBuyerValue": 0.8631,
+  "weakQueryCount": 1,
+  "gatesPassed": true,
+  "releaseStatus": "blocked",
+  "releaseBlockers": [
+    "queryValidationPassed=false: full-enhancement passRate 0.67 (12/18). Residual 6 failures (q2, q8, q9, q10, q12, q17) are tool-selection multi-candidate clarifications (clarification.triggered=true, issueClass=scope_ambiguity), DIFFERENT root cause from q1/q11."
+  ],
+  "iterationAction": "pass",
+  "lastAction": "Iter4 applied post_tool_grounding_clarification shared fix in server.ts via pipeline-fixer. Rewrote buildCommittedSubstitutePayload to drop uncertainty language; added requestedEntityDiffersMeaningfullyFromTitle helper firing on missing content tokens; wired into handleSearchAndGetOutcomes + handleCompareEventOutcomeQuotes. Deployed local (pid 6140 on :4003) + VPS (pm2 pid 516736). tsc clean. Surface checks 5/5 pass including q1 and q11 (user-named blockers both fixed). Reviewer gates stayed green. Full-enhancement went 44%->67%.",
+  "nextAction": "Hand off to user. Reviewer gates are green and user-named surface blockers (q1, q11) are fixed. Release still blocked because queryValidationPassed requires full-enhancement passRate === 1 (100%); current 67%. Residual 6 failures are tool-picker multi-candidate clarifications (prompts that name a single specific market and ask a specific question but match multiple contributor tools). Known-risk path: iter3 already regressed 56%->44% when touching tool-selection priorities, so a 5th iteration there is high-risk and declined per max-2 budget. Recommend: either (a) accept current state and ship with noted limitation, (b) revert iter3 tool-description change to reclaim earlier 56% baseline, or (c) schedule a targeted multi-candidate tool-picker auto-resolve fix against a test suite with reviewer replication for noise reduction.",
+  "timestamp": "2026-04-18T13:14:00.000Z"
 }

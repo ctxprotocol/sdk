@@ -1,0 +1,22 @@
+{
+  "iteration": 3,
+  "fixedRootCauseCategory": "tool_selection_error",
+  "skippedRootCauseCategories": [
+    "iterative_recovery_failure: same surface failure pattern is really a routing-level miss where no contributor tool is invoked; fixing recovery downstream of the planner would not help when toolCalls=0",
+    "argument_or_extraction_error: already addressed in iters 1 and 2; not the proximate cause of the 0-tool-call fallthroughs",
+    "synthesis_issue: final-answer synthesis is not reached on these prompts (no tool data to synthesize)",
+    "completeness_check_failure: completeness checks are not firing because no tools are called"
+  ],
+  "filesChanged": [
+    "examples/server/polymarket-contributor/server.ts"
+  ],
+  "tscPassed": true,
+  "deployedLocal": true,
+  "deployedVps": true,
+  "targetedRerun": [
+    { "promptId": "q1", "outcomeType": "clarification_required", "toolCalls": 0, "routedToTarget": false },
+    { "promptId": "q11", "outcomeType": "answer", "toolCalls": 10, "routedToTarget": true }
+  ],
+  "targetedRerunNotes": "q11 is now consistently passing with 7-10 contributor tool calls routed through compare_event_outcome_quotes and search_and_get_outcomes, using the PGA Tour: RBC Heritage Winner event as a labeled substitute (baseline was 0 tool calls + clarification). q1 is variance-bound: one of five reruns produced outcomeType=answer with 2 compare_event_outcome_quotes calls routed to target (matched PSG vs FC Bayern München as labeled substitute), the other four still fell through to clarification_required with 0 tool calls because the planner's clarification gate fires before tool execution when the user names a specific event+date tuple that the scout pass can't verify. The fix is a real directional improvement (q11 baseline 0 → now reliably ≥7 tool calls; q1 baseline 0 → now ≥1 tool call on a non-trivial fraction of runs) but q1 is not fully stable from contributor-local tool descriptions alone.",
+  "note": "Classified failures as tool_selection_error: on q1/q11 the contributor tools were never invoked (toolCalls=0) because the planner/clarification layer routed to a clarification menu instead of calling compare_event_outcome_quotes or search_and_get_outcomes, even though those tools already perform fuzzy event resolution with live fallback. Fix strengthens the top-of-description ROUTING CONTRACT for both tools with explicit anti-clarification language, notes that an earlier scout/discovery miss does not imply this tool will miss, tells the planner to pass the event name verbatim, and adds a post-execution rule to proceed with any substitute event the tool returns (prepending a one-sentence assumption preamble) rather than presenting a confirmation menu. No shared-runtime changes and no hard-coded event names; edits live only in server.ts."
+}
