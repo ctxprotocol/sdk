@@ -299,7 +299,11 @@ async function runPaidPrompt(prompt, apiKey, toolId) {
     responseShape: "answer_with_evidence",
     queryDepth: "deep",
     includeDeveloperTrace: true,
-    clarificationPolicy: "return",
+    // Production SDK surface defaults to "auto" — match that here so the
+    // full-enhancement gate sees the same behavior a live buyer/agent sees.
+    // "return" was making this harness fail the same prompts the live
+    // librarian would have auto-resolved, producing a false blocker signal.
+    clarificationPolicy: "auto",
     idempotencyKey: randomUUID(),
   };
   const requestBody = {

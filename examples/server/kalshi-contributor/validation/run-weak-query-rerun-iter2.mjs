@@ -114,7 +114,9 @@ async function runOne({ promptId, query, toolId, apiKey }) {
     responseShape: "answer_with_evidence",
     queryDepth: "deep",
     includeDeveloperTrace: true,
-    clarificationPolicy: "return",
+    // Match production SDK default ("auto") so reruns see the same behavior
+    // that live buyers and the reviewer harness see.
+    clarificationPolicy: "auto",
   };
   let lastError = null;
   for (let attempt = 0; attempt <= MAX_TRANSIENT_RETRIES; attempt += 1) {
