@@ -98,6 +98,7 @@ IMPROVED CATEGORY FILTERING: When filtering by category (e.g., 'Sports'), this t
 PLANNER GUIDANCE:
   - If the user asks for the hottest markets in a named Kalshi category, call this tool first with that exact category.
   - Prefer this ranked discovery path over raw get_markets or broad browse flows when the request is "hottest", "trending", "most active", or "right now".
+  - If the user names an explicit anchor market and asks whether it is hot relative to its own peers, first call get_market to recover the anchor's canonical series/category identifiers, then compare with browse_series before using this broad category leaderboard as secondary context.
   - For climate/weather prompts, do not substitute unrelated sports, crypto, or general commodity markets unless they are explicitly returned here.
 
 RETURNS: Markets ranked by activity with:
@@ -108,9 +109,7 @@ RETURNS: Markets ranked by activity with:
 - category: The market's category
 
 CROSS-PLATFORM COMPOSABILITY:
-  Compare Kalshi predictions with:
-  - Polymarket: Same event at different prices = arbitrage opportunity (use kalshi_crossref_polymarket)
-  - Odds API: Sports predictions vs sportsbook odds`,
+  Compare Kalshi predictions with other marketplace tools for the same event at different prices.`,
         inputSchema: {
             type: "object",
             properties: {
@@ -166,9 +165,20 @@ CROSS-PLATFORM COMPOSABILITY:
         name: "analyze_market_liquidity",
         description: `Analyze market liquidity and orderbook depth. Simulates slippage for different position sizes ($100, $500, $1000).
 
-Answers: "Can I get in/out of this position without moving the market?"
+USE THIS WHENEVER the user asks about:
+  - "bid-ask spread" / "tightest spread" / "widest spread"
+  - "how much size can I buy/sell" / "size at ask" / "size at bid"
+  - "orderbook depth" / "liquidity" / "slippage"
+  - "can I get in/out of this position without moving the market"
 
-INPUT: market ticker from discover_trending_markets or search_markets
+CRITICAL FAN-OUT RULE: If the user asks a spread/depth/size question across multiple
+candidates or sub-markets of an event (e.g. "2028 Presidential Election contracts —
+which candidate has the tightest spread and how much size can I buy"), you MUST call
+this tool once PER candidate/sub-market ticker (ideally in parallel) and then compare
+the results. Do NOT answer from search_markets / get_event output alone — those listings
+do not include bid-ask spreads or orderbook depth.
+
+INPUT: market ticker from discover_trending_markets, search_markets, or get_event.markets[]
 
 RETURNS:
 - Spread analysis (bid-ask spread in cents and %)
@@ -694,52 +704,30 @@ RETURNS:
             required: ["ticker", "sentiment", "confidence"],
         },
     },
-    // ==================== CROSS-PLATFORM INTEROPERABILITY ====================
     {
         name: "kalshi_crossref_polymarket",
-        description: `[KALSHI SERVER] Search Polymarket for markets equivalent to a Kalshi market.
+        description: `Cross-reference one resolved Kalshi market against Polymarket search results.
 
-This tool belongs to the KALSHI MCP server. Use it when you have a Kalshi market 
-and want to find the corresponding market on Polymarket for comparison.
-
-⚠️ Call this tool with KALSHI's toolId, not Polymarket's.
-
-Uses Polymarket's official /public-search API for reliable text search.
-
-WORKFLOW:
-  1. First resolve a SPECIFIC Kalshi market with search_markets, get_event, get_events, or get_event_by_slug
-  2. Then call: kalshi_crossref_polymarket({ keywords: "supreme court trump tariffs" })
-  3. If multiple direct candidates exist, shortlist the best 1-2 BEFORE cross-referencing
-  4. Returns matching Polymarket markets with prices and rules
-
-⚠️ Do NOT use this as a broad discovery tool or fan it out across many weak candidates.
-It is best for late-stage validation after the direct Kalshi market is already known.
-Weak keyword matches can return related proxy markets rather than the exact equivalent contract.
-
-PRICE COMPARISON:
-  - Polymarket: decimals (0.28 = 28%)
-  - Kalshi: cents (28 = 28%)
-
-⚠️ CRITICAL: Compare 'rules' and 'yesOutcomeMeans' fields!
-Markets may define YES/NO differently - verify before calculating arbitrage.`,
+Use only after resolving an exact Kalshi contract. Returns only credible Polymarket candidates and includes outcome-alignment guidance before comparing prices.`,
         inputSchema: {
             type: "object",
             properties: {
                 title: {
                     type: "string",
-                    description: "The Kalshi market title to search for on Polymarket",
+                    description: "Resolved Kalshi market title or question text.",
                 },
                 keywords: {
-                    type: "string",
-                    description: "Keywords to search (e.g., 'supreme court tariffs trump'). More specific = better results.",
+                    type: ["string", "array"],
+                    description: "Optional supplemental keywords. Use concise differentiators such as 'fed rate cut end of year'.",
+                    items: { type: "string" },
                 },
                 kalshiTicker: {
                     type: "string",
-                    description: "Optional: The Kalshi ticker (for reference in results)",
+                    description: "Kalshi market ticker for additional keyword extraction.",
                 },
                 limit: {
                     type: "number",
-                    description: "Max results (default: 10)",
+                    description: "Maximum results to return (default: 10, max: 25).",
                 },
             },
             required: [],
@@ -754,31 +742,31 @@ Markets may define YES/NO differently - verify before calculating arbitrage.`,
                         kalshiTicker: { type: "string" },
                     },
                 },
+                searchMethod: { type: "string" },
                 polymarketResults: {
                     type: "array",
-                    description: "Matching Polymarket markets. Use 'slug' with Polymarket's get_event_by_slug for details.",
                     items: {
                         type: "object",
                         properties: {
-                            title: { type: "string", description: "Polymarket market title" },
-                            slug: { type: "string", description: "Use this with Polymarket's get_event_by_slug tool" },
+                            title: { type: "string" },
+                            slug: { type: "string" },
                             question: { type: "string" },
-                            yesPrice: { type: "number", description: "Current YES price (0-1 scale, e.g., 0.25 = 25%)" },
+                            yesPrice: { type: "number" },
                             volume: { type: "number" },
                             liquidity: { type: "number" },
-                            url: { type: "string", description: "Direct Polymarket URL" },
-                            matchScore: { type: "number", description: "Keyword match score (higher = better match)" },
-                            rules: { type: "string", description: "Full resolution rules text" },
-                            yesOutcomeMeans: { type: "string", description: "⚠️ CRITICAL: What does buying YES mean? Compare with Kalshi!" },
-                            noOutcomeMeans: { type: "string", description: "⚠️ CRITICAL: What does buying NO mean? Compare with Kalshi!" },
+                            url: { type: "string" },
+                            matchScore: { type: "number" },
+                            rules: { type: "string" },
+                            yesOutcomeMeans: { type: "string" },
+                            noOutcomeMeans: { type: "string" },
                         },
                     },
                 },
                 hint: { type: "string" },
-                comparisonNote: { type: "string", description: "⚠️ MUST READ: Step-by-step guide for comparing outcomes across platforms" },
+                comparisonNote: { type: "string" },
                 fetchedAt: { type: "string" },
             },
-            required: ["polymarketResults"],
+            required: ["searchedFor", "searchMethod", "polymarketResults", "hint"],
         },
     },
     // ==================== TIER 2: RAW DATA TOOLS ====================
@@ -1208,6 +1196,7 @@ It returns the event plus per-market rules, detailed rules text, and direct URLs
 Use this for prompts like:
 - "Get the exact market snapshot for KXHIGHNY-26MAR19-B47.5"
 - "Show me this market's current yes/no prices, status, close time, and rules"
+- "Use this market as the anchor, then compare it against its own series peers"
 
 ⚠️ CRITICAL: Use EXACT ticker values from API responses. DO NOT construct or guess tickers!
 
@@ -1225,7 +1214,11 @@ EXAMPLE - WRONG (DO NOT DO THIS):
   get_market({ "ticker": "kxdjtvostariffs" })      ❌ Wrong case
 
 The ticker field from API responses is the EXACT string to use. Copy it exactly, don't modify it.
-This method is the best single-call source for current market state, resolution rules, and canonical URLs.
+This method is the best single-call source for current market state, resolution rules, canonical URLs, and cohort identifiers.
+
+PLANNER GUIDANCE:
+  - If a prompt gives an explicit market ticker and asks whether that market is unusually active, liquid, near resolution, overshadowed, or hot relative to peers, call get_market first.
+  - The response includes both category and seriesTicker so you can route follow-up peer comparison to browse_series (same-series cohort) or discover_trending_markets (broad category leaders).
 
 🆕 FALLBACK: If a ticker fails, this tool will auto-attempt to fix common mistakes.`,
         inputSchema: {
@@ -1246,6 +1239,10 @@ This method is the best single-call source for current market state, resolution 
                     properties: {
                         ticker: { type: "string" },
                         eventTicker: { type: "string" },
+                        seriesTicker: {
+                            type: "string",
+                            description: "Canonical series ticker derived from the market's event ticker. Use this for same-series peer comparisons with browse_series.",
+                        },
                         title: { type: "string" },
                         subtitle: { type: "string" },
                         yesPrice: { type: "number" },
@@ -1290,6 +1287,7 @@ PLANNER GUIDANCE:
   - Use this as the default exact-match resolver for topical searches like Supreme Court, tariffs, SCOTUS, bitcoin, or named weather contracts.
   - For highest/lowest daily temperature prompts, prefer daily HIGH/LOW series such as KXHIGHNY or KXLOWNY.
   - Only use hourly KXTEMP... markets when the user explicitly asks about a specific time of day.
+  - This tool returns market titles and prices ONLY. It does NOT return bid-ask spreads, orderbook depth, or size-at-ask. If the user asks about spread, depth, size, liquidity, or slippage, use the tickers returned here as input to analyze_market_liquidity (or get_market_orderbook) — fan out across ALL relevant sub-market tickers before answering.
 
 IF YOU HAVE A KALSHI URL, use get_event_by_slug instead:
   - URL: https://kalshi.com/markets/kxdjtvostariffs/tariffs-case
@@ -1367,11 +1365,23 @@ STATUS OPTIONS:
     },
     {
         name: "get_market_orderbook",
-        description: `Get the orderbook for a specific market. Shows bid/ask prices and quantities.
+        description: `Get the Level 2 orderbook for a specific market. Shows bid/ask prices and quantities.
 
-INPUT: market ticker
+USE THIS (or analyze_market_liquidity) WHENEVER the user asks about:
+  - "bid-ask spread" / "tightest spread" / "widest spread"
+  - "how much size can I buy/sell" / "size at ask" / "size at bid"
+  - "orderbook depth" / "liquidity" / "slippage"
+  - "can I get in/out of" a position
 
-RETURNS: Level 2 orderbook with bids and asks.`,
+CRITICAL FAN-OUT RULE: If the user asks a spread/depth/size question across multiple
+candidates or sub-markets of an event (e.g. "2028 Presidential Election contracts —
+which candidate has the tightest spread"), you MUST call this tool (or
+analyze_market_liquidity) once PER sub-market ticker and then compare. Do NOT answer
+from search_markets / get_event output alone — those do not include orderbook data.
+
+INPUT: market ticker (from search_markets, get_event, or discover_trending_markets)
+
+RETURNS: Level 2 orderbook with bids, asks, spread, and midPrice.`,
         inputSchema: {
             type: "object",
             properties: {
@@ -1918,23 +1928,33 @@ CROSS-PLATFORM:
 
 ⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent markets or construct URLs. Each result includes a real 'url' field - use ONLY those URLs.
 
-INPUT: series_ticker from get_all_series
+INPUT: series_ticker from get_all_series, get_series, or get_market.seriesTicker
 
-RETURNS: All events and markets in the series with direct URLs, current yes prices, 24h volume, and close times.
+RETURNS: All events and markets in the series with direct URLs, current yes/no prices, 24h volume, liquidity, and close times.
 
 Example: browse_series({ seriesTicker: "KXHIGHNY" }) → all NYC high temp events
-Use this for prompts like "List open markets in the KXHIGHNY series with tickers, current yes prices, and close times."`,
+Use this for prompts like "List open markets in the KXHIGHNY series with tickers, current yes prices, and close times."
+
+PLANNER GUIDANCE:
+  - Use this as the primary peer-comparison tool when the user gives an explicit anchor market and asks about series peers, same-family contracts, or whether the anchor is unusually active/liquid/close to resolution relative to comparable contracts.
+  - If the prompt already includes a series-like prefix such as KXMVECROSSCATEGORY, or get_market returned seriesTicker, pass that exact seriesTicker here instead of asking for clarification.
+  - Prefer this over discover_trending_markets when the user wants like-for-like cohort comparison rather than the broadest category leaderboard.`,
         inputSchema: {
             type: "object",
             properties: {
                 seriesTicker: {
                     type: "string",
-                    description: "Series ticker from get_all_series",
+                    description: "Series ticker from get_all_series/get_series, or from get_market.seriesTicker. Many Kalshi market and event tickers start with this series prefix (for example KXMVECROSSCATEGORY-...).",
                 },
                 status: {
                     type: "string",
                     enum: ["open", "closed", "settled", "all"],
                     description: "Filter by status (default: open)",
+                },
+                sortBy: {
+                    type: "string",
+                    enum: ["volume_24h", "liquidity", "close_time"],
+                    description: "Optional ranking for peer comparison. Use volume_24h or liquidity for hottest/overshadowed prompts, or close_time for near-resolution prompts.",
                 },
                 limit: {
                     type: "number",
@@ -1958,9 +1978,12 @@ Use this for prompts like "List open markets in the KXHIGHNY series with tickers
                             eventTicker: { type: "string" },
                             url: { type: "string", format: "uri", description: "Direct Kalshi URL - always use this, never construct URLs" },
                             yesPrice: { type: "number" },
+                            noPrice: { type: "number" },
                             volume24h: { type: "number" },
+                            liquidity: { type: "number" },
                             closeTime: { type: "string" },
                             status: { type: "string" },
+                            category: { type: "string" },
                         },
                     },
                 },
@@ -1996,7 +2019,6 @@ const HEAVY_QUERY_TOOLS = new Set([
     "find_arbitrage_opportunities",
     "find_trading_opportunities",
     "analyze_market_sentiment",
-    "kalshi_crossref_polymarket",
     "browse_category",
     "browse_series",
     "get_all_series",
@@ -2086,9 +2108,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                 return await handleGetMarketsByProbability(args);
             case "analyze_market_sentiment":
                 return await handleAnalyzeMarketSentiment(args);
-            // Cross-Platform Interoperability
             case "kalshi_crossref_polymarket":
-            case "search_on_polymarket": // Backward compatibility alias
                 return await handleSearchOnPolymarket(args);
             // Tier 2: Raw Data Tools
             case "get_events":
@@ -2145,6 +2165,277 @@ function successResult(data) {
     return {
         content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
         structuredContent: data,
+    };
+}
+function buildSearchRecoveryHints(params) {
+    const { query, category, resultCount, lowConfidence, selectedTitle } = params;
+    const isEmpty = resultCount === 0;
+    if (!isEmpty && !lowConfidence) {
+        return null;
+    }
+    const q = (query || "").trim();
+    const keywordGuess = q
+        .replace(/[^A-Za-z0-9 ]+/g, " ")
+        .split(/\s+/)
+        .filter((w) => w.length >= 4)
+        .slice(-1)[0];
+    const slugGuess = q
+        ? `kx${q.toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 24)}`
+        : undefined;
+    const nextTools = [];
+    if (q) {
+        nextTools.push({
+            toolName: "search_markets",
+            suggestedArgs: {
+                query: keywordGuess || q.split(/\s+/).slice(0, 2).join(" "),
+                status: "open",
+                maxSeriesScan: 1500,
+            },
+            reason: "Retry with a reduced keyword (e.g. the main entity name) and NO category filter to widen the series-search scope.",
+        });
+    }
+    if (slugGuess) {
+        nextTools.push({
+            toolName: "resolve_slug",
+            suggestedArgs: { slug: slugGuess },
+            reason: "Attempt slug resolution for direct event lookup. Slug format is the lowercase series ticker (e.g. 'kxmamdani', 'kxoaianth').",
+        });
+        nextTools.push({
+            toolName: "get_event_by_slug",
+            suggestedArgs: { slug: slugGuess },
+            reason: "If you have any plausible slug guess from the user's query, call this for a one-shot event + markets snapshot.",
+        });
+    }
+    if (category) {
+        nextTools.push({
+            toolName: "browse_category",
+            suggestedArgs: { category, status: "open", sortBy: "volume_24h", limit: 100 },
+            reason: "List all active markets in the category so you can scan titles for a semantic match when keyword search missed it.",
+        });
+        nextTools.push({
+            toolName: "discover_trending_markets",
+            suggestedArgs: { category, sortBy: "volume_24h", limit: 50 },
+            reason: "Ranked view of the category's most active markets — useful when search returned irrelevant results.",
+        });
+    }
+    else {
+        nextTools.push({
+            toolName: "get_all_series",
+            suggestedArgs: { limit: 200 },
+            reason: "If no category was provided, scan the series catalog (titles) for a plausible match, then call browse_series on the matched seriesTicker.",
+        });
+    }
+    const reason = isEmpty
+        ? `search_markets returned 0 results for query=${JSON.stringify(q)}${category ? ` category=${JSON.stringify(category)}` : ""}. Do NOT synthesize a refusal — the next step MUST be one of nextTools.`
+        : `search_markets returned ${resultCount} low-confidence result(s)${selectedTitle ? ` (top hit: ${JSON.stringify(selectedTitle)})` : ""} that may not match the user's intent. Do NOT synthesize an answer yet — pivot via nextTools.`;
+    return {
+        reason,
+        nextTools,
+        escalationNote: "Only after ALL nextTools above have been attempted AND returned empty/irrelevant results may you tell the buyer the market does not exist on Kalshi.",
+        shouldSynthesizeRefusal: false,
+    };
+}
+function buildCategoryRecoveryHints(params) {
+    const { category, status, resultCount } = params;
+    if (resultCount > 0) {
+        return null;
+    }
+    const nextTools = [
+        {
+            toolName: "get_all_series",
+            suggestedArgs: { category, limit: 100 },
+            reason: "Category browse returned zero. Enumerate series under this category and then call browse_series on the returned seriesTicker values — categories can be empty at the /markets endpoint even when series exist.",
+        },
+        {
+            toolName: "discover_trending_markets",
+            suggestedArgs: { category, sortBy: "volume_24h", limit: 50 },
+            reason: "Ranked discovery uses a broader market pool + trades fallback, so it often surfaces active markets when category browse is empty.",
+        },
+        {
+            toolName: "get_markets",
+            suggestedArgs: { category, status: status === "open" ? "all" : "open", limit: 100 },
+            reason: "Broaden the status filter (open → all, or vice versa) to catch markets that are pending/closed/settled but still relevant to the question.",
+        },
+        {
+            toolName: "get_all_categories",
+            reason: "If you are unsure whether the category name is canonical, re-fetch the taxonomy and confirm spelling/capitalization (e.g. 'Economics' vs 'Economy').",
+        },
+    ];
+    return {
+        reason: `browse_category for ${JSON.stringify(category)} status=${status} returned 0 markets. Do NOT conclude the category is empty on Kalshi — call the tools in nextTools below before synthesizing a refusal.`,
+        nextTools,
+        escalationNote: "Only after get_all_series + discover_trending_markets + get_markets(status='all') all return empty may you tell the buyer this category has no qualifying markets right now.",
+        shouldSynthesizeRefusal: false,
+    };
+}
+function buildSeriesRecoveryHints(params) {
+    const { seriesTicker, status, resultCount } = params;
+    if (resultCount > 0) {
+        return null;
+    }
+    const nextTools = [
+        {
+            toolName: "browse_series",
+            suggestedArgs: { seriesTicker, status: "all", limit: 100 },
+            reason: "Retry with status='all' — the series may have only closed/settled markets currently, which are excluded by the default 'open' filter.",
+        },
+        {
+            toolName: "get_events",
+            suggestedArgs: { seriesTicker, limit: 50 },
+            reason: "List events under this series directly; the event-level endpoint may return records even when the market-level endpoint is empty.",
+        },
+        {
+            toolName: "get_series",
+            suggestedArgs: { seriesTicker },
+            reason: "Confirm the series ticker itself is valid. If it returns a warning, the ticker may be malformed and you should call get_all_series to enumerate valid tickers.",
+        },
+    ];
+    return {
+        reason: `browse_series for ${JSON.stringify(seriesTicker)} status=${status} returned 0 markets. The series may be dormant, closed, or the ticker may be wrong — try nextTools before concluding.`,
+        nextTools,
+        escalationNote: "Only after all nextTools return empty may you tell the buyer this series has no qualifying markets.",
+        shouldSynthesizeRefusal: false,
+    };
+}
+function buildTrendingRecoveryHints(params) {
+    const { category, resultCount } = params;
+    if (resultCount > 0) {
+        return null;
+    }
+    const nextTools = [];
+    if (category) {
+        nextTools.push({
+            toolName: "browse_category",
+            suggestedArgs: { category, status: "open", sortBy: "volume_24h", limit: 100 },
+            reason: "Unranked list of all markets in this category — useful when the trending-ranked pool is empty.",
+        });
+        nextTools.push({
+            toolName: "get_all_series",
+            suggestedArgs: { category, limit: 100 },
+            reason: "Enumerate series under this category and call browse_series on each seriesTicker to surface active markets.",
+        });
+    }
+    else {
+        nextTools.push({
+            toolName: "get_all_categories",
+            reason: "No category was provided — load the taxonomy first, then call discover_trending_markets per category.",
+        });
+    }
+    return {
+        reason: `discover_trending_markets returned 0 trendingMarkets${category ? ` for category=${JSON.stringify(category)}` : ""}. Pivot via nextTools before telling the buyer nothing is active.`,
+        nextTools,
+        escalationNote: "Do not refuse until browse_category + get_all_series both come back empty.",
+        shouldSynthesizeRefusal: false,
+    };
+}
+function buildMarketsListRecoveryHints(params) {
+    const { args, resultCount, nextCursor } = params;
+    const category = args?.category ?? undefined;
+    const status = args?.status ?? "open";
+    const seriesTicker = args?.seriesTicker ?? undefined;
+    const eventTicker = args?.eventTicker ?? undefined;
+    const isEmpty = resultCount === 0;
+    const hasMorePages = typeof nextCursor === "string" && nextCursor.length > 0;
+    if (!isEmpty && !hasMorePages) {
+        return null;
+    }
+    const nextTools = [];
+    if (isEmpty) {
+        if (eventTicker) {
+            nextTools.push({
+                toolName: "get_event",
+                suggestedArgs: { eventTicker, withNestedMarkets: true },
+                reason: "The event may exist but have no markets at the requested status — fetch the event directly for nested markets.",
+            });
+        }
+        if (seriesTicker) {
+            nextTools.push({
+                toolName: "browse_series",
+                suggestedArgs: { seriesTicker, status: "all", limit: 100 },
+                reason: "Broaden the series status filter to include closed/settled markets.",
+            });
+        }
+        if (category) {
+            nextTools.push({
+                toolName: "browse_category",
+                suggestedArgs: { category, status: "open", sortBy: "volume_24h", limit: 100 },
+                reason: "Category browse may surface markets missed by the raw markets listing.",
+            });
+            nextTools.push({
+                toolName: "get_all_series",
+                suggestedArgs: { category, limit: 100 },
+                reason: "Enumerate series under this category, then browse_series on each seriesTicker.",
+            });
+        }
+        if (status === "open") {
+            nextTools.push({
+                toolName: "get_markets",
+                suggestedArgs: { ...(args || {}), status: "all", limit: 100 },
+                reason: "Retry with status='all' to catch non-open markets that still match the filter.",
+            });
+        }
+        if (nextTools.length === 0) {
+            nextTools.push({
+                toolName: "discover_trending_markets",
+                suggestedArgs: { sortBy: "volume_24h", limit: 50 },
+                reason: "Fallback to ranked global discovery when specific filters return empty.",
+            });
+        }
+    }
+    if (hasMorePages) {
+        nextTools.push({
+            toolName: "get_markets",
+            suggestedArgs: { ...(args || {}), cursor: nextCursor, limit: 200 },
+            reason: "Result is paginated — call again with the provided cursor to fetch the next page before synthesizing. Alternatively, pivot to discover_trending_markets / browse_category for a pre-ranked view and stop paginating.",
+        });
+        nextTools.push({
+            toolName: "discover_trending_markets",
+            suggestedArgs: category
+                ? { category, sortBy: "volume_24h", limit: 100 }
+                : { sortBy: "volume_24h", limit: 100 },
+            reason: "If you are paginating to find 'top N' by activity, a single discover_trending_markets call is a better ranked shortcut.",
+        });
+    }
+    const reason = isEmpty
+        ? `get_markets returned 0 markets for filters=${JSON.stringify({ category, status, seriesTicker, eventTicker })}. Do NOT refuse — pivot via nextTools.`
+        : `get_markets returned ${resultCount} markets but nextCursor is non-empty (more pages available). Either paginate or pivot to a ranked tool to avoid premature shortlisting.`;
+    return {
+        reason,
+        nextTools,
+        escalationNote: "Premature refusal after one get_markets call is the #1 failure mode on Kalshi — always attempt at least one nextTools pivot before concluding.",
+        shouldSynthesizeRefusal: false,
+    };
+}
+function buildEventFanoutHint(params) {
+    const tickers = params.markets.map((m) => m.ticker).filter(Boolean);
+    if (tickers.length < 2) {
+        return null;
+    }
+    return {
+        reason: `Event ${params.eventTicker} has ${tickers.length} sub-markets. If the user asked about arbitrage, liquidity, orderbook depth, spread, or a top-N / per-candidate comparison, you MUST fan out (preferably in parallel) across ALL sub-market tickers — partial coverage will produce a wrong answer.`,
+        recommendedPerMarketTools: [
+            {
+                toolName: "get_market_orderbook",
+                suggestedArgs: { ticker: "<each markets[].ticker>", depth: 50, preferFixedPoint: true },
+                reason: "Per-candidate bid/ask for spread, arbitrage, and liquidity analyses.",
+            },
+            {
+                toolName: "get_market",
+                suggestedArgs: { ticker: "<each markets[].ticker>" },
+                reason: "Per-candidate yes/no prices, volume, open interest for ranking.",
+            },
+            {
+                toolName: "get_market_candlesticks",
+                suggestedArgs: {
+                    ticker: "<each markets[].ticker>",
+                    periodInterval: 1440,
+                    startTs: "<now - 30d>",
+                    endTs: "<now>",
+                },
+                reason: "Per-candidate historical trajectories for momentum, re-pricing, or time-series comparisons.",
+            },
+        ],
+        escalationNote: `Fan out over all ${tickers.length} tickers (use Promise.all-style parallel calls) before synthesizing. Tickers: ${tickers.slice(0, 20).join(", ")}${tickers.length > 20 ? ", ..." : ""}.`,
     };
 }
 function getNonEmptyString(value) {
@@ -2723,6 +3014,264 @@ function getSeriesTicker(eventTicker) {
         .replace(/-\d+$/, ''); // Numeric: -28
     return cleaned.toLowerCase();
 }
+const KALSHI_CATEGORY_ALIASES = {
+    climate: "climate and weather",
+    weather: "climate and weather",
+    "climate & weather": "climate and weather",
+    economy: "economics",
+    economic: "economics",
+    finance: "financials",
+};
+const KALSHI_CATEGORY_KEYWORDS = {
+    sports: [
+        "nba",
+        "nfl",
+        "mlb",
+        "nhl",
+        "super bowl",
+        "championship",
+        "playoffs",
+        "football",
+        "basketball",
+        "baseball",
+        "hockey",
+        "soccer",
+        "tennis",
+        "golf",
+        "ufc",
+        "boxing",
+        "f1",
+        "nascar",
+        "olympics",
+        "world cup",
+        "finals",
+        "mvp",
+        "rookie",
+        "draft",
+    ],
+    politics: [
+        "election",
+        "president",
+        "senate",
+        "congress",
+        "vote",
+        "trump",
+        "biden",
+        "democrat",
+        "republican",
+        "governor",
+        "primary",
+        "nominee",
+    ],
+    economics: [
+        "gdp",
+        "inflation",
+        "fed",
+        "interest rate",
+        "rates",
+        "recession",
+        "jobs",
+        "payrolls",
+        "employment",
+        "unemployment",
+        "cpi",
+        "pce",
+        "economic",
+        "tariff",
+        "tariffs",
+    ],
+    financials: [
+        "stock",
+        "s&p",
+        "nasdaq",
+        "bitcoin",
+        "crypto",
+        "price",
+        "market",
+    ],
+    "climate and weather": [
+        "weather",
+        "climate",
+        "temp",
+        "temperature",
+        "rain",
+        "snow",
+        "storm",
+        "hurricane",
+        "wind",
+        "heat",
+        "cold",
+        "precipitation",
+        "forecast",
+        "landfall",
+    ],
+};
+const LOW_SIGNAL_SEARCH_WORDS = new Set([
+    "current",
+    "exact",
+    "find",
+    "identify",
+    "latest",
+    "live",
+    "main",
+    "market",
+    "markets",
+    "next",
+    "open",
+    "price",
+    "prices",
+    "release",
+    "resolve",
+    "return",
+    "rule",
+    "rules",
+    "show",
+    "trading",
+    "whether",
+    "will",
+]);
+function normalizeKalshiCategoryName(value) {
+    const normalizedValue = value?.trim().toLowerCase();
+    if (!normalizedValue) {
+        return null;
+    }
+    return KALSHI_CATEGORY_ALIASES[normalizedValue] ?? normalizedValue;
+}
+function getKalshiCategoryKeywords(category) {
+    const normalizedCategory = normalizeKalshiCategoryName(category);
+    if (!normalizedCategory) {
+        return [];
+    }
+    return KALSHI_CATEGORY_KEYWORDS[normalizedCategory] || [];
+}
+function textLooksLikeSportsMarket(text) {
+    return /(winner\?|\bvs\b|points?|goals?|assists?|rebounds?|touchdowns?|innings?|pitcher|strikeouts?|world series|playoffs?|championship|finals)/i.test(text);
+}
+function matchesRequestedKalshiCategory(params) {
+    const normalizedRequested = normalizeKalshiCategoryName(params.requestedCategory);
+    if (!normalizedRequested) {
+        return true;
+    }
+    const normalizedRecord = normalizeKalshiCategoryName(params.recordCategory);
+    if (normalizedRecord === normalizedRequested) {
+        return true;
+    }
+    if (normalizedRequested !== "sports" && textLooksLikeSportsMarket(params.text)) {
+        return false;
+    }
+    const keywords = getKalshiCategoryKeywords(normalizedRequested);
+    return keywords.length === 0
+        ? false
+        : keywords.some((keyword) => params.text.includes(keyword));
+}
+function filterMarketsByRequestedCategory(markets, requestedCategory) {
+    if (!requestedCategory) {
+        return markets;
+    }
+    return markets.filter((market) => {
+        const searchText = [
+            market.title || "",
+            market.subtitle || "",
+            market.yes_sub_title || "",
+            market.event_ticker || "",
+            market.ticker || "",
+        ]
+            .join(" ")
+            .toLowerCase();
+        return matchesRequestedKalshiCategory({
+            requestedCategory,
+            recordCategory: market.category,
+            text: searchText,
+        });
+    });
+}
+function filterSeriesByRequestedCategory(series, requestedCategory) {
+    if (!requestedCategory) {
+        return series;
+    }
+    return series.filter((entry) => {
+        const searchText = [
+            entry.title || "",
+            entry.ticker || "",
+            Array.isArray(entry.tags) ? entry.tags.join(" ") : "",
+        ]
+            .join(" ")
+            .toLowerCase();
+        return matchesRequestedKalshiCategory({
+            requestedCategory,
+            recordCategory: entry.category,
+            text: searchText,
+        });
+    });
+}
+function normalizeRequestedKalshiStatus(value) {
+    const normalizedValue = value?.trim().toLowerCase();
+    if (!normalizedValue) {
+        return "open";
+    }
+    if (normalizedValue === "active") {
+        return "open";
+    }
+    return normalizedValue;
+}
+function matchesRequestedKalshiStatus(requestedStatus, recordStatus) {
+    const normalizedRequested = normalizeRequestedKalshiStatus(requestedStatus);
+    if (normalizedRequested === "all") {
+        return true;
+    }
+    const normalizedRecord = recordStatus?.trim().toLowerCase() || "";
+    if (normalizedRequested === "open") {
+        return (normalizedRecord === "open" ||
+            normalizedRecord === "active" ||
+            normalizedRecord === "initialized");
+    }
+    if (normalizedRequested === "settled") {
+        return normalizedRecord === "settled" || normalizedRecord === "resolved";
+    }
+    return normalizedRecord === normalizedRequested;
+}
+function textMatchesSearchWord(searchText, word) {
+    const variants = new Set([word]);
+    if (word.length > 4 && word.endsWith("s") && !word.endsWith("ss")) {
+        variants.add(word.slice(0, -1));
+    }
+    else if (word.length > 3 && !word.endsWith("s")) {
+        variants.add(`${word}s`);
+    }
+    for (const variant of variants) {
+        if (searchText.includes(variant)) {
+            return true;
+        }
+    }
+    return false;
+}
+function computeIntentMatchScore(searchText, words) {
+    return words.reduce((total, word) => {
+        if (!textMatchesSearchWord(searchText, word)) {
+            return total;
+        }
+        return total + (word.length >= 6 ? 2 : 1);
+    }, 0);
+}
+function hasCredibleIntentMatch(searchText, words) {
+    if (words.length === 0) {
+        return true;
+    }
+    let matchCount = 0;
+    let anchorMatchCount = 0;
+    for (const word of words) {
+        if (!textMatchesSearchWord(searchText, word)) {
+            continue;
+        }
+        matchCount += 1;
+        if (word.length >= 6) {
+            anchorMatchCount += 1;
+        }
+    }
+    const minimumSignalMatches = Math.max(1, Math.ceil(words.length / 2));
+    return (anchorMatchCount > 0 ||
+        (matchCount >= minimumSignalMatches && matchCount / words.length >= 0.5));
+}
 /**
  * Detects if an input looks like a URL slug rather than an event ticker.
  * Slugs are:
@@ -2738,6 +3287,43 @@ function isSlug(input) {
     const hasTickerSuffix = /-\d+$/.test(input);
     const looksLikeTickerFormat = /^[A-Z]+-[A-Z0-9-]+$/.test(input) || hasTickerSuffix;
     return isLowercase && !looksLikeTickerFormat;
+}
+// Event-level ticker shape: `KX<SERIES>-<N>` with NO trailing letter child suffix.
+// Examples: "KXOAIANTH-40", "KXRAMPBREX-40", "KXNEXTUKPM-30", "KXTRILLIONAIRE-30".
+// These are NOT market tickers — they identify an event whose sub-markets have the
+// form "KX<SERIES>-<N>-<CHILD>" (e.g. "KXOAIANTH-40-OAI"). Agents that pass event
+// tickers to get_market or get_market_candlesticks waste 2-4 calls before recovery.
+function isEventLevelTicker(input) {
+    return /^KX[A-Z0-9]+-\d+$/.test(input);
+}
+// Fetch an event by its UPPERCASE event ticker (e.g. "KXOAIANTH-40") and return the
+// normalized child-market list plus a structured recovery-hint payload the iterative
+// planner can read to auto-pivot to the correct per-child tool call.
+async function resolveEventTickerToChildren(eventTicker) {
+    try {
+        const response = await fetchKalshi(`/events/${encodeURIComponent(eventTicker)}?with_nested_markets=true`);
+        const event = response.event;
+        if (!event) {
+            return null;
+        }
+        const childMarkets = (event.markets || []).map((m) => ({
+            ticker: m.ticker,
+            title: m.title || m.yes_sub_title || m.ticker,
+            yesPrice: m.yes_ask || m.last_price || 0,
+            noPrice: m.no_ask || (100 - (m.yes_ask || m.last_price || 50)),
+            volume24h: m.volume_24h || 0,
+            status: m.status || "open",
+        }));
+        return {
+            found: true,
+            eventTitle: event.title || null,
+            seriesTicker: getSeriesTicker(event.event_ticker),
+            childMarkets,
+        };
+    }
+    catch (_error) {
+        return null;
+    }
 }
 /**
  * Resolves a URL slug to market/event information by searching markets.
@@ -2869,7 +3455,7 @@ async function handleDiscoverTrendingMarkets(args) {
         endpoint += `&category=${encodeURIComponent(category)}`;
     }
     const response = await fetchKalshi(endpoint);
-    let markets = response.markets || [];
+    let markets = filterMarketsByRequestedCategory(response.markets || [], category);
     const activityByTicker = new Map();
     const allVolume24hZero = markets.every((marketItem) => Number(marketItem.volume_24h || 0) <= 0);
     const allVolumeZero = markets.every((marketItem) => Number(marketItem.volume || 0) <= 0);
@@ -2969,34 +3555,7 @@ async function handleDiscoverTrendingMarkets(args) {
             }
         }
     }
-    // IMPROVED CATEGORY FILTERING: If category is specified, also filter by keywords
-    // This handles cases where Kalshi's category filter doesn't work as expected
-    if (category) {
-        const rawNormalizedCategory = category.trim().toLowerCase();
-        const normalizedCategory = rawNormalizedCategory === 'climate' || rawNormalizedCategory === 'weather'
-            ? 'climate and weather'
-            : rawNormalizedCategory;
-        const categoryKeywords = {
-            'sports': ['nba', 'nfl', 'mlb', 'nhl', 'super bowl', 'championship', 'playoffs', 'football', 'basketball', 'baseball', 'hockey', 'soccer', 'tennis', 'golf', 'ufc', 'boxing', 'f1', 'nascar', 'olympics', 'world cup', 'finals', 'mvp', 'rookie', 'draft'],
-            'politics': ['election', 'president', 'senate', 'congress', 'vote', 'trump', 'biden', 'democrat', 'republican', 'governor', 'primary', 'nominee'],
-            'economics': ['gdp', 'inflation', 'fed', 'interest rate', 'recession', 'jobs', 'unemployment', 'cpi', 'economic'],
-            'financials': ['stock', 's&p', 'nasdaq', 'bitcoin', 'crypto', 'price', 'market'],
-            'climate and weather': ['weather', 'climate', 'temp', 'temperature', 'rain', 'snow', 'storm', 'hurricane', 'wind', 'heat', 'cold', 'precipitation', 'forecast', 'landfall'],
-            'climate & weather': ['weather', 'climate', 'temp', 'temperature', 'rain', 'snow', 'storm', 'hurricane', 'wind', 'heat', 'cold', 'precipitation', 'forecast', 'landfall'],
-        };
-        const keywords = categoryKeywords[normalizedCategory] || [];
-        if (keywords.length > 0) {
-            // Filter to only markets that match category keywords in title
-            markets = markets.filter(m => {
-                const title = ((m.title || '') + ' ' + (m.subtitle || '') + ' ' + (m.yes_sub_title || '')).toLowerCase();
-                const matchesCategory = m.category?.toLowerCase() === normalizedCategory;
-                const matchesKeywords = keywords.some(kw => title.includes(kw));
-                const looksLikeSportsMarket = normalizedCategory.startsWith('climate') &&
-                    /(winner\?| vs | at |points?|goals?|assists?|rebounds?|touchdowns?|innings?|pitcher|strikeouts?)/i.test(title);
-                return matchesCategory || (matchesKeywords && !looksLikeSportsMarket);
-            });
-        }
-    }
+    markets = filterMarketsByRequestedCategory(markets, category);
     // Sort by the requested metric
     const sorted = markets.sort((a, b) => {
         const tradeActivityA = activityByTicker.get(a.ticker);
@@ -3052,7 +3611,11 @@ async function handleDiscoverTrendingMarkets(args) {
     const totalVolume = trendingMarkets.reduce((sum, m) => sum + m.volume24h, 0);
     const formattedVolume = Number(totalVolume.toFixed(2)).toLocaleString();
     const marketSummary = `Showing ${trendingMarkets.length} of ${markets.length} active markets${category ? ` in ${category}` : ""}. Combined 24h contract volume: ${formattedVolume}`;
-    return successResult({
+    const trendingRecoveryHints = buildTrendingRecoveryHints({
+        category,
+        resultCount: trendingMarkets.length,
+    });
+    const trendingResponse = {
         marketSummary,
         trendingMarkets,
         totalActive: markets.length,
@@ -3066,7 +3629,12 @@ async function handleDiscoverTrendingMarkets(args) {
             usedTradeFallback: needsTradeFallback,
         },
         fetchedAt: new Date().toISOString(),
-    });
+    };
+    if (trendingRecoveryHints) {
+        trendingResponse.hint = `⚠️ discover_trending_markets returned 0 markets${category ? ` for category=${JSON.stringify(category)}` : ""}. Follow recoveryHints.nextTools before concluding nothing is active.`;
+        trendingResponse.recoveryHints = trendingRecoveryHints;
+    }
+    return successResult(trendingResponse);
 }
 async function handleAnalyzeMarketLiquidity(args) {
     const requestedTicker = args?.ticker;
@@ -3368,7 +3936,9 @@ async function handleCheckMarketEfficiency(args) {
         noPrice: m.no_ask || (100 - (m.yes_ask || m.last_price || 50)),
         impliedProbability: (m.yes_ask || m.last_price || 50) / 100,
     }));
-    const sumOfYesPrices = outcomes.reduce((sum, o) => sum + o.yesPrice, 0);
+    const sumOfYesPrices = outcomes.length === 1
+        ? outcomes[0].yesPrice + outcomes[0].noPrice
+        : outcomes.reduce((sum, o) => sum + o.yesPrice, 0);
     const vig = sumOfYesPrices - 100;
     const vigPercent = ((vig / 100) * 100).toFixed(2);
     let rating;
@@ -3394,9 +3964,13 @@ async function handleCheckMarketEfficiency(args) {
     }));
     const isEfficient = Math.abs(vig) <= 3;
     const recommendation = vig < -2
-        ? `OPPORTUNITY: Sum of prices is ${sumOfYesPrices}¢ < 100¢. Buying all outcomes guarantees ${Math.abs(vig).toFixed(0)}¢ profit.`
+        ? outcomes.length === 1
+            ? `OPPORTUNITY: YES + NO ask totals ${sumOfYesPrices}¢ < 100¢. Buying both sides guarantees ${Math.abs(vig).toFixed(0)}¢ profit.`
+            : `OPPORTUNITY: Sum of prices is ${sumOfYesPrices}¢ < 100¢. Buying all outcomes guarantees ${Math.abs(vig).toFixed(0)}¢ profit.`
         : vig > 5
-            ? `HIGH VIG: Market has ${vig.toFixed(0)}¢ overround. Consider this when sizing positions.`
+            ? outcomes.length === 1
+                ? `HIGH VIG: YES + NO ask totals ${sumOfYesPrices}¢, implying ${vig.toFixed(0)}¢ of overround on the binary book.`
+                : `HIGH VIG: Market has ${vig.toFixed(0)}¢ overround. Consider this when sizing positions.`
             : "Market is efficiently priced.";
     return successResult({
         market: eventTicker || ticker || "",
@@ -3484,7 +4058,7 @@ async function handleFindTradingOpportunities(args) {
         endpoint += `&category=${encodeURIComponent(category)}`;
     }
     const response = await fetchKalshi(endpoint);
-    let markets = response.markets || [];
+    let markets = filterMarketsByRequestedCategory(response.markets || [], category);
     // Filter by liquidity
     markets = markets.filter(m => (m.liquidity || 0) >= minLiquidity);
     // Apply strategy filters
@@ -4048,21 +4622,6 @@ async function handleSearchOnPolymarket(args) {
                 ...strongTickerAnchors,
                 ...matchWords.filter(word => word.length >= 6),
             ])];
-        const textMatchesWord = (searchText, word) => {
-            const variants = new Set([word]);
-            if (word.length > 4 && word.endsWith('s') && !word.endsWith('ss')) {
-                variants.add(word.slice(0, -1));
-            }
-            else if (word.length > 3 && !word.endsWith('s')) {
-                variants.add(`${word}s`);
-            }
-            for (const variant of variants) {
-                if (searchText.includes(variant)) {
-                    return true;
-                }
-            }
-            return false;
-        };
         const allResults = [];
         let rejectedWeakMatches = 0;
         // Use Polymarket's official /public-search API for server-side text search
@@ -4100,11 +4659,11 @@ async function handleSearchOnPolymarket(args) {
                 ].join(' ').toLowerCase();
                 let matchCount = 0;
                 for (const word of matchWords) {
-                    if (textMatchesWord(searchText, word)) {
+                    if (textMatchesSearchWord(searchText, word)) {
                         matchCount++;
                     }
                 }
-                const anchorMatchCount = strongKeywordAnchors.filter(word => textMatchesWord(searchText, word)).length;
+                const anchorMatchCount = strongKeywordAnchors.filter(word => textMatchesSearchWord(searchText, word)).length;
                 const matchScore = matchWords.length > 0 ? matchCount / matchWords.length : 1;
                 const minimumSignalMatches = matchWords.length === 0
                     ? 0
@@ -4165,7 +4724,7 @@ async function handleSearchOnPolymarket(args) {
 }
 // ==================== TIER 2: RAW DATA HANDLERS ====================
 async function handleGetEvents(args) {
-    const status = args?.status || "open";
+    const status = normalizeRequestedKalshiStatus(args?.status);
     const seriesTicker = args?.seriesTicker;
     const withNestedMarkets = args?.withNestedMarkets === true;
     const withMilestones = args?.withMilestones === true;
@@ -4190,13 +4749,34 @@ async function handleGetEvents(args) {
     }
     const response = await fetchKalshi(endpoint);
     const nextCursor = response.next_cursor || response.cursor || "";
-    const events = (response.events || []).map(e => ({
-        eventTicker: e.event_ticker,
-        title: e.title || e.event_ticker,
-        category: e.category || "Unknown",
-        status: e.status || "open",
-        marketsCount: Array.isArray(e.markets) ? e.markets.length : 0,
-    }));
+    const events = (response.events || []).map((event) => {
+        const result = {
+            eventTicker: event.event_ticker,
+            title: event.title || event.event_ticker,
+            category: event.category || "Unknown",
+            status: event.status || "open",
+            marketsCount: Array.isArray(event.markets) ? event.markets.length : 0,
+        };
+        if (withNestedMarkets && Array.isArray(event.markets)) {
+            result.markets = event.markets.map((market) => ({
+                ticker: market.ticker,
+                title: market.title || market.yes_sub_title || market.ticker,
+                yesPrice: market.yes_ask || market.last_price || 0,
+                noPrice: market.no_ask || (100 - (market.yes_ask || market.last_price || 50)),
+                yesBid: market.yes_bid || 0,
+                yesAsk: market.yes_ask || 0,
+                noBid: market.no_bid || 0,
+                noAsk: market.no_ask || 0,
+                volume: market.volume || 0,
+                volume24h: market.volume_24h || 0,
+                liquidity: market.liquidity || 0,
+                closeTime: market.close_time || "",
+                status: market.status || "open",
+                url: `https://kalshi.com/markets/${getSeriesTicker(market.event_ticker)}`,
+            }));
+        }
+        return result;
+    });
     return successResult({
         events,
         nextCursor,
@@ -4254,7 +4834,7 @@ async function handleGetMarkets(args) {
         endpoint += `&cursor=${encodeURIComponent(cursor)}`;
     const response = await fetchKalshi(endpoint);
     const nextCursor = response.next_cursor || response.cursor || "";
-    const markets = (response.markets || []).map((m) => ({
+    const markets = filterMarketsByRequestedCategory(response.markets || [], category).map((m) => ({
         ticker: m.ticker,
         eventTicker: m.event_ticker,
         title: m.title || m.yes_sub_title || m.ticker,
@@ -4275,7 +4855,12 @@ async function handleGetMarkets(args) {
         closeTime: m.close_time || "",
         url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
     }));
-    return successResult({
+    const marketsRecoveryHints = buildMarketsListRecoveryHints({
+        args,
+        resultCount: markets.length,
+        nextCursor,
+    });
+    const marketsResponse = {
         markets,
         nextCursor,
         cursor: nextCursor,
@@ -4288,7 +4873,15 @@ async function handleGetMarkets(args) {
             tickersCount: tickers.length,
         },
         fetchedAt: new Date().toISOString(),
-    });
+    };
+    if (marketsRecoveryHints) {
+        marketsResponse.hint =
+            markets.length === 0
+                ? `⚠️ get_markets returned 0 markets for the given filters. DO NOT refuse — follow recoveryHints.nextTools (broaden status, pivot to browse_category / discover_trending_markets, or fetch get_event directly).`
+                : `ℹ️ More pages available (nextCursor='${nextCursor.slice(0, 24)}...'). Paginate with cursor OR pivot to a ranked tool (recoveryHints.nextTools) before shortlisting a 'top N'.`;
+        marketsResponse.recoveryHints = marketsRecoveryHints;
+    }
+    return successResult(marketsResponse);
 }
 async function handleGetEvent(args) {
     let eventTicker = args?.eventTicker;
@@ -4334,6 +4927,13 @@ async function handleGetEvent(args) {
         if (resolvedFrom) {
             result.resolvedFrom = resolvedFrom;
         }
+        const fanoutHint = buildEventFanoutHint({
+            eventTicker: event.event_ticker,
+            markets,
+        });
+        if (fanoutHint) {
+            result.fanoutHint = fanoutHint;
+        }
         return successResult(result);
     }
     catch (error) {
@@ -4352,7 +4952,7 @@ async function handleGetEvent(args) {
                     volume: m.volume || 0,
                     status: m.status || "open",
                 }));
-                return successResult({
+                const fallbackResult = {
                     event: {
                         eventTicker: event.event_ticker,
                         title: event.title || event.event_ticker,
@@ -4362,7 +4962,15 @@ async function handleGetEvent(args) {
                     markets,
                     resolvedFrom: `fallback:${eventTicker}`,
                     fetchedAt: new Date().toISOString(),
+                };
+                const fallbackFanoutHint = buildEventFanoutHint({
+                    eventTicker: event.event_ticker,
+                    markets,
                 });
+                if (fallbackFanoutHint) {
+                    fallbackResult.fanoutHint = fallbackFanoutHint;
+                }
+                return successResult(fallbackResult);
             }
         }
         throw error;
@@ -4430,7 +5038,7 @@ async function handleGetEventBySlug(args) {
         canCloseEarly: m.can_close_early || false,
         earlyCloseCondition: m.early_close_condition || ""
     }));
-    return successResult({
+    const slugResult = {
         event: {
             eventTicker: event.event_ticker,
             seriesTicker: resolved.seriesTicker,
@@ -4441,7 +5049,15 @@ async function handleGetEventBySlug(args) {
         markets,
         resolvedFrom: `slug:${slug}`,
         fetchedAt: new Date().toISOString(),
+    };
+    const slugFanoutHint = buildEventFanoutHint({
+        eventTicker: event.event_ticker,
+        markets,
     });
+    if (slugFanoutHint) {
+        slugResult.fanoutHint = slugFanoutHint;
+    }
+    return successResult(slugResult);
 }
 async function handleGetMarket(args) {
     const ticker = args?.ticker;
@@ -4454,6 +5070,7 @@ async function handleGetMarket(args) {
             market: {
                 ticker: m.ticker,
                 eventTicker: m.event_ticker,
+                seriesTicker: getSeriesTicker(m.event_ticker),
                 title: m.title || m.yes_sub_title || m.ticker,
                 subtitle: m.subtitle || m.no_sub_title || "",
                 yesPrice: m.yes_ask || m.last_price || 0,
@@ -4489,6 +5106,59 @@ async function handleGetMarket(args) {
     catch (error) {
         if (!(error instanceof Error && error.message.includes('404'))) {
             throw error;
+        }
+    }
+    // Strategy 1.5: Auto-resolve event-level tickers (e.g. "KXOAIANTH-40") that buyers/
+    // agents sometimes pass to get_market. Without this, calls fall through to Strategy
+    // 2's regex (which only strips -0-prefixed suffixes) and waste 2-4 follow-up calls
+    // before eventually hitting resolve_slug. Returning the child market list + a
+    // recoveryHints payload lets the iterative planner pick the correct per-candidate
+    // ticker on its next step.
+    if (isEventLevelTicker(ticker)) {
+        const eventResolution = await resolveEventTickerToChildren(ticker);
+        if (eventResolution?.found && eventResolution.childMarkets.length > 0) {
+            const childMarkets = eventResolution.childMarkets;
+            const topChildren = [...childMarkets]
+                .sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0))
+                .slice(0, 10);
+            const payload = {
+                kind: "event_ticker_not_market",
+                eventTicker: ticker,
+                eventTitle: eventResolution.eventTitle,
+                seriesTicker: eventResolution.seriesTicker,
+                resolvedFrom: `event:${ticker}`,
+                childMarketCount: childMarkets.length,
+                childMarkets,
+                recoveryHints: {
+                    reason: `"${ticker}" is an EVENT ticker, not a MARKET ticker. Events have multiple sub-markets (one per candidate/outcome) and do not have their own yes/no price. Use one of the child tickers listed in childMarkets for get_market, get_market_orderbook, or get_market_candlesticks.`,
+                    nextTools: [
+                        {
+                            toolName: "get_market",
+                            suggestedArgs: { ticker: topChildren[0]?.ticker ?? childMarkets[0].ticker },
+                            reason: `Call get_market per child ticker (highest 24h volume first: ${topChildren.slice(0, 3).map((c) => c.ticker).join(", ")}) to get yes/no prices and liquidity.`,
+                        },
+                        {
+                            toolName: "get_market_candlesticks",
+                            suggestedArgs: {
+                                ticker: topChildren[0]?.ticker ?? childMarkets[0].ticker,
+                                periodInterval: 1440,
+                                startTs: Math.floor(Date.now() / 1000) - 86400 * 30,
+                                endTs: Math.floor(Date.now() / 1000),
+                            },
+                            reason: "For 30-day trajectories / re-pricing / moving averages, call get_market_candlesticks per child ticker with periodInterval=1440 (daily).",
+                        },
+                        {
+                            toolName: "get_event",
+                            suggestedArgs: { eventTicker: ticker, withNestedMarkets: true },
+                            reason: "Call get_event for the full event view (all child markets with prices and volume in one response).",
+                        },
+                    ],
+                    escalationNote: `Fan out the per-child call over ALL ${childMarkets.length} childMarkets if the query asks for a ranking, comparison, arbitrage, or 'tightest spread / strongest aggression / highest volume' across the event.`,
+                    shouldSynthesizeRefusal: false,
+                },
+                fetchedAt: new Date().toISOString(),
+            };
+            return successResult(payload);
         }
     }
     // Strategy 2: Try removing common suffixes AI might have added (like -001, -01, etc.)
@@ -4544,8 +5214,9 @@ async function handleGetMarket(args) {
 }
 async function handleSearchMarkets(args) {
     const query = args?.query;
-    const category = args?.category;
-    const status = args?.status || "open";
+    const requestedCategory = args?.category;
+    const category = normalizeKalshiCategoryName(requestedCategory) ?? requestedCategory;
+    const status = normalizeRequestedKalshiStatus(args?.status);
     const limit = Math.min(args?.limit || 20, 50);
     const maxSeriesScan = Math.min(args?.maxSeriesScan || 600, 1200);
     let markets = [];
@@ -4566,12 +5237,18 @@ async function handleSearchMarkets(args) {
         'climate': ['weather'],
         'tariff': ['tariffs'],
         'tariffs': ['tariff'],
+        'jobs': ['payrolls', 'employment'],
+        'payrolls': ['jobs', 'employment'],
+        'fomc': ['fed', 'federal', 'reserve'],
+        'nyc': ['new', 'york'],
     };
     const tokenizeQueryWords = (value) => value
         .toLowerCase()
         .replace(/[^a-z0-9\s]/g, ' ')
         .split(/\s+/)
-        .filter(word => word.length > 2 && !stopWords.has(word));
+        .filter(word => word.length > 2 &&
+        !stopWords.has(word) &&
+        !LOW_SIGNAL_SEARCH_WORDS.has(word));
     const expandQueryWords = (words) => {
         const expandedWords = new Set(words);
         for (const word of words) {
@@ -4587,9 +5264,78 @@ async function handleSearchMarkets(args) {
         }
         return [...expandedWords];
     };
+    const queryLower = query?.toLowerCase() || '';
     // Parse query words
     let queryWords = query ? expandQueryWords(tokenizeQueryWords(query)) : [];
-    const scoreQueryMatches = (searchText) => queryWords.reduce((total, word) => total + (searchText.includes(word) ? (word.length >= 6 ? 2 : 1) : 0), 0);
+    if (queryLower.includes('new york city') || queryLower.includes('new york')) {
+        queryWords = [...queryWords, 'nyc'];
+    }
+    if (/\b\d{2,3}f\b/.test(queryLower)) {
+        queryWords = [...queryWords, 'temperature', 'temp', 'high'];
+    }
+    if (queryLower.includes('jobs report')) {
+        queryWords = [...queryWords, 'payrolls', 'employment'];
+    }
+    // Preserve US jurisdiction signal. Tokenizer drops "U.S." / "US" (length <=2 after
+    // punctuation stripping) which lets non-US elections (e.g. Turkish, UK) win ranking
+    // on queries like "2028 U.S. Presidential Election". Re-inject strong US tokens.
+    const intentRequiresUSJurisdiction = /\bu\.s\.|\busa\b|\bunited states\b|\bamericans?\b/.test(queryLower) ||
+        (/\bpresident(?:ial)?\b/.test(queryLower) && /\bu\.?\s?s\.?\b/.test(queryLower));
+    if (intentRequiresUSJurisdiction) {
+        queryWords = [...queryWords, 'usa', 'america', 'american', 'united', 'states'];
+    }
+    queryWords = [...new Set(queryWords)];
+    const intentRequiresWeather = category === "climate and weather" ||
+        /\b(weather|climate|temperature|temp|hurricane|rain|snow|storm|heat)\b/.test(queryLower) ||
+        /\b\d{2,3}f\b/.test(queryLower);
+    const intentRequiresTariffs = /\b(tariff|tariffs|trade war|customs|import|china)\b/.test(queryLower);
+    const intentRequiresJobs = /\b(jobs?|payrolls?|employment|unemployment|nfp)\b/.test(queryLower);
+    const intentRequiresInflation = /\b(cpi|inflation|consumer price index|core cpi|pce)\b/.test(queryLower);
+    const intentRequiresFedRates = /\b(fed|fomc|federal reserve)\b/.test(queryLower) &&
+        /\b(rate|rates|cut|cuts|hike|hikes|funds|basis|bps|decision)\b/.test(queryLower);
+    const matchesStrictIntent = (searchText) => {
+        if (intentRequiresWeather &&
+            !/kxhigh|temperature|temp|weather|climate|hurricane|rain|snow|storm|heat|degree/.test(searchText)) {
+            return false;
+        }
+        if (intentRequiresTariffs &&
+            !/\btariff|tariffs|china|trade|customs|import/.test(searchText)) {
+            return false;
+        }
+        if (intentRequiresJobs &&
+            !/\bjob|jobs|payroll|payrolls|employment|unemployment|labor/.test(searchText) &&
+            !searchText.includes("kxpayroll")) {
+            return false;
+        }
+        if (intentRequiresInflation &&
+            !/\bcpi|inflation|consumer price index|core cpi|pce/.test(searchText) &&
+            !searchText.includes("kxcpi")) {
+            return false;
+        }
+        if (intentRequiresUSJurisdiction) {
+            const nonUSCountryPattern = /\b(turkey|turkish|uk|united kingdom|british|france|french|germany|german|japan|japanese|india|indian|mexico|mexican|brazil|brazilian|korea|korean|russia|russian|china|chinese|canada|canadian|argentina|argentine|pakistan|pakistani|taiwan|taiwanese|philippines|filipino|iran|iranian|israel|israeli|spain|spanish|italy|italian|poland|polish|venezuela|venezuelan|nigeria|nigerian|egypt|egyptian|saudi|australia|australian|south korea|north korea|indonesia|indonesian|thailand|thai|vietnam|vietnamese)\b/;
+            const hasUSSignal = /\b(us|u\.s\.|usa|united states|america|american)\b/.test(searchText) ||
+                /kx(pres|potus|djt|trump|gop|dem|senate|house|congress|biden|harris|vance|election)/.test(searchText);
+            if (nonUSCountryPattern.test(searchText) && !hasUSSignal) {
+                return false;
+            }
+        }
+        if (intentRequiresFedRates) {
+            if (!/\bfed|fomc|federal reserve/.test(searchText)) {
+                return false;
+            }
+            if (!/\brate|rates|cut|cuts|hike|hikes|funds|basis|bps|decision/.test(searchText) &&
+                !/kxfed|kxratecut|kxfomc|kxlargecut/.test(searchText)) {
+                return false;
+            }
+            if (/\bdissent|emergency meeting/.test(searchText) &&
+                !/\brate|cut|hike|funds|decision/.test(searchText)) {
+                return false;
+            }
+        }
+        return true;
+    };
+    const scoreQueryMatches = (searchText) => computeIntentMatchScore(searchText, queryWords);
     const explicitIdentifierTokens = query
         ? [...new Set((query.match(/\bkx[a-z0-9-]{5,}\b/gi) || []).map((token) => token.toUpperCase()))]
         : [];
@@ -4602,9 +5348,7 @@ async function handleSearchMarkets(args) {
             }
             const explicitMatch = explicitIdentifierTokens.includes(market.ticker.toUpperCase()) ||
                 explicitIdentifierTokens.includes((market.event_ticker || '').toUpperCase());
-            const matchesStatus = status === "all" ||
-                market.status === status ||
-                explicitMatch;
+            const matchesStatus = matchesRequestedKalshiStatus(status, market.status) || explicitMatch;
             if (!matchesStatus) {
                 return;
             }
@@ -4694,13 +5438,14 @@ async function handleSearchMarkets(args) {
                 }
             }
             // Step 4: Match query words to categories/tags and count matches per tag
-            let detectedCategory = null;
+            let detectedCategory = normalizeKalshiCategoryName(category);
             const tagMatchCounts = new Map();
             for (const word of queryWords) {
                 const match = wordToTagMap.get(word);
                 if (match) {
-                    if (!detectedCategory)
-                        detectedCategory = match.category;
+                    if (!detectedCategory) {
+                        detectedCategory = normalizeKalshiCategoryName(match.category);
+                    }
                     const existing = tagMatchCounts.get(match.tag);
                     if (existing) {
                         existing.count++;
@@ -4759,13 +5504,13 @@ async function handleSearchMarkets(args) {
                     // Keep the narrower tag-derived pool if the broad supplement fails.
                 }
             }
-            let allSeries = [...allSeriesMap.values()];
+            let allSeries = filterSeriesByRequestedCategory([...allSeriesMap.values()], category);
             console.log(`[Kalshi Search] Total unique series from tag searches: ${allSeries.length}`);
             // If still no results, fall back to broader search
             if (allSeries.length === 0) {
                 console.log('[Kalshi Search] No results with filters, falling back to broader search');
                 const fallbackResponse = await fetchKalshi(`/series?limit=${maxSeriesScan}`);
-                allSeries = fallbackResponse.series || [];
+                allSeries = filterSeriesByRequestedCategory(fallbackResponse.series || [], category);
             }
             // Initial filter - any query word matches series title/ticker/tags
             // Also pre-score for better initial ranking
@@ -4774,7 +5519,7 @@ async function handleSearchMarkets(args) {
                 const tagsText = Array.isArray(s.tags) ? s.tags.join(' ') : '';
                 const searchText = ((s.title || '') + ' ' + s.ticker + ' ' + tagsText).toLowerCase();
                 const matchScore = scoreQueryMatches(searchText);
-                if (matchScore > 0) {
+                if (matchScore > 0 && hasCredibleIntentMatch(searchText, queryWords)) {
                     initialMatches.push({ series: s, score: matchScore });
                 }
             }
@@ -4810,7 +5555,9 @@ async function handleSearchMarkets(args) {
                         }
                         // Score based on ALL text: series title + event title + ticker
                         const fullText = ((s.title || '') + ' ' + eventTitle + ' ' + s.ticker).toLowerCase();
-                        const score = scoreQueryMatches(fullText);
+                        const score = hasCredibleIntentMatch(fullText, queryWords)
+                            ? scoreQueryMatches(fullText)
+                            : 0;
                         // Bonus for exact phrase matches
                         const bonusScore = queryWords.length > 1 && fullText.includes(queryWords.join(' ')) ? 3 : 0;
                         return { series: s, eventTitle, score: score + bonusScore, hasMarkets: !!firstMarket };
@@ -4818,7 +5565,14 @@ async function handleSearchMarkets(args) {
                     catch {
                         // If all fetches fail, use series data only
                         const fullText = ((s.title || '') + ' ' + s.ticker).toLowerCase();
-                        return { series: s, eventTitle: s.title || '', score: scoreQueryMatches(fullText), hasMarkets: false };
+                        return {
+                            series: s,
+                            eventTitle: s.title || '',
+                            score: hasCredibleIntentMatch(fullText, queryWords)
+                                ? scoreQueryMatches(fullText)
+                                : 0,
+                            hasMarkets: false,
+                        };
                     }
                 });
                 const results = await Promise.all(eventPromises);
@@ -4881,12 +5635,44 @@ async function handleSearchMarkets(args) {
     if (query) {
         markets = markets.filter(m => {
             const searchText = ((m.title || '') + ' ' + (m.yes_sub_title || '') + ' ' + m.ticker + ' ' + m.event_ticker).toLowerCase();
-            return queryWords.some(word => {
-                const regex = new RegExp(`\\b${word}\\b`, 'i');
-                return regex.test(searchText);
-            });
+            return hasCredibleIntentMatch(searchText, queryWords) && matchesStrictIntent(searchText);
         });
     }
+    markets = filterMarketsByRequestedCategory(markets, requestedCategory);
+    const timeSensitiveQuery = queryLower.includes('next') ||
+        queryLower.includes('soon') ||
+        queryLower.includes('this week');
+    const scoreMarketResult = (market) => {
+        const searchText = [
+            market.title || '',
+            market.subtitle || '',
+            market.yes_sub_title || '',
+            market.ticker,
+            market.event_ticker,
+        ]
+            .join(' ')
+            .toLowerCase();
+        let score = scoreQueryMatches(searchText);
+        if (matchesRequestedKalshiCategory({
+            requestedCategory: requestedCategory,
+            recordCategory: market.category,
+            text: searchText,
+        })) {
+            score += 2;
+        }
+        if (timeSensitiveQuery && market.close_time) {
+            const closeTs = Date.parse(market.close_time);
+            if (!Number.isNaN(closeTs) && closeTs > Date.now()) {
+                const hoursUntilClose = (closeTs - Date.now()) / (1000 * 60 * 60);
+                score += Math.max(0, 8 - hoursUntilClose / 48);
+            }
+        }
+        score += Math.min((market.volume_24h || 0) / 5000, 2);
+        return score;
+    };
+    markets.sort((left, right) => scoreMarketResult(right) - scoreMarketResult(left) ||
+        (right.volume_24h || 0) - (left.volume_24h || 0) ||
+        (right.liquidity || 0) - (left.liquidity || 0));
     let results = markets.slice(0, limit).map(m => ({
         title: m.title || m.yes_sub_title || m.ticker,
         ticker: m.ticker,
@@ -4924,12 +5710,24 @@ async function handleSearchMarkets(args) {
     const selectedHint = selectedResult
         ? ` Best match: ${selectedResult.title} (${selectedResult.ticker}, status: ${selectedResult.status}).`
         : "";
+    const selectedConfidence = searchResolution?.confidence ?? null;
+    const lowConfidence = selectedConfidence === "low" ||
+        (results.length > 0 && !selectedResult && !!query);
+    const recoveryHints = buildSearchRecoveryHints({
+        query,
+        category: requestedCategory,
+        resultCount: results.length,
+        lowConfidence,
+        selectedTitle: selectedResult?.title ?? null,
+    });
     // Build helpful hint
     const hint = results.length === 0 && query
-        ? `⚠️ No Kalshi markets found for "${query}". Try: (1) Different keywords, (2) Check kalshi.com for the exact URL, (3) Use get_event_by_slug with the slug from the URL.`
-        : matchedSeries.length > 0
-            ? `✅ Found ${results.length} markets via series search. Matched series: ${matchedSeries.slice(0, 5).join(', ')}.${selectedHint}`
-            : `Found ${results.length} markets matching "${query || 'all'}".${selectedHint}`;
+        ? `⚠️ No Kalshi markets found for "${query}". DO NOT synthesize a refusal. Next: call one of recoveryHints.nextTools — e.g. resolve_slug / get_event_by_slug for a slug guess, or search_markets again with a single-keyword query and NO category filter.`
+        : lowConfidence
+            ? `⚠️ Low-confidence match${selectedHint ? ` (${selectedHint.trim()})` : ""}. Results may be semantically irrelevant — call recoveryHints.nextTools before answering.`
+            : matchedSeries.length > 0
+                ? `✅ Found ${results.length} markets via series search. Matched series: ${matchedSeries.slice(0, 5).join(', ')}.${selectedHint}`
+                : `Found ${results.length} markets matching "${query || 'all'}".${selectedHint}`;
     const responseData = {
         results,
         count: results.length,
@@ -4942,6 +5740,9 @@ async function handleSearchMarkets(args) {
         hint,
         fetchedAt: new Date().toISOString(),
     };
+    if (recoveryHints) {
+        responseData.recoveryHints = recoveryHints;
+    }
     return successResult(searchResolution
         ? attachContributorSearchMetadata(responseData, searchResolution)
         : responseData);
@@ -5041,6 +5842,54 @@ async function handleGetMarketCandlesticks(args) {
     const endTs = args?.endTs || Math.floor(Date.now() / 1000);
     const periodInterval = args?.periodInterval || 60;
     const includeLatestBeforeStart = args?.includeLatestBeforeStart === true;
+    // Detect event-level tickers (e.g. "KXOAIANTH-40", "KXRAMPBREX-40") before issuing
+    // the batch call. The upstream /markets/candlesticks endpoint silently returns an
+    // empty markets array for event-level tickers (no error, ~124 bytes) which wastes a
+    // tool call without giving the iterative planner anything to pivot on. Auto-resolve
+    // to child markets here so the planner can fan out per-child on the next step.
+    if (isEventLevelTicker(ticker)) {
+        const eventResolution = await resolveEventTickerToChildren(ticker);
+        if (eventResolution?.found && eventResolution.childMarkets.length > 0) {
+            const childMarkets = eventResolution.childMarkets;
+            const topChildren = [...childMarkets]
+                .sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0))
+                .slice(0, 10);
+            const primaryChild = topChildren[0]?.ticker ?? childMarkets[0].ticker;
+            return successResult({
+                kind: "event_ticker_not_market",
+                requestedTicker: ticker,
+                eventTitle: eventResolution.eventTitle,
+                seriesTicker: eventResolution.seriesTicker,
+                resolvedFrom: `event:${ticker}`,
+                childMarketCount: childMarkets.length,
+                childMarkets,
+                candlesticks: [],
+                recoveryHints: {
+                    reason: `"${ticker}" is an EVENT ticker, not a MARKET ticker. get_market_candlesticks returns one time-series per child market, not per event. Call this tool again with a child ticker from childMarkets.`,
+                    nextTools: [
+                        {
+                            toolName: "get_market_candlesticks",
+                            suggestedArgs: {
+                                ticker: primaryChild,
+                                periodInterval,
+                                startTs,
+                                endTs,
+                            },
+                            reason: `Retry with the highest-24h-volume child ticker first (${topChildren.slice(0, 3).map((c) => c.ticker).join(", ")}). Fan out over additional children if the query needs per-candidate comparison.`,
+                        },
+                        {
+                            toolName: "get_event",
+                            suggestedArgs: { eventTicker: ticker, withNestedMarkets: true },
+                            reason: "Full event snapshot with all child markets (yes/no prices, volume) in a single call.",
+                        },
+                    ],
+                    escalationNote: `Fan out per-child candlesticks over ALL ${childMarkets.length} childMarkets for event-level trajectory / re-pricing / moving-average analyses.`,
+                    shouldSynthesizeRefusal: false,
+                },
+                fetchedAt: new Date().toISOString(),
+            });
+        }
+    }
     const baseBatchEndpoint = `/markets/candlesticks?market_tickers=${encodeURIComponent(ticker)}&start_ts=${startTs}&end_ts=${endTs}&period_interval=${periodInterval}`;
     const batchEndpoint = includeLatestBeforeStart
         ? `${baseBatchEndpoint}&include_latest_before_start=true`
@@ -5195,14 +6044,18 @@ async function handleGetAllCategories(_args) {
     });
 }
 async function handleGetAllSeries(args) {
-    const category = args?.category;
+    const requestedCategory = args?.category;
+    const category = normalizeKalshiCategoryName(requestedCategory) ?? requestedCategory;
     const tags = args?.tags;
     const limit = Math.min(args?.limit || 100, 200);
-    let endpoint = `/series?limit=${limit}`;
-    if (category) {
+    const shouldHydrateLocally = Boolean(category || tags);
+    let endpoint = shouldHydrateLocally
+        ? `/series?limit=10000`
+        : `/series?limit=${limit}`;
+    if (!shouldHydrateLocally && category) {
         endpoint += `&category=${encodeURIComponent(category)}`;
     }
-    if (tags) {
+    if (!shouldHydrateLocally && tags) {
         endpoint += `&tags=${encodeURIComponent(tags)}`;
     }
     let response;
@@ -5214,7 +6067,29 @@ async function handleGetAllSeries(args) {
         warning = `series list unavailable for endpoint ${endpoint}: ${error instanceof Error ? error.message : "unknown error"}`;
         response = { series: [] };
     }
-    const series = (response.series || []).map((s) => ({
+    let seriesSnapshot = response.series || [];
+    if (requestedCategory) {
+        seriesSnapshot = filterSeriesByRequestedCategory(seriesSnapshot, requestedCategory);
+    }
+    if (tags) {
+        const wantedTags = tags
+            .split(",")
+            .map((value) => value.trim().toLowerCase())
+            .filter((value) => value.length > 0);
+        if (wantedTags.length > 0) {
+            seriesSnapshot = seriesSnapshot.filter((seriesEntry) => {
+                const searchText = [
+                    seriesEntry.title || "",
+                    seriesEntry.ticker || "",
+                    Array.isArray(seriesEntry.tags) ? seriesEntry.tags.join(" ") : "",
+                ]
+                    .join(" ")
+                    .toLowerCase();
+                return wantedTags.every((tag) => searchText.includes(tag));
+            });
+        }
+    }
+    const series = seriesSnapshot.slice(0, limit).map((s) => ({
         ticker: s.ticker,
         title: s.title || s.ticker,
         category: s.category || "Unknown",
@@ -5269,11 +6144,12 @@ async function handleGetSeries(args) {
     return handleGetAllSeries(args);
 }
 async function handleBrowseCategory(args) {
-    const category = args?.category;
-    if (!category) {
+    const requestedCategory = args?.category;
+    if (!requestedCategory) {
         return errorResult("category is required");
     }
-    const status = args?.status || "open";
+    const category = normalizeKalshiCategoryName(requestedCategory) ?? requestedCategory;
+    const status = normalizeRequestedKalshiStatus(args?.status);
     const sortBy = args?.sortBy || "volume_24h";
     const limit = Math.min(args?.limit || 50, 100);
     let endpoint = `/markets?limit=${limit}&category=${encodeURIComponent(category)}`;
@@ -5281,7 +6157,7 @@ async function handleBrowseCategory(args) {
         endpoint += `&status=${status}`;
     }
     const response = await fetchKalshi(endpoint);
-    let markets = response.markets || [];
+    let markets = filterMarketsByRequestedCategory(response.markets || [], requestedCategory).filter((market) => matchesRequestedKalshiStatus(status, market.status));
     // Sort
     markets.sort((a, b) => {
         switch (sortBy) {
@@ -5307,19 +6183,30 @@ async function handleBrowseCategory(args) {
         closeTime: m.close_time || "",
         status: m.status || "open",
     }));
-    return successResult({
-        category,
+    const recoveryHints = buildCategoryRecoveryHints({
+        category: requestedCategory,
+        status,
+        resultCount: marketsResult.length,
+    });
+    const browseCategoryResponse = {
+        category: requestedCategory,
         markets: marketsResult,
         totalCount: marketsResult.length,
         fetchedAt: new Date().toISOString(),
-    });
+    };
+    if (recoveryHints) {
+        browseCategoryResponse.hint = `⚠️ browse_category returned 0 markets for ${JSON.stringify(requestedCategory)} (status=${status}). DO NOT conclude the category is empty — follow recoveryHints.nextTools (get_all_series + discover_trending_markets + get_markets with broader status).`;
+        browseCategoryResponse.recoveryHints = recoveryHints;
+    }
+    return successResult(browseCategoryResponse);
 }
 async function handleBrowseSeries(args) {
     const seriesTicker = args?.seriesTicker;
     if (!seriesTicker) {
         return errorResult("seriesTicker is required");
     }
-    const status = args?.status || "open";
+    const status = normalizeRequestedKalshiStatus(args?.status);
+    const sortBy = args?.sortBy;
     const limit = Math.min(args?.limit || 50, 100);
     // Get series info
     const seriesRes = await fetchKalshi(`/series/${encodeURIComponent(seriesTicker)}`);
@@ -5330,23 +6217,60 @@ async function handleBrowseSeries(args) {
         endpoint += `&status=${status}`;
     }
     const response = await fetchKalshi(endpoint);
-    const markets = (response.markets || []).map(m => ({
+    const markets = (response.markets || [])
+        .filter((market) => matchesRequestedKalshiStatus(status, market.status))
+        .map((m) => ({
         title: m.title || m.yes_sub_title || m.ticker,
         ticker: m.ticker,
         eventTicker: m.event_ticker,
         url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
         yesPrice: m.yes_ask || m.last_price || 0,
+        noPrice: m.no_ask || (100 - (m.yes_ask || m.last_price || 50)),
         volume24h: m.volume_24h || 0,
+        liquidity: m.liquidity || 0,
         closeTime: m.close_time || "",
         status: m.status || "open",
+        category: m.category || "Unknown",
     }));
-    return successResult({
+    if (sortBy === "volume_24h") {
+        markets.sort((a, b) => b.volume24h - a.volume24h);
+    }
+    else if (sortBy === "liquidity") {
+        markets.sort((a, b) => b.liquidity - a.liquidity);
+    }
+    else if (sortBy === "close_time") {
+        markets.sort((a, b) => {
+            const aTime = Date.parse(a.closeTime);
+            const bTime = Date.parse(b.closeTime);
+            if (!Number.isFinite(aTime) && !Number.isFinite(bTime)) {
+                return 0;
+            }
+            if (!Number.isFinite(aTime)) {
+                return 1;
+            }
+            if (!Number.isFinite(bTime)) {
+                return -1;
+            }
+            return aTime - bTime;
+        });
+    }
+    const seriesRecoveryHints = buildSeriesRecoveryHints({
+        seriesTicker,
+        status,
+        resultCount: markets.length,
+    });
+    const browseSeriesResponse = {
         seriesTicker,
         seriesTitle: series?.title || seriesTicker,
         markets,
         totalCount: markets.length,
         fetchedAt: new Date().toISOString(),
-    });
+    };
+    if (seriesRecoveryHints) {
+        browseSeriesResponse.hint = `⚠️ browse_series returned 0 markets for ${JSON.stringify(seriesTicker)} (status=${status}). Follow recoveryHints.nextTools before concluding.`;
+        browseSeriesResponse.recoveryHints = seriesRecoveryHints;
+    }
+    return successResult(browseSeriesResponse);
 }
 // ============================================================================
 // EXPRESS SERVER WITH SECURITY MIDDLEWARE

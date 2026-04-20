@@ -1,0 +1,2306 @@
+{
+  "generatedAt": "2026-04-20T07:33:53.701Z",
+  "serverName": "kalshi-contributor",
+  "runType": "full-enhancement",
+  "codeChanged": false,
+  "promptPoolRegenerated": true,
+  "autoQueryValidationRun": true,
+  "toolCount": 0,
+  "formFields": {
+    "name": "Kalshi Intelligence",
+    "description": "Live Kalshi market intelligence for screening tradable event contracts, inspecting orderbook depth and spreads, flagging structural and cross-venue arbitrage, and reading trade flow from one MCP endpoint.\n\nFeatures:\n- Screen the live Kalshi board by volume, probability band, and tradeability — not just by headline popularity\n- Pull per-market orderbook depth, bid/ask spreads, and slippage context for sizing real Yes/No entries\n- Decompose events and series into sub-markets and flag yes_bid+no_bid arbitrage or cross-market overround\n- Read recent trades, candlesticks, and sentiment in one grounded answer, with direct tickers and close times\n- Cross-reference Kalshi legs against Polymarket via kalshi_crossref_polymarket to catch venue-level mispricings\n\nTry asking:\n- \"Show me the top 10 trending Kalshi markets right now by 24h volume — include ticker, title, yes price, and liquidity.\"\n- \"For the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299, what are the current yes/no bid and ask, the implied probability from the midpoint, and the bid-ask spread in cents?\"\n- \"For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).\"\n- \"Analyze sentiment on KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 using the last 24h of trades and price action — is smart money leaning Yes or No?\"\n- \"Walk me through a full trading workflow on KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA: current pricing, orderbook depth to fill $1,000 Yes, trade-flow direction in the last 6 hours, and a rec with risk.\"\n- \"Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap.\"\n\nAgent tips:\n- Start with discover_trending_markets or get_markets_by_probability for live ranked screens, then pivot into get_market and get_market_orderbook for microstructure\n- When the user names an event or asks for \"all/every\" sub-markets, use get_event with with_nested_markets=true and follow up with get_markets if the event fans out\n- Use check_market_efficiency and find_arbitrage_opportunities before calling an edge real — yes_bid+no_bid<100 is the Kalshi-native structural test\n- Use kalshi_crossref_polymarket only after you have a concrete Kalshi ticker so Yes/No semantics stay aligned across venues",
+    "category": "Finance & Markets",
+    "price": "0.10",
+    "endpoint": "https://mcp.ctxprotocol.com/kalshi/mcp"
+  },
+  "generatedDescription": "Live Kalshi market intelligence for screening tradable event contracts, inspecting orderbook depth and spreads, flagging structural and cross-venue arbitrage, and reading trade flow from one MCP endpoint.\n\nFeatures:\n- Screen the live Kalshi board by volume, probability band, and tradeability — not just by headline popularity\n- Pull per-market orderbook depth, bid/ask spreads, and slippage context for sizing real Yes/No entries\n- Decompose events and series into sub-markets and flag yes_bid+no_bid arbitrage or cross-market overround\n- Read recent trades, candlesticks, and sentiment in one grounded answer, with direct tickers and close times\n- Cross-reference Kalshi legs against Polymarket via kalshi_crossref_polymarket to catch venue-level mispricings\n\nTry asking:\n- \"Show me the top 10 trending Kalshi markets right now by 24h volume — include ticker, title, yes price, and liquidity.\"\n- \"For the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299, what are the current yes/no bid and ask, the implied probability from the midpoint, and the bid-ask spread in cents?\"\n- \"For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).\"\n- \"Analyze sentiment on KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 using the last 24h of trades and price action — is smart money leaning Yes or No?\"\n- \"Walk me through a full trading workflow on KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA: current pricing, orderbook depth to fill $1,000 Yes, trade-flow direction in the last 6 hours, and a rec with risk.\"\n- \"Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap.\"\n\nAgent tips:\n- Start with discover_trending_markets or get_markets_by_probability for live ranked screens, then pivot into get_market and get_market_orderbook for microstructure\n- When the user names an event or asks for \"all/every\" sub-markets, use get_event with with_nested_markets=true and follow up with get_markets if the event fans out\n- Use check_market_efficiency and find_arbitrage_opportunities before calling an edge real — yes_bid+no_bid<100 is the Kalshi-native structural test\n- Use kalshi_crossref_polymarket only after you have a concrete Kalshi ticker so Yes/No semantics stay aligned across venues",
+  "candidatePromptPool": [
+    {
+      "prompt": "Show me the top 10 trending Kalshi markets right now by 24h volume — include ticker, title, yes price, and liquidity.",
+      "mustWin": true,
+      "alphaCategory": "discovery-screening",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q1: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "For the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299, what are the current yes/no bid and ask, the implied probability from the midpoint, and the bid-ask spread in cents?",
+      "mustWin": true,
+      "alphaCategory": "pricing-efficiency",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q2: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "Pull the full orderbook for KXMVESPORTSMULTIGAMEEXTENDED-S2026CD1E5D81F28-6E30FBDE5BD and tell me the dollar size I could buy Yes with <= 2 cents of slippage.",
+      "mustWin": true,
+      "alphaCategory": "liquidity-depth",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q3: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "Run the market efficiency check on KXMVECROSSCATEGORY-S2026BC8725F16E4-1BA7E7F4DEC. Does yes_bid + no_bid < 100? If so, what is the implied arb edge?",
+      "mustWin": true,
+      "alphaCategory": "arbitrage-opportunities",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q4: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "Fetch the last 50 trades on KXMVESPORTSMULTIGAMEEXTENDED-S202628F048239CC-FE199BD14F4 and tell me net Yes vs No volume over the last hour.",
+      "mustWin": true,
+      "alphaCategory": "flow-and-trades",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q5: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "Give me 1-hour candlesticks for KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D over the last 24 hours — report OHLC for Yes price and total volume per bar.",
+      "mustWin": true,
+      "alphaCategory": "flow-and-trades",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q6: paid vs free differentiation=high_differentiation"
+    },
+    {
+      "prompt": "For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).",
+      "mustWin": true,
+      "alphaCategory": "event-structure",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q7: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "List every active market in the KXMVECROSSCATEGORY-S2026EA752452A61 event and rank them by yes_ask — which single-name has the tightest spread?",
+      "mustWin": true,
+      "alphaCategory": "event-structure",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q8: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "Find all Kalshi markets where yes_ask is between 20 and 35 cents — I want outright longshots with a cheap premium.",
+      "mustWin": true,
+      "alphaCategory": "discovery-screening",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q9: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "Resolve the slug for event KXMVECROSSCATEGORY-S2026BC8725F16E4 and then pull the event-level candlestick for the last 7 days at 1-day granularity.",
+      "mustWin": true,
+      "alphaCategory": "event-structure",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q10: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "Analyze sentiment on KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 using the last 24h of trades and price action — is smart money leaning Yes or No?",
+      "mustWin": true,
+      "alphaCategory": "flow-and-trades",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q11: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "Use kalshi_crossref_polymarket on the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202602150E22176-FC050A30E2D and flag any sub-leg where an equivalent Polymarket market exists with >3 cent price divergence.",
+      "mustWin": true,
+      "alphaCategory": "arbitrage-opportunities",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q12: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "List every Kalshi event closing before 2026-04-25 — imminent-settlement shortlist with tickers and close times.",
+      "mustWin": true,
+      "alphaCategory": "discovery-screening",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q16: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "Walk me through a full trading workflow on KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA: current pricing, orderbook depth to fill $1,000 Yes, trade-flow direction in the last 6 hours, and a rec with risk.",
+      "mustWin": true,
+      "alphaCategory": "workflow-synthesis",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q17: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "Browse the series KXMVECROSSCATEGORY and tell me how many active events it has and the total 24h volume rolled up across them.",
+      "mustWin": true,
+      "alphaCategory": "event-structure",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q19: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "On KXMVECROSSCATEGORY-S20260B3344E1366-C1C600EA12C, are yes_bid + no_bid < 99? If so quantify the riskless edge after a 7% taker fee.",
+      "mustWin": true,
+      "alphaCategory": "arbitrage-opportunities",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q20: paid vs free differentiation=high_differentiation"
+    },
+    {
+      "prompt": "Search Kalshi for markets whose title mentions 'Victor Wembanyama' and rank by yes_ask — where is the market pricing his 35+ point line?",
+      "mustWin": true,
+      "alphaCategory": "discovery-screening",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q21: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "For the NHL-centric market KXMVESPORTSMULTIGAMEEXTENDED-S20268F24BEFAD58-0EA9403DBFE closing 2026-05-10, give me the current yes price, 24h volume, and the 15-min candlestick series since open.",
+      "mustWin": true,
+      "alphaCategory": "flow-and-trades",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q22: paid vs free differentiation=high_differentiation"
+    },
+    {
+      "prompt": "Scan all open Kalshi markets and return the 5 with the widest yes bid-ask spread — these are the least efficiently priced right now.",
+      "mustWin": true,
+      "alphaCategory": "pricing-efficiency",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q23: paid vs free differentiation=moderate_differentiation"
+    },
+    {
+      "prompt": "Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap.",
+      "mustWin": true,
+      "alphaCategory": "workflow-synthesis",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+      "comparisonNote": "q24: paid vs free differentiation=moderate_differentiation"
+    }
+  ],
+  "promptSets": {
+    "showcasePrompts": [
+      "Show me the top 10 trending Kalshi markets right now by 24h volume — include ticker, title, yes price, and liquidity.",
+      "For the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299, what are the current yes/no bid and ask, the implied probability from the midpoint, and the bid-ask spread in cents?",
+      "For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).",
+      "Analyze sentiment on KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 using the last 24h of trades and price action — is smart money leaning Yes or No?",
+      "Walk me through a full trading workflow on KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA: current pricing, orderbook depth to fill $1,000 Yes, trade-flow direction in the last 6 hours, and a rec with risk.",
+      "Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap."
+    ],
+    "regressionPrompts": [
+      "Show me the top 10 trending Kalshi markets right now by 24h volume — include ticker, title, yes price, and liquidity.",
+      "For the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299, what are the current yes/no bid and ask, the implied probability from the midpoint, and the bid-ask spread in cents?",
+      "Pull the full orderbook for KXMVESPORTSMULTIGAMEEXTENDED-S2026CD1E5D81F28-6E30FBDE5BD and tell me the dollar size I could buy Yes with <= 2 cents of slippage.",
+      "Run the market efficiency check on KXMVECROSSCATEGORY-S2026BC8725F16E4-1BA7E7F4DEC. Does yes_bid + no_bid < 100? If so, what is the implied arb edge?",
+      "Fetch the last 50 trades on KXMVESPORTSMULTIGAMEEXTENDED-S202628F048239CC-FE199BD14F4 and tell me net Yes vs No volume over the last hour.",
+      "Give me 1-hour candlesticks for KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D over the last 24 hours — report OHLC for Yes price and total volume per bar.",
+      "For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).",
+      "List every active market in the KXMVECROSSCATEGORY-S2026EA752452A61 event and rank them by yes_ask — which single-name has the tightest spread?",
+      "Find all Kalshi markets where yes_ask is between 20 and 35 cents — I want outright longshots with a cheap premium.",
+      "Resolve the slug for event KXMVECROSSCATEGORY-S2026BC8725F16E4 and then pull the event-level candlestick for the last 7 days at 1-day granularity.",
+      "Analyze sentiment on KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 using the last 24h of trades and price action — is smart money leaning Yes or No?",
+      "Use kalshi_crossref_polymarket on the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202602150E22176-FC050A30E2D and flag any sub-leg where an equivalent Polymarket market exists with >3 cent price divergence.",
+      "List every Kalshi event closing before 2026-04-25 — imminent-settlement shortlist with tickers and close times.",
+      "Walk me through a full trading workflow on KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA: current pricing, orderbook depth to fill $1,000 Yes, trade-flow direction in the last 6 hours, and a rec with risk.",
+      "Browse the series KXMVECROSSCATEGORY and tell me how many active events it has and the total 24h volume rolled up across them.",
+      "On KXMVECROSSCATEGORY-S20260B3344E1366-C1C600EA12C, are yes_bid + no_bid < 99? If so quantify the riskless edge after a 7% taker fee.",
+      "Search Kalshi for markets whose title mentions 'Victor Wembanyama' and rank by yes_ask — where is the market pricing his 35+ point line?",
+      "For the NHL-centric market KXMVESPORTSMULTIGAMEEXTENDED-S20268F24BEFAD58-0EA9403DBFE closing 2026-05-10, give me the current yes price, 24h volume, and the 15-min candlestick series since open.",
+      "Scan all open Kalshi markets and return the 5 with the widest yes bid-ask spread — these are the least efficiently priced right now.",
+      "Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap."
+    ]
+  },
+  "questionMarketFit": {
+    "genericChatbotBaseline": "The free no-tools baseline remains weak on live Kalshi liquidity, spread, orderbook, trade flow, event-structure, and cross-venue semantic questions because it cannot access the current Kalshi board.",
+    "mustWinQuestions": [
+      {
+        "question": "Show me the top 10 trending Kalshi markets right now by 24h volume — include ticker, title, yes price, and liquidity.",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q1: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "For the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299, what are the current yes/no bid and ask, the implied probability from the midpoint, and the bid-ask spread in cents?",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q2: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "Pull the full orderbook for KXMVESPORTSMULTIGAMEEXTENDED-S2026CD1E5D81F28-6E30FBDE5BD and tell me the dollar size I could buy Yes with <= 2 cents of slippage.",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q3: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "Run the market efficiency check on KXMVECROSSCATEGORY-S2026BC8725F16E4-1BA7E7F4DEC. Does yes_bid + no_bid < 100? If so, what is the implied arb edge?",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q4: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "Fetch the last 50 trades on KXMVESPORTSMULTIGAMEEXTENDED-S202628F048239CC-FE199BD14F4 and tell me net Yes vs No volume over the last hour.",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q5: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "Give me 1-hour candlesticks for KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D over the last 24 hours — report OHLC for Yes price and total volume per bar.",
+        "genericChatbotBaseline": "weak",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "high_differentiation",
+        "freeLlmComparisonNote": "q6: paid vs free differentiation=high_differentiation"
+      },
+      {
+        "question": "For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q7: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "List every active market in the KXMVECROSSCATEGORY-S2026EA752452A61 event and rank them by yes_ask — which single-name has the tightest spread?",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q8: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "Find all Kalshi markets where yes_ask is between 20 and 35 cents — I want outright longshots with a cheap premium.",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q9: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "Resolve the slug for event KXMVECROSSCATEGORY-S2026BC8725F16E4 and then pull the event-level candlestick for the last 7 days at 1-day granularity.",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q10: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "Analyze sentiment on KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 using the last 24h of trades and price action — is smart money leaning Yes or No?",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q11: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "Use kalshi_crossref_polymarket on the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202602150E22176-FC050A30E2D and flag any sub-leg where an equivalent Polymarket market exists with >3 cent price divergence.",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q12: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "List every Kalshi event closing before 2026-04-25 — imminent-settlement shortlist with tickers and close times.",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q16: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "Walk me through a full trading workflow on KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA: current pricing, orderbook depth to fill $1,000 Yes, trade-flow direction in the last 6 hours, and a rec with risk.",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q17: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "Browse the series KXMVECROSSCATEGORY and tell me how many active events it has and the total 24h volume rolled up across them.",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q19: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "On KXMVECROSSCATEGORY-S20260B3344E1366-C1C600EA12C, are yes_bid + no_bid < 99? If so quantify the riskless edge after a 7% taker fee.",
+        "genericChatbotBaseline": "weak",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "high_differentiation",
+        "freeLlmComparisonNote": "q20: paid vs free differentiation=high_differentiation"
+      },
+      {
+        "question": "Search Kalshi for markets whose title mentions 'Victor Wembanyama' and rank by yes_ask — where is the market pricing his 35+ point line?",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q21: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "For the NHL-centric market KXMVESPORTSMULTIGAMEEXTENDED-S20268F24BEFAD58-0EA9403DBFE closing 2026-05-10, give me the current yes price, 24h volume, and the 15-min candlestick series since open.",
+        "genericChatbotBaseline": "weak",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "high_differentiation",
+        "freeLlmComparisonNote": "q22: paid vs free differentiation=high_differentiation"
+      },
+      {
+        "question": "Scan all open Kalshi markets and return the 5 with the widest yes bid-ask spread — these are the least efficiently priced right now.",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q23: paid vs free differentiation=moderate_differentiation"
+      },
+      {
+        "question": "Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap.",
+        "genericChatbotBaseline": "partial",
+        "currentDirectMcp": "pass",
+        "currentQueryMode": "pass",
+        "fixLayer": "none",
+        "differentiation": "moderate_differentiation",
+        "freeLlmComparisonNote": "q24: paid vs free differentiation=moderate_differentiation"
+      }
+    ],
+    "apiValueExtractionStatus": "PASS"
+  },
+  "verticalAlphaResearch": {
+    "completedAt": "2026-04-20T07:33:53.698Z",
+    "upstreamDocsSource": "/websites/kalshi",
+    "alphaCategories": [
+      {
+        "category": "Live Discovery And Screening",
+        "upstreamDataSource": "Kalshi /markets and /events discovery endpoints sorted by live 24h volume, close time, and probability band",
+        "whyItBeatsFree": "These screens require current Kalshi board state — tickers, volumes, and close times change intraday and cannot be recovered from a static frontier model.",
+        "examplePromptShape": "Show me the top 10 trending Kalshi markets right now by 24h volume with tickers, Yes prices, and liquidity."
+      },
+      {
+        "category": "Pricing Efficiency And Spreads",
+        "upstreamDataSource": "Per-market Kalshi /markets/{ticker} pulls for yes_bid, yes_ask, no_bid, no_ask, and derived midpoints",
+        "whyItBeatsFree": "Whether a Kalshi spread is tight or wide depends on the live book at this moment, not generic commentary about prediction markets.",
+        "examplePromptShape": "What are the current yes/no bid and ask and midpoint-implied probability for this Kalshi ticker right now?"
+      },
+      {
+        "category": "Liquidity And Orderbook Depth",
+        "upstreamDataSource": "Kalshi /markets/{ticker}/orderbook plus contributor analyze_market_liquidity for slippage-aware sizing",
+        "whyItBeatsFree": "Dollar-size-to-slippage only makes sense against the current live orderbook, which a free model does not have access to.",
+        "examplePromptShape": "Pull the full orderbook for this Kalshi ticker and tell me the dollar size I can buy Yes with <=2 cents of slippage."
+      },
+      {
+        "category": "Event And Series Structure",
+        "upstreamDataSource": "Kalshi /events, /events/{event}, /series, and slug resolution for nested sub-markets",
+        "whyItBeatsFree": "Multi-leg Kalshi events decompose into dozens of sub-markets whose current Yes prices change intraday — that is live structure, not static knowledge.",
+        "examplePromptShape": "For this Kalshi event, list all sub-markets, their current Yes prices, and flag any pair where yes_bid+no_bid<100."
+      },
+      {
+        "category": "Trade Flow And Sentiment",
+        "upstreamDataSource": "Kalshi /markets/{ticker}/trades, candlesticks, and event-level candles for live tape and direction",
+        "whyItBeatsFree": "Net Yes-vs-No flow, candle-based momentum, and sentiment are intraday live signals that demand venue-specific data fusion.",
+        "examplePromptShape": "Fetch the last 50 trades on this Kalshi ticker and tell me net Yes vs No volume over the last hour."
+      },
+      {
+        "category": "Structural And Cross-Venue Arbitrage",
+        "upstreamDataSource": "Contributor find_arbitrage_opportunities, find_trading_opportunities, and kalshi_crossref_polymarket layered over live Kalshi quotes",
+        "whyItBeatsFree": "Arbitrage calls depend on the current live Kalshi book and the current Polymarket book — a generic model cannot align contract semantics or quote the real gap.",
+        "examplePromptShape": "Run the efficiency check on this Kalshi ticker — if yes_bid+no_bid<100, what is the implied arb edge after fees?"
+      },
+      {
+        "category": "Imminent Settlement And Close-Time Screens",
+        "upstreamDataSource": "Kalshi /events and /markets filtered by close_time for contracts about to settle",
+        "whyItBeatsFree": "Which Kalshi events actually settle before a given date is a live-board question, not a thesis a free model can fabricate credibly.",
+        "examplePromptShape": "List every Kalshi event closing before this Friday — imminent-settlement shortlist with tickers and close times."
+      },
+      {
+        "category": "Workflow Synthesis On A Single Market",
+        "upstreamDataSource": "Contributor workflows chaining get_market, orderbook, trades, analyze_market_liquidity, and find_trading_opportunities on one live ticker",
+        "whyItBeatsFree": "A paying user wants one live workflow — pricing, depth, flow, and a trade recommendation — not a generic how-to detached from the current Kalshi board.",
+        "examplePromptShape": "Walk me through a full trading workflow on this Kalshi ticker — current pricing, orderbook depth to fill $1,000 Yes, recent flow, and a rec with risk."
+      },
+      {
+        "category": "Targeted Search And Thematic Screens",
+        "upstreamDataSource": "Kalshi search_markets plus category and series browsing over the live open market set",
+        "whyItBeatsFree": "Searching Kalshi for a specific player, series, or theme returns current live tickers and prices that a free baseline has to hallucinate.",
+        "examplePromptShape": "Search Kalshi for markets mentioning a named player or theme and rank them by current yes_ask."
+      }
+    ],
+    "crossToolOpportunities": [
+      "Cross-check live Kalshi and Polymarket contracts for macro and sports markets via kalshi_crossref_polymarket before treating an odds gap as real arbitrage."
+    ],
+    "upstreamUIGaps": [
+      "The Kalshi UI does not screen the live board by combined probability, liquidity, and close-time thresholds in one workflow.",
+      "The UI does not estimate dollar-size-to-slippage from the current orderbook in one answer.",
+      "The UI does not flag yes_bid+no_bid<100 structural arbitrage across an event's sub-markets automatically.",
+      "The UI does not cross-reference live Kalshi quotes against an equivalent Polymarket contract in one view.",
+      "The UI does not combine current pricing, orderbook depth, trade flow, and a workflow-level recommendation for a single market in one synthesis."
+    ]
+  },
+  "reviewerEvaluationSummary": {
+    "satisfactionMean": 4.201,
+    "highFragilityRate": 0,
+    "baselineBeatenRate": 0.65,
+    "queryCount": 20,
+    "queriesBelow3": 5,
+    "weakQueryCount": 1,
+    "weakQueryRate": 0.05,
+    "blockingHighDifferentiationPromptIds": [],
+    "differentiationCounts": {
+      "high_differentiation": 19,
+      "moderate_differentiation": 0,
+      "low_differentiation": 1
+    },
+    "promptSetFingerprint": "q1,q10,q11,q12,q16,q17,q19,q2,q20,q21,q22,q23,q24,q3,q4,q5,q6,q7,q8,q9",
+    "weightedBuyerValue": 0.8691,
+    "generalization": {
+      "active": true,
+      "ok": true,
+      "holdoutRatio": 0.4,
+      "holdoutGateMinCount": 5,
+      "holdoutGeneralizationTolerance": 0.3,
+      "trainQueryCount": 12,
+      "holdoutQueryCount": 8,
+      "trainSatisfactionMean": 4.181,
+      "holdoutSatisfactionMean": 4.231,
+      "trainWeakQueryRate": 0.083,
+      "holdoutWeakQueryRate": 0
+    }
+  },
+  "validationEvidence": {
+    "buildPassed": true,
+    "lintPassed": true,
+    "context7DocsFetched": true,
+    "contextContext7LibraryId": "/websites/ctxprotocol",
+    "upstreamContext7LibraryId": "/websites/kalshi",
+    "localEnvFilesPresent": true,
+    "contextApiKeyAvailable": true,
+    "openRouterApiKeyAvailable": true,
+    "helperArtifactsGenerated": [],
+    "fullEnhancementResultsArtifact": "context-sdk/examples/server/kalshi-contributor/validation/full-enhancement-results.latest.json",
+    "surfaceChecksArtifact": "context-sdk/examples/server/kalshi-contributor/validation/marketplace-surface-checks.latest.json",
+    "localPromptValidation": {
+      "promptCount": 20,
+      "passedCount": 20,
+      "passRate": 1,
+      "mustWinPromptCount": 20,
+      "mustWinPassedPrompts": 20,
+      "baselineBeatenRate": 1
+    },
+    "marketplaceAutoQueryValidationAttempted": true,
+    "marketplaceAutoQueryPromptCount": 5,
+    "marketplaceAutoQueryPassedCount": 5,
+    "marketplaceAutoQueryFailedCount": 0,
+    "marketplaceAutoQueryRuns": [
+      {
+        "id": "q1",
+        "prompt": "Show me the top 10 trending Kalshi markets right now by 24h volume — include ticker, title, yes price, and liquidity.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 43094,
+        "responsePreview": "As of April 20, 2026, here are the top 10 trending Kalshi markets ranked by 24-hour volume. Please note that while volume is high, the data source currently reports $0 liquidity for these specific listings.\n\n| Rank | Ticker | Title | Yes Price | 24h Volume | Liquidity |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| 1 | KXNHLGAME-26APR19UTAVGK-VGK | Game 1: Utah at Vegas Winner? | $0.36 | $2,105,684.89 | $0 |\n| 2 | KXNHLGAME-26APR19UTAVGK-UTA | Game 1: Utah at Vegas Winner? | $0.66 | $1,190,894.2",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "q2",
+        "prompt": "For the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299, what are the current yes/no bid and ask, the implied probability from the midpoint, and the bid-ask spread in cents?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 2,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 2
+          }
+        ],
+        "durationMs": 42201,
+        "responsePreview": "As of April 20, 2026, here are the current market details for **KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299**:\n\n| Metric | Value |\n| :--- | :--- |\n| **YES Bid** | 0¢ |\n| **YES Ask** | 0¢ |\n| **NO Bid** | 100¢ |\n| **NO Ask** | 100¢ |\n| **Implied Probability (Midpoint)** | 50% |\n| **Bid-Ask Spread** | 100 cents |\n\nNote that the orderbook for this market was empty at the time of the query, resulting in a nominal midpoint of 50¢ and a full 100-cent spread.",
+        "hasData": true,
+        "actionable": false,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 3,
+          "toolStepCount": 3
+        }
+      },
+      {
+        "id": "q7",
+        "prompt": "For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 1
+          },
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 47586,
+        "responsePreview": "As of April 20, 2026, 03:59:08 UTC, the event **KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9** (\"Combo\") contains only one sub-market. Because there are no pairs of markets (e.g., a \"Yes\" and a \"No\" market or opposing outcomes) to compare, structural arbitrage and venue overround checks cannot be performed.\n\n| Ticker | Title | Yes Price | Flags |\n| :--- | :--- | :--- | :--- |\n| KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9-19499DFBB78 | yes Jalen Brunson: 2+,yes OG Anunoby: 1+,yes Jamal Murray:",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "q11",
+        "prompt": "Analyze sentiment on KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 using the last 24h of trades and price action — is smart money leaning Yes or No?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 2,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 2
+          }
+        ],
+        "durationMs": 50022,
+        "responsePreview": "Based on the last 24 hours of data, there is no active \"smart money\" flow to analyze for this market. While the sentiment model technically labels the outlook as **strongly bullish**, this inference is not supported by actual trading activity.\n\nThe market currently reflects an illiquid and inconsistent state:\n\n| Metric | Value |\n| :--- | :--- |\n| **Ticker** | KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 |\n| **Yes Price** | 100¢ |\n| **No Price** | 100¢ |\n| **24h Volume** | 0 |\n| **Op",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "q17",
+        "prompt": "Walk me through a full trading workflow on KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA: current pricing, orderbook depth to fill $1,000 Yes, trade-flow direction in the last 6 hours, and a rec with risk.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 3,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 3
+          }
+        ],
+        "durationMs": 47951,
+        "responsePreview": "As of April 20, 2026, the trading workflow for this NBA multi-game prop (KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA) indicates an extremely illiquid market where typical execution is currently not possible.\n\n### Current Pricing\nBased on the latest data, there is no active spread being maintained by market makers.\n\n| Metric | Value |\n| :--- | :--- |\n| **Last Price** | 11.5¢ |\n| **Yes Bid / Ask** | 0¢ / 100¢ |\n| **No Bid / Ask** | 0¢ / 100¢ |\n| **Open Interest** | 40 |\n| **24h Volum",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 3,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      }
+    ],
+    "marketplaceExecuteValidationAttempted": true,
+    "marketplaceExecutePassedMethodCount": 6,
+    "marketplaceExecuteFailedMethodCount": 0,
+    "marketplaceExecuteMethods": [
+      "search_markets",
+      "get_market",
+      "get_event",
+      "get_market_orderbook",
+      "get_market_trades",
+      "get_market_candlesticks"
+    ],
+    "marketplaceExecuteMethodRuns": [
+      {
+        "methodName": "search_markets",
+        "args": {
+          "query": "yes James Harden: 4+ yes Jarrett Allen: 10+ yes RJ Barrett: 2+",
+          "limit": 5,
+          "status": "open"
+        },
+        "status": "pass",
+        "durationMs": 11548,
+        "executePriceUsd": "0.002",
+        "sessionSpentUsd": "0.002000",
+        "sessionRemainingUsd": "0.998",
+        "resultKeys": [
+          "results",
+          "count",
+          "matchedSeries",
+          "searchMethod",
+          "searchBudget",
+          "hint",
+          "fetchedAt",
+          "recoveryHints",
+          "searchMetadata"
+        ]
+      },
+      {
+        "methodName": "get_market",
+        "args": {
+          "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299"
+        },
+        "status": "pass",
+        "durationMs": 10335,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.003000",
+        "sessionRemainingUsd": "0.997",
+        "resultKeys": [
+          "market",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_event",
+        "args": {
+          "eventTicker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21"
+        },
+        "status": "pass",
+        "durationMs": 10265,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.004000",
+        "sessionRemainingUsd": "0.996",
+        "resultKeys": [
+          "event",
+          "markets",
+          "fetchedAt",
+          "fanoutHint"
+        ]
+      },
+      {
+        "methodName": "get_market_orderbook",
+        "args": {
+          "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299",
+          "depth": 10
+        },
+        "status": "pass",
+        "durationMs": 9752,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.005000",
+        "sessionRemainingUsd": "0.995",
+        "resultKeys": [
+          "ticker",
+          "bids",
+          "asks",
+          "spread",
+          "midPrice",
+          "orderbookFpAvailable",
+          "quantityPrecision",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_market_trades",
+        "args": {
+          "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299",
+          "limit": 5
+        },
+        "status": "pass",
+        "durationMs": 9572,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.006000",
+        "sessionRemainingUsd": "0.994",
+        "resultKeys": [
+          "ticker",
+          "trades",
+          "summary",
+          "nextCursor",
+          "cursor",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_market_candlesticks",
+        "args": {
+          "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299",
+          "periodInterval": 60
+        },
+        "status": "pass",
+        "durationMs": 9314,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.007000",
+        "sessionRemainingUsd": "0.993",
+        "resultKeys": [
+          "ticker",
+          "candlesticks",
+          "sourceEndpoint",
+          "fetchedAt"
+        ]
+      }
+    ],
+    "publicAuthProbe": {
+      "initializeStatus": 200,
+      "toolsListStatus": 200,
+      "toolsCallStatus": 401,
+      "toolCount": 24,
+      "rpcAuthBlocked": false,
+      "pass": true
+    },
+    "externalAccuracyCheck": {
+      "status": "PASS",
+      "localSample": {
+        "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299",
+        "eventTicker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21",
+        "title": "yes James Harden: 4+,yes Jarrett Allen: 10+,yes RJ Barrett: 2+",
+        "closeTime": "2026-05-04T23:00:00Z"
+      },
+      "upstreamSample": {
+        "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299",
+        "eventTicker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21",
+        "title": "yes James Harden: 4+,yes Jarrett Allen: 10+,yes RJ Barrett: 2+",
+        "closeTime": "2026-05-04T23:00:00Z"
+      },
+      "notes": [
+        "The local Kalshi sample market matched the public Kalshi Trade API on ticker and event ticker.",
+        "No obvious wrong-universe regression was detected in the fresh external spot check."
+      ]
+    },
+    "freeLlmBaselineGate": {
+      "mustWinPromptCount": 20,
+      "highDifferentiationCount": 3,
+      "moderateDifferentiationCount": 17,
+      "lowDifferentiationCount": 0,
+      "notes": [
+        "3 prompts land as high differentiation, 17 as moderate, and 0 as low after the fresh free-versus-paid rerun plus the required live-data calibration gate.",
+        "The paid flow beats the free baseline on 20/20 must-win prompts by grounding answers in live Kalshi ticker, orderbook, trade, event-structure, and cross-venue data."
+      ]
+    },
+    "traceAnalysis": {
+      "analyzedPromptCount": 17,
+      "systemicIssueCount": 2,
+      "promptsRequiringAttention": [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5",
+        "q7",
+        "q8",
+        "q9",
+        "q10",
+        "q11",
+        "q12",
+        "q16",
+        "q17",
+        "q19",
+        "q21",
+        "q23",
+        "q24"
+      ]
+    },
+    "upstreamCoverageReview": [
+      {
+        "area": "Live discovery, ranked screens, category and series browsing",
+        "decision": "implemented",
+        "reason": "The contributor already exposes discover_trending_markets, get_markets_by_probability, search_markets, browse_category, browse_series, get_events, and get_event for core buyer-facing live discovery of Kalshi markets."
+      },
+      {
+        "area": "Per-market pricing, orderbook depth, spreads, and liquidity",
+        "decision": "implemented",
+        "reason": "The contributor already exposes get_market, get_market_orderbook, check_market_efficiency, and analyze_market_liquidity for grounded microstructure and execution-quality answers."
+      },
+      {
+        "area": "Trade flow, candlesticks, and sentiment",
+        "decision": "implemented",
+        "reason": "The contributor already exposes get_market_trades, get_market_candlesticks, get_event_candlesticks, and analyze_market_sentiment so the flow-and-tape questions are directly answerable."
+      },
+      {
+        "area": "Event and series structure with resolution",
+        "decision": "implemented",
+        "reason": "The contributor already exposes get_events, get_event, get_event_by_slug, get_series, browse_series, and resolve_slug to walk from a slug or ticker into full sub-market decomposition."
+      },
+      {
+        "area": "Arbitrage and opportunity discovery",
+        "decision": "implemented",
+        "reason": "find_arbitrage_opportunities, find_trading_opportunities, and kalshi_crossref_polymarket already cover structural (yes+no<100), intra-event, and cross-venue edge detection."
+      },
+      {
+        "area": "Authenticated trading, portfolio, RFQ, and builder-only operational endpoints",
+        "decision": "reject",
+        "reason": "These require per-user Kalshi auth and are not the public-intelligence value proposition of this paid marketplace listing."
+      }
+    ]
+  },
+  "dataQualityValidation": {
+    "reviewedAt": "2026-04-20T07:33:53.701Z",
+    "automationVersion": "kalshi-full-enhancement-local-2026-04-20",
+    "level1InternalConsistency": {
+      "status": "PASS",
+      "checks": [
+        {
+          "scope": "Fresh local full-enhancement sweep",
+          "status": "PASS",
+          "issueClass": "no_obvious_internal_inconsistency",
+          "evidenceSources": [
+            "context-sdk/examples/server/kalshi-contributor/validation/full-enhancement-results.latest.json",
+            "context-sdk/examples/server/kalshi-contributor/validation/marketplace-surface-checks.latest.json"
+          ],
+          "notes": [
+            "All fresh pinned full-enhancement prompts passed with grounded, tool-backed answers in the local rerun.",
+            "The auto-query rerun also stayed green on the selected showcase prompts."
+          ]
+        }
+      ]
+    },
+    "level2ExternalAccuracy": {
+      "status": "PASS",
+      "checks": [
+        {
+          "scope": "Live Kalshi market snapshot vs public /markets endpoint",
+          "status": "PASS",
+          "issueClass": "wrong_universe_not_detected",
+          "evidenceSources": [
+            "context-sdk/examples/server/kalshi-contributor/validation/marketplace-surface-checks.latest.json",
+            "https://api.elections.kalshi.com/trade-api/v2/markets?status=open&limit=5"
+          ],
+          "notes": [
+            "The local Kalshi sample market matched the public Kalshi Trade API on ticker and event ticker.",
+            "No obvious wrong-universe regression was detected in the fresh external spot check."
+          ]
+        }
+      ]
+    },
+    "summary": {
+      "wrongUniverseStatus": "not_detected",
+      "automationReady": "READY",
+      "notes": [
+        "Fresh local prompt validation, auto-query routing, execute validation, public auth probing, and one raw-upstream ranking check all passed."
+      ]
+    }
+  },
+  "signoff": {
+    "apiValueExtraction": {
+      "status": "PASS",
+      "notes": [
+        "The fresh question set still proves clear paid value on live Kalshi liquidity, spread, orderbook, trade-flow, event-structure, and arbitrage questions.",
+        "The paid flow beat the free baseline on 20/20 must-win prompts."
+      ]
+    },
+    "buyerSatisfaction": {
+      "status": "DEFERRED_TO_REVIEWER",
+      "notes": [
+        "Buyer satisfaction scoring is handled by the pipeline-reviewer readonly subagent.",
+        "See reviewer-evaluation.json in the contributor's validation directory for scores."
+      ]
+    },
+    "traceAssessment": {
+      "status": "DEFERRED_TO_REVIEWER",
+      "notes": [
+        "Trace assessment is handled by the pipeline-reviewer readonly subagent.",
+        "See reviewer-evaluation.json in the contributor's validation directory for per-query trace assessments."
+      ]
+    },
+    "queryModeAlignment": {
+      "status": "PASS",
+      "notes": [
+        "Pinned local query passed 20/20 prompts.",
+        "Auto query routed and passed 5/5 showcase prompts on localhost."
+      ]
+    },
+    "executeModeAlignment": {
+      "status": "PASS",
+      "notes": [
+        "Representative execute validation passed 6/6 methods.",
+        "Execute coverage included discovery, per-market lookup, orderbook, trades, and event decomposition."
+      ]
+    },
+    "directEndpointValidation": {
+      "status": "PASS",
+      "notes": [
+        "Fresh local direct MCP checks were healthy and the public auth contract probe stayed correct.",
+        "A raw upstream Kalshi ranking spot check did not detect a wrong-universe regression."
+      ]
+    },
+    "authContract": {
+      "status": "PASS",
+      "notes": [
+        "Unauthenticated initialize and tools/list succeeded on the public endpoint.",
+        "Unauthenticated tools/call stayed blocked as required."
+      ]
+    },
+    "marketplaceQueryValidation": {
+      "status": "PASS",
+      "notes": [
+        "Fresh local pinned and auto query validation are both green on the regenerated prompt suite."
+      ]
+    },
+    "marketplaceExecuteValidation": {
+      "status": "PASS",
+      "notes": [
+        "Representative execute validation is green on localhost for the current listing."
+      ]
+    },
+    "descriptionSync": {
+      "status": "N/A",
+      "notes": [
+        "Description sync was intentionally not run in this local automated pipeline.",
+        "The next step after browser QA is user-driven commit, push, and deploy."
+      ]
+    },
+    "overallReleaseStatus": {
+      "status": "PASS",
+      "notes": [
+        "The centralized release decision is green for this contributor.",
+        "The automated local work is complete and the artifact is being written through the wrapper path."
+      ]
+    },
+    "progressFrontier": {
+      "completedStages": [
+        "fresh vertical alpha research",
+        "fresh prompt-pool regeneration",
+        "fresh pinned local query sweep",
+        "fresh auto-query showcase rerun",
+        "fresh representative execute validation",
+        "public auth-contract probe",
+        "raw-upstream ranking spot check"
+      ],
+      "highestCompletedStage": "local browser QA handoff ready",
+      "firstIncompleteStage": "manual browser QA plus user-driven commit/push/deploy",
+      "blockerOrStopReason": "Automated work is complete; the remaining steps are intentionally manual."
+    }
+  },
+  "releaseDecision": {
+    "status": "ready",
+    "artifactWriteAllowed": true,
+    "blockers": [],
+    "iteration": {
+      "action": "pass",
+      "shouldContinue": false,
+      "terminalState": "converged",
+      "iterationCount": 7,
+      "previousSatisfactionMean": 4.258,
+      "iterationStateSource": "run-log",
+      "weakQueryRate": 0.05,
+      "reason": "Release gates passed, mean 4.201 >= 4.2, and only 5% weak queries (<= 20%)."
+    },
+    "artifact": {
+      "exists": true,
+      "status": "consistent"
+    },
+    "decisionPath": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/release-decision.json"
+  },
+  "qualityGates": {
+    "passed": true,
+    "reviewerGatePassed": true,
+    "buyerSatisfactionPassed": true,
+    "fragilityPassed": true,
+    "highDifferentiationFloorPassed": true,
+    "differentiationPassed": true,
+    "blockingPromptIdsBelow3": [],
+    "directValidationPassed": true,
+    "authContractPassed": true,
+    "queryMarketplaceValidationPassed": true,
+    "executeMarketplaceValidationPassed": true,
+    "releaseBlockers": []
+  },
+  "marketplaceStage": "post-submission",
+  "toolIdOrName": "5cc326fb-500d-4c17-bc5f-ade143210636",
+  "surfaceClassification": "mixed",
+  "surfaceSummary": {
+    "queryMethodCount": 0,
+    "executeMethodCount": 0
+  },
+  "surfaceMatrix": [],
+  "markdownSubmissionBlock": "## Tool Submission Details\n\n### Form Fields\n\n**Name:** Kalshi Intelligence\n\n**Description:**\n```markdown\nLive Kalshi market intelligence for screening tradable event contracts, inspecting orderbook depth and spreads, flagging structural and cross-venue arbitrage, and reading trade flow from one MCP endpoint.\n\nFeatures:\n- Screen the live Kalshi board by volume, probability band, and tradeability — not just by headline popularity\n- Pull per-market orderbook depth, bid/ask spreads, and slippage context for sizing real Yes/No entries\n- Decompose events and series into sub-markets and flag yes_bid+no_bid arbitrage or cross-market overround\n- Read recent trades, candlesticks, and sentiment in one grounded answer, with direct tickers and close times\n- Cross-reference Kalshi legs against Polymarket via kalshi_crossref_polymarket to catch venue-level mispricings\n\nTry asking:\n- \"Show me the top 10 trending Kalshi markets right now by 24h volume — include ticker, title, yes price, and liquidity.\"\n- \"For the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299, what are the current yes/no bid and ask, the implied probability from the midpoint, and the bid-ask spread in cents?\"\n- \"For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).\"\n- \"Analyze sentiment on KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 using the last 24h of trades and price action — is smart money leaning Yes or No?\"\n- \"Walk me through a full trading workflow on KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA: current pricing, orderbook depth to fill $1,000 Yes, trade-flow direction in the last 6 hours, and a rec with risk.\"\n- \"Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap.\"\n\nAgent tips:\n- Start with discover_trending_markets or get_markets_by_probability for live ranked screens, then pivot into get_market and get_market_orderbook for microstructure\n- When the user names an event or asks for \"all/every\" sub-markets, use get_event with with_nested_markets=true and follow up with get_markets if the event fans out\n- Use check_market_efficiency and find_arbitrage_opportunities before calling an edge real — yes_bid+no_bid<100 is the Kalshi-native structural test\n- Use kalshi_crossref_polymarket only after you have a concrete Kalshi ticker so Yes/No semantics stay aligned across venues\n```\n\n**Category:** Finance & Markets\n\n**Price:** $0.10 USDC per response\n\n**Endpoint:** https://mcp.ctxprotocol.com/kalshi/mcp\n\n### Rationale\n\n**Why this name:** Keeps the Kalshi brand explicit while framing the listing as a buyer-facing intelligence layer, not a raw REST wrapper.\n\n**Why this category:** The listing centers on event-contract microstructure, live odds, orderbook depth, trade flow, and arbitrage discovery, which fits Finance & Markets.\n\n**Why this price:** Time-sensitive curated Kalshi intelligence that materially beats a free no-tools baseline on live liquidity, spread, arbitrage, and cross-venue questions where the free model cannot access the current board.\n\n### Discovered Skills\n\n| Tool Name | Description | Key Parameters |\n|-----------|-------------|----------------|\n| `discover_trending_markets` | Live ranked Kalshi markets by volume, recency, and liquidity | `sortBy`, `minVolume`, `category`, `limit` |\n| `get_markets_by_probability` | Screen markets by yes_ask / probability band with liquidity filters | `minYesAsk`, `maxYesAsk`, `minLiquidity`, `category` |\n| `get_market_orderbook` | Full Yes/No orderbook with depth and slippage context | `ticker` |\n| `check_market_efficiency` | Spread, midpoint, and yes_bid+no_bid arbitrage signal | `ticker` |\n| `analyze_market_liquidity` | Dollar-size-to-slippage estimate from live book depth | `ticker`, `slippageCents` |\n| `get_event` | Event-level decomposition with nested sub-markets | `eventTicker`, `with_nested_markets` |\n| `find_arbitrage_opportunities` | Intra-event and structural arbitrage scanner | `eventTicker`, `minEdgeCents` |\n| `kalshi_crossref_polymarket` | Cross-venue semantic alignment and odds-gap inspection | `ticker`, `keywords`, `limit` |\n\n### Notes for Developer\n\n- The fresh full-enhancement review found the high-value public read-only surface already covered by the current Kalshi contributor implementation.\n- Authenticated trading, portfolio, RFQ, and builder-only Kalshi endpoints were intentionally not promoted into the listing because they do not improve the current paid marketplace wedge.\n- Description sync was intentionally left out of this local automated run; the next step after browser QA is user-driven commit, push, and deploy.",
+  "traceDiagnostics": {
+    "generatedAt": "2026-04-20T07:33:53.700Z",
+    "analyzedPromptCount": 17,
+    "promptAnalyses": [
+      {
+        "id": "q1",
+        "prompt": "Show me the top 10 trending Kalshi markets right now by 24h volume — include ticker, title, yes price, and liquidity.",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q1: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q1",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 68% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 34588,
+            "executionDurationMs": 23545,
+            "executionDurationShare": 0.6807,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q2",
+        "prompt": "For the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299, what are the current yes/no bid and ask, the implied probability from the midpoint, and the bid-ask spread in cents?",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q2: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q2",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 114% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 24073,
+            "executionDurationMs": 27503,
+            "executionDurationShare": 1.1425,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q3",
+        "prompt": "Pull the full orderbook for KXMVESPORTSMULTIGAMEEXTENDED-S2026CD1E5D81F28-6E30FBDE5BD and tell me the dollar size I could buy Yes with <= 2 cents of slippage.",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q3: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q3",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 106% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 27108,
+            "executionDurationMs": 28619,
+            "executionDurationShare": 1.0557,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q4",
+        "prompt": "Run the market efficiency check on KXMVECROSSCATEGORY-S2026BC8725F16E4-1BA7E7F4DEC. Does yes_bid + no_bid < 100? If so, what is the implied arb edge?",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q4: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q4",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 116% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 25339,
+            "executionDurationMs": 29394,
+            "executionDurationShare": 1.16,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q5",
+        "prompt": "Fetch the last 50 trades on KXMVESPORTSMULTIGAMEEXTENDED-S202628F048239CC-FE199BD14F4 and tell me net Yes vs No volume over the last hour.",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q5: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q5",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 76% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 18691,
+            "executionDurationMs": 14196,
+            "executionDurationShare": 0.7595,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q7",
+        "prompt": "For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q7: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q7",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 153% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 62038,
+            "executionDurationMs": 94750,
+            "executionDurationShare": 1.5273,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q8",
+        "prompt": "List every active market in the KXMVECROSSCATEGORY-S2026EA752452A61 event and rank them by yes_ask — which single-name has the tightest spread?",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q8: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q8",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 179% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 29560,
+            "executionDurationMs": 52915,
+            "executionDurationShare": 1.7901,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q9",
+        "prompt": "Find all Kalshi markets where yes_ask is between 20 and 35 cents — I want outright longshots with a cheap premium.",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q9: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q9",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 292% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 48039,
+            "executionDurationMs": 140246,
+            "executionDurationShare": 2.9194,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q10",
+        "prompt": "Resolve the slug for event KXMVECROSSCATEGORY-S2026BC8725F16E4 and then pull the event-level candlestick for the last 7 days at 1-day granularity.",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q10: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q10",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 132% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 27039,
+            "executionDurationMs": 35680,
+            "executionDurationShare": 1.3196,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q11",
+        "prompt": "Analyze sentiment on KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 using the last 24h of trades and price action — is smart money leaning Yes or No?",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q11: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q11",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 114% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 30313,
+            "executionDurationMs": 34663,
+            "executionDurationShare": 1.1435,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q12",
+        "prompt": "Use kalshi_crossref_polymarket on the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202602150E22176-FC050A30E2D and flag any sub-leg where an equivalent Polymarket market exists with >3 cent price divergence.",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q12: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q12",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 113% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 37657,
+            "executionDurationMs": 42369,
+            "executionDurationShare": 1.1251,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q16",
+        "prompt": "List every Kalshi event closing before 2026-04-25 — imminent-settlement shortlist with tickers and close times.",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q16: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q16",
+          "bottleneckStage": "synthesis",
+          "bottleneckReason": "Grounded data reached the answer path, but the final synthesis did not create strong separation from the baseline.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness.",
+          "suggestedFix": "Planner: validate or simplify the generated program so grounded data is surfaced directly into the final answer.",
+          "fixScope": "planner",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 59860,
+            "executionDurationMs": null,
+            "executionDurationShare": null,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q17",
+        "prompt": "Walk me through a full trading workflow on KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA: current pricing, orderbook depth to fill $1,000 Yes, trade-flow direction in the last 6 hours, and a rec with risk.",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q17: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q17",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 208% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 33514,
+            "executionDurationMs": 69806,
+            "executionDurationShare": 2.0829,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q19",
+        "prompt": "Browse the series KXMVECROSSCATEGORY and tell me how many active events it has and the total 24h volume rolled up across them.",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q19: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q19",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 93% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 27335,
+            "executionDurationMs": 25491,
+            "executionDurationShare": 0.9325,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q21",
+        "prompt": "Search Kalshi for markets whose title mentions 'Victor Wembanyama' and rank by yes_ask — where is the market pricing his 35+ point line?",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q21: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q21",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 408% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 129390,
+            "executionDurationMs": 527990,
+            "executionDurationShare": 4.0806,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q23",
+        "prompt": "Scan all open Kalshi markets and return the 5 with the widest yes bid-ask spread — these are the least efficiently priced right now.",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q23: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q23",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 301% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 70537,
+            "executionDurationMs": 211971,
+            "executionDurationShare": 3.0051,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      },
+      {
+        "id": "q24",
+        "prompt": "Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap.",
+        "status": "pass",
+        "differentiation": "moderate_differentiation",
+        "outcomeType": "answer",
+        "upstreamAnswerability": "answerable",
+        "comparisonNote": "q24: paid vs free differentiation=moderate_differentiation",
+        "traceAnalysis": {
+          "version": "2026-04-04.trace-informed-diagnosis.v1",
+          "promptId": "q24",
+          "bottleneckStage": "execution",
+          "bottleneckReason": "Execution consumed 577% of the measured query time.",
+          "retryPattern": {
+            "cheapFix": 0,
+            "semantic": 0,
+            "total": 0
+          },
+          "toolSelectionOptimal": true,
+          "toolSelectionIssue": null,
+          "plannerIssue": null,
+          "completenessIssue": null,
+          "budgetExhausted": false,
+          "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+          "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+          "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+          "fixScope": "runtime",
+          "evidence": {
+            "outcomeType": "answer",
+            "coverageStatus": "answerable",
+            "expectedToolNames": [],
+            "actualToolNames": [
+              "Kalshi"
+            ],
+            "selectedToolNames": [
+              "Kalshi"
+            ],
+            "selectedMethodNames": [
+              "discover_trending_markets",
+              "analyze_market_liquidity",
+              "check_market_efficiency",
+              "find_arbitrage_opportunities",
+              "find_trading_opportunities",
+              "get_markets_by_probability",
+              "analyze_market_sentiment",
+              "kalshi_crossref_polymarket",
+              "get_events",
+              "get_markets",
+              "get_event",
+              "resolve_slug"
+            ],
+            "selectedMethodCount": 24,
+            "totalDurationMs": 69639,
+            "executionDurationMs": 401473,
+            "executionDurationShare": 5.7651,
+            "selectedPolicy": "exploratory",
+            "rediscoveryExecuted": false,
+            "planningValidationApplied": false,
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "completionEvaluationCount": 0,
+            "lowScoreDimensions": []
+          }
+        }
+      }
+    ],
+    "systemicIssues": [
+      {
+        "pattern": "16/17 prompts hit selection or routing misses on answerable prompts",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "fixScope": "runtime",
+        "affectedPromptIds": [
+          "q1",
+          "q2",
+          "q3",
+          "q4",
+          "q5",
+          "q7",
+          "q8",
+          "q9",
+          "q10",
+          "q11",
+          "q12",
+          "q17",
+          "q19",
+          "q21",
+          "q23",
+          "q24"
+        ]
+      },
+      {
+        "pattern": "1/17 prompts hit grounded data reaching the pipeline without creating strong answer differentiation",
+        "rootCause": "Grounded data was available, but the final answer still under-delivered on differentiation or completeness.",
+        "fixScope": "planner",
+        "affectedPromptIds": [
+          "q16"
+        ]
+      }
+    ]
+  },
+  "promptSetsStatus": "local-full-enhancement-2026-04-20T07:25:02.302Z",
+  "residualDiagnostics": null,
+  "apiCoverageReview": [
+    {
+      "area": "Live discovery, ranked screens, category and series browsing",
+      "decision": "implemented",
+      "reason": "The contributor already exposes discover_trending_markets, get_markets_by_probability, search_markets, browse_category, browse_series, get_events, and get_event for core buyer-facing live discovery of Kalshi markets."
+    },
+    {
+      "area": "Per-market pricing, orderbook depth, spreads, and liquidity",
+      "decision": "implemented",
+      "reason": "The contributor already exposes get_market, get_market_orderbook, check_market_efficiency, and analyze_market_liquidity for grounded microstructure and execution-quality answers."
+    },
+    {
+      "area": "Trade flow, candlesticks, and sentiment",
+      "decision": "implemented",
+      "reason": "The contributor already exposes get_market_trades, get_market_candlesticks, get_event_candlesticks, and analyze_market_sentiment so the flow-and-tape questions are directly answerable."
+    },
+    {
+      "area": "Event and series structure with resolution",
+      "decision": "implemented",
+      "reason": "The contributor already exposes get_events, get_event, get_event_by_slug, get_series, browse_series, and resolve_slug to walk from a slug or ticker into full sub-market decomposition."
+    },
+    {
+      "area": "Arbitrage and opportunity discovery",
+      "decision": "implemented",
+      "reason": "find_arbitrage_opportunities, find_trading_opportunities, and kalshi_crossref_polymarket already cover structural (yes+no<100), intra-event, and cross-venue edge detection."
+    },
+    {
+      "area": "Authenticated trading, portfolio, RFQ, and builder-only operational endpoints",
+      "decision": "reject",
+      "reason": "These require per-user Kalshi auth and are not the public-intelligence value proposition of this paid marketplace listing."
+    }
+  ]
+}
