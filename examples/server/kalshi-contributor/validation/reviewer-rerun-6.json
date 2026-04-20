@@ -1,0 +1,233 @@
+{
+  "generatedAt": "2026-04-20",
+  "reviewer": "pipeline-reviewer",
+  "iteration": 6,
+  "focusPrompts": ["q6", "q7", "q8", "q10", "q12", "q22", "q24"],
+  "perQueryEvaluations": [
+    {
+      "id": "q6",
+      "promptId": "q6",
+      "query": "Give me 1-hour candlesticks for KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D over the last 24 hours — report OHLC for Yes price and total volume per bar.",
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.5,
+      "quotedExcerpts": [
+        "only one 1-hour candlestick was available for the ticker **KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D** within the requested 24-hour window.",
+        "| 2026-04-20 04:00:00 | $0.00 | $0.00 | $0.00 | $0.00 | 0 |",
+        "The zero values indicate there was no trading activity or price movement recorded during this reported interval."
+      ],
+      "traceAssessment": {
+        "toolCalls": 3,
+        "loopCount": 5,
+        "selfHeal": 0,
+        "fallback": 0,
+        "assessment": "get_market_candlesticks returned one bar with yesAsk open=8.6/close=100 but yesBid 0; response reported the yesBid series only and framed it as 'no activity', missing that yesAsk actually moved. Minor dataAccuracy ding; otherwise honest and live-fetched."
+      },
+      "rootCauseCategory": null,
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "autoPromoteReason": "Paid returns live 2026-04-20 Kalshi candle + real market title; free baseline disclaims real-time access."
+    },
+    {
+      "id": "q7",
+      "promptId": "q7",
+      "query": "For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).",
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 3,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.5,
+      "quotedExcerpts": [
+        "there is only one sub-market available for the event **KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9**.",
+        "Because there is only one market, pairwise implied probability checks (structural arbitrage or venue overround) cannot be performed",
+        "KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9-19499DFBB78 | yes Jalen Brunson: 2+,yes OG Anunoby: 1+,... | 0"
+      ],
+      "traceAssessment": {
+        "toolCalls": 1,
+        "loopCount": 2,
+        "selfHeal": 0,
+        "fallback": 0,
+        "assessment": "Single efficient get_event(withNestedMarkets) call; upstream returned only one nested market. Response honestly surfaces inability to compute pair-wise checks."
+      },
+      "rootCauseCategory": null,
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "autoPromoteReason": "Paid uses live Kalshi get_event returning the actual single-leg 'Combo' market; free baseline fabricates four unrelated CS2 sub-markets."
+    },
+    {
+      "id": "q8",
+      "promptId": "q8",
+      "query": "List every active market in the KXMVECROSSCATEGORY-S2026EA752452A61 event and rank them by yes_ask — which single-name has the tightest spread?",
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.83,
+      "quotedExcerpts": [
+        "there are 2 active markets in the **Blanch vs Bonzi** (KXMVECROSSCATEGORY-S2026EA752452A61) event.",
+        "yes Darwin Blanch,yes Henrique Rocha,yes Pedro Martinez | KXMVECROSSCATEGORY-S2026EA752452A61-C5C439F0A26 | 0 | 0¢",
+        "There is no \"single-name\" market available in this event; both active markets are multi-name combo markets."
+      ],
+      "traceAssessment": {
+        "toolCalls": 3,
+        "loopCount": 3,
+        "selfHeal": 0,
+        "fallback": 0,
+        "assessment": "get_event + two analyze_market_liquidity calls confirm real quotes/spreads; response correctly notes absence of single-name markets."
+      },
+      "rootCauseCategory": null,
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "autoPromoteReason": "Paid returns real event title 'Blanch vs Bonzi' with correct tickers; free baseline invents a CPI-category event."
+    },
+    {
+      "id": "q10",
+      "promptId": "q10",
+      "query": "Resolve the slug for event KXMVECROSSCATEGORY-S2026BC8725F16E4 and then pull the event-level candlestick for the last 7 days at 1-day granularity.",
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.5,
+      "quotedExcerpts": [
+        "The slug **KXMVECROSSCATEGORY-S2026BC8725F16E4** resolves to the following event: Title: Toronto at Cleveland",
+        "most of the 75 sub-markets within this event do not have a full 7-day time series; many currently contain only a single daily candle",
+        "| ...-23FEE3ED0FB | Evan Mobley: 10+, James Harden: 15+, RJ Barrett: 4+ | 57.7 | 100.0 | 57.7 | 100.0 |"
+      ],
+      "traceAssessment": {
+        "toolCalls": 2,
+        "loopCount": 3,
+        "selfHeal": 0,
+        "fallback": 1,
+        "assessment": "Iter-6 sub-market fallback materialized: get_event_candlesticks returned marketTickers + in-band sub-market candles; response surfaces 7 representative sub-market OHLC rows rather than claiming empty data. Big improvement vs iter-5 (was 3.33)."
+      },
+      "rootCauseCategory": null,
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "autoPromoteReason": "Paid resolves the real slug ('Toronto at Cleveland') and returns real daily candles for sub-markets; free baseline fabricates a 'Cross-Category Move' CPI product."
+    },
+    {
+      "id": "q12",
+      "promptId": "q12",
+      "query": "Use kalshi_crossref_polymarket on the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202602150E22176-FC050A30E2D and flag any sub-leg where an equivalent Polymarket market exists with >3 cent price divergence.",
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 3.83,
+      "quotedExcerpts": [
+        "no equivalent Polymarket markets were found for the individual sub-legs of the specified Kalshi market. Consequently, no price divergences could be flagged.",
+        "The Kalshi market is a finalized three-leg sports parlay, whereas the search results returned unrelated soccer matches.",
+        "CD Real Tomayapo vs. CD San Antonio Bulo Bulo | Will CD Real Tomayapo win on 2026-05-09? | 0.5 | Single-leg soccer match only"
+      ],
+      "traceAssessment": {
+        "toolCalls": 2,
+        "loopCount": 3,
+        "selfHeal": 0,
+        "fallback": 0,
+        "assessment": "crossref used string-match on raw parlay title and returned irrelevant Bolivian soccer hits. Runtime correctly surfaces this rather than hallucinating a match, but the tool itself still can't decompose parlay legs into individual searchable entities. Buyer gets honest 'no divergence' but loses the core alpha of the query."
+      },
+      "rootCauseCategory": "crossref-parlay-decomposition-failure",
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "autoPromoteReason": "Paid grounds the verdict in real Polymarket search output; free baseline fabricates divergence numbers. Differentiation stays high because paid refuses to hallucinate."
+    },
+    {
+      "id": "q22",
+      "promptId": "q22",
+      "query": "For the NHL-centric market KXMVESPORTSMULTIGAMEEXTENDED-S20268F24BEFAD58-0EA9403DBFE closing 2026-05-10, give me the current yes price, 24h volume, and the 15-min candlestick series since open.",
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.83,
+      "quotedExcerpts": [
+        "**Yes Price** | 0¢ |",
+        "**Close Time** | 2026-05-10 23:00:00 UTC |",
+        "There is no candlestick data available for this market. Because the market has recorded zero trading activity since it opened, no price action exists to generate a time series."
+      ],
+      "traceAssessment": {
+        "toolCalls": 2,
+        "loopCount": 3,
+        "selfHeal": 0,
+        "fallback": 0,
+        "assessment": "get_market + get_market_candlesticks; candlesticks empty with recoveryHints explaining zero activity + window auto-clamp. Response correctly reports the real close time and zero-volume state. Iter-6 event-level fallback is not triggered (this is market-level), which is correct behavior."
+      },
+      "rootCauseCategory": null,
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "autoPromoteReason": "Paid surfaces real close time (2026-05-10) and real ticker title; free baseline fabricates $0.54 yes price and $12,740 24h volume."
+    },
+    {
+      "id": "q24",
+      "promptId": "q24",
+      "query": "Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap.",
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.17,
+      "quotedExcerpts": [
+        "Trading opportunities cannot be identified for **KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33** because the market and all its associated sub-legs are already **finalized**.",
+        "there are no live `yes_ask` prices available to compute expected value or assess structural cheapness.",
+        "Lack of Live Data: Rankings require open markets with active order books."
+      ],
+      "traceAssessment": {
+        "toolCalls": 12,
+        "loopCount": 4,
+        "selfHeal": 0,
+        "fallback": 0,
+        "assessment": "Spent full 12-call budget on get_market for each sibling sub-leg; all came back finalized with terminal 0/100 prices. Response honestly reports the dead-end rather than fabricating EV rankings, but buyer still gets no actionable ranking. Event/market finalization is upstream reality, not a runtime bug."
+      },
+      "rootCauseCategory": "finalized-market-no-live-ev",
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "autoPromoteReason": "Paid grounds the refusal in real finalized settlements and real sub-leg titles; free baseline constructs a fictitious naive-prior table."
+    }
+  ],
+  "summary": {
+    "satisfactionMean": 4.45,
+    "weakQueries": ["q12"],
+    "rootCauseCategories": {
+      "crossref-parlay-decomposition-failure": ["q12"],
+      "finalized-market-no-live-ev": ["q24"]
+    },
+    "differentiation": {
+      "high_differentiation": ["q6", "q7", "q8", "q10", "q12", "q22", "q24"],
+      "moderate_differentiation": [],
+      "low_differentiation": []
+    },
+    "autoPromotedCount": 7,
+    "notes": "Iter-6 sub-market fallback for handleGetEventCandlesticks clearly lifted q10 from 3.33 -> 4.50 by materializing top-volume sub-market OHLC rows in-band; the response now cites real daily candles instead of claiming an empty event series. q22 correctly unaffected (market-level, not event-level). Remaining sub-4.0 is q12 only, which is an upstream crossref parlay-decomposition issue (string-match on raw parlay title returns unrelated Bolivian soccer matches) rather than a runtime candlestick path problem. Overall mean across the 7 rescored queries = 4.45, up from the iter-5 mean of 4.13 over the same seven prompts."
+  }
+}

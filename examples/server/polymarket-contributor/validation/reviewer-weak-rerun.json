@@ -1,0 +1,456 @@
+{
+  "reviewedAt": "2026-04-18T10:00:00Z",
+  "perQueryEvaluations": [
+    {
+      "promptId": "p5",
+      "query": "Estimate slippage for a $50,000 buy of Yes on the 'Will the U.S. invade Iran before 2027?' market and tell me the fill price vs current midpoint.",
+      "quotedExcerpts": [
+        "While the liquidity tool provided specific slippage simulations for **selling** positions (e.g., 6% slippage for a $10,000 sell), it did not provide a direct execution simulation for a $50,000 **buy**.",
+        "Fill Price vs. Midpoint: Any market buy will immediately fill starting at the best ask of **0.25**, which is **2.04% higher** than the current 0.245 midpoint.",
+        "With nearly $928,000 in total liquidity on the ask side (selling \"Yes\" tokens), a $50,000 buy represents only about 5.4% of the available depth."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.0,
+      "scoreExplanations": {
+        "actionability": "Gives a usable floor on fill (>=0.25) and 2.04% cross-spread cost plus a limit-order recommendation; buyer can act, though exact VWAP for the $50k fill isn't simulated.",
+        "dataFreshness": "Explicit 'April 18, 2026' date stamp and live orderbook fields from analyze_market_liquidity.",
+        "specificity": "Concrete numbers throughout: midpoint 0.245, bid 0.24, ask 0.25, spread 408.2 bps, ask depth $927,971.40, bid depth $318,362.74.",
+        "uniqueness": "Depth breakdown by side and bps spread are not homepage-visible; requires orderbook tool.",
+        "completeness": "Query asked explicitly for slippage and fill price of a $50k buy — response admits the $50k buy simulation was not produced and only bounds it. Partial answer.",
+        "dataAccuracy": "Numbers are internally consistent (bid+spread≈ask; depth totals add); no red flags."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "analyze_market_liquidity was called once and apparently returned sell-side slippage simulations only; no buy-side simulation call (e.g. a depth-walk using askDepth levels) was attempted to actually estimate $50k fill VWAP.",
+        "completenessIssue": "No completeness evaluations fired to flag the missing buy-side slippage and trigger a repair.",
+        "codeIssueDetail": "toolCallHistory shows a single analyze_market_liquidity call; no follow-up tool call walked the ask book levels to compute VWAP for a $50k buy, so the response had to qualitatively infer the fill.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "completeness_check_failure",
+        "rootCauseEvidence": "diagnostics.completeness.evaluations is empty (0 evals) despite the query explicitly requesting a $50k buy fill price that the single tool call did not produce.",
+        "responseQualityNote": "Good liquidity context and sensible bounds, but falls short of the exact slippage/fill number the buyer asked for.",
+        "improvementLever": "Have completeness trigger a second call (depth-walk or check_market_efficiency with buy-size) to produce the $50k buy VWAP rather than narrating the gap.",
+        "diagnosticBrief": {
+          "toolUsed": "analyze_market_liquidity",
+          "toolShouldHaveUsed": "analyze_market_liquidity with explicit buy-size parameter or a depth-walk follow-up",
+          "argsUsed": "{\"marketQuery\":\"Will the U.S. invade Iran before 2027?\",\"tokenId\":\"[REDACTED]\"}",
+          "argsShouldHaveUsed": "{\"marketQuery\":\"...\",\"side\":\"buy\",\"sizeUsd\":50000}",
+          "codeSnippet": "toolCallHistory length=1; no follow-up after liquidity returned sell-side simulations only.",
+          "toolResultSample": "{currentPrice:0.245, spread:{bestBid:0.24,bestAsk:0.25,spreadBps:408.2}, depth:{askDepthUsd:927971.4,bidDepthUsd:318362.74}}",
+          "completenessVerdict": "0 evaluations — completeness did not fire.",
+          "stageTimingBottleneck": "stageTiming all null"
+        }
+      },
+      "overallVerdict": "I'd pay again cautiously — good numbers, but I wanted an exact $50k fill VWAP and got a bound instead."
+    },
+    {
+      "promptId": "p10",
+      "query": "For the 'Warriors vs. Suns' NBA event on Polymarket, which derivative market (spread, total, moneyline, player prop) has the tightest spread relative to its 24h volume?",
+      "quotedExcerpts": [
+        "Based on data from a past query (fetched on **April 18, 2026, at 09:11 UTC**), the derivative market with the tightest spread relative to its 24h volume for the Warriors vs. Suns event is the **headline match market** itself.",
+        "With a quoted spread of only **0.1 cents** and a 24h volume of **$9.38 million**, it offers the highest liquidity and best relative tradability among the analyzed markets.",
+        "This analysis is based on a bounded shortlist of active and high-priced markets. It is not an exhaustive census of every available player prop, spread, or total derivative for this event"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.33,
+      "scoreExplanations": {
+        "actionability": "Clear winner identified with rank and a tradability score; buyer can act on 'headline > player props'.",
+        "dataFreshness": "ISO timestamp 2026-04-18T09:11 UTC cited.",
+        "specificity": "Per-market table with spreads in cents, volumes, depth USD, tradability scores.",
+        "uniqueness": "Ranks derivatives by spread-vs-volume across the event — cross-market screen not visible on the Polymarket UI.",
+        "completeness": "Directly answers the question; flags the shortlist scope limitation honestly.",
+        "dataAccuracy": "Numbers are internally plausible: headline $9.38M vol vs player props <$6k is the expected order-of-magnitude gap; spreads scale inversely with volume."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "contributor_tool_schema_gap",
+        "rootCauseEvidence": "rank_event_tradability returned only a bounded shortlist; response itself flags that spread/total/moneyline derivatives may not have been enumerated exhaustively.",
+        "responseQualityNote": "Strong, specific, dated answer; minor caveat that exhaustive derivative coverage isn't guaranteed by the tool.",
+        "improvementLever": "Expand rank_event_tradability to guarantee inclusion of all derivative categories (spread/total/ML/props) per event rather than a bounded shortlist.",
+        "diagnosticBrief": {
+          "toolUsed": "rank_event_tradability",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"eventQuery\":\"Warriors vs Suns\",\"limit\":6,\"category\":\"sports\"}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "single rank_event_tradability call; returned ranked shortlist of 5.",
+          "toolResultSample": "eventTitle: 'Warriors vs. Suns', eventSlug: 'nba-gsw-phx-2026-04-17', rankedOutcomes: [...]",
+          "completenessVerdict": "no completeness evaluations fired",
+          "stageTimingBottleneck": "stageTiming all null"
+        }
+      },
+      "overallVerdict": "Yes, I'd pay again — direct, specific, dated answer with honest scope caveat."
+    },
+    {
+      "promptId": "p12",
+      "query": "Compare outcome probabilities, 24h volume, and orderbook depth for the top 8 teams in the '2026 FIFA World Cup Winner' event on Polymarket.",
+      "quotedExcerpts": [
+        "The execution loop was bounded and exhausted its step budget before returning a terminal answer, meaning only the top outcomes by volume were processed for detailed orderbook metrics.",
+        "| **Uzbekistan** | 0.1% | $32,373,215.21 | 14,926,066.88 | 11,004,519.99 |",
+        "Due to the bounded execution, detailed orderbook depth for the high-probability favorites (e.g., Spain, France, England) was not retrieved in this specific batch."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 3,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 1,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 2.5,
+      "scoreExplanations": {
+        "actionability": "Buyer explicitly wants top 8 teams (Spain, France, England, Brazil, etc.); response returns 8 longshot nations (Uzbekistan, Curaçao, Jordan) and flat-out admits the favorites weren't processed.",
+        "dataFreshness": "Implicit 'as of April 18, 2026' but no explicit UTC timestamp or fetch time.",
+        "specificity": "Numbers down to 2 decimals for volume and depth, probabilities given.",
+        "uniqueness": "Orderbook depth + volume screen is non-trivial, but the deliverable (favorites) is homepage-visible.",
+        "completeness": "Fails the question's core ask: favorites' depth is missing; the listed 'top 8' is by volume ordering of longshots, not probability/team relevance.",
+        "dataAccuracy": "Red flag: ask-depth values are suspiciously near-identical across 6 of 8 distinct outcomes (11,004,519.99 / 11,004,514.99 / 11,004,520.00) — these are rounded to almost the same number across unrelated teams, and two outcomes show 21,004,520.00 with the same decimal. Capped at 2 per Hard Rule 6."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": null,
+        "planningIssue": "Planner chose to rank by total volume rather than by implied Yes probability, so 'top 8' pulled longshots with high speculative volume instead of the favorites the query means.",
+        "executionIssue": "12 loops, 3 tool calls, and executionResult.error='Execution stopped before a terminal result was produced' — budget exhausted before favorites were batched.",
+        "completenessIssue": "No completeness evaluations fired despite terminal failure.",
+        "codeIssueDetail": "executionResult.error: 'Execution stopped before a terminal result was produced'; logs tail empty; loopCount=12 with only 3 successful tool calls indicates the iterative loop thrashed without progress.",
+        "dataAccuracyRedFlags": "bid/ask depth columns show near-identical ~11,004,519 values across Uzbekistan, Curaçao, South Africa, Jordan, South Korea, Qatar — implausible across 6 distinct orderbooks; suggests a default/shared liquidity floor being echoed or a stale/cached field being surfaced.",
+        "rootCauseCategory": "stage_reflection_error",
+        "rootCauseEvidence": "loopCount=12 with executionResult.error='Execution stopped before a terminal result was produced'; the iterative planner never self-corrected the 'top 8 by volume' interpretation to 'top 8 by probability/favorites' and burned budget without fetching favorites' depth.",
+        "responseQualityNote": "Honest about the gap but delivers the wrong 8 teams and quoted uniform depth values that look synthetic.",
+        "improvementLever": "Fix planner semantics for 'top N teams' in an event (default to probability-ranked favorites) and investigate why ask-depth values collide across distinct outcomes.",
+        "diagnosticBrief": {
+          "toolUsed": "search_and_get_outcomes, get_event_outcomes, get_batch_orderbooks",
+          "toolShouldHaveUsed": "search_and_get_outcomes sorted by probability/currentPrice desc, then get_batch_orderbooks for top 8 favorites",
+          "argsUsed": "{\"query\":\"2026 FIFA World Cup winner\",\"sortBy\":\"volume\",\"category\":\"sports\"}",
+          "argsShouldHaveUsed": "{\"query\":\"2026 FIFA World Cup winner\",\"sortBy\":\"price\",\"limit\":8}",
+          "codeSnippet": "loopCount=12; executionResult.error='Execution stopped before a terminal result was produced'",
+          "toolResultSample": "totalOutcomes:48, sortedBy:'volume', then thrashed through get_batch_orderbooks",
+          "completenessVerdict": "0 evaluations",
+          "stageTimingBottleneck": "stageTiming null; loopCount=12 is the real bottleneck"
+        }
+      },
+      "overallVerdict": "No — the 'top 8' are longshots, the favorites are missing by admission, and the depth column has uniform-value red flags."
+    },
+    {
+      "promptId": "p13",
+      "query": "Compare whale concentration and top-10-holder composition for 'Will the Oklahoma City Thunder win the 2026 NBA Finals?' vs 'Will the Cleveland Cavaliers win the 2026 NBA Finals?' vs 'Will the New York Knicks win the 2026 NBA Finals?' — where is smart money most concentrated?",
+      "quotedExcerpts": [
+        "Based on data from queries performed on April 18, 2026, there is no detectable whale concentration or top-holder activity for any of the three markets.",
+        "All three scans returned zero unique holders and zero value across both YES and NO positions.",
+        "This suggests these specific market contracts may be inactive, illiquid, or newly created placeholders that have not yet seen significant trading volume."
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 3,
+        "specificity": 2,
+        "uniqueness": 1,
+        "completeness": 2,
+        "dataAccuracy": 1
+      },
+      "satisfactionMean": 1.67,
+      "scoreExplanations": {
+        "actionability": "Zero data returned for all three legs; buyer cannot decide 'where smart money is concentrated' from a three-way-zero tie.",
+        "dataFreshness": "Has the April 18, 2026 date but no fetch timestamps on the per-market results.",
+        "specificity": "Only zeros and 0% rows — no actual holder addresses, entry prices, or position sizes. Hard Rule: no specific data → max 2.",
+        "uniqueness": "Reports 'no data' — anything a free LLM could say. Hard Rule 5 → max 2; scoring 1 because it doesn't even add correct market context.",
+        "completeness": "Addresses all three legs but with empty results; doesn't attempt to re-resolve correct conditionIds.",
+        "dataAccuracy": "Clear red flag: all three markets return identical zero values because the tool was called with fake conditionId literal '0xthunder' (and presumably analogs) — the 'zero holders' is an artifact of a bad arg, not truth. Hard Rule 6 → max 2; scoring 1."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": null,
+        "planningIssue": "Planner never resolved actual market conditionIds via search before calling get_top_holders.",
+        "executionIssue": "get_top_holders called three times with literal placeholder conditionId '0xthunder' (and by inference '0xcavs'/'0xknicks'); tool returned empty shells and the loop never corrected.",
+        "completenessIssue": "No completeness evaluation fired despite 0 holders across all three scans — an obvious 'needs different args' signal.",
+        "codeIssueDetail": "toolCallHistory[0].args.conditionId='0xthunder' — this is a placeholder string, not a resolved 0x66-char hex conditionId; tool result: 'totalUniqueHolders': 0, 'holdersReturned': {'yes': 0, 'no': 0}. Same pattern for the other two legs.",
+        "dataAccuracyRedFlags": "All three markets identical zero values — uniform across distinct entities caused by bogus conditionId placeholders rather than genuine empty books.",
+        "rootCauseCategory": "argument_or_extraction_error",
+        "rootCauseEvidence": "toolCallHistory shows get_top_holders invoked with conditionId='0xthunder' (a placeholder), not a real hex conditionId; same pattern for the other two legs.",
+        "responseQualityNote": "Honest that data is empty but wrongly attributes it to 'inactive contracts' rather than to the bad arg it passed.",
+        "improvementLever": "Require a resolve-slug/search step before get_top_holders so conditionId is a real 0x… hash; block placeholder literals at the tool boundary.",
+        "diagnosticBrief": {
+          "toolUsed": "get_top_holders (x3)",
+          "toolShouldHaveUsed": "search_and_get_outcomes or search_markets first to resolve conditionId, then get_top_holders",
+          "argsUsed": "{\"conditionId\":\"0xthunder\",\"limit\":10,\"outcome\":\"BOTH\",\"deepFetch\":true}",
+          "argsShouldHaveUsed": "{\"conditionId\":\"<real 0x… from search>\",\"limit\":10,\"outcome\":\"BOTH\"}",
+          "codeSnippet": "args.conditionId='0xthunder' → result: topHolders:{yes:[],no:[]}, totalUniqueHolders:0",
+          "toolResultSample": "{market:'0xthunder', topHolders:{yes:[],no:[]}, totalUniqueHolders:0, positionValueSummary:{yesTotalValue:0,noTotalValue:0}}",
+          "completenessVerdict": "0 evaluations — should have flagged 'all zeros' and triggered slug resolution repair",
+          "stageTimingBottleneck": "stageTiming null"
+        }
+      },
+      "overallVerdict": "No — a three-way tie of zeros caused by placeholder conditionIds is a non-answer."
+    },
+    {
+      "promptId": "p14",
+      "query": "Compare 24h volume and implied Yes probability across the Fed outcomes in the 'Fed decision in April?' event on Polymarket, and flag any pricing inconsistent with the sum-to-one constraint.",
+      "quotedExcerpts": [
+        "If these four outcomes are treated as a mutually exclusive and collectively exhaustive set, their implied probabilities sum to **100.1%** (1.001). This indicates a minor pricing inconsistency or \"overround\" of 0.1% across the event family.",
+        "| **No change** | $22,004,925.13 | 99.45% |",
+        "a direct efficiency check on the specific binary market for \"Will the Fed decrease interest rates by 50+ bps after the April 2026 meeting?\" shows that it is perfectly efficient within its own contract: Yes: 0.15%, No: 99.85%, Sum: 100.0% (0 bps vig)"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.33,
+      "scoreExplanations": {
+        "actionability": "Tells buyer the overround is only 10 bps and the single-market binary is tight — clear 'no meaningful arb' signal.",
+        "dataFreshness": "Dated 'April 18, 2026'.",
+        "specificity": "Per-outcome 24h volume to the cent and Yes probabilities.",
+        "uniqueness": "Sum-to-one vig computation across outcomes is not a homepage feature — genuine screening.",
+        "completeness": "Answers both sub-parts (compare + sum-to-one flag); acknowledges a gap about per-outcome No-side quotes.",
+        "dataAccuracy": "Probabilities and sum (0.15+0.25+99.45+0.25=100.1) are internally consistent; volumes look plausible for a high-profile Fed event."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Clean, numeric, correctly flagged the 10 bps overround.",
+        "improvementLever": "Also quote each No-side midpoint so per-contract efficiency is computed for all four binaries, not just the '50+ bps' one.",
+        "diagnosticBrief": {
+          "toolUsed": "search_and_get_outcomes, check_market_efficiency",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"query\":\"Fed decision in April?\",\"sortBy\":\"volume\",\"category\":\"politics\"}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "2 tool calls, loopCount=3, no errors",
+          "toolResultSample": "totalVolume:110499694, totalOutcomes:4, sortedBy:'volume'",
+          "completenessVerdict": "0 evaluations",
+          "stageTimingBottleneck": "stageTiming null"
+        }
+      },
+      "overallVerdict": "Yes — concise, numeric, directly answers both parts."
+    },
+    {
+      "promptId": "p16",
+      "query": "Build a tradability memo for the 'Israel x Hezbollah ceasefire by April 18, 2026?' market covering resolution risk, current liquidity, recent whale moves, and whether the current Yes price leaves any edge for a late-entry No bet.",
+      "quotedExcerpts": [
+        "| **Current Price (Yes)** | 0.9995 | | **Spread** | 0.1¢ | | **Liquidity Score** | Excellent | | **Open Interest** | $30,405,458.96 | | **Data Fetched At** | 2026-04-18T09:16:29.630Z |",
+        "Liquidity: Excellent. The market maintains a very tight 0.1¢ spread with high quote quality. Estimated exit slippage for a $5,000 trade is approximately 0.1%.",
+        "At this price level, the market leaves almost no room for a late-entry \"No\" bet to be profitable unless there is a significant, unexpected failure in the resolution process"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.17,
+      "scoreExplanations": {
+        "actionability": "Clear verdict: no edge on late-entry No; tight spread, excellent liquidity, exit-slippage estimate.",
+        "dataFreshness": "ISO timestamp 2026-04-18T09:16:29.630Z.",
+        "specificity": "Price 0.9995, spread 0.1¢, OI $30.4M, slippage 0.1% for $5k; whale 'specifics' missing by admission.",
+        "uniqueness": "Memo combines rules-risk, whale flow direction, quote quality — requires multiple tool views.",
+        "completeness": "Covers all four asked dimensions; flags OI-trend and whale-size gaps.",
+        "dataAccuracy": "Numbers are internally consistent and plausible for an event-day ceasefire market."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "contributor_tool_schema_gap",
+        "rootCauseEvidence": "Response flags 'exact trade sizes and individual wallet identities behind these moves were not included'; build_market_tradability_memo surfaces directional whale flow but not size/wallet detail, so the memo is qualitative on that leg.",
+        "responseQualityNote": "Strong one-shot memo; whale detail is the one thin spot.",
+        "improvementLever": "Have build_market_tradability_memo auto-include top whale wallets and USD sizes from analyze_whale_flow rather than just directional lean.",
+        "diagnosticBrief": {
+          "toolUsed": "build_market_tradability_memo",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"marketQuery\":\"Israel x Hezbollah ceasefire by April 18, 2026?\",\"hoursBack\":24}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "1 tool call, loopCount=2",
+          "toolResultSample": "{market:{title:'Israel x Hezbollah ceasefire...',currentPrice:0.9995,spreadCents:0.1,liquidityScore:'excellent'},rulesRisk:'moderate',quoteQuality:'strong'}",
+          "completenessVerdict": "0 evaluations",
+          "stageTimingBottleneck": "stageTiming null"
+        }
+      },
+      "overallVerdict": "Yes — cohesive, dated memo that answers the buyer's four questions with concrete numbers."
+    },
+    {
+      "promptId": "p18",
+      "query": "Find the highest-expected-value arbitrage opportunity in the 'Republican Presidential Nominee 2028' neg-risk event on Polymarket: check if the sum of all candidate Yes midpoints exceeds 1.0, and if so, size a basket short trade that fits within $100k risk given current book depth on the top legs (e.g., Donald Trump, J.D. Vance, Rand Paul).",
+      "quotedExcerpts": [
+        "As of April 18, 2026, no basket-short arbitrage opportunity was found for the \"Republican Presidential Nominee 2028\" event. The sum of the Yes midpoints for the top legs is significantly below 1.0, and an efficiency check on representative contracts within the event confirms a vig-free, efficiently priced market.",
+        "Here is the complete returned collection for allOutcomes (35 items).",
+        "| J.D. Vance | 0.3905 | undated | | | Tucker Carlson | 0.046 | undated | | | Marco Rubio | 0.2095 | undated | | | Donald Trump | 0.017 | undated | |"
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 3,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 2,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 3.0,
+      "scoreExplanations": {
+        "actionability": "Gives a 'no arb' verdict but doesn't show the actual computed sum of the 35 midpoints or the book-depth sizing logic the buyer explicitly asked for.",
+        "dataFreshness": "Dated April 18, 2026 but end-date column is 'undated' for all 35 rows — freshness signal is thin.",
+        "specificity": "35 candidates with midpoints to 4 decimals.",
+        "uniqueness": "Full 35-row enumeration is a screen; basket-arb sizing would be unique, but it wasn't produced.",
+        "completeness": "Query asked three things: (a) compute sum, (b) if >1.0, (c) size $100k basket short using book depth on top legs. Response skips explicit sum and skips the sizing branch.",
+        "dataAccuracy": "Midpoints look plausible (Trump 0.017 with Trump Jr 0.0175 is an odd ordering — Trump himself scoring below his son and Vance at 0.3905 requires the buyer to trust without a stated eligibility/term-limit rationale). Eyeballed sum of listed midpoints ≈ 0.93 — consistent with 'below 1.0' but never shown."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": "Planner did not schedule an explicit sum-of-midpoints reduction step; only a spot efficiency check on a representative binary.",
+        "executionIssue": "8 tool calls including 3 get_orderbook and 3 search_and_get_outcomes — redundant rediscovery; no get_orderbook aggregation surfaced in the final answer.",
+        "completenessIssue": "Completeness did not flag the missing numeric sum and the skipped basket-sizing branch.",
+        "codeIssueDetail": "toolCallHistory shows 3 search_and_get_outcomes calls (redundant) and 3 get_orderbook calls whose results never appear quantitatively in the response; efficiency check used one representative contract, not the full sum.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "stage_reflection_error",
+        "rootCauseEvidence": "8 tool calls, loopCount=8, with redundant search_and_get_outcomes repeats and get_orderbook results that didn't get synthesised into the required sum/basket sizing.",
+        "responseQualityNote": "Delivers the raw candidate list but skips the two computations (sum, sizing) the query explicitly asked for.",
+        "improvementLever": "Force a deterministic reducer (sum of allOutcomes[*].currentPrice) plus a depth-based sizing helper whenever the query says 'if sum > 1.0, size a basket'.",
+        "diagnosticBrief": {
+          "toolUsed": "search_and_get_outcomes (x3), get_midpoints, get_orderbook (x3), check_market_efficiency",
+          "toolShouldHaveUsed": "search_and_get_outcomes once, then a sum-reducer over allOutcomes, then get_orderbook only on top legs if sum>1",
+          "argsUsed": "{\"query\":\"Republican Presidential Nominee 2028\",\"sortBy\":\"volume\",\"category\":\"politics\"}",
+          "argsShouldHaveUsed": "same, with a single pass and a sum aggregation step",
+          "codeSnippet": "toolCalls=8, loopCount=8; 3 redundant search_and_get_outcomes calls",
+          "toolResultSample": "totalOutcomes:35, totalVolume:565422097",
+          "completenessVerdict": "0 evaluations — missed the 'show the computed sum' and 'basket sizing' gaps",
+          "stageTimingBottleneck": "loopCount=8 with redundant search calls"
+        }
+      },
+      "overallVerdict": "On the fence — I got the candidate list and a verdict, but not the explicit sum or sizing I asked for."
+    },
+    {
+      "promptId": "p19",
+      "query": "Construct a portfolio of 5 moderate-probability (30-60% Yes) Polymarket bets ending within 60 days, drawn from current top markets including 'Strait of Hormuz traffic returns to normal by end of April?' and 'US x Iran permanent peace deal by April 30, 2026?' — size each leg to equal-risk, avoid correlated bets, and output expected portfolio volatility and sharpe.",
+      "quotedExcerpts": [
+        "As of April 18, 2026, here is a portfolio of five moderate-probability Polymarket bets ending within the next 60 days.",
+        "Here is the complete returned collection for $ (8 items).",
+        "| Tool | | :--- | | find_moderate_probability_bets | | search_markets | | search_and_get_outcomes |"
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 2,
+        "specificity": 1,
+        "uniqueness": 1,
+        "completeness": 1,
+        "dataAccuracy": 1
+      },
+      "satisfactionMean": 1.17,
+      "scoreExplanations": {
+        "actionability": "No portfolio, no sizing, no volatility, no sharpe — zero action value.",
+        "dataFreshness": "April 18, 2026 date only; no per-leg data.",
+        "specificity": "Response body is a table of tool names instead of markets/prices. Hard Rule 3 → max 2; scoring 1.",
+        "uniqueness": "Nothing a free LLM couldn't do worse. Hard Rule 5 → max 2; scoring 1.",
+        "completeness": "None of the six asked pieces (5 legs, equal-risk sizing, correlation check, volatility, sharpe, date filter) delivered.",
+        "dataAccuracy": "No data returned to evaluate; the 'table of tools' is a synthesis failure, not data. Scoring 1."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": null,
+        "planningIssue": "Planner queued 8 tool types (find_moderate_probability_bets, search_markets, search_and_get_outcomes x2, compare_event_outcome_quotes, get_spreads, analyze_whale_flow, get_top_markets) without a final synthesis step that turns them into a sized portfolio.",
+        "executionIssue": "executionResult.error='Execution stopped before a terminal result was produced'; loopCount=10.",
+        "completenessIssue": "No completeness evaluations fired even though the synthesis rendered a list of tool names instead of a portfolio.",
+        "codeIssueDetail": "executionResult.error: 'Execution stopped before a terminal result was produced'; final synthesis surfaced '| Tool |' list, indicating the synthesizer fell back to dumping the execution plan instead of the accumulated results.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "Response body renders 'complete returned collection for $ (8 items)' as a table of tool names (find_moderate_probability_bets, search_markets, …) — the synthesizer serialised the plan, not the tool results, after executionResult.error='Execution stopped before a terminal result was produced'.",
+        "responseQualityNote": "Catastrophic failure — no usable portfolio content, just tool names.",
+        "improvementLever": "When executionResult.error is set, force a last-pass synthesis using accumulated toolCallHistory results (not the plan) and gate the response on having >=5 actual market rows before returning.",
+        "diagnosticBrief": {
+          "toolUsed": "find_moderate_probability_bets, search_markets, search_and_get_outcomes (x2), compare_event_outcome_quotes, get_spreads, analyze_whale_flow, get_top_markets",
+          "toolShouldHaveUsed": "find_moderate_probability_bets alone with endsWithinDays=60 and minPrice=0.30/maxPrice=0.60, then a local sizing/correlation step",
+          "argsUsed": "{\"limit\":20,\"sortBy\":\"return_potential\",\"category\":\"all\",\"maxPrice\":0.6,\"minPrice\":0.3,\"minLiquidity\":10000}",
+          "argsShouldHaveUsed": "add endsWithinDays:60 and skip the 7 follow-up rediscovery calls",
+          "codeSnippet": "executionResult.error='Execution stopped before a terminal result was produced'; synthesis rendered '| Tool |' list",
+          "toolResultSample": "opportunities:[{market:'Will Tottenham Hotspur FC win on 2026-04-18?',currentPrice:0.305,impliedProbability:'31%',...}]",
+          "completenessVerdict": "0 evaluations; should have blocked the tool-name table as final output",
+          "stageTimingBottleneck": "loopCount=10 then terminal failure"
+        }
+      },
+      "overallVerdict": "No — I paid and got a table of tool names. This is a refund request."
+    }
+  ],
+  "aggregate": {
+    "satisfactionMean": 3.15,
+    "satisfactionMin": 1.17,
+    "queryCount": 8,
+    "queriesAbove4": 4,
+    "queriesBelow3": 3,
+    "fragilityReport": {
+      "highCount": 3,
+      "mediumCount": 1,
+      "lowCount": 4,
+      "highFragilityRate": 0.375,
+      "highFragilityQueryIds": ["p12", "p13", "p19"]
+    },
+    "topImprovementLevers": [
+      "Force a real completeness check that blocks responses when executionResult.error is set or when the response is a plan/tool-name dump instead of synthesised data (p12, p19).",
+      "Resolve real 0x conditionIds via search before calling holder/orderbook tools; reject placeholder literals like '0xthunder' at the tool boundary (p13).",
+      "Add deterministic post-processing steps for 'sum of midpoints', 'basket sizing', and 'top N by probability' so planners don't default to volume-ranking or skip the quantitative branch (p12, p18, p5)."
+    ]
+  }
+}

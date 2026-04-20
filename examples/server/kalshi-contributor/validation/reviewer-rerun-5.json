@@ -1,0 +1,477 @@
+{
+  "reviewedAt": "2026-04-20T07:30:00Z",
+  "perQueryEvaluations": [
+    {
+      "id": "q6",
+      "promptId": "q6",
+      "query": "Give me 1-hour candlesticks for KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D over the last 24 hours — report OHLC for Yes price and total volume per bar.",
+      "quotedExcerpts": [
+        "As of the data fetched on April 20, 2026 (06:36 UTC), only one 1-hour candlestick was available for the requested 24-hour window",
+        "| 2026-04-20 04:00:00 | 0.0000 | 0.0000 | 0.0000 | 0.0000 | 0 |",
+        "A full 24-hour series of one-hour bars is not available from the source for this specific market."
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.5,
+      "scoreExplanations": {
+        "actionability": "One all-zeros bar gives nothing to trade on, but the response is concise and honest.",
+        "dataFreshness": "Hour-level timestamp (06:36 UTC) on the response and a per-bar end time.",
+        "specificity": "Full OHLC + volume table and exact ticker echoed back.",
+        "uniqueness": "Kalshi UI also shows this; modest value-add beyond a straight passthrough.",
+        "completeness": "Explicitly names the data gap but does not cross-reference volume=0 or market status to explain why the series is near-empty (prior iteration included a snapshot with that context).",
+        "dataAccuracy": "One 0-volume bar is internally consistent with a 0-volume contract; no contradictions."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": "Only get_market_candlesticks called; no accompanying get_market to confirm volume/status, so the response cannot tell buyer *why* the series is empty.",
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": "toolCallHistory=['get_market_candlesticks'] only (1 call); prior iteration used get_market alongside candles to contextualise.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "upstream_api_limitation",
+        "rootCauseEvidence": "Single candlestick call returned 1 bar; no retry needed, but also no market-snapshot call to explain the sparsity.",
+        "responseQualityNote": "Right: honest, one-call, no wasted budget. Wrong: dropped the market-snapshot context that prior rerun provided, so buyer sees fewer reasons why the series is empty.",
+        "improvementLever": "Pair a single get_market alongside get_market_candlesticks so an empty/near-empty series is always explained with live yes_price/volume/status.",
+        "diagnosticBrief": {
+          "toolUsed": "get_market_candlesticks",
+          "toolShouldHaveUsed": "get_market + get_market_candlesticks",
+          "argsUsed": "{ticker, period_interval:60, startTs/endTs:last24h}",
+          "argsShouldHaveUsed": "{ticker} for get_market, plus candlesticks call",
+          "codeSnippet": "single get_market_candlesticks call returning 1 near-empty bar",
+          "toolResultSample": "candles: [{open:0,high:0,low:0,close:0,volume:0}]",
+          "completenessVerdict": "no completeness evaluations fired",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Buyer gets an honest, compact empty-bar answer; usable but less contextual than prior rerun."
+    },
+    {
+      "id": "q7",
+      "promptId": "q7",
+      "query": "For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).",
+      "quotedExcerpts": [
+        "there is only one sub-market available. Because pairwise analysis requires at least two markets, implied probability sums for structural arbitrage (< 100) or venue overrounds (> 110) cannot be computed.",
+        "**Structural Arbitrage (< 100):** N/A (single market)",
+        "**Venue Overround (> 110):** N/A (single market)"
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 4,
+        "specificity": 3,
+        "uniqueness": 3,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.33,
+      "scoreExplanations": {
+        "actionability": "No tradable edge (single leg, 0¢), but response correctly tells buyer why — no more false arb flag to mislead them.",
+        "dataFreshness": "ISO timestamp (2026-04-20T06:37:06.903Z) attached to the data snapshot.",
+        "specificity": "Full ticker + title + yes price, but still no yes_bid/yes_ask or close time on the row.",
+        "uniqueness": "Suggests sibling-event lookup in the 'remaining gap' — useful hint the UI doesn't offer.",
+        "completeness": "Delivers the one-row universe and two explicit N/A verdicts; no pairwise attempted on impossible data — correct.",
+        "dataAccuracy": "Prior-iteration bug (calling a 0¢ single leg a 'structural arb') is fixed: response now explicitly says pairwise is not applicable."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": "Planner did not attempt to confirm one-leg-ness via a second get_markets(event_ticker) paginated call, but with singleLegGuidance in get_event this is no longer harmful.",
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": "toolCallHistory=['get_event']; get_event result included singleLegGuidance which the synthesizer correctly honored (no false arb flag).",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "contributor_guidance_applied",
+        "rootCauseEvidence": "get_event response payload contains 'singleLegGuidance' and the synthesizer output explicitly states 'N/A (single market)' for both arb and overround conditions — guidance propagated end-to-end.",
+        "responseQualityNote": "Right: correctly refuses to run pairwise math on a single leg and flags the gap honestly. Wrong: could still paginate get_markets to verify exhaustiveness rather than trusting nested markets.",
+        "improvementLever": "Keep singleLegGuidance but also call get_markets(event_ticker) once to prove the 1-leg universe when the query says 'all sub-markets'.",
+        "diagnosticBrief": {
+          "toolUsed": "get_event (with singleLegGuidance)",
+          "toolShouldHaveUsed": "get_event + get_markets(event_ticker) for exhaustiveness proof",
+          "argsUsed": "{eventTicker:'KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9', withNestedMarkets:true}",
+          "argsShouldHaveUsed": "same + follow-up get_markets paginated",
+          "codeSnippet": "single get_event with nested markets; singleLegGuidance echoed downstream",
+          "toolResultSample": "event.markets length=1; payload carries singleLegGuidance hint",
+          "completenessVerdict": "no evaluations recorded",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Clear improvement over prior rerun — the misleading single-leg arb flag is gone; buyer gets an honest, correctly-qualified N/A answer."
+    },
+    {
+      "id": "q8",
+      "promptId": "q8",
+      "query": "List every active market in the KXMVECROSSCATEGORY-S2026EA752452A61 event and rank them by yes_ask — which single-name has the tightest spread?",
+      "quotedExcerpts": [
+        "As of April 20, 2026, there are two active markets for the **Blanch vs Bonzi** (KXMVECROSSCATEGORY-S2026EA752452A61) event.",
+        "Here is the complete returned collection for allMarkets (2 items).",
+        "| Title | Close Time | Liquidity | Mid Price |"
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 3,
+        "specificity": 3,
+        "uniqueness": 2,
+        "completeness": 2,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 2.5,
+      "scoreExplanations": {
+        "actionability": "Response does NOT answer the explicit 'which single-name has the tightest spread?' question — no spread or yes_ask column shown.",
+        "dataFreshness": "Date-level timestamp only.",
+        "specificity": "Title, close time, liquidity, mid price columns — but no yes_ask, no spread.",
+        "uniqueness": "A 2-row table with no ranking or spread is barely better than the Kalshi UI.",
+        "completeness": "Misses the core ask: explicit spread ranking and tightest-spread winner. Prior rerun at least named the winner.",
+        "dataAccuracy": "Both mid=50, liquidity=0 is plausible for an untraded 2-leg combo event; no contradictions, but no bid/ask to verify."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": "Planner pulled orderbook for both legs but the synthesizer did not compute and surface yes_ask and spread per leg — the core deliverable was dropped.",
+        "executionIssue": "Two orderbook calls returned data but the response only displays mid and liquidity, not best_bid/best_ask/spread.",
+        "completenessIssue": "No evaluation caught that 'tightest spread' was not answered.",
+        "codeIssueDetail": "toolCallHistory=['get_event','get_market_orderbook','get_market_orderbook']; orderbook depth=50 fetched but spread not derived in the narrative.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "completeness_gap",
+        "rootCauseEvidence": "Query literally asks for 'tightest spread' and yes_ask ranking; response table has neither column despite orderbook data being in tool results.",
+        "responseQualityNote": "Right: cleaner tool choice than prior rerun (orderbooks not redundant analyze_market_liquidity x2). Wrong: synthesis dropped the spread/yes_ask computation the buyer paid for.",
+        "improvementLever": "Synthesizer must emit best_bid/best_ask/spread columns whenever orderbook tool results are in context and the query mentions 'spread' or 'rank by yes_ask'.",
+        "diagnosticBrief": {
+          "toolUsed": "get_event, get_market_orderbook x2",
+          "toolShouldHaveUsed": "same, but with spread computed in output",
+          "argsUsed": "{eventTicker}, {ticker, depth:50} x2",
+          "argsShouldHaveUsed": "same",
+          "codeSnippet": "orderbooks fetched for both legs; no spread column in final table",
+          "toolResultSample": "two legs, mid=50 each, liquidity=0",
+          "completenessVerdict": "no evaluations recorded",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Regression vs prior rerun — cleaner tool choice but the 'tightest spread' deliverable is missing entirely."
+    },
+    {
+      "id": "q10",
+      "promptId": "q10",
+      "query": "Resolve the slug for event KXMVECROSSCATEGORY-S2026BC8725F16E4 and then pull the event-level candlestick for the last 7 days at 1-day granularity.",
+      "quotedExcerpts": [
+        "The slug `KXMVECROSSCATEGORY-S2026BC8725F16E4` resolves to the event **Toronto at Cleveland** (category: Exotics, ticker: `KXMVECROSSCATEGORY-S2026BC8725F16E4`).",
+        "While the event contains 75 sub-markets, only 11 markets returned data for this period, and each provided only a single daily candle instead of the full 7-day range.",
+        "| KXMVECROSSCATEGORY-S2026BC8725F16E4-23FEE3ED0FB | 1776657600 | 57.7 | 100.0 | 57.7 | 100.0 |"
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 3,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 3.5,
+      "scoreExplanations": {
+        "actionability": "Per-market OHLC rows are usable; uniform High=100/Close=100 caps the edge.",
+        "dataFreshness": "Date-only stamp plus a unix end-period per row.",
+        "specificity": "Concrete OHLC per market row, includes coverage note (75 sub-markets, 11 with data).",
+        "uniqueness": "Rolling up event-level candles across 75 legs is non-trivial and genuinely beyond the Kalshi UI.",
+        "completeness": "Slug resolved, 7-day candles attempted, explicit gap note delivered.",
+        "dataAccuracy": "Every High=100 / many Close=100 still suggests legs have settled; synthesis still doesn't explicitly call the event finalized."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": "Uniform-settled-price pattern not flagged explicitly as 'event likely resolved'.",
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": "toolCallHistory=['get_event_by_slug','get_event_candlesticks']; 2 calls, no retries — same tool shape as prior rerun.",
+        "dataAccuracyRedFlags": "All rows close at 100 — settled-leg signal.",
+        "rootCauseCategory": "data_accuracy_issue",
+        "rootCauseEvidence": "Uniform High=100, most Close=100 across 11 distinct sub-markets is inconsistent with a live OHLC series.",
+        "responseQualityNote": "Right: clean slug resolve plus candle table plus coverage note. Wrong: still doesn't explicitly state 'event appears finalized' from the uniform 100s.",
+        "improvementLever": "When event-level candle rows are uniform at 100, synthesizer should explicitly flag 'event appears settled — live OHLC likely unavailable'.",
+        "diagnosticBrief": {
+          "toolUsed": "get_event_by_slug, get_event_candlesticks",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{slug/eventTicker, period_interval:1440, last 7d}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "2 tool calls, no retries",
+          "toolResultSample": "rows: open varies 28.8-67.3, high=100, close≈100",
+          "completenessVerdict": "no evaluations recorded",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Unchanged vs prior rerun — useful rolled-up candle table but settled-event signal still not explicitly called out."
+    },
+    {
+      "id": "q12",
+      "promptId": "q12",
+      "query": "Use kalshi_crossref_polymarket on the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202602150E22176-FC050A30E2D and flag any sub-leg where an equivalent Polymarket market exists with >3 cent price divergence.",
+      "quotedExcerpts": [
+        "a price divergence analysis could not be performed because **no equivalent Polymarket markets were found** for the specified Kalshi anchor market or its associated sub-legs.",
+        "The anchor market and most retrieved sub-markets within the parent event are currently **finalized**, with prices at 100.",
+        "The parent event `KXMVESPORTSMULTIGAMEEXTENDED-S202602150E22176` (\"Combo\") contains **78 total sub-markets**."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 3,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.33,
+      "scoreExplanations": {
+        "actionability": "No divergence to trade on; finalized anchor limits upside, but parent-event context is now surfaced.",
+        "dataFreshness": "Date-level only, no per-quote timestamps.",
+        "specificity": "Anchor ticker, status, yes/no price plus 10 concrete parent-event rows with tickers.",
+        "uniqueness": "Cross-venue attempt is this product's signature, and parent-event context adds some color.",
+        "completeness": "Better than prior rerun: anchor status, parent-event size (78), and 10-row excerpt now included alongside the 'no match' verdict.",
+        "dataAccuracy": "Finalized=100/100 consistent; no internal contradictions."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": "Still runs crossref on a finalized anchor — but now also calls get_event to at least surface live sibling context instead of ending on a dead leg.",
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": "toolCallHistory=['get_market','kalshi_crossref_polymarket','get_event']; get_event added this iteration to enrich context.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "tool_selection_partial_fix",
+        "rootCauseEvidence": "Planner still invokes crossref on finalized leg, but the added get_event call lets the synthesizer show parent-event 78-market context, partially mitigating the wasted crossref.",
+        "responseQualityNote": "Right: now surfaces parent-event list + size + finalized status. Wrong: still doesn't pivot to find_trading_opportunities on live siblings.",
+        "improvementLever": "When get_market returns status=finalized, skip crossref entirely and call find_trading_opportunities(parent_event_ticker, include_live_siblings=true).",
+        "diagnosticBrief": {
+          "toolUsed": "get_market, kalshi_crossref_polymarket, get_event",
+          "toolShouldHaveUsed": "get_market + find_trading_opportunities(parent_event)",
+          "argsUsed": "{ticker} then crossref(title,keywords) then get_event(parent)",
+          "argsShouldHaveUsed": "{event_ticker: parent, include_live_siblings:true}",
+          "codeSnippet": "finalized anchor → crossref (no matches) → parent get_event for context",
+          "toolResultSample": "anchor status=finalized, parent has 78 sub-markets, crossref returned no semantic matches",
+          "completenessVerdict": "no evaluations recorded",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Modest improvement — parent-event context strengthens the 'no match' answer, but planner still wastes a crossref call on a finalized leg."
+    },
+    {
+      "id": "q16",
+      "promptId": "q16",
+      "query": "List every Kalshi event closing before 2026-04-25 — imminent-settlement shortlist with tickers and close times.",
+      "quotedExcerpts": [
+        "Based on data from a past query, the following Kalshi event was identified as closing before 2026-04-25.",
+        "| KXTVSEASONRELEASETHELASTOFUS | KXTVSEASONRELEASETHELASTOFUS-26-APR | When will \"The Last of Us\" Season 3 be released? | 2026-04-01T14:00:00Z | Finalized |",
+        "All other events in the provided results have closing dates scheduled for July 2026 or later."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 3,
+        "specificity": 2,
+        "uniqueness": 2,
+        "completeness": 2,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 2.33,
+      "scoreExplanations": {
+        "actionability": "Single stale row closing 2026-04-01 is useless for imminent settlement.",
+        "dataFreshness": "ISO close time shown but it's in the past vs today's query date.",
+        "specificity": "Only 1 ticker delivered — not a shortlist.",
+        "uniqueness": "Listing is the baseline Kalshi offering; 1 row falls short.",
+        "completeness": "Explicit truncation caveat but still effectively empty; Kalshi has many <5-day events missing.",
+        "dataAccuracy": "Row is internally consistent but the one 'match' pre-dates the query."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "medium",
+        "selectionIssue": "Six get_events calls with minCloseTs set to 1745539200 (2025-04-24) and no maxCloseTs bound; walks a huge window and truncates mid-stream.",
+        "planningIssue": "Planner uses minCloseTs (LOWER bound) but not a maxCloseTs upper bound corresponding to 2026-04-25, so most pages return long-dated events.",
+        "executionIssue": "6 paginated get_events returning mostly far-future events, client-side filter yields 1 row.",
+        "completenessIssue": "Response admits truncation; no repair loop.",
+        "codeIssueDetail": "toolCallHistory=6x get_events with minCloseTs only; missing maxCloseTs filter equivalent to 2026-04-25.",
+        "dataAccuracyRedFlags": "Only match closed 2026-04-01, before today — filter semantics wrong.",
+        "rootCauseCategory": "argument_or_extraction_error",
+        "rootCauseEvidence": "All 6 get_events calls pass minCloseTs but no maxCloseTs; the 'before 2026-04-25' constraint is never pushed into the API call.",
+        "responseQualityNote": "Right: honest truncation caveat. Wrong: unchanged from prior rerun — filter bug still there.",
+        "improvementLever": "Add maxCloseTs arg to get_events (or sort by close_time asc) and break pagination once close_time exceeds the cutoff.",
+        "diagnosticBrief": {
+          "toolUsed": "get_events x6",
+          "toolShouldHaveUsed": "get_events with maxCloseTs=1745539200+N days bound",
+          "argsUsed": "{status:'open', minCloseTs:1745539200, limit:200, cursor loop}",
+          "argsShouldHaveUsed": "{status:'open', maxCloseTs:<2026-04-25 epoch>, limit:200, sort:'close_time_asc'}",
+          "codeSnippet": "6 cursor-paginated get_events, all bounded only by minCloseTs",
+          "toolResultSample": "mostly July 2026+ events, filtered client-side to 1",
+          "completenessVerdict": "no evaluations recorded",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Unchanged vs prior rerun — same filter-bound bug, same single-stale-row result. Buyer would feel ripped off."
+    },
+    {
+      "id": "q22",
+      "promptId": "q22",
+      "query": "For the NHL-centric market KXMVESPORTSMULTIGAMEEXTENDED-S20268F24BEFAD58-0EA9403DBFE closing 2026-05-10, give me the current yes price, 24h volume, and the 15-min candlestick series since open.",
+      "quotedExcerpts": [
+        "| **Yes Price** | 0¢ |",
+        "| **24h Volume** | 0 |",
+        "No candlestick data is available for this market because it has recorded 0 volume over the requested window. As a result, the time series since open is currently empty."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.5,
+      "scoreExplanations": {
+        "actionability": "Still no edge (0/0/0), but the response is now tighter and doesn't waste 3 interval retries.",
+        "dataFreshness": "Query date plus explicit close time in UTC.",
+        "specificity": "Yes price, 24h volume, close time, status concretely listed in a compact table.",
+        "uniqueness": "Notes the 0-volume → empty-candles causal link; modest value-add.",
+        "completeness": "Delivers snapshot and correctly explains empty series in one shot — no longer requires three interval attempts.",
+        "dataAccuracy": "0 price + 0 volume + status=active internally consistent for an unopened leg."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": "Did not pivot to find_trading_opportunities on the parent event, but the recoveryHints in the empty-candlestick response correctly stopped the 1m/60m/1d retry loop from the prior rerun.",
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": "toolCallHistory=['get_market','get_market_candlesticks']; only 2 calls vs 4 previously — recoveryHints short-circuited the retry storm.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "contributor_guidance_applied",
+        "rootCauseEvidence": "get_market_candlesticks response contains recoveryHints and planner stopped after one empty candle call instead of retrying 3 intervals (down from 3 candle calls to 1).",
+        "responseQualityNote": "Right: budget-efficient, honest empty-state answer with explicit causal explanation. Wrong: still doesn't take the recoveryHints' pivot suggestion to find_trading_opportunities on parent event.",
+        "improvementLever": "Extend recoveryHints consumption: when the hint names a pivot tool (find_trading_opportunities on parent event), planner should execute it rather than just stopping.",
+        "diagnosticBrief": {
+          "toolUsed": "get_market, get_market_candlesticks",
+          "toolShouldHaveUsed": "same plus find_trading_opportunities(parent_event) via recoveryHints",
+          "argsUsed": "{ticker} then {ticker, period_interval:15, startTs/endTs}",
+          "argsShouldHaveUsed": "same, plus pivot on empty candles",
+          "codeSnippet": "1 candle attempt, empty result, recoveryHints consumed to stop retrying",
+          "toolResultSample": "candlesticks: [] with recoveryHints payload attached",
+          "completenessVerdict": "no evaluations recorded",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Clear improvement — budget waste from prior rerun's 3 interval retries is gone thanks to recoveryHints; answer is compact and honest."
+    },
+    {
+      "id": "q24",
+      "promptId": "q24",
+      "query": "Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap.",
+      "quotedExcerpts": [
+        "The specific ticker **KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33** could not be found on Kalshi. A direct query returned a 404 \"not found\" error",
+        "Almost all retrieved markets in this series show a `yesPrice` of 0 and zero trading volume.",
+        "Without active bid/ask spreads or current pricing, it is not possible to calculate expected value (EV) against a naive prior or identify \"structurally cheap\" legs."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 3,
+        "specificity": 3,
+        "uniqueness": 3,
+        "completeness": 3,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 2.83,
+      "scoreExplanations": {
+        "actionability": "No EV ranking and no structurally-cheap flags delivered — core ask still unmet.",
+        "dataFreshness": "Date-only timestamps; no per-leg freshness.",
+        "specificity": "Three sample market rows with tickers, titles, yesPrice, close times — more detail than the dump format of prior rerun.",
+        "uniqueness": "Honest 404 handling and a pivot to series-browse is more transparent than the prior rerun's 10-leg liquidity spam.",
+        "completeness": "Tells buyer why EV cannot be computed (no liquidity) and acknowledges ticker mismatch — clearer scoping than before.",
+        "dataAccuracy": "Ticker is reported not found, then series fallback is shown; uniform yesPrice in {0,100} remains a red flag suggesting settled/illiquid series."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "medium",
+        "selectionIssue": "Planner never called find_trading_opportunities despite query literally saying 'Find trading opportunities' and recoveryHints being present in search_markets result.",
+        "planningIssue": "loopCount=12 and toolStepCount=12 with 5 distinct calls indicate heavy deliberation with no EV computation.",
+        "executionIssue": "One failure recorded (failureCount=1) — the initial 404 on the provided ticker — handled via search/browse_series fallback.",
+        "completenessIssue": "No evaluation flagged the missing EV/ranking output (vs prior rerun this is the same gap).",
+        "codeIssueDetail": "toolCallHistory=['get_event'(404),'search_markets'(with recoveryHints),'browse_series','analyze_market_liquidity','get_market_orderbook']; recoveryHints not consumed toward find_trading_opportunities.",
+        "dataAccuracyRedFlags": "Uniform yesPrice in {0,100} across series samples.",
+        "rootCauseCategory": "tool_selection_error",
+        "rootCauseEvidence": "recoveryHints present in search_markets result but planner still did not invoke find_trading_opportunities; instead ran analyze_market_liquidity + orderbook on one representative leg.",
+        "responseQualityNote": "Right: transparent 404 handling and scoped caveats, fewer redundant calls than prior rerun's 10x analyze_market_liquidity. Wrong: still no EV ranking; recoveryHints pivot unused.",
+        "improvementLever": "When recoveryHints recommend find_trading_opportunities and the query phrase matches, force that tool call before terminating.",
+        "diagnosticBrief": {
+          "toolUsed": "get_event(404), search_markets, browse_series, analyze_market_liquidity, get_market_orderbook",
+          "toolShouldHaveUsed": "find_trading_opportunities(parent_event_or_series, rank_by:'ev')",
+          "argsUsed": "{eventTicker}(404) then series-level search/browse",
+          "argsShouldHaveUsed": "{seriesTicker or event_ticker, rank_by:'ev', include_live_siblings:true}",
+          "codeSnippet": "5 calls, 1 failure, no find_trading_opportunities despite recoveryHints",
+          "toolResultSample": "series has many yesPrice=0/100 legs, zero volume; recoveryHints in search_markets unused",
+          "completenessVerdict": "no evaluations recorded",
+          "stageTimingBottleneck": null
+        }
+      },
+      "overallVerdict": "Partial improvement — transparent 404 handling and fewer redundant calls than before, but the EV-ranking deliverable is still missing and recoveryHints were not acted on."
+    }
+  ],
+  "aggregate": {
+    "satisfactionMean": 3.1,
+    "satisfactionMin": 2.33,
+    "queryCount": 8,
+    "queriesAbove4": 0,
+    "queriesBelow3": 3,
+    "fragilityReport": {
+      "highCount": 0,
+      "mediumCount": 2,
+      "lowCount": 6,
+      "highFragilityRate": 0.0,
+      "highFragilityQueryIds": []
+    },
+    "contributorFixEvidence": {
+      "singleLegGuidance": {
+        "appliedIn": ["q7"],
+        "effect": "Prior rerun's false 'structural arb on single leg' flag is eliminated; q7 now correctly emits N/A for both arb and overround conditions. q7 satisfactionMean improved from 2.5 to 3.33."
+      },
+      "recoveryHints": {
+        "appliedIn": ["q22", "q24"],
+        "effect": "q22: stopped the 1m/60m/1d retry storm (4 calls → 2 calls) and improved mean from 3.17 to 3.5. q24: recoveryHints present in search_markets result but planner did not consume the pivot-to-find_trading_opportunities recommendation — only partial lift (2.33 → 2.83)."
+      }
+    },
+    "regressions": [
+      "q8: tool selection cleaner (orderbooks instead of redundant analyze_market_liquidity) but synthesizer dropped spread/yes_ask columns, leaving the 'tightest spread' question unanswered — mean flat at 2.5 but answer quality regressed."
+    ],
+    "topImprovementLevers": [
+      "Teach the planner to actually consume recoveryHints' pivot recommendation (find_trading_opportunities on parent event) rather than just stopping retries — would lift q12, q22, q24.",
+      "Fix get_events arg extraction in q16 to push a maxCloseTs upper bound into the API call instead of client-side filtering a truncated page.",
+      "When orderbook data is present and the query mentions 'spread' or 'rank by yes_ask' (q8), synthesizer must emit yes_bid/yes_ask/spread columns — the computation shouldn't be silently dropped."
+    ]
+  }
+}

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "2026-04-17",
-  "generatedAt": "2026-04-18T13:09:39.083Z",
+  "generatedAt": "2026-04-20T06:59:56.499Z",
   "contributor": "polymarket-contributor",
   "paths": {
     "contributorDir": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor",
@@ -23,6 +23,16 @@
   "reviewer": {
     "present": true,
     "path": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/reviewer-evaluation.json",
+    "provenance": {
+      "reviewedAt": "2026-04-18T09:48:28.216Z",
+      "replicationCount": 1,
+      "reviewSource": null,
+      "reviewerAgent": {
+        "path": ".cursor/agents/pipeline-reviewer.md",
+        "model": "claude-4.7-opus-high-thinking",
+        "checksum": "fnv1a-8e1cc5c2"
+      }
+    },
     "blockers": [],
     "summary": {
       "satisfactionMean": 4.211,
@@ -97,22 +107,54 @@
       "resultsPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/full-enhancement-results.latest.json",
       "surfaceChecksPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/marketplace-surface-checks.latest.json"
     },
-    "blockers": [
-      "Local query validation is not green."
-    ],
     "surfaceFailures": {
       "entries": [],
       "totalCount": 0,
       "fixableCount": 0,
       "promptIds": []
     },
+    "passRate": 1,
+    "surfaceFailedCount": 0,
+    "surfacePromptCount": 5,
+    "surfaceFailureRatio": 0,
     "checks": {
-      "queryValidationPassed": false,
+      "queryValidationPassedStrict": true,
+      "queryValidationPassedRelaxed": false,
+      "queryValidationPassed": true,
       "executeValidationPassed": true,
       "authContractPassed": true,
       "directValidationPassed": true
     },
-    "passed": false
+    "blockers": [],
+    "passed": true,
+    "appliedGate": {
+      "mode": "relaxed",
+      "reviewerIsStrong": true,
+      "strictThreshold": {
+        "passRate": 1,
+        "surfaceFailures": 0
+      },
+      "relaxedThreshold": {
+        "passRate": 0.85,
+        "surfaceFailures": 1,
+        "surfaceFailureRatio": 0.1,
+        "minSurfacePromptCount": 10
+      },
+      "strongReviewerThresholds": {
+        "satisfactionMean": 4,
+        "weakQueryRate": 0.2,
+        "highFragilityRate": 0.3
+      },
+      "observed": {
+        "passRate": 1,
+        "surfaceFailures": 0,
+        "surfacePromptCount": 5,
+        "surfaceFailureRatio": 0,
+        "satisfactionMean": 4.211,
+        "weakQueryRate": 0.053,
+        "highFragilityRate": 0.053
+      }
+    }
   },
   "iteration": {
     "action": "pass",
@@ -125,14 +167,12 @@
     "reason": "Release gates passed, mean 4.211 >= 4.2, and only 5% weak queries (<= 20%)."
   },
   "release": {
-    "status": "blocked",
-    "artifactWriteAllowed": false,
-    "blockers": [
-      "Local query validation is not green."
-    ]
+    "status": "ready",
+    "artifactWriteAllowed": true,
+    "blockers": []
   },
   "artifact": {
-    "exists": false,
-    "status": "missing_blocked"
+    "exists": true,
+    "status": "consistent"
   }
 }

@@ -1,0 +1,355 @@
+{
+  "generatedAt": "2026-04-18T12:40:29.224Z",
+  "toolId": "294100e8-c648-4e5f-a254-95a14b56e398",
+  "localMcpUrl": "http://localhost:4003/mcp",
+  "localContextBaseUrl": "http://localhost:3000",
+  "publicMcpUrl": "https://mcp.ctxprotocol.com/polymarket/mcp",
+  "localToolCount": 48,
+  "sampleMarket": {
+    "title": "Will WTI Crude Oil (WTI) hit (HIGH) $120 in April?",
+    "slug": "what-price-will-wti-hit-in-april-2026",
+    "conditionId": "0x7eceae72d7d7b3e175fa872c728526e6fec4714288a4bda91fe818e298e69a6f",
+    "tokenIds": [
+      "102819095095965439744162571161521676487329974358777036138951551179423945030463",
+      "72387266160731568407931217212970384645889453148307103504977225646121486508046",
+      "80793017828921029287931257105703818238993153969741983091003252488259065804950",
+      "13841318808967667695171171956421417481574020022746549435632825234253659769482"
+    ],
+    "primaryTokenId": "102819095095965439744162571161521676487329974358777036138951551179423945030463"
+  },
+  "autoQuerySummary": {
+    "promptCount": 5,
+    "passedCount": 4,
+    "failedCount": 1,
+    "routedCount": 4,
+    "runs": [
+      {
+        "id": "q1",
+        "prompt": "Within the 'Paris Saint-Germain FC vs. Liverpool FC' event, what are the current implied probabilities, best bids, best asks, and spreads for 'Will Paris Saint-Germain FC win on 2026-04-08?', 'Will Paris Saint-Germain FC vs. Liverpool FC end in a draw?', and 'Will Liverpool FC win on 2026-04-08?'?",
+        "retryCount": 0,
+        "status": "fail",
+        "outcomeType": "clarification_required",
+        "toolCalls": 0,
+        "routedToTarget": false,
+        "toolsUsed": [],
+        "durationMs": 76555,
+        "responsePreview": "I found a live PSG-related Champions League market, but not an exact PSG vs Liverpool event. Which market did you want quotes for?\n\n1. The exact PSG vs Liverpool match market, if you have a different title/slug [recommended]\n   Continue the runtime using the interpretation: The exact PSG vs Liverpool match market, if you have a different title/slug\n2. The live PSG vs FC Bayern München market I found\n   Continue the runtime using the interpretation: The live PSG vs FC Bayern München market I foun",
+        "hasData": true,
+        "actionable": false,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 0,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 0
+        }
+      },
+      {
+        "id": "q2",
+        "prompt": "For the 'Will Paris Saint-Germain FC win on 2026-04-08?' market, how much merged depth is available right now and what slippage would a $1k, $5k, and $10k exit face?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket Intelligence",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 46719,
+        "responsePreview": "As of April 18, 2026, the merged depth for the \"**Will Paris Saint-Germain FC win on 2026-04-08?**\" market is **$0**.\n\nThe market currently has no visible bid or ask depth on the orderbook, resulting in a liquidity score of \"illiquid.\" Consequently, simulated exits of any significant size face 100% slippage as they cannot be filled under current conditions.\n\n### Estimated Exit Slippage\n| Exit Amount | Amount Filled | Average Price | Slippage | Can Fill |\n| :--- | :--- | :--- | :--- | :--- |\n| $1",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "q4",
+        "prompt": "Within the '2026 FIFA World Cup Winner ' event, which sampled outcomes currently look most tradable and which look headline-only among Spain, France, England, Switzerland, and South Korea?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket Intelligence",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 74863,
+        "responsePreview": "As of April 18, 2026, **Spain** and **England** are the most tradable outcomes for the 2026 FIFA World Cup Winner event, both sporting perfect tradability scores and very low slippage. **France** is also highly tradable but features slightly higher slippage for larger exits. Conversely, **South Korea** is classified as headline-only due to significant slippage, while **Switzerland** remains on the watchlist.\n\n| Outcome | Classification | Price | Tradability Score | Slippage ($5k) | Whale Value |",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "q6",
+        "prompt": "Within the 'Iran x Israel/US conflict ends by...?' event, which date buckets are taking the biggest share of live trading right now, especially 'Iran x Israel/US conflict ends by April 15?' versus 'Iran x Israel/US conflict ends by April 30?' and 'Iran x Israel/US conflict ends by June 30?'",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket Intelligence",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 76956,
+        "responsePreview": "As of April 18, 2026, the specific date buckets you queried within the **\"Iran x Israel/US conflict ends by...?\"** event show that the **April 15** bucket holds significantly more live trading volume than the April 30 or June 30 buckets. \n\nThe **April 15** market accounts for nearly **19.5%** of the total event volume, while **April 30** and **June 30** combined account for approximately **14.7%**.\n\nThe following table displays the live trading share for the requested buckets and others within t",
+        "hasData": true,
+        "actionable": false,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 12,
+          "toolStepCount": 12
+        }
+      },
+      {
+        "id": "q11",
+        "prompt": "Inside the 'The Masters - Winner ' event, compare Xander Schauffele, Cameron Young, and Akshay Bhatia on current price, spread, and which one is easiest to exit size in.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 9,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "294100e8-c648-4e5f-a254-95a14b56e398",
+            "name": "Polymarket Intelligence",
+            "skillCalls": 9
+          }
+        ],
+        "durationMs": 177314,
+        "responsePreview": "The available data is for the **EMEA Masters 2026 Winter Winner** (an esports event), as a direct match for the golf Masters tournament was not found. **Akshay Bhatia** does not have a corresponding outcome in this event.\n\nHere is the complete returned collection for allEventOutcomes (6 items).\n\n| Name | Current Price | Date Status | End Date |\n| :--- | :--- | :--- | :--- |\n| Misa Esports | 0.0055 | undated |  |\n| BIG | 0.0105 | undated |  |\n| Unicorns of Love Sexy Edition | 0.0105 | undated |  ",
+        "hasData": true,
+        "actionable": false,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 9,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 1,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 11,
+          "toolStepCount": 11
+        }
+      }
+    ]
+  },
+  "executeValidation": {
+    "discoveredToolName": "Polymarket Intelligence",
+    "discoveredMethodCount": 23,
+    "passedMethodCount": 6,
+    "failedMethodCount": 0,
+    "methods": [
+      {
+        "methodName": "search_and_get_outcomes",
+        "args": {
+          "query": "Will WTI Crude Oil (WTI) hit (HIGH) $120 in April?"
+        },
+        "status": "pass",
+        "durationMs": 14779,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.001000",
+        "sessionRemainingUsd": "0.999",
+        "resultKeys": [
+          "eventTitle",
+          "eventSlug",
+          "eventUrl",
+          "totalVolume",
+          "totalOutcomes",
+          "sortedBy",
+          "synthesisHint",
+          "outcomes",
+          "primaryOutcome",
+          "primaryTokenId",
+          "primaryConditionId",
+          "searchQuery",
+          "searchMethod",
+          "matchConfidence",
+          "note",
+          "fetchedAt",
+          "searchMetadata"
+        ]
+      },
+      {
+        "methodName": "get_event_by_slug",
+        "args": {
+          "slug": "what-price-will-wti-hit-in-april-2026"
+        },
+        "status": "pass",
+        "durationMs": 10798,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.002000",
+        "sessionRemainingUsd": "0.998",
+        "resultKeys": [
+          "event",
+          "markets",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_prices",
+        "args": {
+          "tokenIds": [
+            "102819095095965439744162571161521676487329974358777036138951551179423945030463",
+            "72387266160731568407931217212970384645889453148307103504977225646121486508046"
+          ]
+        },
+        "status": "pass",
+        "durationMs": 9359,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.003000",
+        "sessionRemainingUsd": "0.997",
+        "resultKeys": [
+          "prices",
+          "note",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_market_parameters",
+        "args": {
+          "tokenId": "102819095095965439744162571161521676487329974358777036138951551179423945030463"
+        },
+        "status": "pass",
+        "durationMs": 8230,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.004000",
+        "sessionRemainingUsd": "0.996",
+        "resultKeys": [
+          "tokenId",
+          "tickSize",
+          "feeRateBps",
+          "negRisk",
+          "minOrderSize",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_spreads",
+        "args": {
+          "tokenIds": [
+            "102819095095965439744162571161521676487329974358777036138951551179423945030463",
+            "72387266160731568407931217212970384645889453148307103504977225646121486508046"
+          ]
+        },
+        "status": "pass",
+        "durationMs": 9429,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.005000",
+        "sessionRemainingUsd": "0.995",
+        "resultKeys": [
+          "spreads",
+          "count",
+          "note",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_market_open_interest",
+        "args": {
+          "conditionId": "0x7eceae72d7d7b3e175fa872c728526e6fec4714288a4bda91fe818e298e69a6f"
+        },
+        "status": "pass",
+        "durationMs": 7022,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.006000",
+        "sessionRemainingUsd": "0.994",
+        "resultKeys": [
+          "openInterest",
+          "totalOpenInterest",
+          "changeRateAvailable",
+          "note",
+          "fetchedAt"
+        ]
+      }
+    ]
+  },
+  "publicAuthProbe": {
+    "initializeStatus": 200,
+    "toolsListStatus": 200,
+    "toolsCallStatus": 401,
+    "toolCount": 48,
+    "rpcAuthBlocked": false,
+    "pass": true
+  },
+  "externalAccuracyCheck": {
+    "status": "PASS",
+    "overlapTop3": 3,
+    "localTopMarkets": [
+      {
+        "title": "Will Oprah Winfrey win the 2028 Democratic presidential nomination?",
+        "slug": "democratic-presidential-nominee-2028"
+      },
+      {
+        "title": "Will Uzbekistan win the 2026 FIFA World Cup?",
+        "slug": "2026-fifa-world-cup-winner-595"
+      },
+      {
+        "title": "Will Mike Pence win the 2028 Republican presidential nomination?",
+        "slug": "republican-presidential-nominee-2028"
+      }
+    ],
+    "upstreamTopMarkets": [
+      {
+        "title": "Democratic Presidential Nominee 2028",
+        "slug": "democratic-presidential-nominee-2028"
+      },
+      {
+        "title": "2026 FIFA World Cup Winner ",
+        "slug": "2026-fifa-world-cup-winner-595"
+      },
+      {
+        "title": "Republican Presidential Nominee 2028",
+        "slug": "republican-presidential-nominee-2028"
+      }
+    ],
+    "notes": [
+      "The contributor's top-volume ranking materially matched the raw Gamma upstream top-three set.",
+      "No obvious wrong-universe regression was detected in the fresh external spot check."
+    ]
+  }
+}

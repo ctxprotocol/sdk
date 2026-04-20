@@ -1,0 +1,574 @@
+{
+  "reviewedAt": "2026-04-20T06:05:00Z",
+  "perQueryEvaluations": [
+    {
+      "id": "q6",
+      "promptId": "q6",
+      "query": "Give me 1-hour candlesticks for KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D over the last 24 hours — report OHLC for Yes price and total volume per bar.",
+      "quotedExcerpts": [
+        "No 1-hour candlesticks were found for the market **KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D** over the last 24 hours.",
+        "Since there is zero trading volume reported for this specific ticker, candlestick bars cannot be generated.",
+        "| **24h Volume** | 0 | | **Total Volume** | 0 | | **Open Interest** | 0 | | **Yes Bid / Ask** | 0 / 100 |"
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.5,
+      "scoreExplanations": {
+        "actionability": "No OHLC series to act on; response cannot generate a trade idea beyond 'market is dead'.",
+        "dataFreshness": "Explicit fetchedAt timestamp 2026-04-20T05:24Z within the hour.",
+        "specificity": "Gives exact ticker, yesBid/Ask, volume, openInterest, close time.",
+        "uniqueness": "Kalshi UI shows the same zero-volume snapshot; answer is essentially pass-through market metadata. Bounded to 3.",
+        "completeness": "Answers the question fully — both the candlesticks ask and a clear reason for absence.",
+        "dataAccuracy": "Zero-volume numbers are internally consistent with 0 bid / 100 ask and active-but-untraded status."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": "Planner issued two candlestick calls — first with startTs=1716480000 (May 2024, 2 years stale) before correcting to a now-24h window; wasted one tool call.",
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": "toolCallHistory[0].args.startTs=1716480000 is May 2024; the retry at toolCallHistory[2].args.startTs=1745049872 is correct. Same empty result either way because the market has no trades.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "argument_or_extraction_error",
+        "rootCauseEvidence": "toolCallHistory[0].args.startTs=1716480000 vs the intended 'last 24h' on 2026-04-20 shows the planner originally picked a 2024 timestamp.",
+        "responseQualityNote": "Answer is honest and specific but has nothing tradeable because the contract is untraded; the initial stale-timestamp call is a latent bug.",
+        "improvementLever": "Clock-grounded time arithmetic in the planner so 'last 24h' never produces year-2024 epochs.",
+        "diagnosticBrief": {
+          "toolUsed": "get_market_candlesticks, get_market",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"ticker\":\"KXMVE...F1FA5E0C77D\",\"startTs\":1716480000,\"endTs\":1716566400,\"periodInterval\":60}",
+          "argsShouldHaveUsed": "{\"startTs\":<now-86400>,\"endTs\":<now>,\"periodInterval\":60}",
+          "codeSnippet": "first call used May-2024 epoch; second call corrected to 2026-04-19→2026-04-20 and still returned candlesticks:[]",
+          "toolResultSample": "{\"ticker\":\"KXMVE...F1FA5E0C77D\",\"candlesticks\":[],\"windowAdjusted\":false,\"fetchedAt\":\"2026-04-20T05:24:32.450Z\"}",
+          "completenessVerdict": "no completeness evaluations recorded (completeness=null)",
+          "stageTimingBottleneck": "executionMs=23371"
+        }
+      },
+      "overallVerdict": "Honest 'no data' answer — I would only pay again if the pipeline also flagged that the market is a candidate to ignore for analytics."
+    },
+    {
+      "id": "q7",
+      "promptId": "q7",
+      "query": "For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).",
+      "quotedExcerpts": [
+        "only one sub-market was returned.",
+        "Because only a single combined market exists for this event, it is not possible to calculate pairwise implied probability sums for structural arbitrage or venue overround flags.",
+        "| KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9-19499DFBB78 | ... | 0 | N/A (Single Market) |"
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.5,
+      "scoreExplanations": {
+        "actionability": "No pair flags possible; buyer gets a single row at yesPrice=0 with nothing tradeable.",
+        "dataFreshness": "fetchedAt 2026-04-20T05:25Z cited in response.",
+        "specificity": "Ticker, title with full leg breakdown, exact yesPrice included.",
+        "uniqueness": "Same thing the event page shows. Bounded to 3.",
+        "completeness": "Correctly identifies the arb/overround checks are structurally impossible for 1 sub-market.",
+        "dataAccuracy": "yesPrice=0 with noPrice=100 is internally coherent for a zero-liquidity combo."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "upstream_api_limitation",
+        "rootCauseEvidence": "get_event returned markets:[{...one combo entry...}] so the pairwise analysis the query asks for has no data to operate on.",
+        "responseQualityNote": "Right tool, right answer; buyer limitation is that the event simply doesn't contain multiple sub-markets.",
+        "improvementLever": "Upfront 'this event has 1 sub-market; pairwise analysis will be N/A' clarification before running the tool, so buyer can pivot.",
+        "diagnosticBrief": {
+          "toolUsed": "get_event",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"eventTicker\":\"KXMVE...AEDA9\",\"withNestedMarkets\":true}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "markets.length===1 → pairChecks:[] in executionResult",
+          "toolResultSample": "{\"event\":{...},\"markets\":[{\"ticker\":\"...19499DFBB78\",\"yesPrice\":0,\"noPrice\":100,\"volume\":0}]}",
+          "completenessVerdict": "completeness=null (no evaluations)",
+          "stageTimingBottleneck": "synthesisMs=6836"
+        }
+      },
+      "overallVerdict": "Accurate but low-value — a one-market event can't answer the question; I'd only pay if the system warned me upfront."
+    },
+    {
+      "id": "q8",
+      "promptId": "q8",
+      "query": "List every active market in the KXMVECROSSCATEGORY-S2026EA752452A61 event and rank them by yes_ask — which single-name has the tightest spread?",
+      "quotedExcerpts": [
+        "There are 2 active markets in the **Blanch vs Bonzi** (KXMVECROSSCATEGORY-S2026EA752452A61) event.",
+        "It is a **tie** for the tightest spread, as both active markets have a spread of 100¢.",
+        "The market featuring Darwin Blanch, Henrique Rocha, and Pedro Martinez has the lowest **yes_ask** at 0."
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 3,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.83,
+      "scoreExplanations": {
+        "actionability": "Ranking answered; but spreads are both 100 so no edge exists to trade.",
+        "dataFreshness": "fetchedAt timestamps present on both orderbook calls (2026-04-20T05:25:55Z, 05:25:56Z).",
+        "specificity": "Exact tickers, yesAsk, spread, titles — all concrete.",
+        "uniqueness": "Fan-out over 2 orderbooks + ranking is a light screening operation a buyer could do manually, but the synthesis is useful. Bounded at 3.",
+        "completeness": "Addresses every sub-question (list, rank, tightest-spread single-name).",
+        "dataAccuracy": "Both orderbooks empty with spread=100 is internally consistent; nothing contradictory."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": "Good fan-out per the fanoutHint; both orderbooks queried in sequence.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "upstream_api_limitation",
+        "rootCauseEvidence": "Both orderbook results show bids:[] asks:[] so spread comparison is degenerate at 100¢ regardless of ranking method.",
+        "responseQualityNote": "Trace is clean and the fanout hint was respected; answer is accurate though untradeable.",
+        "improvementLever": "When all spreads are the max (100), surface that explicitly as 'no liquid single-name' and skip the tie ranking.",
+        "diagnosticBrief": {
+          "toolUsed": "get_event, get_market_orderbook (x2)",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"eventTicker\":\"...EA752452A61\",\"withNestedMarkets\":true}; then get_market_orderbook on both tickers",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "fanoutHint recommended get_market_orderbook per ticker → executed as suggested",
+          "toolResultSample": "{\"bids\":[],\"asks\":[],\"spread\":100,\"midPrice\":50}",
+          "completenessVerdict": "completeness=null",
+          "stageTimingBottleneck": "executionMs=18413"
+        }
+      },
+      "overallVerdict": "Correct, specific, but degenerate tie — worth paying only because it confirms illiquidity without ambiguity."
+    },
+    {
+      "id": "q10",
+      "promptId": "q10",
+      "query": "Resolve the slug for event KXMVECROSSCATEGORY-S2026BC8725F16E4 and then pull the event-level candlestick for the last 7 days at 1-day granularity.",
+      "quotedExcerpts": [
+        "The slug `kxmvecrosscategory-s2026bc8725f16e4` resolves to the following event: * **Title**: Toronto at Cleveland",
+        "the request for 1-day granularity candlestick data over the last 7 days returned no historical OHLC (Open, High, Low, Close) rows for any of the 63 sub-markets associated with this event.",
+        "Because the event-level candlestick endpoint returned empty arrays for all market tickers, there is no price history to display for the requested window."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 3,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.5,
+      "scoreExplanations": {
+        "actionability": "Slug resolved but no price history, no price action insight to trade on.",
+        "dataFreshness": "fetchedAt timestamps explicit (2026-04-20T05:26:28Z, 05:26:33Z).",
+        "specificity": "Event ticker, series, category, status, sub-market count (63) all given.",
+        "uniqueness": "Slug→event mapping is basic venue metadata. Bounded at 3.",
+        "completeness": "Both the resolve step and the candlestick pull are covered; silence on empties is explained.",
+        "dataAccuracy": "All 63 candlestick arrays empty is consistent with zero-volume sub-markets seen in the markets list."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": "get_event_candlesticks with periodInterval=1440 over 7 days is correctly scoped; API returns parallel empty arrays.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "upstream_api_limitation",
+        "rootCauseEvidence": "marketCandlesticks = 63 empty arrays in toolCallHistory[1].result — no trades ever recorded on any leg.",
+        "responseQualityNote": "Solid two-step execution; buyer just gets nothing because these are illiquid combo legs.",
+        "improvementLever": "Fall back to event-level aggregate volume/openInterest signal so zero-activity events can be discarded earlier.",
+        "diagnosticBrief": {
+          "toolUsed": "get_event_by_slug, get_event_candlesticks",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"slug\":\"kxmvecrosscategory-s2026bc8725f16e4\",\"withNestedMarkets\":true}; then eventTicker, periodInterval=1440, 7-day window",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "marketCandlesticks: [[], [], [], ... x63]",
+          "toolResultSample": "{\"eventTicker\":\"KXMVECROSSCATEGORY-S2026BC8725F16E4\",\"marketTickers\":[...63 items...],\"marketCandlesticks\":[[],[],...]}",
+          "completenessVerdict": "completeness=null",
+          "stageTimingBottleneck": "executionMs=14595"
+        }
+      },
+      "overallVerdict": "Accurate resolution and honest empty-history report — borderline pay-again for this kind of illiquid event."
+    },
+    {
+      "id": "q11",
+      "promptId": "q11",
+      "query": "Analyze sentiment on KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 using the last 24h of trades and price action — is smart money leaning Yes or No?",
+      "quotedExcerpts": [
+        "smart money sentiment cannot be reliably inferred for this market.",
+        "While the automated sentiment tool labels the market as \"strongly bullish,\" the underlying trade data indicates this is likely a data artifact rather than meaningful activity.",
+        "**Smart Money Lean**: Inconclusive. There is no \"tape\" to read, as there have been zero trades in the last 24 hours."
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.0,
+      "scoreExplanations": {
+        "actionability": "Tells buyer explicitly NOT to act on the tool's 'strongly bullish' label; saves a bad trade.",
+        "dataFreshness": "05:27 UTC timestamp cited; tool fetchedAt 2026-04-20T05:27:05Z.",
+        "specificity": "Exact prices (100/100), 0 volume, 0 open interest, ticker cited in full.",
+        "uniqueness": "Critical override of the sentiment tool's misleading output — this is real buyer value a free LLM/UI can't produce without the trace.",
+        "completeness": "Addresses sentiment question plus explains limitations explicitly.",
+        "dataAccuracy": "yesPrice=100 and noPrice=100 with 0 volume is flagged as a data artifact — correctly called out."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": "analyze_market_sentiment returned sentiment=strongly_bullish confidence=high despite recentTrades:[] and volume24h=0 — contributor tool bug.",
+        "dataAccuracyRedFlags": "priceChange.change24h=100 and high24h=200 are non-sensical for a contract capped at 100¢; the tool is producing garbage sentiment on empty input.",
+        "rootCauseCategory": "contributor_tool_bug",
+        "rootCauseEvidence": "toolCallHistory[1].result.sentiment='strongly_bullish' with recentTrades:[] and volumeTotal:0 — synthesis had to override.",
+        "responseQualityNote": "Synthesis layer correctly negated a broken tool; that's the value delivered here.",
+        "improvementLever": "Fix analyze_market_sentiment to emit sentiment='insufficient_data' when volume24h=0 and trades=[], instead of 'strongly_bullish high confidence'.",
+        "diagnosticBrief": {
+          "toolUsed": "get_market, analyze_market_sentiment",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"ticker\":\"...C062D2B3962\",\"tradeLimit\":20,\"periodHours\":24,\"candlestickInterval\":60}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "sentiment:'strongly_bullish', confidence:'high', recentTrades:[], volume24h:0",
+          "toolResultSample": "{\"sentiment\":\"strongly_bullish\",\"confidence\":\"high\",\"priceChange\":{\"change24h\":100,\"high24h\":200,\"low24h\":0},\"recentTrades\":[],\"volumeTrend\":{\"volume24h\":0}}",
+          "completenessVerdict": "completeness=null",
+          "stageTimingBottleneck": "executionMs=14269"
+        }
+      },
+      "overallVerdict": "Yes, I'd pay again — synthesis caught and corrected a misleading tool output."
+    },
+    {
+      "id": "q12",
+      "promptId": "q12",
+      "query": "Use kalshi_crossref_polymarket on the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202602150E22176-FC050A30E2D and flag any sub-leg where an equivalent Polymarket market exists with >3 cent price divergence.",
+      "quotedExcerpts": [
+        "no sub-legs from the Kalshi market were flagged for price divergence.",
+        "The search for equivalent markets on Polymarket returned no direct matches for the specific sports betting sub-legs (San Antonio Spurs, point totals, or Vegas Golden Knights).",
+        "**Finalized Status**: As of April 20, 2026, the Kalshi market is finalized."
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.83,
+      "scoreExplanations": {
+        "actionability": "Correctly tells buyer there is nothing to trade — market is finalized.",
+        "dataFreshness": "fetchedAt 2026-04-20T05:27:36Z and 05:27:40Z cited.",
+        "specificity": "Kalshi ticker, full leg list, Polymarket candidate slugs all named.",
+        "uniqueness": "Cross-venue crossref is not something a free LLM would produce without tool access.",
+        "completeness": "Explains both the no-match result and finalized-status blocker.",
+        "dataAccuracy": "Polymarket candidates are obviously semantic false positives ('CD San Antonio Bulo Bulo' soccer) — crossref correctly flags equivalentOutcome:false."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": "Crossref returned 5 low-relevance Polymarket soccer matches because keyword tokenizer boiled down to 'san antonio wins over points'.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "contributor_tool_schema_gap",
+        "rootCauseEvidence": "kalshi_crossref_polymarket.keywords got normalized to 'san antonio wins over points' — stripping numeric lines and proper nouns like 'VGK Golden Knights', causing false positives.",
+        "responseQualityNote": "Synthesis correctly dismissed the false matches; crossref itself needs smarter keyword extraction or leg decomposition.",
+        "improvementLever": "kalshi_crossref_polymarket should decompose bundled Kalshi legs and run a crossref per leg, not a single whole-title keyword hash.",
+        "diagnosticBrief": {
+          "toolUsed": "get_market, kalshi_crossref_polymarket",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"kalshiTicker\":\"...FC050A30E2D\",\"title\":\"yes San Antonio... VGK Golden Knights\",\"keywords\":[...3 legs...],\"limit\":10}",
+          "argsShouldHaveUsed": "run per-leg crossref (e.g. VGK Golden Knights money line) instead of one whole-bundle query",
+          "codeSnippet": "searchedFor.keywords:'san antonio wins over points' → 5 soccer matches flagged equivalentOutcome:false",
+          "toolResultSample": "[{\"title\":\"CD Real Tomayapo vs. CD San Antonio Bulo Bulo\",\"matchScore\":0.8,\"equivalentOutcome\":false}, ...]",
+          "completenessVerdict": "completeness=null",
+          "stageTimingBottleneck": "executionMs=17292"
+        }
+      },
+      "overallVerdict": "Pay-again borderline — honest and specific, but crossref architecture can't service bundled Kalshi contracts."
+    },
+    {
+      "id": "q16",
+      "promptId": "q16",
+      "query": "List every Kalshi event closing before 2026-04-25 — imminent-settlement shortlist with tickers and close times.",
+      "quotedExcerpts": [
+        "the following open Kalshi events are scheduled to close before April 25, 2026.",
+        "| KXLCPIMAXYOY-27 | How high will inflation get this year? | 2026-04-17T17:17:55.000Z |",
+        "**Remaining Gap**: The search was bounded and returned an incomplete paginated slice (1,200 events). This list represents all qualifying events found in that slice, but does not capture every event across all Kalshi markets."
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 2,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 3.33,
+      "scoreExplanations": {
+        "actionability": "Delivers 32 tickers a buyer could act on, but table is mis-filtered so actionable list is suspect.",
+        "dataFreshness": "Events list returned same-day; explicit 'As of Monday, April 20, 2026'.",
+        "specificity": "Tickers, titles, exact close-time timestamps with seconds precision.",
+        "uniqueness": "Cross-series imminent-settlement screening is beyond UI point-and-click — useful.",
+        "completeness": "Explicitly bounded and incomplete — 6 cursor pages but stopped before covering universe; buyer cannot trust this is exhaustive.",
+        "dataAccuracy": "Many rows in the table have closeTimes BEFORE today (Feb/Mar 2026) yet are listed as 'open' — those events should already be closed/settled; either the status filter is stale or the response mislabels settled events as imminent. Red flag, max 2."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": "minCloseTs filter was 1777075200 (2026-04-23Z) ignoring 'before 2026-04-25' — filter semantics inverted (min vs max). The 32 events returned have close times BEFORE 2026-04-20 (impossible for open status), suggesting the filter isn't being honored by the API or the status=open events have stale data.",
+        "executionIssue": "6 paginated calls @ ~7s each = 44s execution, synthesis 85s; total 131s — high latency for an incomplete list.",
+        "completenessIssue": "Response self-reports 'incomplete paginated slice'; pagination didn't exhaust the cursor.",
+        "codeIssueDetail": "get_events args minCloseTs=1777075200 is April 23, 2026 — should be maxCloseTs for 'before April 25' intent. Also loopCount=2 / toolStepCount=2 but toolCalls=6 shows parallel pagination driven from one loop.",
+        "dataAccuracyRedFlags": "Row KXSONGRELEASE-27JAN01 lists closeTime 2026-02-13 but status=open — contradiction.",
+        "rootCauseCategory": "argument_or_extraction_error",
+        "rootCauseEvidence": "Planner used minCloseTs (floor) when the query needs a ceiling; schema has no maxCloseTs so planner should have filtered client-side after a status-open scan.",
+        "responseQualityNote": "Tickers are real but the filter is upside-down; buyer would need to double-check each row.",
+        "improvementLever": "Add maxCloseTs client-side filter in the planner / get_events wrapper so 'closing before DATE' queries work correctly.",
+        "diagnosticBrief": {
+          "toolUsed": "get_events (x6 paginated)",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"status\":\"open\",\"minCloseTs\":1777075200,\"limit\":200}",
+          "argsShouldHaveUsed": "{\"status\":\"open\",\"limit\":200,...} + client-side filter closeTime < 2026-04-25T00:00Z",
+          "codeSnippet": "6 get_events calls with minCloseTs=1777075200 — none with maxCloseTs because schema lacks it",
+          "toolResultSample": "{\"events\":[{\"eventTicker\":\"KXELONMARS-99\",...closeTime:2099-08-01},...]}",
+          "completenessVerdict": "completeness=null; response text admits incompleteness",
+          "stageTimingBottleneck": "synthesisMs=85259"
+        }
+      },
+      "overallVerdict": "Would not pay again — list is internally inconsistent (open events with Feb close times) and explicitly incomplete."
+    },
+    {
+      "id": "q21",
+      "promptId": "q21",
+      "query": "Search Kalshi for markets whose title mentions 'Victor Wembanyama' and rank by yes_ask — where is the market pricing his 35+ point line?",
+      "quotedExcerpts": [
+        "there are currently no standalone markets on Kalshi specifically for Victor Wembanyama's scoring lines.",
+        "No market was found for a **35+ point line**; the closest available line for him in these parlays is **25+ points**.",
+        "| KXMVECROSSCATEGORY-S20262659CDE1E16-21D69C6D6D5 | ...yes Victor Wembanyama: 25+, ... (22 total legs) | 2 |"
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.0,
+      "scoreExplanations": {
+        "actionability": "Buyer learns 35+ line doesn't exist and sees closest 25+ parlay tickers, but the parlays aren't pure Wembanyama bets.",
+        "dataFreshness": "Explicit 2026-04-20 reference; tool fetchedAt 2026-04-20T05:30:41Z.",
+        "specificity": "Seven real tickers, exact yesAsk values, total-leg counts — highly concrete.",
+        "uniqueness": "Surfaced non-obvious parlay tickers containing Wembanyama legs that the UI search does not expose directly.",
+        "completeness": "Addresses search, ranking, and the 35+ line question; notes illiquidity of top result.",
+        "dataAccuracy": "yesAsk values of 2, 0, 0, ... are consistent with illiquid combo contracts; no red flags."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "medium",
+        "selectionIssue": "First search used an over-constrained query ('Victor Wembanyama 35+ point line' with category=Sports) returning 0; had to recover through browse_category, get_all_series, and re-search.",
+        "planningIssue": "Planner front-loaded a failing query, then recovered via recoveryHints — 3 search attempts and a category browse before a hit.",
+        "executionIssue": "executionMs=144650 — 2.4 minutes just in execution, driven by successive recovery calls.",
+        "completenessIssue": null,
+        "codeIssueDetail": "search_markets first call returned results:[] hint asked to 'call search_markets again with a single-keyword query and NO category filter' — system did, eventually. toolCallHistory shows the second search_markets with query='Victor Wembanyama' still returned non-Wembanyama NJ election markets (bug in search_markets relevance) before a 3rd call with query='Wembanyama' finally returned real matches.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "iterative_recovery_failure",
+        "rootCauseEvidence": "3 search_markets calls + browse_category + get_all_series for a simple name lookup; search_markets is not actually indexing sub-market leg text.",
+        "responseQualityNote": "Good final answer but trace is fragile — any budget cut kills this query.",
+        "improvementLever": "Make search_markets index nested-market leg titles so a single call with 'Wembanyama' returns the parlay tickers directly.",
+        "diagnosticBrief": {
+          "toolUsed": "search_markets (x3), browse_category, get_all_series, analyze_market_liquidity",
+          "toolShouldHaveUsed": "search_markets with leg-text index",
+          "argsUsed": "{\"query\":\"Victor Wembanyama 35+ point line\",\"category\":\"Sports\",\"maxSeriesScan\":600}",
+          "argsShouldHaveUsed": "{\"query\":\"Wembanyama\",\"maxSeriesScan\":1500}",
+          "codeSnippet": "attempt 1 results:[]; attempt 2 returned NJ election rows; attempt 3 (query='Wembanyama') returned parlay matches",
+          "toolResultSample": "{\"results\":[{\"title\":\"yes Onyeka Okongwu: 10+,...yes Victor Wembanyama: 25+...\",\"ticker\":\"KXMVECROSSCATEGORY-S2026BB3A4CC92A5-3DF8A90BB91\",...}]}",
+          "completenessVerdict": "completeness=null",
+          "stageTimingBottleneck": "executionMs=144650"
+        }
+      },
+      "overallVerdict": "Pay-again for the final answer but the 2.5-minute recovery path is a fragility risk."
+    },
+    {
+      "id": "q22",
+      "promptId": "q22",
+      "query": "For the NHL-centric market KXMVESPORTSMULTIGAMEEXTENDED-S20268F24BEFAD58-0EA9403DBFE closing 2026-05-10, give me the current yes price, 24h volume, and the 15-min candlestick series since open.",
+      "quotedExcerpts": [
+        "| **Current Yes Price** | 0 | | **24h Volume** | 0 | | **Status** | active | | **Close Time** | 2026-05-10T23:00:00Z |",
+        "Regarding the 15-minute candlestick series since the market opened, no data was returned for this specific interval.",
+        "The request resulted in an empty collection because the data window was clamped due to provider limits on high-resolution historical data."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 2,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.17,
+      "scoreExplanations": {
+        "actionability": "Nothing to act on — price/volume both 0; candlestick series empty.",
+        "dataFreshness": "fetchedAt 2026-04-20T05:33:28Z cited.",
+        "specificity": "Ticker, closeTime, yesPrice, volume given precisely.",
+        "uniqueness": "Basic market snapshot a buyer could see on kalshi.com. Bounded at 2.",
+        "completeness": "Says 'window was clamped' but doesn't follow through with the hint ('re-call with periodInterval=60 or 1440') to salvage some history.",
+        "dataAccuracy": "yesPrice=0 with yesAsk=0 and noPrice=100 is coherent for a contract with no asks."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": "Planner requested periodInterval=1 (1-minute, not 15-minute) when query said '15-min candlestick series'; 15-min would be periodInterval=15, but tool appears to support 1/60/1440 only based on windowAdjustedNote — contributor may not support 15min granularity.",
+        "executionIssue": "Endpoint clamped range due to 5000-candle cap at 1min; returned empty set.",
+        "completenessIssue": "Known recovery hint ('re-call with periodInterval 60 or 1440') was not executed.",
+        "codeIssueDetail": "windowAdjustedNote: 'Requested window of 31622400s exceeded Kalshi's 5000-candle cap for periodInterval=1min. Auto-clamped startTs from 1746831600 to 1778154000 (300000s window). For longer history, re-call with a larger periodInterval (60 or 1440 minutes).' — hint ignored.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "iterative_recovery_failure",
+        "rootCauseEvidence": "toolCallHistory[1].result.windowAdjustedNote explicitly provided a recovery path; no follow-up call was issued to use 60-min buckets.",
+        "responseQualityNote": "Buyer got a shrug when a 60-min fallback series was available for the asking.",
+        "improvementLever": "Honor windowAdjustedNote hints: when clamp rejects the interval, auto-retry at the recommended periodInterval.",
+        "diagnosticBrief": {
+          "toolUsed": "get_market, get_market_candlesticks",
+          "toolShouldHaveUsed": "get_market_candlesticks with periodInterval=60 on retry",
+          "argsUsed": "{\"ticker\":\"...0EA9403DBFE\",\"startTs\":1746831600,\"endTs\":1778454000,\"periodInterval\":1}",
+          "argsShouldHaveUsed": "{\"periodInterval\":60,\"startTs\":<marketOpen>,\"endTs\":<now>}",
+          "codeSnippet": "windowAdjusted:true, candlesticks:[], windowAdjustedNote recommending periodInterval 60 or 1440",
+          "toolResultSample": "{\"candlesticks\":[],\"windowAdjusted\":true,\"windowAdjustedNote\":\"... re-call with a larger periodInterval (60 or 1440 minutes).\"}",
+          "completenessVerdict": "completeness=null",
+          "stageTimingBottleneck": "executionMs=14236"
+        }
+      },
+      "overallVerdict": "Would not pay again — a recoverable empty set was accepted as final."
+    },
+    {
+      "id": "q24",
+      "promptId": "q24",
+      "query": "Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap.",
+      "quotedExcerpts": [
+        "there are no live trading opportunities for the market **KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33** because the contract is already **finalized**.",
+        "| **Close Time** | 2026-04-20T04:26:24Z |",
+        "No live `yes_ask` quotes or individual sub-leg tickers were available because the market reached its final settlement before the query was processed."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 2,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.17,
+      "scoreExplanations": {
+        "actionability": "Finalized market = no trade possible; buyer learns to skip.",
+        "dataFreshness": "fetchedAt 2026-04-20T05:34:05Z cited.",
+        "specificity": "Full ticker and all 9 listed sub-legs enumerated.",
+        "uniqueness": "Just a get_market pass-through; free tools can see finalized status. Bounded at 2.",
+        "completeness": "Doesn't attempt the 'rank sub-leg EV' part — treats the compound market as one row even though the query implied multi-leg analysis.",
+        "dataAccuracy": "Finalized yesPrice=0, noPrice=100 is internally consistent."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": "The ticker is a single sub-market (leg of parent event KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A), not an event; the query talks about 'each sub-leg' — planner should have pulled the parent event via get_event(eventTicker) to expose peer legs for comparison, or called find_trading_opportunities with the new eventTicker scoping.",
+        "planningIssue": "find_trading_opportunities was in the selectedMethods list (now accepts eventTicker/ticker scoping per iter-3 fix) but was not invoked.",
+        "executionIssue": null,
+        "completenessIssue": "Query asked for sub-leg EV ranking; response only returned the compound market itself.",
+        "codeIssueDetail": "toolCallHistory has only {get_market ticker=...71524DD7E33}; no get_event / find_trading_opportunities call to fetch peer sub-legs.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "tool_selection_error",
+        "rootCauseEvidence": "selection.selectedTools.selectedMethods includes find_trading_opportunities and get_event; neither was actually called despite the query literally beginning 'Find trading opportunities on ...'.",
+        "responseQualityNote": "Answer is factually right about finalized status but never attempted the sub-leg ranking the buyer paid for.",
+        "improvementLever": "Route queries whose intent verb is 'find trading opportunities' to find_trading_opportunities (now scoped by ticker/eventTicker) instead of bare get_market.",
+        "diagnosticBrief": {
+          "toolUsed": "get_market",
+          "toolShouldHaveUsed": "find_trading_opportunities with eventTicker=KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A (or get_event to enumerate sub-legs)",
+          "argsUsed": "{\"ticker\":\"...71524DD7E33\"}",
+          "argsShouldHaveUsed": "{\"eventTicker\":\"KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A\"} (iter-3 scoping) or get_event with withNestedMarkets:true",
+          "codeSnippet": "single get_market call; finalized status detected → synthesized refusal without trying peer sub-legs",
+          "toolResultSample": "{\"market\":{\"ticker\":\"...71524DD7E33\",\"status\":\"finalized\",\"yesPrice\":0,\"noPrice\":100,...}}",
+          "completenessVerdict": "completeness=null",
+          "stageTimingBottleneck": "synthesisMs=7239"
+        }
+      },
+      "overallVerdict": "Would not pay again — the iter-3 fix made find_trading_opportunities scopable but the planner didn't use it for the query that literally asks for 'trading opportunities'."
+    }
+  ],
+  "aggregate": {
+    "satisfactionMean": 3.58,
+    "satisfactionMin": 3.17,
+    "queryCount": 10,
+    "queriesAbove4": 2,
+    "queriesBelow3": 0,
+    "fragilityReport": {
+      "highCount": 0,
+      "mediumCount": 2,
+      "lowCount": 8,
+      "highFragilityRate": 0.0,
+      "highFragilityQueryIds": []
+    },
+    "topImprovementLevers": [
+      "Route intent-matching queries to find_trading_opportunities / analyze_market_sentiment with eventTicker scoping instead of falling back to bare get_market.",
+      "Honor windowAdjustedNote and recoveryHints in the iterative runtime (auto-retry at suggested periodInterval, auto-re-query with different filter semantics).",
+      "Fix planner filter semantics: 'closing before DATE' should translate to a client-side maxCloseTs filter, not minCloseTs; indicate status-vs-closeTime inconsistencies before rendering."
+    ]
+  }
+}

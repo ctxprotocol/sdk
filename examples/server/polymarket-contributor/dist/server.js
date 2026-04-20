@@ -587,7 +587,7 @@ const TOOLS = [
     // ==================== TIER 1: INTELLIGENCE TOOLS ====================
     {
         name: "analyze_market_liquidity",
-        description: 'Analyze market liquidity and calculate "Whale Cost" for ONE specific outcome token - simulates the slippage for selling $1k, $5k, and $10k positions. Answers: "Can I exit this position if I put $X in?" Merges direct + synthetic liquidity from both YES and NO orderbooks for accurate depth.\n\n**SIZE-SPECIFIC SIMULATION:** When the user asks about a specific dollar size (e.g. "slippage for a $50,000 buy") or a specific side (buy vs sell), pass `positionSizeUsd` and optionally `side` ("buy" or "sell") to get a walk-the-book fill simulation at that exact size. The result will include `whaleCost.custom` with the avgPrice, worstPrice, slippagePercent, and canFill for that specific size/side. This is how you answer "estimate slippage for a $X buy/sell" questions accurately.\n\nUse this when the user already means ONE named team/candidate/outcome or when you already have tokenId/conditionId. Do NOT use this as the first choice for event-level multi-outcome requests like "World Cup winner market" or "election market" when no specific outcome was named. For those categorical-market prompts, prefer analyze_event_outcome_liquidity.\n\nAccepts tokenId, conditionId, slug, or marketQuery. If you only know the single market by name, pass marketQuery and this tool will resolve the best live match first.\n\n⏱️ PERFORMANCE: Makes 3 CLOB API calls (~3-5s). Safe to call in parallel with 1-2 other lightweight tools, but avoid calling alongside find_trading_opportunities or analyze_top_holders.',
+        description: 'Analyze market liquidity and calculate "Whale Cost" for ONE specific outcome token - simulates the slippage for selling $1k, $5k, and $10k positions. Answers: "Can I exit this position if I put $X in?" Merges direct + synthetic liquidity from both YES and NO orderbooks for accurate depth.\n\n**SIZE-SPECIFIC SIMULATION:** When the user asks about a specific dollar size (e.g. "slippage for a $50,000 buy") or a specific side (buy vs sell), pass `positionSizeUsd` and optionally `side` ("buy" or "sell") to get a walk-the-book fill simulation at that exact size. The result will include `whaleCost.custom` with the avgPrice, worstPrice, slippagePercent, and canFill for that specific size/side. This is how you answer "estimate slippage for a $X buy/sell" questions accurately.\n\n**MARKET STATE (read this first when synthesising answers):** the response ALWAYS includes `marketState`, `marketStateSummary`, `isTradeable`, `marketSlug`, and `polymarketUrl`. If `marketState` is `closed_resolved`, the market has already settled — report the `winningOutcome` and the fact that exits happen via redeem/claim, NOT as "100% slippage / illiquid CLOB". If `marketState` is `closed_unresolved`, trading has ended and UMA settlement is pending. If `marketState` is `orderbook_disabled` / `not_accepting_orders` / `archived`, walk-the-book sizing is not meaningful and the summary explains why. Only when `marketState` is `tradeable` should slippage / depth numbers be quoted as live liquidity. Any link you produce to Polymarket MUST use `polymarketUrl` (or compose `https://polymarket.com/market/<marketSlug>`) verbatim — do not synthesise a slug from the question text, it will be a dead link.\n\nUse this when the user already means ONE named team/candidate/outcome or when you already have tokenId/conditionId. Do NOT use this as the first choice for event-level multi-outcome requests like "World Cup winner market" or "election market" when no specific outcome was named. For those categorical-market prompts, prefer analyze_event_outcome_liquidity.\n\nAccepts tokenId, conditionId, slug, or marketQuery. If you only know the single market by name, pass marketQuery and this tool will resolve the best live match first.\n\n⏱️ PERFORMANCE: Makes 3 CLOB API calls (~3-5s). Safe to call in parallel with 1-2 other lightweight tools, but avoid calling alongside find_trading_opportunities or analyze_top_holders.',
         inputSchema: {
             type: "object",
             properties: {
@@ -624,6 +624,46 @@ const TOOLS = [
             properties: {
                 market: { type: "string" },
                 tokenId: { type: "string" },
+                conditionId: { type: "string" },
+                marketSlug: {
+                    type: ["string", "null"],
+                    description: "Canonical Polymarket market_slug for this contract. Use this for any user-facing URL instead of synthesizing one from the question.",
+                },
+                polymarketUrl: {
+                    type: ["string", "null"],
+                    description: "Real Polymarket URL for this market (https://polymarket.com/market/<market_slug>). Synthesis layers must use this value verbatim rather than guessing a slug from the question text.",
+                },
+                marketState: {
+                    type: "string",
+                    enum: [
+                        "tradeable",
+                        "orderbook_disabled",
+                        "not_accepting_orders",
+                        "closed_resolved",
+                        "closed_unresolved",
+                        "archived",
+                        "unknown",
+                    ],
+                    description: "Classification of the market's state. 'closed_resolved' means the market has settled (winningOutcome will be set); 'closed_unresolved' means trading is over but UMA has not settled yet; 'archived' means the market is delisted; 'orderbook_disabled' / 'not_accepting_orders' mean the market is live but unmatchable right now; 'tradeable' means normal operation; 'unknown' means the /book endpoint was transiently unreachable.",
+                },
+                marketStateSummary: {
+                    type: "string",
+                    description: "Human-readable explanation of marketState. Answers should quote or paraphrase this instead of defaulting to a generic 'illiquid' framing when the real story is that the market has ended.",
+                },
+                isTradeable: { type: "boolean" },
+                endDate: { type: ["string", "null"] },
+                winningOutcome: {
+                    type: ["string", "null"],
+                    description: "For closed_resolved markets, the outcome that won ('Yes' or 'No' for binary markets).",
+                },
+                settlementPrices: {
+                    type: "object",
+                    description: "Final settled per-share prices for YES and NO tokens when the market has resolved (0/1 for binary resolutions). Null means no settlement recorded yet.",
+                    properties: {
+                        yes: { type: ["number", "null"] },
+                        no: { type: ["number", "null"] },
+                    },
+                },
                 currentPrice: { type: "number" },
                 spread: {
                     type: "object",
@@ -656,7 +696,7 @@ const TOOLS = [
                 },
                 whaleCost: {
                     type: "object",
-                    description: "Slippage simulation for different position sizes",
+                    description: "Slippage simulation for different position sizes. When marketState is not 'tradeable', all fills are structurally zero because the orderbook is disabled — this is NOT an illiquid-book signal.",
                     properties: {
                         sell1k: { type: "object" },
                         sell5k: { type: "object" },
@@ -693,6 +733,9 @@ const TOOLS = [
                 "spread",
                 "whaleCost",
                 "liquidityScore",
+                "marketState",
+                "marketStateSummary",
+                "isTradeable",
             ],
         },
     },
@@ -6865,6 +6908,159 @@ async function buildEventOutcomeRows(params) {
         filteredInactiveCount,
     };
 }
+function computeMarketTradability(market) {
+    const tokens = Array.isArray(market.tokens) ? market.tokens : [];
+    const yesToken = tokens.find((t) => t?.outcome?.toLowerCase() === "yes") ?? tokens[0];
+    const noToken = tokens.find((t) => t?.outcome?.toLowerCase() === "no") ?? tokens[1];
+    const winnerToken = tokens.find((t) => t?.winner === true);
+    const toPriceNumber = (v) => {
+        const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+        return Number.isFinite(n) ? n : null;
+    };
+    const yesPrice = toPriceNumber(yesToken?.price);
+    const noPrice = toPriceNumber(noToken?.price);
+    const slug = typeof market.market_slug === "string" && market.market_slug.trim().length > 0
+        ? market.market_slug.trim()
+        : null;
+    const polymarketUrl = slug ? `https://polymarket.com/market/${slug}` : null;
+    const question = typeof market.question === "string" && market.question.trim().length > 0
+        ? market.question.trim()
+        : null;
+    const endDate = typeof market.end_date_iso === "string" && market.end_date_iso.trim().length > 0
+        ? market.end_date_iso.trim()
+        : null;
+    // Classification order matters: archived > resolved > closed-unresolved >
+    // orderbook_disabled > not_accepting_orders > tradeable.
+    let state = "tradeable";
+    let summary = "Market is live and accepts orders on the CLOB.";
+    let winningOutcome = null;
+    if (market.archived === true) {
+        state = "archived";
+        summary = "Market is archived on Polymarket and no longer available for trading.";
+    }
+    else if (market.closed === true) {
+        if (winnerToken) {
+            state = "closed_resolved";
+            winningOutcome = winnerToken.outcome ?? null;
+            const priceLabel = winnerToken.outcome?.toLowerCase() === "yes" && yesPrice !== null
+                ? ` at $${yesPrice.toFixed(2)}/share`
+                : winnerToken.outcome?.toLowerCase() === "no" && noPrice !== null
+                    ? ` at $${noPrice.toFixed(2)}/share`
+                    : "";
+            summary = `Market has resolved${winningOutcome ? ` with ${winningOutcome} as the winning outcome${priceLabel}` : ""}. The CLOB orderbook is permanently disabled for this contract; any existing positions settle via redeem/claim rather than a CLOB exit.`;
+        }
+        else {
+            state = "closed_unresolved";
+            summary = "Market is closed (trading has ended) but has not yet been resolved on-chain. Orderbook trading is over; awaiting UMA settlement.";
+        }
+    }
+    else if (market.enable_order_book === false) {
+        state = "orderbook_disabled";
+        summary = "Market is published but the CLOB orderbook is disabled for this contract, so walk-the-book execution is not possible.";
+    }
+    else if (market.accepting_orders === false) {
+        state = "not_accepting_orders";
+        summary = "Market is live but is currently not accepting new orders (paused). Existing orders may still be resting but the book is effectively frozen.";
+    }
+    return {
+        state,
+        isTradeable: state === "tradeable",
+        summary,
+        question,
+        marketSlug: slug,
+        polymarketUrl,
+        endDate,
+        winningOutcome,
+        settlementPrices: { yes: yesPrice, no: noPrice },
+    };
+}
+const NON_TRADEABLE_ZERO_FILL = {
+    amountFilled: 0,
+    avgPrice: 0,
+    worstPrice: 0,
+    slippagePercent: 100,
+    canFill: false,
+};
+function buildNonTradeableLiquidityResponse(params) {
+    const { tradability, tokenId, conditionId, marketTitle } = params;
+    const yesSettled = tradability.settlementPrices.yes;
+    const refPrice = typeof yesSettled === "number" && yesSettled >= 0 && yesSettled <= 1
+        ? Number(yesSettled.toFixed(4))
+        : 0;
+    // For resolved markets, the honest "recommendation" is: there is no CLOB
+    // exit, position settles at the winning token's price. For closed-unresolved
+    // markets, it's: trading is over, wait for settlement. For paused/disabled
+    // orderbook markets, it's: market is live but unmatchable right now.
+    let recommendation;
+    switch (tradability.state) {
+        case "closed_resolved":
+            recommendation = tradability.winningOutcome
+                ? `Market has resolved with ${tradability.winningOutcome} as the winning outcome. CLOB trading is permanently disabled; YES shares are redeemable at $${(tradability.settlementPrices.yes ?? 0).toFixed(2)} and NO at $${(tradability.settlementPrices.no ?? 0).toFixed(2)} via Polymarket's redeem flow rather than a CLOB sell.`
+                : "Market has resolved and CLOB trading is permanently disabled. Position exit is via redeem/claim at the settled price, not via the orderbook.";
+            break;
+        case "closed_unresolved":
+            recommendation =
+                "Market is closed to new trading and awaiting on-chain resolution. No CLOB exit is possible; wait for UMA settlement and then redeem.";
+            break;
+        case "archived":
+            recommendation =
+                "Market is archived on Polymarket and no longer tradeable. Any exit simulation on the CLOB is not meaningful here.";
+            break;
+        case "orderbook_disabled":
+            recommendation =
+                "Market is published but the CLOB orderbook is disabled, so walk-the-book slippage simulations are not meaningful. Exit size at a given price is effectively zero right now.";
+            break;
+        case "not_accepting_orders":
+            recommendation =
+                "Market is live but currently paused (not accepting new orders). No matching will occur; treat execution/exit risk as high until the pause lifts.";
+            break;
+        default:
+            recommendation = tradability.summary;
+    }
+    return {
+        market: marketTitle,
+        tokenId,
+        conditionId: conditionId ?? undefined,
+        marketSlug: tradability.marketSlug,
+        polymarketUrl: tradability.polymarketUrl,
+        marketState: tradability.state,
+        marketStateSummary: tradability.summary,
+        isTradeable: false,
+        endDate: tradability.endDate,
+        winningOutcome: tradability.winningOutcome,
+        settlementPrices: tradability.settlementPrices,
+        currentPrice: refPrice,
+        spread: {
+            bestBid: refPrice,
+            bestAsk: refPrice,
+            spreadCents: 0,
+            spreadBps: 0,
+            absolute: 0,
+            percentage: 0,
+            bps: 0,
+        },
+        depth: {
+            bidDepthUsd: 0,
+            askDepthUsd: 0,
+            totalDepthUsd: 0,
+            note: tradability.state === "closed_resolved"
+                ? "Market is resolved; CLOB orderbook is permanently disabled, so merged depth is zero by design. This is NOT a liquidity problem — positions settle via redeem rather than CLOB sell."
+                : tradability.state === "closed_unresolved"
+                    ? "Market is closed and awaiting on-chain settlement; CLOB depth is zero because trading has ended, not because the book is thin."
+                    : tradability.state === "archived"
+                        ? "Market is archived; there is no orderbook to measure depth against."
+                        : "CLOB orderbook is disabled or the market is paused; depth is structurally zero rather than an indicator of liquidity.",
+        },
+        whaleCost: {
+            sell1k: NON_TRADEABLE_ZERO_FILL,
+            sell5k: NON_TRADEABLE_ZERO_FILL,
+            sell10k: NON_TRADEABLE_ZERO_FILL,
+        },
+        liquidityScore: "illiquid",
+        recommendation,
+        fetchedAt: new Date().toISOString(),
+    };
+}
 // ============================================================================
 // TIER 1: INTELLIGENCE TOOL HANDLERS
 // ============================================================================
@@ -6896,21 +7092,47 @@ async function handleAnalyzeMarketLiquidity(args) {
     }
     let yesTokenId = tokenId;
     let noTokenId = "";
+    let clobMarket = null;
     // PERF: Resolve token IDs first, then fetch both orderbooks in parallel.
     // Previously this was 5 sequential calls (market → yesBook → market again → noBook → prices).
     // Now it's: 1 market call → 2 parallel book calls + 1 price call = 2 round-trips total.
     if (conditionId) {
-        const market = (await fetchClob(`/markets/${conditionId}`, undefined, 8000));
-        yesTokenId = market.tokens?.[0]?.token_id || tokenId;
-        noTokenId = market.tokens?.[1]?.token_id || "";
+        const market = (await fetchClob(`/markets/${conditionId}`, undefined, 8000).catch(() => null));
+        if (market) {
+            clobMarket = market;
+            const yesFromTokens = market.tokens?.find((t) => t?.outcome?.toLowerCase() === "yes")?.token_id ??
+                market.tokens?.[0]?.token_id;
+            const noFromTokens = market.tokens?.find((t) => t?.outcome?.toLowerCase() === "no")?.token_id ??
+                market.tokens?.[1]?.token_id;
+            yesTokenId = yesFromTokens || tokenId;
+            noTokenId = noFromTokens || "";
+        }
     }
     if (!yesTokenId) {
         return errorResult("Could not resolve token ID");
     }
+    // If we have a CLOB market payload, inspect tradability BEFORE hitting /book.
+    // A closed / resolved / archived / orderbook-disabled market should not be
+    // reported as a generic "illiquid" surface — the truthful story is that the
+    // market has ended or been paused, and any "100% slippage" framing is
+    // actively misleading.
+    const tradability = clobMarket ? computeMarketTradability(clobMarket) : null;
+    const marketTitleFromClob = (tradability?.question?.length ?? 0) > 0
+        ? tradability.question
+        : clobMarket?.question || conditionId || yesTokenId;
+    if (tradability && !tradability.isTradeable) {
+        return successResult(buildNonTradeableLiquidityResponse({
+            tradability,
+            tokenId: yesTokenId,
+            conditionId: conditionId || clobMarket?.condition_id || null,
+            marketTitle: marketTitleFromClob,
+        }));
+    }
     // Fetch both orderbooks in parallel (+ price) instead of sequentially.
-    // NOTE: Some Gamma markets don't have an active CLOB orderbook (or are paused),
-    // which manifests as a 404 from /book. In that case we return a best-effort
-    // response instead of failing the entire tool call.
+    // NOTE: Even when CLOB /markets reports enable_order_book=true, the /book
+    // endpoint can still 404 transiently. That is a transport-level failure and
+    // is handled below distinctly from the "market said it's not tradeable"
+    // case, which has already been resolved above.
     const [yesOrderbook, noOrderbook] = (await Promise.all([
         fetchClob(`/book?token_id=${yesTokenId}`, undefined, 8000)
             .then((r) => r)
@@ -6922,7 +7144,7 @@ async function handleAnalyzeMarketLiquidity(args) {
             : Promise.resolve(null),
     ]));
     if (!yesOrderbook) {
-        let fallbackMarketTitle = conditionId || yesTokenId;
+        let fallbackMarketTitle = marketTitleFromClob;
         let fallbackPrice = 0.5;
         let fallbackLiquidity = 0;
         try {
@@ -6983,11 +7205,15 @@ async function handleAnalyzeMarketLiquidity(args) {
                 bidDepthUsd: Number((fallbackLiquidity * 0.5).toFixed(2)),
                 askDepthUsd: Number((fallbackLiquidity * 0.5).toFixed(2)),
                 totalDepthUsd: Number(fallbackLiquidity.toFixed(2)),
-                note: "CLOB orderbook unavailable; Gamma liquidity used as rough proxy",
+                note: "CLOB /book temporarily unreachable; Gamma liquidity used as rough proxy.",
             },
             whaleCost: noBookWhaleCost,
             liquidityScore: "illiquid",
-            recommendation: "CLOB orderbook unavailable (market may be paused or not tradeable on the orderbook). Treat execution/exit risk as high.",
+            marketState: "unknown",
+            marketStateSummary: "Upstream /book endpoint did not return an orderbook on this attempt. Market appeared live per /markets, so this is likely a transient transport issue rather than a resolved or paused market.",
+            marketSlug: tradability?.marketSlug ?? null,
+            polymarketUrl: tradability?.polymarketUrl ?? null,
+            recommendation: "CLOB /book was temporarily unreachable. Treat execution/exit risk as high and retry; if the condition persists, check market status directly on Polymarket.",
             fetchedAt: new Date().toISOString(),
         });
     }
@@ -7113,8 +7339,16 @@ async function handleAnalyzeMarketLiquidity(args) {
         recommendation = `Low liquidity. Exit $1k would cost ~${slippage1k.toFixed(1)}% in slippage. Use limit orders.`;
     }
     return successResult({
-        market: yesOrderbook.market || conditionId,
+        market: (tradability?.question?.length ?? 0) > 0
+            ? tradability.question
+            : (yesOrderbook.market || conditionId),
         tokenId: yesTokenId,
+        conditionId: conditionId || clobMarket?.condition_id,
+        marketSlug: tradability?.marketSlug ?? null,
+        polymarketUrl: tradability?.polymarketUrl ?? null,
+        marketState: tradability?.state ?? "tradeable",
+        marketStateSummary: tradability?.summary ?? "Market is live and accepts orders on the CLOB.",
+        isTradeable: true,
         currentPrice: Number(currentPrice.toFixed(4)),
         spread: {
             bestBid: Number(bestBid.toFixed(4)),

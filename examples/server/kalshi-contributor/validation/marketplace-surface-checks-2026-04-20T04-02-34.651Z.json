@@ -1,0 +1,338 @@
+{
+  "generatedAt": "2026-04-20T04:02:34.653Z",
+  "toolId": "5cc326fb-500d-4c17-bc5f-ade143210636",
+  "localMcpUrl": "http://localhost:4007/mcp",
+  "localContextBaseUrl": "http://localhost:3000",
+  "publicMcpUrl": "https://mcp.ctxprotocol.com/kalshi/mcp",
+  "localToolCount": 24,
+  "sampleMarket": {
+    "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299",
+    "eventTicker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21",
+    "title": "yes James Harden: 4+,yes Jarrett Allen: 10+,yes RJ Barrett: 2+",
+    "closeTime": "2026-05-04T23:00:00Z"
+  },
+  "autoQuerySummary": {
+    "promptCount": 5,
+    "passedCount": 5,
+    "failedCount": 0,
+    "routedCount": 5,
+    "runs": [
+      {
+        "id": "q1",
+        "prompt": "Show me the top 10 trending Kalshi markets right now by 24h volume — include ticker, title, yes price, and liquidity.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 43094,
+        "responsePreview": "As of April 20, 2026, here are the top 10 trending Kalshi markets ranked by 24-hour volume. Please note that while volume is high, the data source currently reports $0 liquidity for these specific listings.\n\n| Rank | Ticker | Title | Yes Price | 24h Volume | Liquidity |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| 1 | KXNHLGAME-26APR19UTAVGK-VGK | Game 1: Utah at Vegas Winner? | $0.36 | $2,105,684.89 | $0 |\n| 2 | KXNHLGAME-26APR19UTAVGK-UTA | Game 1: Utah at Vegas Winner? | $0.66 | $1,190,894.2",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "q2",
+        "prompt": "For the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299, what are the current yes/no bid and ask, the implied probability from the midpoint, and the bid-ask spread in cents?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 2,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 2
+          }
+        ],
+        "durationMs": 42201,
+        "responsePreview": "As of April 20, 2026, here are the current market details for **KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299**:\n\n| Metric | Value |\n| :--- | :--- |\n| **YES Bid** | 0¢ |\n| **YES Ask** | 0¢ |\n| **NO Bid** | 100¢ |\n| **NO Ask** | 100¢ |\n| **Implied Probability (Midpoint)** | 50% |\n| **Bid-Ask Spread** | 100 cents |\n\nNote that the orderbook for this market was empty at the time of the query, resulting in a nominal midpoint of 50¢ and a full 100-cent spread.",
+        "hasData": true,
+        "actionable": false,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 3,
+          "toolStepCount": 3
+        }
+      },
+      {
+        "id": "q7",
+        "prompt": "For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 1
+          },
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 47586,
+        "responsePreview": "As of April 20, 2026, 03:59:08 UTC, the event **KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9** (\"Combo\") contains only one sub-market. Because there are no pairs of markets (e.g., a \"Yes\" and a \"No\" market or opposing outcomes) to compare, structural arbitrage and venue overround checks cannot be performed.\n\n| Ticker | Title | Yes Price | Flags |\n| :--- | :--- | :--- | :--- |\n| KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9-19499DFBB78 | yes Jalen Brunson: 2+,yes OG Anunoby: 1+,yes Jamal Murray:",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "q11",
+        "prompt": "Analyze sentiment on KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 using the last 24h of trades and price action — is smart money leaning Yes or No?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 2,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 2
+          }
+        ],
+        "durationMs": 50022,
+        "responsePreview": "Based on the last 24 hours of data, there is no active \"smart money\" flow to analyze for this market. While the sentiment model technically labels the outlook as **strongly bullish**, this inference is not supported by actual trading activity.\n\nThe market currently reflects an illiquid and inconsistent state:\n\n| Metric | Value |\n| :--- | :--- |\n| **Ticker** | KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 |\n| **Yes Price** | 100¢ |\n| **No Price** | 100¢ |\n| **24h Volume** | 0 |\n| **Op",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "q17",
+        "prompt": "Walk me through a full trading workflow on KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA: current pricing, orderbook depth to fill $1,000 Yes, trade-flow direction in the last 6 hours, and a rec with risk.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 3,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "5cc326fb-500d-4c17-bc5f-ade143210636",
+            "name": "Kalshi",
+            "skillCalls": 3
+          }
+        ],
+        "durationMs": 47951,
+        "responsePreview": "As of April 20, 2026, the trading workflow for this NBA multi-game prop (KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA) indicates an extremely illiquid market where typical execution is currently not possible.\n\n### Current Pricing\nBased on the latest data, there is no active spread being maintained by market makers.\n\n| Metric | Value |\n| :--- | :--- |\n| **Last Price** | 11.5¢ |\n| **Yes Bid / Ask** | 0¢ / 100¢ |\n| **No Bid / Ask** | 0¢ / 100¢ |\n| **Open Interest** | 40 |\n| **24h Volum",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 3,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      }
+    ]
+  },
+  "executeValidation": {
+    "discoveredToolName": "Kalshi",
+    "discoveredMethodCount": 24,
+    "passedMethodCount": 6,
+    "failedMethodCount": 0,
+    "methods": [
+      {
+        "methodName": "search_markets",
+        "args": {
+          "query": "yes James Harden: 4+ yes Jarrett Allen: 10+ yes RJ Barrett: 2+",
+          "limit": 5,
+          "status": "open"
+        },
+        "status": "pass",
+        "durationMs": 11548,
+        "executePriceUsd": "0.002",
+        "sessionSpentUsd": "0.002000",
+        "sessionRemainingUsd": "0.998",
+        "resultKeys": [
+          "results",
+          "count",
+          "matchedSeries",
+          "searchMethod",
+          "searchBudget",
+          "hint",
+          "fetchedAt",
+          "recoveryHints",
+          "searchMetadata"
+        ]
+      },
+      {
+        "methodName": "get_market",
+        "args": {
+          "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299"
+        },
+        "status": "pass",
+        "durationMs": 10335,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.003000",
+        "sessionRemainingUsd": "0.997",
+        "resultKeys": [
+          "market",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_event",
+        "args": {
+          "eventTicker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21"
+        },
+        "status": "pass",
+        "durationMs": 10265,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.004000",
+        "sessionRemainingUsd": "0.996",
+        "resultKeys": [
+          "event",
+          "markets",
+          "fetchedAt",
+          "fanoutHint"
+        ]
+      },
+      {
+        "methodName": "get_market_orderbook",
+        "args": {
+          "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299",
+          "depth": 10
+        },
+        "status": "pass",
+        "durationMs": 9752,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.005000",
+        "sessionRemainingUsd": "0.995",
+        "resultKeys": [
+          "ticker",
+          "bids",
+          "asks",
+          "spread",
+          "midPrice",
+          "orderbookFpAvailable",
+          "quantityPrecision",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_market_trades",
+        "args": {
+          "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299",
+          "limit": 5
+        },
+        "status": "pass",
+        "durationMs": 9572,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.006000",
+        "sessionRemainingUsd": "0.994",
+        "resultKeys": [
+          "ticker",
+          "trades",
+          "summary",
+          "nextCursor",
+          "cursor",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_market_candlesticks",
+        "args": {
+          "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299",
+          "periodInterval": 60
+        },
+        "status": "pass",
+        "durationMs": 9314,
+        "executePriceUsd": "0.001",
+        "sessionSpentUsd": "0.007000",
+        "sessionRemainingUsd": "0.993",
+        "resultKeys": [
+          "ticker",
+          "candlesticks",
+          "sourceEndpoint",
+          "fetchedAt"
+        ]
+      }
+    ]
+  },
+  "publicAuthProbe": {
+    "initializeStatus": 200,
+    "toolsListStatus": 200,
+    "toolsCallStatus": 401,
+    "toolCount": 24,
+    "rpcAuthBlocked": false,
+    "pass": true
+  },
+  "externalAccuracyCheck": {
+    "status": "PASS",
+    "localSample": {
+      "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299",
+      "eventTicker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21",
+      "title": "yes James Harden: 4+,yes Jarrett Allen: 10+,yes RJ Barrett: 2+",
+      "closeTime": "2026-05-04T23:00:00Z"
+    },
+    "upstreamSample": {
+      "ticker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299",
+      "eventTicker": "KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21",
+      "title": "yes James Harden: 4+,yes Jarrett Allen: 10+,yes RJ Barrett: 2+",
+      "closeTime": "2026-05-04T23:00:00Z"
+    },
+    "notes": [
+      "The local Kalshi sample market matched the public Kalshi Trade API on ticker and event ticker.",
+      "No obvious wrong-universe regression was detected in the fresh external spot check."
+    ]
+  }
+}

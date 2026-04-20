@@ -1,0 +1,240 @@
+{
+  "reviewedAt": "2026-04-18T00:00:00Z",
+  "perQueryEvaluations": [
+    {
+      "promptId": "p12",
+      "query": "Compare outcome probabilities, 24h volume, and orderbook depth for the top 8 teams in the '2026 FIFA World Cup Winner' event on Polymarket.",
+      "quotedExcerpts": [
+        "As of April 18, 2026, here is the comparison of the top 8 teams for the **2026 FIFA World Cup Winner** event on Polymarket.",
+        "| **Spain** | 17.2% | $13,818,149.39 | 3,098,727.99 | 20,216,168.22 |",
+        "All outcomes currently show a wide raw spread of 0.9980."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.17,
+      "scoreExplanations": {
+        "actionability": "Gives a concrete ranked table a trader can scan, but flags that raw orderbook depth is not executable liquidity, so action is limited to 'rough context'.",
+        "dataFreshness": "Explicit 'As of April 18, 2026' date and live book snapshot via get_batch_orderbooks; no hour-level timestamp so not a 5.",
+        "specificity": "Exact implied probabilities, 24h volumes to the cent, and per-outcome bid/ask depth numbers for 8 teams.",
+        "uniqueness": "Multi-outcome comparison with orderbook depth merged with event data — not trivially replicable from the product homepage.",
+        "completeness": "Covers all three requested dimensions (probability, 24h volume, depth) for 8 teams and calls out the raw-vs-merged depth caveat; doesn't provide merged/synthetic neg-risk depth that the question implicitly wants.",
+        "dataAccuracy": "Volumes differ per team and probabilities sum to ~77% which is plausible for top-8 of 48. Mild red flag: several bid depths cluster near 3,09x,xxx and ask depths near 2.10x10^7 across unrelated teams, suggesting raw-book artifacts rather than fabricated numbers — response itself warns about this."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "Bid depths ~3.09M and ask depths ~2.1x10^7 repeat across multiple outcomes; these are raw direct-book artifacts on a neg-risk event, which the response correctly discloses.",
+        "rootCauseCategory": "upstream_api_limitation",
+        "rootCauseEvidence": "get_batch_orderbooks returned raw CLOB books with warning that raw spread is misleading on neg-risk markets; no merged-book tool was invoked to produce executable depth.",
+        "responseQualityNote": "Clean table, honest caveat about raw vs merged depth on neg-risk markets; misses merged/executable depth a trader actually needs.",
+        "improvementLever": "Augment with get_prices/get_spreads or a merged synthetic-liquidity tool so depth numbers reflect neg-risk executable liquidity instead of raw direct book.",
+        "diagnosticBrief": {
+          "toolUsed": "search_and_get_outcomes + compare_event_outcome_quotes + get_batch_orderbooks",
+          "toolShouldHaveUsed": "get_prices / get_spreads or analyze_event_outcome_liquidity to merge neg-risk synthetic depth",
+          "argsUsed": "{query:'2026 FIFA World Cup winner',sortBy:'volume',category:'sports'}; compare_event_outcome_quotes limit=8 with 8 team outcomes; get_batch_orderbooks tokenIds=[REDACTED]",
+          "argsShouldHaveUsed": "Call get_spreads/get_prices on the 8 tokenIds, or analyze_event_outcome_liquidity for merged neg-risk depth",
+          "codeSnippet": "get_batch_orderbooks -> warning: 'Direct raw CLOB book only. Raw spread can be misleading on neg-risk markets and should NOT be ranked across outcomes.'",
+          "toolResultSample": "{\"orderbooks\":{...\"view\":\"raw\",\"warning\":\"Direct raw CLOB book only. Raw spread can be misleading on neg-risk markets and should NOT be ranked across outcomes. Use get_prices/get_spreads for quote snapshots...\"}}",
+          "completenessVerdict": "no completeness evaluations recorded",
+          "stageTimingBottleneck": "executionMs=55120"
+        }
+      },
+      "overallVerdict": "Yes — a buyer gets a usable ranked comparison with honest caveats; would pay again, though merged depth would lift it to a clear 5."
+    },
+    {
+      "promptId": "p13",
+      "query": "Compare whale concentration and top-10-holder composition for 'Will the Oklahoma City Thunder win the 2026 NBA Finals?' vs 'Will the Cleveland Cavaliers win the 2026 NBA Finals?' vs 'Will the New York Knicks win the 2026 NBA Finals?' — where is smart money most concentrated?",
+      "quotedExcerpts": [
+        "As of April 18, 2026, whale concentration is exceptionally high across all three markets, with smart money signals currently categorized as **neutral**.",
+        "A single whale (`0xa5ef...966`) dominates the NO side of all three markets. Their largest positions are against the Knicks (~$2.77M) and the Cavaliers (~$2.76M).",
+        "**OKC Thunder:** Shows the most significant dollar-value conviction on the YES side, with the top holder possessing a position valued at **$252,202.34**."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 4.17,
+      "scoreExplanations": {
+        "actionability": "Gives a direct verdict on where smart money is most concentrated and flags concentration risk for exit; could be sharper with a recommended action.",
+        "dataFreshness": "'As of April 18, 2026' date plus live current prices (0.455, 0.042, 0.037) from analyze_top_holders; no intraday timestamp so not 5.",
+        "specificity": "Whale counts (31/36/33), top-5 YES %, top-5 NO %, specific addresses (0xa5ef...966, 0xdb2...56e), and dollar position values.",
+        "uniqueness": "Cross-market whale comparison with shared-address detection is exactly the kind of screening the Polymarket UI does not expose.",
+        "completeness": "Addresses both whale concentration and top-holder composition across all three markets and answers the 'where is smart money most concentrated' question; does not fully present the top-10 breakdown beyond highlights.",
+        "dataAccuracy": "Red flag: Top 5 NO % is 99.50 / 98.56 / 99.46 across three distinct markets and Top 5 YES % clusters 54.88–58.56 — suspiciously uniform. Plausible because one whale (0xa5ef...966) dominates NO everywhere, but the YES-side uniformity plus near-100% NO concentration across three teams warrants a score of 3."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "Top 5 NO % values (99.50, 98.56, 99.46) and Top 5 YES % values (58.56, 58.48, 54.88) are suspiciously close across three distinct markets; could reflect neg-risk structure but also a shared supply metric rather than independent per-market concentration.",
+        "rootCauseCategory": "data_accuracy_issue",
+        "rootCauseEvidence": "toolCallHistory[0..2] analyze_top_holders returned near-identical top-5 NO concentration (~99%) across three different NBA Finals markets, suggesting either a shared whale dominating all NO sides or a metric computed off overall supply rather than distinct holder bases.",
+        "responseQualityNote": "Strong cross-market whale comparison with shared-address detection and clear verdict; undermined by uniform top-5 percentages that should be explained or sanity-checked.",
+        "improvementLever": "Have analyze_top_holders (or a follow-up) cite raw share counts and supply so uniform top-5 % figures can be sanity-checked, and compare YES-side holders' absolute exposure rather than only percentage-of-supply.",
+        "diagnosticBrief": {
+          "toolUsed": "analyze_top_holders x3 (one per market)",
+          "toolShouldHaveUsed": "analyze_event_whale_breakdown (event-level cross-market whale analysis) if the three markets live in one event, else current per-market calls plus a concentration sanity-check tool",
+          "argsUsed": "marketQuery='Will the Oklahoma City Thunder win the 2026 NBA Finals?' | Cleveland Cavaliers | New York Knicks, limit=10, deepFetch=true",
+          "argsShouldHaveUsed": "Same three calls are fine, but add a normalization step that distinguishes per-market supply share from event-wide whale overlap",
+          "codeSnippet": "analyze_top_holders -> yesWhales[0] 0xead15...0c76a ($252,202.34 OKC) / 0xdb27b...c56e ($16,652.58 CAVS) / 0xdb27b...c56e ($22,969.10 KNICKS)",
+          "toolResultSample": "{\"market\":\"Oklahoma City Thunder\",\"conditionId\":\"0x22e7b5e354...\",\"currentPrice\":0.455,\"whaleAnalysis\":{\"yesWhales\":[{\"rank\":1,\"address\":\"0xead152b855effa6b5b5837f53b24c0756830c76a\",\"shares\":554290.86,\"positionValue\":252202.34,...}]}}",
+          "completenessVerdict": "no completeness evaluations recorded; response is self-described as complete with 'neutral' smart-money signal",
+          "stageTimingBottleneck": "executionMs (per trace stageTiming) dominates vs selection/synthesis"
+        }
+      },
+      "overallVerdict": "Yes — the cross-market whale comparison and shared-address callouts justify paying; I'd want a sanity check on the suspiciously uniform concentration percentages."
+    },
+    {
+      "promptId": "p18",
+      "query": "Find the highest-expected-value arbitrage opportunity in the 'Republican Presidential Nominee 2028' neg-risk event on Polymarket: check if the sum of all candidate Yes midpoints exceeds 1.0, and if so, size a basket short trade that fits within $100k risk given current book depth on the top legs (e.g., Donald Trump, J.D. Vance, Rand Paul).",
+      "quotedExcerpts": [
+        "The sum of the \"Yes\" midpoints for all 35 outcomes is **0.9635**, which is below the 1.0 threshold required for a profitable negative-risk short basket.",
+        "| **J.D. Vance** | 0.3905 | Excellent | 0.9% | Best of the named legs; deep order book. |",
+        "**Donald Trump** | 0.0165 | Poor | Cannot Fill | Extremely thin; $5k sell would lose 60.8%. |"
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.67,
+      "scoreExplanations": {
+        "actionability": "Gives a direct go/no-go (no arb, 0.9635 < 1.0) plus per-leg execution notes so the buyer knows exactly why not to trade.",
+        "dataFreshness": "Live midpoints via get_prices and depth via analyze_market_liquidity on April 18, 2026; no explicit hh:mm timestamp drops it from 5.",
+        "specificity": "Exact midpoint sum (0.9635), mid prices per leg (0.3905, 0.0165, 0.0115), and $10k sell slippage per leg.",
+        "uniqueness": "35-outcome neg-risk sum with per-leg slippage sizing is exactly what a neg-risk basket trader needs and not trivially doable from the UI.",
+        "completeness": "Answers both parts (sum check + sizing feasibility) and correctly shortcuts the sizing step because the condition fails.",
+        "dataAccuracy": "Internally consistent: J.D. Vance bid/ask 0.390/0.391 matches 0.3905 mid; Trump 0.016/0.017 → 0.0165; depths differ sharply per leg. No red flags; dropping a point only because I can't independently verify the 35-outcome sum."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Clear verdict with numbers that match the tool outputs; structured liquidity table makes execution constraints obvious.",
+        "improvementLever": "Include a list of the actual liquid legs (ones that could anchor a basket if the sum were >1.0) and a hypothetical basket-size recommendation, so the answer is reusable when the sum next crosses 1.0.",
+        "diagnosticBrief": {
+          "toolUsed": "search_and_get_outcomes, compare_market_against_related_contracts, get_event_by_slug, get_prices, analyze_market_liquidity x3",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "search 'Republican Presidential Nominee 2028' politics; get_event_by_slug 'republican-presidential-nominee-2028'; get_prices on full tokenId set; analyze_market_liquidity per leg (Trump, Vance, Rand Paul)",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "get_prices -> {Vance mid:0.3905, Trump mid:0.0165} ; analyze_market_liquidity Trump -> liquidityScore 'poor', askDepthUsd 12.3M but bidDepthUsd 8,327.91",
+          "toolResultSample": "{\"market\":\"0x895e01...\",\"currentPrice\":0.0165,\"spread\":{\"bestBid\":0.016,\"bestAsk\":0.017,\"spreadCents\":0.1,\"spreadBps\":606.1},\"depth\":{\"bidDepthUsd\":8327.91,\"askDepthUsd\":12314036.11,...}}",
+          "completenessVerdict": "no completeness evaluations recorded; response treats the arb check as fully resolved",
+          "stageTimingBottleneck": "executionMs dominates (7 tool calls)"
+        }
+      },
+      "overallVerdict": "Yes — this is exactly the kind of quantitative go/no-go a neg-risk basket trader pays for."
+    },
+    {
+      "promptId": "p19",
+      "query": "Construct a portfolio of 5 moderate-probability (30-60% Yes) Polymarket bets ending within 60 days, drawn from current top markets including 'Strait of Hormuz traffic returns to normal by end of April?' and 'US x Iran permanent peace deal by April 30, 2026?' — size each leg to equal-risk, avoid correlated bets, and output expected portfolio volatility and sharpe.",
+      "quotedExcerpts": [
+        "The requested markets regarding **\"Strait of Hormuz traffic\"** and the **\"US x Iran permanent peace deal\"** are not currently live on Polymarket for the requested dates.",
+        "Search results for these topics returned either unrelated \"Trump ballroom\" projects or resolved markets from 2023/2024.",
+        "Here is the complete returned collection for $ (11 items)."
+      ],
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 2,
+        "specificity": 1,
+        "uniqueness": 1,
+        "completeness": 1,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 1.33,
+      "scoreExplanations": {
+        "actionability": "No portfolio, no sizes, no vol/Sharpe — buyer cannot act on anything.",
+        "dataFreshness": "Mentions 'resolved markets from 2023/2024' and current date implicit, but no live data table delivered; cap at 2.",
+        "specificity": "No numbers, no contract IDs, no probabilities — just a list of tool names. Rule 3 caps specificity at 2; I score 1 given the raw tool-list dump.",
+        "uniqueness": "A free LLM would have produced the same 'could not find these markets' sentence and could arguably have explained the portfolio construction math anyway.",
+        "completeness": "Zero of the four asks (5 bets, equal-risk sizing, correlation screen, vol+Sharpe) is delivered, even after seeding candidates from find_moderate_probability_bets results in the trace.",
+        "dataAccuracy": "Nothing substantive to be right or wrong about; the claim that the two named markets aren't live is plausible from the trace but is delivered alongside an incoherent 'returned collection for $' tool dump."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": "Repeated search_markets calls with identical queries (slots 0,1,3,5,8) instead of pivoting to find_moderate_probability_bets + correlation/volatility tools after the first miss.",
+        "planningIssue": "Planner never decomposed the task into: (a) candidate universe via find_moderate_probability_bets, (b) per-leg risk sizing, (c) pairwise correlation, (d) portfolio vol/Sharpe synthesis.",
+        "executionIssue": "executionSuccess=false, executionResult.error='Execution stopped before a terminal result was produced'. Tool loop thrashed across 11 calls without assembling a portfolio; get_top_markets returned a GAMMA 422 validation error and was not retried with corrected args.",
+        "completenessIssue": "No diagnostics.completeness evaluations fired even though the response trivially fails completeness; stage-reflection never flagged the abandoned portfolio construction.",
+        "codeIssueDetail": "toolCallHistory[4] get_top_markets returned 'GAMMA API error (422): validation error ... error validating query argument \\\"volume\\\": invalid range'; pipeline did not recover by re-calling without the offending min/maxTotalVolume=0 args. executionResult.error='Execution stopped before a terminal result was produced' confirms premature termination.",
+        "dataAccuracyRedFlags": "n/a — no portfolio data produced",
+        "rootCauseCategory": "iterative_recovery_failure",
+        "rootCauseEvidence": "executionSuccess=false with 'Execution stopped before a terminal result was produced'; 11 tool calls show repeated search_markets without pivot, an unhandled GAMMA 422 from get_top_markets, and no completeness evaluation triggering a different plan.",
+        "responseQualityNote": "Correctly identifies that the two named markets aren't live, but then degenerates into a bare tool-name list instead of constructing the requested portfolio from find_moderate_probability_bets results that were already retrieved.",
+        "improvementLever": "When one seed market is missing, fall back to find_moderate_probability_bets + correlation scan to still deliver a 5-leg portfolio with vol/Sharpe, and fix the get_top_markets arg set (drop minTotalVolume=0/maxTotalVolume=0 that triggers the GAMMA validation error).",
+        "diagnosticBrief": {
+          "toolUsed": "search_markets x5, find_moderate_probability_bets, get_top_markets (422), check_market_efficiency, search_and_get_outcomes x2, build_market_tradability_memo",
+          "toolShouldHaveUsed": "find_moderate_probability_bets (already returned results!) + find_correlated_markets + build_market_tradability_memo on 5 distinct candidates, plus a portfolio/Sharpe synthesis step",
+          "argsUsed": "search_markets repeated with identical query 'US x Iran permanent peace deal by April 30, 2026?'; get_top_markets with minTotalVolume:0, maxTotalVolume:0 (invalid)",
+          "argsShouldHaveUsed": "get_top_markets without min/maxTotalVolume=0 sentinel; use find_moderate_probability_bets output (Everton FC etc.) as candidate universe and screen for ending<60d + pairwise uncorrelated",
+          "codeSnippet": "toolCallHistory[4] get_top_markets -> 'GAMMA API error (422): {\"type\":\"validation error\",\"error\":\"error validating query argument \\\"volume\\\": invalid range\"}'; executionResult.error='Execution stopped before a terminal result was produced'",
+          "toolResultSample": "{\"error\":\"GAMMA API error (422): {\\\"type\\\":\\\"validation error\\\",\\\"error\\\":\\\"error validating query argument \\\\\\\"volume\\\\\\\": invalid range\\\"}\"}",
+          "completenessVerdict": "no completeness evaluations despite executionSuccess=false",
+          "stageTimingBottleneck": "executionMs dominates with 11 wasted tool calls"
+        }
+      },
+      "overallVerdict": "No — I would not pay for this; the portfolio ask is simply not answered and the response leaks internal tool names."
+    }
+  ],
+  "aggregate": {
+    "satisfactionMean": 3.59,
+    "satisfactionMin": 1.33,
+    "queryCount": 4,
+    "queriesAbove4": 3,
+    "queriesBelow3": 1,
+    "fragilityReport": {
+      "highCount": 1,
+      "mediumCount": 0,
+      "lowCount": 3,
+      "highFragilityRate": 0.25,
+      "highFragilityQueryIds": ["p19"]
+    },
+    "topImprovementLevers": [
+      "Recover from failed/partial searches by pivoting to find_moderate_probability_bets + find_correlated_markets + portfolio synthesis instead of re-running identical search_markets queries (p19).",
+      "Prefer merged neg-risk liquidity tools (get_prices/get_spreads or analyze_event_outcome_liquidity) over raw get_batch_orderbooks when ranking depth across outcomes (p12).",
+      "When reporting whale top-N concentration, also cite raw share counts and absolute supply so suspiciously uniform percentages can be sanity-checked across markets (p13)."
+    ]
+  }
+}

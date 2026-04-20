@@ -1,0 +1,228 @@
+{
+  "batchLabel": "kalshi-contributor iteration 7 re-run",
+  "reviewer": "pipeline-reviewer",
+  "perQueryEvaluations": [
+    {
+      "promptId": "q6",
+      "query": "Give me 1-hour candlesticks for KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D over the last 24 hours — report OHLC for Yes price and total volume per bar.",
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.50,
+      "quotedExcerpts": [
+        "There are no 1-hour OHLC candlesticks available for the ticker KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D over the last 24 hours. Based on data fetched at 2026-04-20 07:10:34 UTC, the market had zero trading volume in this window.",
+        "24h Volume: 0 | Total Volume: 0 | Open Interest: 0"
+      ],
+      "traceAssessment": {
+        "toolCalls": 1,
+        "loopCount": 2,
+        "observedBehavior": "Single tool call, clean completion; correctly maps absence-of-bars to zero volume rather than fabricating OHLC."
+      },
+      "rootCauseCategory": null,
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "notes": "Paid cites live Kalshi snapshot with timestamp. Free refuses ('cannot pull real-time data') — paid clearly wins. Honest null result instead of hallucinating bars."
+    },
+    {
+      "promptId": "q7",
+      "query": "For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 or > 110.",
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.67,
+      "quotedExcerpts": [
+        "only one sub-market was found. Because there is only a single market leg, pairwise analysis for structural arbitrage (sum < 100) or venue overround (sum > 110) cannot be performed.",
+        "KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9-19499DFBB78 | yes Jalen Brunson: 2+, yes OG Anunoby: 1+, yes Jamal Murray: 1+, yes James Hard..."
+      ],
+      "traceAssessment": {
+        "toolCalls": 1,
+        "loopCount": 3,
+        "observedBehavior": "Lists real sub-market ticker and title; correctly notes arb math is N/A for single leg."
+      },
+      "rootCauseCategory": null,
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "notes": "Free baseline fabricates a full table of yes/no prices and implied% for 'Map 1 Winner' etc. that do not exist on this Kalshi event. Paid returns accurate ground truth — auto-promoted to high."
+    },
+    {
+      "promptId": "q8",
+      "query": "List every active market in the KXMVECROSSCATEGORY-S2026EA752452A61 event and rank them by yes_ask — which single-name has the tightest spread?",
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.67,
+      "quotedExcerpts": [
+        "As of April 20, 2026, there are two active markets in the Blanch vs Bonzi (KXMVECROSSCATEGORY-S2026EA752452A61) event. Both markets currently have an identical spread of 100¢, resulting in a tie for the tightest spread.",
+        "KXMVECROSSCATEGORY-S2026EA752452A61-C5C439F0A26 | yes Darwin Blanch,yes Henrique Rocha,yes Pedro Martinez | 0 | 100"
+      ],
+      "traceAssessment": {
+        "toolCalls": 3,
+        "loopCount": 3,
+        "observedBehavior": "Three tool calls to enumerate and sort; result table grounded in real tickers."
+      },
+      "rootCauseCategory": null,
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "notes": "Free completely misinterprets the event as an asset-category index and fabricates rankings. Paid correctly identifies it as a tennis Blanch-vs-Bonzi combo market with real tickers."
+    },
+    {
+      "promptId": "q10",
+      "query": "Resolve the slug for event KXMVECROSSCATEGORY-S2026BC8725F16E4 and then pull the event-level candlestick for the last 7 days at 1-day granularity.",
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 5,
+        "completeness": 3,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.17,
+      "quotedExcerpts": [
+        "the slug KXMVECROSSCATEGORY-S2026BC8725F16E4 resolves to the following event: Title: Toronto at Cleveland, Series Ticker: kxmvecrosscategory, Category: Exotics, Status: Open",
+        "no 1-day granularity candlesticks were returned for the requested 7-day window (April 13, 2026, to April 20, 2026)"
+      ],
+      "traceAssessment": {
+        "toolCalls": 2,
+        "loopCount": 3,
+        "observedBehavior": "Resolves slug correctly; honest null on candles. Could optionally have fetched snapshot price as a consolation signal, but stays truthful."
+      },
+      "rootCauseCategory": null,
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "notes": "Free hallucinates a slug 'will-the-kxmve-cross-category-index-be-above-8725...'. Paid returns real event metadata. Auto-promoted to high because paid cites live Kalshi."
+    },
+    {
+      "promptId": "q12",
+      "query": "Use kalshi_crossref_polymarket on the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202602150E22176-FC050A30E2D and flag any sub-leg where an equivalent Polymarket market exists with >3 cent price divergence.",
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.67,
+      "quotedExcerpts": [
+        "no equivalent Polymarket markets were found for the sub-legs of the specified Kalshi multi-leg contract. The Kalshi market is currently finalized.",
+        "The search for equivalent legs on Polymarket returned soccer matches involving the team 'CD San Antonio Bulo Bulo,' which do not align with the basketball and hockey legs (San Antonio Spurs and Vegas Golden Knights) in the Kalshi bundle."
+      ],
+      "traceAssessment": {
+        "toolCalls": 2,
+        "loopCount": 3,
+        "observedBehavior": "Runs real crossref tool; explains why fuzzy matches were rejected (token collision on 'San Antonio')."
+      },
+      "rootCauseCategory": null,
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "notes": "Free invents a 'LoL / CS / Valorant parlay' storyline with no tool evidence. Paid grounds the negative result in real crossref output."
+    },
+    {
+      "promptId": "q16",
+      "query": "List every Kalshi event closing before 2026-04-25 — imminent-settlement shortlist with tickers and close times.",
+      "satisfactionScores": {
+        "actionability": 1,
+        "dataFreshness": 2,
+        "specificity": 2,
+        "uniqueness": 2,
+        "completeness": 1,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 1.83,
+      "quotedExcerpts": [
+        "I was unable to retrieve the shortlist of Kalshi events closing before April 25, 2026, due to a repeated technical error during the data retrieval process.",
+        "the queries failed because the time-based filters used (minCloseTs and maxCloseTs) are no longer supported by the underlying service. To get this information, the search needs to be performed using the closingBeforeTs parameter with the specific Unix timestamp for your date"
+      ],
+      "traceAssessment": {
+        "toolCalls": 10,
+        "loopCount": 10,
+        "failureCount": 10,
+        "recoveryCount": 0,
+        "observedBehavior": "Ten consecutive tool failures with zero recoveries. The contributor's improved error message correctly surfaces the closingBeforeTs requirement (the iter7 fix landed), but the orchestrating agent never adapts — it re-submits the legacy minCloseTs/maxCloseTs arg across all 10 loops instead of constructing closingBeforeTs=1777680000. Self-heal count is 0."
+      },
+      "rootCauseCategory": "argument_or_extraction_error",
+      "differentiation": "low_differentiation",
+      "autoPromoted": false,
+      "notes": "REGRESSION SIGNAL: iter7 fix made the error message prescriptive, but the upstream librarian/agent loop does not consume the hint. This is the worst query in the batch — user gets zero tickers and zero close times. Root cause is no longer the contributor's argument validation (that's correct now); it is the agent's failure to translate the error recovery instruction into a corrected closingBeforeTs call. Recommend an orchestrator-side fix (retry policy that parses the contributor's self-described correction, or a pre-call epoch helper) rather than another contributor patch. Free baseline is also weak (generic, stale 2024 commentary) so differentiation stays low because neither side delivers the shortlist."
+    },
+    {
+      "promptId": "q22",
+      "query": "For the NHL-centric market KXMVESPORTSMULTIGAMEEXTENDED-S20268F24BEFAD58-0EA9403DBFE closing 2026-05-10, give me the current yes price, 24h volume, and the 15-min candlestick series since open.",
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.67,
+      "quotedExcerpts": [
+        "Title: yes TB Lightning, yes Edmonton wins by over 1.5 goals | Current YES Price: 0¢ | 24h Volume: 0 | Close Time: 2026-05-10T23:00:00Z",
+        "as of April 20, 2026 (07:22 UTC)"
+      ],
+      "traceAssessment": {
+        "toolCalls": 2,
+        "loopCount": 3,
+        "observedBehavior": "Snapshot + candles fetch; honest null on candle series due to zero volume."
+      },
+      "rootCauseCategory": null,
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "notes": "Free outright refuses. Paid returns real market title, close time, and snapshot with fresh timestamp — unambiguous high differentiation."
+    },
+    {
+      "promptId": "q24",
+      "query": "Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap.",
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.50,
+      "quotedExcerpts": [
+        "no actionable trading opportunities were found for the sub-legs of this event. All 10 sub-markets are currently finalized with zero orderbook depth",
+        "they are illiquid and quoted at extreme values (0 or 100). Because these markets are locked, they do not offer structural cheapness or positive expected value"
+      ],
+      "traceAssessment": {
+        "toolCalls": 12,
+        "loopCount": 4,
+        "observedBehavior": "Twelve tool calls to enumerate all 10 sub-legs and evaluate each. No failures. Table grounded in real finalized status."
+      },
+      "rootCauseCategory": null,
+      "differentiation": "high_differentiation",
+      "autoPromoted": true,
+      "notes": "Free invents a 'Naive Bayesian Prior / Elo mean-reversion' analysis with no real prices. Paid correctly reports the market is finalized / illiquid and EV analysis is degenerate. Actionability capped at 3 because the honest answer is 'no trade' — useful but not profit-generating. Auto-promoted to high: paid cites live finalized state across 10 real tickers."
+    }
+  ],
+  "summary": {
+    "promptsScored": 8,
+    "satisfactionMean": 4.21,
+    "weakQueries": ["q16"],
+    "strongQueries": ["q7", "q8", "q12", "q22", "q24"],
+    "highDifferentiationCount": 7,
+    "lowDifferentiationCount": 1,
+    "rootCauseCounts": {
+      "argument_or_extraction_error": 1
+    },
+    "headline": "Seven of eight focus prompts now deliver live, differentiated Kalshi data with honest null handling. q16 still fails end-to-end: the iter7 contributor-side fix surfaces the correct closingBeforeTs guidance in error text, but the agent loop does not self-heal — 10 failed tool calls, 0 recoveries. Remaining work is agent/orchestrator-side argument adaptation, not another contributor patch."
+  }
+}
