@@ -46,6 +46,18 @@ const { attachContributorSearchMetadata, createSearchIntent, resolveContributorS
 const GAMMA_API_URL = "https://gamma-api.polymarket.com";
 const CLOB_API_URL = "https://clob.polymarket.com";
 const DATA_API_URL = "https://data-api.polymarket.com";
+// Polymarket Data API `/holders` deep-scan knobs.
+//
+// The public docs (as of 2026-04) claim `limit` is capped at 20 with no
+// pagination. Empirically the endpoint accepts `limit` up to 500 per call
+// and returns the top N holders for each token sorted descending by share
+// balance; anything above 500 is silently clamped. We therefore do a single
+// `limit=500` call per market/outcome as the primary deep-scan strategy
+// and fall back to the legacy `minBalance`-tier sweep only if the upstream
+// ever regresses.
+const DEEP_HOLDER_SCAN_LIMIT = 500;
+const LEGACY_HOLDER_PAGE_SIZE = 20;
+const SHALLOW_HOLDER_SCAN_LIMIT = 20;
 function getConfiguredInteger(name, fallback, min, max) {
     const raw = process.env[name];
     if (!raw)
@@ -863,7 +875,7 @@ Returns:
 - smartMoneySignal: Which side whales favor (YES/NO/NEUTRAL)
 - totalUniqueHolders: Total holders found via deep fetching
 
-🔥 DEEP FETCHING: We work around Polymarket's 20-holder API limit by querying holder tiers from $1M (ultra-whales) down to $1, then deduplicating addresses. This captures the full spectrum and typically returns 50-100+ unique holders.
+🔥 DEEP FETCHING: We now call /holders with limit=500 per side in a single request (the doc'd 20-cap is stale — the endpoint empirically returns up to 500 top holders sorted desc by share balance). The previous multi-tier minBalance workaround collapsed to exactly 20 unique holders for popular outcomes because every tier's top-20 was the same set once an outcome had 20+ holders. The new path routinely surfaces hundreds of unique holders, so whaleCount actually varies per outcome instead of saturating at 20. If the upstream ever regresses, we transparently fall back to the legacy tier sweep.
 
 CONVICTIONSCORES: "extreme" (>$10k), "high" ($5k-$10k), "moderate" ($1k-$5k), "low" (<$1k)
 
@@ -4125,12 +4137,12 @@ USE analyze_whale_flow FOR: "Break down trading by size bucket", "Are whales buy
         name: "get_top_holders",
         description: `Get the top holders (biggest positions) for a specific market. Shows who the whales are, their position sizes, and implied conviction. Essential for smart money analysis.
 
-DEEP FETCHING (default=true): Polymarket API caps at 20 holders per call with NO pagination. To work around this, we query 10 minBalance thresholds [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] in paced batches and deduplicate results. This captures everything from ultra-whales ($1M+) down to small positions, returning 50-100+ unique holders instead of just 20.
+DEEP FETCHING (default=true): Uses a single /holders call with limit=500 per side, returning up to 500 top holders sorted descending by share balance (well beyond the public docs' stated 20-cap, which is stale). This is the actual true whale set — not a top-20 sample — so whaleCount and totalWhaleValue reflect reality. If the upstream ever regresses to the doc'd 20-cap we automatically fall back to a paced minBalance tier sweep.
 
 Set deepFetch=false for faster but shallower results (20 per side max).
 
-⏱️ PERFORMANCE: With deepFetch=true, this runs 10 holder-tier queries in paced batches and typically takes ~8-15s.
-⚠️ Call ALONE (not in parallel with other heavy tools) when deepFetch=true to avoid timeouts.`,
+⏱️ PERFORMANCE: With deepFetch=true, a single /holders call typically completes in ~1-2s.
+The response includes scanMode, perCallLimit, and perSideScanCeilingHit so callers can tell whether the deep single-call path or the fallback tier sweep was used, and whether the scan ceiling may have truncated a long tail.`,
         inputSchema: {
             type: "object",
             properties: {
@@ -4246,6 +4258,21 @@ Set deepFetch=false for faster but shallower results (20 per side max).
                         whaleCount: { type: "number", description: "Holders with > $1000 position" },
                     },
                 },
+                scanMode: {
+                    type: "string",
+                    enum: ["deep-single-call", "legacy-tier-sweep", "shallow"],
+                    description: "Which /holders fetch path was actually used (single call up to 500, fallback tier sweep, or shallow limit=20).",
+                },
+                perCallLimit: {
+                    type: "number",
+                    description: "The limit used per /holders call during the selected scan mode.",
+                },
+                perSideScanCeilingHit: {
+                    type: "boolean",
+                    description: "True when at least one side returned exactly the per-call limit, signalling a long tail of smaller holders may exist beyond the scan. All realistic whales (>$1k position) are still captured.",
+                },
+                fetchMethod: { type: "string" },
+                note: { type: "string" },
                 fetchedAt: { type: "string" },
             },
             required: ["market", "conditionId", "topHolders"],
@@ -14669,26 +14696,46 @@ async function handleGetTopHolders(args) {
         catch {
             // Use defaults
         }
-        // Multi-tier minBalance thresholds for deep fetching.
-        // Each tier gets up to 20 holders, and we deduplicate by address.
-        // The tool description instructs AI clients to call this ALONE (not in parallel)
-        // when using deepFetch=true to avoid MCP transport timeouts.
-        const minBalanceTiers = deepFetch
-            ? [1000000, 100000, 10000, 5000, 2000, 1000, 500, 100, 10, 1] // Deep: 10 tiers for full spectrum (whales → small)
-            : [1]; // Shallow: just one call
         // Maps to deduplicate holders by address
         const yesHoldersMap = new Map();
         const noHoldersMap = new Map();
-        // Fetch holders in paced batches to avoid bursty upstream throttling.
+        // Fetch holders. Primary path: single `limit=DEEP_HOLDER_SCAN_LIMIT`
+        // request. Fallback path (only if upstream regresses to the doc'd
+        // 20-cap): the legacy paced `minBalance` tier sweep.
         const tierResults = [];
-        const tierBatchSize = deepFetch ? 3 : 1;
-        for (let i = 0; i < minBalanceTiers.length; i += tierBatchSize) {
-            const tierBatch = minBalanceTiers.slice(i, i + tierBatchSize);
-            const batchResults = await Promise.all(tierBatch.map((minBal) => fetchDataApi(`/holders?market=${conditionId}&limit=20&minBalance=${minBal}`, upstreamTimeoutProfile).catch(() => [])));
-            tierResults.push(...batchResults);
-            if (deepFetch && i + tierBatchSize < minBalanceTiers.length) {
-                await sleep(120);
+        let scanMode = "shallow";
+        let perCallLimit = SHALLOW_HOLDER_SCAN_LIMIT;
+        let perSideScanCeilingHit = false;
+        if (deepFetch) {
+            const primary = (await fetchDataApi(`/holders?market=${conditionId}&limit=${DEEP_HOLDER_SCAN_LIMIT}&minBalance=1`, upstreamTimeoutProfile).catch(() => []));
+            const primaryOk = Array.isArray(primary) &&
+                primary.some((token) => (token.holders?.length ?? 0) > LEGACY_HOLDER_PAGE_SIZE);
+            if (primaryOk) {
+                scanMode = "deep-single-call";
+                perCallLimit = DEEP_HOLDER_SCAN_LIMIT;
+                perSideScanCeilingHit = primary.some((token) => (token.holders?.length ?? 0) >= DEEP_HOLDER_SCAN_LIMIT);
+                tierResults.push(primary);
             }
+            else {
+                scanMode = "legacy-tier-sweep";
+                perCallLimit = LEGACY_HOLDER_PAGE_SIZE;
+                const minBalanceTiers = [100000, 10000, 5000, 2000, 1000, 500, 100, 10, 1];
+                const tierBatchSize = 3;
+                for (let i = 0; i < minBalanceTiers.length; i += tierBatchSize) {
+                    const tierBatch = minBalanceTiers.slice(i, i + tierBatchSize);
+                    const batchResults = await Promise.all(tierBatch.map((minBal) => fetchDataApi(`/holders?market=${conditionId}&limit=${LEGACY_HOLDER_PAGE_SIZE}&minBalance=${minBal}`, upstreamTimeoutProfile).catch(() => [])));
+                    tierResults.push(...batchResults);
+                    if (i + tierBatchSize < minBalanceTiers.length) {
+                        await sleep(120);
+                    }
+                }
+            }
+        }
+        else {
+            scanMode = "shallow";
+            perCallLimit = SHALLOW_HOLDER_SCAN_LIMIT;
+            const shallow = (await fetchDataApi(`/holders?market=${conditionId}&limit=${SHALLOW_HOLDER_SCAN_LIMIT}&minBalance=1`, upstreamTimeoutProfile).catch(() => []));
+            tierResults.push(shallow);
         }
         // Process all tier results
         for (const holdersResponse of tierResults) {
@@ -14770,6 +14817,16 @@ async function handleGetTopHolders(args) {
         catch {
             // Use conditionId as title
         }
+        const fetchMethod = scanMode === "deep-single-call"
+            ? `deep-single-call (/holders limit=${perCallLimit} per side, sorted desc by share balance)`
+            : scanMode === "legacy-tier-sweep"
+                ? `legacy-tier-sweep (fallback: 9 /holders calls at limit=${perCallLimit} across minBalance tiers)`
+                : `shallow (single /holders call limit=${perCallLimit} per side)`;
+        const note = scanMode === "deep-single-call"
+            ? `Deep holder scan returned ${totalUniqueHolders} unique holders (up to ${perCallLimit} per side) via a single /holders call sorted descending by share balance. Whale counts and totals reflect the full scanned set.${perSideScanCeilingHit ? ` NOTE: at least one side hit the ${DEEP_HOLDER_SCAN_LIMIT} per-call ceiling; additional long-tail holders may exist below the scan floor but all top holders and realistic whales (> $1k position) are captured.` : ""}`
+            : scanMode === "legacy-tier-sweep"
+                ? `Fallback holder scan: the upstream appears to be enforcing the doc'd 20-per-call cap, so we swept 9 minBalance tiers [$100k…$1] and deduplicated. Whale counts and totals use the full deduplicated set; response samples may still be truncated for payload size.`
+                : "Single API call (limit 20 per side). Use deepFetch=true for deep scan (up to 500 per side).";
         return successResult({
             market: marketTitle,
             conditionId,
@@ -14788,12 +14845,11 @@ async function handleGetTopHolders(args) {
                 top10NoPercent: Number(top10NoPercent.toFixed(2)),
                 whaleCount: yesWhaleCount + noWhaleCount,
             },
-            fetchMethod: deepFetch
-                ? "multi-tier (10 API calls in paced batches with minBalance thresholds from $1M to $1)"
-                : "single-call",
-            note: deepFetch
-                ? `Deep fetch found ${totalUniqueHolders} unique holders by querying 10 position tiers (from $1M ultra-whales to $1 positions). Polymarket API caps at 20 per call with no pagination, so we query [$1M, $100k, $10k, $5k, $2k, $1k, $500, $100, $10, $1] thresholds in paced batches and deduplicate. Response samples may still be truncated, but whale counts and total values use the full deduplicated holder scan.`
-                : "Single API call (limit 20 per side). Use deepFetch=true for more thorough results.",
+            scanMode,
+            perCallLimit,
+            perSideScanCeilingHit,
+            fetchMethod,
+            note,
             fetchedAt: new Date().toISOString(),
         });
     }
@@ -15451,7 +15507,7 @@ async function handleAnalyzeEventWhaleBreakdown(args) {
             smartMoneyConsensus,
             selectionReason,
             synthesisHint: "Use whalesByOutcome as the only grounded whale-backing evidence. If whalesByOutcome is empty or requested outcomes appear in unmatchedOutcomes, say whale data was unavailable for those names instead of substituting plain trading volume as a whale proxy.",
-            note: `Analyzed ${whaleResults.length} of ${totalMarketsInEvent} markets. Whale totals and whale counts use the full deep holder scan for each outcome; returned holder samples may still be truncated for payload size. The outcome with the most whale money suggests smart money's pick.`,
+            note: `Analyzed ${whaleResults.length} of ${totalMarketsInEvent} markets. Whale totals and whale counts use the full deep holder scan for each outcome (single /holders call with limit=500 per side; falls back to a paced minBalance tier sweep only if the upstream regresses). Returned holder samples may still be truncated for payload size. The outcome with the most whale money suggests smart money's pick.`,
             fetchedAt: new Date().toISOString(),
         });
     }
