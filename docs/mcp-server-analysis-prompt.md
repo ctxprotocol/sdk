@@ -270,11 +270,12 @@ Please analyze this MCP server and generate submission details:
 
 Remind developers about these requirements:
 
-1. **outputSchema Required**: Tools MUST define `outputSchema` in their tool definitions for dispute resolution
-2. **Deterministic Outputs**: Given the same inputs, tools should return consistent outputs
-3. **Error Handling**: Return proper MCP error responses, not silent failures
-4. **Documentation**: Include example inputs/outputs in tool descriptions
-5. **Rate-limit metadata strongly recommended**: Publish `_meta.rateLimit` (or `_meta.rateLimitHints`) so planners/runtime can avoid over-querying low-tier APIs. Include fields like `maxRequestsPerMinute`, `cooldownMs`, `maxConcurrency`, `supportsBulk`, `recommendedBatchTools`, and `notes`.
+1. **outputSchema Required**: Tools MUST define `outputSchema` in their tool definitions for dispute resolution.
+2. **outputSchema root must be `type: "object"`**: The MCP specification forbids `anyOf`, `oneOf`, arrays, or primitives at the root of `outputSchema`. Express nullability inside `properties` (e.g. `{ "type": ["string", "null"] }`), and signal error / no-data responses with `isError: true` — not with a schema union. The Context contribute flow will reject any listing whose root type is not `"object"`. See [build-tools guide](https://docs.ctxprotocol.com/guides/build-tools#outputschema-root-must-be-type-object).
+3. **Deterministic Outputs**: Given the same inputs, tools should return consistent outputs.
+4. **Error Handling**: Return proper MCP error responses, not silent failures.
+5. **Documentation**: Include example inputs/outputs in tool descriptions.
+6. **Rate-limit metadata strongly recommended**: Publish `_meta.rateLimit` (or `_meta.rateLimitHints`) so planners/runtime can avoid over-querying low-tier APIs. Include fields like `maxRequestsPerMinute`, `cooldownMs`, `maxConcurrency`, `supportsBulk`, `recommendedBatchTools`, and `notes`.
 
 Reference: https://github.com/ctxprotocol/context#-the-data-broker-standard
 
