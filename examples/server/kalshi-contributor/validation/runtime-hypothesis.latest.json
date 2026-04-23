@@ -1,0 +1,150 @@
+{
+  "hypothesisId": "runtime-hypothesis-2026-04-22T17-40-00Z-clarification-001",
+  "hypothesisVersion": "runtime-hypothesis.v1",
+  "generatedAt": "2026-04-22T17:40:00.000Z",
+  "targetDimension": "clarification",
+  "targetType": "stage",
+  "focusContributor": "kalshi-contributor",
+  "handoffToRunPipeline": false,
+  "handoffReason": null,
+  "targetSelectionNote": "Explicit user override to target clarification despite it being above the 4.0 automation floor (mean 4.3). Selected because the stage review records a stable 5-trace failure cluster (viable_pool_excludes_top_fit_candidate) with optimizationReadiness=ready. The dominant sub-failure (searchFocused clause gate dropping non-search-surface top-fitScore candidates) is contributor-agnostic and addressable at the shared-runtime layer.",
+  "selectedFailureCluster": {
+    "label": "viable_pool_excludes_top_fit_candidate",
+    "traceCount": 5,
+    "queryIds": ["q1", "q5", "q9", "q20", "q21"],
+    "addressedSubFailures": ["q1", "q9", "q20"],
+    "deferredSubFailures": ["q5", "q21"],
+    "deferredReason": "q5 drop reason is unresolvedRequiredParams inference (parameter-resolution layer, a distinct sub-failure). q21's top candidate is itself a search-surface keyword-search method (fitScore 24.48), so the searchFocused gate does not explain its exclusion; likely drop reason is unresolvedRequiredParams penalty, candidateExpandsVenueScopeBeyondQuery, or scopePreference mismatch. Both are separate iterations."
+  },
+  "problemStatement": "On multi-clause marketplace prompts whose clauses combine a MARKET_DISCOVERY_COVERAGE_TOKEN (markets, prices, contracts, outcomes, ...) with a KNOWN_VENUE_TOKEN (kalshi, polymarket, ...), buildClauseSlotProfiles sets searchFocused=true via isMarketDiscoveryClause. buildClauseCandidateSupports then hard-drops every candidate whose name/description/input/output tokens do not intersect a small 11-token SEARCH_SURFACE_SIGNAL_TOKENS set (article, articles, crawl, headline, headlines, news, research, search, source, sources, web). This drops the semantic-retrieval ranker's top-fitScore candidate (e.g., discover_trending_markets at fitScore 37.55 on q1, a 14.4pt lead over the next-best) before it can compete on weighted score. The result is a 3-option clarification pool that excludes the correct method (q1, q21) or a single-grounded-interpretation collapse onto a narrower/wrong method (q5, q9, q20). The method-retrieval ranker is correct; the downstream token-based gate overrides it.",
+  "runtimeInvariant": "When the semantic method-retrieval ranker produces an overwhelmingly dominant fitScore verdict for a candidate, downstream token-based pool-construction gates must not silently exclude that candidate. The ranker's verdict is the authoritative signal; token-based heuristics are preferences, not kill-switches, when the ranker strongly disagrees.",
+  "rootCauseHypothesis": "context/lib/ai/query-clarification.ts, buildClauseCandidateSupports line ~1724: `if (profile.searchFocused && !candidateHasSearchSurfaceSignal(candidate)) { continue; }` axes the ranker's top-fitScore candidate whenever the candidate's name/description/input/output tokens do not intersect SEARCH_SURFACE_SIGNAL_TOKENS. Combined with searchFocused over-firing on any markets+venue clause via isMarketDiscoveryClause (line 890), this excludes contributor-agnostic discovery methods (discover_*, list_*, browse_*, top_*, leaderboard_*, hot_*, feed_*) from the viable pool. The soft +/-0.35 preference on line 1738 is not strong enough to overcome the hard drop because the drop happens before scoring. The fix belongs at the hard-drop site, not in the token tables or in searchFocused's trigger.",
+  "proposedExperiment": {
+    "label": "Dominant-fitScore override for searchFocused clause gate",
+    "description": "Introduce a narrow, rollout-flag-controlled override in buildClauseCandidateSupports that lets a candidate bypass the searchFocused hard drop when its fitScore dominates the best competing candidate in the same pre-filter pool by at least DOMINANT_FITSCORE_OVERRIDE_MARGIN_POINTS (default 10). The existing soft +/-0.35 scoring signal at line ~1738 is preserved unchanged, so a dominantly-ranked non-search-surface candidate still carries the -0.35 preference penalty and must win on aggregate weighted score. Emit a new decisionSignal searchFocused_gate_overridden_by_dominant_fit_score:<margin> whenever the override fires, so traces and stage reviewers can measure cluster shrinkage mechanically. Guard behind a new rollout flag DUAL_SURFACE_DOMINANT_FITSCORE_OVERRIDE in context/lib/rollout/dual-surface-flags.ts with values off|dominant and default dominant, so the behavior can be rolled back without a code revert.",
+    "changeType": "rollout_flag + policy_threshold + decision_signal",
+    "affectedFiles": [
+      "/Users/alex/Documents/context/lib/ai/query-clarification.ts",
+      "/Users/alex/Documents/context/lib/rollout/dual-surface-flags.ts",
+      "/Users/alex/Documents/context/tests/unit/query-clarification.test.ts"
+    ],
+    "smallestFilesToChange": [
+      "/Users/alex/Documents/context/lib/ai/query-clarification.ts",
+      "/Users/alex/Documents/context/lib/rollout/dual-surface-flags.ts",
+      "/Users/alex/Documents/context/tests/unit/query-clarification.test.ts"
+    ],
+    "usesPairedFixException": false,
+    "pairedDimension": null
+  },
+  "likelyCodeLocations": [
+    {
+      "path": "/Users/alex/Documents/context/lib/ai/query-clarification.ts",
+      "function": "buildClauseCandidateSupports",
+      "line": 1724,
+      "issue": "Hard drop `if (profile.searchFocused && !searchSurfaceCandidate) continue;` removes the top-fitScore candidate before it can compete on weighted score. This is the exact site where discover_trending_markets gets axed on q1 and the probability-filter method gets axed on q9. Add the dominance bypass immediately before this continue."
+    },
+    {
+      "path": "/Users/alex/Documents/context/lib/ai/query-clarification.ts",
+      "function": "buildClauseCandidateSupports",
+      "line": 1679,
+      "issue": "Pre-compute the top and second-best fitScore across all candidates passing the earlier filters (queryEligible, queryReadOnlySafe, querySafe, venue match, venue-scope, coverageRatio floor) once at the top of the function, so the per-candidate loop can check dominance in O(1). Do NOT recompute dominance against the full analysisCandidates pool - use the same pool the loop is iterating to avoid letting ineligible candidates set the dominance floor."
+    },
+    {
+      "path": "/Users/alex/Documents/context/lib/ai/query-clarification.ts",
+      "function": "buildClauseCandidateSupports",
+      "line": 1738,
+      "issue": "Existing soft +/-0.35 searchFocused scoring signal. DO NOT modify. Once the hard drop is bypassed, this is the only remaining preference and provides graceful downweight for dominantly-ranked non-search-surface candidates."
+    },
+    {
+      "path": "/Users/alex/Documents/context/lib/ai/query-clarification.ts",
+      "function": "buildClauseSlotProfiles",
+      "line": 1639,
+      "issue": "searchFocused is set from isSearchContextDominantClause || isMarketDiscoveryClause || clause token in SEARCH_CONTEXT_COVERAGE_TOKENS. DO NOT modify - the over-firing is a known marketplace-generality pain point and the dominance override absorbs its false positives without disabling the genuine news-intent path."
+    },
+    {
+      "path": "/Users/alex/Documents/context/lib/ai/query-clarification.ts",
+      "function": "candidateHasSearchSurfaceSignal",
+      "line": 908,
+      "issue": "Token-table SEARCH_SURFACE_SIGNAL_TOKENS (line 637). DO NOT modify - broadening is Option B and is explicitly rejected as brittle/marketplace-brittle. Callers on lines 1395, 1656, 1711, 1739, 2139, 2146, 2156, 2217, 2218 must remain semantically unchanged."
+    },
+    {
+      "path": "/Users/alex/Documents/context/lib/rollout/dual-surface-flags.ts",
+      "function": "getDualSurfaceRolloutFlags",
+      "line": 56,
+      "issue": "Add new flag DUAL_SURFACE_DOMINANT_FITSCORE_OVERRIDE with type DominantFitScoreOverrideMode = 'off' | 'dominant', default 'dominant', using the same parseFlag helper. Export a helper isDominantFitScoreOverrideEnabled(flags) for the consumer in query-clarification.ts."
+    },
+    {
+      "path": "/Users/alex/Documents/context/lib/ai/query-clarification.ts",
+      "function": "classifyClarificationNeed (decisionSignals assembly)",
+      "line": 2880,
+      "issue": "Propagate a new decisionSignal string `searchFocused_gate_overridden_by_dominant_fit_score:<margin>` whenever buildClauseCandidateSupports admits a candidate via the override. Plumb it through ClauseSlotAssessment or ClauseCandidateSupport so it reaches decisionSignals for trace auditability."
+    }
+  ],
+  "paired_fix_justification": null,
+  "guardrails": [
+    "Do NOT remove the hard gate entirely. Only bypass it for candidates whose fitScore dominates the best competing candidate in the same clause pre-filter pool by >= DOMINANT_FITSCORE_OVERRIDE_MARGIN_POINTS (default 10).",
+    "Preserve the exact_identifier_single_tool_overlap fast path (shouldBypassStrictNamedTargetClarification; classifyClarificationNeed ~line 2728). Do not add any branch that could fire clarification for prompts with an explicit ticker or slug literal.",
+    "Preserve the capability_miss branch (classifyClarificationNeed lines ~2737, ~2782) so unsupported venues still fail safely as capability_miss rather than fabricated pools.",
+    "Preserve the unresolvedRequiredParams penalty at line ~1770. unresolved-param drops are a DIFFERENT failure class (q5, likely q21) addressed in a future iteration; the override must not accidentally rescue candidates whose required params are unresolved.",
+    "Do NOT expand SEARCH_SURFACE_SIGNAL_TOKENS, SEARCH_CONTEXT_COVERAGE_TOKENS, MARKET_DISCOVERY_COVERAGE_TOKENS, PLURAL_DISCOVERY_HINT_TOKENS, or KNOWN_VENUE_TOKENS. Token-table tuning is the Option B anti-pattern.",
+    "Do NOT add any method-name, tool-name, venue-name, or prompt-literal string matching in the override path. The override uses ranker fitScore exclusively.",
+    "Keep the existing soft +/-0.35 searchFocused scoring signal at line ~1738 untouched. A dominantly-ranked non-search-surface candidate should still carry the -0.35 preference penalty and must still beat competitors on aggregate weighted score to be selected.",
+    "Emit a trace-visible decisionSignal `searchFocused_gate_overridden_by_dominant_fit_score:<margin>` whenever the override fires. Required for post-hoc audit and for mechanical cluster-shrinkage measurement between iterations.",
+    "Preserve the direct_composite_intent_match and direct_intent_description_match fast paths (classifyClarificationNeed lines ~2934, ~2956). These already handle the strongest-dominant cases and must not be weakened.",
+    "Code-path parity: the override must be invoked identically from the /api/query and /api/chat routes because both consume context/lib/ai/query-clarification.ts. Do not add route-specific branching."
+  ],
+  "marketplaceRobustness": {
+    "generalization": "The override uses fitScore produced by the semantic method-retrieval ranker, which is driven by method contracts, schemas, probe evidence, and semantic profiles - not by contributor-specific names or hardcoded prompt-shape tokens. Any contributor whose top-fit discovery method is named without an English discovery verb (e.g., `fetch_leading_contracts_by_volume`, `ranked_feed_24h`, `most_traded_now`, `hot_markets_v2`, `top_by_volume`, `popular_contracts`, `directory_listing`, or a non-English name) benefits from the same override. The 10-point absolute margin is a policy threshold that can be tuned in a follow-up iteration; it is intentionally conservative to keep the first iteration's blast radius small.",
+    "forbiddenContributorSpecificSignals": [
+      "Method name substring checks (e.g., methodName.includes('trending') or methodName.startsWith('discover'))",
+      "Tool name or toolId allowlist (e.g., toolId === 'kalshi' or candidate.toolName.includes('Kalshi'))",
+      "Venue-specific routing inside buildClauseCandidateSupports or dual-surface-flags",
+      "Hardcoded prompt-shape matching (e.g., matching literal phrases like 'top 10 trending' or 'by 24h volume')",
+      "Per-contributor rollout-flag values (the flag is global on|off, not per-toolId)"
+    ]
+  },
+  "expectedBenefits": [
+    "Shrink the viable_pool_excludes_top_fit_candidate cluster from 5 traces to 2-3 traces on the same 20-prompt trace-rich evaluation.",
+    "Lift clarification dimension mean from 4.3 toward 4.55+ via q1 and q9 (and probably q20) flipping out of the cluster.",
+    "Lift synthesis dimension mean from 4.15 toward 4.4+ as downstream symptom relief on q9 and q20, which scored synthesis=1 because the wrong upstream method returned sparse or empty data.",
+    "Lift finalScoreMean from 4.02 toward 4.20+ without any direct synthesis or execution changes.",
+    "Reduce compensated-loop tool-call counts on q9 and q20 (side effect: lower context-budget pressure, fewer mcpTransport call-count proxy penalties)."
+  ],
+  "riskChecklist": [
+    "A non-search-surface candidate with a coincidentally high fitScore but semantically wrong intent for a genuine news-intent query could slip through the override. Mitigation: conservative 10pt absolute margin floor, preserved -0.35 soft penalty, and the news-intent guardrail regression prompt in validationPlan.",
+    "A contributor whose method description is unusually long and generic could have an inflated fitScore that spuriously dominates in a clause where it is not a good fit. Mitigation: dominance is measured against the SECOND-BEST candidate's fitScore in the same pre-filter pool (relative, not absolute), so a pool where multiple candidates score similarly will not trigger the override.",
+    "If the method-retrieval ranker has a systematic bias on a yet-unseen prompt family, the override would propagate that bias downstream. Mitigation: stage review explicitly documents that the ranker is correct in every failing trace in the current 20-prompt eval; a future divergence would surface via the cluster metric or the regression harness.",
+    "Rollout-flag default 'dominant' means behavior changes on deploy without explicit opt-in. Mitigation: flag supports 'off' for instant rollback without redeploy; the regression harness gate in the orchestrator will catch any contributor-mean regression >= 0.15.",
+    "Over-permissive threshold could let too many non-search-surface candidates bypass on marginal cases. Mitigation: rejection criterion 'override fires on >20% of traces' catches this; threshold is tuneable via environment variable in a follow-up."
+  ],
+  "validationPlan": {
+    "primaryRegressionPrompt": "Show me the top 10 trending Kalshi markets right now by 24h volume — include ticker, title, yes price, and liquidity",
+    "successCriteria": "Either (a) outcomeType=answer with discover_trending_markets selected as the grounded method and executed successfully, OR (b) outcomeType=clarification_required where comparedOptionIds contains the discover_trending_markets option id AND each option's label semantically matches its optionId (no label/optionId mismatch like the q21 'Search Kalshi markets' label on analyze_market_liquidity). Trace decisionSignals must include searchFocused_gate_overridden_by_dominant_fit_score:<margin> on the clause that previously dropped discover_trending_markets.",
+    "noAmbiguousRegression": "Run POLYMARKET_SCREENING_QUERY from context/tests/unit/query-clarification.test.ts ('Find live moderate-probability Polymarket bets trading around 40% to 60% with at least $1M liquidity, and explain which ones are actually tradable in size right now.'). Expected: clarification still fires with a multi-candidate pool; no new single-tool auto-select; override decisionSignal is NOT present.",
+    "exactIdentifierGuardPrompt": "Use an exact-ticker Kalshi prompt from the trace set - e.g., q2, q4, q10, q11, q12 or the minimal fixture 'What is the current yes price of KXBIGCHANGE-26DEC31?'. Expected: no new clarification triggered; exact_identifier_single_tool_overlap fast path remains authoritative; override decisionSignal is absent.",
+    "capabilityMissGuardPrompt": "Run a venue-unsupported prompt: 'Show me the top 10 trending Manifold markets right now by 24h volume'. Expected: capability_miss branch fires with unsupported_venue:manifold in decisionSignals; the override does not accidentally manufacture a pool from Kalshi methods or emit its decisionSignal.",
+    "targetedChecks": [
+      "Unit test: buildClauseCandidateSupports returns a support entry for a synthetic candidate with fitScore 37 when profile.searchFocused=true, the candidate has no search-surface signal, and the next-best eligible competing candidate has fitScore 22 (dominance margin 15 > 10). Assert support is present AND its weightedScore reflects the -0.35 searchFocused penalty (not +0.35).",
+      "Unit test: same fixture but next-best fitScore 30 (dominance margin 7 < 10). Assert the candidate is still dropped (no support entry) and no override decisionSignal is emitted.",
+      "Unit test: same fixture as the pass case but with env var DUAL_SURFACE_DOMINANT_FITSCORE_OVERRIDE=off. Assert the candidate is dropped regardless of margin (rollback path works).",
+      "Unit test: synthetic candidate with fitScore 37 AND unresolvedRequiredParams=['seriesTicker']. Assert the candidate is still dropped (guardrail: override must not rescue unresolved-param candidates - that is a separate failure class).",
+      "Integration test: resolveQueryClarificationDecision on a q1-shaped fixture (multi-clause markets+venue query, candidate pool with one dominantly-ranked non-search-surface discovery method at fitScore 37 and two search-surface methods at fitScore 23 and 22). Assert recommendedCandidate is the discovery method AND decisionSignals contains searchFocused_gate_overridden_by_dominant_fit_score."
+    ],
+    "regressionHarnessRequired": true,
+    "codePathParityRequired": true,
+    "cluster_metric": "viable_pool_excludes_top_fit_candidate trace count on the same 20-prompt trace-rich evaluation drops from 5 -> <=3. Primary success if q1 AND q9 both flip (cluster <= 3). Secondary success if q20 also flips (cluster <= 2). q5 and q21 are explicitly out-of-scope for this iteration and may remain in the cluster - their drop reasons are distinct sub-failures (unresolvedRequiredParams inference and a non-searchFocused drop respectively) queued for follow-up iterations."
+  },
+  "expectedImpact": {
+    "primary": "viable_pool_excludes_top_fit_candidate cluster: 5 -> 2 target, 5 -> 3 accept, 5 -> 4+ reject/revert.",
+    "secondary": "Clarification mean 4.3 -> 4.55+. Synthesis mean 4.15 -> 4.4+ via symptom relief on q9 and q20 (both synthesis=1 due to grounded-no-data from wrong routing). finalScoreMean 4.02 -> 4.20+. Reduced compensated-loop tool-call counts on q9 and q20 with side-effect relief on contextBudget and mcpTransport call-count proxy.",
+    "riskOfRegression": "Low. Primary risk surfaces: (a) a non-search-surface candidate with spuriously high fitScore on a news-intent prompt slips through - caught by the news-prompt and POLYMARKET_SCREENING_QUERY guardrails and by the 10pt margin floor; (b) the POLYMARKET_SCREENING_QUERY or other currently-ambiguous prompts stop firing clarification - caught by the rejection criterion 'clarification.triggered count decreases on non-target prompts'; (c) exact-identifier fast path regresses - caught by the q2/q4 guardrail prompt. No direct risk to toolSelection, scoutDepth, planning, execution, reasoningDepth, or codeSafety dimensions."
+  },
+  "rejectionCriteria": [
+    "Revert if the clarification dimension mean decreases by any amount on the 20-prompt eval versus the 4.3 baseline.",
+    "Revert if the number of clarification.triggered=true traces INCREASES (we are collapsing over-strict clarification, not adding new ones).",
+    "Revert if any of the 9 currently-clean traces (q2, q3, q4, q7, q8, q11, q17, q22, q23, q24) regress by >= 0.5 on any stage score.",
+    "Revert if the regression-baseline harness (polymarket-contributor + kalshi-contributor) shows queryMean drop >= 0.15 on ANY contributor.",
+    "Revert if the override fires on >20% of traces in the 20-prompt eval (signals over-permissive threshold).",
+    "Revert if the exact_identifier_single_tool_overlap fast path (q2, q4, q10, q11, q12-style prompts) starts firing clarification where it previously returned answer."
+  ]
+}

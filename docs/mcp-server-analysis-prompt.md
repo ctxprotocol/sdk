@@ -78,6 +78,7 @@ Agent tips:
 ```
 
 **Example:**
+
 ```markdown
 Real-time gas prices for 50+ EVM chains including Ethereum, Base, Arbitrum, and Optimism.
 
@@ -99,6 +100,7 @@ Agent tips:
 ```
 
 **Banned phrases (do not use in description):**
+
 - "mdash" or "—"
 - "**" (no bold markdown)
 
@@ -121,33 +123,38 @@ Treat them as **must-win prompts**, not filler examples.
 
 Choose the most appropriate category:
 
-| Category | Description | Use When |
-|----------|-------------|----------|
-| `Crypto & DeFi` | On-Chain, Markets, Wallets | Tool provides blockchain data, crypto market analysis, DeFi, prediction markets, on-chain analytics |
-| `Financial Markets` | Stocks, Forex, Odds, Macro, Filings | Tool provides TradFi data, SEC filings, earnings, sports betting odds, macro analysis |
-| `Business & Sales` | Leads, Companies, Competitive Intel | Tool provides company enrichment, lead gen, tech stack detection, e-commerce data |
-| `Marketing & SEO` | Ads, Social Media, Rankings | Tool provides ad intelligence, backlink analysis, keyword research, social monitoring |
-| `Legal & Regulatory` | Filings, Compliance, Patents | Tool provides court filings, patent search, trademark lookup, regulatory tracking |
-| `Real World` | Weather, News, Sports, Location | Tool provides weather, news, real estate, location, or general real-world data |
-| `Developer Tools` | Security, Code, Dependencies | Tool provides vulnerability scanning, repo analytics, supply chain analysis |
-| `Research & Academia` | Papers, Grants, Clinical | Tool provides research mapping, grant matching, clinical trial data |
-| `Utility` | Search, Compute, Infrastructure | General-purpose tools, search engines, computation |
-| `Other` | Anything else | Only if nothing else fits |
+
+| Category              | Description                         | Use When                                                                                            |
+| --------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Crypto & DeFi`       | On-Chain, Markets, Wallets          | Tool provides blockchain data, crypto market analysis, DeFi, prediction markets, on-chain analytics |
+| `Financial Markets`   | Stocks, Forex, Odds, Macro, Filings | Tool provides TradFi data, SEC filings, earnings, sports betting odds, macro analysis               |
+| `Business & Sales`    | Leads, Companies, Competitive Intel | Tool provides company enrichment, lead gen, tech stack detection, e-commerce data                   |
+| `Marketing & SEO`     | Ads, Social Media, Rankings         | Tool provides ad intelligence, backlink analysis, keyword research, social monitoring               |
+| `Legal & Regulatory`  | Filings, Compliance, Patents        | Tool provides court filings, patent search, trademark lookup, regulatory tracking                   |
+| `Real World`          | Weather, News, Sports, Location     | Tool provides weather, news, real estate, location, or general real-world data                      |
+| `Developer Tools`     | Security, Code, Dependencies        | Tool provides vulnerability scanning, repo analytics, supply chain analysis                         |
+| `Research & Academia` | Papers, Grants, Clinical            | Tool provides research mapping, grant matching, clinical trial data                                 |
+| `Utility`             | Search, Compute, Infrastructure     | General-purpose tools, search engines, computation                                                  |
+| `Other`               | Anything else                       | Only if nothing else fits                                                                           |
+
 
 ### 4. Price (required, 0.00 to 100.00 USDC)
 
 **Pricing Guidelines:**
 
-| Tool Type | Suggested Price | Reasoning |
-|-----------|-----------------|-----------|
-| Free/promotional tools | `0.00` | Building user base, simple queries |
-| Basic data queries | `0.001` - `0.01` | Low-cost, high-volume usage |
-| Premium real-time data | `0.01` - `0.10` | Valuable, time-sensitive data |
-| Complex analysis | `0.10` - `1.00` | Computational overhead, unique insights |
-| Execution/trading tools | `0.50` - `5.00` | High-value actions, liability |
-| Enterprise/rare data | `5.00` - `100.00` | Exclusive access, significant value |
+
+| Tool Type               | Suggested Price   | Reasoning                               |
+| ----------------------- | ----------------- | --------------------------------------- |
+| Free/promotional tools  | `0.00`            | Building user base, simple queries      |
+| Basic data queries      | `0.001` - `0.01`  | Low-cost, high-volume usage             |
+| Premium real-time data  | `0.01` - `0.10`   | Valuable, time-sensitive data           |
+| Complex analysis        | `0.10` - `1.00`   | Computational overhead, unique insights |
+| Execution/trading tools | `0.50` - `5.00`   | High-value actions, liability           |
+| Enterprise/rare data    | `5.00` - `100.00` | Exclusive access, significant value     |
+
 
 **Notes:**
+
 - Users pay **once per chat turn** (not per tool call within a turn)
 - Max 4 decimal places (e.g., `0.0001`)
 - Consider competitive pricing vs. similar tools
@@ -156,12 +163,15 @@ Choose the most appropriate category:
 
 **Supported Transports:**
 
-| Transport | Endpoint Format | Example |
-|-----------|-----------------|---------|
-| HTTP Streaming | `/mcp` | `https://api.example.com/mcp` |
-| SSE (Server-Sent Events) | `/sse` | `https://api.example.com/sse` |
+
+| Transport                | Endpoint Format | Example                       |
+| ------------------------ | --------------- | ----------------------------- |
+| HTTP Streaming           | `/mcp`          | `https://api.example.com/mcp` |
+| SSE (Server-Sent Events) | `/sse`          | `https://api.example.com/sse` |
+
 
 **Requirements:**
+
 - Must be publicly accessible HTTPS URL
 - Must implement MCP protocol correctly
 - Must respond to `listTools()` for skill auto-discovery
@@ -176,37 +186,34 @@ When analyzing an MCP server, extract:
 ### From the Code
 
 1. **Tools/Skills Exposed**
-   - List all tools from the `listTools()` implementation
-   - Document input schemas for each tool
-   - Note any `outputSchema` definitions (required for disputes)
-   - Note `_meta.contextRequirements` and `_meta.rateLimit` / `_meta.rateLimitHints` metadata
-   - Group tools by capability cluster (discovery, raw data, analytics, workflow/composite)
-
+  - List all tools from the `listTools()` implementation
+  - Document input schemas for each tool
+  - Note any `outputSchema` definitions (required for disputes)
+  - Note `_meta.contextRequirements` and `_meta.rateLimit` / `_meta.rateLimitHints` metadata
+  - Group tools by capability cluster (discovery, raw data, analytics, workflow/composite)
 2. **Data Sources**
-   - What APIs or data sources does it connect to?
-   - Are there rate limits or API keys required?
-   - What's the data freshness/latency?
-   - Which tools are heavy fan-out tools and should publish pacing hints
-
+  - What APIs or data sources does it connect to?
+  - Are there rate limits or API keys required?
+  - What's the data freshness/latency?
+  - Which tools are heavy fan-out tools and should publish pacing hints
 3. **Unique Value**
-   - What makes this tool different from alternatives?
-   - What specific problems does it solve?
-   - Who is the target user (traders, researchers, developers)?
-   - Which free substitutes fail for the must-win prompts?
-   - Is the strongest contract `Query`, `Execute`, or `both`?
+  - What makes this tool different from alternatives?
+  - What specific problems does it solve?
+  - Who is the target user (traders, researchers, developers)?
+  - Which free substitutes fail for the must-win prompts?
+  - Is the strongest contract `Query`, `Execute`, or `both`?
 
 ### From README/Documentation
 
 1. **Setup Requirements**
-   - Environment variables needed
-   - External dependencies
-   - Deployment instructions
-
+  - Environment variables needed
+  - External dependencies
+  - Deployment instructions
 2. **Usage Examples**
-   - Example queries and responses
-   - Common workflows
-   - Edge cases and limitations
-   - Include comprehensive must-win questions that exercise each capability cluster
+  - Example queries and responses
+  - Common workflows
+  - Edge cases and limitations
+  - Include comprehensive must-win questions that exercise each capability cluster
 
 ---
 
@@ -223,7 +230,9 @@ After analysis, provide:
 
 **Description:**
 ```
+
 [Full description using the format above]
+
 ```
 
 **Category:** [Selected category]
@@ -277,7 +286,7 @@ Remind developers about these requirements:
 5. **Documentation**: Include example inputs/outputs in tool descriptions.
 6. **Rate-limit metadata strongly recommended**: Publish `_meta.rateLimit` (or `_meta.rateLimitHints`) so planners/runtime can avoid over-querying low-tier APIs. Include fields like `maxRequestsPerMinute`, `cooldownMs`, `maxConcurrency`, `supportsBulk`, `recommendedBatchTools`, and `notes`.
 
-Reference: https://github.com/ctxprotocol/context#-the-data-broker-standard
+Reference: [https://github.com/ctxprotocol/context#-the-data-broker-standard](https://github.com/ctxprotocol/context#-the-data-broker-standard)
 
 ---
 
@@ -297,4 +306,4 @@ For fast submissions, copy this template:
 
 ---
 
-*Generated for Context Protocol SDK - https://github.com/ctxprotocol/sdk*
+*Generated for Context Protocol SDK - [https://github.com/ctxprotocol/sdk](https://github.com/ctxprotocol/sdk)*

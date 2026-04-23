@@ -101,11 +101,16 @@ PLANNER GUIDANCE:
   - If the user names an explicit anchor market and asks whether it is hot relative to its own peers, first call get_market to recover the anchor's canonical series/category identifiers, then compare with browse_series before using this broad category leaderboard as secondary context.
   - For climate/weather prompts, do not substitute unrelated sports, crypto, or general commodity markets unless they are explicitly returned here.
 
+LIQUIDITY RENDERING RULE (CRITICAL):
+  - Each trending market includes \`liquidity\` (USD — best estimate), \`bookDepthUsd\` (top-5 depth from live orderbook, nullable), \`yesBid\`, \`yesAsk\`, \`spreadCents\`, \`bestBidSize\`, \`bestAskSize\`, and \`liquiditySignal\` ("excellent" | "good" | "moderate" | "thin" | "empty_book" | null).
+  - NEVER render "N/A" for liquidity when \`bookDepthUsd\`, \`spreadCents\`, or \`yesBid/yesAsk\` are present — those are the real tradeable-liquidity signals from the live orderbook. Kalshi's list endpoint sometimes returns \`liquidityReportedByListEndpoint: 0\` on markets with deep books; the \`liquidity\` field above already accounts for this by falling back to orderbook depth.
+  - When reporting liquidity to the user: prefer \`bookDepthUsd\` formatted as USD ("$6,900 depth"), \`spreadCents\` formatted as cents ("1¢ spread"), and the \`liquiditySignal\` label — in that order. Fall back to \`volume24h\` only when the book is empty (\`liquiditySignal: "empty_book"\`), and say "orderbook currently empty" rather than inventing a number.
+
 RETURNS: Markets ranked by activity with:
 - url: Direct Kalshi market link (ALWAYS use this, never construct URLs)
 - ticker (use with get_market_orderbook, get_market_trades)
 - event_ticker (use with get_event)
-- Current prices and volumes
+- Current prices, volumes, bid/ask, spread, and orderbook-derived liquidity depth
 - category: The market's category
 
 CROSS-PLATFORM COMPOSABILITY:
@@ -145,10 +150,19 @@ CROSS-PLATFORM COMPOSABILITY:
                             url: { type: "string", format: "uri", description: "Direct Kalshi URL - always use this, never construct URLs" },
                             yesPrice: { type: "number" },
                             noPrice: { type: "number" },
+                            yesBid: { type: "number", description: "Best yes bid in cents (from live orderbook top-5 when available, otherwise the market snapshot yes_bid)" },
+                            yesAsk: { type: "number", description: "Best yes ask in cents (from live orderbook top-5 when available, otherwise the market snapshot yes_ask)" },
+                            spreadCents: { type: ["number", "null"], description: "yesAsk - yesBid in cents when both sides are populated; null when either side is empty" },
+                            bestBidSize: { type: ["number", "null"], description: "Contracts resting at best yes bid (from live orderbook top-5); null when the book was not fetched or is empty on that side" },
+                            bestAskSize: { type: ["number", "null"], description: "Contracts resting at best yes ask (from live orderbook top-5); null when the book was not fetched or is empty on that side" },
+                            bookDepthUsd: { type: ["number", "null"], description: "USD notional across top-5 orderbook levels on both sides; null when the orderbook fetch failed or returned empty" },
+                            liquiditySignal: { type: ["string", "null"], enum: ["excellent", "good", "moderate", "thin", "empty_book", null], description: "Qualitative liquidity label derived from bookDepthUsd + spreadCents" },
                             volume24h: { type: "number" },
                             volume: { type: "number" },
                             openInterest: { type: "number" },
-                            liquidity: { type: "number" },
+                            liquidity: { type: "number", description: "Best-estimate USD liquidity — bookDepthUsd when the orderbook fetch succeeded, otherwise the Kalshi list endpoint's liquidity field. Do not render 0 as N/A; cross-check spreadCents and bookDepthUsd." },
+                            liquidityReportedByListEndpoint: { type: "number", description: "Raw liquidity field from Kalshi's /markets list endpoint. Often 0 on deeply-traded markets — treat as unreliable; prefer bookDepthUsd / spreadCents." },
+                            liquiditySource: { type: "string", enum: ["orderbook_top5_depth_usd", "market_snapshot_field", "unavailable"], description: "Provenance label for the liquidity field." },
                             category: { type: "string" },
                             closeTime: { type: "string" },
                             status: { type: "string" },
@@ -178,13 +192,21 @@ this tool once PER candidate/sub-market ticker (ideally in parallel) and then co
 the results. Do NOT answer from search_markets / get_event output alone — those listings
 do not include bid-ask spreads or orderbook depth.
 
+SETTLED-MARKET RULE (CRITICAL):
+  - The response always includes \`marketState\` ∈ {"active", "closed", "settled", "finalized", "initialized", "pending", "unknown"}, \`settled\` (boolean), \`tradeable\` (boolean), \`closeTime\`, and \`result\` (e.g. "yes"/"no" when resolved).
+  - If \`marketState\` is "finalized"/"settled" OR \`settled: true\`: the depth/slippage numbers will all be 0 because trading has ENDED. Do NOT tell the user "you can buy $0 with <= N¢ slippage" or call the market "illiquid" — instead, say the market has resolved (cite \`result\` + \`closeTime\`) and follow \`recoveryHints.nextTools\` (start with \`discover_trending_markets\`) to substitute a currently-tradeable ticker before quoting a slippage number.
+  - If \`marketState\` is "closed"/"initialized"/"pending": trading is paused or hasn't started. Same pivot rule.
+  - Only when \`tradeable: true\` AND \`depth.totalDepthUsd > 0\` should you quote the slippageSimulation / liquidityScore numbers verbatim.
+
 INPUT: market ticker from discover_trending_markets, search_markets, or get_event.markets[]
 
 RETURNS:
+- marketState / settled / tradeable / closeTime / result (lifecycle — always populated)
 - Spread analysis (bid-ask spread in cents and %)
 - Depth at various price levels
 - Slippage simulation for different order sizes
-- Liquidity score and recommendation`,
+- Liquidity score and recommendation
+- hint + recoveryHints when the book is empty or the market has resolved`,
         inputSchema: {
             type: "object",
             properties: {
@@ -278,6 +300,25 @@ RETURNS:
                     enum: ["excellent", "good", "moderate", "poor", "illiquid"],
                 },
                 recommendation: { type: "string" },
+                marketState: {
+                    type: "string",
+                    enum: [
+                        "active",
+                        "closed",
+                        "settled",
+                        "finalized",
+                        "pending",
+                        "initialized",
+                        "unknown",
+                    ],
+                    description: "Lifecycle label — `finalized`/`settled` means trading has ended and the depth/slippage numbers are 0 by design.",
+                },
+                settled: { type: "boolean", description: "True when the market has resolved (trading ended, result recorded)." },
+                tradeable: { type: "boolean", description: "True only when marketState is `active` AND close_time has not passed." },
+                closeTime: { type: ["string", "null"], description: "ISO-8601 close_time from the Kalshi market record (null when unavailable)." },
+                result: { type: ["string", "null"], description: "Settlement outcome (e.g. 'yes', 'no') when the market is finalized; null otherwise." },
+                hint: { type: "string", description: "Rendered when the book is empty OR the market is no longer tradeable — tells the planner exactly how to pivot." },
+                recoveryHints: { type: "object", description: "nextTools + escalation guidance for pivoting away from a settled/closed/empty-book ticker." },
                 fetchedAt: { type: "string" },
             },
             required: ["ticker", "currentPrices", "spread", "liquidityScore"],
@@ -433,11 +474,13 @@ RETURNS: Markets with pricing inefficiencies that could yield risk-free profit.`
     },
     {
         name: "find_trading_opportunities",
-        description: `Find trading opportunities based on probability/strategy:
+        description: `Find trading opportunities — ranks markets by strategy, category, OR within a specific event.
+
+USE THIS TOOL WHEN the user asks to "find trading opportunities", "rank sub-legs", "rank sub-markets", "rank by expected value", or "rank markets in <event>". If they give you a specific event ticker or market ticker (e.g. "find trading opportunities on KXMVE...-XYZ"), pass it as \`eventTicker\` (or \`ticker\` — it will be resolved to the parent event) and this tool returns every sub-market in that event ranked by yes-price / probability. Do NOT call get_market first for ranking-style prompts — call this tool directly.
 
 ⚠️ CRITICAL: Only present markets returned by this tool. NEVER invent markets or construct URLs. Each result includes a real 'url' field - use ONLY those URLs.
 
-STRATEGIES:
+STRATEGIES (when no eventTicker given):
 - lottery_tickets: 1-15¢ (huge payoff if right, unlikely)
 - moderate_conviction: 35-65¢ (balanced risk/reward)
 - high_confidence: 70-90¢ (likely outcomes, safer returns)
@@ -457,9 +500,17 @@ CROSS-PLATFORM: Results include tickers for comparison with Polymarket.`,
                     type: "string",
                     description: "Filter by category",
                 },
+                eventTicker: {
+                    type: "string",
+                    description: "Scope results to a single event's sub-markets (e.g. 'KXMVESPORTSMULTIGAMEEXTENDED-S2026...'). Use this when the user asks to rank sub-legs of a specific event.",
+                },
+                ticker: {
+                    type: "string",
+                    description: "Optional market ticker — its parent event will be resolved and all sibling sub-markets ranked. Alias for convenience when the user provides a full market ticker.",
+                },
                 minLiquidity: {
                     type: "number",
-                    description: "Minimum liquidity in USD (default: 1000)",
+                    description: "Minimum liquidity in USD (default: 1000; set to 0 when scoping to a single eventTicker)",
                 },
                 limit: {
                     type: "number",
@@ -778,7 +829,17 @@ By default returns OPEN events. Use status='settled' for resolved events.
 
 Each event has:
 - event_ticker (use with get_event for details)
-- Multiple markets within it`,
+- Multiple markets within it
+- closeTime (ISO 8601): canonical event close timestamp (earliest sub-market close_time). Render this directly when users ask for close / settlement times — never infer from ticker names.
+
+PLANNER GUIDANCE — CLOSE-TIME FILTERS (read carefully, this is the #1 source of mis-argued calls):
+  - Use closingBeforeTs for upper bounds: "closes before <date>", "imminent settlement", "expiring soon", "closes in next N days", "settles by".
+  - Use closingAfterTs for lower bounds: "closes after <date>", "settles no sooner than".
+  - Both fields take Unix seconds (e.g. midnight UTC of the target day: Math.floor(Date.parse("<cutoff ISO>") / 1000)).
+  - Pair both for a window (e.g. closing between now and 2026-04-25 → closingAfterTs=now, closingBeforeTs=Math.floor(Date.parse("2026-04-25T00:00:00Z")/1000)).
+  - Never try to infer close times from ticker names. The upstream exposes precise filters and earliestCloseTime/latestCloseTime are returned per event so you can sort/trim further.
+  - DO NOT use minCloseTs/maxCloseTs — those legacy names are easy to mis-map (min actually means "closes AFTER" and max means "closes BEFORE"). Always use the closingBeforeTs/closingAfterTs names above. The handler will reject minCloseTs/maxCloseTs arguments with a validation error.
+  - WORKED EXAMPLE — "events closing before 2026-04-25": set closingBeforeTs = Math.floor(Date.parse('2026-04-25T00:00:00Z')/1000) = 1777680000. Do NOT confuse 2026 vs 2025 epochs (2025-04-25 = 1745539200, 2026-04-25 = 1777680000). Always compute from the literal ISO date in the user's ask.`,
         inputSchema: {
             type: "object",
             properties: {
@@ -799,9 +860,13 @@ Each event has:
                     type: "boolean",
                     description: "Include event milestones when available",
                 },
-                minCloseTs: {
+                closingBeforeTs: {
                     type: "number",
-                    description: "Return events with at least one market closing after this Unix timestamp",
+                    description: "PREFERRED upper-bound close-time filter. Use this for 'closing before <date>', 'imminent settlements', 'expiring soon', 'closes in next N days', or any upper bound on close time. Pass Unix seconds for the cutoff (e.g. Math.floor(Date.parse('2026-04-25T00:00:00Z')/1000)).",
+                },
+                closingAfterTs: {
+                    type: "number",
+                    description: "PREFERRED lower-bound close-time filter. Use this for 'closes after <date>' or 'settles no sooner than'. Pass Unix seconds.",
                 },
                 limit: {
                     type: "number",
@@ -827,6 +892,12 @@ Each event has:
                             category: { type: "string" },
                             status: { type: "string" },
                             marketsCount: { type: "number" },
+                            closeTime: {
+                                type: "string",
+                                description: "Canonical close timestamp (earliest sub-market close_time, ISO 8601). Use this when the user asks for event close / settlement times.",
+                            },
+                            earliestCloseTime: { type: "string" },
+                            latestCloseTime: { type: "string" },
                         },
                     },
                 },
@@ -847,6 +918,7 @@ Each event has:
                         withNestedMarkets: { type: "boolean" },
                         withMilestones: { type: "boolean" },
                         minCloseTs: { type: "number" },
+                        maxCloseTs: { type: "number" },
                     },
                 },
                 fetchedAt: { type: "string" },
@@ -889,13 +961,13 @@ Supports status, event/series/category filters, timestamp filters, explicit tick
                     type: "number",
                     description: "Return markets updated after this Unix timestamp",
                 },
-                minCloseTs: {
+                closingBeforeTs: {
                     type: "number",
-                    description: "Minimum close timestamp filter",
+                    description: "PREFERRED upper-bound close-time filter (Unix seconds). Use for 'closes before <date>', 'expiring soon', 'imminent settlement'.",
                 },
-                maxCloseTs: {
+                closingAfterTs: {
                     type: "number",
-                    description: "Maximum close timestamp filter",
+                    description: "PREFERRED lower-bound close-time filter (Unix seconds). Use for 'closes after <date>'.",
                 },
                 minCreatedTs: {
                     type: "number",
@@ -1002,7 +1074,17 @@ EXAMPLE OUTPUT:
 
 ⚠️ TO GET MARKET DETAILS: Use the 'ticker' from markets[] EXACTLY as-is:
   get_market({ ticker: "KXDJTVOSTARIFFS" })  ✅
-  get_market({ ticker: "KXDJTVOSTARIFFS-001" })  ❌ DON'T add suffixes`,
+  get_market({ ticker: "KXDJTVOSTARIFFS-001" })  ❌ DON'T add suffixes
+
+🔁 RECOVERY HINT — ALL/EVERY SUB-MARKET QUERIES:
+  If the user question mentions "all", "every", "each", "full list", "universe",
+  or "enumerate" the sub-markets/legs/contracts of an event, DO NOT treat the
+  markets[] returned by get_event as exhaustive — it can be truncated to a
+  single row. Always follow up with:
+    get_markets({ eventTicker: "<same ticker>", status: "open", limit: 200 })
+  and page with nextCursor until nextCursor is null. Only then answer the
+  "all sub-markets" question. Prefer get_markets pagination whenever
+  get_event returns markets.length <= 3 for a question about the whole event.`,
         inputSchema: {
             type: "object",
             properties: {
@@ -1379,9 +1461,15 @@ which candidate has the tightest spread"), you MUST call this tool (or
 analyze_market_liquidity) once PER sub-market ticker and then compare. Do NOT answer
 from search_markets / get_event output alone — those do not include orderbook data.
 
+SETTLED-MARKET RULE (CRITICAL):
+  - The response always includes \`marketState\` ∈ {"active", "closed", "settled", "finalized", "initialized", "pending", "unknown"}, \`settled\` (boolean), \`tradeable\` (boolean), \`closeTime\`, and \`result\` (e.g. "yes"/"no" when resolved).
+  - If \`marketState\` is "finalized" or "settled" OR \`settled: true\`: the orderbook is empty because trading has ENDED. Do NOT tell the user they can buy "$0 with <= N cents of slippage" — instead, say the market has resolved (cite the \`result\` + \`closeTime\`) and follow \`recoveryHints.nextTools\` (start with \`discover_trending_markets\`) to substitute a currently-tradeable ticker before giving a liquidity/slippage answer.
+  - If \`marketState\` is "closed" / "initialized" / "pending": trading is paused or hasn't started; follow \`recoveryHints.nextTools\` the same way.
+  - Only when \`tradeable: true\` AND bids/asks are populated should you answer spread/depth/slippage questions verbatim.
+
 INPUT: market ticker (from search_markets, get_event, or discover_trending_markets)
 
-RETURNS: Level 2 orderbook with bids, asks, spread, and midPrice.`,
+RETURNS: Level 2 orderbook with bids, asks, spread, midPrice, plus marketState / settled / result / closeTime and recoveryHints when the book is empty or the market has resolved.`,
         inputSchema: {
             type: "object",
             properties: {
@@ -1431,6 +1519,25 @@ RETURNS: Level 2 orderbook with bids, asks, spread, and midPrice.`,
                     type: "string",
                     enum: ["fixed_point", "integer"],
                 },
+                marketState: {
+                    type: "string",
+                    enum: [
+                        "active",
+                        "closed",
+                        "settled",
+                        "finalized",
+                        "pending",
+                        "initialized",
+                        "unknown",
+                    ],
+                    description: "Lifecycle label — `finalized`/`settled` means trading has ended and the empty book is by design.",
+                },
+                settled: { type: "boolean", description: "True when the market has resolved (trading ended, result recorded)." },
+                tradeable: { type: "boolean", description: "True only when marketState is `active` AND close_time has not passed." },
+                closeTime: { type: ["string", "null"], description: "ISO-8601 close_time from the Kalshi market record (null when unavailable)." },
+                result: { type: ["string", "null"], description: "Settlement outcome (e.g. 'yes', 'no') when the market is finalized; null otherwise." },
+                hint: { type: "string", description: "Rendered when the book is empty OR the market is no longer tradeable — tells the planner exactly how to pivot." },
+                recoveryHints: { type: "object", description: "nextTools + escalation guidance for pivoting away from a settled/closed/empty-book ticker." },
                 fetchedAt: { type: "string" },
             },
             required: ["ticker", "bids", "asks"],
@@ -1516,7 +1623,19 @@ seriesTicker is optional and only used as a fallback for legacy endpoint compati
 
 INPUT: market ticker, optional time range and interval
 
-RETURNS: Array of candlesticks with yes_bid, yes_ask, price, volume, open_interest.`,
+RETURNS: Array of candlesticks with yes_bid, yes_ask, price, volume, open_interest.
+
+🔁 RECOVERY HINT — EMPTY CANDLES ON LOW-VOLUME LEGS:
+  If candlesticks returns [] (or trades/volume are 0) for a given market,
+  DO NOT keep retrying different periodInterval values (1 → 60 → 1440) on
+  the same ticker — that market is simply illiquid and has no history.
+  Instead, pivot to liquid siblings on the same event:
+    1. get_market({ ticker }) → read event_ticker (if not already known)
+    2. find_trading_opportunities({ eventTicker: "<parent>" })
+       or get_markets({ eventTicker: "<parent>", status: "open" })
+  Then analyse the liquid legs from the parent event. Treat one empty
+  candlestick response on a 0-volume leg as a terminal signal, not a
+  retry opportunity.`,
         inputSchema: {
             type: "object",
             properties: {
@@ -1930,7 +2049,7 @@ CROSS-PLATFORM:
 
 INPUT: series_ticker from get_all_series, get_series, or get_market.seriesTicker
 
-RETURNS: All events and markets in the series with direct URLs, current yes/no prices, 24h volume, liquidity, and close times.
+RETURNS: All events and markets in the series with direct URLs, current yes/no prices, 24h volume, liquidity, and close times. Also returns an 'aggregate' object with marketCount, activeMarketCount, uniqueEventCount (active-event count), totalVolume24h, and totalLiquidity — USE THESE DIRECTLY for "how many active events" / "total 24h volume rolled up" style rollup prompts instead of trying to re-sum the markets[] list.
 
 Example: browse_series({ seriesTicker: "KXHIGHNY" }) → all NYC high temp events
 Use this for prompts like "List open markets in the KXHIGHNY series with tickers, current yes prices, and close times."
@@ -2295,6 +2414,98 @@ function buildSeriesRecoveryHints(params) {
         nextTools,
         escalationNote: "Only after all nextTools return empty may you tell the buyer this series has no qualifying markets.",
         shouldSynthesizeRefusal: false,
+    };
+}
+function classifyMarketLifecycle(market) {
+    if (!market) {
+        return {
+            marketState: "unknown",
+            settled: false,
+            tradeable: false,
+            closeTime: null,
+            result: null,
+        };
+    }
+    const rawStatus = (market.status || "").toLowerCase();
+    const closeTime = market.close_time || null;
+    const closeTimeMs = closeTime ? Date.parse(closeTime) : Number.NaN;
+    const closePassed = Number.isFinite(closeTimeMs) && closeTimeMs <= Date.now();
+    const rawResult = market.result ?? null;
+    const hasResult = typeof rawResult === "string" && rawResult.trim().length > 0;
+    let marketState;
+    if (rawStatus === "finalized" || rawStatus === "settled") {
+        marketState = rawStatus === "finalized" ? "finalized" : "settled";
+    }
+    else if (rawStatus === "closed") {
+        marketState = "closed";
+    }
+    else if (rawStatus === "initialized" || rawStatus === "pending") {
+        marketState = rawStatus === "initialized" ? "initialized" : "pending";
+    }
+    else if (rawStatus === "active") {
+        marketState = closePassed || hasResult ? "closed" : "active";
+    }
+    else {
+        marketState = "unknown";
+    }
+    const settled = marketState === "finalized" || marketState === "settled" || hasResult;
+    const tradeable = marketState === "active" && !closePassed;
+    return {
+        marketState,
+        settled,
+        tradeable,
+        closeTime,
+        result: hasResult ? rawResult : null,
+    };
+}
+function buildStaleMarketRecoveryHints(params) {
+    const { ticker, eventTicker, lifecycle, bookIsEmpty } = params;
+    if (!bookIsEmpty && lifecycle.tradeable) {
+        return null;
+    }
+    const nextTools = [];
+    if (lifecycle.settled) {
+        nextTools.push({
+            toolName: "get_market_trades",
+            suggestedArgs: { ticker, limit: 50 },
+            reason: "Market is settled — trade history is still the authoritative record for post-mortem price action or settlement-level analysis.",
+        });
+    }
+    if (eventTicker) {
+        nextTools.push({
+            toolName: "get_event",
+            suggestedArgs: { eventTicker, withNestedMarkets: true },
+            reason: "Pull the event's other sub-markets — sibling legs from the same event may still be tradeable with a live orderbook.",
+        });
+    }
+    nextTools.push({
+        toolName: "discover_trending_markets",
+        suggestedArgs: { sortBy: "volume_24h", limit: 10 },
+        reason: "Pick a currently-tradeable Kalshi ticker with real orderbook depth before answering liquidity/slippage questions.",
+    });
+    let hint;
+    if (lifecycle.settled) {
+        const resultBlurb = lifecycle.result ? ` (resolved ${lifecycle.result.toUpperCase()})` : "";
+        const closeBlurb = lifecycle.closeTime ? ` close_time=${lifecycle.closeTime}` : "";
+        hint = `⚠️ ${ticker} is already settled${resultBlurb}${closeBlurb}. The orderbook is empty because trading has ended. DO NOT report "$0 tradeable" as if the book is thin — say the market has settled and offer a live alternative via recoveryHints.nextTools (start with discover_trending_markets).`;
+    }
+    else if (lifecycle.marketState === "closed") {
+        hint = `⚠️ ${ticker} is closed — trading has stopped but settlement has not been recorded yet. The orderbook is empty by design. Use recoveryHints.nextTools to pivot to a live ticker before answering liquidity/slippage questions.`;
+    }
+    else if (lifecycle.marketState === "initialized" || lifecycle.marketState === "pending") {
+        hint = `⚠️ ${ticker} has not started trading yet (marketState=${lifecycle.marketState}). Book will be empty until open; use recoveryHints.nextTools to pivot to a live ticker.`;
+    }
+    else {
+        hint = `⚠️ ${ticker} has an empty orderbook. Before answering "you can buy $0", check marketState in this response and follow recoveryHints.nextTools (discover_trending_markets is the safe fallback).`;
+    }
+    return {
+        hint,
+        recoveryHints: {
+            reason: `Empty orderbook on ${ticker} (marketState=${lifecycle.marketState}${lifecycle.settled ? ", settled" : ""}). Pivot via nextTools before telling the buyer nothing is tradeable.`,
+            nextTools,
+            escalationNote: "When a ticker is settled or closed, answer the user's original intent using a currently-tradeable substitute (via discover_trending_markets) and clearly flag that the originally-named ticker has resolved.",
+            shouldSynthesizeRefusal: false,
+        },
     };
 }
 function buildTrendingRecoveryHints(params) {
@@ -3583,7 +3794,69 @@ async function handleDiscoverTrendingMarkets(args) {
                     fallbackContractsB - fallbackContractsA);
         }
     });
-    const trendingMarkets = sorted.slice(0, limit).map((m, idx) => {
+    const shortlist = sorted.slice(0, limit);
+    // Kalshi's /markets list endpoint often returns liquidity: 0 on deeply-traded
+    // markets because the field is not populated on the list feed. Fetch orderbooks
+    // for the top N in parallel so we can emit real spread + depth numbers instead
+    // of asking the agent to render "N/A". Capped at 20 to bound fan-out.
+    const bookFetchCount = Math.min(shortlist.length, 20);
+    const topTickersForBook = shortlist.slice(0, bookFetchCount).map((m) => m.ticker);
+    const bookByTicker = new Map();
+    if (topTickersForBook.length > 0) {
+        const settledBooks = await Promise.allSettled(topTickersForBook.map(async (ticker) => {
+            const response = (await fetchKalshi(`/markets/${ticker}/orderbook?depth=5`));
+            return { ticker, response };
+        }));
+        for (const entry of settledBooks) {
+            if (entry.status !== "fulfilled") {
+                continue;
+            }
+            const { ticker, response } = entry.value;
+            const book = response.orderbook || {};
+            const yesBids = [...(book.yes || [])].sort((a, b) => b[0] - a[0]);
+            const yesAsksFromNo = (book.no || [])
+                .map(([price, qty]) => [100 - price, qty])
+                .sort((a, b) => a[0] - b[0]);
+            const bestBidCents = yesBids[0]?.[0] ?? 0;
+            const bestBidSize = yesBids[0]?.[1] ?? 0;
+            const bestAskCents = yesAsksFromNo[0]?.[0] ?? 0;
+            const bestAskSize = yesAsksFromNo[0]?.[1] ?? 0;
+            let depthUsd = 0;
+            for (const [price, qty] of yesBids) {
+                depthUsd += (price / 100) * qty;
+            }
+            for (const [price, qty] of yesAsksFromNo) {
+                depthUsd += (price / 100) * qty;
+            }
+            const spreadCents = bestAskCents > 0 && bestBidCents > 0 ? bestAskCents - bestBidCents : null;
+            let liquiditySignal;
+            if (depthUsd >= 50000 && spreadCents !== null && spreadCents <= 2) {
+                liquiditySignal = "excellent";
+            }
+            else if (depthUsd >= 20000 && spreadCents !== null && spreadCents <= 4) {
+                liquiditySignal = "good";
+            }
+            else if (depthUsd >= 5000 && spreadCents !== null && spreadCents <= 6) {
+                liquiditySignal = "moderate";
+            }
+            else if (depthUsd >= 1000) {
+                liquiditySignal = "thin";
+            }
+            else {
+                liquiditySignal = "empty_book";
+            }
+            bookByTicker.set(ticker, {
+                bestBidCents,
+                bestAskCents,
+                bestBidSize,
+                bestAskSize,
+                spreadCents,
+                bookDepthUsd: Number(depthUsd.toFixed(2)),
+                liquiditySignal,
+            });
+        }
+    }
+    const trendingMarkets = shortlist.map((m, idx) => {
         const tradeActivity = activityByTicker.get(m.ticker);
         const derivedVolume24h = Number(m.volume_24h || 0) > 0
             ? Number(m.volume_24h || 0)
@@ -3591,6 +3864,15 @@ async function handleDiscoverTrendingMarkets(args) {
         const derivedVolume = Number(m.volume || 0) > 0
             ? Number(m.volume || 0)
             : Number(tradeActivity?.contractsTraded || 0);
+        const book = bookByTicker.get(m.ticker);
+        const reportedLiquidity = Number(m.liquidity || 0);
+        const effectiveLiquidityUsd = book && book.bookDepthUsd > 0 ? book.bookDepthUsd : reportedLiquidity;
+        const yesBidFallback = Number(m.yes_bid || 0);
+        const yesAskFallback = Number(m.yes_ask || m.last_price || 0);
+        const yesBidCents = book?.bestBidCents ?? yesBidFallback;
+        const yesAskCents = book?.bestAskCents ?? yesAskFallback;
+        const spreadCents = book?.spreadCents ??
+            (yesAskCents > 0 && yesBidCents > 0 ? yesAskCents - yesBidCents : null);
         return {
             rank: idx + 1,
             title: m.title || m.yes_sub_title || m.ticker,
@@ -3599,10 +3881,23 @@ async function handleDiscoverTrendingMarkets(args) {
             url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
             yesPrice: (m.yes_ask || m.last_price || 0),
             noPrice: (m.no_ask || (100 - (m.yes_ask || m.last_price || 50))),
+            yesBid: yesBidCents,
+            yesAsk: yesAskCents,
+            spreadCents,
+            bestBidSize: book?.bestBidSize ?? null,
+            bestAskSize: book?.bestAskSize ?? null,
+            bookDepthUsd: book?.bookDepthUsd ?? null,
+            liquiditySignal: book?.liquiditySignal ?? null,
             volume24h: derivedVolume24h,
             volume: derivedVolume,
             openInterest: m.open_interest || 0,
-            liquidity: m.liquidity || 0,
+            liquidity: Number(effectiveLiquidityUsd.toFixed(2)),
+            liquidityReportedByListEndpoint: reportedLiquidity,
+            liquiditySource: book && book.bookDepthUsd > 0
+                ? "orderbook_top5_depth_usd"
+                : reportedLiquidity > 0
+                    ? "market_snapshot_field"
+                    : "unavailable",
             category: m.category || "Unknown",
             closeTime: m.close_time || "",
             status: m.status || "open",
@@ -3881,11 +4176,24 @@ async function handleAnalyzeMarketLiquidity(args) {
         : liquidityScore === "moderate"
             ? "Moderate liquidity - use limit orders to avoid slippage"
             : "Low liquidity - be cautious with position sizing, may be difficult to exit";
-    return successResult({
+    const lifecycle = classifyMarketLifecycle(market);
+    const bookIsEmpty = yesBids.length === 0 && yesAsks.length === 0;
+    const staleHints = buildStaleMarketRecoveryHints({
+        ticker,
+        eventTicker: market.event_ticker || null,
+        lifecycle,
+        bookIsEmpty,
+    });
+    const analyzeResponse = {
         market: market.title || ticker,
         ticker,
         requestedTicker,
         resolvedFrom,
+        marketState: lifecycle.marketState,
+        settled: lifecycle.settled,
+        tradeable: lifecycle.tradeable,
+        closeTime: lifecycle.closeTime,
+        result: lifecycle.result,
         currentPrices: {
             yesBid,
             yesAsk,
@@ -3912,7 +4220,12 @@ async function handleAnalyzeMarketLiquidity(args) {
         liquidityScore,
         recommendation,
         fetchedAt: new Date().toISOString(),
-    });
+    };
+    if (staleHints) {
+        analyzeResponse.hint = staleHints.hint;
+        analyzeResponse.recoveryHints = staleHints.recoveryHints;
+    }
+    return successResult(analyzeResponse);
 }
 async function handleCheckMarketEfficiency(args) {
     const ticker = args?.ticker;
@@ -4051,16 +4364,43 @@ async function handleFindArbitrageOpportunities(args) {
 async function handleFindTradingOpportunities(args) {
     const strategy = args?.strategy || "all";
     const category = args?.category;
-    const minLiquidity = args?.minLiquidity || 1000;
+    const rawEventTicker = args?.eventTicker?.trim();
+    const rawTicker = args?.ticker?.trim();
     const limit = Math.min(args?.limit || 20, 50);
-    let endpoint = `/markets?limit=100&status=open`;
-    if (category) {
-        endpoint += `&category=${encodeURIComponent(category)}`;
+    // Resolve event scope. If the caller passed a market ticker, derive its parent event.
+    let scopedEventTicker = rawEventTicker || undefined;
+    if (!scopedEventTicker && rawTicker) {
+        try {
+            const mkt = (await fetchKalshi(`/markets/${rawTicker}`));
+            if (mkt?.market?.event_ticker)
+                scopedEventTicker = mkt.market.event_ticker;
+        }
+        catch {
+            // fall through to treating rawTicker as an eventTicker
+            scopedEventTicker = rawTicker;
+        }
     }
-    const response = await fetchKalshi(endpoint);
-    let markets = filterMarketsByRequestedCategory(response.markets || [], category);
-    // Filter by liquidity
-    markets = markets.filter(m => (m.liquidity || 0) >= minLiquidity);
+    let markets = [];
+    let marketsScanned = 0;
+    const minLiquidity = scopedEventTicker !== undefined
+        ? args?.minLiquidity ?? 0
+        : args?.minLiquidity || 1000;
+    if (scopedEventTicker) {
+        const eventRes = (await fetchKalshi(`/events/${scopedEventTicker}?with_nested_markets=true`));
+        const eventMarkets = eventRes?.event?.markets || [];
+        marketsScanned = eventMarkets.length;
+        markets = eventMarkets.filter(m => (m.liquidity || 0) >= minLiquidity);
+    }
+    else {
+        let endpoint = `/markets?limit=100&status=open`;
+        if (category) {
+            endpoint += `&category=${encodeURIComponent(category)}`;
+        }
+        const response = (await fetchKalshi(endpoint));
+        marketsScanned = response.markets?.length || 0;
+        markets = filterMarketsByRequestedCategory(response.markets || [], category);
+        markets = markets.filter(m => (m.liquidity || 0) >= minLiquidity);
+    }
     // Apply strategy filters
     const strategyFilters = {
         lottery_tickets: m => {
@@ -4087,8 +4427,12 @@ async function handleFindTradingOpportunities(args) {
     if (strategy !== "all" && strategyFilters[strategy]) {
         markets = markets.filter(strategyFilters[strategy]);
     }
-    // Sort by volume and take top results
-    markets.sort((a, b) => (b.volume_24h || 0) - (a.volume_24h || 0));
+    if (scopedEventTicker) {
+        markets.sort((a, b) => (b.yes_ask || b.last_price || 0) - (a.yes_ask || a.last_price || 0));
+    }
+    else {
+        markets.sort((a, b) => (b.volume_24h || 0) - (a.volume_24h || 0));
+    }
     markets = markets.slice(0, limit);
     const opportunities = markets.map((m, idx) => {
         const price = m.yes_ask || m.last_price || 50;
@@ -4122,9 +4466,9 @@ async function handleFindTradingOpportunities(args) {
     });
     return successResult({
         summary: {
-            marketsScanned: response.markets?.length || 0,
+            marketsScanned,
             opportunitiesFound: opportunities.length,
-            strategy,
+            strategy: scopedEventTicker ? `event_scope:${scopedEventTicker}` : strategy,
         },
         opportunities,
         fetchedAt: new Date().toISOString(),
@@ -4728,34 +5072,87 @@ async function handleGetEvents(args) {
     const seriesTicker = args?.seriesTicker;
     const withNestedMarkets = args?.withNestedMarkets === true;
     const withMilestones = args?.withMilestones === true;
-    const minCloseTs = args?.minCloseTs;
+    if (args?.minCloseTs !== undefined || args?.maxCloseTs !== undefined) {
+        return errorResult("Arguments minCloseTs/maxCloseTs are not supported (their semantics are commonly mis-mapped). Use closingBeforeTs for 'closes before <date>' / 'imminent settlement' / 'expiring soon' (upper bound on close time) and closingAfterTs for 'closes after <date>' (lower bound). Both take Unix seconds, e.g. Math.floor(Date.parse('2026-04-25T00:00:00Z')/1000) === 1777680000.");
+    }
+    const minCloseTs = args?.closingAfterTs;
+    const maxCloseTs = args?.closingBeforeTs;
     const limit = Math.min(args?.limit || 50, 200);
     const cursor = args?.cursor;
     let endpoint = `/events?limit=${limit}&status=${status}`;
     if (seriesTicker) {
         endpoint += `&series_ticker=${encodeURIComponent(seriesTicker)}`;
     }
-    if (withNestedMarkets) {
-        endpoint += "&with_nested_markets=true";
-    }
+    // Always fetch with_nested_markets so each event can surface a canonical
+    // closeTime (earliest sub-market close). Without this, buyers asking for
+    // close times / imminent settlements get no per-event timestamps.
+    endpoint += "&with_nested_markets=true";
+    void withNestedMarkets;
     if (withMilestones) {
         endpoint += "&with_milestones=true";
     }
     if (minCloseTs) {
         endpoint += `&min_close_ts=${minCloseTs}`;
     }
+    if (maxCloseTs) {
+        // Best-effort: pass to upstream even though it may be ignored; we still
+        // enforce the cap client-side below.
+        endpoint += `&max_close_ts=${maxCloseTs}`;
+    }
     if (cursor) {
         endpoint += `&cursor=${encodeURIComponent(cursor)}`;
     }
     const response = await fetchKalshi(endpoint);
     const nextCursor = response.next_cursor || response.cursor || "";
-    const events = (response.events || []).map((event) => {
+    const rawEvents = response.events || [];
+    const computeEventCloseBounds = (event) => {
+        const tsList = [];
+        const markets = Array.isArray(event.markets) ? event.markets : [];
+        for (const m of markets) {
+            const t = Date.parse(m.close_time || "");
+            if (Number.isFinite(t))
+                tsList.push(Math.floor(t / 1000));
+            const nt = m.close_ts;
+            if (typeof nt === "number" && Number.isFinite(nt))
+                tsList.push(nt);
+        }
+        if (tsList.length === 0)
+            return {};
+        const earliest = Math.min(...tsList);
+        const latest = Math.max(...tsList);
+        return {
+            earliest,
+            latest,
+            earliestIso: new Date(earliest * 1000).toISOString(),
+            latestIso: new Date(latest * 1000).toISOString(),
+        };
+    };
+    const filteredEvents = maxCloseTs || minCloseTs
+        ? rawEvents.filter((e) => {
+            const bounds = computeEventCloseBounds(e);
+            if (bounds.earliest === undefined) {
+                // Keep events we can't evaluate rather than silently drop them.
+                return true;
+            }
+            if (maxCloseTs && bounds.earliest > maxCloseTs)
+                return false;
+            if (minCloseTs && bounds.latest !== undefined && bounds.latest < minCloseTs)
+                return false;
+            return true;
+        })
+        : rawEvents;
+    const events = filteredEvents.map((event) => {
+        const bounds = computeEventCloseBounds(event);
         const result = {
             eventTicker: event.event_ticker,
             title: event.title || event.event_ticker,
             category: event.category || "Unknown",
             status: event.status || "open",
             marketsCount: Array.isArray(event.markets) ? event.markets.length : 0,
+            ...(bounds.earliestIso
+                ? { closeTime: bounds.earliestIso, earliestCloseTime: bounds.earliestIso }
+                : {}),
+            ...(bounds.latestIso ? { latestCloseTime: bounds.latestIso } : {}),
         };
         if (withNestedMarkets && Array.isArray(event.markets)) {
             result.markets = event.markets.map((market) => ({
@@ -4785,9 +5182,10 @@ async function handleGetEvents(args) {
         filtersApplied: {
             status,
             seriesTicker,
-            withNestedMarkets,
+            withNestedMarkets: withNestedMarkets || Boolean(maxCloseTs),
             withMilestones,
             minCloseTs,
+            maxCloseTs,
         },
         fetchedAt: new Date().toISOString(),
     });
@@ -4799,8 +5197,11 @@ async function handleGetMarkets(args) {
     const category = args?.category;
     const tickers = args?.tickers?.filter(Boolean) || [];
     const minUpdatedTs = args?.minUpdatedTs;
-    const minCloseTs = args?.minCloseTs;
-    const maxCloseTs = args?.maxCloseTs;
+    if (args?.minCloseTs !== undefined || args?.maxCloseTs !== undefined) {
+        return errorResult("Arguments minCloseTs/maxCloseTs are not supported (their semantics are commonly mis-mapped). Use closingBeforeTs for 'closes before <date>' (upper bound on close time) and closingAfterTs for 'closes after <date>' (lower bound). Both take Unix seconds.");
+    }
+    const minCloseTs = args?.closingAfterTs;
+    const maxCloseTs = args?.closingBeforeTs;
     const minCreatedTs = args?.minCreatedTs;
     const maxCreatedTs = args?.maxCreatedTs;
     const minSettledTs = args?.minSettledTs;
@@ -4833,8 +5234,28 @@ async function handleGetMarkets(args) {
     if (cursor)
         endpoint += `&cursor=${encodeURIComponent(cursor)}`;
     const response = await fetchKalshi(endpoint);
-    const nextCursor = response.next_cursor || response.cursor || "";
-    const markets = filterMarketsByRequestedCategory(response.markets || [], category).map((m) => ({
+    let nextCursor = response.next_cursor || response.cursor || "";
+    let rawMarkets = response.markets || [];
+    // When a caller requests a series-level rollup (seriesTicker provided and
+    // they didn't pass an explicit cursor) auto-paginate up to a safe ceiling so
+    // we can return a real aggregate.totalVolume24h. Otherwise callers stop at
+    // the first page and synthesize misleading "0 volume across the series"
+    // answers.
+    let autoPaginated = false;
+    if (seriesTicker && !cursor && nextCursor) {
+        const MAX_AUTO_PAGES = 9;
+        const MAX_AUTO_ROWS = 2000;
+        let page = 0;
+        while (nextCursor && page < MAX_AUTO_PAGES && rawMarkets.length < MAX_AUTO_ROWS) {
+            const nextUrl = `${endpoint.split("&cursor=")[0]}&cursor=${encodeURIComponent(nextCursor)}`;
+            const pageResp = (await fetchKalshi(nextUrl));
+            rawMarkets = rawMarkets.concat(pageResp.markets || []);
+            nextCursor = pageResp.next_cursor || pageResp.cursor || "";
+            page += 1;
+            autoPaginated = true;
+        }
+    }
+    const markets = filterMarketsByRequestedCategory(rawMarkets, category).map((m) => ({
         ticker: m.ticker,
         eventTicker: m.event_ticker,
         title: m.title || m.yes_sub_title || m.ticker,
@@ -4860,11 +5281,25 @@ async function handleGetMarkets(args) {
         resultCount: markets.length,
         nextCursor,
     });
+    const totalVolume24h = markets.reduce((acc, m) => acc + (Number(m.volume24h) || 0), 0);
+    const totalVolume = markets.reduce((acc, m) => acc + (Number(m.volume) || 0), 0);
+    const totalLiquidity = markets.reduce((acc, m) => acc + (Number(m.liquidity) || 0), 0);
+    const totalOpenInterest = markets.reduce((acc, m) => acc + (Number(m.openInterest) || 0), 0);
+    const uniqueEventTickers = new Set(markets.map((m) => m.eventTicker).filter(Boolean));
     const marketsResponse = {
         markets,
         nextCursor,
         cursor: nextCursor,
         count: markets.length,
+        autoPaginated,
+        aggregate: {
+            marketCount: markets.length,
+            uniqueEventCount: uniqueEventTickers.size,
+            totalVolume24h,
+            totalVolume,
+            totalLiquidity,
+            totalOpenInterest,
+        },
         filtersApplied: {
             status,
             eventTicker,
@@ -4906,14 +5341,49 @@ async function handleGetEvent(args) {
     try {
         const response = await fetchKalshi(`/events/${eventTicker}?with_nested_markets=${withNested}`);
         const event = response.event;
-        const markets = (event.markets || []).map(m => ({
+        const projectMarket = (m) => ({
             ticker: m.ticker,
             title: m.title || m.yes_sub_title || m.ticker,
             yesPrice: m.yes_ask || m.last_price || 0,
             noPrice: m.no_ask || (100 - (m.yes_ask || m.last_price || 50)),
+            yesBid: m.yes_bid || 0,
+            yesAsk: m.yes_ask || 0,
+            noBid: m.no_bid || 0,
+            noAsk: m.no_ask || 0,
+            lastPrice: m.last_price || 0,
             volume: m.volume || 0,
+            volume24h: m.volume_24h || 0,
+            liquidity: m.liquidity || 0,
+            openInterest: m.open_interest || 0,
+            closeTime: m.close_time || "",
             status: m.status || "open",
-        }));
+        });
+        let markets = (event.markets || []).map(projectMarket);
+        let marketsSource = "event.markets";
+        // Some events return a sparse markets array from /events/{ticker}
+        // (e.g. pagination-like truncation). When that happens, fan out to
+        // /markets?event_ticker=... and merge — this recovers sub-markets
+        // that the event endpoint silently drops, so pairwise arb / spread
+        // checks have real data to work with.
+        if (withNested && markets.length < 2) {
+            try {
+                const marketsResp = (await fetchKalshi(`/markets?event_ticker=${encodeURIComponent(eventTicker)}&limit=200`));
+                const extraRaw = marketsResp.markets || [];
+                if (extraRaw.length > markets.length) {
+                    const byTicker = new Map(markets.map((m) => [m.ticker, m]));
+                    for (const raw of extraRaw) {
+                        if (!byTicker.has(raw.ticker)) {
+                            byTicker.set(raw.ticker, projectMarket(raw));
+                        }
+                    }
+                    markets = Array.from(byTicker.values());
+                    marketsSource = "event.markets+fallback";
+                }
+            }
+            catch {
+                // Best effort; keep the original sparse list if the fallback fails.
+            }
+        }
         const result = {
             event: {
                 eventTicker: event.event_ticker,
@@ -4922,6 +5392,7 @@ async function handleGetEvent(args) {
                 status: event.status || "open",
             },
             markets,
+            marketsSource,
             fetchedAt: new Date().toISOString(),
         };
         if (resolvedFrom) {
@@ -4933,6 +5404,39 @@ async function handleGetEvent(args) {
         });
         if (fanoutHint) {
             result.fanoutHint = fanoutHint;
+        }
+        // Single-leg guidance: pairwise arb / overround / spread / rank-by-EV
+        // prompts require ≥2 sibling legs. When an event truly has only one
+        // sub-market (after the /markets fallback above), the planner should NOT
+        // flag "structural arb" on the single leg and should NOT keep retrying
+        // get_event / get_markets. Tell it explicitly how to answer arb-shaped
+        // prompts in the single-leg case and offer a pivot to related events.
+        if (markets.length <= 1) {
+            const seriesTicker = typeof event.event_ticker === "string" && event.event_ticker.includes("-")
+                ? event.event_ticker.split("-")[0]
+                : null;
+            const nextTools = [];
+            if (seriesTicker) {
+                nextTools.push({
+                    toolName: "get_events",
+                    suggestedArgs: { seriesTicker, status: "open", limit: 50 },
+                    reason: `Find sibling events in series ${seriesTicker} if the buyer wants a cross-event comparison — single-event pairwise arb is not possible with only ${markets.length} sub-market.`,
+                });
+            }
+            if (markets[0]?.ticker) {
+                nextTools.push({
+                    toolName: "get_market_orderbook",
+                    suggestedArgs: { ticker: markets[0].ticker, depth: 50, preferFixedPoint: true },
+                    reason: "For single-leg prompts, orderbook depth/spread is a better substitute for pairwise arb analysis.",
+                });
+            }
+            result.singleLegGuidance = {
+                legCount: markets.length,
+                reason: `Event ${event.event_ticker} has ${markets.length} sub-market${markets.length === 1 ? "" : "s"} after the /markets fallback. Pairwise arbitrage, implied-probability sums (<100 / >110), and cross-leg spread flags are NOT applicable — they require at least two sibling legs. Do not flag "structural arb" on a single-leg event; answer honestly that the event does not support the requested pairwise analysis.`,
+                doNotFlag: ["structuralArb", "venueOverround", "pairwiseSpread"],
+                nextTools,
+                shouldSynthesizeRefusal: false,
+            };
         }
         return successResult(result);
     }
@@ -5095,6 +5599,27 @@ async function handleGetMarket(args) {
         };
         if (resolvedFrom) {
             result.resolvedFrom = resolvedFrom;
+        }
+        // Ranking / sibling-discovery hint: when a buyer asks to "find trading
+        // opportunities" or "rank sub-legs" on a single market ticker that belongs
+        // to a multi-leg event, or when the returned market is already
+        // resolved/finalized (no further EV on it), point the planner at
+        // find_trading_opportunities(eventTicker=...) so it can enumerate and
+        // rank peer sub-legs instead of synthesising a one-market refusal.
+        const status = String(m.status || "open").toLowerCase();
+        const isResolved = status === "finalized" || status === "settled" || status === "closed";
+        const parentEvent = m.event_ticker;
+        if (parentEvent) {
+            result.rankingGuidance = {
+                parentEventTicker: parentEvent,
+                note: isResolved
+                    ? `This market is ${status}. To rank peer sub-legs in the parent event, call find_trading_opportunities with eventTicker="${parentEvent}" (or get_event with withNestedMarkets:true).`
+                    : `For "find trading opportunities", "rank sub-legs", "rank by EV", or peer-comparison prompts across this event, call find_trading_opportunities with eventTicker="${parentEvent}" to get all sibling sub-markets ranked. Do NOT stop at this single market.`,
+                suggestedNextCall: {
+                    toolName: "find_trading_opportunities",
+                    suggestedArgs: { eventTicker: parentEvent },
+                },
+            };
         }
         return result;
     };
@@ -5754,7 +6279,16 @@ async function handleGetMarketOrderbook(args) {
     }
     const depth = Math.min(args?.depth || 10, 100);
     const preferFixedPoint = args?.preferFixedPoint !== false;
-    const response = await fetchKalshi(`/markets/${ticker}/orderbook?depth=${depth}`);
+    const [orderbookSettled, marketSettled] = await Promise.allSettled([
+        fetchKalshi(`/markets/${ticker}/orderbook?depth=${depth}`),
+        fetchKalshi(`/markets/${ticker}`),
+    ]);
+    if (orderbookSettled.status !== "fulfilled") {
+        throw orderbookSettled.reason;
+    }
+    const response = orderbookSettled.value;
+    const market = marketSettled.status === "fulfilled" ? marketSettled.value?.market : undefined;
+    const lifecycle = classifyMarketLifecycle(market);
     const hasOrderbookFp = !!response.orderbook_fp;
     const normalizeQty = (qty) => {
         if (typeof qty === "number") {
@@ -5776,7 +6310,14 @@ async function handleGetMarketOrderbook(args) {
     const bestAsk = yesAsks.length > 0 ? yesAsks[0].price : 100;
     const spread = bestAsk - bestBid;
     const midPrice = (bestBid + bestAsk) / 2;
-    return successResult({
+    const bookIsEmpty = yesBids.length === 0 && yesAsks.length === 0;
+    const staleHints = buildStaleMarketRecoveryHints({
+        ticker,
+        eventTicker: market?.event_ticker || null,
+        lifecycle,
+        bookIsEmpty,
+    });
+    const orderbookResponse = {
         ticker,
         bids: yesBids,
         asks: yesAsks,
@@ -5784,8 +6325,18 @@ async function handleGetMarketOrderbook(args) {
         midPrice,
         orderbookFpAvailable: hasOrderbookFp,
         quantityPrecision: preferFixedPoint && hasOrderbookFp ? "fixed_point" : "integer",
+        marketState: lifecycle.marketState,
+        settled: lifecycle.settled,
+        tradeable: lifecycle.tradeable,
+        closeTime: lifecycle.closeTime,
+        result: lifecycle.result,
         fetchedAt: new Date().toISOString(),
-    });
+    };
+    if (staleHints) {
+        orderbookResponse.hint = staleHints.hint;
+        orderbookResponse.recoveryHints = staleHints.recoveryHints;
+    }
+    return successResult(orderbookResponse);
 }
 async function handleGetMarketTrades(args) {
     const ticker = args?.ticker;
@@ -5838,10 +6389,29 @@ async function handleGetMarketCandlesticks(args) {
     if (!ticker) {
         return errorResult("ticker is required");
     }
-    const startTs = args?.startTs || Math.floor(Date.now() / 1000) - 86400 * 7;
+    const rawStartTs = args?.startTs || Math.floor(Date.now() / 1000) - 86400 * 7;
     const endTs = args?.endTs || Math.floor(Date.now() / 1000);
     const periodInterval = args?.periodInterval || 60;
     const includeLatestBeforeStart = args?.includeLatestBeforeStart === true;
+    // Kalshi enforces a hard cap of 5000 candlesticks per request. periodInterval
+    // is measured in minutes, so max window seconds = 5000 * periodInterval * 60.
+    // When callers request periodInterval:1 over a multi-day window, the upstream
+    // returns repeated 400 "max candlesticks: 5000" errors with no usable data.
+    // Auto-clamp startTs forward so the window stays within the cap and add a
+    // note on the response so the planner can retry with coarser periodInterval
+    // if longer history is required.
+    const MAX_CANDLES_PER_REQUEST = 5000;
+    const maxWindowSeconds = MAX_CANDLES_PER_REQUEST * Math.max(periodInterval, 1) * 60;
+    let startTs = rawStartTs;
+    let windowAdjustedNote;
+    if (endTs - startTs > maxWindowSeconds) {
+        const originalStartTs = startTs;
+        startTs = endTs - maxWindowSeconds;
+        windowAdjustedNote =
+            `Requested window of ${endTs - originalStartTs}s exceeded Kalshi's 5000-candle cap for periodInterval=${periodInterval}min. ` +
+                `Auto-clamped startTs from ${originalStartTs} to ${startTs} (${maxWindowSeconds}s window). ` +
+                `For longer history, re-call with a larger periodInterval (60 or 1440 minutes).`;
+    }
     // Detect event-level tickers (e.g. "KXOAIANTH-40", "KXRAMPBREX-40") before issuing
     // the batch call. The upstream /markets/candlesticks endpoint silently returns an
     // empty markets array for event-level tickers (no error, ~124 bytes) which wastes a
@@ -5936,12 +6506,79 @@ async function handleGetMarketCandlesticks(args) {
             volume: c.volume ?? 0,
             openInterest: c.open_interest ?? 0,
         }));
-        return successResult({
+        const baseResult = {
             ticker,
             candlesticks,
             sourceEndpoint: "/markets/candlesticks",
+            startTs,
+            endTs,
+            periodInterval,
+            windowAdjusted: Boolean(windowAdjustedNote),
+            ...(windowAdjustedNote ? { windowAdjustedNote } : {}),
             fetchedAt: new Date().toISOString(),
-        });
+        };
+        // Empty-candlestick recovery: when a market returns no candles, the planner
+        // tends to retry 2-3 alternate periodInterval values (1m / 60m / 1d) before
+        // giving up — each retry is wasted budget because the upstream data source
+        // is empty for the market, not the interval. Fetch the market snapshot once
+        // so we can tell the planner WHY it's empty and steer to a pivot instead of
+        // an interval retry.
+        if (candlesticks.length === 0) {
+            try {
+                const mktResp = (await fetchKalshi(`/markets/${ticker}`));
+                const m = mktResp?.market;
+                if (m) {
+                    const parentEvent = typeof m.event_ticker === "string" && m.event_ticker.length > 0
+                        ? m.event_ticker
+                        : null;
+                    const volume24h = m.volume_24h ?? 0;
+                    const volumeTotal = m.volume ?? 0;
+                    const status = m.status || "open";
+                    const zeroVolume = volume24h === 0 && volumeTotal === 0;
+                    const finalized = status === "finalized" || status === "settled";
+                    const likelyIlliquidOrDead = zeroVolume || finalized;
+                    const nextTools = [];
+                    if (parentEvent) {
+                        nextTools.push({
+                            toolName: "find_trading_opportunities",
+                            suggestedArgs: { eventTicker: parentEvent, limit: 10 },
+                            reason: `Pivot from this quiet/${finalized ? "finalized" : "illiquid"} leg to ranked siblings in event ${parentEvent} — find_trading_opportunities surfaces liquid sub-legs with EV ranking instead of another empty candle call.`,
+                        });
+                        nextTools.push({
+                            toolName: "get_event",
+                            suggestedArgs: { eventTicker: parentEvent, withNestedMarkets: true },
+                            reason: `Inspect sibling sub-markets in ${parentEvent} with volume / yes_ask / open_interest so a different leg can be picked for the time-series question.`,
+                        });
+                    }
+                    baseResult.recoveryHints = {
+                        reason: likelyIlliquidOrDead
+                            ? `candlesticks is empty because this market has ${zeroVolume ? "0 volume" : `status=${status}`} over the requested window, NOT because the periodInterval is wrong. Do NOT retry with a different periodInterval (1m/60m/1d) — every interval will return empty.`
+                            : `candlesticks is empty for the requested window. Retrying with a different periodInterval is unlikely to help; widen the window via startTs, or pivot to the parent event.`,
+                        snapshot: {
+                            status,
+                            volume24h,
+                            volumeTotal,
+                            openInterest: m.open_interest ?? 0,
+                            eventTicker: parentEvent,
+                            liquidity: m.liquidity ?? 0,
+                        },
+                        nextTools,
+                        pivotGuidance: parentEvent
+                            ? `For "give me the price/volume/candles for <ticker>" prompts where the leg is empty, the buyer-useful answer is: (1) honestly report the 0-volume/finalized snapshot, then (2) call find_trading_opportunities(eventTicker="${parentEvent}") to surface tradable siblings in the same event. Do that in ONE follow-up tool call — do not loop over periodInterval values.`
+                            : `No parent event_ticker available on this market; widen startTs (older history) once, then stop.`,
+                        doNotRetry: [
+                            { toolName: "get_market_candlesticks", reason: "alternate periodInterval values will return the same empty result for a 0-volume leg" },
+                        ],
+                        shouldSynthesizeRefusal: false,
+                    };
+                }
+            }
+            catch {
+                // Best effort; if the market snapshot fetch fails, fall through with the
+                // bare empty-candles response (planner still gets candlesticks:[] signal).
+            }
+        }
+        return successResult(baseResult);
     }
     catch (batchError) {
         if (!seriesTicker) {
@@ -5977,14 +6614,104 @@ async function handleGetEventCandlesticks(args) {
     const periodInterval = args?.periodInterval || 60;
     const endpoint = `/series/${encodeURIComponent(seriesTicker)}/events/${encodeURIComponent(eventTicker)}/candlesticks?start_ts=${startTs}&end_ts=${endTs}&period_interval=${periodInterval}`;
     const response = await fetchKalshi(endpoint);
-    return successResult({
+    const marketTickers = response.market_tickers || [];
+    const marketCandlesticks = response.market_candlesticks || [];
+    const baseResult = {
         eventTicker,
         seriesTicker,
-        marketTickers: response.market_tickers || [],
-        marketCandlesticks: response.market_candlesticks || [],
+        marketTickers,
+        marketCandlesticks,
         adjustedEndTs: response.adjusted_end_ts || endTs,
         fetchedAt: new Date().toISOString(),
-    });
+    };
+    // Event-level recovery: the upstream /events/.../candlesticks endpoint frequently
+    // returns empty rows even for events with 50+ active sub-markets (the aggregate
+    // series isn't tracked for sports/combo events until at least one leg trades).
+    // Rather than returning a bare empty response (which forces the planner to guess
+    // at a sub-market pivot or synthesize a thin "no data" answer), materialize the
+    // fallback in-band: fetch the top-volume child market and inline its candles, so
+    // the buyer still gets a real price history to work with.
+    const hasAnyCandles = marketCandlesticks.some((row) => Array.isArray(row) && row.length > 0);
+    if (!hasAnyCandles) {
+        try {
+            const children = await resolveEventTickerToChildren(eventTicker);
+            if (children?.found && children.childMarkets.length > 0) {
+                const ranked = [...children.childMarkets].sort((a, b) => (b.volume24h || 0) - (a.volume24h || 0));
+                const top = ranked.slice(0, 3);
+                const primary = top[0];
+                let fallbackCandles = [];
+                if (primary) {
+                    try {
+                        const childBatch = (await fetchKalshi(`/markets/candlesticks?market_tickers=${encodeURIComponent(primary.ticker)}&start_ts=${startTs}&end_ts=${endTs}&period_interval=${periodInterval}`));
+                        const primaryMarket = childBatch.markets?.find((m) => m.market_ticker === primary.ticker) ||
+                            childBatch.markets?.[0];
+                        fallbackCandles = (primaryMarket?.candlesticks || []).map((c) => ({
+                            endPeriodTs: c.end_period_ts,
+                            yesBidClose: typeof c.yes_bid === "object" && c.yes_bid
+                                ? c.yes_bid.close ?? null
+                                : c.yes_bid ?? null,
+                            yesAskClose: typeof c.yes_ask === "object" && c.yes_ask
+                                ? c.yes_ask.close ?? null
+                                : c.yes_ask ?? null,
+                            priceClose: typeof c.price === "object" && c.price
+                                ? c.price.close ?? null
+                                : c.price ?? null,
+                            volume: c.volume ?? 0,
+                            openInterest: c.open_interest ?? 0,
+                        }));
+                    }
+                    catch {
+                        // best-effort
+                    }
+                }
+                baseResult.fallbackSubMarketCandles = primary
+                    ? {
+                        representativeTicker: primary.ticker,
+                        representativeTitle: primary.title,
+                        volume24h: primary.volume24h,
+                        yesPrice: primary.yesPrice,
+                        candlesticks: fallbackCandles,
+                        candlestickCount: fallbackCandles.length,
+                    }
+                    : null;
+                baseResult.topSubMarketsByVolume = top.map((c) => ({
+                    ticker: c.ticker,
+                    title: c.title,
+                    volume24h: c.volume24h,
+                    yesPrice: c.yesPrice,
+                    status: c.status,
+                }));
+                baseResult.recoveryHints = {
+                    reason: `Event-level candlesticks for ${eventTicker} returned empty for the requested window (${periodInterval}-min bars). ` +
+                        `This is common for sports/combo events — Kalshi only maintains the aggregate series once legs start trading. ` +
+                        `To still answer the user, the contributor auto-fell-back to the highest-24h-volume sub-market ` +
+                        `(${primary ? primary.ticker : "none available"}), whose candlesticks are inlined in fallbackSubMarketCandles. ` +
+                        `Use those as a representative price trajectory, or fan out per-leg via get_market_candlesticks for the tickers in topSubMarketsByVolume.`,
+                    nextTools: top.map((c) => ({
+                        toolName: "get_market_candlesticks",
+                        suggestedArgs: {
+                            ticker: c.ticker,
+                            periodInterval,
+                            startTs,
+                            endTs,
+                        },
+                        reason: `Sub-market ${c.ticker} has volume_24h=${c.volume24h}; pull its candles for a real time-series.`,
+                    })),
+                    doNotRetry: [
+                        {
+                            toolName: "get_event_candlesticks",
+                            reason: "alternate periodInterval values on the event-level endpoint will return the same empty rows; the aggregate series isn't tracked",
+                        },
+                    ],
+                    shouldSynthesizeRefusal: false,
+                };
+            }
+        }
+        catch {
+            // Best effort; fall through with bare empty response if resolution fails.
+        }
+    }
+    return successResult(baseResult);
 }
 // ==================== DISCOVERY LAYER HANDLERS ====================
 async function handleGetAllCategories(_args) {
@@ -6211,12 +6938,30 @@ async function handleBrowseSeries(args) {
     // Get series info
     const seriesRes = await fetchKalshi(`/series/${encodeURIComponent(seriesTicker)}`);
     const series = seriesRes.series;
-    // Get markets in this series
-    let endpoint = `/markets?limit=${limit}&series_ticker=${encodeURIComponent(seriesTicker)}`;
-    if (status !== "all") {
-        endpoint += `&status=${status}`;
+    // Get markets in this series. Auto-paginate so callers asking for a
+    // series-level rollup ("how many active events" / "total 24h volume") get a
+    // real aggregate instead of a single-page slice. Caller's `limit` becomes
+    // per-page size; we cap absolute row count to stay safe.
+    const perPageLimit = Math.min(limit, 100);
+    const baseEndpoint = `/markets?limit=${perPageLimit}&series_ticker=${encodeURIComponent(seriesTicker)}${status !== "all" ? `&status=${status}` : ""}`;
+    const MAX_AUTO_PAGES = 9;
+    const MAX_AUTO_ROWS = 2000;
+    let rawMarkets = [];
+    let pageCursor = "";
+    let pageCount = 0;
+    let autoPaginated = false;
+    while (true) {
+        const url = pageCursor ? `${baseEndpoint}&cursor=${encodeURIComponent(pageCursor)}` : baseEndpoint;
+        const resp = (await fetchKalshi(url));
+        rawMarkets = rawMarkets.concat(resp.markets || []);
+        pageCursor = resp.next_cursor || resp.cursor || "";
+        pageCount += 1;
+        if (pageCount > 1)
+            autoPaginated = true;
+        if (!pageCursor || pageCount >= MAX_AUTO_PAGES || rawMarkets.length >= MAX_AUTO_ROWS)
+            break;
     }
-    const response = await fetchKalshi(endpoint);
+    const response = { markets: rawMarkets };
     const markets = (response.markets || [])
         .filter((market) => matchesRequestedKalshiStatus(status, market.status))
         .map((m) => ({
@@ -6259,11 +7004,23 @@ async function handleBrowseSeries(args) {
         status,
         resultCount: markets.length,
     });
+    const totalVolume24h = markets.reduce((acc, m) => acc + (Number(m.volume24h) || 0), 0);
+    const totalLiquidity = markets.reduce((acc, m) => acc + (Number(m.liquidity) || 0), 0);
+    const uniqueEventTickers = new Set(markets.map((m) => m.eventTicker).filter(Boolean));
+    const activeMarketCount = markets.filter((m) => m.status === "open" || m.status === "active").length;
     const browseSeriesResponse = {
         seriesTicker,
         seriesTitle: series?.title || seriesTicker,
         markets,
         totalCount: markets.length,
+        autoPaginated,
+        aggregate: {
+            marketCount: markets.length,
+            activeMarketCount,
+            uniqueEventCount: uniqueEventTickers.size,
+            totalVolume24h,
+            totalLiquidity,
+        },
         fetchedAt: new Date().toISOString(),
     };
     if (seriesRecoveryHints) {

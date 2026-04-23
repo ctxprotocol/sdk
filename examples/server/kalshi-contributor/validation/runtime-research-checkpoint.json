@@ -1,0 +1,25 @@
+{
+  "phase": "complete",
+  "iteration": 2,
+  "focusContributor": "kalshi-contributor",
+  "focusDimension": "clarification",
+  "lastAction": "Deterministic decision rejected the clarification override experiment (action=plateau). Manifest finalized as rejected; snapshot auto-restored (context/lib/ai/query-clarification.ts, context/lib/rollout/dual-surface-flags.ts, context/tests/unit/query-clarification.test.ts). Post-revert probe confirms canonical trending-markets prompt is back to clarification_required with the same pre-experiment baseline (recommendedOptionId=analyze_market_liquidity, discover_trending_markets missing, label/optionId mismatch still present).",
+  "nextAction": "Stop. Residual architectural gap viable_pool_excludes_top_fit_candidate (5 traces) is identical to the start of this loop. To re-attempt: (A) re-enable DUAL_SURFACE_DOMINANT_FITSCORE_OVERRIDE flag with a fix-disabled control run to rule out contextBudget variance as attribution, (B) add a budget-aware guardrail to the override (cap on candidate description/arg-schema token delta), or (C) accept the 5-trace gap as deferred architectural debt and pivot to another dimension.",
+  "acceptedExperiments": 0,
+  "rejectedExperiments": 1,
+  "timestamp": "2026-04-22T12:13:00.000Z",
+  "exitStatus": "PLATEAU",
+  "residualGap": {
+    "cluster": "viable_pool_excludes_top_fit_candidate",
+    "dimension": "clarification",
+    "traceCount": 5,
+    "preExperimentMean": 4.3,
+    "empiricalProbe": {
+      "prompt": "Show me the top 10 trending Kalshi markets right now by 24h volume - include ticker, title, yes price, and liquidity",
+      "outcomeType": "clarification_required",
+      "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:analyze_market_liquidity",
+      "discoverTrendingMarketsInPool": false,
+      "labelMismatch": true
+    }
+  }
+}

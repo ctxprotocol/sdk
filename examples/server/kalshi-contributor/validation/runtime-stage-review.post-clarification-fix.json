@@ -1,0 +1,365 @@
+{
+  "generatedAt": "2026-04-22T18:05:00.000Z",
+  "reviewVersion": "runtime-stage-reviewer.v1",
+  "contributor": "kalshi-contributor",
+  "experimentLabel": "dominant-fitScore-override-for-searchFocused-gate",
+  "traceCount": 20,
+  "inputPaths": {
+    "traceInput": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/full-enhancement-results.latest.json",
+    "analyzerOutput": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.post-clarification-fix.json",
+    "preExperimentReview": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.latest.json",
+    "preExperimentAnalyzer": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+    "calibrationBaseline": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json"
+  },
+  "experimentOutcome": {
+    "targetDimension": "clarification",
+    "targetDimensionPreMean": 4.3,
+    "targetDimensionPostMean": 4.85,
+    "targetDimensionDelta": 0.55,
+    "targetImproved": true,
+    "targetClusterLabel": "viable_pool_excludes_top_fit_candidate",
+    "targetClusterPreCount": 5,
+    "targetClusterPostCount": 1,
+    "targetClusterPostCountTechnical": 2,
+    "targetClusterShrinkage": {
+      "countReduction": 4,
+      "countReductionTechnical": 3,
+      "percentReduction": 0.80,
+      "percentReductionTechnical": 0.60,
+      "exceedsMinimumShrinkage": true,
+      "minimumShrinkageThresholdTraces": 2,
+      "minimumShrinkageThresholdPercent": 0.20
+    },
+    "targetClusterResidualQueryIds": ["q21"],
+    "targetClusterTechnicalResidualQueryIds": ["q9", "q21"],
+    "overrideSignalFirings": [
+      {
+        "queryId": "q1",
+        "margin": 21,
+        "outcome": "success",
+        "outcomeDetail": "Override replaced the pre-experiment 3-option clarification modal with a single-grounded-interpretation collapse on discover_trending_markets (the top-fitScore candidate). Top-fit now in comparedOptionIds. finalScore 4.5 (held); synthesis 5; contextBudget 5."
+      }
+    ],
+    "overrideSignalFiringCount": 1,
+    "overrideConservatismNote": "The 10-point margin threshold correctly rescued q1 (margin=21) but did not fire on q21 where the top-fit keyword-search method had a ~5.17-point fitScore margin over the 2nd candidate (24.48 vs ~19.31). q21's residual cluster membership suggests the margin threshold is conservative; a lower threshold or a margin-independent pool-membership repair could close the gap."
+  },
+  "calibrationContext": {
+    "regressionBaselineQueryMean": 4.5,
+    "currentFinalScoreMean": 4.37,
+    "deltaVsBaseline": -0.13,
+    "finalScoreMeanPre": 4.02,
+    "finalScoreMeanPost": 4.37,
+    "finalScoreMeanDelta": 0.35,
+    "note": "Full 20-trace post-experiment mean (4.37) is +0.35 above pre and within 0.13 of the 6-prompt regression baseline (4.5). The residual gap is driven almost entirely by q16 (timeout, finalScore=1) and q19 (terse synthesis, finalScore=3.5). Excluding q16 alone lifts the mean to 4.55, above the baseline."
+  },
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 4.8,
+      "scoutDepth": 4.85,
+      "clarification": 4.85,
+      "planning": 4.9,
+      "execution": 4.7,
+      "synthesis": 4.5
+    },
+    "crossCuttingMeans": {
+      "contextBudget": 4.5,
+      "reasoningDepth": 4.9,
+      "mcpTransport": 4.8,
+      "codeSafety": 5.0,
+      "synthesisBudget": 4.5
+    },
+    "finalScoreMean": 4.37,
+    "preVsPostDeltas": {
+      "stage": {
+        "toolSelection": 0.05,
+        "scoutDepth": -0.15,
+        "clarification": 0.55,
+        "planning": -0.10,
+        "execution": -0.05,
+        "synthesis": 0.35
+      },
+      "crossCutting": {
+        "contextBudget": -0.35,
+        "reasoningDepth": -0.10,
+        "mcpTransport": 0.25,
+        "codeSafety": 0.0,
+        "synthesisBudget": 0.05
+      },
+      "finalScore": 0.35,
+      "hardRegressionThreshold": 0.30,
+      "noBaselineDropThreshold": 0.15,
+      "hardRegressionTriggeredOn": ["contextBudget"],
+      "noBaselineDropTriggeredOn": ["scoutDepth", "contextBudget"],
+      "regressionCauseHypothesis": {
+        "contextBudget": "Pre-experiment only q21 was truncated (142KB). Post-experiment four additional traces show context pressure (q10 @ 491KB, q23 @ 747KB, q24 @ 98KB, q9 @ 294KB with empty_canonical_payload). None of these four new cases have the override decisionSignal (searchFocused_gate_overridden_by_dominant_fit_score); the fix did not directly re-route them. Most-plausible attribution: (a) run-to-run variance in Kalshi market payload sizes, (b) broader iterative-loop behavior from the clarification fix incidentally admitting larger search_markets / candlestick payloads, or (c) an unrelated upstream change. Needs a fix-disabled control run to disambiguate. q21's own contextBudget actually IMPROVED (142KB → 36KB), suggesting the fix helped where it was active and the regression is elsewhere.",
+        "scoutDepth": "Entirely driven by q16 (single-trace timeout: scoutDepth analyzer score = 2). If q16 is treated as a flaky trace, the dimension mean is unchanged. Not a structural scout issue."
+      }
+    },
+    "weakestDimension": {
+      "name": "contextBudget_or_synthesis",
+      "stage": { "name": "synthesis", "mean": 4.5 },
+      "crossCutting": { "name": "contextBudget", "mean": 4.5 },
+      "mean": 4.5,
+      "confidence": "medium",
+      "confidenceReason": "Both dimensions tie at mean 4.5. Synthesis low scores (q5, q10, q11, q19, q21, q24) are a mix of downstream symptoms and one genuine terseness case (q19). contextBudget low scores are new and stable across 4 traces but attribution to the fix is unclear without a control run."
+    },
+    "rootCauseDimension": {
+      "name": "contextBudget",
+      "mean": 4.5,
+      "confidence": "low",
+      "confidenceReason": "The four new low-scoring contextBudget traces (q9, q10, q23, q24) form a stable cluster but attribution to the clarification fix cannot be confirmed from this single post-experiment run. Recommend gating further optimization on a fix-disabled control run.",
+      "alternativeRootCauses": [
+        {
+          "name": "clarification_pool_construction_residual",
+          "mean": 4.85,
+          "confidence": "high",
+          "note": "Single residual trace (q21) still exhibits the pre-experiment pattern (top-fit keyword-search excluded from the 3-option pool, margin ~5.17 below the 10-point override threshold). The fix correctly addressed the large-margin cases; the residual is a smaller-margin subclass."
+        },
+        {
+          "name": "iterative_loop_watchdog",
+          "mean": "n/a",
+          "confidence": "medium",
+          "note": "q16 regressed from loop-repeat to full timeout. Possibly a timeout-budget interaction or a flaky single trace. Verify on repeat run before treating as structural."
+        }
+      ]
+    },
+    "analyzerDisagreements": [
+      {
+        "dimension": "execution",
+        "analyzerMean": 1.95,
+        "reviewerMean": 4.7,
+        "reason": "Analyzer determineBottleneckStage heuristic (executionDurationMs / totalDurationMs >= 0.4) still produces >100% bottleneck shares on iterative traces (q5=127%, q9=288%, q19=91%, q20=165%, q21=770%, q24=276%). Raw trace evidence shows retryCount=0, selfHealCount=0 on 18/20 prompts; failureCount>0 only on q20 (1) and q24 (2). q16 genuinely is execution=1 (complete timeout). q21 kept at 4 due to loop-count exceeding stepBudget (12 of 10) as compensatory side-effect of residual pool misrouting. q24 kept at 4 due to 2 tool-call failures on a not-found ticker. Analyzer heuristic unchanged from pre-experiment; still unusable on iterative execution."
+      },
+      {
+        "dimension": "clarification",
+        "analyzerMean": 4.9,
+        "reviewerMean": 4.85,
+        "reason": "Reviewer adjusted q9 from analyzer 5 to 4 because the pool still technically excludes the top-fitScore candidate. In this case the exclusion was semantically correct (top-fit is not appropriate for a price-range-filter query), so the score is lowered modestly but not to 3. q21 kept at 3 (analyzer-aligned) — still full viable_pool_excludes_top_fit_candidate pattern."
+      },
+      {
+        "dimension": "contextBudget",
+        "analyzerMean": 4.3,
+        "reviewerMean": 4.5,
+        "reason": "Reviewer bumped q9 from analyzer 3 to 4 because the gapSignals include empty_canonical_payload rather than genuine truncation (canonicalBytes=294KB but canonical dataset after filtering was empty; data-structure/slicing issue, not a budget overflow). Reviewer kept q10=3 (analyzer 2; 491KB truncated but single-step response otherwise complete), q21=2 (analyzer 2; real broad-search truncation at 36KB), q23=3 (analyzer 2; 747KB truncated but finalScore=4.83), q24=3 (analyzer 2; 98KB truncated on not-found ticker fallback). Reviewer numbers less severe than analyzer but regression vs pre (−0.35) still exceeds 0.3 hard-regression threshold."
+      },
+      {
+        "dimension": "mcpTransport",
+        "analyzerMean": 4.6,
+        "reviewerMean": 4.8,
+        "reason": "Reviewer overrode q20 (analyzer 3 on toolCallCount=3, durationMs=45s — neither a genuine transport issue) and q24 (analyzer 3 on toolCallCount=6, durationMs=92s — high latency but no transport errors). Kept q16 at 1 (genuine TimeoutError). Analyzer proxy fires on healthy iterative paths; same concern noted pre-experiment."
+      },
+      {
+        "dimension": "planning",
+        "analyzerMean": 5.0,
+        "reviewerMean": 4.9,
+        "reason": "Reviewer lowered q16 to 3 because, in the timeout case, no planning artifact actually compiled (repairSucceeded=false, executionMode=codegen). Analyzer scored planning=5 on surface signals but the planning loop terminated without producing a usable program."
+      },
+      {
+        "dimension": "scoutDepth",
+        "analyzerMean": 4.85,
+        "reviewerMean": 4.85,
+        "reason": "Aligned with analyzer. Only q16 at 2 (no scout could run because of upstream timeout)."
+      }
+    ],
+    "bottleneckCounts": {
+      "clarification_pool_construction_residual": 1,
+      "broad_search_payload_truncation": 4,
+      "synthesis_terseness": 1,
+      "discovery_query_timeout": 1,
+      "none": 13
+    },
+    "measurementConfidence": {
+      "toolSelection": { "confidence": "medium", "reason": "Single-contributor eval still shadows cross-contributor selection load. Mean held at 4.8 post-experiment; q16 timeout is the only low score." },
+      "scoutDepth": { "confidence": "high", "reason": "probeConfidence 0.94+ on 19/20; only q16 degraded due to upstream timeout." },
+      "clarification": { "confidence": "high", "reason": "Override signal fired exactly where predicted (q1, margin=21) and produced the expected outcome. Residual cluster is a well-characterized smaller-margin subclass (q21)." },
+      "planning": { "confidence": "medium", "reason": "First-pass planning solid; q16 timeout masks whether planning was exercised. Iterative-loop replan behavior still not captured." },
+      "execution": { "confidence": "low", "reason": "Analyzer heuristic unchanged from pre-experiment and still mathematically broken for iterative mode. Reviewer scored from raw failure/retry counts. High confidence execution is not the current weakest lever." },
+      "synthesis": { "confidence": "high", "reason": "Synthesis lift (+0.35) matches expected symptom-relief from the clarification fix. Remaining low scores are individually diagnosable." },
+      "contextBudget": { "confidence": "low", "reason": "4 new low-scoring traces (q9, q10, q23, q24) vs pre-experiment 1 (q21). Attribution to the fix cannot be established without a control run; could equally be run-to-run variance in Kalshi market payload sizes. Recommend fix-disabled re-run before treating contextBudget as the next optimization target." },
+      "reasoningDepth": { "confidence": "high", "reason": "Mechanical reasoning suffices; q16 is the only sub-5 (timeout artifact)." },
+      "mcpTransport": { "confidence": "low", "reason": "Analyzer proxy on call-count + latency still fires on healthy iterative traces. Reviewer's 4.8 is a better estimate; q16 is the only genuine transport failure." },
+      "codeSafety": { "confidence": "high", "reason": "validationApplied=false across all traces (iterative mode); all 5." },
+      "synthesisBudget": { "confidence": "medium", "reason": "Same signal pattern as contextBudget with a lag: 5 sub-5 scores downstream of context truncation and routing. Will lift as side-effect of cB fix if cB is real." }
+    },
+    "optimizationReadiness": {
+      "toolSelection": { "status": "noisy", "reason": "Single-contributor eval does not exercise cross-contributor selection. q16 timeout dominates the mean dip. Not a useful direct lever." },
+      "scoutDepth": { "status": "ready", "reason": "Calibration-stable except for q16 timeout. No direct optimization needed this iteration." },
+      "clarification": { "status": "noisy", "reason": "Target dimension improved decisively (+0.55, cluster 5→1). Residual is a single-trace subclass (q21) with a smaller fitScore margin than the override threshold accepts. Below the 2-trace minimum for a confident next-iteration target but a known-direction extension of the current fix. Queue as secondary, not primary." },
+      "planning": { "status": "noisy", "reason": "First-pass planning still scores 5 everywhere it can actually run. q16 timeout is upstream of planning. No direct lever." },
+      "execution": { "status": "blocked", "reason": "Analyzer score remains a measurement artifact. Do not target execution until the determineBottleneckStage heuristic is clamped or replaced. q16 adaptation-failure class (pre) regressed to q16 timeout (post) — the same watchdog / loop-budget concern." },
+      "synthesis": { "status": "ready", "reason": "Lift from 4.15 → 4.5 matches predicted side-effect of the clarification fix. Residual q19 terseness pattern (1 trace) is addressable but below cluster-significance. Defer." },
+      "contextBudget": { "status": "noisy", "reason": "New signal, 4 traces, but attribution to the fix cannot be established from this single post-experiment run. Decision-relevant: drop of 0.35 exceeds hard-regression threshold 0.30. Recommend fix-disabled control run before treating as ready target." },
+      "reasoningDepth": { "status": "ready", "reason": "Mechanical reasoning remains sufficient. No optimization needed." },
+      "mcpTransport": { "status": "noisy", "reason": "Call-count + latency proxy still produces false positives on healthy iterative traces. Analyzer-side separation of tool_call_count from transport_health is the prerequisite for making this a useful dimension." },
+      "codeSafety": { "status": "ready", "reason": "Not exercised in current iterative mode." },
+      "synthesisBudget": { "status": "noisy", "reason": "Downstream of contextBudget and clarification pool construction. Will move with either fix. Not a direct lever." }
+    },
+    "perQueryScores": {
+      "q1":  { "finalScore": 4.5,  "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": true,  "overrideMargin": 21 },
+      "q2":  { "finalScore": 4.5,  "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false },
+      "q3":  { "finalScore": 4.83, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false },
+      "q4":  { "finalScore": 4.83, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false },
+      "q5":  { "finalScore": 4.33, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 4 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false, "clusterExitNote": "Pre: viable_pool_excludes_top_fit_candidate (synthesis=1). Post: top-fit browse_series in comparedOptionIds, routing correct, market finalized so sparse data reported honestly." },
+      "q6":  { "finalScore": 4.67, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false },
+      "q7":  { "finalScore": 4.67, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false },
+      "q8":  { "finalScore": 4.83, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false },
+      "q9":  { "finalScore": 4.5,  "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 4, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 4, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 4 }, "overrideFired": false, "clusterExitNote": "Technical criterion (top-fit excluded) still applies — discover_trending_markets at 22.18 excluded; search_markets at rank #3 selected. Semantic criterion does NOT apply — top-fit was wrong for a price-range-filter query. Count as cluster-exited semantically, residual technically." },
+      "q10": { "finalScore": 4.33, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 4 }, "crossCutting": { "contextBudget": 3, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 3 }, "overrideFired": false, "contextBudgetEvidence": "canonicalBytes=491775, truncated=true. Multi-step 'resolve_slug + event-level candlesticks for 345 sub-markets × 7 days'. Not a direct consequence of the clarification fix." },
+      "q11": { "finalScore": 4.33, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 4 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false },
+      "q12": { "finalScore": 4.67, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false },
+      "q16": { "finalScore": 1.0,  "stage": { "toolSelection": 1, "scoutDepth": 2, "clarification": 5, "planning": 3, "execution": 1, "synthesis": 1 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 3, "mcpTransport": 1, "codeSafety": 5, "synthesisBudget": 2 }, "overrideFired": false, "regressionNote": "Pre: iterative_loop_repeats_failing_tool_call (10 failing tool calls; execution=3, synthesis=4). Post: complete TimeoutError before any tool call (toolCalls=0, latencyMs=null). Regression on single trace; may be flaky. Not an obvious consequence of the clarification fix — q16 is broad-discovery with no searchFocused gate interaction." },
+      "q17": { "finalScore": 4.83, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false },
+      "q19": { "finalScore": 3.5,  "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 4 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false, "note": "Same synthesis_terseness pattern as pre: 175-char response reports aggregate (774 events, $0 volume) without per-event breakdown. Carry-over, not a regression." },
+      "q20": { "finalScore": 4.83, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false, "clusterExitNote": "Pre: viable_pool_excludes_top_fit_candidate (synthesis=1, finalScore=1.67). Post: top-fit get_market_orderbook in comparedOptionIds and selected. Full recovery (finalScore=4.83)." },
+      "q21": { "finalScore": 4.33, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 3, "planning": 5, "execution": 4, "synthesis": 4 }, "crossCutting": { "contextBudget": 2, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 3 }, "overrideFired": false, "residualClusterNote": "Still in viable_pool_excludes_top_fit_candidate. search_markets ranked #1 at fitScore 24.475; comparedOptionIds=[get_market_orderbook, find_trading_opportunities, check_market_efficiency]. Margin over #2 (discover_trending_markets at 19.31) = 5.17 points — below 10-point override threshold. Recommended option requires a ticker the query does not provide. finalScore lifted 1.67 → 4.33 via 12 compensatory loops." },
+      "q22": { "finalScore": 4.83, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 5, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 5 }, "overrideFired": false },
+      "q23": { "finalScore": 4.83, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "crossCutting": { "contextBudget": 3, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 4 }, "overrideFired": false, "contextBudgetEvidence": "canonicalBytes=747606, truncated=true on legitimate broad-scan 'widest bid-ask spread' query. Synthesis still produced finalScore=4.83; truncation informational, not blocking." },
+      "q24": { "finalScore": 4.33, "stage": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 4, "synthesis": 4 }, "crossCutting": { "contextBudget": 3, "reasoningDepth": 5, "mcpTransport": 5, "codeSafety": 5, "synthesisBudget": 4 }, "overrideFired": false, "contextBudgetEvidence": "canonicalBytes=98312, truncated=true. Ticker not found so fallback broad-series scan returned 20-item fullSearchCandidates — expected behavior on not-found identifier." }
+    }
+  },
+  "dominantFailureClusters": {
+    "viable_pool_excludes_top_fit_candidate": {
+      "clusterLabel": "viable_pool_excludes_top_fit_candidate",
+      "status": "shrunk",
+      "preTraceCount": 5,
+      "postTraceCount": 1,
+      "postTraceCountTechnical": 2,
+      "preQueryIds": ["q1", "q5", "q9", "q20", "q21"],
+      "postQueryIds": ["q21"],
+      "postQueryIdsTechnical": ["q9", "q21"],
+      "shrinkagePercent": 0.80,
+      "shrinkagePercentTechnical": 0.60,
+      "exitedQueryIds": ["q1", "q5", "q9", "q20"],
+      "whyItMatters": "Dominant-fitScore override correctly resolved q1 (canonical override-eligible case). Pool-construction path now admits the top-fit candidate for q5 and q20 (both previously synthesis=1 downstream failures). q9 technically still fails but its top-fit was semantically incorrect anyway, so current pool behavior is desirable. Only q21 is a true residual: a smaller-margin case (5.17 points) below the conservative 10-point threshold. Cluster shrinkage exceeds both 2-trace and 20% thresholds."
+    },
+    "broad_search_payload_truncation_on_multi_step_or_unknown_ticker": {
+      "clusterLabel": "broad_search_payload_truncation_on_multi_step_or_unknown_ticker",
+      "status": "new",
+      "preTraceCount": 1,
+      "postTraceCount": 4,
+      "preQueryIds": ["q21"],
+      "postQueryIds": ["q10", "q21", "q23", "q24"],
+      "attributionToFix": "unclear",
+      "whyItMatters": "Four traces show canonicalBytes ≥ 98KB with truncated=true. None fire the searchFocused_gate_overridden_by_dominant_fit_score signal, so the fix did not directly re-route them. Plausible causes: (a) run-to-run Kalshi payload-size variance, (b) incidental iterative-loop behavior changes from the fix, or (c) unrelated upstream change. q21 actually IMPROVED (142KB → 36KB). Needs fix-disabled control run before treating as a real regression attributable to the experiment."
+    },
+    "grounded_no_data_surface_as_final_answer": {
+      "clusterLabel": "grounded_no_data_surface_as_final_answer",
+      "status": "shrunk",
+      "preTraceCount": 3,
+      "postTraceCount": 0,
+      "preQueryIds": ["q5", "q9", "q20"],
+      "postQueryIds": [],
+      "shrinkagePercent": 1.0,
+      "whyItMatters": "Fully resolved — downstream of viable_pool_excludes_top_fit_candidate shrinkage. All three traces now produce non-empty, graded-4+ responses."
+    },
+    "synthesis_terseness": {
+      "clusterLabel": "terse_answer_drops_actionability",
+      "status": "partially_shrunk",
+      "preTraceCount": 2,
+      "postTraceCount": 1,
+      "preQueryIds": ["q16", "q19"],
+      "postQueryIds": ["q19"],
+      "whyItMatters": "q19 is a direct carry-over (same response shape, same $0 volume aggregate with no per-event breakdown). q16 dropped out because it now times out entirely rather than producing a terse answer."
+    },
+    "iterative_loop_repeats_failing_tool_call": {
+      "clusterLabel": "iterative_loop_repeats_failing_tool_call",
+      "status": "transformed",
+      "preTraceCount": 1,
+      "postTraceCount": 0,
+      "preQueryIds": ["q16"],
+      "postQueryIds": [],
+      "whyItMatters": "Pre q16 repeated a failing tool call 10 times; post q16 times out before any tool call fires. Underlying watchdog/adaptation concern morphed from loop-exhaustion to request-timeout. Not resolved; moved to discovery_query_timeout."
+    },
+    "discovery_query_timeout": {
+      "clusterLabel": "discovery_query_timeout",
+      "status": "new_single_trace",
+      "preTraceCount": 0,
+      "postTraceCount": 1,
+      "preQueryIds": [],
+      "postQueryIds": ["q16"],
+      "whyItMatters": "Single-trace timeout on 'list every event closing before X date' broad-discovery prompt. Below cluster-significance. Could be flaky SDK-side timeout or genuine watchdog issue. Verify with re-run before prioritizing."
+    },
+    "clarification_pool_construction_small_margin_residual": {
+      "clusterLabel": "clarification_pool_construction_small_margin_residual",
+      "status": "new_subclass",
+      "preTraceCount": 0,
+      "postTraceCount": 1,
+      "preQueryIds": [],
+      "postQueryIds": ["q21"],
+      "whyItMatters": "Single-trace subclass of viable_pool_excludes_top_fit_candidate where top-fit margin is below the 10-point override threshold. Direction for follow-up iteration: either lower threshold, split gate into param-resolvability-conditioned vs searchFocused paths, or admit the keyword-search method whenever the query string literally says 'search'."
+    }
+  },
+  "calibrationNotes": [
+    "Analyzer determineBottleneckStage heuristic (executionDurationMs/totalDurationMs >= 0.4) is unchanged from pre-experiment and still produces >100% bottleneck shares on iterative traces. Still recommended: clamp executionDurationShare to [0,1] before thresholding, or switch to a stage-wall-clock metric.",
+    "Analyzer mcpTransport score continues to fire on healthy high-call-count broad-scan prompts (q20 at toolCallCount=3 got analyzer 3; q24 at toolCallCount=6 got 3). Separate tool_call_count from transport_health at the analyzer level.",
+    "Override decisionSignal 'searchFocused_gate_overridden_by_dominant_fit_score:<margin>' fired exactly once (q1, margin=21). Suggests the 10-point margin threshold is calibrated conservatively; a lower bound (e.g., 5) would have additionally caught q21 (margin ~5.17).",
+    "2 of 20 traces triggered clarification post-experiment (q21 only; q1 collapsed to single_grounded_interpretation via override). Same low user-visible volume as pre; recommend shadow clarificationPolicy:return run on q1 and q21 to validate the user-visible modal.",
+    "contextBudget regression of −0.35 is above the hard-regression threshold 0.30 but attribution to the clarification fix cannot be established from this single run. Treat as measurement-confidence issue, not an immediate blocker."
+  ],
+  "qualitativeSummary": "The experiment successfully achieved its primary goal. Target dimension clarification lifted from 4.3 to 4.85 (+0.55), and the viable_pool_excludes_top_fit_candidate cluster shrank from 5 traces to 1 (semantic) or 2 (technical), exceeding both the 2-trace and 20% shrinkage thresholds. The override decisionSignal fired exactly where predicted (q1, margin=21) and produced the expected outcome: q1's clarification modal was collapsed into single_grounded_interpretation on the correct top-fit method (discover_trending_markets), finalScore held at 4.5 without the user-visible modal. Side-effect lifts on synthesis (+0.35) and mcpTransport (+0.25) match the pre-review's interaction-risk predictions. Net finalScoreMean moved from 4.02 to 4.37 (+0.35). The residual clarification case (q21) is a smaller-margin subclass of the same pattern (fitScore margin ~5.17, below the 10-point override threshold). Two concerns warrant attention before the next iteration: (1) contextBudget regressed by 0.35 (reviewer) / 0.55 (analyzer) with 4 new low-scoring traces (q9, q10, q23, q24), none of which fired the override signal — attribution to the fix is unclear and this should be disambiguated with a fix-disabled control run; (2) q16 transitioned from a loop-exhaustion failure to a full request timeout, a single-trace regression that may be flaky but points to the same watchdog/adaptation gap that was pre-existing. Neither concern negates the experiment's success; both are observations for the orchestrator's decision step.",
+  "evidenceByPromptId": {
+    "q1":  { "stageScores": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "decisionSignals": ["direct_composite_intent_match", "searchFocused_gate_overridden_by_dominant_fit_score:21"], "clarificationOutcome": "triggered=false; recommendedOptionId=discover_trending_markets (top-fit)", "notes": "Canonical override-resolved case. Clarification modal (pre) → single_grounded_interpretation (post) via override. Top-fit now in comparedOptionIds. finalScore held 4.5." },
+    "q5":  { "stageScores": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 4 }, "decisionSignals": ["exact_identifier_single_tool_overlap"], "clarificationOutcome": "comparedOptionIds=[browse_series, get_market_candlesticks]; recommendedOptionId=browse_series (top-fit 11.96)", "notes": "Pre synthesis=1, finalScore=1.67. Post synthesis=4, finalScore=4.33. Market finalized → sparse data reported honestly. Pool now admits top-fit." },
+    "q9":  { "stageScores": { "toolSelection": 5, "scoutDepth": 5, "clarification": 4, "planning": 5, "execution": 5, "synthesis": 5 }, "decisionSignals": ["direct_composite_intent_match"], "clarificationOutcome": "comparedOptionIds=[search_markets]; candidateSummaries top=discover_trending_markets (22.18) — excluded; selected search_markets (#3, 20.07)", "notes": "Technical criterion: top-fit still excluded. Semantic criterion: top-fit wrong for price-filter query; search_markets is right route. Pool behavior desirable despite dropping top-ranked fitScore candidate." },
+    "q10": { "stageScores": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 4 }, "notes": "New contextBudget low-score. canonicalBytes=491775 truncated. Multi-step 'resolve slug + event-level candlesticks' expanded into 345 sub-markets × 7 daily candles. Routing correct; payload size is a tool-output characteristic, not a clarification-fix consequence." },
+    "q16": { "stageScores": { "toolSelection": 1, "scoutDepth": 2, "clarification": 5, "planning": 3, "execution": 1, "synthesis": 1 }, "clarificationOutcome": "n/a — TimeoutError before any tool call", "notes": "Pre: loop-repeat failing tool call. Post: TimeoutError, toolCalls=0, finalScore=1. Regression on single trace; could be flaky. Not an obvious consequence of the clarification fix because q16 is broad-discovery with no searchFocused gate interaction." },
+    "q20": { "stageScores": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 5 }, "decisionSignals": ["exact_identifier_single_tool_overlap"], "clarificationOutcome": "comparedOptionIds=[get_market_orderbook, analyze_market_liquidity, find_arbitrage_opportunities]; recommendedOptionId=get_market_orderbook (top-fit 12.99)", "notes": "Pre synthesis=1, finalScore=1.67. Post synthesis=5, finalScore=4.83. Top-fit now in pool and selected; response correctly identified empty orderbook. Full recovery." },
+    "q21": { "stageScores": { "toolSelection": 5, "scoutDepth": 5, "clarification": 3, "planning": 5, "execution": 4, "synthesis": 4 }, "crossCuttingScores": { "contextBudget": 2, "mcpTransport": 5, "synthesisBudget": 3 }, "clarificationOutcome": "triggered=true; decisionReasonCode=contract_scope_ambiguity; comparedOptionIds=[get_market_orderbook, find_trading_opportunities, check_market_efficiency]; candidateSummaries top=search_markets (24.475)", "notes": "Residual cluster member. Top-fit search_markets still excluded. fitScore margin over #2 = 5.17 — below 10-point override threshold. Recommended option requires a ticker the query does not provide. finalScore lifted 1.67 → 4.33 via 12 compensatory loops; still visible failure on clarificationPolicy:return path." }
+  },
+  "interactionRisks": [
+    { "pair": ["clarification", "synthesis"], "risk": "Validated: clarification fix lifted synthesis mean by 0.35 as predicted. No paired-fix concern remains.", "pairedFixAllowed": true },
+    { "pair": ["clarification", "contextBudget"], "risk": "q21 contextBudget pressure reduced (142KB → 36KB), confirming pre-review prediction. However, 3 new unrelated contextBudget regressions (q10, q23, q24) appeared that are not attributable to the fix based on override-signal absence. Need fix-disabled control run.", "pairedFixAllowed": false },
+    { "pair": ["clarification", "execution"], "risk": "q21 loop count 12 > stepBudget 10 still shows compensatory execution on residual cluster trace. Confirms pre-review coupling.", "pairedFixAllowed": false },
+    { "pair": ["clarification", "mcpTransport"], "risk": "mcpTransport mean improved (+0.25) as predicted.", "pairedFixAllowed": true },
+    { "pair": ["planning", "execution"], "risk": "q16 transitioned from loop-repeat to timeout — same watchdog/adaptation gap. Still a paired-fix concern if prioritized; defer until q16 regression replicates or a second trace shows the same pattern.", "pairedFixAllowed": true }
+  ],
+  "recommendationForHypothesisGenerator": {
+    "primaryRecommendation": "accept_experiment_and_observe",
+    "rationale": "Primary target achieved. Target mean moved +0.55 and target cluster shrank 5 → 1-2 traces. Net finalScoreMean lifted 0.35. The one hard-regression signal (contextBudget −0.35) cannot be confidently attributed to the clarification fix because none of the 4 new low-scoring traces fire the override decisionSignal. Recommend: accept the fix, run a fix-disabled control on the same prompt set to disambiguate the contextBudget regression, then decide the next iteration's target from the control-run deltas.",
+    "secondaryRecommendationIfAccepted": {
+      "targetDimension": "contextBudget_if_regression_confirmed_else_clarification_residual",
+      "candidates": [
+        {
+          "name": "clarification_residual_smaller_margin",
+          "cluster": "clarification_pool_construction_small_margin_residual",
+          "why": "Single-trace residual (q21). Same direction as the successful fix: extend pool admission to smaller-margin dominant-fitScore cases, or split the gate so it responds differently when the top-fit has no unresolved required params and the query text contains explicit search-intent markers.",
+          "guardrails": [
+            "Do not reduce the margin threshold below a value that would admit semantically-wrong tools (e.g., keep ≥ 3 points and require zero unresolved required params).",
+            "Preserve the override-signal instrumentation so pre/post cluster shrinkage remains measurable mechanically.",
+            "Re-run calibration baseline to confirm no non-Kalshi contributor regression."
+          ]
+        },
+        {
+          "name": "contextBudget_broad_search_truncation",
+          "cluster": "broad_search_payload_truncation_on_multi_step_or_unknown_ticker",
+          "why": "Four new low-scoring traces exhibit a stable pattern: broad-search methods or multi-step queries produce canonicalBytes above the iterative-context budget. Could be addressed at the canonical-dataset slicing layer (page-size caps, per-step trimming) rather than the routing layer.",
+          "guardrails": [
+            "Run a fix-disabled control on the same prompt set to confirm this is not run-to-run variance before committing.",
+            "Do not regress any of the 4 currently-truncated traces' finalScores; q23 still produced 4.83 despite truncation.",
+            "Measure pre/post canonicalBytes per trace to confirm directional improvement."
+          ]
+        },
+        {
+          "name": "discovery_query_timeout",
+          "cluster": "discovery_query_timeout",
+          "why": "q16 single-trace regression from loop-repeat to timeout. Below cluster-significance but points at a latent watchdog gap.",
+          "guardrails": [
+            "Re-run q16 at least twice to establish whether the regression is stable or flaky.",
+            "If stable, address as a planner/execution-loop paired fix, not a runtime-routing fix."
+          ]
+        }
+      ],
+      "preferredCandidate": "clarification_residual_smaller_margin",
+      "preferredCandidateReason": "Same code path as the successful experiment; minimal blast radius; directly extends a proven fix. contextBudget is larger in magnitude but attribution-unsafe until a control run completes."
+    },
+    "thresholdSummary": {
+      "targetImproved": true,
+      "targetClusterImproved": true,
+      "anyHardRegression": true,
+      "hardRegressionDimensions": ["contextBudget"],
+      "anyNoBaselineDrop": true,
+      "noBaselineDropDimensions": ["scoutDepth", "contextBudget"],
+      "decisionHint": "Per pre-review's rule targetProgress = targetImproved OR (status=noisy AND targetClusterImproved), targetProgress = true. The hard-regression on contextBudget (−0.35) triggers the orchestrator's regression check but attribution to the fix is not established. Recommend: accept the fix conditionally on a fix-disabled control run confirming contextBudget is not fix-caused, OR accept immediately and treat contextBudget as the candidate target for the next iteration."
+    }
+  }
+}

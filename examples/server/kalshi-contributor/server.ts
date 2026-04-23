@@ -165,11 +165,16 @@ PLANNER GUIDANCE:
   - If the user names an explicit anchor market and asks whether it is hot relative to its own peers, first call get_market to recover the anchor's canonical series/category identifiers, then compare with browse_series before using this broad category leaderboard as secondary context.
   - For climate/weather prompts, do not substitute unrelated sports, crypto, or general commodity markets unless they are explicitly returned here.
 
+LIQUIDITY RENDERING RULE (CRITICAL):
+  - Each trending market includes \`liquidity\` (USD — best estimate), \`bookDepthUsd\` (top-5 depth from live orderbook, nullable), \`yesBid\`, \`yesAsk\`, \`spreadCents\`, \`bestBidSize\`, \`bestAskSize\`, and \`liquiditySignal\` ("excellent" | "good" | "moderate" | "thin" | "empty_book" | null).
+  - NEVER render "N/A" for liquidity when \`bookDepthUsd\`, \`spreadCents\`, or \`yesBid/yesAsk\` are present — those are the real tradeable-liquidity signals from the live orderbook. Kalshi's list endpoint sometimes returns \`liquidityReportedByListEndpoint: 0\` on markets with deep books; the \`liquidity\` field above already accounts for this by falling back to orderbook depth.
+  - When reporting liquidity to the user: prefer \`bookDepthUsd\` formatted as USD ("$6,900 depth"), \`spreadCents\` formatted as cents ("1¢ spread"), and the \`liquiditySignal\` label — in that order. Fall back to \`volume24h\` only when the book is empty (\`liquiditySignal: "empty_book"\`), and say "orderbook currently empty" rather than inventing a number.
+
 RETURNS: Markets ranked by activity with:
 - url: Direct Kalshi market link (ALWAYS use this, never construct URLs)
 - ticker (use with get_market_orderbook, get_market_trades)
 - event_ticker (use with get_event)
-- Current prices and volumes
+- Current prices, volumes, bid/ask, spread, and orderbook-derived liquidity depth
 - category: The market's category
 
 CROSS-PLATFORM COMPOSABILITY:
@@ -209,10 +214,19 @@ CROSS-PLATFORM COMPOSABILITY:
               url: { type: "string", format: "uri", description: "Direct Kalshi URL - always use this, never construct URLs" },
               yesPrice: { type: "number" },
               noPrice: { type: "number" },
+              yesBid: { type: "number", description: "Best yes bid in cents (from live orderbook top-5 when available, otherwise the market snapshot yes_bid)" },
+              yesAsk: { type: "number", description: "Best yes ask in cents (from live orderbook top-5 when available, otherwise the market snapshot yes_ask)" },
+              spreadCents: { type: ["number", "null"], description: "yesAsk - yesBid in cents when both sides are populated; null when either side is empty" },
+              bestBidSize: { type: ["number", "null"], description: "Contracts resting at best yes bid (from live orderbook top-5); null when the book was not fetched or is empty on that side" },
+              bestAskSize: { type: ["number", "null"], description: "Contracts resting at best yes ask (from live orderbook top-5); null when the book was not fetched or is empty on that side" },
+              bookDepthUsd: { type: ["number", "null"], description: "USD notional across top-5 orderbook levels on both sides; null when the orderbook fetch failed or returned empty" },
+              liquiditySignal: { type: ["string", "null"], enum: ["excellent", "good", "moderate", "thin", "empty_book", null], description: "Qualitative liquidity label derived from bookDepthUsd + spreadCents" },
               volume24h: { type: "number" },
               volume: { type: "number" },
               openInterest: { type: "number" },
-              liquidity: { type: "number" },
+              liquidity: { type: "number", description: "Best-estimate USD liquidity — bookDepthUsd when the orderbook fetch succeeded, otherwise the Kalshi list endpoint's liquidity field. Do not render 0 as N/A; cross-check spreadCents and bookDepthUsd." },
+              liquidityReportedByListEndpoint: { type: "number", description: "Raw liquidity field from Kalshi's /markets list endpoint. Often 0 on deeply-traded markets — treat as unreliable; prefer bookDepthUsd / spreadCents." },
+              liquiditySource: { type: "string", enum: ["orderbook_top5_depth_usd", "market_snapshot_field", "unavailable"], description: "Provenance label for the liquidity field." },
               category: { type: "string" },
               closeTime: { type: "string" },
               status: { type: "string" },
@@ -243,13 +257,21 @@ this tool once PER candidate/sub-market ticker (ideally in parallel) and then co
 the results. Do NOT answer from search_markets / get_event output alone — those listings
 do not include bid-ask spreads or orderbook depth.
 
+SETTLED-MARKET RULE (CRITICAL):
+  - The response always includes \`marketState\` ∈ {"active", "closed", "settled", "finalized", "initialized", "pending", "unknown"}, \`settled\` (boolean), \`tradeable\` (boolean), \`closeTime\`, and \`result\` (e.g. "yes"/"no" when resolved).
+  - If \`marketState\` is "finalized"/"settled" OR \`settled: true\`: the depth/slippage numbers will all be 0 because trading has ENDED. Do NOT tell the user "you can buy $0 with <= N¢ slippage" or call the market "illiquid" — instead, say the market has resolved (cite \`result\` + \`closeTime\`) and follow \`recoveryHints.nextTools\` (start with \`discover_trending_markets\`) to substitute a currently-tradeable ticker before quoting a slippage number.
+  - If \`marketState\` is "closed"/"initialized"/"pending": trading is paused or hasn't started. Same pivot rule.
+  - Only when \`tradeable: true\` AND \`depth.totalDepthUsd > 0\` should you quote the slippageSimulation / liquidityScore numbers verbatim.
+
 INPUT: market ticker from discover_trending_markets, search_markets, or get_event.markets[]
 
 RETURNS:
+- marketState / settled / tradeable / closeTime / result (lifecycle — always populated)
 - Spread analysis (bid-ask spread in cents and %)
 - Depth at various price levels
 - Slippage simulation for different order sizes
-- Liquidity score and recommendation`,
+- Liquidity score and recommendation
+- hint + recoveryHints when the book is empty or the market has resolved`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -344,6 +366,25 @@ RETURNS:
           enum: ["excellent", "good", "moderate", "poor", "illiquid"],
         },
         recommendation: { type: "string" },
+        marketState: {
+          type: "string",
+          enum: [
+            "active",
+            "closed",
+            "settled",
+            "finalized",
+            "pending",
+            "initialized",
+            "unknown",
+          ],
+          description: "Lifecycle label — `finalized`/`settled` means trading has ended and the depth/slippage numbers are 0 by design.",
+        },
+        settled: { type: "boolean", description: "True when the market has resolved (trading ended, result recorded)." },
+        tradeable: { type: "boolean", description: "True only when marketState is `active` AND close_time has not passed." },
+        closeTime: { type: ["string", "null"], description: "ISO-8601 close_time from the Kalshi market record (null when unavailable)." },
+        result: { type: ["string", "null"], description: "Settlement outcome (e.g. 'yes', 'no') when the market is finalized; null otherwise." },
+        hint: { type: "string", description: "Rendered when the book is empty OR the market is no longer tradeable — tells the planner exactly how to pivot." },
+        recoveryHints: { type: "object", description: "nextTools + escalation guidance for pivoting away from a settled/closed/empty-book ticker." },
         fetchedAt: { type: "string" },
       },
       required: ["ticker", "currentPrices", "spread", "liquidityScore"],
@@ -1504,9 +1545,15 @@ which candidate has the tightest spread"), you MUST call this tool (or
 analyze_market_liquidity) once PER sub-market ticker and then compare. Do NOT answer
 from search_markets / get_event output alone — those do not include orderbook data.
 
+SETTLED-MARKET RULE (CRITICAL):
+  - The response always includes \`marketState\` ∈ {"active", "closed", "settled", "finalized", "initialized", "pending", "unknown"}, \`settled\` (boolean), \`tradeable\` (boolean), \`closeTime\`, and \`result\` (e.g. "yes"/"no" when resolved).
+  - If \`marketState\` is "finalized" or "settled" OR \`settled: true\`: the orderbook is empty because trading has ENDED. Do NOT tell the user they can buy "$0 with <= N cents of slippage" — instead, say the market has resolved (cite the \`result\` + \`closeTime\`) and follow \`recoveryHints.nextTools\` (start with \`discover_trending_markets\`) to substitute a currently-tradeable ticker before giving a liquidity/slippage answer.
+  - If \`marketState\` is "closed" / "initialized" / "pending": trading is paused or hasn't started; follow \`recoveryHints.nextTools\` the same way.
+  - Only when \`tradeable: true\` AND bids/asks are populated should you answer spread/depth/slippage questions verbatim.
+
 INPUT: market ticker (from search_markets, get_event, or discover_trending_markets)
 
-RETURNS: Level 2 orderbook with bids, asks, spread, and midPrice.`,
+RETURNS: Level 2 orderbook with bids, asks, spread, midPrice, plus marketState / settled / result / closeTime and recoveryHints when the book is empty or the market has resolved.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -1556,6 +1603,25 @@ RETURNS: Level 2 orderbook with bids, asks, spread, and midPrice.`,
           type: "string",
           enum: ["fixed_point", "integer"],
         },
+        marketState: {
+          type: "string",
+          enum: [
+            "active",
+            "closed",
+            "settled",
+            "finalized",
+            "pending",
+            "initialized",
+            "unknown",
+          ],
+          description: "Lifecycle label — `finalized`/`settled` means trading has ended and the empty book is by design.",
+        },
+        settled: { type: "boolean", description: "True when the market has resolved (trading ended, result recorded)." },
+        tradeable: { type: "boolean", description: "True only when marketState is `active` AND close_time has not passed." },
+        closeTime: { type: ["string", "null"], description: "ISO-8601 close_time from the Kalshi market record (null when unavailable)." },
+        result: { type: ["string", "null"], description: "Settlement outcome (e.g. 'yes', 'no') when the market is finalized; null otherwise." },
+        hint: { type: "string", description: "Rendered when the book is empty OR the market is no longer tradeable — tells the planner exactly how to pivot." },
+        recoveryHints: { type: "object", description: "nextTools + escalation guidance for pivoting away from a settled/closed/empty-book ticker." },
         fetchedAt: { type: "string" },
       },
       required: ["ticker", "bids", "asks"],
@@ -2559,6 +2625,128 @@ function buildSeriesRecoveryHints(params: {
     escalationNote:
       "Only after all nextTools return empty may you tell the buyer this series has no qualifying markets.",
     shouldSynthesizeRefusal: false,
+  };
+}
+
+type MarketLifecycle = {
+  marketState:
+    | "active"
+    | "closed"
+    | "settled"
+    | "finalized"
+    | "pending"
+    | "initialized"
+    | "unknown";
+  settled: boolean;
+  tradeable: boolean;
+  closeTime: string | null;
+  result: string | null;
+};
+
+function classifyMarketLifecycle(market: KalshiMarket | undefined | null): MarketLifecycle {
+  if (!market) {
+    return {
+      marketState: "unknown",
+      settled: false,
+      tradeable: false,
+      closeTime: null,
+      result: null,
+    };
+  }
+
+  const rawStatus = (market.status || "").toLowerCase();
+  const closeTime = market.close_time || null;
+  const closeTimeMs = closeTime ? Date.parse(closeTime) : Number.NaN;
+  const closePassed = Number.isFinite(closeTimeMs) && closeTimeMs <= Date.now();
+  const rawResult = (market as { result?: string | null }).result ?? null;
+  const hasResult = typeof rawResult === "string" && rawResult.trim().length > 0;
+
+  let marketState: MarketLifecycle["marketState"];
+  if (rawStatus === "finalized" || rawStatus === "settled") {
+    marketState = rawStatus === "finalized" ? "finalized" : "settled";
+  } else if (rawStatus === "closed") {
+    marketState = "closed";
+  } else if (rawStatus === "initialized" || rawStatus === "pending") {
+    marketState = rawStatus === "initialized" ? "initialized" : "pending";
+  } else if (rawStatus === "active") {
+    marketState = closePassed || hasResult ? "closed" : "active";
+  } else {
+    marketState = "unknown";
+  }
+
+  const settled =
+    marketState === "finalized" || marketState === "settled" || hasResult;
+  const tradeable = marketState === "active" && !closePassed;
+
+  return {
+    marketState,
+    settled,
+    tradeable,
+    closeTime,
+    result: hasResult ? rawResult : null,
+  };
+}
+
+function buildStaleMarketRecoveryHints(params: {
+  ticker: string;
+  eventTicker?: string | null;
+  lifecycle: MarketLifecycle;
+  bookIsEmpty: boolean;
+}): { hint: string; recoveryHints: RecoveryHints } | null {
+  const { ticker, eventTicker, lifecycle, bookIsEmpty } = params;
+  if (!bookIsEmpty && lifecycle.tradeable) {
+    return null;
+  }
+
+  const nextTools: RecoveryHintTool[] = [];
+
+  if (lifecycle.settled) {
+    nextTools.push({
+      toolName: "get_market_trades",
+      suggestedArgs: { ticker, limit: 50 },
+      reason:
+        "Market is settled — trade history is still the authoritative record for post-mortem price action or settlement-level analysis.",
+    });
+  }
+
+  if (eventTicker) {
+    nextTools.push({
+      toolName: "get_event",
+      suggestedArgs: { eventTicker, withNestedMarkets: true },
+      reason:
+        "Pull the event's other sub-markets — sibling legs from the same event may still be tradeable with a live orderbook.",
+    });
+  }
+
+  nextTools.push({
+    toolName: "discover_trending_markets",
+    suggestedArgs: { sortBy: "volume_24h", limit: 10 },
+    reason:
+      "Pick a currently-tradeable Kalshi ticker with real orderbook depth before answering liquidity/slippage questions.",
+  });
+
+  let hint: string;
+  if (lifecycle.settled) {
+    const resultBlurb = lifecycle.result ? ` (resolved ${lifecycle.result.toUpperCase()})` : "";
+    const closeBlurb = lifecycle.closeTime ? ` close_time=${lifecycle.closeTime}` : "";
+    hint = `⚠️ ${ticker} is already settled${resultBlurb}${closeBlurb}. The orderbook is empty because trading has ended. DO NOT report "$0 tradeable" as if the book is thin — say the market has settled and offer a live alternative via recoveryHints.nextTools (start with discover_trending_markets).`;
+  } else if (lifecycle.marketState === "closed") {
+    hint = `⚠️ ${ticker} is closed — trading has stopped but settlement has not been recorded yet. The orderbook is empty by design. Use recoveryHints.nextTools to pivot to a live ticker before answering liquidity/slippage questions.`;
+  } else if (lifecycle.marketState === "initialized" || lifecycle.marketState === "pending") {
+    hint = `⚠️ ${ticker} has not started trading yet (marketState=${lifecycle.marketState}). Book will be empty until open; use recoveryHints.nextTools to pivot to a live ticker.`;
+  } else {
+    hint = `⚠️ ${ticker} has an empty orderbook. Before answering "you can buy $0", check marketState in this response and follow recoveryHints.nextTools (discover_trending_markets is the safe fallback).`;
+  }
+
+  return {
+    hint,
+    recoveryHints: {
+      reason: `Empty orderbook on ${ticker} (marketState=${lifecycle.marketState}${lifecycle.settled ? ", settled" : ""}). Pivot via nextTools before telling the buyer nothing is tradeable.`,
+      nextTools,
+      escalationNote:
+        "When a ticker is settled or closed, answer the user's original intent using a currently-tradeable substitute (via discover_trending_markets) and clearly flag that the originally-named ticker has resolved.",
+      shouldSynthesizeRefusal: false,
+    },
   };
 }
 
@@ -4234,7 +4422,89 @@ async function handleDiscoverTrendingMarkets(
     }
   });
 
-  const trendingMarkets = sorted.slice(0, limit).map((m, idx) => {
+  const shortlist = sorted.slice(0, limit);
+
+  // Kalshi's /markets list endpoint often returns liquidity: 0 on deeply-traded
+  // markets because the field is not populated on the list feed. Fetch orderbooks
+  // for the top N in parallel so we can emit real spread + depth numbers instead
+  // of asking the agent to render "N/A". Capped at 20 to bound fan-out.
+  const bookFetchCount = Math.min(shortlist.length, 20);
+  const topTickersForBook = shortlist.slice(0, bookFetchCount).map((m) => m.ticker);
+  const bookByTicker = new Map<
+    string,
+    {
+      bestBidCents: number;
+      bestAskCents: number;
+      bestBidSize: number;
+      bestAskSize: number;
+      spreadCents: number | null;
+      bookDepthUsd: number;
+      liquiditySignal: string;
+    }
+  >();
+  if (topTickersForBook.length > 0) {
+    const settledBooks = await Promise.allSettled(
+      topTickersForBook.map(async (ticker) => {
+        const response = (await fetchKalshi(
+          `/markets/${ticker}/orderbook?depth=5`
+        )) as KalshiOrderbook;
+        return { ticker, response };
+      })
+    );
+
+    for (const entry of settledBooks) {
+      if (entry.status !== "fulfilled") {
+        continue;
+      }
+      const { ticker, response } = entry.value;
+      const book = response.orderbook || {};
+      const yesBids = [...(book.yes || [])].sort((a, b) => b[0] - a[0]);
+      const yesAsksFromNo = (book.no || [])
+        .map(([price, qty]) => [100 - price, qty] as [number, number])
+        .sort((a, b) => a[0] - b[0]);
+
+      const bestBidCents = yesBids[0]?.[0] ?? 0;
+      const bestBidSize = yesBids[0]?.[1] ?? 0;
+      const bestAskCents = yesAsksFromNo[0]?.[0] ?? 0;
+      const bestAskSize = yesAsksFromNo[0]?.[1] ?? 0;
+
+      let depthUsd = 0;
+      for (const [price, qty] of yesBids) {
+        depthUsd += (price / 100) * qty;
+      }
+      for (const [price, qty] of yesAsksFromNo) {
+        depthUsd += (price / 100) * qty;
+      }
+
+      const spreadCents =
+        bestAskCents > 0 && bestBidCents > 0 ? bestAskCents - bestBidCents : null;
+
+      let liquiditySignal: string;
+      if (depthUsd >= 50000 && spreadCents !== null && spreadCents <= 2) {
+        liquiditySignal = "excellent";
+      } else if (depthUsd >= 20000 && spreadCents !== null && spreadCents <= 4) {
+        liquiditySignal = "good";
+      } else if (depthUsd >= 5000 && spreadCents !== null && spreadCents <= 6) {
+        liquiditySignal = "moderate";
+      } else if (depthUsd >= 1000) {
+        liquiditySignal = "thin";
+      } else {
+        liquiditySignal = "empty_book";
+      }
+
+      bookByTicker.set(ticker, {
+        bestBidCents,
+        bestAskCents,
+        bestBidSize,
+        bestAskSize,
+        spreadCents,
+        bookDepthUsd: Number(depthUsd.toFixed(2)),
+        liquiditySignal,
+      });
+    }
+  }
+
+  const trendingMarkets = shortlist.map((m, idx) => {
     const tradeActivity = activityByTicker.get(m.ticker);
     const derivedVolume24h =
       Number(m.volume_24h || 0) > 0
@@ -4245,6 +4515,18 @@ async function handleDiscoverTrendingMarkets(
         ? Number(m.volume || 0)
         : Number(tradeActivity?.contractsTraded || 0);
 
+    const book = bookByTicker.get(m.ticker);
+    const reportedLiquidity = Number(m.liquidity || 0);
+    const effectiveLiquidityUsd =
+      book && book.bookDepthUsd > 0 ? book.bookDepthUsd : reportedLiquidity;
+    const yesBidFallback = Number(m.yes_bid || 0);
+    const yesAskFallback = Number(m.yes_ask || m.last_price || 0);
+    const yesBidCents = book?.bestBidCents ?? yesBidFallback;
+    const yesAskCents = book?.bestAskCents ?? yesAskFallback;
+    const spreadCents =
+      book?.spreadCents ??
+      (yesAskCents > 0 && yesBidCents > 0 ? yesAskCents - yesBidCents : null);
+
     return {
       rank: idx + 1,
       title: m.title || m.yes_sub_title || m.ticker,
@@ -4253,10 +4535,24 @@ async function handleDiscoverTrendingMarkets(
       url: `https://kalshi.com/markets/${getSeriesTicker(m.event_ticker)}`,
       yesPrice: (m.yes_ask || m.last_price || 0),
       noPrice: (m.no_ask || (100 - (m.yes_ask || m.last_price || 50))),
+      yesBid: yesBidCents,
+      yesAsk: yesAskCents,
+      spreadCents,
+      bestBidSize: book?.bestBidSize ?? null,
+      bestAskSize: book?.bestAskSize ?? null,
+      bookDepthUsd: book?.bookDepthUsd ?? null,
+      liquiditySignal: book?.liquiditySignal ?? null,
       volume24h: derivedVolume24h,
       volume: derivedVolume,
       openInterest: m.open_interest || 0,
-      liquidity: m.liquidity || 0,
+      liquidity: Number(effectiveLiquidityUsd.toFixed(2)),
+      liquidityReportedByListEndpoint: reportedLiquidity,
+      liquiditySource:
+        book && book.bookDepthUsd > 0
+          ? "orderbook_top5_depth_usd"
+          : reportedLiquidity > 0
+            ? "market_snapshot_field"
+            : "unavailable",
       category: m.category || "Unknown",
       closeTime: m.close_time || "",
       status: m.status || "open",
@@ -4596,11 +4892,25 @@ async function handleAnalyzeMarketLiquidity(
     ? "Moderate liquidity - use limit orders to avoid slippage"
     : "Low liquidity - be cautious with position sizing, may be difficult to exit";
 
-  return successResult({
+  const lifecycle = classifyMarketLifecycle(market);
+  const bookIsEmpty = yesBids.length === 0 && yesAsks.length === 0;
+  const staleHints = buildStaleMarketRecoveryHints({
+    ticker,
+    eventTicker: market.event_ticker || null,
+    lifecycle,
+    bookIsEmpty,
+  });
+
+  const analyzeResponse: Record<string, unknown> = {
     market: market.title || ticker,
     ticker,
     requestedTicker,
     resolvedFrom,
+    marketState: lifecycle.marketState,
+    settled: lifecycle.settled,
+    tradeable: lifecycle.tradeable,
+    closeTime: lifecycle.closeTime,
+    result: lifecycle.result,
     currentPrices: {
       yesBid,
       yesAsk,
@@ -4627,7 +4937,14 @@ async function handleAnalyzeMarketLiquidity(
     liquidityScore,
     recommendation,
     fetchedAt: new Date().toISOString(),
-  });
+  };
+
+  if (staleHints) {
+    analyzeResponse.hint = staleHints.hint;
+    analyzeResponse.recoveryHints = staleHints.recoveryHints;
+  }
+
+  return successResult(analyzeResponse);
 }
 
 async function handleCheckMarketEfficiency(
@@ -7067,7 +7384,18 @@ async function handleGetMarketOrderbook(
 
   const depth = Math.min((args?.depth as number) || 10, 100);
   const preferFixedPoint = args?.preferFixedPoint !== false;
-  const response = await fetchKalshi(`/markets/${ticker}/orderbook?depth=${depth}`) as KalshiOrderbook;
+  const [orderbookSettled, marketSettled] = await Promise.allSettled([
+    fetchKalshi(`/markets/${ticker}/orderbook?depth=${depth}`) as Promise<KalshiOrderbook>,
+    fetchKalshi(`/markets/${ticker}`) as Promise<{ market: KalshiMarket }>,
+  ]);
+
+  if (orderbookSettled.status !== "fulfilled") {
+    throw orderbookSettled.reason;
+  }
+  const response = orderbookSettled.value;
+  const market =
+    marketSettled.status === "fulfilled" ? marketSettled.value?.market : undefined;
+  const lifecycle = classifyMarketLifecycle(market);
   const hasOrderbookFp = !!response.orderbook_fp;
 
   const normalizeQty = (qty: number | string): number => {
@@ -7095,7 +7423,15 @@ async function handleGetMarketOrderbook(
   const spread = bestAsk - bestBid;
   const midPrice = (bestBid + bestAsk) / 2;
 
-  return successResult({
+  const bookIsEmpty = yesBids.length === 0 && yesAsks.length === 0;
+  const staleHints = buildStaleMarketRecoveryHints({
+    ticker,
+    eventTicker: market?.event_ticker || null,
+    lifecycle,
+    bookIsEmpty,
+  });
+
+  const orderbookResponse: Record<string, unknown> = {
     ticker,
     bids: yesBids,
     asks: yesAsks,
@@ -7103,8 +7439,20 @@ async function handleGetMarketOrderbook(
     midPrice,
     orderbookFpAvailable: hasOrderbookFp,
     quantityPrecision: preferFixedPoint && hasOrderbookFp ? "fixed_point" : "integer",
+    marketState: lifecycle.marketState,
+    settled: lifecycle.settled,
+    tradeable: lifecycle.tradeable,
+    closeTime: lifecycle.closeTime,
+    result: lifecycle.result,
     fetchedAt: new Date().toISOString(),
-  });
+  };
+
+  if (staleHints) {
+    orderbookResponse.hint = staleHints.hint;
+    orderbookResponse.recoveryHints = staleHints.recoveryHints;
+  }
+
+  return successResult(orderbookResponse);
 }
 
 async function handleGetMarketTrades(

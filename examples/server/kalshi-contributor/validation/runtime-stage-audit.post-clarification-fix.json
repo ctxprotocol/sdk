@@ -1,0 +1,4662 @@
+{
+  "generatedAt": "2026-04-22T11:27:25.051Z",
+  "version": "2026-04-09.runtime-stage-trace-analysis.v1",
+  "queryCount": 20,
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 4.8,
+      "scoutDepth": 4.85,
+      "clarification": 4.9,
+      "planning": 5,
+      "execution": 1.95,
+      "synthesis": 4.5
+    },
+    "crossCuttingMeans": {
+      "contextBudget": 4.3,
+      "reasoningDepth": 4.9,
+      "mcpTransport": 4.6,
+      "codeSafety": 5,
+      "synthesisBudget": 4.35
+    },
+    "bottleneckCounts": {
+      "execution": 19,
+      "toolSelection": 1
+    },
+    "dimensionDrivers": {
+      "toolSelection": {
+        "lowScoreCount": 1,
+        "topDrivers": [
+          {
+            "queryId": "q16",
+            "score": 1,
+            "issue": null
+          }
+        ]
+      },
+      "scoutDepth": {
+        "lowScoreCount": 1,
+        "topDrivers": [
+          {
+            "queryId": "q16",
+            "score": 2,
+            "issue": null
+          }
+        ]
+      },
+      "clarification": {
+        "lowScoreCount": 1,
+        "topDrivers": [
+          {
+            "queryId": "q21",
+            "score": 3,
+            "issue": null
+          }
+        ]
+      },
+      "planning": {
+        "lowScoreCount": 0,
+        "topDrivers": []
+      },
+      "execution": {
+        "lowScoreCount": 5,
+        "topDrivers": [
+          {
+            "queryId": "q16",
+            "score": 1,
+            "issue": null
+          },
+          {
+            "queryId": "q1",
+            "score": 2,
+            "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+          },
+          {
+            "queryId": "q2",
+            "score": 2,
+            "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+          },
+          {
+            "queryId": "q3",
+            "score": 2,
+            "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+          },
+          {
+            "queryId": "q4",
+            "score": 2,
+            "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+          }
+        ]
+      },
+      "synthesis": {
+        "lowScoreCount": 1,
+        "topDrivers": [
+          {
+            "queryId": "q16",
+            "score": 1,
+            "issue": null
+          }
+        ]
+      },
+      "contextBudget": {
+        "lowScoreCount": 5,
+        "topDrivers": [
+          {
+            "queryId": "q10",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q21",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q23",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q24",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q9",
+            "score": 3,
+            "issue": null
+          }
+        ]
+      },
+      "reasoningDepth": {
+        "lowScoreCount": 1,
+        "topDrivers": [
+          {
+            "queryId": "q16",
+            "score": 3,
+            "issue": null
+          }
+        ]
+      },
+      "mcpTransport": {
+        "lowScoreCount": 3,
+        "topDrivers": [
+          {
+            "queryId": "q16",
+            "score": 1,
+            "issue": null
+          },
+          {
+            "queryId": "q20",
+            "score": 3,
+            "issue": null
+          },
+          {
+            "queryId": "q24",
+            "score": 3,
+            "issue": null
+          }
+        ]
+      },
+      "codeSafety": {
+        "lowScoreCount": 0,
+        "topDrivers": []
+      },
+      "synthesisBudget": {
+        "lowScoreCount": 5,
+        "topDrivers": [
+          {
+            "queryId": "q16",
+            "score": 2,
+            "issue": null
+          },
+          {
+            "queryId": "q9",
+            "score": 3,
+            "issue": null
+          },
+          {
+            "queryId": "q10",
+            "score": 3,
+            "issue": null
+          },
+          {
+            "queryId": "q21",
+            "score": 3,
+            "issue": null
+          },
+          {
+            "queryId": "q23",
+            "score": 3,
+            "issue": null
+          }
+        ]
+      }
+    },
+    "promptSetFingerprint": "q1,q10,q11,q12,q16,q17,q19,q2,q20,q21,q22,q23,q24,q3,q4,q5,q6,q7,q8,q9",
+    "finalScoreMean": 4.37,
+    "weakQueryIds": [
+      "q16",
+      "q19"
+    ]
+  },
+  "systemicIssues": [
+    {
+      "pattern": "19/19 prompts hit selection or routing misses on answerable prompts",
+      "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "fixScope": "runtime",
+      "affectedPromptIds": [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5",
+        "q6",
+        "q7",
+        "q8",
+        "q9",
+        "q10",
+        "q11",
+        "q12",
+        "q17",
+        "q19",
+        "q20",
+        "q21",
+        "q22",
+        "q23",
+        "q24"
+      ]
+    }
+  ],
+  "perQueryAnalyses": [
+    {
+      "id": "q1",
+      "query": "Show me the top 10 trending Kalshi markets right now by 24h volume — include ticker, title, yes price, and liquidity.",
+      "alphaCategory": "discovery-screening",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 1,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 42896,
+      "finalScore": 4.5,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 3,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:discover_trending_markets",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_composite_intent_match",
+            "searchFocused_gate_overridden_by_dominant_fit_score:21"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 2,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 2,
+          "toolStepCount": 2,
+          "iterativeExecution": true,
+          "executionMs": 19188,
+          "synthesisMs": 10439,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 1155,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 12891,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 42896,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 1,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "leaderboard",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q1",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 70% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 42896,
+          "executionDurationMs": 30155,
+          "executionDurationShare": 0.703,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "As of April 22, 2026, at 10:59 AM UTC, here are the top 10 trending Kalshi markets ranked by 24h volume:\n\n| Ticker | Title | Yes Price | Liquidity |\n| :--- | :--- | :--- | :--- |\n| KXNBASERIES-26HOULALR1-LAL | Houston vs Los Angeles L 2026 1st Round series winner? | 56 | 153692.66 |\n| KXNBAGAME-26APR22ORLDET-DET | Game 2: Orlando at Detroit Winner? | 78 | 4556225.85 |\n| KXIPLGAME-26APR22RRLSG-RR | Lucknow Super Giants vs Rajasthan Royals Winner? | 58 | 402971.24 |\n| KXATPMATCH-26APR22BERCIL-BER ",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q2",
+      "query": "For the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299, what are the current yes/no bid and ask, the implied probability from the midpoint, and the bid-ask spread in cents?",
+      "alphaCategory": "pricing-efficiency",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 1,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 21605,
+      "finalScore": 4.5,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 3,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 3,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:analyze_market_liquidity",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "exact_identifier_single_tool_overlap"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 2,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 2,
+          "toolStepCount": 2,
+          "iterativeExecution": true,
+          "executionMs": 9959,
+          "synthesisMs": 4820,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 813,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 3129,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 21605,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 1,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q2",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 70% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 21605,
+          "executionDurationMs": 15221,
+          "executionDurationShare": 0.7045,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "The Kalshi market **KXMVESPORTSMULTIGAMEEXTENDED-S202622062979C21-E12CA7BD299** has already settled (Result: **YES**) as of April 21, 2026. Because the market is finalized, there are no live bids or asks available.\n\nBased on data from a query on April 22, 2026, at 11:00:04 UTC, the final order book metrics are as follows:\n\n| Metric | Value |\n| :--- | :--- |\n| **Market Status** | Finalized (Settled YES) |\n| **Current Yes Bid** | N/A (Order book is empty) |\n| **Current Yes Ask** | N/A (Order book ",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q3",
+      "query": "Pull the full orderbook for KXMVESPORTSMULTIGAMEEXTENDED-S2026CD1E5D81F28-6E30FBDE5BD and tell me the dollar size I could buy Yes with <= 2 cents of slippage.",
+      "alphaCategory": "liquidity-depth",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 1,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 62857,
+      "finalScore": 4.83,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 5,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 2,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:get_market_orderbook",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "exact_identifier_single_tool_overlap"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 3,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 3,
+          "toolStepCount": 3,
+          "iterativeExecution": true,
+          "executionMs": 49495,
+          "synthesisMs": 5588,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 954,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 5709,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 62857,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 1,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 5
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q3",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 146% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 62857,
+          "executionDurationMs": 91552,
+          "executionDurationShare": 1.4565,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "The market for **KXMVESPORTSMULTIGAMEEXTENDED-S2026CD1E5D81F28-6E30FBDE5BD** is already finalized and settled, meaning there is no live orderbook available to calculate tradeable dollar size or slippage.\n\nAs of the last check on **2026-04-22T11:01:14.611Z**, the market details are as follows:\n\n| Attribute | Value |\n| :--- | :--- |\n| **Market Status** | Finalized (Settled) |\n| **Tradeable** | No |\n| **Close Time** | 2026-04-21T03:35:00Z |\n| **Result** | No |\n| **Yes Bid/Ask** | 0 / 0 |\n| **No Bid",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q4",
+      "query": "Run the market efficiency check on KXMVECROSSCATEGORY-S2026BC8725F16E4-1BA7E7F4DEC. Does yes_bid + no_bid < 100? If so, what is the implied arb edge?",
+      "alphaCategory": "arbitrage-opportunities",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 2,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 37149,
+      "finalScore": 4.83,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 5,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:check_market_efficiency",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 2,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 2,
+          "toolStepCount": 2,
+          "iterativeExecution": true,
+          "executionMs": 17117,
+          "synthesisMs": 9547,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 1015,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 4375,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 37149,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 2,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q4",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 87% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 37149,
+          "executionDurationMs": 32454,
+          "executionDurationShare": 0.8736,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "Based on the market efficiency check, the condition **yes_bid + no_bid < 100** is **not met**. \n\nAs of April 22, 2026, the market for **KXMVECROSSCATEGORY-S2026BC8725F16E4-1BA7E7F4DEC** is finalized and settled. Because the market has already resolved, there is no live orderbook or arbitrage edge to execute.\n\n### Market Efficiency Data\n| Attribute | Value |\n| :--- | :--- |\n| **Ticker** | KXMVECROSSCATEGORY-S2026BC8725F16E4-1BA7E7F4DEC |\n| **Market Status** | Finalized (Settled: NO) |\n| **Close T",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q5",
+      "query": "Fetch the last 50 trades on KXMVESPORTSMULTIGAMEEXTENDED-S202628F048239CC-FE199BD14F4 and tell me net Yes vs No volume over the last hour.",
+      "alphaCategory": "flow-and-trades",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 2,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 31161,
+      "finalScore": 4.33,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 2,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9878,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9878,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 2,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:browse_series",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "exact_identifier_single_tool_overlap"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 3,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 3,
+          "toolStepCount": 3,
+          "iterativeExecution": true,
+          "executionMs": 18481,
+          "synthesisMs": 5583,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 4,
+          "responseLength": 538,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 3016,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 31161,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 2,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q5",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 127% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 31161,
+          "executionDurationMs": 39718,
+          "executionDurationShare": 1.2746,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "The market for **KXMVESPORTSMULTIGAMEEXTENDED-S202628F048239CC-FE199BD14F4** is currently **finalized** and closed on April 21, 2026, at 02:49:59 UTC.\n\nAs a result, no trades were returned in the query, and there has been no trading activity over the last hour.\n\n### Last Hour Volume Summary\n| Metric | Value |\n| :--- | :--- |\n| **Yes Volume** | 0 |\n| **No Volume** | 0 |\n| **Net (Yes - No)** | 0 |\n\n**Note:** No trade records were available for analysis because the market is no longer active and th",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q6",
+      "query": "Give me 1-hour candlesticks for KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D over the last 24 hours — report OHLC for Yes price and total volume per bar.",
+      "alphaCategory": "flow-and-trades",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 1,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 27367,
+      "finalScore": 4.67,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 3,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 5
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 0,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:get_market_candlesticks",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "capability_miss_rescued"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 2,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 2,
+          "toolStepCount": 2,
+          "iterativeExecution": true,
+          "executionMs": 14807,
+          "synthesisMs": 4945,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 772,
+          "differentiation": "high_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 3156,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 27367,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 1,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q6",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 80% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 27367,
+          "executionDurationMs": 21799,
+          "executionDurationShare": 0.7965,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "There are no 1-hour candlesticks available for **KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D** over the last 24 hours. As of April 22, 2026, the market is finalized and recorded zero trading volume during the requested period.\n\n### Market Snapshot\n| Attribute | Value |\n| :--- | :--- |\n| **Ticker** | KXMVESPORTSMULTIGAMEEXTENDED-S2026B1902930B9B-F1FA5E0C77D |\n| **Status** | finalized |\n| **24h Volume** | 0 |\n| **Total Volume** | 0 |\n| **Open Interest** | 0 |\n| **Liquidity** | 0 |\n\n*",
+        "coverageStatus": "answerable",
+        "differentiation": "high_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q7",
+      "query": "For the event KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9, list all sub-markets, their yes prices, and flag any pair whose implied probabilities sum to < 100 (structural arb) or > 110 (venue overround).",
+      "alphaCategory": "event-structure",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 2,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 33742,
+      "finalScore": 4.67,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 3,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 5
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 3,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:check_market_efficiency",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "exact_identifier_single_tool_overlap"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 3,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 3,
+          "toolStepCount": 3,
+          "iterativeExecution": true,
+          "executionMs": 17688,
+          "synthesisMs": 8252,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 1757,
+          "differentiation": "high_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 6698,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 33742,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 2,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q7",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 101% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 33742,
+          "executionDurationMs": 33988,
+          "executionDurationShare": 1.0073,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "As of Wednesday, April 22, 2026, only one sub-market was found for the event **KXMVESPORTSMULTIGAMEEXTENDED-S2026F6B762AEDA9**.\n\nBecause only a single sub-market was returned, pairwise analysis for structural arbitrage (implied probability < 100) or venue overround (implied probability > 110) is not applicable, as these metrics require at least two sibling markets for comparison. Additionally, this sub-market is currently listed as **finalized**.\n\n| Sub-Market Ticker | Title | Yes Price | Implie",
+        "coverageStatus": "answerable",
+        "differentiation": "high_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q8",
+      "query": "List every active market in the KXMVECROSSCATEGORY-S2026EA752452A61 event and rank them by yes_ask — which single-name has the tightest spread?",
+      "alphaCategory": "event-structure",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 4,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 43304,
+      "finalScore": 4.83,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 5,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 3,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:analyze_market_liquidity",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "exact_identifier_single_tool_overlap"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 4,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 4,
+          "toolStepCount": 4,
+          "iterativeExecution": true,
+          "executionMs": 27546,
+          "synthesisMs": 7619,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 867,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-stop",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 12562,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 43304,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 4,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "leaderboard",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q8",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 200% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 43304,
+          "executionDurationMs": 86508,
+          "executionDurationShare": 1.9977,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "As of Wednesday, April 22, 2026, there are no active markets in the **Blanch vs Bonzi** (KXMVECROSSCATEGORY-S2026EA752452A61) event; both markets have been finalized and settled.\n\nBased on the data from a past query, here are the markets ranked by their final **yes_ask** values:\n\n| Ticker | Title | Yes Ask | Spread | Status |\n| :--- | :--- | :--- | :--- | :--- |\n| KXMVECROSSCATEGORY-S2026EA752452A61-C5C439F0A26 | yes Darwin Blanch,yes Henrique Rocha,yes Pedro Martinez | 0 | 100 | finalized |\n| K",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q9",
+      "query": "Find all Kalshi markets where yes_ask is between 20 and 35 cents — I want outright longshots with a cheap premium.",
+      "alphaCategory": "discovery-screening",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 13,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 92654,
+      "finalScore": 4.5,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 3,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:search_markets",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_composite_intent_match"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 5,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 5,
+          "toolStepCount": 5,
+          "iterativeExecution": true,
+          "executionMs": 64804,
+          "synthesisMs": 17059,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 1444,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "low",
+          "gapCount": 2,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 3,
+          "canonicalBytes": 294193,
+          "gapCount": 2,
+          "gapSignals": [
+            "empty_canonical_payload",
+            "limited_slice_coverage"
+          ],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 92654,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 13,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 3,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 2,
+          "viewType": null,
+          "rowCount": 0
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q9",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 288% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 92654,
+          "executionDurationMs": 267045,
+          "executionDurationShare": 2.8822,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "Based on the data from past queries, no Kalshi markets were found with a **yes_ask** price between 20¢ and 35¢ in the initial sets of data retrieved.\n\nAs of April 22, 2026, the search yielded the following results:\n*   **Probability Filter:** Targeted searches for markets with a 15–35% probability (which typically correlates with the requested price range) returned **zero matches**.\n*   **Broad Market Scan:** An analysis of approximately 250 open markets was conducted. While several markets show",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q10",
+      "query": "Resolve the slug for event KXMVECROSSCATEGORY-S2026BC8725F16E4 and then pull the event-level candlestick for the last 7 days at 1-day granularity.",
+      "alphaCategory": "event-structure",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 2,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 128408,
+      "finalScore": 4.33,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 2,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:resolve_slug",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 3,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 3,
+          "toolStepCount": 3,
+          "iterativeExecution": true,
+          "executionMs": 72748,
+          "synthesisMs": 39394,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 4,
+          "responseLength": 1767,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "medium",
+          "gapCount": 1,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 2,
+          "canonicalBytes": 491775,
+          "gapCount": 1,
+          "gapSignals": [
+            "context_truncated"
+          ],
+          "truncated": true
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 128408,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 2,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 3,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 1,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q10",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 79% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 128408,
+          "executionDurationMs": 101292,
+          "executionDurationShare": 0.7888,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "The slug `KXMVECROSSCATEGORY-S2026BC8725F16E4` resolves to the following event:\n\n*   **Event Title**: Toronto at Cleveland\n*   **Resolved Slug**: `kxmvecrosscategory-s2026bc8725f16e4`\n*   **Category**: Exotics\n*   **Status**: open\n\nAs of **2026-04-22T11:07:33Z**, the event-level candlestick data for the last 7 days (1-day granularity) consists of individual daily candles for **345 sub-markets**. Because there is no single aggregated event price series, the data is reported per market ticker. \n\nM",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q11",
+      "query": "Analyze sentiment on KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B3962 using the last 24h of trades and price action — is smart money leaning Yes or No?",
+      "alphaCategory": "flow-and-trades",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 2,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 33371,
+      "finalScore": 4.33,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 2,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:analyze_market_sentiment",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 2,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 2,
+          "toolStepCount": 2,
+          "iterativeExecution": true,
+          "executionMs": 16545,
+          "synthesisMs": 6269,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 4,
+          "responseLength": 1013,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 3901,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 33371,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 2,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q11",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 110% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 33371,
+          "executionDurationMs": 36711,
+          "executionDurationShare": 1.1001,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "The market for this ticker has **finalized**, meaning it is no longer active for trading. As a result, there is no \"smart money\" leaning to analyze within the last 24 hours, as there has been zero volume and no recent trades.\n\nThe contract resolved to a **Yes** outcome (price of 100), reflecting its final state rather than current market sentiment or active positioning.\n\n### Market Snapshot\n| Attribute | Value |\n| :--- | :--- |\n| **Ticker** | KXMVESPORTSMULTIGAMEEXTENDED-S2026EB144C75D4A-C062D2B",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q12",
+      "query": "Use kalshi_crossref_polymarket on the Kalshi market KXMVESPORTSMULTIGAMEEXTENDED-S202602150E22176-FC050A30E2D and flag any sub-leg where an equivalent Polymarket market exists with >3 cent price divergence.",
+      "alphaCategory": "arbitrage-opportunities",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 6,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 177558,
+      "finalScore": 4.67,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 4,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:kalshi_crossref_polymarket",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 9,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 9,
+          "toolStepCount": 9,
+          "iterativeExecution": true,
+          "executionMs": 159613,
+          "synthesisMs": 10136,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 2818,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 28512,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 177558,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 6,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q12",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 614% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 177558,
+          "executionDurationMs": 1089531,
+          "executionDurationShare": 6.1362,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "Based on the tool results, no sub-leg could be flagged for price divergence because **no equivalent Polymarket markets were found** for the specified Kalshi market family.\n\nThe provided ticker did not resolve directly; instead, the search identified the closest matching event on Kalshi (Event: `KXMVESPORTSMULTIGAMEEXTENDED-S20266D2D8A7980E`). While 12 sibling markets were scanned within this Kalshi event, the cross-reference search for these sports-player combinations on Polymarket returned zero",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q16",
+      "query": "List every Kalshi event closing before 2026-04-25 — imminent-settlement shortlist with tickers and close times.",
+      "alphaCategory": "discovery-screening",
+      "category": "kalshi",
+      "outcomeType": "timeout",
+      "toolCalls": 0,
+      "toolNames": [],
+      "latencyMs": null,
+      "finalScore": 1,
+      "buyerScores": {
+        "freshness": 1,
+        "specificity": 1,
+        "actionability": 1,
+        "completeness": 1,
+        "dataAccuracy": 1,
+        "uniqueness": 1
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 1,
+          "selectedPolicy": null,
+          "selectedToolNames": [],
+          "selectedMethodCount": null,
+          "scoutConfidence": null,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 2,
+          "selectedPolicy": null,
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": false,
+          "probeConfidence": null,
+          "candidateMethodCount": null,
+          "shortlistCount": null,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "timeout",
+          "optionCount": null,
+          "recommendedOptionId": null,
+          "decisionReasonCode": null,
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": null,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 1,
+          "repairSucceeded": false,
+          "compiledFirstTry": true,
+          "issue": null,
+          "executionMode": "codegen"
+        },
+        "execution": {
+          "score": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 0,
+          "toolStepCount": null,
+          "iterativeExecution": false,
+          "executionMs": null,
+          "synthesisMs": null,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": null
+        },
+        "synthesis": {
+          "score": 1,
+          "responseLength": 0,
+          "differentiation": "low_differentiation",
+          "hasGroundingArtifact": false,
+          "confidenceLevel": null,
+          "gapCount": null,
+          "stageArtifactKinds": [],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": null,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 3,
+          "plannerReasoningStage": null,
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 1,
+          "durationMs": null,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 0,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": false,
+          "repairEffort": 1
+        },
+        "synthesisBudget": {
+          "score": 2,
+          "verifiedFactCount": null,
+          "inferredFactCount": null,
+          "gapCount": 0,
+          "viewType": null,
+          "rowCount": 0
+        }
+      },
+      "bottleneckDimension": "toolSelection",
+      "bottleneckScore": 1,
+      "bottleneckDetail": "Lowest deterministic score in the current runtime trace bundle.",
+      "traceDiagnosis": null,
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "",
+        "coverageStatus": "answerable",
+        "differentiation": "low_differentiation",
+        "hasGroundingArtifact": false,
+        "hasFreshnessEvidence": false
+      }
+    },
+    {
+      "id": "q17",
+      "query": "Walk me through a full trading workflow on KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA: current pricing, orderbook depth to fill $1,000 Yes, trade-flow direction in the last 6 hours, and a rec with risk.",
+      "alphaCategory": "workflow-synthesis",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 4,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 49545,
+      "finalScore": 4.83,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 5,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 0,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:get_market_orderbook",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "capability_miss_rescued"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 3,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 3,
+          "toolStepCount": 3,
+          "iterativeExecution": true,
+          "executionMs": 28143,
+          "synthesisMs": 7638,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 2017,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 10561,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 49545,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 4,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q17",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 198% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 49545,
+          "executionDurationMs": 98010,
+          "executionDurationShare": 1.9782,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "This market is **finalized** and has settled to **No**. As of its closing on April 22, 2026, at 02:56:01 UTC, it is no longer tradeable.\n\n### Market Overview: KXMVESPORTSMULTIGAMEEXTENDED-S202676E24888D78-0EF31096FAA\n**Title:** yes CJ McCollum: 1+,yes Karl-Anthony Towns: 1+,yes LeBron James: 1+,yes Payton Pritchard: 2+,yes Jalen Brunson: 25+,yes Karl-Anthony Towns: 15+,yes James Harden: 15+,yes Scottie Barnes: 15+\n\n| Metric | Value |\n| :--- | :--- |\n| **Status** | Finalized (Settled: No) |\n| **C",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q19",
+      "query": "Browse the series KXMVECROSSCATEGORY and tell me how many active events it has and the total 24h volume rolled up across them.",
+      "alphaCategory": "event-structure",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 1,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 33807,
+      "finalScore": 3.5,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 3,
+        "actionability": 1,
+        "completeness": 3,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:browse_series",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_intent_description_match"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 2,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 2,
+          "toolStepCount": 2,
+          "iterativeExecution": true,
+          "executionMs": 19212,
+          "synthesisMs": 6280,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 4,
+          "responseLength": 175,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 578440,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 33807,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 1,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q19",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 91% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 33807,
+          "executionDurationMs": 30864,
+          "executionDurationShare": 0.9129,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability",
+            "specificity",
+            "completeness"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "The series **KXMVECROSSCATEGORY** (MVE Cross Category) currently has **774 active events**. As of April 22, 2026, the total 24h volume rolled up across these events is **$0**.",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q20",
+      "query": "On KXMVECROSSCATEGORY-S20260B3344E1366-C1C600EA12C, are yes_bid + no_bid < 99? If so quantify the riskless edge after a 7% taker fee.",
+      "alphaCategory": "arbitrage-opportunities",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 3,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 45291,
+      "finalScore": 4.83,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 5,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 3,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:get_market_orderbook",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "exact_identifier_single_tool_overlap"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 4,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 1,
+          "loopCount": 4,
+          "toolStepCount": 4,
+          "iterativeExecution": true,
+          "executionMs": 31127,
+          "synthesisMs": 6280,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 937,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-stop",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 13628,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 3,
+          "durationMs": 45291,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 3,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q20",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 165% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 45291,
+          "executionDurationMs": 74924,
+          "executionDurationShare": 1.6543,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "As of April 22, 2026, the ticker **KXMVECROSSCATEGORY-S20260B3344E1366-C1C600EA12C** has an empty orderbook and is marked as not tradeable. Because there are no active bids, the condition `yes_bid + no_bid < 99` cannot be met, and no riskless edge can be quantified.\n\nFor comparison, the most active tradeable markets currently show a bid sum of exactly 100¢, providing no arbitrage opportunity:\n\n| Ticker | Title | Yes Bid | No Bid | Sum |\n| :--- | :--- | :--- | :--- | :--- |\n| KXNBAGAME-26APR22ORL",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q21",
+      "query": "Search Kalshi for markets whose title mentions 'Victor Wembanyama' and rank by yes_ask — where is the market pricing his 35+ point line?",
+      "alphaCategory": "discovery-screening",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 5,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 173115,
+      "finalScore": 4.33,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 2,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 2,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 3,
+          "triggered": true,
+          "outcomeType": "answer",
+          "optionCount": 3,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:get_market_orderbook",
+          "decisionReasonCode": "contract_scope_ambiguity",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 12,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 12,
+          "toolStepCount": 12,
+          "iterativeExecution": true,
+          "executionMs": 153576,
+          "synthesisMs": 9172,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 4,
+          "responseLength": 1133,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "medium",
+          "gapCount": 2,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 2,
+          "canonicalBytes": 36010,
+          "gapCount": 2,
+          "gapSignals": [
+            "context_truncated",
+            "limited_slice_coverage"
+          ],
+          "truncated": true
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 173115,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 5,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 3,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 2,
+          "viewType": "leaderboard",
+          "rowCount": 0
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q21",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 770% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 173115,
+          "executionDurationMs": 1332524,
+          "executionDurationShare": 7.6973,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "As of April 22, 2026, there are no standalone markets for Victor Wembanyama's point totals. However, his performance is included as a leg in several multi-game \"Extended\" sports markets.\n\nThe market pricing his **35+ point line** is part of a complex multi-condition ticker. Note that both identified markets currently show an empty order book with no active ask price.\n\n### Victor Wembanyama Market Lines\n| Market Title (Condition Snippet) | Ticker | Yes Ask | Status |\n| :--- | :--- | :--- | :--- |",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q22",
+      "query": "For the NHL-centric market KXMVESPORTSMULTIGAMEEXTENDED-S20268F24BEFAD58-0EA9403DBFE closing 2026-05-10, give me the current yes price, 24h volume, and the 15-min candlestick series since open.",
+      "alphaCategory": "flow-and-trades",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 2,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 31035,
+      "finalScore": 4.83,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 5,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 1,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:search_markets",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 2,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 2,
+          "toolStepCount": 2,
+          "iterativeExecution": true,
+          "executionMs": 16249,
+          "synthesisMs": 4501,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 740,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "high",
+          "gapCount": 0,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 5,
+          "canonicalBytes": 4995,
+          "gapCount": 0,
+          "gapSignals": [],
+          "truncated": false
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 31035,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 2,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 5,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 0,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q22",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 123% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 31035,
+          "executionDurationMs": 38165,
+          "executionDurationShare": 1.2297,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "Based on data from a past query (fetched on April 22, 2026), the market for **yes TB Lightning, yes Edmonton wins by over 1.5 goals** (`KXMVESPORTSMULTIGAMEEXTENDED-S20268F24BEFAD58-0EA9403DBFE`) is currently **finalized**.\n\n### Market Snapshot\n| Metric | Value |\n| :--- | :--- |\n| **Status** | Finalized |\n| **Yes Price** | 100 |\n| **24h Volume** | 0 |\n| **Total Volume** | 0 |\n| **Close Time** | 2026-04-21 06:19:35 UTC |\n\n### 15-Min Candlestick Series\nThere is no candlestick data available for th",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q23",
+      "query": "Scan all open Kalshi markets and return the 5 with the widest yes bid-ask spread — these are the least efficiently priced right now.",
+      "alphaCategory": "pricing-efficiency",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 8,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 79391,
+      "finalScore": 4.83,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 5,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:search_markets",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": [
+            "direct_composite_intent_match"
+          ]
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 3,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 0,
+          "loopCount": 3,
+          "toolStepCount": 3,
+          "iterativeExecution": true,
+          "executionMs": 52151,
+          "synthesisMs": 16356,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 5,
+          "responseLength": 1808,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "medium",
+          "gapCount": 1,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-stop",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 2,
+          "canonicalBytes": 747606,
+          "gapCount": 1,
+          "gapSignals": [
+            "context_truncated"
+          ],
+          "truncated": true
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 5,
+          "durationMs": 79391,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 8,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 3,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 1,
+          "viewType": "table",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q23",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 74% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 79391,
+          "executionDurationMs": 58791,
+          "executionDurationShare": 0.7405,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": []
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "As of April 22, 2026, at 11:24:02 UTC, several Kalshi markets are tied with the widest possible bid-ask spread of 100 cents (representing a 200.00% spread relative to the mid-price). This typically occurs in markets with no active bids and an ask price of 100.\n\nThe following five markets are among those with the widest spreads:\n\n| Rank | Market Title | Ticker | Spread (Cents) | Spread (%) |\n| :--- | :--- | :--- | :--- | :--- |\n| 1 (Tie) | yes Talia Gibson, yes Tereza Valentova, yes Dayana Yastre",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    },
+    {
+      "id": "q24",
+      "query": "Find trading opportunities on KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33: rank each sub-leg by expected-value given current yes_ask vs a naive prior, and flag any that look structurally cheap.",
+      "alphaCategory": "workflow-synthesis",
+      "category": "kalshi",
+      "outcomeType": "answer",
+      "toolCalls": 6,
+      "toolNames": [
+        "Kalshi"
+      ],
+      "latencyMs": 92819,
+      "finalScore": 4.33,
+      "buyerScores": {
+        "freshness": 5,
+        "specificity": 5,
+        "actionability": 2,
+        "completeness": 5,
+        "dataAccuracy": 5,
+        "uniqueness": 4
+      },
+      "stageScores": {
+        "toolSelection": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodCount": 24,
+          "scoutConfidence": 0.9894,
+          "scoutFallback": false,
+          "issue": null
+        },
+        "scoutDepth": {
+          "score": 5,
+          "selectedPolicy": "exploratory",
+          "scoutEnabled": false,
+          "evidenceAttachedToPlanning": true,
+          "probeConfidence": 0.9894,
+          "candidateMethodCount": 24,
+          "shortlistCount": 10,
+          "budgetReasonCode": null
+        },
+        "clarification": {
+          "score": 5,
+          "triggered": false,
+          "outcomeType": "answer",
+          "optionCount": 1,
+          "recommendedOptionId": "5cc326fb-500d-4c17-bc5f-ade143210636:find_trading_opportunities",
+          "decisionReasonCode": "single_grounded_interpretation",
+          "decisionSignals": []
+        },
+        "planning": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "repairEffort": 0,
+          "repairSucceeded": true,
+          "compiledFirstTry": true,
+          "issue": null,
+          "stepBudget": 10,
+          "completedStepCount": 6,
+          "executionMode": "iterative"
+        },
+        "execution": {
+          "score": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "failureCount": 2,
+          "loopCount": 6,
+          "toolStepCount": 6,
+          "iterativeExecution": true,
+          "executionMs": 69582,
+          "synthesisMs": 8998,
+          "budgetConsumedPct": null,
+          "budgetExhausted": false,
+          "issue": "Execution consumed retries or latency headroom before the answer stabilized."
+        },
+        "synthesis": {
+          "score": 4,
+          "responseLength": 2197,
+          "differentiation": "moderate_differentiation",
+          "hasGroundingArtifact": true,
+          "confidenceLevel": "medium",
+          "gapCount": 1,
+          "stageArtifactKinds": [
+            "query-session-contract",
+            "tool-selection",
+            "scout-evidence-sanitized",
+            "scout-contract",
+            "scout-pre-plan-probe",
+            "depth-decision",
+            "scout-budget-envelope",
+            "scout-rollout-contract",
+            "clarification-decision-input",
+            "clarification-decision",
+            "scout-budget-stop",
+            "first-pass-execution",
+            "execution-program-lineage",
+            "completeness-evaluation",
+            "canonical-dataset-registered",
+            "final-execution",
+            "synthesis-context-selection",
+            "scout-budget-summary"
+          ],
+          "issue": null
+        }
+      },
+      "crossCuttingScores": {
+        "contextBudget": {
+          "score": 2,
+          "canonicalBytes": 98312,
+          "gapCount": 1,
+          "gapSignals": [
+            "context_truncated"
+          ],
+          "truncated": true
+        },
+        "reasoningDepth": {
+          "score": 5,
+          "plannerReasoningStage": "mechanical",
+          "scoutLlmSelectionUsed": false,
+          "revisionCount": 1,
+          "replanCount": 0
+        },
+        "mcpTransport": {
+          "score": 3,
+          "durationMs": 92819,
+          "timeoutBudgetMs": null,
+          "toolCallCount": 6,
+          "logs": []
+        },
+        "codeSafety": {
+          "score": 5,
+          "validationApplied": false,
+          "validationPassed": null,
+          "validationIssues": [],
+          "patchCount": 0,
+          "retryCount": 0,
+          "repairSucceeded": true,
+          "repairEffort": 0
+        },
+        "synthesisBudget": {
+          "score": 3,
+          "verifiedFactCount": 3,
+          "inferredFactCount": 3,
+          "gapCount": 1,
+          "viewType": "leaderboard",
+          "rowCount": 8
+        }
+      },
+      "bottleneckDimension": "execution",
+      "bottleneckScore": 2,
+      "bottleneckDetail": "Execution consumed retries or latency headroom before the answer stabilized.",
+      "traceDiagnosis": {
+        "version": "2026-04-04.trace-informed-diagnosis.v1",
+        "promptId": "q24",
+        "bottleneckStage": "execution",
+        "bottleneckReason": "Execution consumed 276% of the measured query time.",
+        "retryPattern": {
+          "cheapFix": 0,
+          "semantic": 0,
+          "total": 0
+        },
+        "toolSelectionOptimal": true,
+        "toolSelectionIssue": null,
+        "plannerIssue": null,
+        "completenessIssue": null,
+        "budgetExhausted": false,
+        "budgetHeadroom": "Current trace did not expose retry-budget counters, but no retries were consumed.",
+        "rootCause": "Execution consumed retries or latency headroom before the answer stabilized.",
+        "suggestedFix": "Runtime: investigate the execution path and reduce retry-heavy or fallback-heavy behavior for this prompt class.",
+        "fixScope": "runtime",
+        "evidence": {
+          "outcomeType": "answer",
+          "coverageStatus": "answerable",
+          "expectedToolNames": [],
+          "actualToolNames": [
+            "Kalshi"
+          ],
+          "selectedToolNames": [
+            "Kalshi"
+          ],
+          "selectedMethodNames": [
+            "discover_trending_markets",
+            "analyze_market_liquidity",
+            "check_market_efficiency",
+            "find_arbitrage_opportunities",
+            "find_trading_opportunities",
+            "get_markets_by_probability",
+            "analyze_market_sentiment",
+            "kalshi_crossref_polymarket",
+            "get_events",
+            "get_markets",
+            "get_event",
+            "resolve_slug"
+          ],
+          "selectedMethodCount": 24,
+          "totalDurationMs": 92819,
+          "executionDurationMs": 256102,
+          "executionDurationShare": 2.7592,
+          "selectedPolicy": "exploratory",
+          "rediscoveryExecuted": false,
+          "planningValidationApplied": false,
+          "revisionCount": 1,
+          "patchCount": 0,
+          "replanCount": 0,
+          "completionEvaluationCount": 0,
+          "lowScoreDimensions": [
+            "actionability"
+          ]
+        }
+      },
+      "evidence": {
+        "groundedEntity": null,
+        "answerabilityNote": "SDK evaluation path against Context query API; local Kalshi MCP direct checks not required for this artifact.",
+        "responsePreview": "The specific market ticker **KXMVESPORTSMULTIGAMEEXTENDED-S2026D6AEEE0583A-71524DD7E33** was not found in the current Kalshi data. Based on a search of the broader **KXMVESPORTSMULTIGAMEEXTENDED** series, the following candidate markets were retrieved, though they do not match the specific identifier provided.\n\nHere is the complete returned collection for fullSearchCandidates (20 items).\n\n| Title | Close Time | Status | Volume24h |\n| :--- | :--- | :--- | :--- |\n| yes Atletico,yes Real Sociedad,y",
+        "coverageStatus": "answerable",
+        "differentiation": "moderate_differentiation",
+        "hasGroundingArtifact": true,
+        "hasFreshnessEvidence": true
+      }
+    }
+  ],
+  "inputPath": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/full-enhancement-results.latest.json"
+}

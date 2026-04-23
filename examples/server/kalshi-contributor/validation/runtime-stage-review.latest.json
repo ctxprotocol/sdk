@@ -1,0 +1,254 @@
+{
+  "generatedAt": "2026-04-22T17:35:00.000Z",
+  "reviewVersion": "runtime-stage-reviewer.v1",
+  "contributor": "kalshi-contributor",
+  "traceCount": 20,
+  "inputPaths": {
+    "traceInput": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/full-enhancement-results.latest.json",
+    "analyzerOutput": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-audit.latest.json",
+    "calibrationBaseline": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.baseline.json"
+  },
+  "calibrationContext": {
+    "regressionBaselineQueryMean": 4.5,
+    "currentFinalScoreMean": 4.02,
+    "deltaVsBaseline": -0.48,
+    "note": "Full-pool run (20 prompts) is below the 6-prompt regression baseline. Deficit is concentrated in three finalScore=1.67 traces (q5, q9, q20) plus mid-tier q16 and q19; the regression-subset subset mean must be recomputed separately before direct comparison."
+  },
+  "dimensionSummary": {
+    "stageMeans": {
+      "toolSelection": 4.75,
+      "scoutDepth": 5.0,
+      "clarification": 4.3,
+      "planning": 5.0,
+      "execution": 4.75,
+      "synthesis": 4.15
+    },
+    "crossCuttingMeans": {
+      "contextBudget": 4.85,
+      "reasoningDepth": 5.0,
+      "mcpTransport": 4.55,
+      "codeSafety": 5.0,
+      "synthesisBudget": 4.45
+    },
+    "finalScoreMean": 4.02,
+    "weakestDimension": {
+      "name": "synthesis",
+      "mean": 4.15,
+      "confidence": "medium",
+      "confidenceReason": "Synthesis has the lowest mean, but the three synthesis=1 traces are downstream symptoms of upstream routing failures, not a synthesis-layer defect. Treat synthesis as symptom, not lever."
+    },
+    "rootCauseDimension": {
+      "name": "clarification",
+      "mean": 4.3,
+      "confidence": "high",
+      "confidenceReason": "Only 2/20 traces fired the clarification modal, but the same pool-construction failure mode recurs in the single-grounded-interpretation collapse path, giving 5 independent observations (q1, q5, q9, q20, q21) of the identical viable_pool_excludes_top_fit_candidate pattern. The clarification mean itself is noisy but the underlying cluster is stable."
+    },
+    "analyzerDisagreements": [
+      {
+        "dimension": "execution",
+        "analyzerMean": 2.1,
+        "reviewerMean": 4.75,
+        "reason": "Analyzer scored execution via determineBottleneckStage heuristic (executionDurationMs/totalDurationMs >= 0.4). In iterative-execution mode executionDurationMs is summed across loops while totalDurationMs is wall clock; the ratio exceeds 100% on 9 of 20 traces (q24=577%, q7=153%, q21=408%), mathematically impossible for a real bottleneck share. Raw trace evidence shows retryCount=0, selfHealCount=0, failureCount=0 on 17/20 prompts. Only q16 has genuine execution failures (10 repeated failing tool calls on unsupported filter params). Reviewer re-scored execution from failure/retry counts."
+      },
+      {
+        "dimension": "clarification",
+        "analyzerMean": 4.8,
+        "reviewerMean": 4.3,
+        "reason": "Analyzer scored clarification 5 whenever clarification.triggered was false. Reviewer lowered scores on q5, q9, q20 (from 5 to 3) because the same pool-construction logic that drives clarification also decided those single-grounded-interpretation collapses, and dropped the top-fitScore candidate. Also lowered q1 (3 to 2) and q21 (3 to 2) because the top-fit candidate was excluded from the 3-option pool by a wide margin, not a borderline call."
+      },
+      {
+        "dimension": "mcpTransport",
+        "analyzerMean": 4.7,
+        "reviewerMean": 4.55,
+        "reason": "Kept most analyzer scores but lowered q21 to 3 due to loop amplification, and flagging the proxy: analyzer drops to 3 on toolCallCount>=8 regardless of whether transport actually failed, producing false signal on broad-scan prompts (q16, q21, q23)."
+      }
+    ],
+    "bottleneckCounts": {
+      "clarification_pool_construction": 5,
+      "execution_loop_adaptation": 1,
+      "synthesis_terseness": 2,
+      "context_truncation": 1,
+      "none": 11
+    },
+    "measurementConfidence": {
+      "toolSelection": { "confidence": "medium", "reason": "Single-tool evaluation does not exercise cross-contributor selection load; the pool-construction logic shared with clarification is the hidden risk." },
+      "scoutDepth": { "confidence": "high", "reason": "probeConfidence consistently 0.94+ across all 20 traces; no scout-driven failures." },
+      "clarification": { "confidence": "high", "reason": "5 independent traces show identical viable_pool_excludes_top_fit_candidate pattern across both the triggered path and the single-grounded-interpretation collapse path." },
+      "planning": { "confidence": "medium", "reason": "First-pass planning scored 5 everywhere, but iterative-loop replan behavior (q16) is not currently captured by the planning dimension." },
+      "execution": { "confidence": "low", "reason": "Analyzer heuristic is broken. Reviewer scored from raw failure/retry counts which are near zero for most traces. Low confidence in absolute number; high confidence execution is NOT the current weakest lever." },
+      "synthesis": { "confidence": "high", "reason": "Three synthesis=1 traces share an identical pattern: sparse upstream data reported faithfully. Clear downstream symptom." },
+      "contextBudget": { "confidence": "medium", "reason": "Single-trace truncation signal (q21); clearly diagnosed but low volume." },
+      "reasoningDepth": { "confidence": "high", "reason": "No drift observed; mechanical reasoning adequate across all traces." },
+      "mcpTransport": { "confidence": "low", "reason": "Score is a call-count proxy that fires on broad-scan queries even when transport is healthy." },
+      "codeSafety": { "confidence": "high", "reason": "validationApplied=false across all traces; not applicable in iterative execution mode." },
+      "synthesisBudget": { "confidence": "medium", "reason": "Four sub-5 scores (q5, q9, q20, q21); three mirror the routing-failure pattern, one is truncation-linked." }
+    },
+    "optimizationReadiness": {
+      "toolSelection": {
+        "status": "noisy",
+        "reason": "Single-contributor eval shadows real pool-construction load. Not a useful lever in isolation; address via the clarification/pool layer."
+      },
+      "scoutDepth": {
+        "status": "ready",
+        "reason": "Calibration-stable. No optimization needed this iteration."
+      },
+      "clarification": {
+        "status": "ready",
+        "reason": "Stable 5-trace failure cluster (viable_pool_excludes_top_fit_candidate) recurs across the triggered and single-grounded-interpretation paths. Scoped to the pool-construction / viability-filter layer downstream of the fitScore ranker. Expect finalScore, synthesis, synthesisBudget, and mcpTransport to lift as side-effects."
+      },
+      "planning": {
+        "status": "noisy",
+        "reason": "First-pass score ceiling at 5; iterative-loop adaptation (q16 pattern) is attributed to execution in current scoring. Revisit after clarification is fixed."
+      },
+      "execution": {
+        "status": "architectural",
+        "reason": "Analyzer score is a measurement artifact. Do not target execution until the bottleneck heuristic is calibrated. The q16 adaptation-failure class is real but better addressed as a planner/loop-variance change than an execution change."
+      },
+      "synthesis": {
+        "status": "architectural",
+        "reason": "Low synthesis scores trace to upstream routing failures; synthesis-layer changes cannot manufacture data the wrong tool never returned. Defer; re-measure after clarification fix."
+      },
+      "contextBudget": {
+        "status": "ready",
+        "reason": "Single-trace signal (q21) with clear root cause (broad-search payload 142KB). Low-priority until the upstream pool issue is resolved."
+      },
+      "reasoningDepth": {
+        "status": "ready",
+        "reason": "Mechanical reasoning suffices across all observed failure modes; no evidence a deeper reasoning mode is needed."
+      },
+      "mcpTransport": {
+        "status": "noisy",
+        "reason": "Call-count proxy produces false positives on legitimate broad-scan queries. Recommend analyzer-side separation of tool_call_count from transport_health."
+      },
+      "codeSafety": {
+        "status": "ready",
+        "reason": "Not applicable in current iterative mode; no optimization needed."
+      },
+      "synthesisBudget": {
+        "status": "architectural",
+        "reason": "Downstream of the pool-construction / upstream routing root cause. Will lift if clarification target is fixed."
+      }
+    }
+  },
+  "dominantFailureClusters": {
+    "clarification": {
+      "clusterLabel": "viable_pool_excludes_top_fit_candidate",
+      "traceCount": 5,
+      "queryIds": ["q1", "q5", "q9", "q20", "q21"],
+      "whyItMatters": "The method-retrieval ranker produces fitScores that correctly identify the semantically-best-fit method, but the downstream viability/comparison filter drops the top-ranked candidate in favor of methods with more resolvable params or narrower scope. This produces wrong single-tool selections (q5, q9, q20) and wrong 3-option clarification pools (q1, q21). The pattern is contributor-agnostic and structural."
+    },
+    "synthesis": {
+      "clusterLabel": "grounded_no_data_surface_as_final_answer",
+      "traceCount": 3,
+      "queryIds": ["q5", "q9", "q20"],
+      "whyItMatters": "Synthesis faithfully reports sparse/empty data when upstream routing landed on a method that cannot answer the query. Downstream symptom of the pool-construction cluster, not a synthesis-layer defect."
+    },
+    "synthesis_terseness": {
+      "clusterLabel": "terse_answer_drops_actionability",
+      "traceCount": 2,
+      "queryIds": ["q16", "q19"],
+      "whyItMatters": "Correct aggregate data returned but response length and view-type do not expose the underlying detail the buyer expects. Addressable via synthesis-context-selection heuristics; lower priority than the pool cluster."
+    },
+    "execution": {
+      "clusterLabel": "iterative_loop_repeats_failing_tool_call",
+      "traceCount": 1,
+      "queryIds": ["q16"],
+      "whyItMatters": "Iterative agent loop repeated the same tool call with unsupported filter parameters 10 times without adapting or replanning. Low volume but real adaptation-logic gap; will recur whenever a contributor's schema evolves."
+    },
+    "contextBudget": {
+      "clusterLabel": "broad_search_payload_truncation",
+      "traceCount": 1,
+      "queryIds": ["q21"],
+      "whyItMatters": "canonicalBytes=142812 with context_truncated=true. Broad-search tools can blow the context budget; truncation cascades into synthesisBudget and mcpTransport penalties for the same trace. Downstream of the routing cluster."
+    }
+  },
+  "calibrationNotes": [
+    "Analyzer determineBottleneckStage heuristic (executionDurationMs/totalDurationMs >= 0.4) is producing measurement artifacts for iterative execution. executionDurationMs is summed across loops while totalDurationMs is wall clock, producing ratios >100% on 9/20 traces. Recommend switching to a true max-stage-elapsed metric or clamping to [0,1] before thresholding.",
+    "Analyzer 'selection-or-routing-misses on answerable prompts' flag triggers on 19/20 traces driven by the same broken heuristic; treat as noise until the heuristic is repaired.",
+    "mcpTransport low-score on toolCallCount>=8 fires on legitimate broad-scan prompts (q16, q21, q23). Gate the low score on observed transport error rate, not call count.",
+    "Only 2/20 traces triggered clarification under clarificationPolicy:auto; the bulk of the pool-construction evidence comes from the single-grounded-interpretation collapse path. Future runs could mirror a subset under clarificationPolicy:return to surface the user-visible failure mode on the same prompt set."
+  ],
+  "qualitativeSummary": "The analyzer paints execution as the weakest stage at 2.1, but that is a measurement artifact of a latency-ratio heuristic that produces >100% bottleneck shares on iterative execution. Raw developer traces show execution is clean on 17/20 prompts (retryCount=0, selfHealCount=0, failureCount=0). The genuinely weakest stage by trace-grounded evidence is synthesis (mean 4.15), driven by three synthesis=1 traces (q5, q9, q20). Those three traces plus the two triggered clarifications (q1, q21) all exhibit one underlying failure: the clarification/pool-construction layer drops the top-fitScore candidate from the visible 3-option pool or from the single-grounded-interpretation collapse and settles on a method with narrower intent coverage. The method-retrieval ranker itself is producing correct fitScores; the bug is downstream of ranking, in the viability/comparison filter that decides which candidates reach comparedOptionIds and which collapse into viableCandidateCount=1 outcomes. Recommended target is the clarification pool-construction layer; synthesis, synthesisBudget, contextBudget, and mcpTransport means should improve as side-effects without direct work on those dimensions. The one genuine non-clarification signal is q16, where the iterative loop repeated the same failing tool call 10 times without replanning - queue this behind the clarification fix as a separate adaptation-logic concern. Measurement confidence is high for clarification (5-trace stable cluster), high for synthesis-as-symptom, low for execution (needs analyzer heuristic repair before it can be scored reliably).",
+  "evidenceByPromptId": {
+    "q1": {
+      "stageScores": { "toolSelection": 5, "scoutDepth": 5, "clarification": 2, "planning": 5, "execution": 5, "synthesis": 5 },
+      "notes": "Clarification fired with 3 options. The method-retrieval ranker's top candidate had fitScore=37.55, but the viable pool that reached comparedOptionIds consisted of three methods at materially lower fitScores (top recommended at 23.14, a 62% gap vs the dropped candidate). The top-fit method was a discovery-surface method appropriate for a ranked-discovery prompt; it was filtered out of the viable pool upstream of the clarification judge. In clarificationPolicy:auto the iterative agent recovered and the trace still produced finalScore=4.5, silently passing this failure class through the scoring pipeline. In clarificationPolicy:return (browser) the user would see a semantically-wrong 3-way modal. This is the canonical evidence for the viable_pool_excludes_top_fit_candidate cluster."
+    },
+    "q5": {
+      "stageScores": { "toolSelection": 3, "scoutDepth": 5, "clarification": 3, "planning": 5, "execution": 5, "synthesis": 1 },
+      "notes": "Same pool-construction pull-point as q1 surfacing via the single-grounded-interpretation collapse. viableCandidateCount=1 selected a catalog-browse method with an unresolved required param over a trade-history method ranked 2nd by fitScore whose unresolved param was actually present in the prompt. Synthesis honestly reported 'no trades' - downstream symptom."
+    },
+    "q9": {
+      "stageScores": { "toolSelection": 3, "scoutDepth": 5, "clarification": 3, "planning": 5, "execution": 4, "synthesis": 1 },
+      "notes": "Top candidate (probability-filter method, fitScore 20.28) was excluded in favor of a keyword-search tool for a numeric-range query. Agent looped 7 times searching for range-filtered results the chosen tool could not produce."
+    },
+    "q16": {
+      "stageScores": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 3, "synthesis": 4 },
+      "notes": "Iterative agent repeated the same tool call with unsupported filter parameters 10 times without replanning. The only genuine execution-layer issue in the 20-trace set. failureCount=10, retryCount=0 - no self-heal triggered."
+    },
+    "q19": {
+      "stageScores": { "toolSelection": 5, "scoutDepth": 5, "clarification": 5, "planning": 5, "execution": 5, "synthesis": 4 },
+      "notes": "182-char response with correct aggregates (743 events, $0 volume) but missing per-event breakdown the buyer expected. Synthesis-terseness cluster."
+    },
+    "q20": {
+      "stageScores": { "toolSelection": 3, "scoutDepth": 5, "clarification": 3, "planning": 5, "execution": 5, "synthesis": 1 },
+      "notes": "Pool construction picked a catalog-browse method for a bid-arithmetic query; an efficiency-check method was semantically correct. Market was finalized so arithmetic was unreachable anyway, but synthesis did not adapt to the finalized case with useful context."
+    },
+    "q21": {
+      "stageScores": { "toolSelection": 5, "scoutDepth": 5, "clarification": 2, "planning": 5, "execution": 4, "synthesis": 5 },
+      "crossCuttingScores": { "contextBudget": 2, "mcpTransport": 3, "synthesisBudget": 3 },
+      "notes": "Strongest magnitude of the viable_pool_excludes_top_fit_candidate cluster: 0 of 3 offered options fit the 'search by title' intent. The keyword-search method that was semantically correct ranked #1 in candidateSummaries (fitScore 24.48) but was excluded from comparedOptionIds. Recommended option required a single ticker the query does not provide. Also exhibits a clarification label/optionId mismatch (label 'Search Kalshi markets' while recommendedOptionId is an orderbook-lookup method). Iterative agent needed 12 loops (budget 10) to recover and still truncated context at 142KB."
+    }
+  },
+  "interactionRisks": [
+    {
+      "pair": ["clarification", "synthesis"],
+      "risk": "When pool construction selects a semantically-wrong method, synthesis faithfully reports sparse or empty data and takes the scoring hit. Pure synthesis-layer changes would mask the upstream defect rather than fix it. Fix clarification first, then re-measure synthesis on the same trace set.",
+      "pairedFixAllowed": false
+    },
+    {
+      "pair": ["clarification", "execution"],
+      "risk": "Bad pool construction forces the iterative agent into long compensatory loops, consuming step budget (observed at 12 completed vs 10 budgeted) and raising tool-call counts. Execution-layer changes cannot undo the upstream routing error; expect loop counts to drop as a side-effect of the clarification fix.",
+      "pairedFixAllowed": false
+    },
+    {
+      "pair": ["clarification", "contextBudget"],
+      "risk": "Bad pool construction pushes the agent into broad fallback searches that can truncate context (single trace at 142KB). Context budget pressure is compensatory, not independent; do not target it standalone this iteration.",
+      "pairedFixAllowed": false
+    },
+    {
+      "pair": ["clarification", "mcpTransport"],
+      "risk": "High tool-call counts on compensated traces trip the analyzer's call-count proxy for transport; changes here risk double-counting. Prefer fixing the root routing issue.",
+      "pairedFixAllowed": false
+    },
+    {
+      "pair": ["planning", "execution"],
+      "risk": "Iterative loop that repeats a failing tool call (observed on one trace) straddles planner and execution-loop responsibilities. If addressed, both stages must move together. Queue behind the clarification fix.",
+      "pairedFixAllowed": true
+    }
+  ],
+  "recommendationForHypothesisGenerator": {
+    "targetDimension": "clarification",
+    "why": "The dominant failure cluster viable_pool_excludes_top_fit_candidate recurs in 5 of 20 traces (25%) across both the clarification-triggered path and the single-grounded-interpretation collapse path. The method-retrieval ranker is producing correct fitScores - in every failing trace the semantically-best method is top-ranked in candidateSummaries. The bug is downstream of ranking: the viability/comparison filter that constructs the visible candidate pool (the inputs to comparedOptionIds and the gate that decides viableCandidateCount=1) is excluding top-ranked candidates, typically when they have unresolved required parameters or broader scope than narrower alternatives. This is the upstream pull-point; synthesis, synthesisBudget, contextBudget, and mcpTransport means should lift as side-effects when it is fixed. Do not target synthesis or execution directly - they are symptoms or measurement artifacts.",
+    "likelyCodeLocations": [
+      "Candidate viability filter that produces the visible pool from the ranker's candidateSummaries - specifically the logic that decides which of the top-K candidates reach comparedOptionIds and which are pruned for parameter unresolvability, scope narrowness, or method-kind mismatch.",
+      "Single-grounded-interpretation collapse path that reduces a multi-candidate pool to viableCandidateCount=1 based on decisionSignals like direct_composite_intent_match and exact_identifier_single_tool_overlap.",
+      "Clarification judge's pool-construction input boundary, where the mapping from ranked candidates to the 3-option offering is defined (including the label/optionId coherence check that produced the q21 label mismatch).",
+      "Parameter-resolution/inference layer that currently excludes candidates when required params are unresolved, even when the query text contains the info (as in the q5 case where a ticker was in the prompt but not matched to the unresolved param field)."
+    ],
+    "guardrails": [
+      "Preserve exact_identifier_single_tool_overlap and capability_miss_rescued signals that correctly handle 9 clean traces (q2, q3, q4, q7, q8, q11, q17, q22, q23, q24).",
+      "Do not regress the single_grounded_interpretation fast-path on exact-identifier prompts; track comparedOptionIds size and content before/after.",
+      "Do not up-weight method-name vs method-description tokens in the ranker - the raw trace shows the ranker is already correct. The bug is downstream of ranking.",
+      "Re-measure the same 20-trace set under clarificationPolicy:auto after the fix. Additionally rerun a small subset (at minimum the q1 prompt) under clarificationPolicy:return to validate the user-visible modal also improves.",
+      "Instrument the delta between candidateSummaries[0] and comparedOptionIds[0] per trace so cluster shrinkage is measurable mechanically between iterations.",
+      "Validate the label/optionId coherence of clarification offerings; q21 showed a label that described a different method than the recommendedOptionId.",
+      "Confirm the fix is contributor-agnostic by re-running any regression baseline that covers non-Kalshi contributors before declaring success."
+    ],
+    "successMetrics": {
+      "primary": "Shrink viable_pool_excludes_top_fit_candidate cluster from 5 traces to 0-1 traces.",
+      "secondary": "Lift synthesis mean from 4.15 toward 4.5+; lift finalScoreMean from 4.02 toward 4.3+; reduce completedStepCount/stepBudget ratio on compensated traces.",
+      "guardrailMetric": "Do not introduce any new clarification.triggered=true on exact-identifier prompts (q2, q4, q10, q11, q12)."
+    }
+  }
+}

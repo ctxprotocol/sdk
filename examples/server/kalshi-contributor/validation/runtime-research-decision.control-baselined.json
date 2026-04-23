@@ -1,0 +1,110 @@
+{
+  "decidedAt": "2026-04-22T15:19:45.320Z",
+  "targetDimension": "clarification",
+  "finalStatus": "rejected",
+  "action": "plateau",
+  "shouldContinue": false,
+  "nextTargetDimension": null,
+  "scoreBefore": {
+    "target": 4.7,
+    "byDimension": {
+      "toolSelection": 5,
+      "scoutDepth": 5,
+      "clarification": 4.7,
+      "planning": 5,
+      "execution": 4.8,
+      "synthesis": 4.65,
+      "contextBudget": 4.4,
+      "reasoningDepth": 5,
+      "mcpTransport": 4.85,
+      "codeSafety": 5,
+      "synthesisBudget": 4.5
+    }
+  },
+  "scoreAfter": {
+    "target": 4.85,
+    "byDimension": {
+      "toolSelection": 4.8,
+      "scoutDepth": 4.85,
+      "clarification": 4.85,
+      "planning": 4.9,
+      "execution": 4.7,
+      "synthesis": 4.5,
+      "contextBudget": 4.5,
+      "reasoningDepth": 4.9,
+      "mcpTransport": 4.8,
+      "codeSafety": 5,
+      "synthesisBudget": 4.5
+    }
+  },
+  "dimensionDeltas": {
+    "toolSelection": -0.2,
+    "scoutDepth": -0.15,
+    "clarification": 0.15,
+    "planning": -0.1,
+    "execution": -0.1,
+    "synthesis": -0.15,
+    "contextBudget": 0.1,
+    "reasoningDepth": -0.1,
+    "mcpTransport": -0.05,
+    "codeSafety": 0,
+    "synthesisBudget": 0
+  },
+  "gates": {
+    "targetImproved": false,
+    "crossedAutomationFloor": false,
+    "targetClusterImproved": false,
+    "targetProgress": false,
+    "noHardRegression": true,
+    "noBaselineDrop": false,
+    "harnessGreen": true,
+    "parityHeld": true
+  },
+  "dominantClusterProgress": {
+    "before": null,
+    "after": null,
+    "traceCountDelta": null,
+    "relativeDrop": null,
+    "improved": null
+  },
+  "targetRejectedCount": 2,
+  "nextReadyDimensions": [],
+  "primaryBlocker": "clarification improved by 0.15, below the 0.20 threshold.",
+  "blockers": [
+    "clarification improved by 0.15, below the 0.20 threshold.",
+    "Target dimension clarification did not clear the target-progress gate.",
+    "toolSelection fell from 5.00 to 4.80 (drop 0.20 exceeds 0.15 tolerance), violating noBaselineDrop.",
+    "scoutDepth fell from 5.00 to 4.85 (drop 0.15 exceeds 0.15 tolerance), violating noBaselineDrop.",
+    "synthesis fell from 4.65 to 4.50 (drop 0.15 exceeds 0.15 tolerance), violating noBaselineDrop."
+  ],
+  "couplingNotes": [],
+  "reason": "clarification improved by 0.15, below the 0.20 threshold. Target dimension clarification did not clear the target-progress gate. toolSelection fell from 5.00 to 4.80 (drop 0.20 exceeds 0.15 tolerance), violating noBaselineDrop. scoutDepth fell from 5.00 to 4.85 (drop 0.15 exceeds 0.15 tolerance), violating noBaselineDrop. synthesis fell from 4.65 to 4.50 (drop 0.15 exceeds 0.15 tolerance), violating noBaselineDrop. Stop as a plateau because the loop found some progress signal, but not enough to clear the gates and no alternative ready dimension remains below 4.0.",
+  "northStar": {
+    "weightedRuntimeValueBefore": 0.9733,
+    "weightedRuntimeValueAfter": 0.9656,
+    "delta": -0.0077,
+    "formula": "0.7 * (avgDimensionScore / 5) + 0.3 * harnessPassRate"
+  },
+  "thresholds": {
+    "targetImprovement": 0.2,
+    "hardRegression": -0.3,
+    "baselineDropTolerance": 0.15,
+    "readyDimension": 4,
+    "clusterDropAbsolute": 2,
+    "clusterDropRatio": 0.2,
+    "maxRejectionsPerDimension": 2
+  },
+  "traceContext": {
+    "preReviewTraceCount": 20,
+    "postReviewTraceCount": 20,
+    "iteration": 3,
+    "maxIterations": 5
+  },
+  "usedArtifactPaths": {
+    "preReviewPath": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.control-reverted-baseline.json",
+    "postReviewPath": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-stage-review.post-clarification-fix.json",
+    "regressionPath": "/Users/alex/Documents/context/artifacts/validation/runtime-research-regression/runtime-research-regression.latest.json",
+    "manifestPath": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-experiment-manifest.latest.json",
+    "runLogPath": "/Users/alex/Documents/context-sdk/examples/server/kalshi-contributor/validation/runtime-research-log.json"
+  }
+}
