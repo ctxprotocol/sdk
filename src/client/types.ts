@@ -69,7 +69,7 @@ export interface McpToolMeta {
   /** Whether this method can be selected in query mode */
   queryEligible?: boolean;
 
-  /** Declared latency class for metadata-scout/runtime gating */
+  /** Declared latency class for runtime gating */
   latencyClass?: McpToolLatencyClass;
 
   /** Method-level pricing metadata */
@@ -85,7 +85,7 @@ export interface McpToolMeta {
   contextRequirements?: string[];
 
   /**
-   * Optional metadata-scout/runtime pacing hints.
+   * Optional runtime pacing hints.
    * Tool contributors can publish these to reduce rate-limit failures.
    */
   rateLimit?: McpToolRateLimitHints;
@@ -583,8 +583,8 @@ export interface QueryClarificationDiagnostics {
  *
  * Unlike `execute()` which calls a single tool once, `query()` sends a
  * natural-language question and lets the server handle the live librarian
- * pipeline (`discover -> select -> metadata scout -> clarify if needed ->
- * iterative execute -> synthesize -> settle`).
+ * pipeline (`discover -> select -> iterative execute (with in-loop
+ * clarification if needed) -> synthesize -> settle`).
  * One flat fee covers up to 100 MCP skill calls per tool.
  */
 export interface QueryOptions {
@@ -663,8 +663,7 @@ export interface QueryOptions {
   /**
    * Include machine-readable developer trace output for this query response.
    * When enabled, the server may return summary counters plus diagnostics
-   * for lane selection, metadata scout adequacy, clarification, and iterative
-   * execution behavior.
+   * for tool selection, clarification, and iterative execution behavior.
    */
   includeDeveloperTrace?: boolean;
 
@@ -696,7 +695,7 @@ export interface QueryDeveloperTraceLoopInfo {
 }
 
 /**
- * Tool selection metadata attached to discovery and metadata-scout diagnostics.
+ * Tool selection metadata attached to discovery diagnostics.
  */
 export interface QueryDeveloperTraceToolSelection {
   toolId: string;
@@ -961,8 +960,8 @@ export interface QueryForkReference extends QueryAttemptReference {
 
 /**
  * Public continuation state returned by headless Query responses.
- * Internal selected-tool lineage, Scout reuse, and clarification snapshots
- * remain durable server state but are not exposed as chat-style payloads.
+ * Internal selected-tool lineage and clarification snapshots remain durable
+ * server state but are not exposed as chat-style payloads.
  */
 export interface QuerySessionState {
   sessionId: string;
