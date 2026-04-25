@@ -469,11 +469,71 @@ export type QueryResponseEnvelopeViewType =
   | "heatmap"
   | "timeseries";
 
+/**
+ * Supported high-level chart kinds produced by the librarian's
+ * code interpreter. Each chart artifact is a structured spec + data pair
+ * the SDK consumer can render with their preferred chart library
+ * (the first-party UI uses Recharts via shadcn/ui).
+ */
+export type QueryChartType = "line" | "bar" | "area" | "scatter" | "composed";
+
+/** Per-series rendering hint for a structured chart artifact. */
+export type QueryChartSeriesType = "line" | "bar" | "area" | "scatter";
+
+/** Axis kind hint used by structured chart artifacts. */
+export type QueryChartAxisType = "time" | "category" | "number";
+
+/** Axis value formatter hint used by structured chart artifacts. */
+export type QueryChartValueFormat =
+  | "number"
+  | "percent"
+  | "currency"
+  | "compact";
+
+/** Allowed primitive cell value inside a chart data row. */
+export type QueryChartDataValue = string | number | null;
+
+/** A single data row keyed by `xKey` plus each series key. */
+export type QueryChartDataRow = Record<string, QueryChartDataValue>;
+
+/** Single series entry inside a structured chart spec. */
+export interface QueryChartSeries {
+  key: string;
+  label?: string;
+  type?: QueryChartSeriesType;
+}
+
+/** Optional axis configuration for a structured chart spec. */
+export interface QueryChartAxis {
+  type?: QueryChartAxisType;
+  label?: string;
+  format?: QueryChartValueFormat;
+}
+
+/** Structured chart spec describing layout for a chart artifact. */
+export interface QueryChartSpec {
+  type: QueryChartType;
+  xKey: string;
+  series: QueryChartSeries[];
+  xAxis?: QueryChartAxis;
+  yAxis?: QueryChartAxis;
+  legend?: boolean;
+  stacked?: boolean;
+}
+
+/**
+ * Computed artifact emitted by the librarian's code interpreter.
+ *
+ * Charts are returned as a structured `{ spec, data }` pair so SDK consumers
+ * can render them with any compatible charting library. The first-party web UI
+ * renders these specs with Recharts. Metric tables are rendered as compact
+ * key-value tables.
+ */
 export type QueryComputedArtifact =
   | {
       kind: "chart";
-      mimeType: "image/svg+xml";
-      data: string;
+      spec: QueryChartSpec;
+      data: QueryChartDataRow[];
       title?: string;
     }
   | {

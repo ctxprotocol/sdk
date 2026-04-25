@@ -517,6 +517,66 @@ type QueryClarificationPolicy = "return" | "auto" | "error";
 type QueryOutcomeType = "answer" | "clarification_required" | "capability_miss";
 type QueryResponseShape = "answer" | "answer_with_evidence" | "evidence_only";
 type QueryResponseEnvelopeViewType = "table" | "leaderboard" | "heatmap" | "timeseries";
+/**
+ * Supported high-level chart kinds produced by the librarian's
+ * code interpreter. Each chart artifact is a structured spec + data pair
+ * the SDK consumer can render with their preferred chart library
+ * (the first-party UI uses Recharts via shadcn/ui).
+ */
+type QueryChartType = "line" | "bar" | "area" | "scatter" | "composed";
+/** Per-series rendering hint for a structured chart artifact. */
+type QueryChartSeriesType = "line" | "bar" | "area" | "scatter";
+/** Axis kind hint used by structured chart artifacts. */
+type QueryChartAxisType = "time" | "category" | "number";
+/** Axis value formatter hint used by structured chart artifacts. */
+type QueryChartValueFormat = "number" | "percent" | "currency" | "compact";
+/** Allowed primitive cell value inside a chart data row. */
+type QueryChartDataValue = string | number | null;
+/** A single data row keyed by `xKey` plus each series key. */
+type QueryChartDataRow = Record<string, QueryChartDataValue>;
+/** Single series entry inside a structured chart spec. */
+interface QueryChartSeries {
+    key: string;
+    label?: string;
+    type?: QueryChartSeriesType;
+}
+/** Optional axis configuration for a structured chart spec. */
+interface QueryChartAxis {
+    type?: QueryChartAxisType;
+    label?: string;
+    format?: QueryChartValueFormat;
+}
+/** Structured chart spec describing layout for a chart artifact. */
+interface QueryChartSpec {
+    type: QueryChartType;
+    xKey: string;
+    series: QueryChartSeries[];
+    xAxis?: QueryChartAxis;
+    yAxis?: QueryChartAxis;
+    legend?: boolean;
+    stacked?: boolean;
+}
+/**
+ * Computed artifact emitted by the librarian's code interpreter.
+ *
+ * Charts are returned as a structured `{ spec, data }` pair so SDK consumers
+ * can render them with any compatible charting library. The first-party web UI
+ * renders these specs with Recharts. Metric tables are rendered as compact
+ * key-value tables.
+ */
+type QueryComputedArtifact = {
+    kind: "chart";
+    spec: QueryChartSpec;
+    data: QueryChartDataRow[];
+    title?: string;
+} | {
+    kind: "metric_table";
+    title?: string;
+    rows: Array<{
+        metric: string;
+        value: string;
+    }>;
+};
 interface QueryClarificationOption {
     id: string;
     toolId: string;
@@ -1096,6 +1156,8 @@ interface QueryBaseResult {
     data?: unknown;
     /** Optional blob URL for persisted execution data (when includeDataUrl=true) */
     dataUrl?: string;
+    /** Optional derived artifacts emitted by code_interpreter in answer mode. */
+    computedArtifacts?: QueryComputedArtifact[];
     /** Optional machine-readable Developer Mode trace payload */
     developerTrace?: QueryDeveloperTrace;
     /** Optional orchestration outcome metrics for benchmarking and rollout analysis */
@@ -1191,4 +1253,4 @@ declare class ContextError extends Error {
     constructor(message: string, code?: (ContextErrorCode | string) | undefined, statusCode?: number | undefined, helpUrl?: string | undefined);
 }
 
-export { type QueryForkReference as $, type SearchCandidateProvenance as A, ContextError as B, type ContributorSearchResolution as C, type ContextClientOptions as D, type McpToolMeta as E, type McpToolRateLimitHints as F, type SearchResponse as G, type SearchOptions as H, type ExecuteOptions as I, type ExecuteSessionStartOptions as J, type ExecuteSessionStatus as K, type ExecuteSessionSpend as L, type McpTool as M, type ExecuteSessionResult as N, type ExecutionResult as O, type ExecuteApiSuccessResponse as P, type QueryDeveloperTrace as Q, type ResolveContributorSearchParams as R, type SearchCandidate as S, type Tool as T, type ExecuteApiErrorResponse as U, type ExecuteApiResponse as V, type ExecuteSessionApiSuccessResponse as W, type ExecuteSessionApiResponse as X, type QueryDeepMode as Y, type QueryAttemptForkReason as Z, type QueryAttemptReference as _, type ContributorSearchMetadata as a, type QueryOptions as a0, type QueryResult as a1, type QuerySessionState as a2, type QueryToolUsage as a3, type QueryCost as a4, type QueryCompletenessRepairEvent as a5, type QueryDeveloperTraceDiagnostics as a6, type QueryDeveloperTraceSummary as a7, type QueryDeveloperTraceStep as a8, type QueryDeveloperTraceToolRef as a9, type QueryDeveloperTraceLoopInfo as aa, type QueryApiSuccessResponse as ab, type QueryApiResponse as ac, type QueryStreamEvent as ad, type QueryStreamToolStatusEvent as ae, type QueryStreamTextDeltaEvent as af, type QueryStreamDeveloperTraceEvent as ag, type QueryStreamDoneEvent as ah, type QueryStreamErrorEvent as ai, type UpdateToolOptions as aj, type UpdateToolResult as ak, type ContextErrorCode as al, type QueryClarificationPayload as am, type QueryClarificationOption as an, type QueryClarificationPolicy as ao, type QueryCapabilityMissPayload as ap, type QueryAssumptionMetadata as aq, type QueryOutcomeType as ar, type ToolCategory as as, ALLOWED_TOOL_CATEGORIES as at, type SearchShortlist as b, type SearchIntent as c, type ContributorSearchConfig as d, type ContributorSearchResolvedConfig as e, type ContributorSearchTraceRecord as f, type ContributorSearchValidationCaseKind as g, type ContributorSearchValidationExpectation as h, type ContributorSearchValidationArtifact as i, ContributorSearchBudgetExceededError as j, CONTRIBUTOR_SEARCH_METADATA_VERSION as k, CONTRIBUTOR_SEARCH_VALIDATION_VERSION as l, type ContributorSearchConfidence as m, type ContributorSearchDegradedOutcome as n, type ContributorSearchDegradedOutcomePolicy as o, type ContributorSearchDegradedReasonCode as p, type ContributorSearchJudge as q, type ContributorSearchJudgeContext as r, type ContributorSearchJudgeInput as s, type ContributorSearchJudgeResult as t, type ContributorSearchJudgeSnapshot as u, type ContributorSearchJudgeUsage as v, type ContributorSearchMetadataSource as w, type ContributorSearchOutcome as x, type ContributorSearchTraceSummary as y, type ContributorSearchValidatorStatus as z };
+export { type QueryForkReference as $, type SearchCandidateProvenance as A, ContextError as B, type ContributorSearchResolution as C, type ContextClientOptions as D, type McpToolMeta as E, type McpToolRateLimitHints as F, type SearchResponse as G, type SearchOptions as H, type ExecuteOptions as I, type ExecuteSessionStartOptions as J, type ExecuteSessionStatus as K, type ExecuteSessionSpend as L, type McpTool as M, type ExecuteSessionResult as N, type ExecutionResult as O, type ExecuteApiSuccessResponse as P, type QueryDeveloperTrace as Q, type ResolveContributorSearchParams as R, type SearchCandidate as S, type Tool as T, type ExecuteApiErrorResponse as U, type ExecuteApiResponse as V, type ExecuteSessionApiSuccessResponse as W, type ExecuteSessionApiResponse as X, type QueryDeepMode as Y, type QueryAttemptForkReason as Z, type QueryAttemptReference as _, type ContributorSearchMetadata as a, type QueryOptions as a0, type QueryResult as a1, type QuerySessionState as a2, type QueryToolUsage as a3, type QueryCost as a4, type QueryCompletenessRepairEvent as a5, type QueryDeveloperTraceDiagnostics as a6, type QueryDeveloperTraceSummary as a7, type QueryDeveloperTraceStep as a8, type QueryDeveloperTraceToolRef as a9, type QueryChartAxis as aA, type QueryChartSpec as aB, type ToolCategory as aC, ALLOWED_TOOL_CATEGORIES as aD, type QueryDeveloperTraceLoopInfo as aa, type QueryApiSuccessResponse as ab, type QueryApiResponse as ac, type QueryStreamEvent as ad, type QueryStreamToolStatusEvent as ae, type QueryStreamTextDeltaEvent as af, type QueryStreamDeveloperTraceEvent as ag, type QueryStreamDoneEvent as ah, type QueryStreamErrorEvent as ai, type UpdateToolOptions as aj, type UpdateToolResult as ak, type ContextErrorCode as al, type QueryClarificationPayload as am, type QueryClarificationOption as an, type QueryClarificationPolicy as ao, type QueryCapabilityMissPayload as ap, type QueryAssumptionMetadata as aq, type QueryOutcomeType as ar, type QueryComputedArtifact as as, type QueryChartType as at, type QueryChartSeriesType as au, type QueryChartAxisType as av, type QueryChartValueFormat as aw, type QueryChartDataValue as ax, type QueryChartDataRow as ay, type QueryChartSeries as az, type SearchShortlist as b, type SearchIntent as c, type ContributorSearchConfig as d, type ContributorSearchResolvedConfig as e, type ContributorSearchTraceRecord as f, type ContributorSearchValidationCaseKind as g, type ContributorSearchValidationExpectation as h, type ContributorSearchValidationArtifact as i, ContributorSearchBudgetExceededError as j, CONTRIBUTOR_SEARCH_METADATA_VERSION as k, CONTRIBUTOR_SEARCH_VALIDATION_VERSION as l, type ContributorSearchConfidence as m, type ContributorSearchDegradedOutcome as n, type ContributorSearchDegradedOutcomePolicy as o, type ContributorSearchDegradedReasonCode as p, type ContributorSearchJudge as q, type ContributorSearchJudgeContext as r, type ContributorSearchJudgeInput as s, type ContributorSearchJudgeResult as t, type ContributorSearchJudgeSnapshot as u, type ContributorSearchJudgeUsage as v, type ContributorSearchMetadataSource as w, type ContributorSearchOutcome as x, type ContributorSearchTraceSummary as y, type ContributorSearchValidatorStatus as z };
