@@ -469,6 +469,19 @@ export type QueryResponseEnvelopeViewType =
   | "heatmap"
   | "timeseries";
 
+export type QueryComputedArtifact =
+  | {
+      kind: "chart";
+      mimeType: "image/svg+xml";
+      data: string;
+      title?: string;
+    }
+  | {
+      kind: "metric_table";
+      title?: string;
+      rows: Array<{ metric: string; value: string }>;
+    };
+
 export interface QueryClarificationOption {
   id: string;
   toolId: string;
@@ -1177,6 +1190,9 @@ export interface QueryBaseResult {
 
   /** Optional blob URL for persisted execution data (when includeDataUrl=true) */
   dataUrl?: string;
+
+  /** Optional derived artifacts emitted by code_interpreter in answer mode. */
+  computedArtifacts?: QueryComputedArtifact[];
 
   /** Optional machine-readable Developer Mode trace payload */
   developerTrace?: QueryDeveloperTrace;
