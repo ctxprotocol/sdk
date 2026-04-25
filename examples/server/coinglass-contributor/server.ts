@@ -206,6 +206,8 @@ class RateLimiter {
   private lastRefill: number;
   private readonly maxTokens: number;
   private readonly refillRate: number;
+  private nextAvailableAt = 0;
+  private pendingAcquire: Promise<void> = Promise.resolve();
 
   constructor(maxRequestsPerMinute: number) {
     this.maxTokens = maxRequestsPerMinute;
@@ -215,21 +217,34 @@ class RateLimiter {
   }
 
   async acquire(scope: string): Promise<void> {
-    this.refill();
-    if (this.tokens >= 1) {
-      this.tokens -= 1;
-      return;
-    }
-    const waitMs = Math.ceil((1 - this.tokens) / this.refillRate);
-    console.warn("[coinglass-rate] wait", {
-      scope,
-      waitMs,
-      maxRequestsPerMinute: this.maxTokens,
-      cooldownMs: Math.ceil(60_000 / this.maxTokens),
+    let release: () => void = () => {};
+    const previousAcquire = this.pendingAcquire;
+    this.pendingAcquire = new Promise((resolve) => {
+      release = resolve;
     });
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
-    this.refill();
-    this.tokens -= 1;
+    await previousAcquire;
+
+    try {
+      this.refill();
+      if (this.tokens >= 1) {
+        this.tokens -= 1;
+        await this.waitForCooldown(scope);
+        return;
+      }
+      const waitMs = Math.ceil((1 - this.tokens) / this.refillRate);
+      console.warn("[coinglass-rate] wait", {
+        scope,
+        waitMs,
+        maxRequestsPerMinute: this.maxTokens,
+        cooldownMs: Math.ceil(60_000 / this.maxTokens),
+      });
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      this.refill();
+      this.tokens -= 1;
+      await this.waitForCooldown(scope);
+    } finally {
+      release();
+    }
   }
 
   private refill(): void {
@@ -237,6 +252,22 @@ class RateLimiter {
     const elapsed = now - this.lastRefill;
     this.tokens = Math.min(this.maxTokens, this.tokens + elapsed * this.refillRate);
     this.lastRefill = now;
+  }
+
+  private async waitForCooldown(scope: string): Promise<void> {
+    const now = Date.now();
+    const waitMs = Math.max(0, this.nextAvailableAt - now);
+    this.nextAvailableAt =
+      Math.max(now, this.nextAvailableAt) + COINGLASS_RATE_LIMIT_COOLDOWN_MS;
+    if (waitMs === 0) {
+      return;
+    }
+    console.warn("[coinglass-rate] cooldown", {
+      scope,
+      waitMs,
+      cooldownMs: COINGLASS_RATE_LIMIT_COOLDOWN_MS,
+    });
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
   }
 }
 
@@ -277,6 +308,7 @@ const cache = new TtlCache();
 const CACHE_TTL_SHORT = 30_000;
 const CACHE_TTL_MEDIUM = 120_000;
 const CACHE_TTL_LONG = 300_000;
+const COINGLASS_FETCH_TIMEOUT_MS = 12_000;
 
 function buildToolRateLimitMetadata(toolName: string): ToolRateLimitMetadata {
   const recommendedBatchTools = TOOL_BATCH_HINTS[toolName] ?? [];
@@ -1423,9 +1455,15 @@ async function coinglassGet(endpoint: string, params: Record<string, string | nu
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== "") url.searchParams.set(k, String(v));
   }
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    COINGLASS_FETCH_TIMEOUT_MS
+  );
   const res = await fetch(url.toString(), {
     headers: { "accept": "application/json", "CG-API-KEY": API_KEY },
-  });
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timeout));
   if (!res.ok) {
     const responseText = await res.text();
     console.error("[coinglass-api] http_error", {
@@ -1521,8 +1559,22 @@ async function assertCoinglassApiAccessible(): Promise<void> {
 type CoinMarketsRow = {
   symbol?: string;
   open_interest_usd?: number;
+  open_interest_quantity?: number;
+  open_interest_change_percent_1h?: number;
+  open_interest_change_percent_4h?: number;
+  open_interest_change_percent_24h?: number;
   market_cap_usd?: number;
   current_price?: number;
+};
+
+type OpenInterestSnapshot = {
+  symbol: string;
+  totalOiUsd: number;
+  totalOiQuantity: number;
+  oiChange1h: number;
+  oiChange4h: number;
+  oiChange24h: number;
+  exchangeCount: number;
 };
 
 function normalizeCoinSymbols(input: unknown[], max: number): string[] {
@@ -1666,6 +1718,48 @@ function pickNumericValue(row: Record<string, unknown> | null, keys: string[]): 
     }
   }
   return null;
+}
+
+async function getOpenInterestSnapshotBySymbol(
+  symbols: string[]
+): Promise<Map<string, OpenInterestSnapshot>> {
+  const snapshots = new Map<string, OpenInterestSnapshot>();
+
+  for (const symbol of symbols) {
+    try {
+      const data = await coinglassGet(
+        "/api/futures/open-interest/exchange-list",
+        { symbol },
+        CACHE_TTL_SHORT
+      );
+      const exchanges = Array.isArray(data)
+        ? (data as Array<Record<string, unknown>>)
+        : [];
+      const all =
+        exchanges.find((exchange) => exchange.exchange === "All") ?? null;
+      snapshots.set(symbol, {
+        symbol,
+        totalOiUsd: pickNumericValue(all, ["open_interest_usd"]) ?? 0,
+        totalOiQuantity:
+          pickNumericValue(all, ["open_interest_quantity"]) ?? 0,
+        oiChange1h:
+          pickNumericValue(all, ["open_interest_change_percent_1h"]) ?? 0,
+        oiChange4h:
+          pickNumericValue(all, ["open_interest_change_percent_4h"]) ?? 0,
+        oiChange24h:
+          pickNumericValue(all, ["open_interest_change_percent_24h"]) ?? 0,
+        exchangeCount: Math.max(0, exchanges.length - 1),
+      });
+    } catch (error) {
+      console.warn("[coinglass-oi] symbol_fetch_failed", {
+        symbol,
+        reason: error instanceof Error ? error.message : "unknown_error",
+      });
+      continue;
+    }
+  }
+
+  return snapshots;
 }
 
 // ============================================================================
@@ -2490,7 +2584,7 @@ async function handleScanOiDivergence(args: Record<string, unknown> | undefined)
     fgSentiment = fgValue >= 75 ? "Extreme Greed" : fgValue >= 55 ? "Greed" : fgValue >= 45 ? "Neutral" : fgValue >= 25 ? "Fear" : "Extreme Fear";
   }
 
-  const BATCH_SIZE = 10;
+  const oiSnapshotBySymbol = await getOpenInterestSnapshotBySymbol(targetCoins);
   const oiResults: Array<{
     symbol: string;
     totalOiUsd: number;
@@ -2500,35 +2594,19 @@ async function handleScanOiDivergence(args: Record<string, unknown> | undefined)
     exchanges: number;
   }> = [];
 
-  for (let i = 0; i < targetCoins.length; i += BATCH_SIZE) {
-    const batch = targetCoins.slice(i, i + BATCH_SIZE);
-    const results = await Promise.all(
-      batch.map(async (symbol) => {
-        try {
-          const data = await coinglassGet("/api/futures/open-interest/exchange-list", { symbol }, CACHE_TTL_SHORT);
-          const exchanges = Array.isArray(data) ? data : [];
-          const all = exchanges.find((e: { exchange?: string }) => e.exchange === "All") as {
-            open_interest_usd?: number;
-            open_interest_change_percent_1h?: number;
-            open_interest_change_percent_4h?: number;
-            open_interest_change_percent_24h?: number;
-          } | undefined;
-          return {
-            symbol,
-            totalOiUsd: all?.open_interest_usd ?? 0,
-            oiChange1h: all?.open_interest_change_percent_1h ?? 0,
-            oiChange4h: all?.open_interest_change_percent_4h ?? 0,
-            oiChange24h: all?.open_interest_change_percent_24h ?? 0,
-            exchanges: exchanges.length - 1,
-          };
-        } catch {
-          return null;
-        }
-      })
-    );
-    for (const r of results) {
-      if (r) oiResults.push(r);
+  for (const symbol of targetCoins) {
+    const snapshot = oiSnapshotBySymbol.get(symbol);
+    if (!snapshot) {
+      continue;
     }
+    oiResults.push({
+      symbol,
+      totalOiUsd: snapshot.totalOiUsd,
+      oiChange1h: snapshot.oiChange1h,
+      oiChange4h: snapshot.oiChange4h,
+      oiChange24h: snapshot.oiChange24h,
+      exchanges: snapshot.exchangeCount,
+    });
   }
 
   const isFearful = fgValue < 45;
@@ -2598,7 +2676,7 @@ async function handleScanOiDivergence(args: Record<string, unknown> | undefined)
     recommendation,
     confidence: oiResults.length >= 20 ? 0.8 : oiResults.length >= 10 ? 0.7 : 0.6,
     limitations: "Hobbyist tier: Long/short ratio data not available. Divergence based on OI changes + Fear & Greed sentiment.",
-    dataSources: ["open-interest/exchange-list", "fear-greed-history", "bull-market-peak-indicator"],
+    dataSources: ["open-interest/exchange-list", "fear-greed-history"],
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -2626,38 +2704,30 @@ async function handleGetOiBatch(args: Record<string, unknown> | undefined): Prom
     });
   }
 
-  const BATCH_SIZE = 8;
+  const oiSnapshotBySymbol = await getOpenInterestSnapshotBySymbol(targetSymbols);
   const results: Array<Record<string, unknown>> = [];
 
-  for (let i = 0; i < targetSymbols.length; i += BATCH_SIZE) {
-    const batch = targetSymbols.slice(i, i + BATCH_SIZE);
-    const batchResults = await Promise.all(
-      batch.map(async (symbol) => {
-        try {
-          const data = await coinglassGet("/api/futures/open-interest/exchange-list", { symbol }, CACHE_TTL_SHORT);
-          const exchanges = Array.isArray(data) ? data : [];
-          const all = exchanges.find((e: { exchange?: string }) => e.exchange === "All") as {
-            open_interest_usd?: number;
-            open_interest_quantity?: number;
-            open_interest_change_percent_1h?: number;
-            open_interest_change_percent_4h?: number;
-            open_interest_change_percent_24h?: number;
-          } | undefined;
-          return {
-            symbol,
-            total_oi_usd: all?.open_interest_usd ?? 0,
-            total_oi_quantity: all?.open_interest_quantity ?? 0,
-            oi_change_1h: all?.open_interest_change_percent_1h ?? 0,
-            oi_change_4h: all?.open_interest_change_percent_4h ?? 0,
-            oi_change_24h: all?.open_interest_change_percent_24h ?? 0,
-            exchange_count: exchanges.length - 1,
-          };
-        } catch {
-          return { symbol, error: "Failed to fetch OI data", total_oi_usd: 0 };
-        }
-      })
-    );
-    results.push(...batchResults);
+  for (const symbol of targetSymbols) {
+    const snapshot = oiSnapshotBySymbol.get(symbol);
+    if (!snapshot) {
+      results.push({
+        symbol,
+        error: "Failed to fetch OI data from Coinglass open-interest exchange-list",
+        total_oi_usd: 0,
+        data_source: "open-interest/exchange-list",
+      });
+      continue;
+    }
+    results.push({
+      symbol,
+      total_oi_usd: snapshot.totalOiUsd,
+      total_oi_quantity: snapshot.totalOiQuantity,
+      oi_change_1h: snapshot.oiChange1h,
+      oi_change_4h: snapshot.oiChange4h,
+      oi_change_24h: snapshot.oiChange24h,
+      exchange_count: snapshot.exchangeCount,
+      data_source: "open-interest/exchange-list",
+    });
   }
 
   return successResult({
