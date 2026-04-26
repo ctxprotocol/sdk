@@ -37,6 +37,8 @@ export {
 export type {
   ContextClientOptions,
   Tool,
+  SuggestedPrompt,
+  SuggestedPromptSource,
   McpTool,
   McpToolMeta,
   McpToolRateLimitHints,

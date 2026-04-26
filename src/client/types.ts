@@ -55,6 +55,18 @@ export interface McpToolRateLimitHints {
 export type DiscoveryMode = "query" | "execute";
 export type McpToolSurface = "answer" | "execute" | "both";
 export type McpToolLatencyClass = "instant" | "fast" | "slow" | "streaming";
+export type SuggestedPromptSource = "contributor" | "platform" | "sdk";
+
+export interface SuggestedPrompt {
+  /** Prompt text shown as a clickable example in the Context app */
+  text: string;
+
+  /** Where this prompt came from */
+  source: SuggestedPromptSource;
+
+  /** Optional display hint for the listing price */
+  priceHint?: string;
+}
 
 export interface McpToolPricingMeta {
   executeUsd?: string;
@@ -160,6 +172,9 @@ export interface Tool {
 
   /** Description of what the tool does */
   description: string;
+
+  /** Clickable example questions shown in the Context app */
+  suggestedPrompts?: SuggestedPrompt[];
 
   /** Price per execution in USDC */
   price: string;
@@ -280,6 +295,9 @@ export interface UpdateToolOptions {
   /** New marketplace description */
   description?: string;
 
+  /** Validated example questions shown as clickable prompts in the Context app */
+  suggestedPrompts?: SuggestedPrompt[];
+
   /** New category -- must be one of the predefined marketplace categories */
   category?: ToolCategory | null;
 }
@@ -291,6 +309,7 @@ export interface UpdateToolResult {
   id: string;
   name: string;
   description: string;
+  suggestedPrompts: SuggestedPrompt[];
   category: string | null;
   updatedAt: string;
 }
@@ -475,7 +494,15 @@ export type QueryResponseEnvelopeViewType =
  * the SDK consumer can render with their preferred chart library
  * (the first-party UI uses Recharts via shadcn/ui).
  */
-export type QueryChartType = "line" | "bar" | "area" | "scatter" | "composed";
+export type QueryChartType =
+  | "line"
+  | "bar"
+  | "area"
+  | "scatter"
+  | "composed"
+  | "histogram"
+  | "heatmap"
+  | "candlestick";
 
 /** Per-series rendering hint for a structured chart artifact. */
 export type QueryChartSeriesType = "line" | "bar" | "area" | "scatter";
@@ -501,6 +528,7 @@ export interface QueryChartSeries {
   key: string;
   label?: string;
   type?: QueryChartSeriesType;
+  errorKey?: string;
 }
 
 /** Optional axis configuration for a structured chart spec. */
@@ -519,6 +547,27 @@ export interface QueryChartSpec {
   yAxis?: QueryChartAxis;
   legend?: boolean;
   stacked?: boolean;
+  brush?: boolean;
+  referenceLines?: Array<{
+    axis: "x" | "y";
+    value: string | number;
+    label?: string;
+  }>;
+  referenceAreas?: Array<{
+    x1?: string | number;
+    x2?: string | number;
+    y1?: number;
+    y2?: number;
+    label?: string;
+  }>;
+  yKey?: string;
+  valueKey?: string;
+  ohlc?: {
+    openKey: string;
+    highKey: string;
+    lowKey: string;
+    closeKey: string;
+  };
 }
 
 /**

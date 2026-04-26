@@ -227,6 +227,15 @@ interface McpToolRateLimitHints {
 type DiscoveryMode = "query" | "execute";
 type McpToolSurface = "answer" | "execute" | "both";
 type McpToolLatencyClass = "instant" | "fast" | "slow" | "streaming";
+type SuggestedPromptSource = "contributor" | "platform" | "sdk";
+interface SuggestedPrompt {
+    /** Prompt text shown as a clickable example in the Context app */
+    text: string;
+    /** Where this prompt came from */
+    source: SuggestedPromptSource;
+    /** Optional display hint for the listing price */
+    priceHint?: string;
+}
 interface McpToolPricingMeta {
     executeUsd?: string;
     queryUsd?: string;
@@ -306,6 +315,8 @@ interface Tool {
     name: string;
     /** Description of what the tool does */
     description: string;
+    /** Clickable example questions shown in the Context app */
+    suggestedPrompts?: SuggestedPrompt[];
     /** Price per execution in USDC */
     price: string;
     /** Tool category (e.g., "defi", "nft") */
@@ -382,6 +393,8 @@ interface UpdateToolOptions {
     name?: string;
     /** New marketplace description */
     description?: string;
+    /** Validated example questions shown as clickable prompts in the Context app */
+    suggestedPrompts?: SuggestedPrompt[];
     /** New category -- must be one of the predefined marketplace categories */
     category?: ToolCategory | null;
 }
@@ -392,6 +405,7 @@ interface UpdateToolResult {
     id: string;
     name: string;
     description: string;
+    suggestedPrompts: SuggestedPrompt[];
     category: string | null;
     updatedAt: string;
 }
@@ -523,7 +537,7 @@ type QueryResponseEnvelopeViewType = "table" | "leaderboard" | "heatmap" | "time
  * the SDK consumer can render with their preferred chart library
  * (the first-party UI uses Recharts via shadcn/ui).
  */
-type QueryChartType = "line" | "bar" | "area" | "scatter" | "composed";
+type QueryChartType = "line" | "bar" | "area" | "scatter" | "composed" | "histogram" | "heatmap" | "candlestick";
 /** Per-series rendering hint for a structured chart artifact. */
 type QueryChartSeriesType = "line" | "bar" | "area" | "scatter";
 /** Axis kind hint used by structured chart artifacts. */
@@ -539,6 +553,7 @@ interface QueryChartSeries {
     key: string;
     label?: string;
     type?: QueryChartSeriesType;
+    errorKey?: string;
 }
 /** Optional axis configuration for a structured chart spec. */
 interface QueryChartAxis {
@@ -555,6 +570,27 @@ interface QueryChartSpec {
     yAxis?: QueryChartAxis;
     legend?: boolean;
     stacked?: boolean;
+    brush?: boolean;
+    referenceLines?: Array<{
+        axis: "x" | "y";
+        value: string | number;
+        label?: string;
+    }>;
+    referenceAreas?: Array<{
+        x1?: string | number;
+        x2?: string | number;
+        y1?: number;
+        y2?: number;
+        label?: string;
+    }>;
+    yKey?: string;
+    valueKey?: string;
+    ohlc?: {
+        openKey: string;
+        highKey: string;
+        lowKey: string;
+        closeKey: string;
+    };
 }
 /**
  * Computed artifact emitted by the librarian's code interpreter.
@@ -1253,4 +1289,4 @@ declare class ContextError extends Error {
     constructor(message: string, code?: (ContextErrorCode | string) | undefined, statusCode?: number | undefined, helpUrl?: string | undefined);
 }
 
-export { type QueryForkReference as $, type SearchCandidateProvenance as A, ContextError as B, type ContributorSearchResolution as C, type ContextClientOptions as D, type McpToolMeta as E, type McpToolRateLimitHints as F, type SearchResponse as G, type SearchOptions as H, type ExecuteOptions as I, type ExecuteSessionStartOptions as J, type ExecuteSessionStatus as K, type ExecuteSessionSpend as L, type McpTool as M, type ExecuteSessionResult as N, type ExecutionResult as O, type ExecuteApiSuccessResponse as P, type QueryDeveloperTrace as Q, type ResolveContributorSearchParams as R, type SearchCandidate as S, type Tool as T, type ExecuteApiErrorResponse as U, type ExecuteApiResponse as V, type ExecuteSessionApiSuccessResponse as W, type ExecuteSessionApiResponse as X, type QueryDeepMode as Y, type QueryAttemptForkReason as Z, type QueryAttemptReference as _, type ContributorSearchMetadata as a, type QueryOptions as a0, type QueryResult as a1, type QuerySessionState as a2, type QueryToolUsage as a3, type QueryCost as a4, type QueryCompletenessRepairEvent as a5, type QueryDeveloperTraceDiagnostics as a6, type QueryDeveloperTraceSummary as a7, type QueryDeveloperTraceStep as a8, type QueryDeveloperTraceToolRef as a9, type QueryChartAxis as aA, type QueryChartSpec as aB, type ToolCategory as aC, ALLOWED_TOOL_CATEGORIES as aD, type QueryDeveloperTraceLoopInfo as aa, type QueryApiSuccessResponse as ab, type QueryApiResponse as ac, type QueryStreamEvent as ad, type QueryStreamToolStatusEvent as ae, type QueryStreamTextDeltaEvent as af, type QueryStreamDeveloperTraceEvent as ag, type QueryStreamDoneEvent as ah, type QueryStreamErrorEvent as ai, type UpdateToolOptions as aj, type UpdateToolResult as ak, type ContextErrorCode as al, type QueryClarificationPayload as am, type QueryClarificationOption as an, type QueryClarificationPolicy as ao, type QueryCapabilityMissPayload as ap, type QueryAssumptionMetadata as aq, type QueryOutcomeType as ar, type QueryComputedArtifact as as, type QueryChartType as at, type QueryChartSeriesType as au, type QueryChartAxisType as av, type QueryChartValueFormat as aw, type QueryChartDataValue as ax, type QueryChartDataRow as ay, type QueryChartSeries as az, type SearchShortlist as b, type SearchIntent as c, type ContributorSearchConfig as d, type ContributorSearchResolvedConfig as e, type ContributorSearchTraceRecord as f, type ContributorSearchValidationCaseKind as g, type ContributorSearchValidationExpectation as h, type ContributorSearchValidationArtifact as i, ContributorSearchBudgetExceededError as j, CONTRIBUTOR_SEARCH_METADATA_VERSION as k, CONTRIBUTOR_SEARCH_VALIDATION_VERSION as l, type ContributorSearchConfidence as m, type ContributorSearchDegradedOutcome as n, type ContributorSearchDegradedOutcomePolicy as o, type ContributorSearchDegradedReasonCode as p, type ContributorSearchJudge as q, type ContributorSearchJudgeContext as r, type ContributorSearchJudgeInput as s, type ContributorSearchJudgeResult as t, type ContributorSearchJudgeSnapshot as u, type ContributorSearchJudgeUsage as v, type ContributorSearchMetadataSource as w, type ContributorSearchOutcome as x, type ContributorSearchTraceSummary as y, type ContributorSearchValidatorStatus as z };
+export { type QueryAttemptForkReason as $, type SearchCandidateProvenance as A, ContextError as B, type ContributorSearchResolution as C, type ContextClientOptions as D, type SuggestedPrompt as E, type SuggestedPromptSource as F, type McpToolMeta as G, type McpToolRateLimitHints as H, type SearchResponse as I, type SearchOptions as J, type ExecuteOptions as K, type ExecuteSessionStartOptions as L, type McpTool as M, type ExecuteSessionStatus as N, type ExecuteSessionSpend as O, type ExecuteSessionResult as P, type QueryDeveloperTrace as Q, type ResolveContributorSearchParams as R, type SearchCandidate as S, type Tool as T, type ExecutionResult as U, type ExecuteApiSuccessResponse as V, type ExecuteApiErrorResponse as W, type ExecuteApiResponse as X, type ExecuteSessionApiSuccessResponse as Y, type ExecuteSessionApiResponse as Z, type QueryDeepMode as _, type ContributorSearchMetadata as a, type QueryAttemptReference as a0, type QueryForkReference as a1, type QueryOptions as a2, type QueryResult as a3, type QuerySessionState as a4, type QueryToolUsage as a5, type QueryCost as a6, type QueryCompletenessRepairEvent as a7, type QueryDeveloperTraceDiagnostics as a8, type QueryDeveloperTraceSummary as a9, type QueryChartDataRow as aA, type QueryChartSeries as aB, type QueryChartAxis as aC, type QueryChartSpec as aD, type ToolCategory as aE, ALLOWED_TOOL_CATEGORIES as aF, type QueryDeveloperTraceStep as aa, type QueryDeveloperTraceToolRef as ab, type QueryDeveloperTraceLoopInfo as ac, type QueryApiSuccessResponse as ad, type QueryApiResponse as ae, type QueryStreamEvent as af, type QueryStreamToolStatusEvent as ag, type QueryStreamTextDeltaEvent as ah, type QueryStreamDeveloperTraceEvent as ai, type QueryStreamDoneEvent as aj, type QueryStreamErrorEvent as ak, type UpdateToolOptions as al, type UpdateToolResult as am, type ContextErrorCode as an, type QueryClarificationPayload as ao, type QueryClarificationOption as ap, type QueryClarificationPolicy as aq, type QueryCapabilityMissPayload as ar, type QueryAssumptionMetadata as as, type QueryOutcomeType as at, type QueryComputedArtifact as au, type QueryChartType as av, type QueryChartSeriesType as aw, type QueryChartAxisType as ax, type QueryChartValueFormat as ay, type QueryChartDataValue as az, type SearchShortlist as b, type SearchIntent as c, type ContributorSearchConfig as d, type ContributorSearchResolvedConfig as e, type ContributorSearchTraceRecord as f, type ContributorSearchValidationCaseKind as g, type ContributorSearchValidationExpectation as h, type ContributorSearchValidationArtifact as i, ContributorSearchBudgetExceededError as j, CONTRIBUTOR_SEARCH_METADATA_VERSION as k, CONTRIBUTOR_SEARCH_VALIDATION_VERSION as l, type ContributorSearchConfidence as m, type ContributorSearchDegradedOutcome as n, type ContributorSearchDegradedOutcomePolicy as o, type ContributorSearchDegradedReasonCode as p, type ContributorSearchJudge as q, type ContributorSearchJudgeContext as r, type ContributorSearchJudgeInput as s, type ContributorSearchJudgeResult as t, type ContributorSearchJudgeSnapshot as u, type ContributorSearchJudgeUsage as v, type ContributorSearchMetadataSource as w, type ContributorSearchOutcome as x, type ContributorSearchTraceSummary as y, type ContributorSearchValidatorStatus as z };

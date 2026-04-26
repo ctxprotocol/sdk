@@ -19,6 +19,8 @@ export { Query } from "./resources/query.js";
 export type {
   ContextClientOptions,
   Tool,
+  SuggestedPrompt,
+  SuggestedPromptSource,
   McpTool,
   McpToolMeta,
   McpToolRateLimitHints,

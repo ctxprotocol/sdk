@@ -42,10 +42,11 @@ export class Developer {
     if (
       updates.name === undefined &&
       updates.description === undefined &&
+      updates.suggestedPrompts === undefined &&
       updates.category === undefined
     ) {
       throw new ContextError(
-        "At least one field required: name, description, or category"
+        "At least one field required: name, description, suggestedPrompts, or category"
       );
     }
 

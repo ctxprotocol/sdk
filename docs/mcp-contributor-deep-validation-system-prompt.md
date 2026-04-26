@@ -199,6 +199,19 @@ Agent tips:
 
 Banned in description: "mdash", "—", "**" (no bold markdown).
 
+Context stores the `Try asking:` suite as first-class `suggestedPrompts`
+metadata. In the chat app these prompts appear as clickable chips on the tool
+hover card. Clicking a chip pins that tool, fills the composer, and focuses the
+input so the user can review and send normally. Post-submission optimization
+flows should push the validated prompt suite explicitly via the SDK:
+
+```ts
+await client.developer.updateTool(toolId, {
+  description: updatedDescription,
+  suggestedPrompts: validatedPrompts.map((text) => ({ text, source: "sdk" })),
+});
+```
+
 3.4 "Try asking" Quality Bar (critical — these become the validation suite)
 The "Try asking" questions serve a dual purpose:
 

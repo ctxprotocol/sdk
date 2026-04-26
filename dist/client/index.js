@@ -51,9 +51,9 @@ var Developer = class {
     if (!toolId) {
       throw new ContextError("toolId is required");
     }
-    if (updates.name === void 0 && updates.description === void 0 && updates.category === void 0) {
+    if (updates.name === void 0 && updates.description === void 0 && updates.suggestedPrompts === void 0 && updates.category === void 0) {
       throw new ContextError(
-        "At least one field required: name, description, or category"
+        "At least one field required: name, description, suggestedPrompts, or category"
       );
     }
     if (updates.category !== void 0 && updates.category !== null && !ALLOWED_TOOL_CATEGORIES.includes(updates.category)) {
