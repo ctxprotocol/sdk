@@ -1,0 +1,148 @@
+{
+  "runId": "2026-04-27T06:44:52Z",
+  "contributor": "hyperliquid-contributor",
+  "events": [
+    {
+      "timestamp": "2026-04-27T06:46:30Z",
+      "phase": "readiness",
+      "event": "server_check",
+      "detail": "localhost:3000 responded but /api/health returned 404 after retries; continuing because the server process is reachable and this app may not expose /api/health",
+      "durationMs": 67000
+    },
+    {
+      "timestamp": "2026-04-27T06:47:08Z",
+      "phase": "prompts",
+      "event": "live_data_discovery",
+      "detail": "Discovered 230 perpetual markets and 80 spot tokens from Hyperliquid public info endpoints",
+      "marketCount": 230,
+      "spotTokenCount": 80
+    },
+    {
+      "timestamp": "2026-04-27T06:50:00Z",
+      "phase": "prompts",
+      "event": "alpha_researcher_complete",
+      "detail": "19 grounded Hyperliquid-only prompts generated and validated against live snapshot entities",
+      "promptCount": 19,
+      "droppedCount": 0
+    },
+    {
+      "timestamp": "2026-04-27T07:06:06.627Z",
+      "phase": "evaluation",
+      "event": "paid_sweep_complete",
+      "detail": "19/19 paid SDK prompts passed",
+      "successCount": 19,
+      "errorCount": 0,
+      "durationMs": 883558
+    },
+    {
+      "timestamp": "2026-04-27T07:06:06.627Z",
+      "phase": "evaluation",
+      "event": "free_baseline_complete",
+      "detail": "19/19 Gemini baseline attempts completed",
+      "successCount": 19
+    },
+    {
+      "timestamp": "2026-04-27T07:06:06.627Z",
+      "phase": "evaluation",
+      "event": "failure_gate",
+      "detail": "0 deterministic auto-weak responses",
+      "autoWeakCount": 0,
+      "autoWeakPromptIds": []
+    },
+    {
+      "timestamp": "2026-04-27T07:12:50.690Z",
+      "phase": "evaluation",
+      "event": "reviewer_complete",
+      "detail": "Wrote reviewer-evaluation.json",
+      "satisfactionMean": 4.596491228070175,
+      "weakQueryCount": 3,
+      "weakQueryRate": 0.15789473684210525,
+      "baselineBeatenRate": 0.8947368421052632
+    },
+    {
+      "timestamp": "2026-04-27T07:12:50.690Z",
+      "phase": "evaluation",
+      "event": "surface_validation_complete",
+      "detail": "19/19 query prompts and 0/6 representative read methods passed",
+      "failedQueryCount": 0,
+      "failedMethodCount": 6
+    },
+    {
+      "timestamp": "2026-04-27T07:14:14.407Z",
+      "phase": "evaluation",
+      "event": "surface_validation_complete",
+      "detail": "19/19 query prompts and 6/6 representative read methods passed after temporary auth-bypass smoke",
+      "failedQueryCount": 0,
+      "failedMethodCount": 0
+    },
+    {
+      "timestamp": "2026-04-27T07:17:47.446Z",
+      "phase": "convergence",
+      "event": "gate_check",
+      "detail": "Release gates passed; artifact write allowed",
+      "releaseStatus": "ready",
+      "iterationAction": "pass",
+      "terminalState": "converged",
+      "blockers": []
+    },
+    {
+      "timestamp": "2026-04-27T07:17:47.446Z",
+      "phase": "convergence",
+      "event": "generalization_check",
+      "detail": "Train and holdout reviewer means are aligned",
+      "active": true,
+      "ok": true,
+      "holdoutRatio": 0.4,
+      "holdoutGateMinCount": 5,
+      "holdoutGeneralizationTolerance": 0.3,
+      "trainQueryCount": 10,
+      "holdoutQueryCount": 9,
+      "trainSatisfactionMean": 4.583,
+      "holdoutSatisfactionMean": 4.611,
+      "trainWeakQueryRate": 0.2,
+      "holdoutWeakQueryRate": 0.111
+    },
+    {
+      "timestamp": "2026-04-27T07:17:47.446Z",
+      "phase": "convergence",
+      "event": "north_star_check",
+      "detail": "Weighted buyer value recorded at convergence",
+      "weightedBuyerValue": 0.8937
+    },
+    {
+      "timestamp": "2026-04-27T07:17:47.446Z",
+      "phase": "complete",
+      "event": "pipeline_complete",
+      "detail": "Release ready with artifact written and description synced",
+      "finalSatisfactionMean": 4.596,
+      "weakQueryCount": 3,
+      "weakQueryRate": 0.158,
+      "baselineBeatenRate": 0.8947,
+      "totalIterations": 0,
+      "artifactWritten": true,
+      "descriptionSynced": true
+    },
+    {
+      "timestamp": "2026-04-27T07:20:26.907Z",
+      "phase": "post-convergence",
+      "event": "deploy_verification_complete",
+      "detail": "VPS deploy completed and public Hyperliquid tools/list exposes oiCapStatus",
+      "deployed": true,
+      "publicToolCount": 48
+    },
+    {
+      "timestamp": "2026-04-27T07:20:26.907Z",
+      "phase": "complete",
+      "event": "pipeline_complete",
+      "detail": "Release ready with consistent artifact, synced description, and verified production MCP endpoint",
+      "finalSatisfactionMean": 4.596,
+      "weakQueryCount": 3,
+      "weakQueryRate": 0.158,
+      "baselineBeatenRate": 0.8947,
+      "totalIterations": 0,
+      "artifactWritten": true,
+      "descriptionSynced": true,
+      "deployed": true
+    }
+  ]
+}

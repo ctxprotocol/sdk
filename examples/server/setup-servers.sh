@@ -10,17 +10,29 @@ echo "🚀 Setting up MCP servers..."
 
 BASE_DIR=~/mcp-servers
 
-# Define servers: name:directory:port
+# Define actively hosted servers: name:directory:port.
+# Blocknative, Odds API, and Dune examples remain in the repo, but are not
+# hosted on the shared VPS because they are not currently supported surfaces.
 SERVERS=(
-  "mcp-blocknative:blocknative-contributor:4001"
   "mcp-hyperliquid:hyperliquid-contributor:4002"
   "mcp-polymarket:polymarket-contributor:4003"
   "mcp-exa:exa-contributor:4004"
   "mcp-coinglass:coinglass-contributor:4005"
-  "mcp-odds-api:odds-api-contributor:4006"
   "mcp-kalshi:kalshi-contributor:4007"
-  "mcp-dune:dune-contributor:4008"
 )
+
+RETIRED_SERVERS=(
+  "mcp-blocknative"
+  "mcp-odds-api"
+  "mcp-dune"
+)
+
+for NAME in "${RETIRED_SERVERS[@]}"; do
+  if pm2 describe "$NAME" > /dev/null 2>&1; then
+    echo "🧹 Removing retired server from PM2: $NAME"
+    pm2 delete "$NAME"
+  fi
+done
 
 for SERVER in "${SERVERS[@]}"; do
   IFS=':' read -r NAME DIR PORT <<< "$SERVER"

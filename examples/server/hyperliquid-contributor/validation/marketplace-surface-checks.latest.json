@@ -1,0 +1,787 @@
+{
+  "generatedAt": "2026-04-27T07:12:50.684Z",
+  "toolId": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+  "localMcpUrl": "http://localhost:4002/mcp",
+  "localContextBaseUrl": "http://localhost:3000",
+  "publicMcpUrl": "https://mcp.ctxprotocol.com/hyperliquid/mcp",
+  "localToolCount": 48,
+  "autoQuerySummary": {
+    "promptCount": 19,
+    "passedCount": 19,
+    "failedCount": 0,
+    "routedCount": 19,
+    "runs": [
+      {
+        "id": "hl-001",
+        "prompt": "Among the Hyperliquid BTC, ETH, HYPE, SOL, and ZEC perpetual markets, which currently dominates by 24h notional volume, open interest in USD, and max leverage?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 6,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 6
+          }
+        ],
+        "durationMs": 51197,
+        "responsePreview": "Based on real-time market data from April 27, 2026, **BTC** is the dominant market across all three categories among the specified perpetuals.\n\n### Hyperliquid Market Comparison\n\n| Market | 24h Notional Volume (USD) | Open Interest (USD) | Max Leverage |\n| :--- | :--- | :--- | :--- |\n| **BTC** | **$1,781,701,195.41** | **$2,116,673,751.96** | **40x** |\n| **ETH** | $711,276,732.45 | $971,921,823.85 | 25x |\n| **HYPE** | $173,242,641.88 | $833,641,514.00 | 10x |\n| **SOL** | $149,884,696.86 | $259,2",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 6,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 3,
+          "toolStepCount": 3
+        }
+      },
+      {
+        "id": "hl-002",
+        "prompt": "Give me a live risk snapshot for the Hyperliquid BTC perpetual market: mark price, mid price, oracle price, 24h volume, open interest in USD, funding rate, spread, and max leverage.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 19947,
+        "responsePreview": "As of April 27, 2026, at 06:52:16 UTC, here is the live risk snapshot for the Hyperliquid BTC perpetual market:\n\n| Metric | Value |\n| :--- | :--- |\n| **Mark Price** | 77,634 |\n| **Mid Price** | 77,634.5 |\n| **Oracle Price** | 77,667 |\n| **24h Volume (USD)** | $1,782,008,031.74 |\n| **Open Interest (USD)** | $2,116,977,960.79 |\n| **Funding Rate** | 0.00125% (10.95% Annualized) |\n| **Spread** | 0.13 |\n| **Max Leverage** | 40x |",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "hl-003",
+        "prompt": "Compare the Hyperliquid ETH and HYPE perpetual markets by 24h volume, open interest in USD, funding rate, premium versus oracle, and 24h price change.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 4,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 4
+          }
+        ],
+        "durationMs": 28566,
+        "responsePreview": "As of April 27, 2026, here is the comparison between the Hyperliquid ETH and HYPE perpetual markets:\n\n| Metric | ETH Perpetual | HYPE Perpetual |\n| :--- | :--- | :--- |\n| **24h Volume (USD)** | $711,500,218.67 | $173,290,832.91 |\n| **Open Interest (USD)** | $972,031,632.61 | $834,384,813.87 |\n| **Funding Rate (Hourly)** | 0.0000034257 | 0.0000125000 |\n| **Funding Rate (Annualized)** | 3.00% | 10.95% |\n| **Premium vs Oracle** | -0.0431 | -0.0211 |\n| **24h Price Change** | -0.33% | +3.05% |\n\n**Key",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 4,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "hl-004",
+        "prompt": "What is the current bid-ask spread, visible bid liquidity, visible ask liquidity, and liquidity score for the Hyperliquid BTC perpetual orderbook?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 20275,
+        "responsePreview": "Based on data from a past query, here are the current orderbook metrics for the Hyperliquid BTC perpetual as of 2026-04-27T06:53:23.908Z:\n\n| Metric | Value |\n| :--- | :--- |\n| **Asset** | BTC |\n| **Bid-Ask Spread** | 129.03 |\n| **Visible Bid Liquidity** | 315470111.4299999 |\n| **Visible Ask Liquidity** | 408998870.4100001 |\n| **Liquidity Score** | deep |\n\nVisible liquidity represents the cumulative notional value of orders across the approximately 20 visible levels of the orderbook. Additional a",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "hl-005",
+        "prompt": "If I needed to sell $5,000,000 of HYPE perps on Hyperliquid, what visible-book slippage, filled percentage, TWAP duration, and execution recommendation would the current orderbook imply?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 21933,
+        "responsePreview": "Based on the current L2 order book as of **2026-04-27T06:53:56Z**, here is the implied impact for selling $5,000,000 of HYPE perps:\n\n| Metric | Value |\n| :--- | :--- |\n| **Visible-Book Slippage** | 2.35 Bps |\n| **Filled Percentage (Visible Book)** | 6.14% |\n| **TWAP Duration (Estimated)** | 4-8 hours |\n| **Execution Recommendation** | TWAP / Algorithmic execution |\n\n### Execution Analysis\n*   **Visible Liquidity:** A market order would exhaust the currently visible book after filling only 6.14% ",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "hl-006",
+        "prompt": "For the Hyperliquid CHIP perpetual market, estimate the impact of buying $500,000 through the visible orderbook and explain whether daily volume and open interest make that order fragile.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 5,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 5
+          }
+        ],
+        "durationMs": 37143,
+        "responsePreview": "Based on market data from earlier today, April 27, 2026, here is the estimated impact and fragility analysis for a $500,000 buy order on the Hyperliquid CHIP perpetual market.\n\n### **Order Impact Estimate ($500,000 Buy)**\n\n| Metric | Value |\n| :--- | :--- |\n| **Mid Price** | $0.07585 |\n| **Estimated Price Impact** | 0.0509% |\n| **Slippage** | ~5.09 bps |\n| **Average Fill Price** | $0.075891 |\n| **Worst Fill Price** | $0.075924 |\n| **Visible Ask Liquidity** | $637,891.90 |\n| **Order % of Visible ",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 5,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "hl-007",
+        "prompt": "For the Hyperliquid ZEC perpetual market, show the current orderbook spread, visible depth on both sides, and how that depth compares with ZEC 24h notional volume.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 4,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 4
+          }
+        ],
+        "durationMs": 34142,
+        "responsePreview": "As of April 27, 2026, the Hyperliquid ZEC perpetual market shows the following orderbook and liquidity metrics:\n\n### ZEC Orderbook & Volume Summary\n| Metric | Value |\n| :--- | :--- |\n| **Best Bid** | $355.2 |\n| **Best Ask** | $355.4 |\n| **Current Spread** | $0.20 |\n| **Visible Bid Depth (20 levels)** | $1,900,263.89 |\n| **Visible Ask Depth (20 levels)** | $2,674,857.32 |\n| **24h Notional Volume** | $39,309,422.02 |\n\n### Liquidity Comparison\nThe visible depth represents a significant portion of t",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 4,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 3,
+          "toolStepCount": 3
+        }
+      },
+      {
+        "id": "hl-008",
+        "prompt": "Is the Hyperliquid MAVIA perpetual market's strongly positive funding a one-off print or persistent over the last 7 days?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 3,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 42886,
+        "responsePreview": "Based on fetched tool results from the last 7 days, the strongly positive funding for the MAVIA perpetual market is a **persistent regime**, not a one-off print.\n\nEvery hourly funding print recorded in the 7-day window was positive (100% positive funding), with the rate currently trending upward.\n\n### MAVIA 7-Day Funding Stats\n| Metric | Value |\n| :--- | :--- |\n| **Average Hourly Rate** | 0.00083698% |\n| **Average Annualized Rate** | 733.19% |\n| **Peak Hourly Rate** | 0.00112030% |\n| **Minimum H",
+        "hasData": true,
+        "actionable": false,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 3,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 2,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 5,
+          "toolStepCount": 5
+        }
+      },
+      {
+        "id": "hl-009",
+        "prompt": "For the Hyperliquid BLAST perpetual market, quantify the current negative funding rate and summarize whether shorts have consistently paid longs over the last 7 days.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 2,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 2
+          }
+        ],
+        "durationMs": 27848,
+        "responsePreview": "As of April 27, 2026, at 06:56:53 UTC, the BLAST perpetual market on Hyperliquid is experiencing a significant negative funding rate. Shorts are currently paying longs at an annualized rate of **-572.88%**.\n\nOver the last 7 days, shorts have consistently paid longs on average. While the funding rate was positive for approximately 26.19% of the week, the overall trend has been negative, with the rate recently becoming much more bearish.\n\n### BLAST Funding Rate Metrics (7-Day Analysis)\n\n| Metric |",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 2,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "hl-010",
+        "prompt": "Between the Hyperliquid CHIP and LDO perpetual markets, which has the more expensive short-side carry based on current funding and recent funding history?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 4,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 4
+          }
+        ],
+        "durationMs": 34168,
+        "responsePreview": "Based on current funding rates and the last 14 days of history, **CHIP** has significantly more expensive short-side carry than **LDO**. \n\nWhile both markets currently have negative funding (shorts paying longs), CHIP's current rate is more than three times as expensive as LDO's. Furthermore, LDO's recent history shows that shorts have actually earned a positive return on average over the last two weeks, whereas CHIP shorts have faced a heavy average cost.\n\n### Funding Comparison (Hyperliquid)\n*",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 4,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "hl-011",
+        "prompt": "For Hyperliquid HYPE and SOL perps, which market has the higher open-interest-to-volume ratio and greater liquidation cascade risk right now?",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 6,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 6
+          }
+        ],
+        "durationMs": 38649,
+        "responsePreview": "As of April 27, 2026, **HYPE** has both a higher open-interest-to-volume ratio and a greater liquidation cascade risk compared to SOL on Hyperliquid.\n\nThe following table summarizes the key metrics for both markets:\n\n| Metric | HYPE | SOL |\n| :--- | :--- | :--- |\n| **Open Interest (USD)** | $837,413,092.58 | $259,356,609.35 |\n| **24h Volume** | $175,325,019.15 | $150,347,581.80 |\n| **OI/Volume Ratio** | **4.78** | 1.73 |\n| **Liquidation Risk** | **High** | Moderate |\n| **Funding Rate (Annual)** ",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 6,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 4,
+          "toolStepCount": 4
+        }
+      },
+      {
+        "id": "hl-012",
+        "prompt": "Check whether any of the Hyperliquid BTC, ETH, HYPE, ZEC, or CHIP perpetual markets are currently reported at the open-interest cap.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 21815,
+        "responsePreview": "None of the requested markets (BTC, ETH, HYPE, ZEC, or CHIP) are currently reported at their open-interest cap.\n\nAs of 2026-04-27T06:59:04Z, the following perpetual markets are at their open-interest cap:\n\n| Market | Status |\n| :--- | :--- |\n| CANTO | At Cap |\n| FTM | At Cap |\n| JELLY | At Cap |\n| LOOM | At Cap |\n| MAVIA | At Cap |\n| RLB | At Cap |\n| ZEREBRO | At Cap |",
+        "hasData": true,
+        "actionable": false,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "hl-013",
+        "prompt": "For the Hyperliquid BTC perpetual market, summarize the last 100 recent trades: buy versus sell volume, largest trade notional, and whether any trades exceeded a $250,000 whale threshold.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 23965,
+        "responsePreview": "As of 2026-04-27 06:59:33Z, here is a summary of the most recent trades for the BTC perpetual market. \n\n**Note:** The following data is based on a snapshot of the last 10 trades returned by the system. This is a partial summary and does not cover the full 100 trades requested due to API snapshot limitations.\n\n### Volume Summary\n| Side | Volume (BTC) | Notional (USD) | Volume Share |\n| :--- | :--- | :--- | :--- |\n| **Buy** | 0.01258 | ~$978.46 | 33.07% |\n| **Sell** | 0.02546 | ~$1,978.19 | 66.93%",
+        "hasData": true,
+        "actionable": false,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "hl-014",
+        "prompt": "For the Hyperliquid HYPE perpetual market, use the last 48 one-hour candles to report price change, period high, period low, and total traded volume.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 20054,
+        "responsePreview": "As of 2026-04-27T07:00:04.839Z, here is the performance summary for the Hyperliquid HYPE perpetual market based on the last 48 one-hour candles:\n\n| Metric | Value |\n| :--- | :--- |\n| **Price Change** | 3.35 |\n| **Period High** | 43.568 |\n| **Period Low** | 40.83 |\n| **Total Traded Volume** | 6,882,426.76 |",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "hl-015",
+        "prompt": "For the Hyperliquid PENGU perpetual market, compare the recent 7-day average daily volume with its 30-day average and say whether liquidity is accelerating or drying up.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 18425,
+        "responsePreview": "Liquidity for the PENGU perpetual market is **accelerating**. As of April 27, 2026, the recent 7-day average daily volume is approximately **92% higher** than the 30-day average, signaling significantly increased trading activity.\n\n| Metric | Average Daily Volume |\n| :--- | :--- |\n| **7-Day Average** | $7,079,151.50 |\n| **30-Day Average** | $3,691,715.27 |\n| **Ratio (7d/30d)** | 1.92x |\n\nThe volume peaked recently on April 22, 2026, at approximately $10.25M, and the current daily volume remains ",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "hl-016",
+        "prompt": "For Hyperliquid spot tokens PURR, HFUN, TRUMP, and PUMP, list token metadata, available spot pair indexes, current mark or mid price, and 24h spot volume where available.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 5,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 5
+          }
+        ],
+        "durationMs": 54975,
+        "responsePreview": "As of April 27, 2026, 07:01 UTC, here is the information for the requested tokens on Hyperliquid:\n\n| Token | Metadata Index | Decimals (sz/wei) | Spot Pair Index | Mark Price | Mid Price | 24h Volume |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n| **PURR** | 1 | 0 / 5 | 0 (PURR/USDC) | 0.07564 | 0.07575950000000001 | 436217.127563 |\n| **HFUN** | 2 | 2 / 8 | Not Available | N/A | N/A | N/A |\n| **TRUMP** | 10 | 2 / 7 | Not Available | 2.5465 | 2.5467500000000003 | 7536063.991749999 |\n| **PU",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 5,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 1,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 3,
+          "toolStepCount": 3
+        }
+      },
+      {
+        "id": "hl-017",
+        "prompt": "Compare Hyperliquid spot TRUMP and spot PUMP by current spot pair price, 24h notional volume, token decimals, and whether the pair is canonical.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 3,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 2
+          }
+        ],
+        "durationMs": 156513,
+        "responsePreview": "Based on the Hyperliquid spot market data as of **April 27, 2026, 07:02:36 UTC**, here is the comparison between the **TRUMP** (Token Index 10) and **PUMP** (Token Index 26) spot pairs.\n\n| Metric | TRUMP/USDC | PUMP/USDC |\n| :--- | :--- | :--- |\n| **Current Spot Price** | 0.000349 USDC | 0.00009497 USDC |\n| **24h Notional Volume** | 4.66 USDC | 81.82 USDC |\n| **Token Decimals** | 2 | 0 |\n| **Is Canonical Pair** | No | No |\n\n### Key Details:\n*   **TRUMP/USDC**: This pair (Pair Index 9) has a curr",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 3,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 1,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 6,
+          "toolStepCount": 6
+        }
+      },
+      {
+        "id": "hl-018",
+        "prompt": "For the Hyperliquid HLP vault at 0xdfc24b077bc1425ad1dea75bcb6f8158e10df303, report APR, TVL, follower count, leader commission, lockup period, and recent performance by available period.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 23481,
+        "responsePreview": "As of April 27, 2026, here are the details for the Hyperliquidity Provider (HLP) vault:\n\n### Vault Overview\n*   **APR (Annualized):** -14.55%\n*   **TVL:** $211.64M\n*   **Follower Count:** 100\n*   **Leader Commission:** 0%\n*   **Lockup Period:** 4 days\n\n### Recent Performance\nThe following table shows the vault's profit and loss (PnL) across various timeframes:\n\n| Period | PnL (USD) | Data Points |\n| :--- | :--- | :--- |\n| **Day** | $661.10 | 57 |\n| **Week** | $11,104.50 | 66 |\n| **Month** | -$2,",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      },
+      {
+        "id": "hl-019",
+        "prompt": "For the Hyperliquid HYPE token, summarize the staking mechanics, current HYPE mid price, delegation lockup, unstaking queue, minimum validator self-delegation, and what public staking data is unavailable.",
+        "retryCount": 0,
+        "status": "pass",
+        "outcomeType": "answer",
+        "toolCalls": 1,
+        "routedToTarget": true,
+        "toolsUsed": [
+          {
+            "id": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+            "name": "Hyperliquid",
+            "skillCalls": 1
+          }
+        ],
+        "durationMs": 24774,
+        "responsePreview": "Based on data from a recent query (fetched April 27, 2026), here is the summary of the Hyperliquid HYPE token staking details:\n\n### Staking Metrics and Mechanics\n\n| Attribute | Value |\n| :--- | :--- |\n| **Current HYPE Mid Price** | $42.5315 |\n| **Delegation Lockup** | 1 day |\n| **Unstaking Queue** | 7 days |\n| **Minimum Validator Self-Delegation** | 10,000 HYPE |\n| **Reward Distribution** | Accrued every minute, distributed daily, and auto-redelegated |\n| **Reward Formula** | Inversely proportio",
+        "hasData": true,
+        "actionable": true,
+        "looksGeneric": false,
+        "developerTraceSummary": {
+          "toolCalls": 1,
+          "retryCount": 0,
+          "selfHealCount": 0,
+          "fallbackCount": 0,
+          "failureCount": 0,
+          "recoveryCount": 0,
+          "completionChecks": 0,
+          "loopCount": 2,
+          "toolStepCount": 2
+        }
+      }
+    ]
+  },
+  "executeValidation": {
+    "discoveredToolName": "Hyperliquid",
+    "discoveredMethodCount": 48,
+    "passedMethodCount": 6,
+    "failedMethodCount": 0,
+    "methods": [
+      {
+        "methodName": "get_market_info",
+        "args": {
+          "coin": "BTC"
+        },
+        "status": "pass",
+        "durationMs": 1536,
+        "resultKeys": [
+          "coin",
+          "markPrice",
+          "indexPrice",
+          "midPrice",
+          "premium",
+          "spread",
+          "openInterest",
+          "openInterestUsd",
+          "fundingRate",
+          "fundingRateAnnualized",
+          "volume24h",
+          "priceChange24h",
+          "maxLeverage",
+          "impactPrices",
+          "dataSources",
+          "dataFreshness",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_orderbook",
+        "args": {
+          "coin": "BTC"
+        },
+        "status": "pass",
+        "durationMs": 721,
+        "resultKeys": [
+          "coin",
+          "midPrice",
+          "spread",
+          "bids",
+          "asks",
+          "totalBidLiquidity",
+          "totalAskLiquidity",
+          "fetchedAt",
+          "liquidityContext",
+          "note",
+          "dataSources",
+          "dataFreshness"
+        ]
+      },
+      {
+        "methodName": "get_funding_analysis",
+        "args": {
+          "coin": "HYPE"
+        },
+        "status": "pass",
+        "durationMs": 536,
+        "resultKeys": [
+          "coin",
+          "currentFunding",
+          "venueFundingSnapshot",
+          "predictedFundings",
+          "fundingArbitrage",
+          "confidence",
+          "dataSources",
+          "dataFreshness",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_candles",
+        "args": {
+          "coin": "HYPE",
+          "interval": "1h",
+          "limit": 4
+        },
+        "status": "pass",
+        "durationMs": 386,
+        "resultKeys": [
+          "coin",
+          "interval",
+          "candles",
+          "summary",
+          "dataSources",
+          "dataFreshness",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_spot_meta",
+        "args": {},
+        "status": "pass",
+        "durationMs": 773,
+        "resultKeys": [
+          "tokens",
+          "universe",
+          "assetContexts",
+          "dataSources",
+          "dataFreshness",
+          "fetchedAt"
+        ]
+      },
+      {
+        "methodName": "get_hlp_vault_stats",
+        "args": {},
+        "status": "pass",
+        "durationMs": 536,
+        "resultKeys": [
+          "name",
+          "vaultAddress",
+          "apr",
+          "aprAnnualized",
+          "tvl",
+          "tvlFormatted",
+          "followerCount",
+          "leaderCommission",
+          "performance",
+          "lockupPeriod",
+          "isClosed",
+          "allowDeposits",
+          "note",
+          "dataSources",
+          "dataFreshness",
+          "fetchedAt"
+        ]
+      }
+    ],
+    "note": "Read-only representative MCP tool calls validated on a temporary local bypass port; production /mcp tools/call remains protected by Context JWT auth.",
+    "validationMcpUrl": "http://localhost:4102/mcp",
+    "authMode": "temporary_local_bypass_for_read_only_validation"
+  },
+  "publicAuthProbe": {
+    "initializeStatus": 200,
+    "toolsListStatus": 200,
+    "toolsCallStatus": 0,
+    "toolCount": 48,
+    "rpcAuthBlocked": false,
+    "pass": true
+  },
+  "externalAccuracyCheck": {
+    "status": "PASS",
+    "localSample": {
+      "symbol": "BTC",
+      "source": "local MCP get_market_info",
+      "markPrice": 77615
+    },
+    "upstreamSample": {
+      "symbol": "BTC",
+      "source": "Hyperliquid /info metaAndAssetCtxs",
+      "markPrice": 77624
+    },
+    "notes": [
+      "SDK query sweep passed all prompts against the registered Hyperliquid tool.",
+      "Representative read-only MCP methods returned structured content from the local contributor server.",
+      "BTC mark price was compared against Hyperliquid public /info within a 2% tolerance."
+    ]
+  },
+  "tempAuthBypassMcpUrl": "http://localhost:4102/mcp"
+}

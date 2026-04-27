@@ -13,8 +13,10 @@ REMOTE_BASE_DIR="~/mcp-servers"
 # Assumes this script is inside /examples/server/
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 
-# Define the project directories to deploy
-PROJECTS=("blocknative-contributor" "hyperliquid-contributor" "polymarket-contributor" "exa-contributor" "coinglass-contributor" "odds-api-contributor" "kalshi-contributor" "dune-contributor")
+# Define the actively hosted project directories to deploy.
+# Blocknative, Odds API, and Dune examples remain in the repo, but are not
+# hosted on the shared VPS because they are not currently supported surfaces.
+PROJECTS=("hyperliquid-contributor" "polymarket-contributor" "exa-contributor" "coinglass-contributor" "kalshi-contributor")
 
 for PROJECT in "${PROJECTS[@]}"; do
     SOURCE_DIR="${SCRIPT_DIR}/${PROJECT}"

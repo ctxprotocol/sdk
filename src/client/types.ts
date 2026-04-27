@@ -591,6 +591,49 @@ export type QueryComputedArtifact =
       rows: Array<{ metric: string; value: string }>;
     };
 
+export interface QueryToolCallFailureSample {
+  /** Display name of the contributor tool whose call failed. */
+  toolName: string;
+
+  /** MCP method name that was invoked when the failure occurred. */
+  methodName: string;
+
+  /** Truncated failure reason captured from the runtime error. */
+  reason: string;
+}
+
+export interface QueryGroundingSummary {
+  /** Marketplace methods registered in the iterative runtime, excluding control tools. */
+  availableToolCount: number;
+
+  /** Capped sample of method names available to the model. */
+  availableMethodNamesSample: string[];
+
+  /** Methods selected by retrieval/tool selection before runtime filtering. */
+  selectedMethodCount: number;
+
+  /** Capped list of selected methods that did not survive runtime filtering. */
+  selectedButFilteredOut: string[];
+
+  /** Grounded marketplace tool calls actually executed (successes only). */
+  toolCallCount: number;
+
+  /** Total marketplace method invocations attempted by the model (success + failure). */
+  toolCallAttemptCount: number;
+
+  /** Marketplace method invocations that completed without throwing. */
+  toolCallSuccessCount: number;
+
+  /** Marketplace method invocations that threw an error before returning data. */
+  toolCallFailureCount: number;
+
+  /** Capped sample of recent failed marketplace method invocations with reasons. */
+  toolCallFailureSamples: QueryToolCallFailureSample[];
+
+  /** True when the answer was grounded in at least one marketplace tool call. */
+  grounded: boolean;
+}
+
 export interface QueryClarificationOption {
   id: string;
   toolId: string;
@@ -947,6 +990,8 @@ export interface QueryDeveloperTraceDiagnostics {
     scoutEvidenceInjected: boolean;
     stepBudget: number;
     completedStepCount: number;
+    toolCallCount?: number;
+    toolRegistry?: Omit<QueryGroundingSummary, "toolCallCount" | "grounded">;
   };
   clarification?: QueryClarificationDiagnostics;
   contributorSearches?: ContributorSearchTraceRecord[];
@@ -1302,6 +1347,9 @@ export interface QueryBaseResult {
 
   /** Optional derived artifacts emitted by code_interpreter in answer mode. */
   computedArtifacts?: QueryComputedArtifact[];
+
+  /** Public grounding summary for marketplace tool execution. */
+  grounding?: QueryGroundingSummary;
 
   /** Optional machine-readable Developer Mode trace payload */
   developerTrace?: QueryDeveloperTrace;

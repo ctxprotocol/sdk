@@ -1,0 +1,593 @@
+{
+  "generatedAt": "2026-04-27T07:20:00.000Z",
+  "contributor": "hyperliquid-contributor",
+  "summary": {
+    "promptCount": 19,
+    "satisfactionMean": 4.596491228070175,
+    "weakQueryCount": 3,
+    "weakQueryRate": 0.15789473684210525,
+    "baselineBeatenRate": 0.8947368421052632,
+    "fragilityReport": {
+      "highFragilityCount": 3,
+      "highFragilityRate": 0.15789473684210525,
+      "notes": "Most traces are grounded and successful. High fragility is concentrated in funding-history post-processing and spot-market queries with tool failures or synthesized fallback data."
+    },
+    "topImprovementLevers": [
+      "Normalize orderbook spread units and cite best bid and ask alongside spread.",
+      "Expand recent-trades retrieval or clearly cap claims when only a short snapshot is available.",
+      "Fix spot pair resolution so spot answers never substitute perpetual market data."
+    ]
+  },
+  "evaluations": [
+    {
+      "id": "hl-001",
+      "prompt": "Among the Hyperliquid BTC, ETH, HYPE, SOL, and ZEC perpetual markets, which currently dominates by 24h notional volume, open interest in USD, and max leverage?",
+      "alphaCategory": "market-discovery",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 5,
+      "quotedExcerpts": [
+        "Based on real-time market data from April 27, 2026, **BTC** is the dominant market across all three categories among the specified perpetuals.",
+        "**BTC** | **$1,781,701,195.41** | **$2,116,673,751.96** | **40x**"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid clearly beats the free baseline because it uses current Hyperliquid values and correctly identifies BTC, while the baseline incorrectly claimed HYPE dominated volume.",
+      "traceAssessment": {
+        "toolCalls": 6,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The response directly answers the dominance question with current comparative values.",
+        "improvementLever": "Maintain the current market-comparison pattern."
+      }
+    },
+    {
+      "id": "hl-002",
+      "prompt": "Give me a live risk snapshot for the Hyperliquid BTC perpetual market: mark price, mid price, oracle price, 24h volume, open interest in USD, funding rate, spread, and max leverage.",
+      "alphaCategory": "market-discovery",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 5,
+      "quotedExcerpts": [
+        "As of April 27, 2026, at 06:52:16 UTC, here is the live risk snapshot for the Hyperliquid BTC perpetual market:",
+        "**Mark Price** | 77,634 ... **Open Interest (USD)** | $2,116,977,960.79 ... **Max Leverage** | 40x"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline by providing internally consistent live values for every requested field instead of the baseline's materially different BTC price and OI figures.",
+      "traceAssessment": {
+        "toolCalls": 1,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "Single-tool retrieval produced a complete live BTC risk snapshot.",
+        "improvementLever": "Maintain the direct market-info retrieval path."
+      }
+    },
+    {
+      "id": "hl-003",
+      "prompt": "Compare the Hyperliquid ETH and HYPE perpetual markets by 24h volume, open interest in USD, funding rate, premium versus oracle, and 24h price change.",
+      "alphaCategory": "market-discovery",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.833333333333333,
+      "quotedExcerpts": [
+        "As of April 27, 2026, here is the comparison between the Hyperliquid ETH and HYPE perpetual markets:",
+        "**Funding Rate (Annualized)** | 3.00% | 10.95% ... **24h Price Change** | -0.33% | +3.05%"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline because the baseline used stale late-2024 ranges, while paid returned current ETH and HYPE metrics across the requested columns.",
+      "traceAssessment": {
+        "toolCalls": 4,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The answer covers all requested comparison dimensions with live values.",
+        "improvementLever": "Clarify whether premium values are dollars, percent, or raw spread to oracle."
+      }
+    },
+    {
+      "id": "hl-004",
+      "prompt": "What is the current bid-ask spread, visible bid liquidity, visible ask liquidity, and liquidity score for the Hyperliquid BTC perpetual orderbook?",
+      "alphaCategory": "liquidity-impact",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 3.8333333333333335,
+      "quotedExcerpts": [
+        "Based on data from a past query, here are the current orderbook metrics for the Hyperliquid BTC perpetual as of 2026-04-27T06:53:23.908Z:",
+        "**Bid-Ask Spread** | 129.03 ... **Visible Bid Liquidity** | 315470111.4299999 ... **Liquidity Score** | deep"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid still beats the baseline by returning concrete visible-liquidity totals, while the baseline only gave approximate spread ranges and no actual depth. However, the paid spread is unit-ambiguous and appears inconsistent with other BTC spread evidence.",
+      "traceAssessment": {
+        "toolCalls": 1,
+        "toolSelectionFit": "adequate",
+        "fragilityRisk": "medium",
+        "rootCauseCategory": "synthesis_quality",
+        "diagnosticBrief": "The response answers the requested fields, but says 'past query,' leaves large liquidity numbers unformatted, and reports a BTC spread of 129.03 without units despite another BTC snapshot showing a much tighter spread.",
+        "improvementLever": "Return best bid, best ask, dollar spread, and basis-point spread from the same orderbook snapshot, with formatted USD liquidity."
+      }
+    },
+    {
+      "id": "hl-005",
+      "prompt": "If I needed to sell $5,000,000 of HYPE perps on Hyperliquid, what visible-book slippage, filled percentage, TWAP duration, and execution recommendation would the current orderbook imply?",
+      "alphaCategory": "liquidity-impact",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.666666666666667,
+      "quotedExcerpts": [
+        "Based on the current L2 order book as of **2026-04-27T06:53:56Z**, here is the implied impact for selling $5,000,000 of HYPE perps:",
+        "**Visible-Book Slippage** | 2.35 Bps ... **Filled Percentage (Visible Book)** | 6.14% ... **Execution Recommendation** | TWAP / Algorithmic execution"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline with live orderbook-derived slippage, fill percentage, and TWAP guidance; the baseline was generic and based on assumed HYPE liquidity.",
+      "traceAssessment": {
+        "toolCalls": 1,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The response is actionable and transparent about visible-book limits, though the relationship between low slippage and only 6.14% visible fill could be clearer.",
+        "improvementLever": "Separate visible-book partial-fill impact from expected full-order TWAP impact."
+      }
+    },
+    {
+      "id": "hl-006",
+      "prompt": "For the Hyperliquid CHIP perpetual market, estimate the impact of buying $500,000 through the visible orderbook and explain whether daily volume and open interest make that order fragile.",
+      "alphaCategory": "liquidity-impact",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.833333333333333,
+      "quotedExcerpts": [
+        "**Estimated Price Impact** | 0.0509% ... **Visible Ask Liquidity** | $637,891.90 ... **Order % of Visible Asks** | ~78.4%",
+        "A single market buy of $500,000 would consume nearly all visible ask liquidity (20+ levels) in the current orderbook snapshot."
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline by using current CHIP orderbook, volume, and OI evidence rather than general mid-cap liquidity assumptions.",
+      "traceAssessment": {
+        "toolCalls": 5,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The response gives both execution impact and fragility reasoning with current depth and market-context metrics.",
+        "improvementLever": "Maintain the multi-tool fragility analysis and add confidence bands for hidden-liquidity uncertainty."
+      }
+    },
+    {
+      "id": "hl-007",
+      "prompt": "For the Hyperliquid ZEC perpetual market, show the current orderbook spread, visible depth on both sides, and how that depth compares with ZEC 24h notional volume.",
+      "alphaCategory": "liquidity-impact",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 5,
+      "quotedExcerpts": [
+        "**Best Bid** | $355.2 ... **Best Ask** | $355.4 ... **Current Spread** | $0.20",
+        "**Bid Side Depth:** 4.83% of 24h notional volume. **Ask Side Depth:** 6.80% of 24h notional volume."
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline by providing exact current bid, ask, depth, volume, and depth-to-volume percentages instead of broad spread estimates.",
+      "traceAssessment": {
+        "toolCalls": 4,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The answer is complete, current, and directly computes the requested depth-to-volume comparison.",
+        "improvementLever": "Maintain this orderbook-depth response shape."
+      }
+    },
+    {
+      "id": "hl-008",
+      "prompt": "Is the Hyperliquid MAVIA perpetual market's strongly positive funding a one-off print or persistent over the last 7 days?",
+      "alphaCategory": "funding-carry",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.5,
+      "quotedExcerpts": [
+        "the strongly positive funding for the MAVIA perpetual market is a **persistent regime**, not a one-off print.",
+        "**Average Annualized Rate** | 733.19% ... **Positive Funding %** | 100% ... **Latest Print (Annualized)** | 891.53%"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline because it quantifies 7-day funding persistence with current rates; the baseline gave an unsupported narrative conclusion.",
+      "traceAssessment": {
+        "toolCalls": 3,
+        "toolSelectionFit": "adequate",
+        "fragilityRisk": "high",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The answer satisfies the buyer despite two post-processing contract failures and a missing daily aggregated summary table.",
+        "improvementLever": "Make funding-history table generation resilient so post-processing failures do not appear in otherwise successful traces."
+      }
+    },
+    {
+      "id": "hl-009",
+      "prompt": "For the Hyperliquid BLAST perpetual market, quantify the current negative funding rate and summarize whether shorts have consistently paid longs over the last 7 days.",
+      "alphaCategory": "funding-carry",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.833333333333333,
+      "quotedExcerpts": [
+        "Shorts are currently paying longs at an annualized rate of **-572.88%**.",
+        "**7-Day Average Annualized Rate** | -119.23% ... **Frequency of Positive Funding** | 26.19%"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline by giving current and seven-day quantitative funding statistics rather than a static approximate rate.",
+      "traceAssessment": {
+        "toolCalls": 2,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The answer correctly frames negative funding as shorts paying longs and quantifies recent persistence.",
+        "improvementLever": "Clarify the difference between consistently negative on average and positive prints during 26.19% of the week."
+      }
+    },
+    {
+      "id": "hl-010",
+      "prompt": "Between the Hyperliquid CHIP and LDO perpetual markets, which has the more expensive short-side carry based on current funding and recent funding history?",
+      "alphaCategory": "funding-carry",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.833333333333333,
+      "quotedExcerpts": [
+        "**CHIP** has significantly more expensive short-side carry than **LDO**.",
+        "**Current Annualized (APR)** | -383.63% | -119.21% ... **14-Day Avg Annualized** | -118.12% | +10.51%"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline by grounding the conclusion in current and 14-day funding data, while the baseline asserted CHIP without current evidence.",
+      "traceAssessment": {
+        "toolCalls": 4,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The response gives a clear winner and explains both current and recent-history carry.",
+        "improvementLever": "Clarify sign conventions for funding rates so negative APR is immediately understood as short-side cost."
+      }
+    },
+    {
+      "id": "hl-011",
+      "prompt": "For Hyperliquid HYPE and SOL perps, which market has the higher open-interest-to-volume ratio and greater liquidation cascade risk right now?",
+      "alphaCategory": "open-interest-risk",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.833333333333333,
+      "quotedExcerpts": [
+        "**HYPE** has both a higher open-interest-to-volume ratio and a greater liquidation cascade risk compared to SOL on Hyperliquid.",
+        "**OI/Volume Ratio** | **4.78** | 1.73 ... **Liquidation Risk** | **High** | Moderate"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline by calculating current OI-to-volume ratios and risk labels; the baseline only gave structural reasoning.",
+      "traceAssessment": {
+        "toolCalls": 6,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The response directly answers the relative risk question with current metrics.",
+        "improvementLever": "Add liquidation-threshold context if available, but the current ratio-based answer is useful."
+      }
+    },
+    {
+      "id": "hl-012",
+      "prompt": "Check whether any of the Hyperliquid BTC, ETH, HYPE, ZEC, or CHIP perpetual markets are currently reported at the open-interest cap.",
+      "alphaCategory": "open-interest-risk",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.833333333333333,
+      "quotedExcerpts": [
+        "None of the requested markets (BTC, ETH, HYPE, ZEC, or CHIP) are currently reported at their open-interest cap.",
+        "As of 2026-04-27T06:59:04Z, the following perpetual markets are at their open-interest cap: CANTO, FTM, JELLY, LOOM, MAVIA, RLB, ZEREBRO."
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline because it checks the current reported at-cap list; the baseline speculated from typical risk parameters.",
+      "traceAssessment": {
+        "toolCalls": 1,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The answer directly answers no for the requested markets and adds useful context on which markets are at cap.",
+        "improvementLever": "Maintain this direct at-cap lookup behavior."
+      }
+    },
+    {
+      "id": "hl-013",
+      "prompt": "For the Hyperliquid BTC perpetual market, summarize the last 100 recent trades: buy versus sell volume, largest trade notional, and whether any trades exceeded a $250,000 whale threshold.",
+      "alphaCategory": "trade-tape-momentum",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 2,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 3.5,
+      "quotedExcerpts": [
+        "**Note:** The following data is based on a snapshot of the last 10 trades returned by the system. This is a partial summary and does not cover the full 100 trades requested due to API snapshot limitations.",
+        "**Largest Trade Notional:** $1,976.64 ... **Whale Activity ($250,000+):** No trades in this snapshot met or exceeded the $250,000 whale threshold."
+      ],
+      "paidBeatsBaseline": false,
+      "baselineComparison": "Paid is more transparent and likely more grounded, but it does not beat the baseline for buyer utility because the user requested the last 100 trades and the paid answer only covers 10.",
+      "traceAssessment": {
+        "toolCalls": 1,
+        "toolSelectionFit": "adequate",
+        "fragilityRisk": "medium",
+        "rootCauseCategory": "data_gap",
+        "diagnosticBrief": "The trace selected get_recent_trades and succeeded, but the returned data covered only 10 trades. The answer's whale conclusion is therefore scoped to an incomplete sample rather than the requested 100 trades.",
+        "improvementLever": "Support pagination or repeated recent-trade pulls until 100 trades are accumulated, then compute buy/sell volume and whale thresholds across the full set."
+      }
+    },
+    {
+      "id": "hl-014",
+      "prompt": "For the Hyperliquid HYPE perpetual market, use the last 48 one-hour candles to report price change, period high, period low, and total traded volume.",
+      "alphaCategory": "trade-tape-momentum",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.333333333333333,
+      "quotedExcerpts": [
+        "As of 2026-04-27T07:00:04.839Z, here is the performance summary for the Hyperliquid HYPE perpetual market based on the last 48 one-hour candles:",
+        "**Price Change** | 3.35 ... **Period High** | 43.568 ... **Total Traded Volume** | 6,882,426.76"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline because the baseline used a stale May 2024 example, while paid used current 48-candle data.",
+      "traceAssessment": {
+        "toolCalls": 1,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The answer covers the requested candle-derived metrics, but price-change and volume units should be explicit.",
+        "improvementLever": "Label price change as absolute and/or percent, and label volume units as contracts/base or USD notional."
+      }
+    },
+    {
+      "id": "hl-015",
+      "prompt": "For the Hyperliquid PENGU perpetual market, compare the recent 7-day average daily volume with its 30-day average and say whether liquidity is accelerating or drying up.",
+      "alphaCategory": "trade-tape-momentum",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 5,
+      "quotedExcerpts": [
+        "Liquidity for the PENGU perpetual market is **accelerating**.",
+        "**7-Day Average** | $7,079,151.50 ... **30-Day Average** | $3,691,715.27 ... **Ratio (7d/30d)** | 1.92x"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline by returning current 7-day and 30-day averages and the opposite conclusion from the outdated baseline.",
+      "traceAssessment": {
+        "toolCalls": 1,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The response cleanly answers the acceleration question with current averages and a ratio.",
+        "improvementLever": "Maintain the volume-history comparison pattern."
+      }
+    },
+    {
+      "id": "hl-016",
+      "prompt": "For Hyperliquid spot tokens PURR, HFUN, TRUMP, and PUMP, list token metadata, available spot pair indexes, current mark or mid price, and 24h spot volume where available.",
+      "alphaCategory": "spot-market-structure",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 3.3333333333333335,
+      "quotedExcerpts": [
+        "**TRUMP** | 10 | 2 / 7 | Not Available | 2.5465 | 2.5467500000000003 | 7536063.991749999",
+        "**Data Source**: The prices and volumes for PURR, TRUMP, and PUMP are synthesized from perpetual market information where direct spot pair entries were missing from the localized dataset."
+      ],
+      "paidBeatsBaseline": false,
+      "baselineComparison": "Paid has fresher-looking numbers than the baseline, but it does not beat baseline quality because it substitutes perpetual market information for a spot-token prompt and misses available spot pair indexes for TRUMP and PUMP.",
+      "traceAssessment": {
+        "toolCalls": 5,
+        "toolSelectionFit": "weak",
+        "fragilityRisk": "high",
+        "rootCauseCategory": "contributor_bug",
+        "diagnosticBrief": "The answer is explicitly not pure spot data: it synthesizes prices and volumes from perpetual market information and marks spot pair indexes unavailable even though the follow-up spot comparison finds pair indexes 9 and 20.",
+        "improvementLever": "Fix spot token-to-pair resolution and suppress perpetual fallbacks for spot prompts unless the response clearly separates unavailable spot data from unrelated perp data."
+      }
+    },
+    {
+      "id": "hl-017",
+      "prompt": "Compare Hyperliquid spot TRUMP and spot PUMP by current spot pair price, 24h notional volume, token decimals, and whether the pair is canonical.",
+      "alphaCategory": "spot-market-structure",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 4.333333333333333,
+      "quotedExcerpts": [
+        "**Current Spot Price** | 0.000349 USDC | 0.00009497 USDC ... **Is Canonical Pair** | No | No",
+        "**TRUMP/USDC**: This pair (Pair Index 9) has a current mark price of 0.000238 USDC and a mid price of 0.000349 USDC."
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline because it uses current spot pair data and canonical status, while the baseline gave stale October 2024 prices and claimed both pairs were canonical.",
+      "traceAssessment": {
+        "toolCalls": 3,
+        "toolSelectionFit": "adequate",
+        "fragilityRisk": "high",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The answer covers all requested fields, but trace fragility is high due to one failed tool attempt and very long latency; it also conflicts with hl-016's synthesized spot-token values.",
+        "improvementLever": "Unify spot market resolution so pair-index lookups and token metadata queries return the same price/volume basis."
+      }
+    },
+    {
+      "id": "hl-018",
+      "prompt": "For the Hyperliquid HLP vault at 0xdfc24b077bc1425ad1dea75bcb6f8158e10df303, report APR, TVL, follower count, leader commission, lockup period, and recent performance by available period.",
+      "alphaCategory": "protocol-yield-and-staking",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.833333333333333,
+      "quotedExcerpts": [
+        "**APR (Annualized):** -14.55% ... **TVL:** $211.64M ... **Follower Count:** 100 ... **Lockup Period:** 4 days",
+        "**Day** | $661.10 | 57 ... **Month** | -$2,262,192.00 | 46 ... **All Time** | $136,496,208.40 | 89"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline with current vault stats and period performance, while the baseline used stale 2024 estimates.",
+      "traceAssessment": {
+        "toolCalls": 1,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The response gives all requested vault fields and recent performance periods.",
+        "improvementLever": "Label performance periods with exact windows when the vault API provides them."
+      }
+    },
+    {
+      "id": "hl-019",
+      "prompt": "For the Hyperliquid HYPE token, summarize the staking mechanics, current HYPE mid price, delegation lockup, unstaking queue, minimum validator self-delegation, and what public staking data is unavailable.",
+      "alphaCategory": "protocol-yield-and-staking",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 5,
+      "quotedExcerpts": [
+        "**Current HYPE Mid Price** | $42.5315 ... **Delegation Lockup** | 1 day ... **Unstaking Queue** | 7 days ... **Minimum Validator Self-Delegation** | 10,000 HYPE",
+        "**Unavailable Public Staking Data** ... **Current staking totals** ... **Validator list**"
+      ],
+      "paidBeatsBaseline": true,
+      "baselineComparison": "Paid beats the baseline by combining current HYPE price with specific staking mechanics and a clear list of unavailable public data.",
+      "traceAssessment": {
+        "toolCalls": 1,
+        "toolSelectionFit": "strong",
+        "fragilityRisk": "low",
+        "rootCauseCategory": "none",
+        "diagnosticBrief": "The answer is complete and transparent about public staking data gaps.",
+        "improvementLever": "Maintain explicit unavailable-data disclosure for staking prompts."
+      }
+    }
+  ]
+}

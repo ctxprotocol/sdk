@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import sharedQueryFixture from "../../../fixtures/query-response/full-grounded-answer.json" with {
+  type: "json",
+};
 import { ContextClient } from "../client.js";
 import { ContextError } from "../types.js";
 import type {
@@ -9,6 +12,15 @@ import type {
   QueryStreamTextDeltaEvent,
   QueryStreamDoneEvent,
 } from "../types.js";
+
+type SharedQueryFixture = {
+  groundedAnswer: Record<string, unknown>;
+  capabilityMiss: Record<string, unknown>;
+  clarificationRequired: Record<string, unknown>;
+  ungroundedCapabilityMiss: Record<string, unknown>;
+};
+
+const SHARED_QUERY_FIXTURE = sharedQueryFixture as SharedQueryFixture;
 
 // ============================================================================
 // Helpers
@@ -814,6 +826,66 @@ describe("Query Resource", () => {
         expect(result.evidence?.facts[0]?.label).toBe("Net BTC exchange flow");
         expect(result.artifacts?.canonicalDataRef?.datasetId).toBe("dataset-1");
         expect(result.usage?.outcomeType).toBe("answer");
+      }
+    });
+
+    it("parses shared grounded answer fixture artifacts and grounding", async () => {
+      globalThis.fetch = mockFetchRunResult(SHARED_QUERY_FIXTURE.groundedAnswer);
+
+      const result: QueryResult = await client.query.run({
+        query: "Compare BTC and ETH returns.",
+        includeDeveloperTrace: true,
+      });
+
+      expect(result.outcomeType).toBe("answer");
+      expect(result.grounding).toEqual({
+        availableToolCount: 4,
+        availableMethodNamesSample: [
+          "Market Data.get_candles",
+          "Market Data.get_funding_history",
+          "Market Data.get_open_interest_history",
+        ],
+        selectedMethodCount: 3,
+        selectedButFilteredOut: [],
+        toolCallCount: 2,
+        grounded: true,
+      });
+      expect(result.computedArtifacts).toHaveLength(2);
+      expect(result.computedArtifacts?.[0]?.kind).toBe("chart");
+      if (result.computedArtifacts?.[0]?.kind === "chart") {
+        expect(result.computedArtifacts[0].spec.xKey).toBe("date");
+        expect(result.computedArtifacts[0].data[1]?.btcReturn).toBe(0.034);
+      }
+      expect(result.computedArtifacts?.[1]?.kind).toBe("metric_table");
+      if (result.computedArtifacts?.[1]?.kind === "metric_table") {
+        expect(result.computedArtifacts[1].rows[0]).toEqual({
+          metric: "BTC cumulative return",
+          value: "3.4%",
+        });
+      }
+      expect(
+        result.developerTrace?.diagnostics?.execution?.toolRegistry
+          ?.availableToolCount,
+      ).toBe(4);
+    });
+
+    it("parses shared ungrounded runtime fixture as capability miss", async () => {
+      globalThis.fetch = mockFetchRunResult(
+        SHARED_QUERY_FIXTURE.ungroundedCapabilityMiss,
+      );
+
+      const result = await client.query.run({
+        query: "Compare BTC and ETH returns.",
+        clarificationPolicy: "return",
+      });
+
+      expect(result.outcomeType).toBe("capability_miss");
+      expect(result.grounding?.grounded).toBe(false);
+      expect(result.grounding?.availableToolCount).toBe(3);
+      if (result.outcomeType === "capability_miss") {
+        expect(result.capabilityMiss.missingCapabilities).toEqual([
+          "runtime_did_not_invoke_selected_tools",
+        ]);
       }
     });
 

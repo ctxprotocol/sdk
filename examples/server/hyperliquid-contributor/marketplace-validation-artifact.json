@@ -1,0 +1,401 @@
+{
+  "generatedAt": "2026-04-27T07:20:19.646Z",
+  "serverName": "hyperliquid-contributor",
+  "runType": "full-enhancement",
+  "codeChanged": true,
+  "promptPoolRegenerated": true,
+  "autoQueryValidationRun": true,
+  "toolCount": 48,
+  "formFields": {
+    "name": "Hyperliquid Intelligence",
+    "description": "Live Hyperliquid market intelligence for perps, spot, liquidity, funding, open interest, HLP vaults, and HYPE staking from one MCP endpoint.\n\nFeatures:\n- Pull current perp market snapshots with mark, mid, oracle, volume, open interest, funding, spreads, and leverage\n- Simulate visible-book price impact for large BTC, HYPE, ZEC, CHIP, and other Hyperliquid orders\n- Compare funding, carry pressure, open-interest crowding, recent trades, candles, and volume momentum\n- Inspect Hyperliquid spot token metadata, spot pairs, HLP vault stats, and public HYPE staking mechanics\n- Use structured responses with data freshness, sources, and fetched timestamps for auditability\n\nTry asking:\n- \"Among the Hyperliquid BTC, ETH, HYPE, SOL, and ZEC perpetual markets, which currently dominates by 24h notional volume, open interest in USD, and max leverage?\"\n- \"Give me a live risk snapshot for the Hyperliquid BTC perpetual market: mark price, mid price, oracle price, 24h volume, open interest in USD, funding rate, spread, and max leverage.\"\n- \"Compare the Hyperliquid ETH and HYPE perpetual markets by 24h volume, open interest in USD, funding rate, premium versus oracle, and 24h price change.\"\n- \"What is the current bid-ask spread, visible bid liquidity, visible ask liquidity, and liquidity score for the Hyperliquid BTC perpetual orderbook?\"\n- \"If I needed to sell $5,000,000 of HYPE perps on Hyperliquid, what visible-book slippage, filled percentage, TWAP duration, and execution recommendation would the current orderbook imply?\"\n- \"For Hyperliquid HYPE and SOL perps, which market has the higher open-interest-to-volume ratio and greater liquidation cascade risk right now?\"\n- \"For the Hyperliquid HYPE perpetual market, use the last 48 one-hour candles to report price change, period high, period low, and total traded volume.\"\n- \"For the Hyperliquid HLP vault at 0xdfc24b077bc1425ad1dea75bcb6f8158e10df303, report APR, TVL, follower count, leader commission, lockup period, and recent performance by available period.\"\n\nAgent tips:\n- Start with get_market_info or list_markets for live perp discovery, then use get_orderbook or calculate_price_impact for execution sizing\n- Use get_funding_history with get_market_info when the question is about current carry versus recent persistence\n- Use get_open_interest_analysis for crowded-market and liquidation-risk questions before making a directional recommendation\n- Use get_spot_meta for spot token and pair questions; avoid substituting perp data for spot pair answers\n- Treat write actions as signature workflows that require user approval in the browser",
+    "category": "Crypto & DeFi",
+    "price": "0.10",
+    "endpoint": "https://mcp.ctxprotocol.com/hyperliquid/mcp"
+  },
+  "generatedDescription": "Live Hyperliquid market intelligence for perps, spot, liquidity, funding, open interest, HLP vaults, and HYPE staking from one MCP endpoint.\n\nFeatures:\n- Pull current perp market snapshots with mark, mid, oracle, volume, open interest, funding, spreads, and leverage\n- Simulate visible-book price impact for large BTC, HYPE, ZEC, CHIP, and other Hyperliquid orders\n- Compare funding, carry pressure, open-interest crowding, recent trades, candles, and volume momentum\n- Inspect Hyperliquid spot token metadata, spot pairs, HLP vault stats, and public HYPE staking mechanics\n- Use structured responses with data freshness, sources, and fetched timestamps for auditability\n\nTry asking:\n- \"Among the Hyperliquid BTC, ETH, HYPE, SOL, and ZEC perpetual markets, which currently dominates by 24h notional volume, open interest in USD, and max leverage?\"\n- \"Give me a live risk snapshot for the Hyperliquid BTC perpetual market: mark price, mid price, oracle price, 24h volume, open interest in USD, funding rate, spread, and max leverage.\"\n- \"Compare the Hyperliquid ETH and HYPE perpetual markets by 24h volume, open interest in USD, funding rate, premium versus oracle, and 24h price change.\"\n- \"What is the current bid-ask spread, visible bid liquidity, visible ask liquidity, and liquidity score for the Hyperliquid BTC perpetual orderbook?\"\n- \"If I needed to sell $5,000,000 of HYPE perps on Hyperliquid, what visible-book slippage, filled percentage, TWAP duration, and execution recommendation would the current orderbook imply?\"\n- \"For Hyperliquid HYPE and SOL perps, which market has the higher open-interest-to-volume ratio and greater liquidation cascade risk right now?\"\n- \"For the Hyperliquid HYPE perpetual market, use the last 48 one-hour candles to report price change, period high, period low, and total traded volume.\"\n- \"For the Hyperliquid HLP vault at 0xdfc24b077bc1425ad1dea75bcb6f8158e10df303, report APR, TVL, follower count, leader commission, lockup period, and recent performance by available period.\"\n\nAgent tips:\n- Start with get_market_info or list_markets for live perp discovery, then use get_orderbook or calculate_price_impact for execution sizing\n- Use get_funding_history with get_market_info when the question is about current carry versus recent persistence\n- Use get_open_interest_analysis for crowded-market and liquidation-risk questions before making a directional recommendation\n- Use get_spot_meta for spot token and pair questions; avoid substituting perp data for spot pair answers\n- Treat write actions as signature workflows that require user approval in the browser",
+  "descriptionUpdate": {
+    "status": "updated",
+    "descriptionUpdatedAt": "2026-04-27T07:20:19.646Z",
+    "toolId": "b940bedc-3d67-45b0-8709-b3d070e5e454",
+    "updatedName": "Hyperliquid"
+  },
+  "descriptionUpdatedAt": "2026-04-27T07:20:19.646Z",
+  "candidatePromptPool": [
+    {
+      "prompt": "Among the Hyperliquid BTC, ETH, HYPE, SOL, and ZEC perpetual markets, which currently dominates by 24h notional volume, open interest in USD, and max leverage?",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "market-discovery",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-001: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 5
+    },
+    {
+      "prompt": "Give me a live risk snapshot for the Hyperliquid BTC perpetual market: mark price, mid price, oracle price, 24h volume, open interest in USD, funding rate, spread, and max leverage.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "market-discovery",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-002: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 5
+    },
+    {
+      "prompt": "Compare the Hyperliquid ETH and HYPE perpetual markets by 24h volume, open interest in USD, funding rate, premium versus oracle, and 24h price change.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "market-discovery",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-003: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 4.833333333333333
+    },
+    {
+      "prompt": "What is the current bid-ask spread, visible bid liquidity, visible ask liquidity, and liquidity score for the Hyperliquid BTC perpetual orderbook?",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "liquidity-impact",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-004: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 3.8333333333333335
+    },
+    {
+      "prompt": "If I needed to sell $5,000,000 of HYPE perps on Hyperliquid, what visible-book slippage, filled percentage, TWAP duration, and execution recommendation would the current orderbook imply?",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "liquidity-impact",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-005: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 4.666666666666667
+    },
+    {
+      "prompt": "For the Hyperliquid CHIP perpetual market, estimate the impact of buying $500,000 through the visible orderbook and explain whether daily volume and open interest make that order fragile.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "liquidity-impact",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-006: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 4.833333333333333
+    },
+    {
+      "prompt": "For the Hyperliquid ZEC perpetual market, show the current orderbook spread, visible depth on both sides, and how that depth compares with ZEC 24h notional volume.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "liquidity-impact",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-007: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 5
+    },
+    {
+      "prompt": "Is the Hyperliquid MAVIA perpetual market's strongly positive funding a one-off print or persistent over the last 7 days?",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "funding-carry",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-008: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 4.5
+    },
+    {
+      "prompt": "For the Hyperliquid BLAST perpetual market, quantify the current negative funding rate and summarize whether shorts have consistently paid longs over the last 7 days.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "funding-carry",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-009: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 4.833333333333333
+    },
+    {
+      "prompt": "Between the Hyperliquid CHIP and LDO perpetual markets, which has the more expensive short-side carry based on current funding and recent funding history?",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "funding-carry",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-010: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 4.833333333333333
+    },
+    {
+      "prompt": "For Hyperliquid HYPE and SOL perps, which market has the higher open-interest-to-volume ratio and greater liquidation cascade risk right now?",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "open-interest-risk",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-011: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 4.833333333333333
+    },
+    {
+      "prompt": "Check whether any of the Hyperliquid BTC, ETH, HYPE, ZEC, or CHIP perpetual markets are currently reported at the open-interest cap.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "open-interest-risk",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-012: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 4.833333333333333
+    },
+    {
+      "prompt": "For the Hyperliquid BTC perpetual market, summarize the last 100 recent trades: buy versus sell volume, largest trade notional, and whether any trades exceeded a $250,000 whale threshold.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "trade-tape-momentum",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-013: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 3.5
+    },
+    {
+      "prompt": "For the Hyperliquid HYPE perpetual market, use the last 48 one-hour candles to report price change, period high, period low, and total traded volume.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "trade-tape-momentum",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-014: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 4.333333333333333
+    },
+    {
+      "prompt": "For the Hyperliquid PENGU perpetual market, compare the recent 7-day average daily volume with its 30-day average and say whether liquidity is accelerating or drying up.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "trade-tape-momentum",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-015: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 5
+    },
+    {
+      "prompt": "For Hyperliquid spot tokens PURR, HFUN, TRUMP, and PUMP, list token metadata, available spot pair indexes, current mark or mid price, and 24h spot volume where available.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "spot-market-structure",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-016: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 3.3333333333333335
+    },
+    {
+      "prompt": "Compare Hyperliquid spot TRUMP and spot PUMP by current spot pair price, 24h notional volume, token decimals, and whether the pair is canonical.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "spot-market-structure",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-017: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 4.333333333333333
+    },
+    {
+      "prompt": "For the Hyperliquid HLP vault at 0xdfc24b077bc1425ad1dea75bcb6f8158e10df303, report APR, TVL, follower count, leader commission, lockup period, and recent performance by available period.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "protocol-yield-and-staking",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-018: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 4.833333333333333
+    },
+    {
+      "prompt": "For the Hyperliquid HYPE token, summarize the staking mechanics, current HYPE mid price, delegation lockup, unstaking queue, minimum validator self-delegation, and what public staking data is unavailable.",
+      "mustWin": true,
+      "category": "hyperliquid",
+      "alphaCategory": "protocol-yield-and-staking",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "SDK evaluation path against Context query API; local Hyperliquid MCP direct checks not required for this artifact.",
+      "comparisonNote": "hl-019: paid vs free differentiation=moderate_differentiation",
+      "satisfactionMean": 5
+    }
+  ],
+  "showcasePrompts": [
+    "Among the Hyperliquid BTC, ETH, HYPE, SOL, and ZEC perpetual markets, which currently dominates by 24h notional volume, open interest in USD, and max leverage?",
+    "Give me a live risk snapshot for the Hyperliquid BTC perpetual market: mark price, mid price, oracle price, 24h volume, open interest in USD, funding rate, spread, and max leverage.",
+    "Compare the Hyperliquid ETH and HYPE perpetual markets by 24h volume, open interest in USD, funding rate, premium versus oracle, and 24h price change.",
+    "What is the current bid-ask spread, visible bid liquidity, visible ask liquidity, and liquidity score for the Hyperliquid BTC perpetual orderbook?",
+    "If I needed to sell $5,000,000 of HYPE perps on Hyperliquid, what visible-book slippage, filled percentage, TWAP duration, and execution recommendation would the current orderbook imply?",
+    "For Hyperliquid HYPE and SOL perps, which market has the higher open-interest-to-volume ratio and greater liquidation cascade risk right now?",
+    "For the Hyperliquid HYPE perpetual market, use the last 48 one-hour candles to report price change, period high, period low, and total traded volume.",
+    "For the Hyperliquid HLP vault at 0xdfc24b077bc1425ad1dea75bcb6f8158e10df303, report APR, TVL, follower count, leader commission, lockup period, and recent performance by available period."
+  ],
+  "verticalAlphaResearch": {
+    "completedAt": "2026-04-27T07:20:19.646Z",
+    "upstreamDocsSource": "validation/context7-hyperliquid-contributor-upstream-snapshot.txt",
+    "alphaCategories": [
+      {
+        "category": "market-discovery",
+        "upstreamDataSource": "Hyperliquid /info metaAndAssetCtxs",
+        "whyItBeatsFree": "Live market prices, volume, open interest, funding, and leverage change intraday and are not available to a static free model."
+      },
+      {
+        "category": "liquidity-impact",
+        "upstreamDataSource": "Hyperliquid /info l2Book plus market context",
+        "whyItBeatsFree": "Visible-book depth and slippage require current orderbook levels and sizing math."
+      },
+      {
+        "category": "funding-carry",
+        "upstreamDataSource": "Hyperliquid fundingHistory and current asset contexts",
+        "whyItBeatsFree": "Carry persistence requires current funding plus recent historical samples."
+      },
+      {
+        "category": "open-interest-risk",
+        "upstreamDataSource": "Hyperliquid open interest and OI cap endpoints",
+        "whyItBeatsFree": "Crowding and liquidation-risk context depends on current open interest, volume, and cap status."
+      },
+      {
+        "category": "spot-market-structure",
+        "upstreamDataSource": "Hyperliquid spotMetaAndAssetCtxs",
+        "whyItBeatsFree": "Spot token metadata, canonical pair flags, and pair volume require current Hyperliquid spot data."
+      },
+      {
+        "category": "protocol-yield-and-staking",
+        "upstreamDataSource": "Hyperliquid vaultDetails and staking metadata",
+        "whyItBeatsFree": "HLP, vault, and staking answers are strongest when grounded in protocol-native fields and explicit public-data limits."
+      }
+    ]
+  },
+  "reviewerSummary": {
+    "satisfactionMean": 4.596,
+    "highFragilityRate": 0.158,
+    "baselineBeatenRate": 0.8947,
+    "queryCount": 19,
+    "queriesBelow3": 0,
+    "weakQueryCount": 3,
+    "weakQueryRate": 0.158,
+    "blockingHighDifferentiationPromptIds": [],
+    "differentiationCounts": {
+      "high_differentiation": 19,
+      "moderate_differentiation": 0,
+      "low_differentiation": 0
+    },
+    "promptSetFingerprint": "hl-001,hl-002,hl-003,hl-004,hl-005,hl-006,hl-007,hl-008,hl-009,hl-010,hl-011,hl-012,hl-013,hl-014,hl-015,hl-016,hl-017,hl-018,hl-019",
+    "weightedBuyerValue": 0.8937,
+    "generalization": {
+      "active": true,
+      "ok": true,
+      "holdoutRatio": 0.4,
+      "holdoutGateMinCount": 5,
+      "holdoutGeneralizationTolerance": 0.3,
+      "trainQueryCount": 10,
+      "holdoutQueryCount": 9,
+      "trainSatisfactionMean": 4.583,
+      "holdoutSatisfactionMean": 4.611,
+      "trainWeakQueryRate": 0.2,
+      "holdoutWeakQueryRate": 0.111
+    }
+  },
+  "reviewerEvaluationSummary": {
+    "satisfactionMean": 4.596,
+    "highFragilityRate": 0.158,
+    "baselineBeatenRate": 0.8947,
+    "queryCount": 19,
+    "queriesBelow3": 0,
+    "weakQueryCount": 3,
+    "weakQueryRate": 0.158,
+    "blockingHighDifferentiationPromptIds": [],
+    "differentiationCounts": {
+      "high_differentiation": 19,
+      "moderate_differentiation": 0,
+      "low_differentiation": 0
+    },
+    "promptSetFingerprint": "hl-001,hl-002,hl-003,hl-004,hl-005,hl-006,hl-007,hl-008,hl-009,hl-010,hl-011,hl-012,hl-013,hl-014,hl-015,hl-016,hl-017,hl-018,hl-019",
+    "weightedBuyerValue": 0.8937,
+    "generalization": {
+      "active": true,
+      "ok": true,
+      "holdoutRatio": 0.4,
+      "holdoutGateMinCount": 5,
+      "holdoutGeneralizationTolerance": 0.3,
+      "trainQueryCount": 10,
+      "holdoutQueryCount": 9,
+      "trainSatisfactionMean": 4.583,
+      "holdoutSatisfactionMean": 4.611,
+      "trainWeakQueryRate": 0.2,
+      "holdoutWeakQueryRate": 0.111
+    }
+  },
+  "qualityGates": {
+    "passed": true,
+    "buyerSatisfactionPassed": true,
+    "fragilityPassed": true,
+    "highDifferentiationFloorPassed": true,
+    "differentiationPassed": true,
+    "directValidationPassed": true,
+    "authContractPassed": true,
+    "queryMarketplaceValidationPassed": true,
+    "executeMarketplaceValidationPassed": true,
+    "blockingPromptIdsBelow3": []
+  },
+  "releaseDecision": {
+    "status": "ready",
+    "artifactWriteAllowed": true,
+    "iteration": {
+      "action": "pass",
+      "shouldContinue": false,
+      "terminalState": "converged",
+      "iterationCount": 0,
+      "previousSatisfactionMean": null,
+      "iterationStateSource": "run-log",
+      "weakQueryRate": 0.158,
+      "reason": "Release gates passed, mean 4.596 >= 4.2, and only 16% weak queries (<= 20%)."
+    },
+    "localValidation": {
+      "queryValidationPassedStrict": true,
+      "queryValidationPassedRelaxed": true,
+      "queryValidationPassed": true,
+      "executeValidationPassed": true,
+      "authContractPassed": true,
+      "directValidationPassed": true
+    }
+  },
+  "localValidation": {
+    "queryPassRate": 1,
+    "queryPromptCount": 19,
+    "failedQueryCount": 0,
+    "representativeReadMethodCount": 6,
+    "failedRepresentativeReadMethodCount": 0,
+    "publicAuthProbe": {
+      "initializeStatus": 200,
+      "toolsListStatus": 200,
+      "toolsCallStatus": 0,
+      "toolCount": 48,
+      "rpcAuthBlocked": false,
+      "pass": true
+    },
+    "note": "Automated validation focuses on SDK/query and representative read-only MCP behavior. Browser signature workflows remain manual QA."
+  },
+  "knownLimitations": [
+    "Browser chat and signature-based write actions still require manual QA.",
+    "Reviewer noted weak but non-blocking opportunities around orderbook spread units, recent trade snapshot limits, and spot pair resolution clarity."
+  ],
+  "signoff": {
+    "overallReleaseStatus": {
+      "status": "PASS",
+      "reason": "Release gates passed, mean 4.596 >= 4.2, and only 16% weak queries (<= 20%)."
+    }
+  }
+}

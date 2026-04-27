@@ -1,0 +1,234 @@
+{
+  "groundedAnswer": {
+    "success": true,
+    "response": "BTC outperformed ETH over the sample window, with higher cumulative return and lower max drawdown.",
+    "toolsUsed": [
+      {
+        "id": "tool-market-data",
+        "name": "Market Data",
+        "skillCalls": 2
+      }
+    ],
+    "cost": {
+      "totalCostUsd": "0.012300",
+      "toolCostUsd": "0.002000",
+      "modelCostUsd": "0.010300"
+    },
+    "durationMs": 4200,
+    "outcomeType": "answer",
+    "grounding": {
+      "availableToolCount": 4,
+      "availableMethodNamesSample": [
+        "Market Data.get_candles",
+        "Market Data.get_funding_history",
+        "Market Data.get_open_interest_history"
+      ],
+      "selectedMethodCount": 3,
+      "selectedButFilteredOut": [],
+      "toolCallCount": 2,
+      "grounded": true
+    },
+    "computedArtifacts": [
+      {
+        "kind": "chart",
+        "title": "BTC vs ETH Cumulative Return",
+        "spec": {
+          "type": "line",
+          "xKey": "date",
+          "series": [
+            {
+              "key": "btcReturn",
+              "label": "BTC",
+              "type": "line"
+            },
+            {
+              "key": "ethReturn",
+              "label": "ETH",
+              "type": "line"
+            }
+          ],
+          "xAxis": {
+            "label": "Date",
+            "type": "category"
+          },
+          "yAxis": {
+            "label": "Cumulative return",
+            "type": "number",
+            "tickFormat": "percent"
+          },
+          "legend": true
+        },
+        "data": [
+          {
+            "date": "2026-04-20",
+            "btcReturn": 0,
+            "ethReturn": 0
+          },
+          {
+            "date": "2026-04-21",
+            "btcReturn": 0.034,
+            "ethReturn": 0.021
+          }
+        ]
+      },
+      {
+        "kind": "metric_table",
+        "title": "Performance Summary",
+        "rows": [
+          {
+            "metric": "BTC cumulative return",
+            "value": "3.4%"
+          },
+          {
+            "metric": "ETH cumulative return",
+            "value": "2.1%"
+          }
+        ]
+      }
+    ],
+    "developerTrace": {
+      "summary": {
+        "toolCalls": 2,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "fallbackCount": 0,
+        "failureCount": 0,
+        "recoveryCount": 0,
+        "completionChecks": 0,
+        "loopCount": 3
+      },
+      "timeline": [
+        {
+          "stepType": "execution-setup",
+          "event": "iterative-execution-entry",
+          "status": "ok",
+          "timestampMs": 0,
+          "metadata": {
+            "availableToolCount": 4,
+            "availableMethodNamesSample": [
+              "Market Data.get_candles",
+              "Market Data.get_funding_history"
+            ],
+            "selectedMethodCount": 3,
+            "selectedButFilteredOut": [],
+            "toolCallCount": 2,
+            "grounded": true
+          }
+        }
+      ],
+      "diagnostics": {
+        "execution": {
+          "reasoningEnabled": true,
+          "receivedReasoning": true,
+          "reasoningChars": 128,
+          "stepBudget": 8,
+          "completedStepCount": 3,
+          "toolCallCount": 2,
+          "toolRegistry": {
+            "availableToolCount": 4,
+            "availableMethodNamesSample": [
+              "Market Data.get_candles",
+              "Market Data.get_funding_history"
+            ],
+            "selectedMethodCount": 3,
+            "selectedButFilteredOut": []
+          }
+        }
+      }
+    }
+  },
+  "capabilityMiss": {
+    "success": true,
+    "response": "The selected tools could not provide the requested market.",
+    "toolsUsed": [],
+    "cost": {
+      "totalCostUsd": "0.000000",
+      "toolCostUsd": "0.000000",
+      "modelCostUsd": "0.000000"
+    },
+    "durationMs": 800,
+    "outcomeType": "capability_miss",
+    "grounding": {
+      "availableToolCount": 0,
+      "availableMethodNamesSample": [],
+      "selectedMethodCount": 2,
+      "selectedButFilteredOut": [
+        "Market Data.get_unsupported_market"
+      ],
+      "toolCallCount": 0,
+      "grounded": false
+    },
+    "capabilityMiss": {
+      "message": "No query-eligible method can provide the requested market.",
+      "missingCapabilities": [
+        "runtime_did_not_invoke_selected_tools"
+      ],
+      "suggestedRewrites": [
+        "Ask for a market supported by the selected tool."
+      ],
+      "originalQuery": "Show me an unsupported market."
+    }
+  },
+  "clarificationRequired": {
+    "success": true,
+    "response": "Which market scope should I use?",
+    "toolsUsed": [],
+    "cost": {
+      "totalCostUsd": "0.000000",
+      "toolCostUsd": "0.000000",
+      "modelCostUsd": "0.000000"
+    },
+    "durationMs": 650,
+    "outcomeType": "clarification_required",
+    "clarification": {
+      "question": "Which market scope should I use?",
+      "options": [
+        {
+          "id": "event",
+          "toolId": "tool-market-data",
+          "toolName": "Market Data",
+          "methodName": "get_event_markets",
+          "label": "Event-wide",
+          "description": "Analyze all outcomes in the event.",
+          "fitScore": 0.86,
+          "recommended": true
+        }
+      ],
+      "allowFreeform": true,
+      "recommendedOptionId": "event",
+      "originalQuery": "Analyze this market."
+    }
+  },
+  "ungroundedCapabilityMiss": {
+    "success": true,
+    "response": "The runtime could not return a grounded answer because no marketplace tools were invoked.",
+    "toolsUsed": [],
+    "cost": {
+      "totalCostUsd": "0.000000",
+      "toolCostUsd": "0.000000",
+      "modelCostUsd": "0.000000"
+    },
+    "durationMs": 1800,
+    "outcomeType": "capability_miss",
+    "grounding": {
+      "availableToolCount": 3,
+      "availableMethodNamesSample": [
+        "Market Data.get_candles"
+      ],
+      "selectedMethodCount": 3,
+      "selectedButFilteredOut": [],
+      "toolCallCount": 0,
+      "grounded": false
+    },
+    "capabilityMiss": {
+      "message": "The runtime did not invoke any selected marketplace tool before finalization.",
+      "missingCapabilities": [
+        "runtime_did_not_invoke_selected_tools"
+      ],
+      "suggestedRewrites": [
+        "Retry the query with grounded tool execution required."
+      ],
+      "originalQuery": "Compare BTC and ETH returns."
+    }
+  }
+}

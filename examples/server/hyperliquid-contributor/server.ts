@@ -429,7 +429,31 @@ const TOOLS = [
         oiToVolumeRatio: { type: "number" },
         fundingImpliedBias: { type: "string" },
         atOpenInterestCap: { type: "boolean" },
+        oiCapStatus: {
+          type: "object",
+          description:
+            "Open-interest cap status and data coverage. Hyperliquid's public endpoint exposes which markets are already at cap, but not numeric cap limits or remaining headroom for non-capped markets.",
+          properties: {
+            isAtOpenInterestCap: { type: "boolean" },
+            source: { type: "string" },
+            knownAtCapMarkets: { type: "array", items: { type: "string" } },
+            explicitCapLimitUsd: { type: "string" },
+            remainingHeadroomUsd: { type: "string" },
+            proximityAssessment: { type: "string" },
+            capacitySignal: { type: "string" },
+          },
+          required: [
+            "isAtOpenInterestCap",
+            "source",
+            "knownAtCapMarkets",
+            "explicitCapLimitUsd",
+            "remainingHeadroomUsd",
+            "proximityAssessment",
+            "capacitySignal",
+          ],
+        },
         liquidationRisk: { type: "string", enum: ["low", "moderate", "high"] },
+        dataCoverageNotes: { type: "array", items: { type: "string" } },
         confidence: { type: "number", minimum: 0, maximum: 1, description: "Confidence in risk assessment" },
         dataSources: { type: "array", items: { type: "string" }, description: "API endpoints used" },
         dataFreshness: { type: "string", enum: ["real-time", "near-real-time", "cached", "historical"] },
@@ -2734,6 +2758,18 @@ async function handleGetOpenInterestAnalysis(args: Record<string, unknown> | und
   const oiUsd = openInterest * markPrice;
   const oiToVolumeRatio = volume24h > 0 ? oiUsd / volume24h : 0;
   const atCap = marketsAtCap.includes(coin);
+  const oiCapStatus = {
+    isAtOpenInterestCap: atCap,
+    source: "perpsAtOpenInterestCap",
+    knownAtCapMarkets: marketsAtCap,
+    explicitCapLimitUsd: "unavailable from Hyperliquid public API",
+    remainingHeadroomUsd: "unavailable from Hyperliquid public API",
+    proximityAssessment: atCap
+      ? "At the exchange-reported open-interest cap; capacity for new positions may be restricted."
+      : "Not in the exchange-reported at-cap list. The public endpoint does not expose a numeric cap or remaining headroom for non-capped markets, so closeness to cap cannot be quantified from this data alone.",
+    capacitySignal:
+      "Use OI/volume, spread, leverage, depth, and funding as liquidity-capacity signals; do not treat a non-capped status as proof of large remaining OI headroom.",
+  };
 
   let fundingBias: string;
   if (fundingRate > 0.0001) fundingBias = "heavily long-biased";
@@ -2757,7 +2793,14 @@ async function handleGetOpenInterestAnalysis(args: Record<string, unknown> | und
     oiToVolumeRatio: Number(oiToVolumeRatio.toFixed(2)),
     fundingImpliedBias: fundingBias,
     atOpenInterestCap: atCap,
+    oiCapStatus,
     liquidationRisk,
+    dataCoverageNotes: [
+      "OI cap coverage is binary: Hyperliquid exposes markets currently at cap, not per-market numeric cap limits.",
+      atCap
+        ? `${coin} is in the current at-cap list.`
+        : `${coin} is not in the current at-cap list; numeric cap proximity/headroom is unavailable from this endpoint.`,
+    ],
     confidence,
     dataSources: ["metaAndAssetCtxs", "perpsAtOpenInterestCap"],
     dataFreshness: "real-time" as const,
@@ -3017,7 +3060,7 @@ async function handleGetMarketsAtOiCap(): Promise<CallToolResult> {
   return successResult({
     marketsAtCap: markets,
     count: markets.length,
-    note: "Markets at OI cap have limited capacity for new positions.",
+    note: "Markets at OI cap have limited capacity for new positions. This endpoint is a binary at-cap list; it does not provide numeric cap limits or remaining headroom for markets absent from the list.",
     dataSources: ["perpsAtOpenInterestCap"],
     dataFreshness: "real-time" as const,
     fetchedAt: new Date().toISOString(),
