@@ -869,6 +869,74 @@ describe("Query Resource", () => {
       ).toBe(4);
     });
 
+    it("preserves expanded chart artifact specs for SDK consumers", async () => {
+      globalThis.fetch = mockFetchRunResult({
+        ...MOCK_SUCCESS_RESPONSE,
+        computedArtifacts: [
+          {
+            kind: "chart",
+            title: "Correlation Heatmap",
+            spec: {
+              type: "heatmap",
+              xKey: "x",
+              yKey: "y",
+              valueKey: "value",
+              series: [{ key: "value", label: "Correlation" }],
+              yAxis: { label: "Asset" },
+            },
+            data: [
+              { x: "BTC", y: "BTC", value: 1 },
+              { x: "BTC", y: "ETH", value: 0.82 },
+            ],
+          },
+          {
+            kind: "chart",
+            title: "BTC Daily Candles",
+            spec: {
+              type: "candlestick",
+              xKey: "time",
+              series: [{ key: "close", label: "Close" }],
+              xAxis: { type: "time", label: "Date" },
+              yAxis: { label: "Price", format: "currency" },
+              ohlc: {
+                openKey: "open",
+                highKey: "high",
+                lowKey: "low",
+                closeKey: "close",
+              },
+            },
+            data: [
+              {
+                time: "2026-04-01",
+                open: 100,
+                high: 104,
+                low: 98,
+                close: 102,
+              },
+            ],
+          },
+        ],
+      });
+
+      const result = await client.query.run("Render richer chart artifacts");
+
+      expect(result.computedArtifacts).toHaveLength(2);
+      const heatmap = result.computedArtifacts?.[0];
+      expect(heatmap?.kind).toBe("chart");
+      if (heatmap?.kind === "chart") {
+        expect(heatmap.spec.type).toBe("heatmap");
+        expect(heatmap.spec.valueKey).toBe("value");
+        expect(heatmap.data[1]?.value).toBe(0.82);
+      }
+      const candlestick = result.computedArtifacts?.[1];
+      expect(candlestick?.kind).toBe("chart");
+      if (candlestick?.kind === "chart") {
+        expect(candlestick.spec.type).toBe("candlestick");
+        expect(candlestick.spec.ohlc?.closeKey).toBe("close");
+        expect(candlestick.spec.xAxis?.label).toBe("Date");
+      }
+    });
+
     it("parses shared ungrounded runtime fixture as capability miss", async () => {
       globalThis.fetch = mockFetchRunResult(
         SHARED_QUERY_FIXTURE.ungroundedCapabilityMiss,
