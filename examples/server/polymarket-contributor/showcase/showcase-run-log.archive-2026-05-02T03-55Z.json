@@ -1,0 +1,125 @@
+{
+  "schemaVersion": "2026-04-30",
+  "runId": "2026-05-02T03:55:00.000Z",
+  "contributor": "polymarket-contributor",
+  "pipelineMode": "showcase",
+  "targetCount": 7,
+  "outputTarget": "json",
+  "events": [
+    {
+      "timestamp": "2026-05-02T03:55:00.000Z",
+      "phase": "initializing",
+      "event": "phase0_started",
+      "detail": "Cleared transient showcase artifacts; preserving upstream snapshot, raw/, showcase-improvement-history.json, and prior improver summaries as historical context."
+    },
+    {
+      "timestamp": "2026-05-02T03:55:30.000Z",
+      "phase": "initializing",
+      "event": "server_health_check",
+      "detail": "GET /api/health returned 200 in 25ms.",
+      "baseUrl": "http://localhost:3000"
+    },
+    {
+      "timestamp": "2026-05-02T03:55:50.000Z",
+      "phase": "prompts",
+      "event": "live_data_discovery",
+      "detail": "Discovered 30 markets, 10 events, 20 categories from Polymarket Gamma API (this orchestrator's first discovery run).",
+      "snapshotPath": "context-sdk/examples/server/polymarket-contributor/validation/live-market-snapshot.json"
+    },
+    {
+      "timestamp": "2026-05-02T03:57:30.000Z",
+      "phase": "prompts",
+      "event": "alpha_researcher_complete",
+      "detail": "Wrote 20 candidates plus 2 reserves grounded in live snapshot to showcase-candidates.json. alpha-researcher subagent attempts ran in readonly mode and refused to write, so the orchestrator wrote the file directly using the verified live snapshot entities. Distribution: time_series=3, categorical_comparison=8, multi_series=5, metric_table_plus_chart=4. Difficulty: lookup=2, workflow=14, ceiling=4. NOTE: this candidates file was DELETED by the parallel orchestrator at ~04:50 (see parallel_orchestrator_clobber event).",
+      "promptCount": 20,
+      "reserveCount": 2,
+      "droppedThemes": [
+        "Same-day NBA/NHL/UFC sports betting (resolves before showcase ships, sparse price history)",
+        "April-30 deadline markets already resolved (peace, anti-cartel, QatarEnergy, Strait of Hormuz April variant)",
+        "Anonymous \"Person X\" placeholder markets in election events (charts would be unreadable)"
+      ]
+    },
+    {
+      "timestamp": "2026-05-02T04:40:55.000Z",
+      "phase": "validation",
+      "event": "sdk_validation_complete",
+      "detail": "Validator exit=0 (no preflight or runtime-failure marker). 20/20 prompts ran to completion in 34 minutes. passCount=0, failCount=20. Only 1 prompt (#15) emitted any chart artifact at all and that chart was 'Recovered alias diagnostics' — a debug artifact with rowCount=0 per row, not a real Polymarket data chart. Dominant hard failure across 19/20 prompts: 'no marketplace tools were reported as used' + 'no chart artifact was emitted'. Underlying cause surfaced in raw responses: 'Local MCP contributor at http://localhost:4003/mcp is unreachable (fetch failed)'. NOTE: showcase-validation.latest.json was DELETED by the parallel orchestrator at ~04:50 (see parallel_orchestrator_clobber event).",
+      "validationArtifact": "context-sdk/examples/server/polymarket-contributor/showcase/showcase-validation.latest.json (DELETED externally)",
+      "passCount": 0,
+      "failCount": 20,
+      "promptsWithChart": 1,
+      "promptsWithRealChart": 0,
+      "rootCauseObserved": "polymarket-contributor MCP server not listening on http://localhost:4003 — every tool call returned ECONNREFUSED inside the Context app even though the Next.js app at :3000 itself is healthy. Validator's runtime watchdog did NOT fire because the validator's own HTTP requests to :3000 succeeded throughout; the fetch failures happened one layer below at the app-to-contributor proxy."
+    },
+    {
+      "timestamp": "2026-05-02T04:48:00.000Z",
+      "phase": "buyer-review",
+      "event": "reviewer_complete",
+      "detail": "pipeline-reviewer subagent scored all 20 prompts. acceptedCount=0, blockedCount=20, satisfactionMean=1.51 (uniqueness scored 3-5 against prompt design concept; all other dimensions 1 because every paid response was a degraded failure). differentiationStatus=skipped_due_to_runtime_collapse. Top two recommended for browser sanity capture: 07 (FIFA World Cup Champion bar chart) and 15 (Strait of Hormuz dual-deadline overlay). NOTE: showcase-reviewer.latest.json was DELETED by the parallel orchestrator at ~04:50.",
+      "reviewerArtifact": "context-sdk/examples/server/polymarket-contributor/showcase/showcase-reviewer.latest.json (DELETED externally)",
+      "satisfactionMean": 1.51,
+      "acceptedCount": 0,
+      "blockedCount": 20,
+      "topTwoForSanityCapture": [
+        "07-coinglass-for-the-2026-fifa-world-cup-champion-event-on-po",
+        "15-polymarket-polymarket-has-two-related-strait-of-hormuz-traf"
+      ]
+    },
+    {
+      "timestamp": "2026-05-02T04:50:02.000Z",
+      "phase": "external-intervention",
+      "event": "parallel_orchestrator_clobber",
+      "detail": "External actor — either a second showcase orchestrator launched in parallel by the user/IDE OR an automated cleanup process — performed a Phase 0 reset on this SHOWCASE_DIR while THIS orchestrator was between buyer-review and browser-capture phases. Side effects observed on disk: (a) showcase-candidates.json, showcase-validation.latest.json, showcase-reviewer.latest.json, validation-runs/* were DELETED; (b) live-market-snapshot.json was rewritten with a fresh discovery; (c) showcase-checkpoint.json was reset to phase=initializing; (d) showcase-run-log.json was overwritten with 4 fresh events. Notably this external actor ALSO started the polymarket-contributor MCP on http://localhost:4003 (PID 42044, log /tmp/polymarket-contributor.log). The MCP is healthy and reports 48 tools. The external actor's run log says nextAction='launch alpha-researcher' but appears to have stalled there — no candidates file, no further activity since 04:50:05. This violates the user's explicit instruction 'Never launch a second orchestrator writing to the same SHOWCASE_DIR'. THIS run-log is the canonical record of what happened; the parallel orchestrator's events have been folded in below.",
+      "parallelOrchestratorEvents": [
+        { "timestamp": "2026-05-02T04:50:00.000Z", "phase": "initializing", "event": "phase0_started", "detail": "Cleared transient showcase files (overwriting THIS orchestrator's artifacts)." },
+        { "timestamp": "2026-05-02T04:50:01.000Z", "phase": "initializing", "event": "next_app_health_check", "detail": "GET /api/health 200." },
+        { "timestamp": "2026-05-02T04:50:02.000Z", "phase": "initializing", "event": "contributor_mcp_started", "detail": "Started polymarket-contributor on :4003." },
+        { "timestamp": "2026-05-02T04:50:05.000Z", "phase": "prompts", "event": "live_data_discovery", "detail": "Refreshed snapshot." }
+      ],
+      "filesDeleted": [
+        "showcase-candidates.json",
+        "showcase-validation.latest.json",
+        "showcase-reviewer.latest.json",
+        "validation-runs/latest.json",
+        "validation-runs/run-2026-05-02T04-06-51-545Z/"
+      ],
+      "filesRewritten": [
+        "showcase-checkpoint.json (reset to phase=initializing)",
+        "showcase-run-log.json (overwritten with 4 fresh events; this entry restores the canonical record)",
+        "context-sdk/examples/server/polymarket-contributor/validation/live-market-snapshot.json"
+      ]
+    },
+    {
+      "timestamp": "2026-05-02T04:51:30.000Z",
+      "phase": "browser-capture",
+      "event": "mandatory_sanity_capture_07",
+      "detail": "Browser-tested top-1 candidate (FIFA World Cup Champion bar chart) using cursor-ide-browser MCP. Submitted prompt verbatim, waited 60s for response. Chat surface rendered ONLY a single 'I was unable to retrieve the current championship odds' paragraph — no chart card, no table, no list. The contributor MCP was up at this point (started ~90s prior by the parallel orchestrator) so the failure is NOT contributor-down, it's a deeper chat-runtime/planner issue. Captured fullPage=true screenshot (3385x2097, single retina viewport — page is genuinely 1 viewport tall because there is no chart card to make it taller).",
+      "captureStatus": "missing_chart",
+      "chatUrl": "http://localhost:3000/chat/067f2b87-d2e6-4f71-906c-b84d3280b749",
+      "screenshotPath": "context-sdk/examples/server/polymarket-contributor/showcase/visual-runs/run-2026-05-02T04-50-00Z/screenshots/07-fifa-world-cup-2026-contenders.png"
+    },
+    {
+      "timestamp": "2026-05-02T04:55:00.000Z",
+      "phase": "browser-capture",
+      "event": "mandatory_sanity_capture_15",
+      "detail": "Browser-tested top-2 candidate (Strait of Hormuz dual-deadline overlay) using cursor-ide-browser MCP. Submitted prompt verbatim, waited ~150s for response. Chat surface rendered 2 paragraphs + a 1-row table for the May 15 market + a 'Key Insights' list with a Substitution Note that ADMITS the system attempted to substitute WTI Crude Oil markets for the missing Hormuz data and that the substituted bar chart is not the requested chart. The chat surface did NOT render any chart artifact regardless. This is a 'wrong-metric chart was emitted upstream but never reached the chat surface' compound failure. Captured fullPage=true screenshot (3385x2097).",
+      "captureStatus": "missing_chart",
+      "chatUrl": "http://localhost:3000/chat/48ff153c-7f61-4350-ad26-d59415ce64fa",
+      "screenshotPath": "context-sdk/examples/server/polymarket-contributor/showcase/visual-runs/run-2026-05-02T04-50-00Z/screenshots/15-strait-hormuz-may-15-vs-end-of-may.png"
+    },
+    {
+      "timestamp": "2026-05-02T04:57:30.000Z",
+      "phase": "browser-capture",
+      "event": "visual_capture_index_written",
+      "detail": "Wrote showcase-visual-capture.latest.json with both records tagged failureReason='runtime_sanity_capture_only_zero_accepted' so the release-decision gate and the runtime-attribution analyzer treat them as informational, not as accepted candidates.",
+      "captureArtifact": "context-sdk/examples/server/polymarket-contributor/showcase/showcase-visual-capture.latest.json"
+    },
+    {
+      "timestamp": "2026-05-02T04:58:00.000Z",
+      "phase": "blocked",
+      "event": "downstream_phases_skipped",
+      "detail": "Phase 3b visual review, Phase 3c runtime attribution, and Phase 4 release decision all REQUIRE showcase-validation.latest.json AND showcase-reviewer.latest.json on disk. Both were deleted by the parallel orchestrator at ~04:50:02. The showcase-release-decision.mjs hook will mark status=blocked if any of {validation, reviewer, visual-capture, visual-review} is missing or malformed — and this run has lost two of those four required inputs. Running visual review against the visual-capture file alone is still possible, but feeding the release decision a partial set would just produce 'blocked' regardless. Per SKILL Phase 3c the runtime attribution analyzer also reads showcase-validation.latest.json (it cannot classify failures without per-prompt validation summaries). Therefore the orchestrator stops here and surfaces blocked with the parallel-orchestrator violation as the dominant blocker.",
+      "blockReason": "parallel_orchestrator_deleted_required_input_files"
+    }
+  ]
+}

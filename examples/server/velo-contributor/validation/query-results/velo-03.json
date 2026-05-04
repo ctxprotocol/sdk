@@ -1,0 +1,199 @@
+{
+  "promptId": "velo-03",
+  "index": 2,
+  "attempt": 1,
+  "status": 200,
+  "ok": true,
+  "durationMs": 35087,
+  "prompt": {
+    "prompt": "For deribit options BTC, what are the latest Velo options values for index_price, iv_1w, iv_1m, skew_1w, skew_1m, and dollar_volume?",
+    "groundedEntity": {
+      "type": "market",
+      "slug": "deribit-BTC-options",
+      "title": "deribit options BTC"
+    },
+    "answerabilityNote": "get_market_rows calls client.rows with type=options for Deribit BTC; options columns include index_price, iv_1w, iv_1m, skew_1w, skew_1m, dollar_volume.",
+    "alphaCategory": "options-volatility-surface",
+    "whyAlpha": "Deribit implied volatility and skew shift continuously.",
+    "expectedDataFields": [
+      "index_price",
+      "iv_1w",
+      "iv_1m",
+      "skew_1w",
+      "skew_1m",
+      "dollar_volume"
+    ],
+    "difficultyTier": "lookup"
+  },
+  "responseText": "I could not establish a reliable capability path for this request with the currently grounded tools.\n\nSuggested next steps:\n- Specify the exact entity, dataset, or tool scope you want analyzed.\n- Pin one or more tool IDs if you already know which tool should answer.\n- Rewrite the question into a narrower, single-intent request.",
+  "body": {
+    "success": true,
+    "response": "I could not establish a reliable capability path for this request with the currently grounded tools.\n\nSuggested next steps:\n- Specify the exact entity, dataset, or tool scope you want analyzed.\n- Pin one or more tool IDs if you already know which tool should answer.\n- Rewrite the question into a narrower, single-intent request.",
+    "toolsUsed": [],
+    "cost": {
+      "totalCostUsd": "0.000000",
+      "toolCostUsd": "0.000000",
+      "modelCostUsd": "0.000000"
+    },
+    "durationMs": 32427,
+    "outcomeType": "capability_miss",
+    "capabilityMiss": {
+      "message": "I could not establish a reliable capability path for this request with the currently grounded tools.",
+      "missingCapabilities": [
+        "No grounded capability path was established."
+      ],
+      "suggestedRewrites": [
+        "Specify the exact entity, dataset, or tool scope you want analyzed.",
+        "Pin one or more tool IDs if you already know which tool should answer.",
+        "Rewrite the question into a narrower, single-intent request."
+      ],
+      "originalQuery": "For deribit options BTC, what are the latest Velo options values for index_price, iv_1w, iv_1m, skew_1w, skew_1m, and dollar_volume?"
+    },
+    "stopReason": "capability_miss",
+    "issueClass": "missing_capability",
+    "actionsTaken": [
+      "inspect_current_grounding",
+      "return_capability_miss"
+    ],
+    "controller": {
+      "scope": "standard",
+      "nextAction": "return_capability_miss",
+      "actionsTaken": [
+        "inspect_current_grounding",
+        "return_capability_miss"
+      ],
+      "patchFirstProgramPreserved": false,
+      "executionProgramRevisionId": null,
+      "hardBudgetApplied": false
+    },
+    "developerTrace": {
+      "summary": {
+        "toolCalls": 0,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "fallbackCount": 0,
+        "failureCount": 0,
+        "recoveryCount": 0,
+        "completionChecks": 0,
+        "loopCount": 0
+      },
+      "timeline": [
+        {
+          "stepType": "orchestration",
+          "event": "capability-miss",
+          "status": "success",
+          "message": "I could not establish a reliable capability path for this request with the currently grounded tools.\n\nSuggested next steps:\n- Specify the exact entity, dataset, or tool scope you want analyzed.\n- Pin one or more tool IDs if you already know which tool should answer.\n- Rewrite the question into a narrower, single-intent request.",
+          "timestampMs": 1777518577870,
+          "metadata": {
+            "requestId": "515d8389-345a-4409-b5d2-66aecb296a02",
+            "durationMs": 32427,
+            "queryDepth": "auto"
+          }
+        }
+      ],
+      "requestId": "515d8389-345a-4409-b5d2-66aecb296a02",
+      "query": "For deribit options BTC, what are the latest Velo options values for index_price, iv_1w, iv_1m, skew_1w, skew_1m, and dollar_volume?",
+      "source": "backend-runtime",
+      "diagnostics": {
+        "selection": {
+          "selectedPolicy": "exploratory",
+          "plannerReasoningStage": "mechanical",
+          "oneShotBias": false,
+          "selectedTools": []
+        },
+        "executionContract": {
+          "plannerQuery": "For deribit options BTC, what are the latest Velo options values for index_price, iv_1w, iv_1m, skew_1w, skew_1m, and dollar_volume?",
+          "allowedModules": []
+        },
+        "cost": {
+          "planningCostUsd": 0,
+          "initialExecutionCostUsd": 0,
+          "rediscoveryAdditionalCostUsd": 0,
+          "synthesisCostUsd": 0,
+          "totalModelCostUsd": 0,
+          "toolCostUsd": 0,
+          "totalChargedUsd": 0
+        },
+        "verification": {
+          "evaluations": [],
+          "repairEvents": [],
+          "triggerNeedsDifferentTools": true,
+          "triggerMissingCapability": "No grounded capability path was established."
+        },
+        "models": {
+          "overrideMode": "none",
+          "stages": [
+            {
+              "stageKey": "tool-selection",
+              "stageKind": "stage",
+              "stage": "tool-selection",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gemini-flash-model",
+              "requestedModelId": "gemini-flash-model",
+              "resolvedModelId": "gemini-flash-model",
+              "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+              "effectiveModelId": "gemini-flash-model",
+              "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.025252,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]",
+                "reasoningTokens": "[REDACTED]",
+                "cachedInputTokens": "[REDACTED]"
+              }
+            }
+          ]
+        }
+      },
+      "governance": {
+        "policyVersion": "2026-03-05.query-data-governance.v1",
+        "redactionCount": 5,
+        "omittedSensitiveFieldsCount": 0,
+        "exposure": {
+          "runtimeArtifacts": "internal_runtime_only",
+          "durableAudit": "internal_ops_only",
+          "developerTrace": "explicit_opt_in_redacted",
+          "publicDataUrl": "explicit_request_opt_in"
+        },
+        "retention": {
+          "runtimeTtlMs": 900000,
+          "durableAuditDays": 30,
+          "publicDataUrl": "until_deleted"
+        }
+      }
+    },
+    "orchestrationMetrics": {
+      "parityStage": "enabled",
+      "orchestrationMode": "auto_discovery",
+      "firstPassSuccess": false,
+      "capabilityMissSignaled": true,
+      "rediscoveryExecuted": false
+    },
+    "querySession": {
+      "sessionId": "d98d83c4-f405-4b40-bd50-d4e57209ef4c",
+      "attemptId": "3c8befb4-5132-4bca-8368-f8d14f4fb82e",
+      "parentAttemptId": null,
+      "rootAttemptId": "3c8befb4-5132-4bca-8368-f8d14f4fb82e",
+      "mode": "initial",
+      "origin": "initial_request",
+      "status": "aborted",
+      "checkpoint": {
+        "currentStage": "selection",
+        "latestCheckpointArtifactId": "515d8389-345a-4409-b5d2-66aecb296a02:2",
+        "canonicalDatasetId": null,
+        "executionProgramCurrentRevisionId": null
+      }
+    }
+  }
+}

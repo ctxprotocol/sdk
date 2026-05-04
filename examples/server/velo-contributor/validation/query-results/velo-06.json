@@ -1,0 +1,3854 @@
+{
+  "promptId": "velo-06",
+  "index": 5,
+  "attempt": 1,
+  "status": 200,
+  "ok": true,
+  "durationMs": 62803,
+  "prompt": {
+    "prompt": "For binance-futures SOLUSDT, does the recent Velo futures structure show positive funding being paired with increasing open interest, and what does that imply about crowded long risk?",
+    "groundedEntity": {
+      "type": "market",
+      "slug": "binance-futures-SOLUSDT",
+      "title": "binance-futures SOLUSDT"
+    },
+    "answerabilityNote": "analyze_futures_market_structure supports SOLUSDT futures rows with funding_rate, dollar_open_interest_close, dollar_volume, and liquidation columns.",
+    "alphaCategory": "futures-leverage-pressure",
+    "whyAlpha": "SOL perp crowding can change quickly.",
+    "expectedDataFields": [
+      "latestFundingRate",
+      "openInterestChangeUsd",
+      "totalDollarVolume",
+      "liquidationImbalanceUsd"
+    ],
+    "difficultyTier": "analysis"
+  },
+  "responseText": "Based on the recent data for Binance SOL/USDT futures, the current structure does **not** show positive funding paired with increasing open interest. Instead, funding is slightly negative and open interest has been decreasing over the last 24 hours.\n\n### Market Snapshot (As of 2026-04-30 03:10 UTC)\n\n| Metric | Value |\n| :--- | :--- |\n| **Current Price** | $82.96 |\n| **Funding Rate** | -0.00003778 |\n| **Open Interest (USD)** | $786,350,155.49 |\n| **1h OI Delta** | -$6,698,393.12 |\n| **4h OI Delta** | -$7,186,527.20 |\n| **24h OI Delta** | -$21,033,968.62 |\n\n### Recent Funding & OI Trends\n\nThe funding history shows that rates have been predominantly negative over the last several cycles, with only one brief flip to positive on April 29th. Open interest peaked at approximately $795M around 22:00 UTC yesterday but has since retraced to $786M.\n\n| Timestamp | Funding Rate | Open Interest (USD) |\n| :--- | :--- | :--- |\n| 2026-04-30 03:00 | - | $786,350,155.49 |\n| 2026-04-30 00:00 | -0.00003778 | $793,566,948.11 |\n| 2026-04-29 16:00 | -0.00006745 | $784,160,924.73 (18:00) |\n| 2026-04-29 08:00 | +0.00007892 | - |\n| 2026-04-29 00:00 | -0.00001641 | - |\n\n### Crowded Long Risk Implication\nThe absence of positive funding and rising open interest suggests that **crowded long risk is currently muted**. \n\nA classic crowded long setup requires positive funding (longs paying shorts) alongside rising open interest, indicating that aggressive buyers are entering and paying a premium to maintain leverage. Because open interest is declining while price has softened, the current data points toward a period of deleveraging or long liquidation rather than an overheated buildup of long positions.",
+  "body": {
+    "success": true,
+    "response": "Based on the recent data for Binance SOL/USDT futures, the current structure does **not** show positive funding paired with increasing open interest. Instead, funding is slightly negative and open interest has been decreasing over the last 24 hours.\n\n### Market Snapshot (As of 2026-04-30 03:10 UTC)\n\n| Metric | Value |\n| :--- | :--- |\n| **Current Price** | $82.96 |\n| **Funding Rate** | -0.00003778 |\n| **Open Interest (USD)** | $786,350,155.49 |\n| **1h OI Delta** | -$6,698,393.12 |\n| **4h OI Delta** | -$7,186,527.20 |\n| **24h OI Delta** | -$21,033,968.62 |\n\n### Recent Funding & OI Trends\n\nThe funding history shows that rates have been predominantly negative over the last several cycles, with only one brief flip to positive on April 29th. Open interest peaked at approximately $795M around 22:00 UTC yesterday but has since retraced to $786M.\n\n| Timestamp | Funding Rate | Open Interest (USD) |\n| :--- | :--- | :--- |\n| 2026-04-30 03:00 | - | $786,350,155.49 |\n| 2026-04-30 00:00 | -0.00003778 | $793,566,948.11 |\n| 2026-04-29 16:00 | -0.00006745 | $784,160,924.73 (18:00) |\n| 2026-04-29 08:00 | +0.00007892 | - |\n| 2026-04-29 00:00 | -0.00001641 | - |\n\n### Crowded Long Risk Implication\nThe absence of positive funding and rising open interest suggests that **crowded long risk is currently muted**. \n\nA classic crowded long setup requires positive funding (longs paying shorts) alongside rising open interest, indicating that aggressive buyers are entering and paying a premium to maintain leverage. Because open interest is declining while price has softened, the current data points toward a period of deleveraging or long liquidation rather than an overheated buildup of long positions.",
+    "toolsUsed": [
+      {
+        "id": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+        "name": "Meridian Market Data",
+        "skillCalls": 3
+      }
+    ],
+    "cost": {
+      "totalCostUsd": "0.152491",
+      "toolCostUsd": "0.100000",
+      "modelCostUsd": "0.052490"
+    },
+    "durationMs": 60140,
+    "outcomeType": "answer",
+    "querySession": {
+      "sessionId": "b1cd1a52-6988-4aac-bacc-8eb146eeae50",
+      "attemptId": "aa67707d-2fc4-4ec1-a73c-461cf51d5895",
+      "parentAttemptId": null,
+      "rootAttemptId": "aa67707d-2fc4-4ec1-a73c-461cf51d5895",
+      "mode": "initial",
+      "origin": "initial_request",
+      "status": "completed",
+      "checkpoint": {
+        "currentStage": "synthesis",
+        "latestCheckpointArtifactId": "d3e680b8-ed2d-4aa1-9974-0b4f1ae937f9:8",
+        "canonicalDatasetId": "d3e680b8-ed2d-4aa1-9974-0b4f1ae937f9:canonical-execution",
+        "executionProgramCurrentRevisionId": "iterative-v1"
+      }
+    },
+    "developerTrace": {
+      "summary": {
+        "toolCalls": 3,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "fallbackCount": 0,
+        "failureCount": 0,
+        "recoveryCount": 0,
+        "completionChecks": 0,
+        "loopCount": 2,
+        "toolStepCount": 2
+      },
+      "timeline": [
+        {
+          "stepType": "orchestration",
+          "event": "query-start",
+          "status": "ok",
+          "message": "Query orchestration started",
+          "timestampMs": 1777518792638,
+          "metadata": {
+            "requestId": "d3e680b8-ed2d-4aa1-9974-0b4f1ae937f9",
+            "queryDepth": "auto"
+          }
+        },
+        {
+          "stepType": "selection",
+          "event": "selected-tools",
+          "status": "ok",
+          "timestampMs": 1777518792639,
+          "metadata": {
+            "selectedPolicy": "exploratory",
+            "plannerReasoningStage": "mechanical",
+            "oneShotBias": false,
+            "selectedTools": [
+              {
+                "toolId": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+                "toolName": "Meridian Market Data",
+                "priceUsd": "0.100000",
+                "selectedMethodCount": 9,
+                "selectedMethods": [
+                  "list_supported_instruments",
+                  "get_ohlcv_history",
+                  "get_funding_history",
+                  "compare_perp_funding_history",
+                  "get_oi_summary",
+                  "get_oi_history",
+                  "get_oi_delta",
+                  "get_normalized_market_snapshot",
+                  "get_venue_health"
+                ],
+                "omittedSelectedMethodCount": 0
+              },
+              {
+                "toolId": "ffe8cd46-ced1-4c7f-9e43-dc8fca25ecbc",
+                "toolName": "Coinglass",
+                "priceUsd": "0.000000",
+                "selectedMethodCount": 27,
+                "selectedMethods": [
+                  "analyze_market_sentiment",
+                  "get_btc_valuation_score",
+                  "get_market_overview",
+                  "scan_oi_divergence",
+                  "get_oi_batch",
+                  "analyze_hobby_market_regime",
+                  "analyze_exchange_balance_pressure",
+                  "get_supported_coins",
+                  "get_supported_exchanges",
+                  "get_exchange_pairs",
+                  "get_futures_pairs_markets",
+                  "get_funding_rates"
+                ],
+                "omittedSelectedMethodCount": 15
+              }
+            ]
+          }
+        },
+        {
+          "stepType": "execution-setup",
+          "event": "iterative-execution-entry",
+          "status": "ok",
+          "timestampMs": 1777518792640,
+          "message": "Iterative execution received the selected tools and any clarification assumption.",
+          "metadata": {
+            "initialCode": "// iterative execution: no generated code",
+            "finalCode": "// iterative execution: no generated code",
+            "plannerQuery": "For binance-futures SOLUSDT, does the recent Velo futures structure show positive funding being paired with increasing open interest, and what does that imply about crowded long risk?",
+            "allowedModules": [],
+            "availableToolCount": 36,
+            "availableMethodNamesSample": [
+              "Meridian Market Data.list_supported_instruments",
+              "Meridian Market Data.get_ohlcv_history",
+              "Meridian Market Data.get_funding_history",
+              "Meridian Market Data.compare_perp_funding_history",
+              "Meridian Market Data.get_oi_summary",
+              "Meridian Market Data.get_oi_history",
+              "Meridian Market Data.get_oi_delta",
+              "Meridian Market Data.get_normalized_market_snapshot",
+              "Meridian Market Data.get_venue_health",
+              "Coinglass.analyze_market_sentiment",
+              "Coinglass.get_btc_valuation_score",
+              "Coinglass.get_market_overview",
+              "Coinglass.scan_oi_divergence",
+              "Coinglass.get_oi_batch",
+              "Coinglass.analyze_hobby_market_regime",
+              "Coinglass.analyze_exchange_balance_pressure",
+              "Coinglass.get_supported_coins",
+              "Coinglass.get_supported_exchanges",
+              "Coinglass.get_exchange_pairs",
+              "Coinglass.get_futures_pairs_markets",
+              "Coinglass.get_funding_rates",
+              "Coinglass.get_oi_by_exchange",
+              "Coinglass.get_futures_liquidation_exchanges",
+              "Coinglass.get_futures_liquidation_coins",
+              "Coinglass.get_ahr999_index",
+              "Coinglass.get_rainbow_chart",
+              "Coinglass.get_fear_greed_index",
+              "Coinglass.get_stock_flow_index",
+              "Coinglass.get_bubble_index",
+              "Coinglass.get_puell_multiple",
+              "Coinglass.get_bull_market_indicators",
+              "Coinglass.get_btc_etf_netflow",
+              "Coinglass.get_btc_etf_list",
+              "Coinglass.get_exchange_balance",
+              "Coinglass.get_exchange_balance_chart",
+              "Coinglass.get_spot_supported_coins"
+            ],
+            "selectedMethodCount": 36,
+            "selectedButFilteredOut": [],
+            "toolCallCount": 3,
+            "toolCallAttemptCount": 3,
+            "toolCallSuccessCount": 3,
+            "toolCallFailureCount": 0,
+            "toolCallFailureSamples": [],
+            "grounded": true
+          }
+        },
+        {
+          "stepType": "execution-program",
+          "event": "execution-program-lineage",
+          "status": "ok",
+          "timestampMs": 1777518792641,
+          "metadata": {
+            "executionProgram": {
+              "baseRevisionId": "iterative-v1",
+              "currentRevisionId": "iterative-v1",
+              "revisionCount": 1,
+              "patchCount": 0,
+              "replanCount": 0,
+              "deterministicChangeCount": 0,
+              "revisions": [
+                {
+                  "revisionId": "iterative-v1",
+                  "parentRevisionId": null,
+                  "attempt": 1,
+                  "action": "initial",
+                  "reason": "initial",
+                  "summary": "Iterative AI SDK tool loop",
+                  "codeHash": "iterative",
+                  "codeLength": 41,
+                  "changedLineCount": 0,
+                  "diffPreview": null,
+                  "editCount": null,
+                  "preservesPriorLogic": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777518792648,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 10055
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777518792649,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 10055
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777518792650,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 10055
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777518792651,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 15798
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1777518793638,
+          "tool": {
+            "id": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+            "name": "get_normalized_market_snapshot"
+          },
+          "metadata": {
+            "args": {
+              "instrument_id": "SOL-PERP-BINANCE"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"venue\":\"binance\",\"venue_symbol\":\"SOLUSDT\",\"canonical_symbol\":\"SOL/USDT:PERP\",\"market_type\":\"perp\",\"contract_type\":\"linear_perp\",\"base_asset\":\"SOL\",\"quote_asset\":\"USDT\",\"current_price\":\"82.9600\",\"funding_rate\":\"-0.00003778\",\"next_funding_time\":\"2026-04-30T08:00:00.002000Z\",\"open_interest_usd\":\"786350155.49160000\",\"oi_delta_1h_usd\":\"-6698393.11855020\",\"oi_delta_4h_usd\":\"-7186527.20240000\",\"oi_delta_24h_usd\":\"-21033968.62290290\",\"oi_delta_7d_usd\":\"-13247477.72550000\",\"nearest_liquidation_clusters\":[{\"side\":\"sell\",\"venue\":\"binance\",\"metadata\":{\"bucket_bps\":\"25\"},\"cluster_id\":\"binance:perp:linear_perp:SOL:USDT:sell:398:1\",\"event_count\":3,\"lower_price\":\"84.97300541300208541118868439\",\"snapshot_ts\":\"2026-04-23T17:02:10.501+00:00\",\"upper_price\":\"85.18650542660259316347810320\",\"cluster_rank\":1,\"d...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1777518793639,
+          "tool": {
+            "id": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+            "name": "get_funding_history"
+          },
+          "metadata": {
+            "args": {
+              "limit": 10,
+              "instrument_id": "SOL-PERP-BINANCE"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"success\":true,\"data\":[{\"ts\":\"2026-04-30T00:00:00.002000Z\",\"venue\":\"binance\",\"instrument_id\":\"binance:perp:linear_perp:SOL:USDT\",\"funding_rate\":\"-0.00003778\",\"next_funding_time\":\"2026-04-30T08:00:00.002000Z\",\"funding_interval_h\":8,\"mark_price\":\"83.01000000\",\"index_price\":\"83.00546825\",\"source_method\":\"binance_rest_funding_history\",\"data_quality\":\"exchange_raw\"},{\"ts\":\"2026-04-29T16:00:00.003000Z\",\"venue\":\"binance\",\"instrument_id\":\"binance:perp:linear_perp:SOL:USDT\",\"funding_rate\":\"-0.00006745\",\"next_funding_time\":\"2026-04-30T00:00:00.003000Z\",\"funding_interval_h\":8,\"mark_price\":\"83.19722325\",\"index_price\":\"83.13012048\",\"source_method\":\"binance_rest_funding_history\",\"data_quality\":\"exchange_raw\"},{\"ts\":\"2026-04-29T08:00:00.011000Z\",\"venue\":\"binance\",\"instrument_id\":\"binance:perp:linear_per...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1777518793640,
+          "tool": {
+            "id": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+            "name": "get_oi_history"
+          },
+          "metadata": {
+            "args": {
+              "limit": 10,
+              "end_ts": null,
+              "interval": "1h",
+              "start_ts": null,
+              "instrument_id": "SOL-PERP-BINANCE"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"success\":true,\"data\":{\"instrument\":{\"instrument_id\":\"binance:perp:linear_perp:SOL:USDT\",\"venue\":\"binance\",\"venue_symbol\":\"SOLUSDT\",\"canonical_symbol\":\"SOL/USDT:PERP\",\"market_type\":\"perp\",\"contract_type\":\"linear_perp\",\"base_asset\":\"SOL\",\"quote_asset\":\"USDT\",\"settlement_asset\":\"USDT\",\"contract_size\":\"1\",\"tick_size\":null,\"step_size\":null,\"price_precision\":null,\"quantity_precision\":null,\"coverage_status\":\"live\",\"is_enabled\":true,\"metadata\":{\"tier\":\"top20\",\"data_families\":{\"ohlcv\":{\"availability\":\"live\",\"history_cap_days\":null,\"notes\":null,\"fixed_window_pagination\":false},\"funding\":{\"availability\":\"live\",\"history_cap_days\":null,\"notes\":null,\"fixed_window_pagination\":false},\"open_interest\":{\"availability\":\"live\",\"history_cap_days\":30,\"notes\":\"Binance openInterestHist exposes only the latest 1 ...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "orchestration",
+          "event": "query-complete",
+          "status": "success",
+          "timestampMs": 1777518794641,
+          "metadata": {
+            "durationMs": 60140,
+            "executionOk": true
+          }
+        }
+      ],
+      "requestId": "d3e680b8-ed2d-4aa1-9974-0b4f1ae937f9",
+      "query": "For binance-futures SOLUSDT, does the recent Velo futures structure show positive funding being paired with increasing open interest, and what does that imply about crowded long risk?",
+      "source": "backend-runtime",
+      "executionSuccess": true,
+      "executionResult": {
+        "market": "binance futures SOLUSDT",
+        "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+        "answer": "No. The recent structure does not show a clean combination of positive funding plus rising open interest. Funding is currently slightly negative (-0.00003778), and open interest is not increasing over the latest window; it is essentially flat-to-lower, with the latest 1h OI delta at -6.70M USD, 4h at -7.19M USD, and 24h at -21.03M USD.",
+        "evidence": {
+          "latest_snapshot": {
+            "current_price": "82.96",
+            "funding_rate": "-0.00003778",
+            "open_interest_usd": "786350155.4916",
+            "oi_delta_1h_usd": "-6698393.11855020",
+            "oi_delta_4h_usd": "-7186527.20240000",
+            "oi_delta_24h_usd": "-21033968.62290290",
+            "freshness_seconds": 170
+          },
+          "funding_rows": [
+            {
+              "ts": "2026-04-30T00:00:00.002000Z",
+              "funding_rate": "-0.00003778"
+            },
+            {
+              "ts": "2026-04-29T16:00:00.003000Z",
+              "funding_rate": "-0.00006745"
+            },
+            {
+              "ts": "2026-04-29T08:00:00.011000Z",
+              "funding_rate": "0.00007892"
+            },
+            {
+              "ts": "2026-04-29T00:00:00.006000Z",
+              "funding_rate": "-0.00001641"
+            },
+            {
+              "ts": "2026-04-28T16:00:00.004000Z",
+              "funding_rate": "-0.00004511"
+            }
+          ],
+          "oi_rows_latest_10h": [
+            {
+              "bucket_start": "2026-04-29T18:00:00Z",
+              "open_interest_usd": "784160924.72762060"
+            },
+            {
+              "bucket_start": "2026-04-29T19:00:00Z",
+              "open_interest_usd": "785745538.23382760"
+            },
+            {
+              "bucket_start": "2026-04-29T20:00:00Z",
+              "open_interest_usd": "791052339.69230000"
+            },
+            {
+              "bucket_start": "2026-04-29T21:00:00Z",
+              "open_interest_usd": "791490983.10000000"
+            },
+            {
+              "bucket_start": "2026-04-29T22:00:00Z",
+              "open_interest_usd": "795476079.60210000"
+            },
+            {
+              "bucket_start": "2026-04-29T23:00:00Z",
+              "open_interest_usd": "790291043.25711000"
+            },
+            {
+              "bucket_start": "2026-04-30T00:00:00Z",
+              "open_interest_usd": "793566948.11077730"
+            },
+            {
+              "bucket_start": "2026-04-30T01:00:00Z",
+              "open_interest_usd": "793988479.22240000"
+            },
+            {
+              "bucket_start": "2026-04-30T02:00:00Z",
+              "open_interest_usd": "785754708.92820000"
+            },
+            {
+              "bucket_start": "2026-04-30T03:00:00Z",
+              "open_interest_usd": "786350155.49160000"
+            }
+          ]
+        },
+        "implication": "Because funding is not positive and OI is not trending up, this does not currently look like a crowded-long buildup. Crowded long risk is therefore muted relative to a classic overheated setup. If funding flips positive while OI resumes rising, that would be a stronger warning sign for long crowding."
+      },
+      "initialCode": "// iterative execution: no generated code",
+      "finalCode": "// iterative execution: no generated code",
+      "executionTrace": [
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 10055,
+          "stepNumber": 1,
+          "toolName": "meridian_market_data__get_normalized_market_snapshot",
+          "outputAlias": "get_normalized_market_snapshot_1"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 10055,
+          "stepNumber": 1,
+          "toolName": "meridian_market_data__get_funding_history",
+          "outputAlias": "get_funding_history_1"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 10055,
+          "stepNumber": 1,
+          "toolName": "meridian_market_data__get_oi_history",
+          "outputAlias": "get_oi_history_1"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 15798,
+          "stepNumber": 2,
+          "toolName": "returnResult",
+          "outputAlias": "returnresult_1"
+        }
+      ],
+      "executionProgram": {
+        "baseRevisionId": "iterative-v1",
+        "currentRevisionId": "iterative-v1",
+        "revisionCount": 1,
+        "patchCount": 0,
+        "replanCount": 0,
+        "deterministicChangeCount": 0,
+        "revisions": [
+          {
+            "revisionId": "iterative-v1",
+            "parentRevisionId": null,
+            "attempt": 1,
+            "action": "initial",
+            "reason": "initial",
+            "summary": "Iterative AI SDK tool loop",
+            "codeHash": "iterative",
+            "codeLength": 41,
+            "changedLineCount": 0,
+            "diffPreview": null,
+            "editCount": null,
+            "preservesPriorLogic": true
+          }
+        ]
+      },
+      "attemptCount": 1,
+      "toolCallHistory": [
+        {
+          "toolId": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+          "toolName": "get_normalized_market_snapshot",
+          "args": {
+            "instrument_id": "SOL-PERP-BINANCE"
+          },
+          "result": {
+            "venue": "binance",
+            "venue_symbol": "SOLUSDT",
+            "canonical_symbol": "SOL/USDT:PERP",
+            "market_type": "perp",
+            "contract_type": "linear_perp",
+            "base_asset": "SOL",
+            "quote_asset": "USDT",
+            "current_price": "82.9600",
+            "funding_rate": "-0.00003778",
+            "next_funding_time": "2026-04-30T08:00:00.002000Z",
+            "open_interest_usd": "786350155.49160000",
+            "oi_delta_1h_usd": "-6698393.11855020",
+            "oi_delta_4h_usd": "-7186527.20240000",
+            "oi_delta_24h_usd": "-21033968.62290290",
+            "oi_delta_7d_usd": "-13247477.72550000",
+            "nearest_liquidation_clusters": [
+              {
+                "side": "sell",
+                "venue": "binance",
+                "metadata": {
+                  "bucket_bps": "25"
+                },
+                "cluster_id": "binance:perp:linear_perp:SOL:USDT:sell:398:1",
+                "event_count": 3,
+                "lower_price": "84.97300541300208541118868439",
+                "snapshot_ts": "2026-04-23T17:02:10.501+00:00",
+                "upper_price": "85.18650542660259316347810320",
+                "cluster_rank": 1,
+                "data_quality": "derived",
+                "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                "source_method": "derived_from_force_orders",
+                "reference_price": "85.40000544020310091576752199",
+                "estimated_notional_usd": "84425.596500"
+              }
+            ],
+            "as_of": "2026-04-30T03:10:00Z",
+            "freshness_seconds": 170,
+            "source_method": "stored_facts",
+            "data_quality": "complete",
+            "success": true,
+            "error": null
+          }
+        },
+        {
+          "toolId": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+          "toolName": "get_funding_history",
+          "args": {
+            "limit": 10,
+            "instrument_id": "SOL-PERP-BINANCE"
+          },
+          "result": {
+            "success": true,
+            "data": [
+              {
+                "ts": "2026-04-30T00:00:00.002000Z",
+                "venue": "binance",
+                "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                "funding_rate": "-0.00003778",
+                "next_funding_time": "2026-04-30T08:00:00.002000Z",
+                "funding_interval_h": 8,
+                "mark_price": "83.01000000",
+                "index_price": "83.00546825",
+                "source_method": "binance_rest_funding_history",
+                "data_quality": "exchange_raw"
+              },
+              {
+                "ts": "2026-04-29T16:00:00.003000Z",
+                "venue": "binance",
+                "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                "funding_rate": "-0.00006745",
+                "next_funding_time": "2026-04-30T00:00:00.003000Z",
+                "funding_interval_h": 8,
+                "mark_price": "83.19722325",
+                "index_price": "83.13012048",
+                "source_method": "binance_rest_funding_history",
+                "data_quality": "exchange_raw"
+              },
+              {
+                "ts": "2026-04-29T08:00:00.011000Z",
+                "venue": "binance",
+                "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                "funding_rate": "0.00007892",
+                "next_funding_time": "2026-04-29T16:00:00.011000Z",
+                "funding_interval_h": 8,
+                "mark_price": "84.67000000",
+                "index_price": "83.38796684",
+                "source_method": "binance_rest_funding_history",
+                "data_quality": "exchange_raw"
+              },
+              {
+                "ts": "2026-04-29T00:00:00.006000Z",
+                "venue": "binance",
+                "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                "funding_rate": "-0.00001641",
+                "next_funding_time": "2026-04-29T08:00:00.006000Z",
+                "funding_interval_h": 8,
+                "mark_price": "84.02000000",
+                "index_price": "84.68493679",
+                "source_method": "binance_rest_funding_history",
+                "data_quality": "exchange_raw"
+              },
+              {
+                "ts": "2026-04-28T16:00:00.004000Z",
+                "venue": "binance",
+                "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                "funding_rate": "-0.00004511",
+                "next_funding_time": "2026-04-29T00:00:00.004000Z",
+                "funding_interval_h": 8,
+                "mark_price": "83.43000000",
+                "index_price": "84.11924556",
+                "source_method": "binance_rest_funding_history",
+                "data_quality": "exchange_raw"
+              },
+              {
+                "ts": "2026-04-28T08:00:00Z",
+                "venue": "binance",
+                "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                "funding_rate": "0.00000841",
+                "next_funding_time": "2026-04-28T16:00:00Z",
+                "funding_interval_h": 8,
+                "mark_price": "83.96785907",
+                "index_price": "83.49360680",
+                "source_method": "binance_rest_funding_history",
+                "data_quality": "exchange_raw"
+              },
+              {
+                "ts": "2026-04-28T00:00:00.001000Z",
+                "venue": "binance",
+                "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                "funding_rate": "-0.00011394",
+                "next_funding_time": "2026-04-28T08:00:00.001000Z",
+                "funding_interval_h": 8,
+                "mark_price": "84.78027685",
+                "index_price": "83.91473878",
+                "source_method": "binance_rest_funding_history",
+                "data_quality": "exchange_raw"
+              },
+              {
+                "ts": "2026-04-27T16:00:00.002000Z",
+                "venue": "binance",
+                "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                "funding_rate": "-0.00011407",
+                "next_funding_time": "2026-04-28T00:00:00.002000Z",
+                "funding_interval_h": 8,
+                "mark_price": "84.10375475",
+                "index_price": "84.73904109",
+                "source_method": "binance_rest_funding_history",
+                "data_quality": "exchange_raw"
+              },
+              {
+                "ts": "2026-04-27T08:00:00Z",
+                "venue": "binance",
+                "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                "funding_rate": "-0.00002080",
+                "next_funding_time": "2026-04-27T16:00:00Z",
+                "funding_interval_h": 8,
+                "mark_price": "85.21000000",
+                "index_price": "84.10532299",
+                "source_method": "binance_rest_funding_history",
+                "data_quality": "exchange_raw"
+              },
+              {
+                "ts": "2026-04-27T00:00:00.004000Z",
+                "venue": "binance",
+                "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                "funding_rate": "-0.00001262",
+                "next_funding_time": "2026-04-27T08:00:00.004000Z",
+                "funding_interval_h": 8,
+                "mark_price": "86.87723102",
+                "index_price": "85.35673270",
+                "source_method": "binance_rest_funding_history",
+                "data_quality": "exchange_raw"
+              }
+            ],
+            "error": null,
+            "as_of": "2026-04-30T03:12:53.127448Z"
+          }
+        },
+        {
+          "toolId": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+          "toolName": "get_oi_history",
+          "args": {
+            "limit": 10,
+            "end_ts": null,
+            "interval": "1h",
+            "start_ts": null,
+            "instrument_id": "SOL-PERP-BINANCE"
+          },
+          "result": {
+            "success": true,
+            "data": {
+              "instrument": {
+                "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                "venue": "binance",
+                "venue_symbol": "SOLUSDT",
+                "canonical_symbol": "SOL/USDT:PERP",
+                "market_type": "perp",
+                "contract_type": "linear_perp",
+                "base_asset": "SOL",
+                "quote_asset": "USDT",
+                "settlement_asset": "USDT",
+                "contract_size": "1",
+                "tick_size": null,
+                "step_size": null,
+                "price_precision": null,
+                "quantity_precision": null,
+                "coverage_status": "live",
+                "is_enabled": true,
+                "metadata": {
+                  "tier": "top20",
+                  "data_families": {
+                    "ohlcv": "[OMITTED:DEPTH_LIMIT]",
+                    "funding": "[OMITTED:DEPTH_LIMIT]",
+                    "open_interest": "[OMITTED:DEPTH_LIMIT]",
+                    "liquidation_clusters": "[OMITTED:DEPTH_LIMIT]"
+                  }
+                },
+                "updated_at": "2026-04-29T06:48:19.102350Z"
+              },
+              "interval": "1h",
+              "row_count": 10,
+              "rows": [
+                {
+                  "bucket_start": "2026-04-29T18:00:00Z",
+                  "ts": "2026-04-29T18:55:00Z",
+                  "venue": "binance",
+                  "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                  "open_interest_contracts": "9558870.06000000",
+                  "open_interest_base": null,
+                  "open_interest_usd": "784160924.72762060",
+                  "mark_price": null,
+                  "source_method": "binance_rest_open_interest_hist",
+                  "data_quality": "exchange_raw"
+                },
+                {
+                  "bucket_start": "2026-04-29T19:00:00Z",
+                  "ts": "2026-04-29T19:55:00Z",
+                  "venue": "binance",
+                  "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                  "open_interest_contracts": "9560155.05000000",
+                  "open_interest_base": null,
+                  "open_interest_usd": "785745538.23382760",
+                  "mark_price": null,
+                  "source_method": "binance_rest_open_interest_hist",
+                  "data_quality": "exchange_raw"
+                },
+                {
+                  "bucket_start": "2026-04-29T20:00:00Z",
+                  "ts": "2026-04-29T20:55:00Z",
+                  "venue": "binance",
+                  "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                  "open_interest_contracts": "9568795.69000000",
+                  "open_interest_base": null,
+                  "open_interest_usd": "791052339.69230000",
+                  "mark_price": null,
+                  "source_method": "binance_rest_open_interest_hist",
+                  "data_quality": "exchange_raw"
+                },
+                {
+                  "bucket_start": "2026-04-29T21:00:00Z",
+                  "ts": "2026-04-29T21:55:00Z",
+                  "venue": "binance",
+                  "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                  "open_interest_contracts": "9547539.00000000",
+                  "open_interest_base": null,
+                  "open_interest_usd": "791490983.10000000",
+                  "mark_price": null,
+                  "source_method": "binance_rest_open_interest_hist",
+                  "data_quality": "exchange_raw"
+                },
+                {
+                  "bucket_start": "2026-04-29T22:00:00Z",
+                  "ts": "2026-04-29T22:55:00Z",
+                  "venue": "binance",
+                  "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                  "open_interest_contracts": "9575973.03000000",
+                  "open_interest_base": null,
+                  "open_interest_usd": "795476079.60210000",
+                  "mark_price": null,
+                  "source_method": "binance_rest_open_interest_hist",
+                  "data_quality": "exchange_raw"
+                },
+                {
+                  "bucket_start": "2026-04-29T23:00:00Z",
+                  "ts": "2026-04-29T23:55:00Z",
+                  "venue": "binance",
+                  "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                  "open_interest_contracts": "9522005.87000000",
+                  "open_interest_base": null,
+                  "open_interest_usd": "790291043.25711000",
+                  "mark_price": null,
+                  "source_method": "binance_rest_open_interest_hist",
+                  "data_quality": "exchange_raw"
+                },
+                {
+                  "bucket_start": "2026-04-30T00:00:00Z",
+                  "ts": "2026-04-30T00:55:00Z",
+                  "venue": "binance",
+                  "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                  "open_interest_contracts": "9451950.81000000",
+                  "open_interest_base": null,
+                  "open_interest_usd": "793566948.11077730",
+                  "mark_price": null,
+                  "source_method": "binance_rest_open_interest_hist",
+                  "data_quality": "exchange_raw"
+                },
+                {
+                  "bucket_start": "2026-04-30T01:00:00Z",
+                  "ts": "2026-04-30T01:55:00Z",
+                  "venue": "binance",
+                  "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                  "open_interest_contracts": "9468023.84000000",
+                  "open_interest_base": null,
+                  "open_interest_usd": "793988479.22240000",
+                  "mark_price": null,
+                  "source_method": "binance_rest_open_interest_hist",
+                  "data_quality": "exchange_raw"
+                },
+                {
+                  "bucket_start": "2026-04-30T02:00:00Z",
+                  "ts": "2026-04-30T02:55:00Z",
+                  "venue": "binance",
+                  "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                  "open_interest_contracts": "9479487.38000000",
+                  "open_interest_base": null,
+                  "open_interest_usd": "785754708.92820000",
+                  "mark_price": null,
+                  "source_method": "binance_rest_open_interest_hist",
+                  "data_quality": "exchange_raw"
+                },
+                {
+                  "bucket_start": "2026-04-30T03:00:00Z",
+                  "ts": "2026-04-30T03:10:00Z",
+                  "venue": "binance",
+                  "instrument_id": "binance:perp:linear_perp:SOL:USDT",
+                  "open_interest_contracts": "9483238.73000000",
+                  "open_interest_base": null,
+                  "open_interest_usd": "786350155.49160000",
+                  "mark_price": null,
+                  "source_method": "binance_rest_open_interest_hist",
+                  "data_quality": "exchange_raw"
+                }
+              ],
+              "coverage": {
+                "interval": "1h",
+                "requested_start_ts": null,
+                "requested_end_ts": null,
+                "returned_start_ts": "2026-04-29T18:00:00Z",
+                "returned_end_ts": "2026-04-30T03:10:00Z",
+                "history_cap_days": 30,
+                "stored_start_ts": "2026-01-03T12:00:00Z",
+                "stored_end_ts": "2026-04-30T03:10:00Z",
+                "stored_row_count": 91161,
+                "stored_history_days": 116,
+                "source_limited": false,
+                "partial_range": false,
+                "notes": [
+                  "Binance openInterestHist exposes only the latest 1 month.",
+                  "Stored OI coverage currently spans 2026-01-03T12:00:00Z to 2026-04-30T03:10:00Z with about 116 day(s), 91161 row(s).",
+                  "Rows are bucketed using the latest stored OI snapshot within each interval bucket."
+                ]
+              }
+            },
+            "error": null,
+            "as_of": "2026-04-30T03:12:55.670731Z"
+          }
+        }
+      ],
+      "toolSchemas": [
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "list_supported_instruments",
+          "description": "Resolve canonical instrument IDs and coverage metadata only. This discovery tool does not return live prices, funding rows, open interest, freshness, or liquidation clusters. Use it only when market identity is genuinely ambiguous or when the user explicitly asks for exact instrument IDs or coverage notes. Do not call this first for obvious requests like Binance BTC perp, ETH perp on Bybit, or direct venue/base comparisons; downstream tools accept simple aliases like BTC-PERP-BINANCE and ETH-PERP-BINANCE directly. It can support prompts that ask to list exact instrument IDs, but it should be a helper step rather than the primary execution path whenever the user also asks for funding rows, latest snapshots, OI rankings, or cross-venue comparisons. For cross-venue perp funding compares, prefer compare_perp_funding_history.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "venue": {
+                "type": "string",
+                "examples": [
+                  "binance",
+                  "bybit",
+                  "okx",
+                  "hyperliquid"
+                ],
+                "description": "Optional venue filter. Use lowercase venue names when narrowing results to one exchange."
+              },
+              "base_asset": {
+                "type": "string",
+                "examples": [
+                  "BTC",
+                  "ETH",
+                  "SOL"
+                ],
+                "description": "Optional base-asset filter. Use uppercase asset symbols such as BTC, ETH, or SOL."
+              },
+              "market_type": {
+                "enum": [
+                  "spot",
+                  "perp"
+                ],
+                "type": "string",
+                "description": "Optional market-type filter. Use perp for perpetuals or spot for spot markets."
+              },
+              "quote_asset": {
+                "type": "string",
+                "examples": [
+                  "USDT",
+                  "USDC"
+                ],
+                "description": "Perp compares here usually use USDT on Binance, Bybit, and OKX, and USDC on Hyperliquid. Do not guess plain USD."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "instrument_id",
+                    "venue",
+                    "venue_symbol",
+                    "canonical_symbol",
+                    "market_type",
+                    "contract_type",
+                    "base_asset",
+                    "quote_asset",
+                    "settlement_asset",
+                    "contract_size",
+                    "tick_size",
+                    "step_size",
+                    "price_precision",
+                    "quantity_precision",
+                    "coverage_status",
+                    "is_enabled",
+                    "metadata"
+                  ],
+                  "properties": {
+                    "venue": "[OMITTED:DEPTH_LIMIT]",
+                    "metadata": "[OMITTED:DEPTH_LIMIT]",
+                    "step_size": "[OMITTED:DEPTH_LIMIT]",
+                    "tick_size": "[OMITTED:DEPTH_LIMIT]",
+                    "base_asset": "[OMITTED:DEPTH_LIMIT]",
+                    "is_enabled": "[OMITTED:DEPTH_LIMIT]",
+                    "updated_at": "[OMITTED:DEPTH_LIMIT]",
+                    "market_type": "[OMITTED:DEPTH_LIMIT]",
+                    "quote_asset": "[OMITTED:DEPTH_LIMIT]",
+                    "venue_symbol": "[OMITTED:DEPTH_LIMIT]",
+                    "contract_size": "[OMITTED:DEPTH_LIMIT]",
+                    "contract_type": "[OMITTED:DEPTH_LIMIT]",
+                    "instrument_id": "[OMITTED:DEPTH_LIMIT]",
+                    "coverage_status": "[OMITTED:DEPTH_LIMIT]",
+                    "price_precision": "[OMITTED:DEPTH_LIMIT]",
+                    "canonical_symbol": "[OMITTED:DEPTH_LIMIT]",
+                    "settlement_asset": "[OMITTED:DEPTH_LIMIT]",
+                    "quantity_precision": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_ohlcv_history",
+          "description": "Return stored OHLCV history for one instrument. Use start_ts and end_ts when the user asks for performance since a named historical event, calendar date, or older regime. If the venue and asset are already obvious, call this tool directly with a supported alias like BTC-PERP-BINANCE or ETH-PERP-BINANCE instead of resolving IDs first. Prefer canonical instrument IDs like venue:market_type:contract_type:BASE:QUOTE, but simple aliases are also accepted.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "instrument_id"
+            ],
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "default": 200,
+                "maximum": 60000,
+                "minimum": 1,
+                "description": "Maximum number of OHLCV rows to return, ordered from newest to oldest."
+              },
+              "end_ts": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "examples": [
+                  "2026-04-25T00:00:00Z"
+                ],
+                "description": "Optional inclusive upper bound for the requested OHLCV window in ISO 8601 UTC."
+              },
+              "interval": {
+                "enum": [
+                  "1m",
+                  "5m",
+                  "15m",
+                  "1h",
+                  "4h",
+                  "1d"
+                ],
+                "type": "string",
+                "default": "1m",
+                "description": "OHLCV candle interval to return."
+              },
+              "start_ts": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "examples": [
+                  "2022-11-09T00:00:00Z"
+                ],
+                "description": "Optional inclusive lower bound for the requested OHLCV window in ISO 8601 UTC."
+              },
+              "instrument_id": {
+                "type": "string",
+                "examples": [
+                  "binance:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BINANCE",
+                  "hyperliquid:perp:linear_perp:BTC:USDC",
+                  "BTC-PERP-HYPERLIQUID"
+                ],
+                "description": "Canonical instrument ID or supported venue alias for the market you want to inspect."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "ts",
+                    "open",
+                    "high",
+                    "low",
+                    "close",
+                    "volume_base",
+                    "volume_quote",
+                    "trades_count"
+                  ],
+                  "properties": {
+                    "ts": "[OMITTED:DEPTH_LIMIT]",
+                    "low": "[OMITTED:DEPTH_LIMIT]",
+                    "high": "[OMITTED:DEPTH_LIMIT]",
+                    "open": "[OMITTED:DEPTH_LIMIT]",
+                    "close": "[OMITTED:DEPTH_LIMIT]",
+                    "volume_base": "[OMITTED:DEPTH_LIMIT]",
+                    "trades_count": "[OMITTED:DEPTH_LIMIT]",
+                    "volume_quote": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_funding_history",
+          "description": "Return stored funding history rows for one known instrument, including the most recent N rows. Use this for single-instrument funding inspection or follow-on analysis after the exact market is already known. If the venue and asset are already obvious, call this tool directly with a supported alias like BTC-PERP-BINANCE instead of resolving IDs first. For cross-venue perp funding comparisons that also need resolved instrument IDs, use compare_perp_funding_history instead. Prefer canonical instrument IDs like venue:market_type:contract_type:BASE:QUOTE, but simple aliases are also accepted.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "instrument_id"
+            ],
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "default": 200,
+                "maximum": 1000,
+                "minimum": 1,
+                "description": "Maximum number of funding rows to return, ordered from newest to oldest."
+              },
+              "instrument_id": {
+                "type": "string",
+                "examples": [
+                  "binance:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BINANCE",
+                  "hyperliquid:perp:linear_perp:BTC:USDC",
+                  "BTC-PERP-HYPERLIQUID"
+                ],
+                "description": "Canonical instrument ID or supported venue alias for the market you want to inspect."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "ts",
+                    "venue",
+                    "instrument_id",
+                    "funding_rate",
+                    "next_funding_time",
+                    "funding_interval_h",
+                    "mark_price",
+                    "index_price",
+                    "source_method",
+                    "data_quality"
+                  ],
+                  "properties": {
+                    "ts": "[OMITTED:DEPTH_LIMIT]",
+                    "venue": "[OMITTED:DEPTH_LIMIT]",
+                    "mark_price": "[OMITTED:DEPTH_LIMIT]",
+                    "index_price": "[OMITTED:DEPTH_LIMIT]",
+                    "data_quality": "[OMITTED:DEPTH_LIMIT]",
+                    "funding_rate": "[OMITTED:DEPTH_LIMIT]",
+                    "instrument_id": "[OMITTED:DEPTH_LIMIT]",
+                    "source_method": "[OMITTED:DEPTH_LIMIT]",
+                    "next_funding_time": "[OMITTED:DEPTH_LIMIT]",
+                    "funding_interval_h": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "compare_perp_funding_history",
+          "description": "Resolve the exact linear perp instrument IDs for one base asset across Binance, Bybit, OKX, and/or Hyperliquid, then return the most recent funding history rows for each venue in one response. Use this when the user asks to list the exact perp instrument IDs and compare funding rows across matching venues.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "base_asset"
+            ],
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "default": 10,
+                "maximum": 1000,
+                "minimum": 1,
+                "description": "Maximum number of recent funding rows to return per venue."
+              },
+              "venues": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "binance",
+                    "bybit",
+                    "okx",
+                    "hyperliquid"
+                  ],
+                  "type": "string"
+                },
+                "default": [
+                  "binance",
+                  "bybit",
+                  "okx",
+                  "hyperliquid"
+                ],
+                "examples": [
+                  [
+                    "binance",
+                    "bybit",
+                    "okx",
+                    "hyperliquid"
+                  ]
+                ],
+                "description": "Venues to include in the funding comparison."
+              },
+              "base_asset": {
+                "type": "string",
+                "examples": [
+                  "BTC",
+                  "ETH",
+                  "SOL"
+                ],
+                "description": "Base asset to compare across venues."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "requested_base_asset",
+                  "requested_market_type",
+                  "requested_venues",
+                  "limit",
+                  "results",
+                  "missing_venues",
+                  "notes"
+                ],
+                "properties": {
+                  "limit": {
+                    "type": "integer"
+                  },
+                  "notes": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "results": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "missing_venues": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "requested_venues": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "requested_base_asset": {
+                    "type": "string"
+                  },
+                  "requested_market_type": {
+                    "enum": "[OMITTED:DEPTH_LIMIT]",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_oi_summary",
+          "description": "Return the latest open-interest snapshot plus precomputed deltas and explicit coverage metadata for missing or source-limited horizons. Use this for OI ranking or momentum analysis after the market is already known, not for instrument discovery. If the venue and asset are already obvious, call this tool directly with a supported alias like BTC-PERP-BINANCE instead of resolving IDs first. Use list_supported_instruments only when identity is ambiguous or when exact coverage notes are the point. Prefer canonical instrument IDs like venue:market_type:contract_type:BASE:QUOTE, but simple aliases are also accepted.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "instrument_id"
+            ],
+            "properties": {
+              "instrument_id": {
+                "type": "string",
+                "examples": [
+                  "binance:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BINANCE",
+                  "hyperliquid:perp:linear_perp:BTC:USDC",
+                  "BTC-PERP-HYPERLIQUID"
+                ],
+                "description": "Canonical instrument ID or supported venue alias for the market you want to inspect."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "instrument",
+                  "latest_snapshot",
+                  "deltas",
+                  "coverage"
+                ],
+                "properties": {
+                  "deltas": {
+                    "type": "object",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "coverage": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "instrument": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "latest_snapshot": {
+                    "type": "[OMITTED:DEPTH_LIMIT]",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_oi_history",
+          "description": "Return stored open-interest history for one known instrument over a caller-selected time window. Use this for charting, range analysis, and follow-on delta calculations. Rows are ordered by bucket_start ascending. If the venue and asset are already obvious, call this tool directly with a supported alias like BTC-PERP-BINANCE instead of resolving IDs first. Prefer canonical instrument IDs like venue:market_type:contract_type:BASE:QUOTE, but simple aliases are also accepted. Some venues currently have source-limited or prospective-only OI history, and coverage notes will say so explicitly.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "instrument_id"
+            ],
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "default": 1000,
+                "maximum": 5000,
+                "minimum": 1,
+                "description": "Maximum number of OI buckets to return after interval and time filters are applied."
+              },
+              "end_ts": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "examples": [
+                  "2026-04-25T00:00:00Z"
+                ],
+                "description": "Optional inclusive upper bound for the requested OI history window in ISO 8601 UTC."
+              },
+              "interval": {
+                "enum": [
+                  "5m",
+                  "1h",
+                  "4h",
+                  "1d"
+                ],
+                "type": "string",
+                "default": "1h",
+                "description": "Bucket interval for the returned open-interest history."
+              },
+              "start_ts": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "examples": [
+                  "2026-04-18T00:00:00Z"
+                ],
+                "description": "Optional inclusive lower bound for the requested OI history window in ISO 8601 UTC."
+              },
+              "instrument_id": {
+                "type": "string",
+                "examples": [
+                  "binance:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BINANCE",
+                  "hyperliquid:perp:linear_perp:BTC:USDC",
+                  "BTC-PERP-HYPERLIQUID"
+                ],
+                "description": "Canonical instrument ID or supported venue alias for the market you want to inspect."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "instrument",
+                  "interval",
+                  "row_count",
+                  "rows",
+                  "coverage"
+                ],
+                "properties": {
+                  "rows": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "coverage": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "interval": {
+                    "enum": "[OMITTED:DEPTH_LIMIT]",
+                    "type": "string"
+                  },
+                  "row_count": {
+                    "type": "integer"
+                  },
+                  "instrument": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_oi_delta",
+          "description": "Compute open-interest delta for one known instrument over an arbitrary range using stored OI snapshots. Use either explicit start_ts/end_ts bounds or a window like 30d, 14d, 72h, or 1w. Returns the matched boundary snapshots plus explicit coverage notes when stored history is source-limited. If the venue and asset are already obvious, call this tool directly with a supported alias like BTC-PERP-BINANCE instead of resolving IDs first. Prefer canonical instrument IDs like venue:market_type:contract_type:BASE:QUOTE, but simple aliases are also accepted.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "instrument_id"
+            ],
+            "properties": {
+              "end_ts": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "examples": [
+                  "2026-04-25T00:00:00Z"
+                ],
+                "description": "Optional inclusive upper bound for the OI delta calculation in ISO 8601 UTC."
+              },
+              "window": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "examples": [
+                  "30d",
+                  "14d",
+                  "72h",
+                  "1w"
+                ],
+                "description": "Use either start_ts or window, not both."
+              },
+              "start_ts": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "examples": [
+                  "2026-04-18T00:00:00Z"
+                ],
+                "description": "Optional inclusive lower bound for the OI delta calculation in ISO 8601 UTC. Use with end_ts, not with window."
+              },
+              "instrument_id": {
+                "type": "string",
+                "examples": [
+                  "binance:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BINANCE",
+                  "hyperliquid:perp:linear_perp:BTC:USDC",
+                  "BTC-PERP-HYPERLIQUID"
+                ],
+                "description": "Canonical instrument ID or supported venue alias for the market you want to inspect."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "instrument",
+                  "start_snapshot",
+                  "end_snapshot",
+                  "delta_usd",
+                  "coverage"
+                ],
+                "properties": {
+                  "coverage": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "delta_usd": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "instrument": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "end_snapshot": {
+                    "type": "[OMITTED:DEPTH_LIMIT]",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "start_snapshot": {
+                    "type": "[OMITTED:DEPTH_LIMIT]",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_normalized_market_snapshot",
+          "description": "Return the latest typed normalized market snapshot for one market, including current_price, funding_rate, next_funding_time, open_interest_usd, OI deltas, freshness_seconds, and nearest_liquidation_clusters. Use this tool to inspect one market or compare latest market conditions across matching venues. Do not use it for funding-history row series or instrument discovery. Prefer canonical instrument IDs like venue:market_type:contract_type:BASE:QUOTE, but simple aliases like BTC-PERP-BINANCE and BTC-PERP-HYPERLIQUID are also accepted; for direct cross-venue compares, call this tool once per venue using those aliases instead of discovering ids first.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "instrument_id"
+            ],
+            "properties": {
+              "instrument_id": {
+                "type": "string",
+                "examples": [
+                  "binance:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BINANCE",
+                  "bybit:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BYBIT",
+                  "okx:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-OKX",
+                  "hyperliquid:perp:linear_perp:BTC:USDC",
+                  "BTC-PERP-HYPERLIQUID"
+                ],
+                "description": "Canonical instrument ID or supported venue alias for the market you want to inspect."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "venue",
+                  "venue_symbol",
+                  "canonical_symbol",
+                  "market_type",
+                  "contract_type",
+                  "base_asset",
+                  "quote_asset",
+                  "current_price",
+                  "funding_rate",
+                  "next_funding_time",
+                  "open_interest_usd",
+                  "oi_delta_1h_usd",
+                  "oi_delta_4h_usd",
+                  "oi_delta_24h_usd",
+                  "oi_delta_7d_usd",
+                  "nearest_liquidation_clusters",
+                  "as_of",
+                  "freshness_seconds",
+                  "source_method",
+                  "data_quality",
+                  "success",
+                  "error"
+                ],
+                "properties": {
+                  "as_of": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "error": {
+                    "type": "[OMITTED:DEPTH_LIMIT]",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "venue": {
+                    "type": "string"
+                  },
+                  "success": {
+                    "type": "boolean"
+                  },
+                  "base_asset": {
+                    "type": "string"
+                  },
+                  "market_type": {
+                    "enum": "[OMITTED:DEPTH_LIMIT]",
+                    "type": "string"
+                  },
+                  "quote_asset": {
+                    "type": "string"
+                  },
+                  "data_quality": {
+                    "type": "string"
+                  },
+                  "funding_rate": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "venue_symbol": {
+                    "type": "string"
+                  },
+                  "contract_type": {
+                    "type": "string"
+                  },
+                  "current_price": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "source_method": {
+                    "type": "string"
+                  },
+                  "oi_delta_1h_usd": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "oi_delta_4h_usd": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "oi_delta_7d_usd": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "canonical_symbol": {
+                    "type": "string"
+                  },
+                  "oi_delta_24h_usd": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "freshness_seconds": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "next_funding_time": {
+                    "type": "[OMITTED:DEPTH_LIMIT]",
+                    "format": "date-time"
+                  },
+                  "open_interest_usd": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "nearest_liquidation_clusters": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "venue": {
+                "type": "string"
+              },
+              "success": {
+                "type": "boolean"
+              },
+              "base_asset": {
+                "type": "string"
+              },
+              "market_type": {
+                "enum": [
+                  "spot",
+                  "perp"
+                ],
+                "type": "string"
+              },
+              "quote_asset": {
+                "type": "string"
+              },
+              "data_quality": {
+                "type": "string"
+              },
+              "funding_rate": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "venue_symbol": {
+                "type": "string"
+              },
+              "contract_type": {
+                "type": "string"
+              },
+              "current_price": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_method": {
+                "type": "string"
+              },
+              "oi_delta_1h_usd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "oi_delta_4h_usd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "oi_delta_7d_usd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "canonical_symbol": {
+                "type": "string"
+              },
+              "oi_delta_24h_usd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "freshness_seconds": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "next_funding_time": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "open_interest_usd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "nearest_liquidation_clusters": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "snapshot_ts",
+                    "cluster_id",
+                    "venue",
+                    "instrument_id",
+                    "side",
+                    "reference_price",
+                    "lower_price",
+                    "upper_price",
+                    "estimated_notional_usd",
+                    "event_count",
+                    "cluster_rank",
+                    "source_method",
+                    "data_quality",
+                    "metadata"
+                  ],
+                  "properties": {
+                    "side": "[OMITTED:DEPTH_LIMIT]",
+                    "venue": "[OMITTED:DEPTH_LIMIT]",
+                    "metadata": "[OMITTED:DEPTH_LIMIT]",
+                    "cluster_id": "[OMITTED:DEPTH_LIMIT]",
+                    "event_count": "[OMITTED:DEPTH_LIMIT]",
+                    "lower_price": "[OMITTED:DEPTH_LIMIT]",
+                    "snapshot_ts": "[OMITTED:DEPTH_LIMIT]",
+                    "upper_price": "[OMITTED:DEPTH_LIMIT]",
+                    "cluster_rank": "[OMITTED:DEPTH_LIMIT]",
+                    "data_quality": "[OMITTED:DEPTH_LIMIT]",
+                    "instrument_id": "[OMITTED:DEPTH_LIMIT]",
+                    "source_method": "[OMITTED:DEPTH_LIMIT]",
+                    "reference_price": "[OMITTED:DEPTH_LIMIT]",
+                    "estimated_notional_usd": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_venue_health",
+          "description": "Return cached summary health for one venue, with optional per-source diagnostics.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "venue": {
+                "type": "string",
+                "default": "binance",
+                "examples": [
+                  "binance",
+                  "bybit",
+                  "okx",
+                  "hyperliquid"
+                ],
+                "description": "Venue to inspect. Mixed-case values like OKX are accepted."
+              },
+              "source_limit": {
+                "type": "integer",
+                "default": 10,
+                "maximum": 20,
+                "minimum": 1,
+                "description": "Maximum number of per-source diagnostic rows to include when include_sources is true."
+              },
+              "include_sources": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether to include per-source diagnostics in addition to the summary health payload."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "venue",
+                  "ok",
+                  "ohlcv_1m",
+                  "funding",
+                  "oi",
+                  "clusters",
+                  "source_summary"
+                ],
+                "properties": {
+                  "oi": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "venue": {
+                    "type": "string"
+                  },
+                  "funding": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "sources": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "clusters": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "ohlcv_1m": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "source_summary": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "analyze_market_sentiment",
+          "description": "🧠 INTELLIGENCE: Analyze broad market sentiment using Fear & Greed plus bull-market indicators. Designed for Hobbyist tier where per-coin long/short and funding detail may be unavailable.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "coins": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Optional coin symbols for reporting context. If omitted, server resolves a dynamic major-coin set using available live market data."
+              }
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "overallSentiment",
+              "sentimentScore",
+              "fearGreedIndex",
+              "recommendation",
+              "confidence",
+              "fetchedAt"
+            ],
+            "properties": {
+              "fetchedAt": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "dataSources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "fundingBias": {
+                "type": "object"
+              },
+              "limitations": {
+                "type": "string"
+              },
+              "analyzedCoins": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "fearGreedIndex": {
+                "type": "object"
+              },
+              "longShortRatio": {
+                "type": "object"
+              },
+              "recommendation": {
+                "type": "string"
+              },
+              "sentimentScore": {
+                "type": "number"
+              },
+              "overallSentiment": {
+                "type": "string"
+              },
+              "bullMarketIndicators": {
+                "type": "object"
+              },
+              "supportsLongShortThresholdCheck": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_btc_valuation_score",
+          "description": "🧠 INTELLIGENCE: Get BTC valuation score using AHR999, Rainbow Chart, Bubble Index, Puell Multiple, and Fear & Greed combined analysis.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "valuationScore",
+              "valuationZone",
+              "confidence"
+            ],
+            "properties": {
+              "fetchedAt": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "indicators": {
+                "type": "object"
+              },
+              "dataSources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "valuationZone": {
+                "type": "string"
+              },
+              "recommendation": {
+                "type": "string"
+              },
+              "valuationScore": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_market_overview",
+          "description": "🧠 INTELLIGENCE: Get a macro market snapshot (BTC price proxy, Fear & Greed, bull indicators, ETF flow, exchange BTC flow) with explicit Hobbyist-tier limitations.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "btcPrice",
+              "fearGreedIndex",
+              "marketSentiment",
+              "fetchedAt"
+            ],
+            "properties": {
+              "etfData": {
+                "type": "object"
+              },
+              "btcPrice": {
+                "type": "number"
+              },
+              "fetchedAt": {
+                "type": "string"
+              },
+              "dataSources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "limitations": {
+                "type": "string"
+              },
+              "exchangeData": {
+                "type": "object"
+              },
+              "fearGreedIndex": {
+                "type": "object"
+              },
+              "marketSentiment": {
+                "type": "string"
+              },
+              "btcPriceFormatted": {
+                "type": "string"
+              },
+              "bullMarketIndicators": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "scan_oi_divergence",
+          "description": "🧠 INTELLIGENCE: Scan top coins for OI vs sentiment divergences using OI-change plus Fear & Greed regime. On Hobbyist tier this is a proxy signal and does not directly verify 80%+ long/short thresholds.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "coins": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Coins to scan. If omitted, server resolves a dynamic major-coin set using available live market data (max 20)."
+              },
+              "oi_change_threshold": {
+                "type": "number",
+                "description": "Minimum absolute OI change % (1h) to flag (default: 0.5)"
+              }
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "longTraps",
+              "shortSqueezes",
+              "scannedCoins",
+              "supportsLongShortThresholdCheck"
+            ],
+            "properties": {
+              "summary": {
+                "type": "object"
+              },
+              "fetchedAt": {
+                "type": "string"
+              },
+              "longTraps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "symbol": "[OMITTED:DEPTH_LIMIT]",
+                    "oi_change_1h": "[OMITTED:DEPTH_LIMIT]",
+                    "oi_change_4h": "[OMITTED:DEPTH_LIMIT]",
+                    "total_oi_usd": "[OMITTED:DEPTH_LIMIT]",
+                    "oi_change_24h": "[OMITTED:DEPTH_LIMIT]",
+                    "signal_strength": "[OMITTED:DEPTH_LIMIT]"
+                  }
+                },
+                "description": "Coins where OI falling but longs may be trapped"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "dataSources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "limitations": {
+                "type": "string"
+              },
+              "scannedCoins": {
+                "type": "number"
+              },
+              "shortSqueezes": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                },
+                "description": "Coins where OI rising into bearish sentiment"
+              },
+              "recommendation": {
+                "type": "string"
+              },
+              "marketSentiment": {
+                "type": "object"
+              },
+              "supportsLongShortThresholdCheck": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_oi_batch",
+          "description": "🧠 INTELLIGENCE: Get open interest data for MULTIPLE coins in a single call. Returns OI breakdown and change percentages for each coin. Use this instead of calling get_oi_by_exchange in a loop. Max 15 coins per call.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "symbols"
+            ],
+            "properties": {
+              "symbols": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Coin symbols to fetch OI for (max 15 valid symbols). Non-string/empty values are ignored."
+              }
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "results",
+              "count"
+            ],
+            "properties": {
+              "count": {
+                "type": "number"
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "symbol": "[OMITTED:DEPTH_LIMIT]",
+                    "oi_change_1h": "[OMITTED:DEPTH_LIMIT]",
+                    "oi_change_4h": "[OMITTED:DEPTH_LIMIT]",
+                    "total_oi_usd": "[OMITTED:DEPTH_LIMIT]",
+                    "oi_change_24h": "[OMITTED:DEPTH_LIMIT]",
+                    "exchange_count": "[OMITTED:DEPTH_LIMIT]"
+                  }
+                }
+              },
+              "fetchedAt": {
+                "type": "string"
+              },
+              "dropped_count": {
+                "type": "number"
+              },
+              "accepted_count": {
+                "type": "number"
+              },
+              "requested_count": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "analyze_hobby_market_regime",
+          "description": "🧠 INTELLIGENCE: Composite Hobby-tier market regime using Fear & Greed, AHR999, Stock-to-Flow, ETF flows, and Bull Market Peak indicators.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "regime",
+              "regimeScore",
+              "recommendation",
+              "fetchedAt"
+            ],
+            "properties": {
+              "regime": {
+                "type": "string"
+              },
+              "etfFlow": {
+                "type": "object"
+              },
+              "fearGreed": {
+                "type": "object"
+              },
+              "fetchedAt": {
+                "type": "string"
+              },
+              "valuation": {
+                "type": "object"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "dataSources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "regimeScore": {
+                "type": "number"
+              },
+              "recommendation": {
+                "type": "string"
+              },
+              "bullMarketIndicators": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "analyze_exchange_balance_pressure",
+          "description": "🧠 INTELLIGENCE: Coin-level exchange flow pressure by combining exchange balances and open-interest context.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "Optional coin symbol. If omitted, server resolves the highest-OI coin dynamically."
+              }
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "symbol",
+              "pressure",
+              "pressureScore",
+              "exchangeFlow",
+              "recommendation",
+              "fetchedAt"
+            ],
+            "properties": {
+              "symbol": {
+                "type": "string"
+              },
+              "pressure": {
+                "type": "string"
+              },
+              "fetchedAt": {
+                "type": "string"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "dataSources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "exchangeFlow": {
+                "type": "object"
+              },
+              "pressureScore": {
+                "type": "number"
+              },
+              "recommendation": {
+                "type": "string"
+              },
+              "openInterestContext": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_supported_coins",
+          "description": "📊 RAW: Get list of all supported coins on Coinglass",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "coins"
+            ],
+            "properties": {
+              "coins": {
+                "type": "array"
+              },
+              "count": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_supported_exchanges",
+          "description": "📊 RAW: Get list of all supported futures exchanges",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "exchanges"
+            ],
+            "properties": {
+              "count": {
+                "type": "number"
+              },
+              "exchanges": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_exchange_pairs",
+          "description": "📊 RAW: Get supported trading pairs for futures exchanges. Response is a map of exchange names to arrays of instrument objects with snake_case properties: instrument_id, base_asset, quote_asset.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "exchange": {
+                "type": "string"
+              }
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_futures_pairs_markets",
+          "description": "📊 RAW: Get detailed market data for a coin's futures trading pairs. Response properties use snake_case: exchange_name, symbol, base_asset, price, open_interest_usd, volume_usd, funding_rate. If symbol is omitted, server resolves a default active major coin using live market data.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "Optional coin symbol (e.g., BTC)."
+              }
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_funding_rates",
+          "description": "📊 RAW: Get current funding rates for a coin across all exchanges. Response properties use snake_case. Each item has: symbol, stablecoin_margin_list (array of {exchange, funding_rate, next_funding_time}), token_margin_list (array of {exchange, funding_rate, next_funding_time}).",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "symbol": {
+                "type": "string"
+              }
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_oi_by_exchange",
+          "description": "📊 RAW: Get open interest breakdown by exchange for a coin. Response properties use snake_case: exchange, symbol, open_interest_usd, open_interest_quantity, open_interest_by_stable_coin_margin, open_interest_quantity_by_coin_margin, open_interest_quantity_by_stable_coin_margin, open_interest_change_percent_5m/_15m/_30m/_1h/_4h/_24h. If symbol is omitted, server resolves a default active major coin using live market data.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "Optional coin symbol."
+              }
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_futures_liquidation_exchanges",
+          "description": "📊 RAW: Get futures exchanges supported by liquidation endpoints.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "range": {
+                "enum": [
+                  "1h",
+                  "4h",
+                  "24h"
+                ],
+                "type": "string",
+                "default": "24h",
+                "examples": [
+                  "1h",
+                  "24h"
+                ],
+                "description": "Range window for liquidation snapshots (e.g., 1h, 4h, 24h)."
+              }
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "range",
+              "data",
+              "count"
+            ],
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "count": {
+                "type": "number"
+              },
+              "range": {
+                "type": "string"
+              },
+              "fetchedAt": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_futures_liquidation_coins",
+          "description": "📊 RAW: Get coins supported by liquidation endpoints.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data",
+              "count"
+            ],
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "count": {
+                "type": "number"
+              },
+              "fetchedAt": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_ahr999_index",
+          "description": "📊 RAW: Get AHR999 index (BTC accumulation indicator). Response items use snake_case: ahr999_value (number), date, price.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_rainbow_chart",
+          "description": "📊 RAW: Get Bitcoin Rainbow Chart data. Response properties use snake_case.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_fear_greed_index",
+          "description": "📊 RAW: Get Crypto Fear & Greed Index history. Response is an object (NOT an array) with snake_case properties: data_list (array of index values 0-100), price_list (array of BTC prices), time_list (array of timestamps). Last element in each array is the most recent.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "data_list": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "time_list": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "price_list": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  }
+                }
+              },
+              "fetchedAt": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_stock_flow_index",
+          "description": "📊 RAW: Get Bitcoin stock-to-flow model index history.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "fetchedAt": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_bubble_index",
+          "description": "📊 RAW: Get Bitcoin Bubble Index data. Response items use snake_case: bubble_index (number), date, price.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_puell_multiple",
+          "description": "📊 RAW: Get Puell Multiple indicator. Response items use snake_case: puell_multiple (number), date, price.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_bull_market_indicators",
+          "description": "📊 RAW: Get Bull Market Peak Indicators. Response items use snake_case: indicator_name, current_value, target_value, hit_status (boolean).",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_btc_etf_netflow",
+          "description": "📊 RAW: Get Bitcoin ETF net assets/flow history. Response properties use snake_case: net_assets_usd, change_usd, date.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "ticker": {
+                "type": "string",
+                "description": "ETF ticker (e.g., GBTC, IBIT)"
+              }
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_btc_etf_list",
+          "description": "📊 RAW: Get supported Bitcoin ETF tickers and metadata.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data",
+              "count"
+            ],
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "count": {
+                "type": "number"
+              },
+              "fetchedAt": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_exchange_balance",
+          "description": "📊 RAW: Get exchange balance list for a coin. Response properties use snake_case: exchange_name, total_balance, balance_change_1d, balance_change_percent_1d, balance_change_7d, balance_change_percent_7d, balance_change_30d, balance_change_percent_30d.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "Optional coin symbol. If omitted, server resolves a default active major coin using live market data."
+              }
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_exchange_balance_chart",
+          "description": "📊 RAW: Get historical exchange balance chart. Response is a nested object (not array) with snake_case properties: time_list (array of timestamps), data_map (object mapping exchange names to {balance_list: number[]}), price_list (array of prices).",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "Optional coin symbol. If omitted, server resolves a default active major coin using live market data."
+              }
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "symbol",
+              "data"
+            ],
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "data_map": {
+                    "type": "object",
+                    "additionalProperties": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "time_list": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "price_list": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  }
+                }
+              },
+              "symbol": {
+                "type": "string"
+              },
+              "fetchedAt": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "serverName": "Coinglass",
+          "toolName": "get_spot_supported_coins",
+          "description": "📊 RAW: Get spot coins supported by Coinglass.",
+          "inputSchema": {
+            "type": "object",
+            "required": [],
+            "properties": {}
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "data",
+              "count"
+            ],
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "count": {
+                "type": "number"
+              },
+              "fetchedAt": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ],
+      "diagnostics": {
+        "selection": {
+          "selectedPolicy": "exploratory",
+          "plannerReasoningStage": "mechanical",
+          "oneShotBias": false,
+          "selectedTools": [
+            {
+              "toolId": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+              "toolName": "Meridian Market Data",
+              "priceUsd": "0.100000",
+              "selectedMethodCount": 9,
+              "selectedMethods": [
+                "list_supported_instruments",
+                "get_ohlcv_history",
+                "get_funding_history",
+                "compare_perp_funding_history",
+                "get_oi_summary",
+                "get_oi_history",
+                "get_oi_delta",
+                "get_normalized_market_snapshot",
+                "get_venue_health"
+              ],
+              "omittedSelectedMethodCount": 0
+            },
+            {
+              "toolId": "ffe8cd46-ced1-4c7f-9e43-dc8fca25ecbc",
+              "toolName": "Coinglass",
+              "priceUsd": "0.000000",
+              "selectedMethodCount": 27,
+              "selectedMethods": [
+                "analyze_market_sentiment",
+                "get_btc_valuation_score",
+                "get_market_overview",
+                "scan_oi_divergence",
+                "get_oi_batch",
+                "analyze_hobby_market_regime",
+                "analyze_exchange_balance_pressure",
+                "get_supported_coins",
+                "get_supported_exchanges",
+                "get_exchange_pairs",
+                "get_futures_pairs_markets",
+                "get_funding_rates"
+              ],
+              "omittedSelectedMethodCount": 15
+            }
+          ]
+        },
+        "executionContract": {
+          "plannerQuery": "For binance-futures SOLUSDT, does the recent Velo futures structure show positive funding being paired with increasing open interest, and what does that imply about crowded long risk?",
+          "allowedModules": [],
+          "intentContract": null,
+          "validation": null
+        },
+        "cost": {
+          "planningCostUsd": 0,
+          "initialExecutionCostUsd": 0.023616,
+          "rediscoveryAdditionalCostUsd": 0,
+          "synthesisCostUsd": 0.0083635,
+          "totalModelCostUsd": 0.052490499999999995,
+          "toolCostUsd": 0.1,
+          "totalChargedUsd": 0.1524905
+        },
+        "verification": {
+          "evaluations": [],
+          "repairEvents": [],
+          "triggerNeedsDifferentTools": false,
+          "triggerMissingCapability": null
+        },
+        "execution": {
+          "reasoningEnabled": true,
+          "receivedReasoning": false,
+          "reasoningChars": 0,
+          "stepBudget": 10,
+          "completedStepCount": 2,
+          "toolCallCount": 3,
+          "toolRegistry": {
+            "availableToolCount": 36,
+            "availableMethodNamesSample": [
+              "Meridian Market Data.list_supported_instruments",
+              "Meridian Market Data.get_ohlcv_history",
+              "Meridian Market Data.get_funding_history",
+              "Meridian Market Data.compare_perp_funding_history",
+              "Meridian Market Data.get_oi_summary",
+              "Meridian Market Data.get_oi_history",
+              "Meridian Market Data.get_oi_delta",
+              "Meridian Market Data.get_normalized_market_snapshot",
+              "Meridian Market Data.get_venue_health",
+              "Coinglass.analyze_market_sentiment",
+              "Coinglass.get_btc_valuation_score",
+              "Coinglass.get_market_overview",
+              "Coinglass.scan_oi_divergence",
+              "Coinglass.get_oi_batch",
+              "Coinglass.analyze_hobby_market_regime",
+              "Coinglass.analyze_exchange_balance_pressure",
+              "Coinglass.get_supported_coins",
+              "Coinglass.get_supported_exchanges",
+              "Coinglass.get_exchange_pairs",
+              "Coinglass.get_futures_pairs_markets",
+              "Coinglass.get_funding_rates",
+              "Coinglass.get_oi_by_exchange",
+              "Coinglass.get_futures_liquidation_exchanges",
+              "Coinglass.get_futures_liquidation_coins",
+              "Coinglass.get_ahr999_index",
+              "Coinglass.get_rainbow_chart",
+              "Coinglass.get_fear_greed_index",
+              "Coinglass.get_stock_flow_index",
+              "Coinglass.get_bubble_index",
+              "Coinglass.get_puell_multiple",
+              "Coinglass.get_bull_market_indicators",
+              "Coinglass.get_btc_etf_netflow",
+              "Coinglass.get_btc_etf_list",
+              "Coinglass.get_exchange_balance",
+              "Coinglass.get_exchange_balance_chart",
+              "Coinglass.get_spot_supported_coins"
+            ],
+            "selectedMethodCount": 36,
+            "selectedButFilteredOut": [],
+            "toolCallAttemptCount": 3,
+            "toolCallSuccessCount": 3,
+            "toolCallFailureCount": 0,
+            "toolCallFailureSamples": []
+          }
+        },
+        "retryBudget": {
+          "cheapFixAttempts": 0,
+          "semanticRetries": 0
+        },
+        "stageTiming": {
+          "selectionMs": 25791,
+          "executionMs": 19795,
+          "synthesisMs": 9405,
+          "accountedMs": 54991,
+          "residualMs": 5149
+        },
+        "executorDiagnostics": null,
+        "models": {
+          "overrideMode": "none",
+          "stages": [
+            {
+              "stageKey": "tool-selection",
+              "stageKind": "stage",
+              "stage": "tool-selection",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gemini-flash-model",
+              "requestedModelId": "gemini-flash-model",
+              "resolvedModelId": "gemini-flash-model",
+              "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+              "effectiveModelId": "gemini-flash-model",
+              "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.020511,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]",
+                "reasoningTokens": "[REDACTED]",
+                "cachedInputTokens": "[REDACTED]"
+              }
+            },
+            {
+              "stageKey": "iterative-execution",
+              "stageKind": "stage",
+              "stage": "iterative-execution",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gpt-5.4-mini-model",
+              "requestedModelId": "gpt-5.4-mini-model",
+              "resolvedModelId": "gpt-5.4-mini-model",
+              "resolvedRuntimeModelId": "openai/gpt-5.4-mini",
+              "effectiveModelId": "gpt-5.4-mini-model",
+              "effectiveRuntimeModelId": "openai/gpt-5.4-mini",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.023616,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]"
+              }
+            },
+            {
+              "stageKey": "final-synthesis",
+              "stageKind": "final-synthesis",
+              "stage": "final-synthesis",
+              "surface": "query",
+              "responseShape": "answer_with_evidence",
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gemini-flash-model",
+              "requestedModelId": "gemini-flash-model",
+              "resolvedModelId": "gemini-flash-model",
+              "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+              "effectiveModelId": "gemini-flash-model",
+              "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.0083635,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]",
+                "reasoningTokens": "[REDACTED]",
+                "cachedInputTokens": "[REDACTED]"
+              }
+            }
+          ]
+        }
+      },
+      "governance": {
+        "policyVersion": "2026-03-05.query-data-governance.v1",
+        "redactionCount": 13,
+        "omittedSensitiveFieldsCount": 127,
+        "exposure": {
+          "runtimeArtifacts": "internal_runtime_only",
+          "durableAudit": "internal_ops_only",
+          "developerTrace": "explicit_opt_in_redacted",
+          "publicDataUrl": "explicit_request_opt_in"
+        },
+        "retention": {
+          "runtimeTtlMs": 900000,
+          "durableAuditDays": 30,
+          "publicDataUrl": "until_deleted"
+        }
+      }
+    },
+    "grounding": {
+      "availableToolCount": 36,
+      "availableMethodNamesSample": [
+        "Meridian Market Data.list_supported_instruments",
+        "Meridian Market Data.get_ohlcv_history",
+        "Meridian Market Data.get_funding_history",
+        "Meridian Market Data.compare_perp_funding_history",
+        "Meridian Market Data.get_oi_summary",
+        "Meridian Market Data.get_oi_history",
+        "Meridian Market Data.get_oi_delta",
+        "Meridian Market Data.get_normalized_market_snapshot",
+        "Meridian Market Data.get_venue_health",
+        "Coinglass.analyze_market_sentiment",
+        "Coinglass.get_btc_valuation_score",
+        "Coinglass.get_market_overview",
+        "Coinglass.scan_oi_divergence",
+        "Coinglass.get_oi_batch",
+        "Coinglass.analyze_hobby_market_regime",
+        "Coinglass.analyze_exchange_balance_pressure",
+        "Coinglass.get_supported_coins",
+        "Coinglass.get_supported_exchanges",
+        "Coinglass.get_exchange_pairs",
+        "Coinglass.get_futures_pairs_markets",
+        "Coinglass.get_funding_rates",
+        "Coinglass.get_oi_by_exchange",
+        "Coinglass.get_futures_liquidation_exchanges",
+        "Coinglass.get_futures_liquidation_coins",
+        "Coinglass.get_ahr999_index",
+        "Coinglass.get_rainbow_chart",
+        "Coinglass.get_fear_greed_index",
+        "Coinglass.get_stock_flow_index",
+        "Coinglass.get_bubble_index",
+        "Coinglass.get_puell_multiple",
+        "Coinglass.get_bull_market_indicators",
+        "Coinglass.get_btc_etf_netflow",
+        "Coinglass.get_btc_etf_list",
+        "Coinglass.get_exchange_balance",
+        "Coinglass.get_exchange_balance_chart",
+        "Coinglass.get_spot_supported_coins"
+      ],
+      "selectedMethodCount": 36,
+      "selectedButFilteredOut": [],
+      "toolCallCount": 3,
+      "toolCallAttemptCount": 3,
+      "toolCallSuccessCount": 3,
+      "toolCallFailureCount": 0,
+      "toolCallFailureSamples": [],
+      "grounded": true
+    },
+    "orchestrationMetrics": {
+      "parityStage": "enabled",
+      "orchestrationMode": "auto_discovery",
+      "firstPassSuccess": true,
+      "capabilityMissSignaled": false,
+      "rediscoveryExecuted": false
+    },
+    "responseShape": "answer_with_evidence",
+    "summary": "Based on the recent data for Binance SOL/USDT futures, the current structure does **not** show positive funding paired with increasing open interest.",
+    "outcome": {
+      "label": "Complete answer",
+      "tone": "positive",
+      "stopReason": "complete_answer",
+      "issueClass": null
+    },
+    "controller": {
+      "scope": "standard",
+      "nextAction": "return_complete_answer",
+      "actionsTaken": [
+        "inspect_current_grounding",
+        "return_complete_answer"
+      ],
+      "patchFirstProgramPreserved": false,
+      "executionProgramRevisionId": "iterative-v1",
+      "hardBudgetApplied": false
+    },
+    "evidence": {
+      "facts": [
+        {
+          "id": "path_lookup:0",
+          "label": "Top-level path lookup for \"answer\"",
+          "path": "answer",
+          "relevanceScore": null,
+          "value": "No. The recent structure does not show a clean combination of positive funding plus rising open interest. Funding is currently slightly negative (-0.00003778), and open interest is not increasing over the latest window; it is essentially flat-to-lower, with the latest 1h OI delta at -6.70M USD, 4h at -7.19M USD, and 24h at -21.03M USD."
+        },
+        {
+          "id": "path_lookup:1",
+          "label": "Top-level path lookup for \"evidence\"",
+          "path": "evidence",
+          "relevanceScore": null,
+          "value": {
+            "latest_snapshot": {
+              "current_price": "82.96",
+              "funding_rate": "-0.00003778",
+              "open_interest_usd": "786350155.4916",
+              "oi_delta_1h_usd": "-6698393.11855020",
+              "oi_delta_4h_usd": "-7186527.20240000",
+              "oi_delta_24h_usd": "-21033968.62290290",
+              "freshness_seconds": 170
+            },
+            "funding_rows": [
+              "[object]",
+              "[object]",
+              "[object]",
+              "[object]",
+              "[object]"
+            ],
+            "oi_rows_latest_10h": [
+              "[object]",
+              "[object]",
+              "[object]",
+              "[object]",
+              "[object]",
+              "[object]"
+            ]
+          }
+        },
+        {
+          "id": "path_lookup:2",
+          "label": "Top-level path lookup for \"implication\"",
+          "path": "implication",
+          "relevanceScore": null,
+          "value": "Because funding is not positive and OI is not trending up, this does not currently look like a crowded-long buildup. Crowded long risk is therefore muted relative to a classic overheated setup. If funding flips positive while OI resumes rising, that would be a stronger warning sign for long crowding."
+        },
+        {
+          "id": "array_window:3",
+          "label": "Array window at \"evidence.oi_rows_latest_10h\" (first 10 rows)",
+          "path": "evidence.oi_rows_latest_10h",
+          "relevanceScore": null,
+          "value": [
+            {
+              "bucket_start": "2026-04-29T18:00:00Z",
+              "open_interest_usd": "784160924.72762060"
+            },
+            {
+              "bucket_start": "2026-04-29T19:00:00Z",
+              "open_interest_usd": "785745538.23382760"
+            },
+            {
+              "bucket_start": "2026-04-29T20:00:00Z",
+              "open_interest_usd": "791052339.69230000"
+            },
+            {
+              "bucket_start": "2026-04-29T21:00:00Z",
+              "open_interest_usd": "791490983.10000000"
+            },
+            {
+              "bucket_start": "2026-04-29T22:00:00Z",
+              "open_interest_usd": "795476079.60210000"
+            },
+            {
+              "bucket_start": "2026-04-29T23:00:00Z",
+              "open_interest_usd": "790291043.25711000"
+            }
+          ]
+        },
+        {
+          "id": "keyword_slice:4",
+          "label": "Keyword slice for \"for\" (lines 79-81)",
+          "path": "line:80",
+          "relevanceScore": 1,
+          "value": "  },\n  \"implication\": \"Because funding is not positive and OI is not trending up, this does not currently look like a crowded-long buildup. Crowded long risk is therefore muted relative to a classic overheated setup. If funding flips positive while OI resumes rising, that would be a stronger warning sign for long crowding.\"\n}"
+        },
+        {
+          "id": "keyword_slice:5",
+          "label": "Keyword slice for \"binance\" (lines 1-3)",
+          "path": "line:2",
+          "relevanceScore": 1,
+          "value": "{\n  \"market\": \"binance futures SOLUSDT\",\n  \"instrument_id\": \"binance:perp:linear_perp:SOL:USDT\","
+        },
+        {
+          "id": "keyword_slice:6",
+          "label": "Keyword slice for \"futures\" (lines 1-3)",
+          "path": "line:2",
+          "relevanceScore": 1,
+          "value": "{\n  \"market\": \"binance futures SOLUSDT\",\n  \"instrument_id\": \"binance:perp:linear_perp:SOL:USDT\","
+        },
+        {
+          "id": "keyword_slice:7",
+          "label": "Keyword slice for \"solusdt\" (lines 1-3)",
+          "path": "line:2",
+          "relevanceScore": 1,
+          "value": "{\n  \"market\": \"binance futures SOLUSDT\",\n  \"instrument_id\": \"binance:perp:linear_perp:SOL:USDT\","
+        }
+      ],
+      "sourceRefs": [],
+      "assumptions": [],
+      "knownUnknowns": [],
+      "retrievalPlanReasonCodes": [
+        "keyword_lookup"
+      ]
+    },
+    "artifacts": {
+      "dataUrl": null,
+      "canonicalDataRef": {
+        "datasetId": "d3e680b8-ed2d-4aa1-9974-0b4f1ae937f9:canonical-execution",
+        "hash": "0976f58088e1b5d38d91517d49871036ee1b5e1280177bbfc424caa562c9a9c1",
+        "bytes": 18443,
+        "publicDataUrl": null
+      },
+      "stageArtifactKinds": [
+        "query-session-contract",
+        "tool-selection",
+        "first-pass-execution",
+        "execution-program-lineage",
+        "completeness-evaluation",
+        "canonical-dataset-registered",
+        "final-execution",
+        "synthesis-context-selection"
+      ]
+    },
+    "view": {
+      "type": "table",
+      "label": "Table",
+      "title": "Evidence table",
+      "columns": [
+        "Evidence",
+        "Value"
+      ],
+      "rows": [
+        {
+          "key": "path_lookup:0",
+          "cells": [
+            "Top-level path lookup for \"answer\"",
+            "\"No. The recent structure does not show a clean combination of positive funding plus rising open interest. Funding is currently slightly negative (-0.00003778), and open interest is not increasing over the latest window; it is essentially flat-to-lower, with the latest 1h OI delta at -6.70M USD, 4h at -7.19M USD, and 24h at -21.03M USD.\""
+          ]
+        },
+        {
+          "key": "path_lookup:1",
+          "cells": [
+            "Top-level path lookup for \"evidence\"",
+            "{\"latest_snapshot\":{\"current_price\":\"82.96\",\"funding_rate\":\"-0.00003778\",\"open_interest_usd\":\"786350155.4916\",\"oi_delta_1h_usd\":\"-6698393.11855020\",\"oi_delta_4h_usd\":\"-7186527.20240000\",\"oi_delta_24h_usd\":\"-21033968.62290290\",\"freshness_seconds\":170},\"funding_rows\":[\"[object]\",\"[object]\",\"[object]\",\"[object]\",\"[object]\"],\"oi_rows_latest_10h\":[\"[object]\",\"[object]\",\"[object]\",\"[object]\",\"[object]\",\"[object]\"]}"
+          ]
+        },
+        {
+          "key": "path_lookup:2",
+          "cells": [
+            "Top-level path lookup for \"implication\"",
+            "\"Because funding is not positive and OI is not trending up, this does not currently look like a crowded-long buildup. Crowded long risk is therefore muted relative to a classic overheated setup. If funding flips positive while OI resumes rising, that would be a stronger warning sign for long crowding.\""
+          ]
+        },
+        {
+          "key": "array_window:3",
+          "cells": [
+            "Array window at \"evidence.oi_rows_latest_10h\" (first 10 rows)",
+            "[{\"bucket_start\":\"2026-04-29T18:00:00Z\",\"open_interest_usd\":\"784160924.72762060\"},{\"bucket_start\":\"2026-04-29T19:00:00Z\",\"open_interest_usd\":\"785745538.23382760\"},{\"bucket_start\":\"2026-04-29T20:00:00Z\",\"open_interest_usd\":\"791052339.69230000\"},{\"bucket_start\":\"2026-04-29T21:00:00Z\",\"open_interest_usd\":\"791490983.10000000\"},{\"bucket_start\":\"2026-04-29T22:00:00Z\",\"open_interest_usd\":\"795476079.60210000\"},{\"bucket_start\":\"2026-04-29T23:00:00Z\",\"open_interest_usd\":\"790291043.25711000\"}]"
+          ]
+        },
+        {
+          "key": "keyword_slice:4",
+          "cells": [
+            "Keyword slice for \"for\" (lines 79-81)",
+            "\"  },\\n  \\\"implication\\\": \\\"Because funding is not positive and OI is not trending up, this does not currently look like a crowded-long buildup. Crowded long risk is therefore muted relative to a classic overheated setup. If funding flips positive while OI resumes rising, that would be a stronger warning sign for long crowding.\\\"\\n}\""
+          ]
+        },
+        {
+          "key": "keyword_slice:5",
+          "cells": [
+            "Keyword slice for \"binance\" (lines 1-3)",
+            "\"{\\n  \\\"market\\\": \\\"binance futures SOLUSDT\\\",\\n  \\\"instrument_id\\\": \\\"binance:perp:linear_perp:SOL:USDT\\\",\""
+          ]
+        },
+        {
+          "key": "keyword_slice:6",
+          "cells": [
+            "Keyword slice for \"futures\" (lines 1-3)",
+            "\"{\\n  \\\"market\\\": \\\"binance futures SOLUSDT\\\",\\n  \\\"instrument_id\\\": \\\"binance:perp:linear_perp:SOL:USDT\\\",\""
+          ]
+        },
+        {
+          "key": "keyword_slice:7",
+          "cells": [
+            "Keyword slice for \"solusdt\" (lines 1-3)",
+            "\"{\\n  \\\"market\\\": \\\"binance futures SOLUSDT\\\",\\n  \\\"instrument_id\\\": \\\"binance:perp:linear_perp:SOL:USDT\\\",\""
+          ]
+        }
+      ]
+    },
+    "freshness": {
+      "asOf": "2026-04-29T06:48:19.102Z",
+      "sourceTimestamps": [
+        "2026-04-30T03:12:55.670Z",
+        "2026-04-30T03:12:53.127Z",
+        "2026-04-30T03:10:00.000Z",
+        "2026-04-29T06:48:19.102Z"
+      ],
+      "note": "Most recent evidence timestamp: 2026-04-29T06:48:19.102Z"
+    },
+    "confidence": {
+      "level": "high",
+      "reason": "Grounded in 2 verified evidence facts with no recorded retrieval gaps.",
+      "verifiedFactCount": 2,
+      "inferredFactCount": 2,
+      "gapCount": 0,
+      "gapSignals": []
+    },
+    "usage": {
+      "durationMs": 60140,
+      "cost": {
+        "totalCostUsd": "0.152491",
+        "toolCostUsd": "0.100000",
+        "modelCostUsd": "0.052490"
+      },
+      "toolsUsed": [
+        {
+          "id": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+          "name": "Meridian Market Data",
+          "skillCalls": 3
+        }
+      ],
+      "outcomeType": "answer",
+      "orchestrationMetrics": {
+        "parityStage": "enabled",
+        "orchestrationMode": "auto_discovery",
+        "firstPassSuccess": true,
+        "capabilityMissSignaled": false,
+        "rediscoveryExecuted": false
+      }
+    },
+    "stopReason": "complete_answer",
+    "issueClass": null,
+    "actionsTaken": [
+      "inspect_current_grounding",
+      "return_complete_answer"
+    ]
+  }
+}

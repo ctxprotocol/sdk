@@ -1,0 +1,1134 @@
+{
+  "reviewedAt": "2026-04-30T05:47:06.567Z",
+  "perQueryEvaluations": [
+    {
+      "promptId": "velo-01",
+      "query": "For binance-futures BTCUSDT, what are the latest BTC close price, funding rate, dollar open interest, dollar volume, and buy/sell liquidation dollar volumes over the most recent Velo futures rows?",
+      "quotedExcerpts": [
+        "The available data for **Binance BTCUSDT** futures was retrieved from Coinglass (as of 2026-04-30T04:09:03Z), as Velo-specific rows were not returned in this query.",
+        "| **Latest Close Price** | 75,744.8 |",
+        "| **Sell Side (Short) Liquidation USD Volume (24h)** | 32,455,285.34 |"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 3,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.17,
+      "scoreExplanations": {
+        "actionability": "The answer directly returns the requested futures metrics.",
+        "dataFreshness": "It includes an exact as-of timestamp: 2026-04-30T04:09:03Z.",
+        "specificity": "It gives exact close, funding, OI, volume, and both liquidation-side dollar volumes.",
+        "uniqueness": "The values are tool-grounded, but came from Coinglass rather than Velo rows.",
+        "completeness": "All requested fields are present, but the source mismatch prevents a full score.",
+        "dataAccuracy": "The table matches the sampled Coinglass result and has no internal red flags."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 0,
+        "fragilityRisk": "medium",
+        "selectionIssue": "Only Coinglass was selected even though the prompt asked for Velo futures rows.",
+        "planningIssue": "The plan used get_futures_pairs_markets instead of Velo get_market_rows or analyze_futures_market_structure.",
+        "executionIssue": "toolCallHistory has one Coinglass futures call and no Velo futures rows call.",
+        "completenessIssue": null,
+        "codeIssueDetail": "selectedTools=[Coinglass]; toolCallHistory=[get_futures_pairs_markets({\"symbol\":\"BTC\"})]; response states Velo-specific rows were not returned.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "tool_selection_error",
+        "rootCauseEvidence": "The selected tool was Coinglass rather than Velo get_market_rows, so the answer satisfied fields but not the requested Velo source.",
+        "responseQualityNote": "Good field coverage and freshness, but it failed the Velo-source requirement.",
+        "improvementLever": "Prefer Velo get_market_rows for explicit Velo futures row lookups, with Coinglass only as fallback.",
+        "diagnosticBrief": {
+          "toolUsed": "get_futures_pairs_markets",
+          "toolShouldHaveUsed": "get_market_rows; analyze_futures_market_structure",
+          "argsUsed": "{\"symbol\":\"BTC\"}",
+          "argsShouldHaveUsed": "{\"type\":\"futures\",\"exchanges\":[\"binance-futures\"],\"products\":[\"BTCUSDT\"],\"columns\":[\"close_price\",\"funding_rate\",\"dollar_open_interest_close\",\"dollar_volume\",\"buy_liquidations_dollar_volume\",\"sell_liquidations_dollar_volume\"],\"limit\":1}",
+          "codeSnippet": "response: \"retrieved from Coinglass ... as Velo-specific rows were not returned\"; selectedTools=[Coinglass].",
+          "toolResultSample": "{\"symbol\":\"BTC\",\"data\":[{\"instrument_id\":\"BTCUSDT\",\"exchange_name\":\"Binance\",\"current_price\":75744.8,\"volume_usd\":14590422277.6129,\"open_interest_usd\":7209254954.8485,\"funding_rate\":-0.005709}]}",
+          "completenessVerdict": "evaluations=[]; repairEvents=[]; triggerNeedsDifferentTools=false; field coverage is complete but source is wrong.",
+          "stageTimingBottleneck": "selection=31693ms"
+        }
+      },
+      "overallVerdict": "I would consider paying again for the numbers, but not if I specifically needed Velo rows.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 3.83
+    },
+    {
+      "promptId": "velo-02",
+      "query": "For binance spot BTCUSDT, what are the latest BTC close price and dollar volume from Velo spot rows?",
+      "quotedExcerpts": [
+        "As of April 30, 2026, the latest Velo spot row data for Binance BTCUSDT is:",
+        "| **Timestamp** | 2026-04-30T03:00:00Z |",
+        "This data is based on the most recent hourly OHLCV row provided by Velo."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 2
+      },
+      "satisfactionMean": 4,
+      "scoreExplanations": {
+        "actionability": "The table gives the latest close and dollar volume directly.",
+        "dataFreshness": "It cites a precise 2026-04-30T03:00:00Z row timestamp.",
+        "specificity": "The answer includes exact close and quote-volume values.",
+        "uniqueness": "A latest hourly row is differentiated from a generic LLM answer, assuming the source is correct.",
+        "completeness": "It covers both requested fields, but source handling is questionable.",
+        "dataAccuracy": "Trace shows get_ohlcv_history was called with instrument_id BTC-PERP-BINANCE after a spot snapshot, so the response labels perp data as spot/Velo."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 37,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "Spot/perp instrument mismatch in toolCallHistory.",
+        "rootCauseCategory": "argument_or_extraction_error",
+        "rootCauseEvidence": "The right kind of OHLCV call was made, but it used BTC-PERP-BINANCE for a spot query. Trace summary: toolCalls=3, selected/called tools=get_normalized_market_snapshot, get_ohlcv_history.",
+        "responseQualityNote": "I would not fully trust this answer because the trace shows a spot/perp source mismatch.",
+        "improvementLever": "Construct spot OHLCV arguments from the spot snapshot instead of falling back to the perp alias.",
+        "diagnosticBrief": {
+          "toolUsed": "get_normalized_market_snapshot, get_ohlcv_history",
+          "toolShouldHaveUsed": "get_ohlcv_history with the Binance spot BTCUSDT instrument",
+          "argsUsed": "[{\"get_normalized_market_snapshot\":{\"instrument_id\":\"binance:spot:spot:BTC:USDT\"}},{\"get_ohlcv_history\":{\"limit\":1,\"end_ts\":\"2026-04-30T03:03:00Z\",\"interval\":\"1h\",\"start_ts\":\"2026-04-29T00:00:00Z\",\"instrument_id\":\"BTC-PERP-BINANCE\"}},{\"get_normalized_market_snapshot\":{\"instrument_id\":\"BTC-PERP-BINANCE\"}}]",
+          "argsShouldHaveUsed": "instrument_id=binance:spot:spot:BTC:USDT or the Velo spot-row equivalent, limit=1, interval=1h",
+          "codeSnippet": "toolCallHistory[1].toolName=get_ohlcv_history; args.instrument_id=BTC-PERP-BINANCE; prompt requested binance spot BTCUSDT.",
+          "toolResultSample": "{\"venue\":\"binance\",\"venue_symbol\":\"BTCUSDT\",\"canonical_symbol\":\"BTC/USDT\",\"market_type\":\"spot\",\"contract_type\":\"spot\",\"base_asset\":\"BTC\",\"quote_asset\":\"USDT\",\"current_price\":\"75772.04000000\",\"funding_rate\":null,\"next_funding_time\":null,\"open_interest_usd\":null,\"oi_delta_1h_usd\":null,\"oi_delta_4h_usd\":null,\"oi_delta_24h_usd\":null,\"oi_delta_7d_usd\":null,\"nearest_liquidation_clusters\":[],\"as_of\":\"2026-04-30T03:03:00Z\",\"freshness_seconds\":337,\"source_method\":\"stored_facts\",\"data_quality\":\"partial\",\"",
+          "completenessVerdict": "no completeness evaluations recorded",
+          "stageTimingBottleneck": "accountedMs=58581ms"
+        }
+      },
+      "overallVerdict": "I would not fully trust this answer because the trace shows a spot/perp source mismatch.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "velo-03",
+      "query": "For deribit options BTC, what are the latest Velo options values for index_price, iv_1w, iv_1m, skew_1w, skew_1m, and dollar_volume?",
+      "quotedExcerpts": [
+        "As of April 30, 2026, the latest Velo options values for BTC on Deribit are as follows:",
+        "| **index_price** | 75682.12 |",
+        "| **iv_1w** | 0.35968386232639205 |\n| **iv_1m** | 0.38185014647197413 |\n| **skew_1w** | 0.13001395245878114 |\n| **skew_1m** | 0.1416986491482828 |\n| **dollar_volume** | 14342169.631000001 |"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "The response gives the exact requested option metrics, making it directly usable for a volatility-surface lookup, though it does not add derived interpretation such as IV term spread or skew change.",
+        "dataFreshness": "The response says the data is latest and dated April 30, 2026, while the trace shows fetchedAt values at 2026-04-30T05:44:43.202Z and 2026-04-30T05:44:47.228Z; it loses one point because the buyer-facing answer omits the precise retrieval time.",
+        "specificity": "It names Deribit BTC options and reports all requested fields with exact numeric values, including index_price 75682.12, iv_1w 0.35968386232639205, and dollar_volume 14342169.631000001.",
+        "uniqueness": "The answer is grounded in Velo market rows rather than generic crypto commentary, but it is a single-market lookup rather than a broader cross-venue or threshold screen.",
+        "completeness": "It answers every requested field: index_price, iv_1w, iv_1m, skew_1w, skew_1m, and dollar_volume.",
+        "dataAccuracy": "The returned values match the latest row in toolCallHistory.result, the two hourly rows vary plausibly, and there are no suspicious uniform-value or magnitude red flags."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 0,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "The response gives a clean exact lookup with fresh Velo-derived values and all requested fields; its main buyer-facing weakness is omitting the precise row timestamp or fetchedAt time.",
+        "improvementLever": "Include the exact latest row timestamp and fetchedAt time in the final answer so freshness is auditable from the response text.",
+        "diagnosticBrief": {
+          "toolUsed": "list_options_products, get_market_rows",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"list_options_products\":{\"limit\":20,\"search\":\"BTC\"},\"get_market_rows\":{\"type\":\"options\",\"coins\":[\"BTC\"],\"products\":[\"BTC\"],\"exchanges\":[\"deribit\"],\"columns\":[\"index_price\",\"iv_1w\",\"iv_1m\",\"skew_1w\",\"skew_1m\",\"dollar_volume\"],\"resolution\":\"1h\",\"lookbackHours\":1,\"limit\":10}}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "executionTrace step 1: velo_market_data__list_options_products success\nexecutionTrace step 2: velo_market_data__get_market_rows success\ntoolCallHistory.get_market_rows.result.rowCount: 2\nlatest row time: 1777525200000",
+          "toolResultSample": "{\"params\":{\"type\":\"options\",\"columns\":[\"index_price\",\"iv_1w\",\"iv_1m\",\"skew_1w\",\"skew_1m\",\"dollar_volume\"],\"exchanges\":[\"deribit\"],\"products\":[],\"coins\":[\"BTC\"],\"begin\":1777524287038,\"end\":1777527887038,\"resolution\":\"1h\"},\"rowCount\":2,\"rows\":[{\"exchange\":\"deribit\",\"coin\":\"BTC\",\"product\":\"BTC\",\"time\":1777521600000,\"index_price\":75452.13,\"iv_1w\":0.36181410762152666,\"iv_1m\":0.3887049740141375,\"skew_1w\":0.1315337564050437,\"skew_1m\":0.13796872968672966",
+          "completenessVerdict": "diagnostics.verification.evaluations was empty, repairEvents was empty, triggerNeedsDifferentTools was false, and the successful result covered all requested fields.",
+          "stageTimingBottleneck": "execution=13664ms"
+        }
+      },
+      "overallVerdict": "Yes, I would pay again for this exact lookup, with the caveat that the answer should expose the precise row timestamp.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 1
+    },
+    {
+      "promptId": "velo-04",
+      "query": "For BTC market cap in Velo, what are the latest circ, circ_dollars, fdv, and fdv_dollars values?",
+      "quotedExcerpts": [
+        "As of April 30, 2026 (04:32:18 UTC), the latest market cap metrics for BTC are as follows:",
+        "| **circ** | 20,022,396 |",
+        "| **fdv_dollars** | 1,514,974,570,944 |"
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 3,
+        "completeness": 5,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 4,
+      "scoreExplanations": {
+        "actionability": "It gives the requested lookup values but little interpretation.",
+        "dataFreshness": "It includes an explicit April 30, 2026 04:32:18 UTC timestamp.",
+        "specificity": "All four requested fields are exact numeric values.",
+        "uniqueness": "Exact Velo values beat a free estimate, though market-cap lookup is not deeply differentiated.",
+        "completeness": "It covers circ, circ_dollars, fdv, and fdv_dollars.",
+        "dataAccuracy": "fdv equals circ and fdv_dollars equals circ_dollars, suspicious for a fully diluted BTC metric."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 0,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": "BTC fdv and circ are identical, as are fdv_dollars and circ_dollars.",
+        "rootCauseCategory": "data_accuracy_issue",
+        "rootCauseEvidence": "toolCallHistory returns identical circ/fdv and dollar values for BTC.",
+        "responseQualityNote": "Fresh, exact, and complete, but fdv/circ equality needs semantic clarification.",
+        "improvementLever": "Clarify or fix BTC fdv semantics in the market-cap data path.",
+        "diagnosticBrief": {
+          "toolUsed": "get_market_caps",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "[{\"tool\":\"get_market_caps\",\"args\":{\"end\":1745971200000,\"begin\":1745884800000,\"coins\":[\"BTC\"],\"resolution\":\"1d\",\"lookbackHours\":24}}]",
+          "argsShouldHaveUsed": "Confirm whether Velo defines BTC fdv as current supply or map the fully diluted field correctly.",
+          "codeSnippet": "get_market_caps row: circ=20022396, fdv=20022396, circ_dollars=fdv_dollars=1514974570944.",
+          "toolResultSample": "[{\"tool\":\"get_market_caps\",\"result\":{\"rows\":[{\"coin\":\"BTC\",\"time\":1777523413041,\"circ\":20022396,\"circ_dollars\":1514974570944,\"fdv\":20022396,\"fdv_dollars\":1514974570944}],\"rowCount\":1,\"params\":{\"coins\":[\"BTC\"],\"begin\":1745884800000,\"end\":1745971200000,\"resolution\":\"1d\"},\"fetchedAt\":\"2026-04-30T04:32:18.001Z\"}}]",
+          "completenessVerdict": "diagnostics.completeness=null; no completeness evaluations, missingParts, needsDifferentTools, or repair events were recorded.",
+          "stageTimingBottleneck": "accountedMs=25870ms"
+        }
+      },
+      "overallVerdict": "I would pay for the lookup but want fdv semantics clarified.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 1
+    },
+    {
+      "promptId": "velo-05",
+      "query": "For binance-futures ETHUSDT, is ETH showing negative funding with rising or falling dollar open interest and liquidation imbalance over the last 24 hours?",
+      "quotedExcerpts": [
+        "As of April 30, 2026, the Binance ETHUSDT perpetual market is showing **negative funding** accompanied by **falling** dollar open interest over the last 24 hours.",
+        "| **Funding Rate** | -0.00006092 | Negative |",
+        "The data indicates a **sell-side liquidation cluster** located just above the current price:"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.17,
+      "scoreExplanations": {
+        "actionability": "The answer clearly states negative funding, falling OI, and where liquidation pressure sits.",
+        "dataFreshness": "It is dated April 30, 2026 but does not include the exact tool as-of timestamp.",
+        "specificity": "It provides exact funding, OI change, current OI, current price, cluster range, and notional.",
+        "uniqueness": "It combines live futures snapshot and liquidation cluster data.",
+        "completeness": "It answers funding and OI direction and gives partial liquidation imbalance with a caveat.",
+        "dataAccuracy": "The response matches the Meridian sampled values and contains no obvious numerical contradiction."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 0,
+        "fragilityRisk": "medium",
+        "selectionIssue": "Selected Meridian and Genesis rather than Velo futures-row analysis.",
+        "planningIssue": "The plan used normalized market snapshots and OI delta rather than Velo futures rows.",
+        "executionIssue": "No Velo get_market_rows/analyze_futures_market_structure call appears in toolCallHistory.",
+        "completenessIssue": null,
+        "codeIssueDetail": "toolCallHistory=[get_normalized_market_snapshot(ETH-PERP-BINANCE), get_oi_delta, get_normalized_market_snapshot(ETH-PERP-BINANCE)]; no Velo contributor call.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "tool_selection_error",
+        "rootCauseEvidence": "diagnostics.selection.selectedTools listed Meridian and Genesis, not velo-contributor, despite Velo tools being the intended source for futures rows.",
+        "responseQualityNote": "Strong buyer-facing answer, but still a source-selection miss relative to Velo.",
+        "improvementLever": "Route ETHUSDT Velo futures-row prompts to Velo analyze_futures_market_structure before generic snapshots.",
+        "diagnosticBrief": {
+          "toolUsed": "get_normalized_market_snapshot, get_oi_delta",
+          "toolShouldHaveUsed": "analyze_futures_market_structure; get_market_rows",
+          "argsUsed": "{\"instrument_id\":\"ETH-PERP-BINANCE\"}; {\"instrument_id\":\"ETH-PERP-BINANCE\",\"window\":\"24h\",\"end_ts\":\"2026-04-30T00:00:00Z\"}",
+          "argsShouldHaveUsed": "{\"exchanges\":[\"binance-futures\"],\"products\":[\"ETHUSDT\"],\"lookbackHours\":24,\"resolution\":\"1h\"}",
+          "codeSnippet": "selectedTools=[Meridian Market Data, Genesis Liquidation Heatmap]; tool result includes ETH-PERP-BINANCE funding and OI delta.",
+          "toolResultSample": "{\"venue\":\"binance\",\"venue_symbol\":\"ETHUSDT\",\"current_price\":\"2249.99\",\"funding_rate\":\"-0.00006092\",\"open_interest_usd\":\"4500524308.26385700\",\"oi_delta_24h_usd\":\"-34921265.41111300\"}",
+          "completenessVerdict": "evaluations=[]; repairEvents=[]; triggerNeedsDifferentTools=false; response caveats liquidation coverage as partial.",
+          "stageTimingBottleneck": "selection=34216ms"
+        }
+      },
+      "overallVerdict": "Yes, mostly; this is useful, but I would prefer the intended Velo source path.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 3.83
+    },
+    {
+      "promptId": "velo-06",
+      "query": "For binance-futures SOLUSDT, does the recent Velo futures structure show positive funding being paired with increasing open interest, and what does that imply about crowded long risk?",
+      "quotedExcerpts": [
+        "Based on the recent data for Binance SOL/USDT futures, the current structure does **not** show positive funding paired with increasing open interest.",
+        "The funding history shows that rates have been predominantly negative over the last several cycles, with only one brief flip to positive on April 29th.",
+        "The absence of positive funding and rising open interest suggests that **crowded long risk is currently muted**."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "The answer directly decides the crowded-long question and explains the risk implication.",
+        "dataFreshness": "It includes a 2026-04-30 03:10 UTC snapshot and recent funding rows.",
+        "specificity": "The response gives exact funding, OI, and OI-delta values plus recent timestamps.",
+        "uniqueness": "The combined funding/OI trend is meaningfully tool-grounded.",
+        "completeness": "It addresses the condition and implication requested.",
+        "dataAccuracy": "Numbers are consistent with the snapshot/history returned in the trace."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 35,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Yes, I would pay for this answer again.",
+        "improvementLever": "Keep this pattern: combine snapshot, funding history, and OI history before making the positioning call.",
+        "diagnosticBrief": {
+          "toolUsed": "get_normalized_market_snapshot, get_funding_history, get_oi_history",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "[{\"get_normalized_market_snapshot\":{\"instrument_id\":\"SOL-PERP-BINANCE\"}},{\"get_funding_history\":{\"limit\":10,\"instrument_id\":\"SOL-PERP-BINANCE\"}},{\"get_oi_history\":{\"limit\":10,\"end_ts\":null,\"interval\":\"1h\",\"start_ts\":null,\"instrument_id\":\"SOL-PERP-BINANCE\"}}]",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "No execution-level issue beyond the response-quality gap.",
+          "toolResultSample": "{\"venue\":\"binance\",\"venue_symbol\":\"SOLUSDT\",\"canonical_symbol\":\"SOL/USDT:PERP\",\"market_type\":\"perp\",\"contract_type\":\"linear_perp\",\"base_asset\":\"SOL\",\"quote_asset\":\"USDT\",\"current_price\":\"82.9600\",\"funding_rate\":\"-0.00003778\",\"next_funding_time\":\"2026-04-30T08:00:00.002000Z\",\"open_interest_usd\":\"786350155.49160000\",\"oi_delta_1h_usd\":\"-6698393.11855020\",\"oi_delta_4h_usd\":\"-7186527.20240000\",\"oi_delta_24h_usd\":\"-21033968.62290290\",\"oi_delta_7d_usd\":\"-13247477.72550000\",\"nearest_liquidation_clusters",
+          "completenessVerdict": "no completeness evaluations recorded",
+          "stageTimingBottleneck": "accountedMs=54991ms"
+        }
+      },
+      "overallVerdict": "Yes, I would pay for this answer again.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "velo-07",
+      "query": "For binance spot BTCUSDT, summarize the last 24 hours of BTC spot close_price and dollar_volume trend from Velo rows and flag whether volume expanded into the latest move.",
+      "quotedExcerpts": [
+        "Based on the last 24 hours of Binance spot BTC/USDT data (from 2026-04-29 04:00 to 2026-04-30 03:00 UTC), here is the summary of the close price and dollar volume trends.",
+        "Note: While you requested \"Velo rows,\" that specific data source was unavailable; the following analysis uses Binance hourly OHLCV data with `quoteVolume` representing dollar volume.",
+        "*   **Details**: Volume did not expand into the latest move. The latest 3-hour average volume (~23.79M) is **66.88% lower** than the prior 3-hour average (~71.86M), indicating a significant decline in participation during the most recent price action."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 3,
+        "completeness": 4,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 4,
+      "scoreExplanations": {
+        "actionability": "The trend call and volume-expansion flag are directly useful.",
+        "dataFreshness": "The answer covers the latest 24 hours through 03:00 UTC.",
+        "specificity": "It provides start/latest prices, percent changes, peak volume, and 3-hour average comparisons.",
+        "uniqueness": "The time-series calculation is better than generic commentary, but it is not Velo-sourced.",
+        "completeness": "It answers the trend and expansion question while acknowledging the source substitution.",
+        "dataAccuracy": "The raw candles look plausible, but code_interpreter failed its artifact contract, so derived calculations were not cleanly validated in trace."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 36,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "code_interpreter failed its postProcessingContract and no successful retry is visible.",
+        "completenessIssue": null,
+        "codeIssueDetail": "code_interpreter failed its postProcessingContract and no successful retry is visible.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "iterative_recovery_failure",
+        "rootCauseEvidence": "code_interpreter returned ok=false for missing metric_table and the runtime still synthesized derived metrics. Trace summary: toolCalls=2, selected/called tools=get_ohlcv, code_interpreter.",
+        "responseQualityNote": "Useful, but I would be cautious because the trace shows a failed calculation step.",
+        "improvementLever": "Retry the failed post-processing step and ground the answer in the requested Velo rows.",
+        "diagnosticBrief": {
+          "toolUsed": "get_ohlcv, code_interpreter",
+          "toolShouldHaveUsed": "Velo spot rows or a successful OHLCV post-processing step",
+          "argsUsed": "[{\"get_ohlcv\":{\"pair\":\"BTC/USDT\",\"limit\":24,\"endTime\":0,\"exchange\":\"binance\",\"startTime\":0,\"timeframe\":\"1h\"}},{\"code_interpreter\":{\"intent\":\"Summarize 24h BTC close and dollar volume trend and flag volume expansion into latest move\",\"codePreview\":\"const src = dataset?.result ?? dataset;\\nconst candles = src?.candles ?? [];\\nconst rows = candles.map(c => ({\\n  datetime: c.datetime,\\n  close: c.close,\\n  dollar_volume: c.quoteVolume,\\n}));\\nrows.sort((a,b)=> new Date(a.datetime) - new Date(b.datetime));\\nconst first = rows[0];\\nconst last = rows[rows.length-1];\\nconst prev = rows[rows.length-2];\\nconst maxVol = rows.reduce((m,r)=> r.dollar_volume > m.dollar_volume ? r : m, rows[0]);\\nconst latest3 = rows.slice(-3);\\nconst prev3 = rows.slice(-6,-3);\\ncons\",\"inputs\":{\"dataset\":\"get_ohlcv_1\"},\"postProcessingContract\":{\"operation\":\"derive_trend_summary\",\"reason\":\"Need to compute trend stats and a latest-vs-prior volume comparison from hourly OHLCV rows; raw rows alone are insufficient.\",\"inputAliases\":[\"get_ohlcv_1\"],\"marketplaceMethodAlreadyProvidesResult\":false,\"expectedArtifacts\":[\"metric_table\"]}}}]",
+          "argsShouldHaveUsed": "Use Velo spot rows for BTCUSDT and retry code_interpreter until metric_table is emitted",
+          "codeSnippet": "code_interpreter result ok=false; error=postProcessingContract expected metric_table; final response still includes derived averages.",
+          "toolResultSample": "{\"ok\":false,\"error\":\"code_interpreter postProcessingContract expected artifact(s) metric_table, but the script emitted only none. Emit the missing artifact(s) with renderChart(...) for charts or metricTable(...) for tables, then retry.\",\"stdout\":[],\"durationMs\":4,\"artifacts\":[],\"intent\":\"Summarize 24h BTC close and dollar volume trend and flag volume expansion into latest move\",\"inputProjectionDiagnostics\":[]}",
+          "completenessVerdict": "no completeness evaluations recorded",
+          "stageTimingBottleneck": "accountedMs=57215ms"
+        }
+      },
+      "overallVerdict": "Useful, but I would be cautious because the trace shows a failed calculation step.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "velo-08",
+      "query": "For deribit options ETH, analyze whether the ETH volatility surface is front-loaded by comparing iv_1w, iv_1m, iv_3m, skew_1w, skew_1m, and dvol_close from Velo options rows.",
+      "quotedExcerpts": [
+        "Based on the data for Deribit ETH options as of April 30, 2026, the ETH volatility surface is **not front-loaded**.",
+        "The implied volatility (IV) exhibits a normal upward-sloping term structure, where short-term volatility is significantly lower than longer-term volatility.",
+        "Current data shows the opposite."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "Clear yes/no read with implications for front-loaded stress.",
+        "dataFreshness": "Dated April 30, 2026 from a 24-hour Velo row window, but no exact latest row timestamp.",
+        "specificity": "Reports all requested IV, skew, DVOL fields and a spread comparison.",
+        "uniqueness": "Derived from hourly Velo rows, not generic commentary.",
+        "completeness": "Addresses IV term structure, skew, DVOL, and the front-loaded condition.",
+        "dataAccuracy": "Values are consistent with returned rows and show no suspicious uniformity."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 0,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "Two code_interpreter attempts failed although retrieved rows were enough.",
+        "completenessIssue": null,
+        "codeIssueDetail": "code_interpreter returned \"postProcessingContract expected artifact(s) metric_table, but the script emitted only none.\"",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Strong final answer, but failed metric-table artifact attempts add fragility.",
+        "improvementLever": "Emit the expected metric_table artifact or avoid unnecessary code_interpreter post-processing.",
+        "diagnosticBrief": {
+          "toolUsed": "check_api_status, get_market_rows, code_interpreter",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "[{\"tool\":\"get_market_rows\",\"args\":{\"end\":1777428000000,\"type\":\"options\",\"begin\":1777341600000,\"coins\":[\"ETH\"],\"limit\":200,\"columns\":[\"iv_1w\",\"iv_1m\",\"iv_3m\",\"skew_1w\",\"skew_1m\",\"dvol_close\",\"ts\",\"product\",\"exchange\"],\"products\":[],\"exchanges\":[\"deribit\"],\"resolution\":\"1h\",\"lookbackHours\":24}},{\"tool\":\"code_interpreter\",\"args\":{\"intent\":\"Assess whether ETH Deribit options volatility surface is front-loaded by comparing iv_1w, iv_1m, iv_3m, skew_1w, skew_1m, and dvol_close from the returned rows.\",\"codePreview\":\"function rowsFrom(alias){ return Array.isArray(alias) ? alias : (alias?.rows ?? alias?.data ?? alias?.items ?? alias?.results ?? alias?.markets ?? alias?.values ?? []); }\\nconst src = rowsFrom(dataset?.result ?? dataset);\\nconst rows = src.slice().sort((a,b)=>a.time-b.time);\\nconst n = rows.length;\\nconst first = rows[0] || {};\\nconst last = rows[n-1] || {};\\nfunction avg(key){ ret",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "get_market_rows returned rowCount=24; code_interpreter attempts failed with missing metric_table artifacts.",
+          "toolResultSample": "[{\"tool\":\"get_market_rows\",\"result\":{\"params\":{\"type\":\"options\",\"columns\":[\"iv_1w\",\"iv_1m\",\"iv_3m\",\"skew_1w\",\"skew_1m\",\"dvol_close\"],\"exchanges\":[\"deribit\"],\"products\":[],\"coins\":[\"ETH\"],\"begin\":1777341600000,\"end\":1777428000000,\"resolution\":\"1h\"},\"rowCount\":24,\"rows\":[{\"exchange\":\"deribit\",\"coin\":\"ETH\",\"product\":\"ETH\",\"time\":1777341600000,\"iv_1w\":0.5298158663690486,\"iv_1m\":0.5794362161210351,\"iv_3m\":0.6034473630927577,\"skew_1w\":0.04916599009619547,\"skew_1m\":0.06437391938490622,\"dvol_close\":59.7",
+          "completenessVerdict": "diagnostics.completeness=null; no completeness evaluations, missingParts, needsDifferentTools, or repair events were recorded.",
+          "stageTimingBottleneck": "accountedMs=61632ms"
+        }
+      },
+      "overallVerdict": "Yes, I would pay again, with mild concern about post-processing fragility.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 1
+    },
+    {
+      "promptId": "velo-09",
+      "query": "For BTC Velo term structure, identify whether BTC forward IV is upward sloping or inverted across the dte points currently returned by Velo.",
+      "quotedExcerpts": [
+        "As of April 30, 2026, the BTC forward IV term structure is **generally upward sloping**, though it exhibits a distinct non-monotonic dip (inversion) at the very short end of the curve.",
+        "While the forward IV rises from 32.64 at 0.1 DTE to over 46.00 at the longest tenors, there is a sharp drop in forward volatility between the 1.1 and 3.1 DTE marks.",
+        "Following this short-dated volatility compression, the curve resumes a steady upward climb."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.67,
+      "scoreExplanations": {
+        "actionability": "Direct curve-shape conclusion and short-end exception.",
+        "dataFreshness": "Dated April 30, 2026, but omits exact fetch timestamp.",
+        "specificity": "Lists 12 DTE/fwd_iv points.",
+        "uniqueness": "Cross-DTE Velo forward-IV read is differentiated.",
+        "completeness": "Answers upward sloping versus inverted and explains the exception.",
+        "dataAccuracy": "Values match the term-structure rows with no internal inconsistency."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 0,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Clean, specific term-structure answer.",
+        "improvementLever": "Include the exact Velo fetchedAt timestamp in the final answer.",
+        "diagnosticBrief": {
+          "toolUsed": "get_futures_term_structure, render_chart",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "[{\"tool\":\"get_futures_term_structure\",\"args\":{\"end\":1714435200000,\"begin\":1713823200000,\"coins\":[\"BTC\"],\"resolution\":\"1h\",\"lookbackHours\":168}}]",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "rowCount=12; fwd_iv rises from 32.64 at 0.1 DTE to 46.32 at 330 DTE, with a 23.32 dip at 3.1 DTE.",
+          "toolResultSample": "[{\"tool\":\"get_futures_term_structure\",\"result\":{\"rows\":[{\"coin\":\"BTC\",\"time\":1777536000000,\"at_the_money_iv\":32.64,\"dte\":0.1,\"fwd_iv\":32.64},{\"coin\":\"BTC\",\"time\":1777622400000,\"at_the_money_iv\":39.23,\"dte\":1.1,\"fwd_iv\":40.089999999999996},{\"coin\":\"BTC\",\"time\":1777708800000,\"at_the_money_iv\":37.45,\"dte\":2.1,\"fwd_iv\":35.31},{\"coin\":\"BTC\",\"time\":1777795200000,\"at_the_money_iv\":33.61,\"dte\":3.1,\"fwd_iv\":23.32},{\"coin\":\"BTC\",\"time\":1778227200000,\"at_the_money_iv\":36.85,\"dte\":8.1,\"fwd_iv\":38.75},{\"coin",
+          "completenessVerdict": "diagnostics.completeness=null; no completeness evaluations, missingParts, needsDifferentTools, or repair events were recorded.",
+          "stageTimingBottleneck": "accountedMs=31725ms"
+        }
+      },
+      "overallVerdict": "Yes, I would pay again for this answer.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 1
+    },
+    {
+      "promptId": "velo-10",
+      "query": "Compare BTC futures pressure across binance-futures BTCUSDT, bybit BTCUSDT, okex-swap BTC-USDT-SWAP, and hyperliquid BTC-USD using funding rate, dollar open interest change, dollar volume, and liquidation imbalance.",
+      "quotedExcerpts": [
+        "The following table compares BTC futures data across the requested venues as of approximately 03:17 UTC on April 30, 2026.",
+        "**Note on Data Gaps:** Dollar volume and a consolidated liquidation imbalance ratio were not available in the provided snapshots and are excluded from this comparison.",
+        "The nearest liquidation clusters are used as a proxy for localized price pressure."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4,
+      "scoreExplanations": {
+        "actionability": "The venue comparison is useful for funding/OI pressure decisions.",
+        "dataFreshness": "It uses an explicit 03:17 UTC timestamp and fresh snapshots.",
+        "specificity": "The response lists funding bps, OI, 1h OI change, and cluster notionals per venue.",
+        "uniqueness": "Cross-venue normalized futures comparison is differentiated.",
+        "completeness": "It omits two requested fields: dollar volume and liquidation imbalance.",
+        "dataAccuracy": "The venue values are internally consistent with the snapshots; the caveat is missing fields, not suspicious numbers."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 85,
+        "fragilityRisk": "high",
+        "selectionIssue": "Only Meridian snapshots were selected/called even though the answer needed volume and imbalance fields.",
+        "planningIssue": null,
+        "executionIssue": "code_interpreter attempts failed while the response still omitted requested fields.",
+        "completenessIssue": "The final response explicitly acknowledges missing requested data or substitutes proxies.",
+        "codeIssueDetail": "code_interpreter attempts failed while the response still omitted requested fields.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "tool_selection_error",
+        "rootCauseEvidence": "Only Meridian snapshots were selected/called even though the answer needed volume and imbalance fields. Trace summary: toolCalls=8, selected/called tools=get_normalized_market_snapshot, code_interpreter.",
+        "responseQualityNote": "I got some value, but not the full comparison I asked for.",
+        "improvementLever": "Select a volume/liquidation-capable tool for cross-venue futures-pressure prompts.",
+        "diagnosticBrief": {
+          "toolUsed": "get_normalized_market_snapshot, code_interpreter",
+          "toolShouldHaveUsed": "Coinglass.get_futures_pairs_markets plus Meridian snapshots",
+          "argsUsed": "[{\"get_normalized_market_snapshot\":{\"instrument_id\":\"BTC-PERP-BINANCE\"}},{\"get_normalized_market_snapshot\":{\"instrument_id\":\"BTC-PERP-BYBIT\"}},{\"get_normalized_market_snapshot\":{\"instrument_id\":\"BTC-PERP-OKX\"}},{\"get_normalized_market_snapshot\":{\"instrument_id\":\"BTC-PERP-HYPERLIQUID\"}},{\"code_interpreter\":{\"intent\":\"Compute derived comparison table and emit requested chart from snapshot aliases.\",\"codePreview\":\"const rows = [];\\nfunction extract(obj){ return obj?.result ?? obj; }\\nconst snaps = [extract(get_normalized_market_snapshot_1), extract(get_normalized_market_snapshot_2), extract(get_normalized_market_snapshot_3), extract(get_normalized_market_snapshot_4)];\\nfor (const s of snaps) {\\n  if (!s) continue;\\n  rows.push({\\n    venue: s.venue,\\n    symbol: s.venue_symbol,\\n    funding_rate: Number(s.funding_rate),\\n    oi_usd: Number(s.open_interest_usd),\\n    oi_delta_1h_usd: Number(s.oi_delta_1h_usd),\\n    l\",\"inputs\":{\"get_normalized_market_snapshot_1\":\"get_normalized_market_snapshot_1\",\"get_normalized_market_snapshot_2\":\"get_normalized_market_snapshot_2\",\"get_normalized_market_snapshot_3\":\"get_normalized_market_snapshot_3\",\"get_normalized_market_snapshot_4\":\"get_normalized_market_snapshot_4\"},\"postProcessingContract\":{\"operation\":\"derive comparison metrics and render chart\",\"reason\":\"The snapshot tool outputs are nested objects and do not provide a flat chart-ready table; a deterministic reshape is needed to compare funding and OI change across venues, and the user requested a comparison visualization.\",\"inputAliases\":[\"get_normalized_market_snapshot_1\",\"get_normalized_market_snapshot_2\",\"get_normalized_market_snapshot_3\",\"get_normalized_market_snapshot_4\"],\"marketplaceMethodAlreadyProvidesResult\":false,\"expectedArtifacts\":[\"chart\",\"metric_table\"]}}},{\"code_interpreter\":{\"intent\":\"Compute derived comparison table and emit requested chart from snapshot aliases.\",\"codePreview\":\"function pick(obj){ return obj && obj.result ? obj.result : obj; }\\nconst snaps = [pick(get_normalized_market_snapshot_1), pick(get_normalized_market_snapshot_2), pick(get_normalized_market_snapshot_3), pick(get_normalized_market_snapshot_4)];\\nconst rows = [];\\nfor (let i = 0; i < snaps.length; i++) {\\n  const s = snaps[i];\\n  if (!s) continue;\\n  const clusters = Array.isArray(s.nearest_liquidation_clusters) ? s.nearest_liquidation_clusters : [];\\n  let liquidationSide = 'none';\\n  if (clusters.length\",\"inputs\":{\"get_normalized_market_snapshot_1\":\"get_normalized_market_snapshot_1\",\"get_normalized_market_snapshot_2\":\"get_normalized_market_snapshot_2\",\"get_normalized_market_snapshot_3\":\"get_normalized_market_snapshot_3\",\"get_normalized_market_snapshot_4\":\"get_normalized_market_snapshot_4\"},\"postProcessingContract\":{\"operation\":\"derive comparison metrics and render chart\",\"reason\":\"The snapshot tool outputs are nested objects and do not provide a flat chart-ready table; a deterministic reshape is needed to compare funding and OI change across venues, and the user requested a comparison visualization.\",\"inputAliases\":[\"get_normalized_market_snapshot_1\",\"get_normalized_market_snapshot_2\",\"get_normalized_market_snapshot_3\",\"get_normalized_market_snapshot_4\"],\"marketplaceMethodAlreadyProvidesResult\":false,\"expectedArtifacts\":[\"chart\",\"metric_table\"]}}},{\"omittedToolCalls\":2}]",
+          "argsShouldHaveUsed": "symbol=BTC to obtain dollar volume and long/short liquidation totals, then merge with per-venue OI/funding snapshots",
+          "codeSnippet": "summary.failureCount=3; code_interpreter VM error included TypeScript syntax; response omits dollar volume and imbalance.",
+          "toolResultSample": "{\"ok\":false,\"error\":\"code_interpreter VM error: Generated code appears to include TypeScript syntax. Return executable JavaScript only; do not include type annotations, interfaces, or generics.. RETRY by calling code_interpreter again in your next step with corrected JavaScript that fixes this exact error \\u2014 do NOT call returnResult yet, do NOT call any other tool, and do NOT silently drop the requested artifact. You have 4 more code_interpreter retry attempt(s) before the runtime force-stop",
+          "completenessVerdict": "no completeness evaluations recorded",
+          "stageTimingBottleneck": "accountedMs=144672ms"
+        }
+      },
+      "overallVerdict": "I got some value, but not the full comparison I asked for.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "velo-11",
+      "query": "Compare binance-futures BTCUSDT, ETHUSDT, and SOLUSDT over the last 24 hours: which has the most stretched combination of funding rate, open-interest change, liquidation imbalance, and dollar volume?",
+      "quotedExcerpts": [
+        "As of April 30, 2026, 03:16:00Z, **ETHUSDT** presents the most stretched combination of metrics among the three assets, primarily driven by having the most negative funding rate and the most significant 24h open interest contraction as a share of its total OI.",
+        "**Dollar Volume:** This metric was not included in the latest Binance snapshot payload and is therefore omitted from the comparison.",
+        "**Liquidation Imbalance:** Full market-wide imbalance series were unavailable; comparisons are based on the nearest-cluster evidence provided in the snapshots."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4,
+      "scoreExplanations": {
+        "actionability": "It gives a clear winner and rationale among BTC, ETH, and SOL.",
+        "dataFreshness": "The response cites 03:16:00Z.",
+        "specificity": "It provides exact funding, OI deltas, and liquidation-cluster notionals.",
+        "uniqueness": "The cross-asset stretch ranking is differentiated by live data.",
+        "completeness": "It omits dollar volume and true liquidation imbalance despite those being part of the prompt.",
+        "dataAccuracy": "The numbers match the snapshot evidence and look plausible."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 66,
+        "fragilityRisk": "medium",
+        "selectionIssue": "Coinglass was selected in schemas but not used for the fields missing from Meridian snapshots.",
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "The final response explicitly acknowledges missing requested data or substitutes proxies.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "tool_selection_error",
+        "rootCauseEvidence": "Coinglass was selected in schemas but not used for the fields missing from Meridian snapshots. Trace summary: toolCalls=6, selected/called tools=get_normalized_market_snapshot.",
+        "responseQualityNote": "Useful for funding/OI ranking, incomplete for the paid request.",
+        "improvementLever": "When a prompt names dollar volume and imbalance, force a supplemental call to a tool that exposes those fields.",
+        "diagnosticBrief": {
+          "toolUsed": "get_normalized_market_snapshot",
+          "toolShouldHaveUsed": "Coinglass.get_futures_pairs_markets",
+          "argsUsed": "[{\"get_normalized_market_snapshot\":{\"instrument_id\":\"BTC-PERP-BINANCE\"}},{\"get_normalized_market_snapshot\":{\"instrument_id\":\"ETH-PERP-BINANCE\"}},{\"get_normalized_market_snapshot\":{\"instrument_id\":\"SOL-PERP-BINANCE\"}},{\"get_normalized_market_snapshot\":{\"instrument_id\":\"BTC-PERP-BINANCE\"}},{\"get_normalized_market_snapshot\":{\"instrument_id\":\"ETH-PERP-BINANCE\"}},{\"get_normalized_market_snapshot\":{\"instrument_id\":\"SOL-PERP-BINANCE\"}}]",
+          "argsShouldHaveUsed": "symbol in [BTC, ETH, SOL] or batch equivalent to retrieve volume and 24h liquidation long/short fields",
+          "codeSnippet": "Coinglass was selected in schemas but not used for the fields missing from Meridian snapshots.",
+          "toolResultSample": "{\"venue\":\"binance\",\"venue_symbol\":\"BTCUSDT\",\"canonical_symbol\":\"BTC/USDT:PERP\",\"market_type\":\"perp\",\"contract_type\":\"linear_perp\",\"base_asset\":\"BTC\",\"quote_asset\":\"USDT\",\"current_price\":\"75749.70\",\"funding_rate\":\"-0.00004220\",\"next_funding_time\":\"2026-04-30T08:00:00.002000Z\",\"open_interest_usd\":\"7203173782.54989050\",\"oi_delta_1h_usd\":\"-41201403.46307850\",\"oi_delta_4h_usd\":\"-26743359.38510950\",\"oi_delta_24h_usd\":\"-251825632.93650950\",\"oi_delta_7d_usd\":\"-745804192.18010950\",\"nearest_liquidation_cl",
+          "completenessVerdict": "no completeness evaluations recorded",
+          "stageTimingBottleneck": "accountedMs=111405ms"
+        }
+      },
+      "overallVerdict": "Useful for funding/OI ranking, incomplete for the paid request.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "velo-12",
+      "query": "Compare deribit options BTC and deribit options ETH: which has the richer 1-week implied volatility and steeper short-term skew according to Velo options rows?",
+      "quotedExcerpts": [
+        "Based on the Velo options data for the 24-hour period ending April 30, 2026, **ETH** has the richer 1-week implied volatility, while **BTC** exhibit a significantly steeper short-term skew.",
+        "ETH options are currently pricing in higher expected volatility over the next week compared to BTC.",
+        "BTC shows a much stronger short-term skew, indicating a higher relative demand for protective puts or aggressive calls compared to ETH."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.67,
+      "scoreExplanations": {
+        "actionability": "Immediately identifies ETH for IV and BTC for skew.",
+        "dataFreshness": "Identifies a 24-hour window ending April 30, 2026.",
+        "specificity": "Reports exact latest iv_1w and skew_1w values for both assets.",
+        "uniqueness": "BTC-vs-ETH Deribit options comparison from Velo rows is differentiated.",
+        "completeness": "Both requested dimensions are answered with a table and interpretation.",
+        "dataAccuracy": "Reported values match the trace summary and row pattern."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 0,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "Strong comparative answer despite harmless empty product searches.",
+        "improvementLever": "Search options products by coin only to avoid empty lookups.",
+        "diagnosticBrief": {
+          "toolUsed": "check_api_status, list_options_products, get_available_columns, get_market_rows",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "[{\"tool\":\"list_options_products\",\"args\":{\"limit\":50,\"search\":\"BTC options deribit\"}},{\"tool\":\"list_options_products\",\"args\":{\"limit\":50,\"search\":\"ETH options deribit\"}},{\"tool\":\"get_market_rows\",\"args\":{\"end\":1777500000000,\"type\":\"options\",\"begin\":1777413600000,\"coins\":[\"BTC\",\"ETH\"],\"limit\":200,\"columns\":[\"iv_1w\",\"skew_1w\"],\"products\":[],\"exchanges\":[\"deribit\"],\"resolution\":\"1h\",\"lookbackHours\":0}}]",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "Empty list_options_products searches were followed by get_market_rows coins=[\"BTC\",\"ETH\"], products=[] returning rowCount=48.",
+          "toolResultSample": "[{\"tool\":\"list_options_products\",\"result\":{\"productCount\":0,\"products\":[],\"fetchedAt\":\"2026-04-30T04:34:55.519Z\"}},{\"tool\":\"list_options_products\",\"result\":{\"productCount\":0,\"products\":[],\"fetchedAt\":\"2026-04-30T04:34:57.896Z\"}},{\"tool\":\"get_market_rows\",\"result\":{\"params\":{\"type\":\"options\",\"columns\":[\"iv_1w\",\"skew_1w\"],\"exchanges\":[\"deribit\"],\"products\":[],\"coins\":[\"BTC\",\"ETH\"],\"begin\":1777413600000,\"end\":1777500000000,\"resolution\":\"1h\"},\"rowCount\":48,\"rows\":[{\"exchange\":\"deribit\",\"coin\":\"BTC\",",
+          "completenessVerdict": "diagnostics.completeness=null; no completeness evaluations, missingParts, needsDifferentTools, or repair events were recorded.",
+          "stageTimingBottleneck": "accountedMs=58987ms"
+        }
+      },
+      "overallVerdict": "Yes, I would pay again for this comparative answer.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 1
+    },
+    {
+      "promptId": "velo-13",
+      "query": "Compare binance spot BTCUSDT with binance-futures BTCUSDT: is the latest BTC move better supported by spot dollar volume or by perp open-interest expansion and funding?",
+      "quotedExcerpts": [
+        "The latest BTC price move is more significantly supported by **perp open-interest expansion and futures volume** than by spot dollar volume.",
+        "In the most recent hour, Binance futures volume was roughly 8 times higher than spot volume, and open interest saw a modest expansion.",
+        "The perp market shows a $2.06M increase in open interest over the last hour, indicating new positions are being opened to support the current price action."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "The answer makes a clear call that derivatives activity, not spot volume, is the stronger support and explains how to interpret negative funding. It stops short of giving an explicit trading threshold or follow-up decision rule.",
+        "dataFreshness": "The response cites a precise timestamp, April 30, 2026, 05:25:00 UTC, and uses latest-hour metrics.",
+        "specificity": "It includes exact spot and futures prices, 1h dollar volumes, 1h OI delta, funding, and 24h price changes.",
+        "uniqueness": "The paired spot/perp comparison and OI-delta context are materially better than free generic commentary, though it is a straightforward two-market comparison rather than a broad screen.",
+        "completeness": "It answers the core question and covers spot volume, perp volume, OI expansion, and funding. It could be stronger by explicitly reconciling the negative 24h price move with the phrase latest BTC move.",
+        "dataAccuracy": "The response aligns with the trace values: spot latest-hour volume is about $10.5M, futures is about $82.4M, OI delta is +$2.06M, and funding is mildly negative. I see no internal data red flags."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 63,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "One code_interpreter call failed its artifact contract before the runtime recovered and returned a grounded result.",
+        "completenessIssue": null,
+        "codeIssueDetail": "toolCallHistory code_interpreter result: \"postProcessingContract expected artifact(s) metric_table, but the script emitted only none\"; executionTrace then shows a second code_interpreter call and returnResult succeeding.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "The final buyer-facing answer is strong and grounded, but the trace shows avoidable fragility in the analysis step.",
+        "improvementLever": "Avoid requiring a metric_table artifact when the buyer only needs a concise comparative answer, or make the generated analysis emit the required artifact on the first try.",
+        "diagnosticBrief": {
+          "toolUsed": "get_available_columns; list_spot_products; get_normalized_market_snapshot; get_market_rows; code_interpreter",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"spotRows\":\"type=spot; exchange=binance; product=BTCUSDT; columns=[close_price,dollar_volume]; resolution=1h; lookbackHours=24\",\"futuresRows\":\"type=futures; exchange=binance-futures; product=BTCUSDT; columns=[close_price,dollar_volume,dollar_open_interest_close,funding_rate]; resolution=1h; lookbackHours=24\",\"snapshot\":\"instrument_id=BTC-PERP-BINANCE\"}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "toolCallHistory[code_interpreter] returned ok=false with missing metric_table artifact; executionResult.comparison later contains spot latest_hour_dollar_volume=10497812.273999993 and perp latest_hour_dollar_volume=82363463.81400001.",
+          "toolResultSample": "{\"comparison\":{\"spot\":{\"latest_hour_close\":75442.77,\"latest_hour_dollar_volume\":10497812.273999993,\"24h_price_change_pct\":-2.3860475607297413},\"perp\":{\"latest_hour_close\":75407.7,\"latest_hour_dollar_volume\":82363463.81400001,\"snapshot_oi_delta_1h_usd\":2062254.7755,\"snapshot_funding_rate\":-0.0000422}}}",
+          "completenessVerdict": "No diagnostics.completeness.evaluations present; no missing parts or needsDifferentTools flags were recorded.",
+          "stageTimingBottleneck": "execution=42121ms"
+        }
+      },
+      "overallVerdict": "Yes, I would pay again for this answer; the trace fragility is real but did not materially harm the final result.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 3
+    },
+    {
+      "promptId": "velo-14",
+      "query": "For binance-futures BTCUSDT, combine Velo futures rows, order book depth, and BTC-tagged Velo news to decide whether current BTC positioning looks like a crowded short, crowded long, or neutral setup.",
+      "quotedExcerpts": [
+        "Based on the futures data, order book depth, and recent news, the current positioning for **BTCUSDT** on Binance-Futures is a **Neutral setup** with a slight lean toward short deleveraging.",
+        "The simultaneous drop in price and Open Interest indicates that long positions are being closed (washed out) rather than aggressive new short positions being opened.",
+        "While negative funding rates show a bearish sentiment among perpetual traders, the balanced order book and the reduction in OI suggest the market is resetting after a period of volatility rather than reaching a crowded extreme."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.67,
+      "scoreExplanations": {
+        "actionability": "The response makes the requested classification, neutral with a slight short-deleveraging lean, and explains why it is not crowded short or crowded long. It is actionable for positioning but does not give a trade setup or invalidation level.",
+        "dataFreshness": "The answer is dated April 30, 2026 and uses current futures/depth/news rows, but the response itself does not include a precise UTC timestamp.",
+        "specificity": "It gives exact price change, OI change, latest and average funding, order book imbalance, bid/ask depth, and a concrete BTC news item.",
+        "uniqueness": "Combining Velo futures rows, order book depth, and BTC-tagged news into a crowding classification is a differentiated multi-data-source answer.",
+        "completeness": "It addresses all requested inputs and directly chooses among crowded short, crowded long, and neutral.",
+        "dataAccuracy": "The figures match the executionResult summary: price and OI fell, funding was negative, bid/ask depth was nearly balanced, and one BTC-tagged story was found. I see no suspicious uniformity or magnitude issue."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 100,
+        "fragilityRisk": "high",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "The final answer succeeded, but the code_interpreter step failed repeatedly before returning a result.",
+        "completenessIssue": null,
+        "codeIssueDetail": "toolCallHistory shows four code_interpreter failures: two \"Generated code appears to include TypeScript syntax\" errors followed by two \"Value must be JSON-serializable\" errors before a successful returnResult.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "The buyer-facing answer is excellent, but the execution path is too fragile and slow for reliable repeated use.",
+        "improvementLever": "Harden code_interpreter generation so it emits plain JSON-serializable JavaScript on the first attempt.",
+        "diagnosticBrief": {
+          "toolUsed": "check_api_status; list_futures_products; get_recent_news; get_market_rows; get_order_book_depth; code_interpreter",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"get_market_rows\":\"type=futures; exchange=binance-futures; product=BTCUSDT; columns=[funding_rate,dollar_open_interest_close,dollar_volume,buy_liquidations_dollar_volume,sell_liquidations_dollar_volume,close_price]; resolution=1h; lookbackHours=72\",\"get_order_book_depth\":\"exchange=binance-futures; product=BTCUSDT; resolution=5; lookbackHours=6; limit=50\",\"get_recent_news\":\"lookbackHours=72; limit=20\"}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "code_interpreter failures: \"Generated code appears to include TypeScript syntax\" and \"Value must be JSON-serializable\"; executionResult.thesis=\"neutral\" with bidDepth10=445.1739996900001 and askDepth10=449.59099963.",
+          "toolResultSample": "{\"thesis\":\"neutral\",\"futures\":{\"rowCount\":73,\"firstPrice\":77730.6,\"latestPrice\":75406.3,\"priceChangePct\":-0.029905600009711864,\"oiChangePct\":-0.02473322365317054,\"latestFunding\":-0.00004974},\"depth\":{\"bidDepth10\":445.1739996900001,\"askDepth10\":449.59099963,\"imbalance\":-0.004935724860770131},\"news\":{\"btcTaggedStories\":1}}",
+          "completenessVerdict": "No diagnostics.completeness.evaluations present; no missing parts or needsDifferentTools flags were recorded.",
+          "stageTimingBottleneck": "execution=82246ms"
+        }
+      },
+      "overallVerdict": "Yes, I would pay for the answer again, but I would worry about reliability because the trace barely reached a clean result.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 3
+    },
+    {
+      "promptId": "velo-15",
+      "query": "For deribit options ETH and binance-futures ETHUSDT, combine ETH options IV/skew with ETH futures funding, OI change, and liquidation imbalance to judge whether ETH downside protection is being priced alongside perp stress.",
+      "quotedExcerpts": [
+        "Based on the data from Deribit and Binance Futures over the last 24 hours, ETH downside protection is indeed being priced alongside visible stress in the perpetual futures market.",
+        "Front-end skew has trended higher, signaling an increasing premium for puts relative to calls as the market hedges against further downside.",
+        "The $156M drop in Open Interest, paired with a negative liquidation imbalance (more long liquidations than short), suggests a \"flush\" of long positions."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 4.17,
+      "scoreExplanations": {
+        "actionability": "Clear defensive-posture judgment with options and futures evidence.",
+        "dataFreshness": "Uses a latest 24-hour window, but exact row timestamps are omitted.",
+        "specificity": "Includes IV/skew changes, OI change, liquidation totals, imbalance, and funding.",
+        "uniqueness": "Crosses options skew with perp stress, a differentiated analysis.",
+        "completeness": "Covers requested families, but liquidation evidence comes through a summary path after row-column issues.",
+        "dataAccuracy": "Trace has conflicting OI/funding metrics across two futures paths."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 0,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "Initial futures calls failed and final answer blended metrics from different successful futures calls.",
+        "completenessIssue": null,
+        "codeIssueDetail": "row path implies oi_change_usd=-155902043.84; analyze_futures_market_structure reports openInterestChangeUsd=-77579156.424 and latestFundingRate=-7.894e-05.",
+        "dataAccuracyRedFlags": "Different futures paths report materially different OI changes for related windows.",
+        "rootCauseCategory": "synthesis_issue",
+        "rootCauseEvidence": "Rich data was available, but synthesis mixed futures windows/metrics without reconciliation.",
+        "responseQualityNote": "Useful cross-market read, but conflicting OI/funding evidence reduces confidence.",
+        "improvementLever": "Use one aligned 24-hour window and reconcile row-call versus summary-tool metrics.",
+        "diagnosticBrief": {
+          "toolUsed": "list_options_products, list_futures_products, check_api_status, get_market_rows, analyze_futures_market_structure",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "[{\"tool\":\"get_market_rows\",\"args\":{\"end\":1777420000000,\"type\":\"futures\",\"begin\":1777333600000,\"coins\":[\"ETH\"],\"limit\":200,\"columns\":[\"funding_rate\",\"dollar_open_interest_close\",\"buy_liquidation_dollar_volume\",\"sell_liquidation_dollar_volume\"],\"products\":[],\"exchanges\":[\"binance-futures\"],\"resolution\":\"1h\",\"lookbackHours\":24}},{\"tool\":\"analyze_futures_market_structure\",\"args\":{\"coins\":[\"ETH\"],\"limit\":200,\"products\":[],\"exchanges\":[\"binance-futures\"],\"resolution\":\"1h\",\"lookbackHours\":24}}]",
+          "argsShouldHaveUsed": "Use one shared begin/end window and the plural liquidation columns or one consistent summary tool.",
+          "codeSnippet": "get_market_rows futures and analyze_futures_market_structure disagree on OI change magnitude.",
+          "toolResultSample": "[{\"tool\":\"get_market_rows\",\"result\":{\"params\":{\"type\":\"futures\",\"columns\":[\"funding_rate\",\"dollar_open_interest_close\"],\"exchanges\":[\"binance-futures\"],\"products\":[],\"coins\":[\"ETH\"],\"begin\":1777333600000,\"end\":1777420000000,\"resolution\":\"1h\"},\"rowCount\":25,\"rows\":[{\"exchange\":\"binance-futures\",\"coin\":\"ETH\",\"product\":\"ETHUSDT\",\"time\":1777330800000,\"funding_rate\":-0.00016104,\"dollar_open_interest_close\":4650582086.815},{\"exchange\":\"binance-futures\",\"coin\":\"ETH\",\"product\":\"ETHUSDT\",\"time\":177733440",
+          "completenessVerdict": "diagnostics.completeness=null; no completeness evaluations, missingParts, needsDifferentTools, or repair events were recorded.",
+          "stageTimingBottleneck": "accountedMs=68804ms"
+        }
+      },
+      "overallVerdict": "I might pay for the insight, but not rely on exact OI/funding figures without reconciliation.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 3
+    },
+    {
+      "promptId": "velo-16",
+      "query": "For binance-futures SOLUSDT, combine SOL futures funding/OI/liquidations with SOL market-cap context from Velo to estimate whether current SOL perp leverage looks large relative to the coin size.",
+      "quotedExcerpts": [
+        "Based on the latest data for Binance SOLUSDT futures and Solana's market capitalization, current perpetual leverage appears **moderate** and not overextended relative to the size of the coin.",
+        "The Open Interest (OI) on Binance represents approximately **1.65%** of Solana's circulating market cap.",
+        "Please note that specific liquidation buy/sell volumes were unavailable in this data snapshot due to an upstream API error."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.17,
+      "scoreExplanations": {
+        "actionability": "Usable leverage-size judgment and ratio.",
+        "dataFreshness": "Framed as April 30, 2026 latest data with current fetches.",
+        "specificity": "Reports OI, market cap, OI/market-cap ratio, volume, funding, and OI decline.",
+        "uniqueness": "OI-to-market-cap normalization is better than generic SOL commentary.",
+        "completeness": "Missing liquidation volumes leave part of the requested combination incomplete.",
+        "dataAccuracy": "OI and market-cap math is plausible; liquidation data is missing."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 0,
+        "fragilityRisk": "medium",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": "Liquidation columns were requested with singular names and omitted from returned futures rows.",
+        "completenessIssue": null,
+        "codeIssueDetail": "Requested buy_liquidation_dollar_volume/sell_liquidation_dollar_volume, while available columns are buy_liquidations_dollar_volume/sell_liquidations_dollar_volume.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "argument_or_extraction_error",
+        "rootCauseEvidence": "Correct tools were selected, but liquidation column names did not match available columns.",
+        "responseQualityNote": "Good normalized leverage read, but not a full funding/OI/liquidation combination.",
+        "improvementLever": "Use plural liquidation columns or analyze_futures_market_structure for liquidation imbalance.",
+        "diagnosticBrief": {
+          "toolUsed": "analyze_futures_market_structure, get_market_caps, check_api_status, get_market_rows",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "[{\"tool\":\"get_market_caps\",\"args\":{\"end\":1767096000000,\"begin\":1767009600000,\"coins\":[\"SOL\"],\"resolution\":\"1d\",\"lookbackHours\":24}},{\"tool\":\"get_market_rows\",\"args\":{\"end\":1777523713077,\"type\":\"futures\",\"begin\":1777437313077,\"coins\":[],\"limit\":200,\"columns\":[\"funding_rate\",\"dollar_open_interest_close\",\"buy_liquidation_dollar_volume\",\"sell_liquidation_dollar_volume\",\"dollar_volume\"],\"products\":[\"SOLUSDT\"],\"exchanges\":[\"binance-futures\"],\"resolution\":\"1h\",\"lookbackHours\":24}}]",
+          "argsShouldHaveUsed": "Request buy_liquidations_dollar_volume and sell_liquidations_dollar_volume, or call analyze_futures_market_structure.",
+          "codeSnippet": "Column singular/plural mismatch caused missing liquidation evidence.",
+          "toolResultSample": "[{\"tool\":\"get_market_caps\",\"result\":{\"rows\":[{\"coin\":\"SOL\",\"time\":1777523713077,\"circ\":576088701.2101058,\"circ_dollars\":47504274301.78532,\"fdv\":625439885.7702879,\"fdv_dollars\":51573772980.617935}],\"rowCount\":1,\"params\":{\"coins\":[\"SOL\"],\"begin\":1767009600000,\"end\":1767096000000,\"resolution\":\"1d\"},\"fetchedAt\":\"2026-04-30T04:39:54.844Z\"}},{\"tool\":\"get_market_rows\",\"result\":{\"params\":{\"type\":\"futures\",\"columns\":[\"funding_rate\",\"dollar_open_interest_close\",\"dollar_volume\"],\"exchanges\":[\"binance-futur",
+          "completenessVerdict": "diagnostics.completeness=null; no completeness evaluations, missingParts, needsDifferentTools, or repair events were recorded.",
+          "stageTimingBottleneck": "accountedMs=70680ms"
+        }
+      },
+      "overallVerdict": "Yes, I would pay for the OI-to-market-cap read, but liquidation imbalance is needed.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 3.33
+    },
+    {
+      "promptId": "velo-17",
+      "query": "Build a same-venue carry and liquidity shortlist across binance-futures BTCUSDT, binance-futures ETHUSDT, and binance-futures SOLUSDT: rank each by funding attractiveness, open-interest risk, liquidation imbalance, recent dollar volume, and available order book depth.",
+      "quotedExcerpts": [
+        "As of **April 30, 2026, 03:30:00 UTC**, here is the carry and liquidity shortlist for Binance Futures.",
+        "Please note that while most metrics were successfully retrieved, a direct order-book depth field was not provided in the snapshot, so that specific ranking remains unavailable.",
+        "*   **Order Book Depth**: Data was not available in the current snapshot to provide a reliable depth ranking."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.33,
+      "scoreExplanations": {
+        "actionability": "The shortlist ranks funding, OI risk, liquidation clusters, and recent volume in a usable way.",
+        "dataFreshness": "It cites a 03:30:00 UTC snapshot.",
+        "specificity": "The table has exact funding rates, OI, volume, and cluster notionals for all three markets.",
+        "uniqueness": "The same-venue ranked comparison is differentiated and tool-grounded.",
+        "completeness": "It covers most requested dimensions but lacks order-book depth.",
+        "dataAccuracy": "The metrics match snapshot/OHLCV results and show no internal red flags."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": false,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 56,
+        "fragilityRisk": "medium",
+        "selectionIssue": "The selected tools did not provide order-book depth, leaving one requested ranking unavailable.",
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": "The final response explicitly acknowledges missing requested data or substitutes proxies.",
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": "tool_selection_error",
+        "rootCauseEvidence": "The selected tools did not provide order-book depth, leaving one requested ranking unavailable. Trace summary: toolCalls=7, selected/called tools=get_normalized_market_snapshot, get_ohlcv_history, render_chart.",
+        "responseQualityNote": "I would likely pay for this, but the missing depth keeps it below excellent.",
+        "improvementLever": "Add depth retrieval to same-venue carry/liquidity shortlist prompts.",
+        "diagnosticBrief": {
+          "toolUsed": "get_normalized_market_snapshot, get_ohlcv_history, render_chart",
+          "toolShouldHaveUsed": "Order-book-depth tool for Binance futures markets",
+          "argsUsed": "[{\"get_normalized_market_snapshot\":{\"instrument_id\":\"BTC-PERP-BINANCE\"}},{\"get_normalized_market_snapshot\":{\"instrument_id\":\"ETH-PERP-BINANCE\"}},{\"get_normalized_market_snapshot\":{\"instrument_id\":\"SOL-PERP-BINANCE\"}},{\"get_ohlcv_history\":{\"limit\":1,\"end_ts\":\"2026-04-30T03:30:00Z\",\"interval\":\"1h\",\"start_ts\":\"2026-04-29T03:30:00Z\",\"instrument_id\":\"BTC-PERP-BINANCE\"}},{\"get_ohlcv_history\":{\"limit\":1,\"end_ts\":\"2026-04-30T03:30:00Z\",\"interval\":\"1h\",\"start_ts\":\"2026-04-29T03:30:00Z\",\"instrument_id\":\"ETH-PERP-BINANCE\"}},{\"get_ohlcv_history\":{\"limit\":1,\"end_ts\":\"2026-04-30T03:30:00Z\",\"interval\":\"1h\",\"start_ts\":\"2026-04-29T03:30:00Z\",\"instrument_id\":\"SOL-PERP-BINANCE\"}},{\"omittedToolCalls\":1}]",
+          "argsShouldHaveUsed": "depth for BTCUSDT, ETHUSDT, SOLUSDT plus existing snapshot/OHLCV calls",
+          "codeSnippet": "The selected tools did not provide order-book depth, leaving one requested ranking unavailable.",
+          "toolResultSample": "{\"venue\":\"binance\",\"venue_symbol\":\"BTCUSDT\",\"canonical_symbol\":\"BTC/USDT:PERP\",\"market_type\":\"perp\",\"contract_type\":\"linear_perp\",\"base_asset\":\"BTC\",\"quote_asset\":\"USDT\",\"current_price\":\"75849.40\",\"funding_rate\":\"-0.00004220\",\"next_funding_time\":\"2026-04-30T08:00:00.002000Z\",\"open_interest_usd\":\"7216358911.41970000\",\"oi_delta_1h_usd\":\"-19705013.88030000\",\"oi_delta_4h_usd\":\"-2662169.47883700\",\"oi_delta_24h_usd\":\"-250041983.58830000\",\"oi_delta_7d_usd\":\"-718507435.29430000\",\"nearest_liquidation_clu",
+          "completenessVerdict": "no completeness evaluations recorded",
+          "stageTimingBottleneck": "accountedMs=93864ms"
+        }
+      },
+      "overallVerdict": "I would likely pay for this, but the missing depth keeps it below excellent.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "velo-18",
+      "query": "For a hypothetical 5 million dollar BTC perp execution, compare binance-futures BTCUSDT, bybit BTCUSDT, okex-swap BTC-USDT-SWAP, and hyperliquid BTC-USD using Velo order book depth, latest mid, funding rate, dollar volume, and open interest; which venue looks least costly and least crowded?",
+      "quotedExcerpts": [
+        "Based on data from a past query, here is the comparison for a $5 million BTC perpetual execution across the specified venues.",
+        "Please note that this analysis is based on a 3-hour lookback window and qualitative order book observations rather than an exact slippage simulation.",
+        "OKX displayed the deepest and heaviest order book across price levels, suggesting the lowest market impact among the group."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "The response gives clear venue calls: OKX for least costly and Hyperliquid for least crowded. It is less than perfect because it admits there was no explicit $5M market-impact or slippage simulation.",
+        "dataFreshness": "The answer states a 3-hour lookback and labels the comparison as April 30, 2026, but it says the data came from a past query and does not include the exact UTC timestamp in the response.",
+        "specificity": "It names all four venues/products and gives exact mid prices, funding rates, open interest, and dollar volume values.",
+        "uniqueness": "This is a cross-venue execution and crowding comparison using order book depth plus derivatives structure, which is materially beyond generic exchange commentary.",
+        "completeness": "It covers depth, mid, funding, dollar volume, open interest, least costly, and least crowded. The missing piece is a normalized depth/slippage calculation for the requested $5M execution size.",
+        "dataAccuracy": "The numbers are internally consistent with the trace: OKX has the heaviest displayed depth, Binance has the largest OI, and Hyperliquid has the lowest OI/crowding read. I do not see suspicious uniform values or impossible magnitudes."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 67,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "The buyer gets a strong cross-venue answer with concrete live-derived metrics. The main weakness is that visible depth is interpreted qualitatively instead of converted into explicit slippage or executable size bands.",
+        "improvementLever": "Normalize order book buckets into explicit $5M sweep cost or bps slippage by venue.",
+        "diagnosticBrief": {
+          "toolUsed": "check_api_status; get_order_book_depth; analyze_futures_market_structure",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"get_order_book_depth\":\"BTC on binance-futures BTCUSDT, bybit BTCUSDT, okex-swap BTC-USDT-SWAP, hyperliquid BTC-USD; resolution=60; lookbackHours=3; limit=20\",\"analyze_futures_market_structure\":\"coins=[BTC]; exchanges=[binance-futures,bybit,okex-swap,hyperliquid]; products=[BTCUSDT,BTC-USDT-SWAP,BTC-USD]; resolution=1h; lookbackHours=3\"}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "executionTrace shows success for get_order_book_depth across all four venues and analyze_futures_market_structure, then returnResult. executionResult.executionAssessment selected leastCostly=okex-swap:BTC-USDT-SWAP and leastCrowded=hyperliquid:BTC-USD.",
+          "toolResultSample": "{\"orderBookDepth\":{\"binance-futures:BTCUSDT\":{\"latestMid\":75455.046875,\"visibleDepthObservation\":\"Very deep\"},\"okex-swap:BTC-USDT-SWAP\":{\"latestMid\":75460.046875,\"visibleDepthObservation\":\"Deepest visible book of the four\"}},\"futuresStructure\":{\"binance-futures:BTCUSDT\":{\"latestFundingRate\":-0.0000498,\"latestOpenInterestUsd\":7205587308.242},\"hyperliquid:BTC-USD\":{\"latestFundingRate\":0.000000968,\"latestOpenInterestUsd\":1955056793.507}}}",
+          "completenessVerdict": "No diagnostics.completeness.evaluations present; no missing parts or needsDifferentTools flags were recorded.",
+          "stageTimingBottleneck": "execution=40929ms"
+        }
+      },
+      "overallVerdict": "Yes, I would pay again for this answer, while expecting the next version to turn depth into explicit slippage estimates.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 2.83
+    },
+    {
+      "promptId": "velo-19",
+      "query": "For deribit options BTC, deribit options ETH, binance-futures BTCUSDT, and binance-futures ETHUSDT, build a volatility-versus-leverage read: which coin has the more compelling options-vol setup after accounting for perp funding, OI change, and liquidation pressure?",
+      "quotedExcerpts": [
+        "Based on the data from a past query (73 hourly rows ending April 30, 2026), the following is a volatility-versus-leverage read for BTC and ETH.",
+        "**BTC** offers the more compelling options-vol setup when accounting for the total leverage environment.",
+        "ETH experienced a sharper de-leveraging event, with Open Interest falling by over 4% compared to BTC's 2.47%."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "The response chooses BTC as the preferred options-vol setup and gives the main drivers. It does not translate that into a specific options structure, hedge, or risk threshold.",
+        "dataFreshness": "It states 73 hourly rows ending April 30, 2026 and labels the snapshot as 2026-04-30, but it does not provide exact UTC time in the response.",
+        "specificity": "The answer provides exact BTC and ETH 1w/1m IV, skew, DVOL, funding, OI change, liquidation totals, and net liquidation imbalance.",
+        "uniqueness": "This combines Deribit options surfaces with Binance futures leverage and liquidation pressure, which is a cross-market analysis a generic model would not produce reliably.",
+        "completeness": "It answers which coin is more compelling and accounts for funding, OI change, and liquidations. It admits missing realized volatility, full term structure, and a direct delta-hedged carry model.",
+        "dataAccuracy": "The figures are internally consistent with the trace for BTC and ETH options and futures rows; there are no repeated impossible values or obvious arithmetic contradictions."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 79,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": "Initial broad discovery calls returned zero products before the runtime narrowed to individual BTC/ETH option and futures searches.",
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": "toolCallHistory first had list_options_products search=\"BTC ETH deribit options\" -> productCount=0 and list_futures_products search=\"BTCUSDT ETHUSDT\" -> productCount=0, then individual BTC, ETH, BTCUSDT, and ETHUSDT searches succeeded.",
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "The answer is high-value and grounded. The main buyer-facing limitation is that it stops at a directional read instead of calculating vol risk premium or a concrete options trade.",
+        "improvementLever": "Add a normalized options-vol score or VRP/carry table so the BTC-over-ETH conclusion is mechanically auditable.",
+        "diagnosticBrief": {
+          "toolUsed": "list_options_products; list_futures_products; get_available_columns; get_market_rows",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"optionsRows\":\"type=options; exchange=deribit; coins=[BTC] and [ETH]; columns=[iv_1w,iv_1m,iv_3m,skew_1w,skew_1m,dvol_close,index_price,dollar_volume]; resolution=1h; lookbackHours=72\",\"futuresRows\":\"type=futures; exchange=binance-futures; products=[BTCUSDT] and [ETHUSDT]; columns=[close_price,funding_rate,dollar_open_interest_close,liquidations_dollar_volume,buy_liquidations_dollar_volume,sell_liquidations_dollar_volume,dollar_volume]; resolution=1h; lookbackHours=72\"}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "executionTrace shows successful get_market_rows for BTC options, ETH options, BTC futures, and ETH futures. executionResult.conclusion picked BTC as the better risk-adjusted vol/leverage balance.",
+          "toolResultSample": "{\"window\":{\"resolution\":\"1h\",\"rowsPerMarket\":73},\"BTC\":{\"options\":{\"latest\":{\"iv_1w\":0.36084097652775426,\"iv_1m\":0.38698718263888754,\"skew_1m\":0.14279274488714477,\"dvol_close\":39.94}},\"futures\":{\"approx_window_stats\":{\"funding_rate_mean\":-0.000018211917808219056,\"oi_change_pct\":-2.4759380092453247}}}}",
+          "completenessVerdict": "No diagnostics.completeness.evaluations present; no missing parts or needsDifferentTools flags were recorded.",
+          "stageTimingBottleneck": "execution=54222ms"
+        }
+      },
+      "overallVerdict": "Yes, I would pay again for this answer, with the caveat that a true options-vol product should eventually include realized-vol or VRP context.",
+      "autoWeak": false,
+      "autoWeakReason": null,
+      "differentiation": "high_differentiation",
+      "previousSatisfactionMean": 3
+    }
+  ],
+  "aggregate": {
+    "satisfactionMean": 4.317,
+    "satisfactionMin": 4,
+    "queryCount": 19,
+    "queriesAbove4": 19,
+    "queriesBelow3": 0,
+    "fragilityReport": {
+      "highCount": 2,
+      "mediumCount": 11,
+      "lowCount": 6,
+      "highFragilityQueryIds": [
+        "velo-10",
+        "velo-14"
+      ],
+      "highFragilityRate": 0.105
+    },
+    "topImprovementLevers": [
+      "Expose and select Velo-specific options, market-cap, futures-row, and spot-row tools instead of returning zero-tool refusals or substitute data.",
+      "When prompts ask for volume, liquidation imbalance, depth, or execution cost, force calls to tools that actually expose those fields and repair failed post-processing.",
+      "Prevent spot/perp instrument alias mismatches and require source-aware argument construction before synthesis."
+    ],
+    "baselineBeatenRate": 0.7368421052631579,
+    "differentiationCounts": {
+      "high_differentiation": 19,
+      "moderate_differentiation": 0,
+      "low_differentiation": 0
+    }
+  },
+  "lastMergedRerun": {
+    "iteration": 5,
+    "path": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/validation/reviewer-rerun-5.json",
+    "mergedAt": "2026-04-30T05:47:06.567Z"
+  }
+}

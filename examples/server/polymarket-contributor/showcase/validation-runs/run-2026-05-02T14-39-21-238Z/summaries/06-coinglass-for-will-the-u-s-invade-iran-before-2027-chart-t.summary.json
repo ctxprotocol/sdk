@@ -1,0 +1,112 @@
+{
+  "id": "06-coinglass-for-will-the-u-s-invade-iran-before-2027-chart-t",
+  "index": 5,
+  "provider": "coinglass",
+  "prompt": "For 'Will the U.S. invade Iran before 2027?', chart the recent price history alongside recent whale-vs-retail flow and current open interest, then summarize whether the move is liquid enough to trade.",
+  "expectedMinimumRows": 20,
+  "expectedReason": "time-series chart needs enough history to show shape",
+  "startedAt": "2026-05-02T14:45:27.936Z",
+  "finishedAt": "2026-05-02T14:48:47.218Z",
+  "durationMs": 199282,
+  "outcomeType": "answer",
+  "responseChars": 1432,
+  "responsePreview": "The market for **\"Will the U.S. invade Iran before 2027?\"** currently shows a strong consensus that an invasion is unlikely, with recent trades for the \"No\" outcome executing at approximately $0.71 and \"Yes\" outcomes at $0.30.\n\nThe emitted chart reflects this price spread over the most recent 20 trades, capturing a period of active trading where the largest individual buy was recorded at $58,799.99.\n\n### Market Liquidity and Activity\nAs of May 2, 2026, the market is highly liquid and actively traded.\n\n| Metric | Value |\n| :--- | :--- |\n| **Current Open Interest** | $5,477,042.07 |\n| **24h Trading Volume** | $501,218.16 |\n| **Available Liquidity** | $875,267.98 |\n\n### Whale-vs-Retail Flow (Last 24 Hours)\nWhale activity is significantly driving the current price action, showing strong alignment with smaller retail traders.\n\n| Trader Segment | Net Flow | Sentiment |\n| :--- | :--- | :--- |\n| **Small** | +$366.69 | Bullish |\n| **Medium** | +$492.36 | Bull|sh |\n| **Whale** | +$133,860.01 | Bullish |\n\n**Summary:** This move is **highly liquid** and suitable for trading. With over $5.4 million in open interest and nearly $900,000 in immediate liquidity, traders can enter or exit significan...",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 0,
+  "chartSummaries": [
+    {
+      "title": "Will the U.S. invade Iran before 2027? — recent price/history, whale-vs-retail flow, and OI context",
+      "type": "line",
+      "rowCount": 20,
+      "distinctXCount": 18,
+      "numericSeriesCount": 1,
+      "numericSeriesWithVariation": 1,
+      "xKey": "timestamp",
+      "seriesKeys": [
+        "price"
+      ],
+      "sampleRows": [
+        {
+          "id": "",
+          "timestamp": 1777732472,
+          "side": "BUY",
+          "outcome": "No",
+          "price": 0.7099999502999869,
+          "size": 4.225351,
+          "notional": 3,
+          "trader": "0xd47f0ac03cde213d9a17d4d2917694eac4ce6532"
+        },
+        {
+          "id": "",
+          "timestamp": 1777732450,
+          "side": "SELL",
+          "outcome": "Yes",
+          "price": 0.29,
+          "size": 14.51,
+          "notional": 4.21,
+          "trader": "0x91bef4262ebdaf8c126865a815b98aa509c53246"
+        },
+        {
+          "id": "",
+          "timestamp": 1777732450,
+          "side": "SELL",
+          "outcome": "Yes",
+          "price": 0.29,
+          "size": 24.2,
+          "notional": 7.02,
+          "trader": "0x23e755bb6b90b2f984bac6dbe944426b6bd60212"
+        }
+      ],
+      "needsDualAxis": false,
+      "willRenderDualAxis": false,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": true,
+      "expectsProbabilityMetric": false,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [
+      "no chart matched the prompt's requested axis, chart type, and metrics",
+      "chart 0: time-series prompt did not use date/time-like x-axis labels"
+    ],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "Will the U.S. invade Iran before 2027? — recent price/history, whale-vs-retail flow, and OI context",
+        "type": "line",
+        "xKey": "timestamp",
+        "seriesKeys": [
+          "price"
+        ],
+        "passes": false,
+        "failures": [
+          "time-series prompt did not use date/time-like x-axis labels"
+        ]
+      }
+    ],
+    "pass": false
+  },
+  "semanticFailures": [
+    "no chart matched the prompt's requested axis, chart type, and metrics",
+    "chart 0: time-series prompt did not use date/time-like x-axis labels"
+  ],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+    "semantic chart audit failed: chart 0: time-series prompt did not use date/time-like x-axis labels"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/06-coinglass-for-will-the-u-s-invade-iran-before-2027-chart-t.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/06-coinglass-for-will-the-u-s-invade-iran-before-2027-chart-t.summary.json"
+}

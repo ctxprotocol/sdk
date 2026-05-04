@@ -1,0 +1,94 @@
+{
+  "id": "12-polymarket-inside-the-polymarket-what-will-wti-crude-oil-wt",
+  "index": 11,
+  "provider": "polymarket",
+  "prompt": "Inside the Polymarket 'What will WTI Crude Oil (WTI) hit in May 2026?' event, plot a dual-axis chart with strike price on the x-axis ($80 LOW plus $90 → $150 HIGH), implied probability on one y-axis, and 24-hour trading volume on the other y-axis — I want to see the strike skew and where traders are actually concentrated.",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-05-02T05:32:53.334Z",
+  "finishedAt": "2026-05-02T05:34:34.618Z",
+  "durationMs": 101284,
+  "outcomeType": "answer",
+  "responseChars": 1485,
+  "responsePreview": "The market for WTI Crude Oil in May 2026 shows a significant divergence between high-probability price targets and where the heaviest trading volume is occurring. \n\nAs of May 2, 2026, the implied probabilities peak at the **$105 strike (92.5%)** and **$110 strike (74.5%)**, indicating high market confidence that oil will reach these levels. However, the most intense trading activity is concentrated in the \"tail\" outcomes, particularly at the **$150 strike**, which has seen over $539,000 in 24-hour volume despite having only a 5.5% implied probability.\n\n### WTI May 2026: Probability vs. Trading Volume ($80 - $150)\n\n| Strike Price | Implied Probability | 24-Hour Volume |\n| :--- | :--- | :--- |\n| ↓ $80 | 27.5% | $119,774.85 |\n| ↓ $85 | 41.5% | $7,329.13 |\n| ↓ $90 | 68.5% | $7,356.63 |\n| ↓ $95 | 78.5% | $10,157.83 |\n| ↑ $105 | 92.5% | $30,547.64 |\n| ↑ $110 | 74.5% | $294,658.91 |\n| ↑ $115 | 57.5% | $5,400.53 |\n| ↑ $120 | 43.5% | $363,472.78 |\n| ↑ $130 | 23.5% | $276,585.60 |\n| ↑ $140 | 12.3% | $254,677.72 |\n| ↑ $150 | 5.5% | $539,363.48 |\n\nThe provided chart illustrates a \"volatility smile\" in volume terms. While the \"center\" of the probability distribution sits between $95 and $110, l...",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 0,
+  "chartSummaries": [
+    {
+      "title": "WTI Crude Oil (WTI) May 2026 — Strike skew vs 24h volume",
+      "type": "composed",
+      "rowCount": 18,
+      "distinctXCount": 18,
+      "numericSeriesCount": 2,
+      "numericSeriesWithVariation": 2,
+      "xKey": "strike",
+      "seriesKeys": [
+        "impliedProbability",
+        "volume24h"
+      ],
+      "sampleRows": [
+        {
+          "strike": 20,
+          "label": "↓ $20",
+          "impliedProbability": 0.0035,
+          "volume24h": 26514.672780999997,
+          "readableQuote": "↓ $20 → matched \"↓ $20\": YES mid 0.4% (0–1: 0.0035), bid 0.3¢ / ask 0.4¢, spread 0.10¢ (28.57% pts)."
+        },
+        {
+          "strike": 30,
+          "label": "↓ $30",
+          "impliedProbability": 0.005,
+          "volume24h": 2006.388776,
+          "readableQuote": "↓ $30 → matched \"↓ $30\": YES mid 0.5% (0–1: 0.0050), bid 0.3¢ / ask 0.7¢, spread 0.40¢ (80.00% pts)."
+        },
+        {
+          "strike": 40,
+          "label": "↓ $40",
+          "impliedProbability": 0.0045,
+          "volume24h": 1632.1424919999995,
+          "readableQuote": "↓ $40 → matched \"↓ $40\": YES mid 0.4% (0–1: 0.0045), bid 0.3¢ / ask 0.6¢, spread 0.30¢ (66.67% pts)."
+        }
+      ],
+      "needsDualAxis": true,
+      "willRenderDualAxis": true,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": true,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "WTI Crude Oil (WTI) May 2026 — Strike skew vs 24h volume",
+        "type": "composed",
+        "xKey": "strike",
+        "seriesKeys": [
+          "impliedProbability",
+          "volume24h"
+        ],
+        "passes": true,
+        "failures": []
+      }
+    ],
+    "pass": true
+  },
+  "semanticFailures": [],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [],
+  "buyerValueScore": 4,
+  "buyerVerdict": "pass",
+  "buyerReview": "Preliminary pass: produced a multi-row, varied chart with specific data and an actionable buyer takeaway.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T05-14-18-958Z/raw/12-polymarket-inside-the-polymarket-what-will-wti-crude-oil-wt.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T05-14-18-958Z/summaries/12-polymarket-inside-the-polymarket-what-will-wti-crude-oil-wt.summary.json"
+}

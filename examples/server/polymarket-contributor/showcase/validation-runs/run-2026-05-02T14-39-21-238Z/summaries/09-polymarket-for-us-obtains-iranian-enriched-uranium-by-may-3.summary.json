@@ -1,0 +1,90 @@
+{
+  "id": "09-polymarket-for-us-obtains-iranian-enriched-uranium-by-may-3",
+  "index": 8,
+  "provider": "polymarket",
+  "prompt": "For 'US obtains Iranian enriched uranium by May 31?', chart current probability, price history, top-holder concentration, and recent whale flow, then annotate the resolution-rule risks that could affect trade sizing.",
+  "expectedMinimumRows": 20,
+  "expectedReason": "time-series chart needs enough history to show shape",
+  "startedAt": "2026-05-02T14:51:46.476Z",
+  "finishedAt": "2026-05-02T14:53:01.100Z",
+  "durationMs": 74624,
+  "outcomeType": "answer",
+  "responseChars": 2081,
+  "responsePreview": "As of May 2, 2026, the market for \"US obtains Iranian enriched uranium by May 31?\" shows a **current probability of 8.5%**. \n\nThe provided bar chart highlights this low probability, reflecting significant market skepticism that physical possession will occur within the next four weeks. No historical price data points were available from the source at the time of the query to establish a long-term trendline.\n\n### Top-Holder Concentration\nThe \"YES\" side is heavily concentrated among a few large accounts, while the \"NO\" side is more widely distributed.\n\n| Side | Top 10 Concentration | Whale Count | Total Position Value |\n| :--- | :--- | :--- | :--- |\n| **YES** | 82.09% | 18 | $227,998.56 |\n| **NO** | 43.66% | 178 | $2,443,120.45 |\n\n### Recent Whale Flow (Last 24 Hours)\nActivity in the last 24 hours shows a strong bullish divergence, with whales exclusively on the buy side.\n\n| Tier | Trade Count | Buy Volume | Sell Volume | Net Flow | Sentiment |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| **Whale** | 17 | $70,606.96 | $0.00 | +$70,606.96 | Bullish |\n| **Medium** | 34 | $5,817.62 | $1,765.19 | +$4,052.43 | Bullish |\n| **Small** | 149 | $817.42 | $212.59 | +$604.83 | Bullish |\n\n### Re...",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 0,
+  "chartSummaries": [
+    {
+      "title": "US obtains Iranian enriched uranium by May 31? — current probability",
+      "type": "bar",
+      "rowCount": 1,
+      "distinctXCount": 1,
+      "numericSeriesCount": 1,
+      "numericSeriesWithVariation": 0,
+      "xKey": "label",
+      "seriesKeys": [
+        "probability"
+      ],
+      "sampleRows": [
+        {
+          "label": "Current probability",
+          "probability": 8.5,
+          "currentPrice": 8.5
+        }
+      ],
+      "needsDualAxis": false,
+      "willRenderDualAxis": false,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": true,
+      "expectsProbabilityMetric": true,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [
+      "no chart matched the prompt's requested axis, chart type, and metrics",
+      "chart 0: time-series prompt did not use date/time-like x-axis labels"
+    ],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "US obtains Iranian enriched uranium by May 31? — current probability",
+        "type": "bar",
+        "xKey": "label",
+        "seriesKeys": [
+          "probability"
+        ],
+        "passes": false,
+        "failures": [
+          "time-series prompt did not use date/time-like x-axis labels"
+        ]
+      }
+    ],
+    "pass": false
+  },
+  "semanticFailures": [
+    "no chart matched the prompt's requested axis, chart type, and metrics",
+    "chart 0: time-series prompt did not use date/time-like x-axis labels"
+  ],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+    "semantic chart audit failed: chart 0: time-series prompt did not use date/time-like x-axis labels",
+    "chart \"US obtains Iranian enriched uranium by May 31? — current probability\" had 1 row(s), expected at least 20",
+    "chart \"US obtains Iranian enriched uranium by May 31? — current probability\" had only 1 distinct x-axis value(s)",
+    "chart \"US obtains Iranian enriched uranium by May 31? — current probability\" had no numeric series variation"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/09-polymarket-for-us-obtains-iranian-enriched-uranium-by-may-3.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/09-polymarket-for-us-obtains-iranian-enriched-uranium-by-may-3.summary.json"
+}

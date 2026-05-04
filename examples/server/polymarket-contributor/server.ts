@@ -2874,15 +2874,18 @@ Returns BOTH total volume AND 24h volume for each market, plus direct Polymarket
         },
         minTotalVolume: {
           type: "number",
-          description: "Minimum ALL-TIME volume in USD (e.g., 10000000 for $10M+). Use this to find only major markets.",
+          description:
+            "Minimum ALL-TIME volume in USD (e.g., 10000000 for $10M+). Use to find only major markets. OMIT THIS FIELD if you do not want a minimum filter — do NOT pass 0 or a negative number as a sentinel.",
         },
         maxTotalVolume: {
           type: "number",
-          description: "Maximum ALL-TIME volume in USD. Use with minTotalVolume to find mid-tier markets.",
+          description:
+            "Maximum ALL-TIME volume in USD. Use with minTotalVolume (must be strictly greater than minTotalVolume) to find mid-tier markets. OMIT THIS FIELD if you do not want a maximum filter — do NOT pass 0 or a negative number as a sentinel.",
         },
         minLiquidity: {
           type: "number",
-          description: "Minimum liquidity in USD. Higher = better exit options.",
+          description:
+            "Minimum liquidity in USD. Higher = better exit options. OMIT THIS FIELD if you do not want a minimum filter — do NOT pass 0 or a negative number as a sentinel.",
         },
         endDateBefore: {
           type: "string",
@@ -14618,9 +14621,51 @@ async function handleGetTopMarkets(
 ): Promise<CallToolResult> {
   const sortBy = (args?.sortBy as string) || "total_volume"; // Default to total volume (biggest markets)
   const category = args?.category as string;
-  const minTotalVolume = args?.minTotalVolume as number | undefined;
-  const maxTotalVolume = args?.maxTotalVolume as number | undefined;
-  const minLiquidity = args?.minLiquidity as number | undefined;
+  let minTotalVolume = args?.minTotalVolume as number | undefined;
+  let maxTotalVolume = args?.maxTotalVolume as number | undefined;
+  let minLiquidity = args?.minLiquidity as number | undefined;
+  // Sanitize numeric range filters before they hit GAMMA. The /events endpoint returns
+  // 422 "error validating query argument \"volume\": invalid range" whenever min >= max
+  // (e.g. minTotalVolume=0 + maxTotalVolume=0, an LLM sentinel pattern). Treat values <= 0
+  // as "no filter" (no real Polymarket market has volume/liquidity <= 0) and collapse
+  // inverted ranges by dropping the broken upper bound, preserving the more-informative
+  // lower bound. Without this, get_top_markets propagates a hard 422 and the planner
+  // silently falls back to discover_trending_markets, returning a less-relevant list.
+  const sanitizeNotes: string[] = [];
+  if (
+    typeof minTotalVolume === "number" &&
+    (!Number.isFinite(minTotalVolume) || minTotalVolume <= 0)
+  ) {
+    sanitizeNotes.push(`minTotalVolume=${minTotalVolume} dropped (<=0 sentinel)`);
+    minTotalVolume = undefined;
+  }
+  if (
+    typeof maxTotalVolume === "number" &&
+    (!Number.isFinite(maxTotalVolume) || maxTotalVolume <= 0)
+  ) {
+    sanitizeNotes.push(`maxTotalVolume=${maxTotalVolume} dropped (<=0 sentinel)`);
+    maxTotalVolume = undefined;
+  }
+  if (
+    typeof minLiquidity === "number" &&
+    (!Number.isFinite(minLiquidity) || minLiquidity <= 0)
+  ) {
+    sanitizeNotes.push(`minLiquidity=${minLiquidity} dropped (<=0 sentinel)`);
+    minLiquidity = undefined;
+  }
+  if (
+    typeof minTotalVolume === "number" &&
+    typeof maxTotalVolume === "number" &&
+    minTotalVolume >= maxTotalVolume
+  ) {
+    sanitizeNotes.push(
+      `maxTotalVolume=${maxTotalVolume} dropped (<= minTotalVolume=${minTotalVolume}, inverted range)`
+    );
+    maxTotalVolume = undefined;
+  }
+  if (sanitizeNotes.length > 0) {
+    console.warn("[get_top_markets] sanitized inputs", { notes: sanitizeNotes });
+  }
   const endDateBefore = args?.endDateBefore as string | undefined;
   const endDateAfter = args?.endDateAfter as string | undefined;
   const includeNearResolved = (args?.includeNearResolved as boolean) ?? false;
@@ -14769,7 +14814,39 @@ async function handleGetTopMarkets(
         endpoint += `&tag_slug=${categoryTagSlug}`;
       }
 
-      const rawEvents = (await fetchGamma(endpoint, 10000, 2)) as GammaEvent[];
+      let rawEvents: GammaEvent[];
+      try {
+        rawEvents = (await fetchGamma(endpoint, 10000, 2)) as GammaEvent[];
+      } catch (error) {
+        // Belt-and-suspenders: even after input sanitization, GAMMA can still return
+        // 422 if the API ever tightens validation on a different argument. Salvage
+        // the call by retrying once without the volume/liquidity range filters
+        // (the only fields here that produce "invalid range" errors). Returning a
+        // ranked list is strictly better than propagating a hard error, which
+        // causes the planner to fall back to discover_trending_markets.
+        if (error instanceof UpstreamHttpError && error.status === 422) {
+          let salvageEndpoint =
+            `/events?active=true&closed=false&limit=${pageSize}` +
+            `&offset=${scanOffset}&order=${orderParam}&ascending=${ascending}`;
+          if (endDateBefore) {
+            salvageEndpoint += `&end_date_max=${endDateBefore}`;
+          }
+          if (endDateAfter) {
+            salvageEndpoint += `&end_date_min=${endDateAfter}`;
+          }
+          if (categoryTagSlug) {
+            salvageEndpoint += `&tag_slug=${categoryTagSlug}`;
+          }
+          console.warn("[get_top_markets] gamma_422_salvage_retry", {
+            originalEndpoint: endpoint.slice(0, 200),
+            salvageEndpoint: salvageEndpoint.slice(0, 200),
+            droppedFilters: { minTotalVolume, maxTotalVolume, minLiquidity },
+          });
+          rawEvents = (await fetchGamma(salvageEndpoint, 10000, 2)) as GammaEvent[];
+        } else {
+          throw error;
+        }
+      }
       pagesScanned += 1;
       lastRawBatchSize = rawEvents.length;
 

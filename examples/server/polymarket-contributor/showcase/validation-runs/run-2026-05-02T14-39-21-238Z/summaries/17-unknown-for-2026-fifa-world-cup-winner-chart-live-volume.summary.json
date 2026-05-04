@@ -1,0 +1,98 @@
+{
+  "id": "17-unknown-for-2026-fifa-world-cup-winner-chart-live-volume",
+  "index": 16,
+  "provider": "unknown",
+  "prompt": "For '2026 FIFA World Cup Winner', chart live volume share and implied probability for Spain, France, England, South Korea, New Zealand, Switzerland, and Haiti, then identify which outcomes have volume that looks outsized relative to probability.",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-05-02T15:03:25.702Z",
+  "finishedAt": "2026-05-02T15:05:02.787Z",
+  "durationMs": 97085,
+  "outcomeType": "answer",
+  "responseChars": 1874,
+  "responsePreview": "As of May 2, 2026, the volume and probability data for the selected 2026 FIFA World Cup Winner outcomes show a significant disconnect between market sentiment (volume) and winning expectations (price).\n\nThe following data is synthesized from the market results fetched during this query:\n\n| Outcome | Implied Probability | Live Volume | Volume Share |\n| :--- | :--- | :--- | :--- |\n| **France** | 16.4% | $22,813,802.25 | 2.60% |\n| **Spain** | 15.3% | $17,950,230.34 | 2.05% |\n| **England** | 11.1% | $14,707,439.90 | 1.68% |\n| **Switzerland** | 0.9% | $14,229,189.77 | 1.62% |\n| **South Korea** | 0.5% | $20,813,061.32 | 2.37% |\n| **New Zealand** | 0.3% | $26,916,994.31 | 3.07% |\n| **Haiti** | 0.1% | $16,317,526.51 | 1.86% |\n\n### Outsized Volume Identification\nBased on the chart and data, three outcomes show volume that is heavily disproportionate to their actual probability of winning:\n\n*   **New Zealand:** This is the most extreme case. Despite an implied probability of just **0.3%**, it holds a **3.07%** volume share—the highest of the entire requested group, even surpassing favorites like France and Spain.\n*   **Haiti:** With a near-zero probability of **0.1%**, Haiti has attracted ov...",
+  "toolsUsed": [
+    "Polymarket Intelligence",
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 0,
+  "chartSummaries": [
+    {
+      "title": "2026 FIFA World Cup Winner: live volume share vs implied probability",
+      "type": "composed",
+      "rowCount": 7,
+      "distinctXCount": 7,
+      "numericSeriesCount": 2,
+      "numericSeriesWithVariation": 2,
+      "xKey": "outcome",
+      "seriesKeys": [
+        "liveVolumeSharePct",
+        "impliedProbabilityPct"
+      ],
+      "sampleRows": [
+        {
+          "outcome": "Spain",
+          "impliedProbabilityPct": 15.3,
+          "liveVolumeSharePct": 2.0470068294746975,
+          "volume": 17950230.341300417,
+          "price": 0.1525,
+          "spreadPercent": 0.66
+        },
+        {
+          "outcome": "France",
+          "impliedProbabilityPct": 16.4,
+          "liveVolumeSharePct": 2.601638425748976,
+          "volume": 22813802.24752668,
+          "price": 0.1645,
+          "spreadPercent": 0.61
+        },
+        {
+          "outcome": "England",
+          "impliedProbabilityPct": 11.1,
+          "liveVolumeSharePct": 1.6772057712254533,
+          "volume": 14707439.901888922,
+          "price": 0.1105,
+          "spreadPercent": 0.9
+        }
+      ],
+      "needsDualAxis": true,
+      "willRenderDualAxis": true,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": true,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "2026 FIFA World Cup Winner: live volume share vs implied probability",
+        "type": "composed",
+        "xKey": "outcome",
+        "seriesKeys": [
+          "liveVolumeSharePct",
+          "impliedProbabilityPct"
+        ],
+        "passes": true,
+        "failures": []
+      }
+    ],
+    "pass": true
+  },
+  "semanticFailures": [],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [],
+  "buyerValueScore": 4,
+  "buyerVerdict": "pass",
+  "buyerReview": "Preliminary pass: produced a multi-row, varied chart with specific data and an actionable buyer takeaway.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/17-unknown-for-2026-fifa-world-cup-winner-chart-live-volume.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/17-unknown-for-2026-fifa-world-cup-winner-chart-live-volume.summary.json"
+}

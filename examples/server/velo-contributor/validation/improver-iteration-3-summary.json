@@ -1,0 +1,73 @@
+{
+  "fixedRootCauseCategory": "argument_or_extraction_error",
+  "skippedRootCauseCategories": [
+    {
+      "rootCauseCategory": "contributor_tool_bug",
+      "promptIds": ["velo-18"],
+      "reason": "Diagnosed but intentionally left for a later ablation; depth venue mapping and payload compaction are separate from argument extraction."
+    }
+  ],
+  "filesChanged": [
+    {
+      "path": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/server.ts",
+      "changes": [
+        "Normalized Velo row filters so options calls keep coins and drop products, while futures/spot calls keep products and drop coins when both are supplied.",
+        "Mapped singular liquidation column aliases to Velo's plural column names before column validation.",
+        "Guarded invalid end=0 and invalid begin windows by falling back to the requested lookback ending at Date.now().",
+        "Updated get_market_rows and analyze_futures_market_structure descriptions to tell the planner to pass either products or coins and to use lookbackHours for latest/current windows."
+      ]
+    }
+  ],
+  "deployed": true,
+  "rerunResultsPath": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/validation/improver-rerun-iteration-3.json",
+  "fixedCount": 2,
+  "no_safe_fix_available": false,
+  "notes": [
+    "Release decision schemaVersion was 2026-04-17; the schema validator shell command was blocked by the pipeline control-plane guard before execution.",
+    "The fix was deployed to the VPS with examples/server/deploy.sh and setup-servers.sh; public /velo/health returned ok and /velo/mcp tools/list exposed the updated get_market_rows description.",
+    "Rerun results show velo-03 and velo-13 returned Velo-backed answers instead of the previous must choose products or coins failures.",
+    "velo-14 and velo-19 could not complete during the rerun because the Context API returned insufficient_allowance before execution."
+  ],
+  "weakQueriesByEvaluationSet": {
+    "train": ["velo-18", "velo-03", "velo-13", "velo-14"],
+    "holdout": ["velo-19"]
+  },
+  "fixedPromptIds": ["velo-03", "velo-13"],
+  "rerunOutcomes": [
+    {
+      "promptId": "velo-18",
+      "evaluationSet": "train",
+      "targetedByFix": false,
+      "status": "answer",
+      "outcome": "Returned a venue comparison answer with Velo Market Data; contributor_tool_bug remains the skipped category for later review."
+    },
+    {
+      "promptId": "velo-03",
+      "evaluationSet": "train",
+      "targetedByFix": true,
+      "status": "answer",
+      "outcome": "Returned latest Deribit BTC options values for index_price, iv_1w, iv_1m, skew_1w, skew_1m, and dollar_volume."
+    },
+    {
+      "promptId": "velo-13",
+      "evaluationSet": "train",
+      "targetedByFix": true,
+      "status": "answer",
+      "outcome": "Returned a spot-versus-futures support comparison using both spot dollar volume and futures OI/funding evidence; final code also guards the end=0 retry noise observed in this rerun."
+    },
+    {
+      "promptId": "velo-14",
+      "evaluationSet": "train",
+      "targetedByFix": true,
+      "status": "blocked",
+      "outcome": "Context API returned insufficient_allowance before execution, so no post-fix developer trace was collected."
+    },
+    {
+      "promptId": "velo-19",
+      "evaluationSet": "holdout",
+      "targetedByFix": false,
+      "status": "blocked",
+      "outcome": "Context API returned insufficient_allowance before execution, so no post-fix developer trace was collected."
+    }
+  ]
+}

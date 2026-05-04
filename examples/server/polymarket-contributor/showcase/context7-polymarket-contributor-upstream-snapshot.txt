@@ -1,0 +1,1569 @@
+===== BEGIN DOCSET 1: https://context7.com/websites/polymarket/llms.txt?tokens=10000 =====
+### Install Polymarket CLOB Client SDK
+
+Source: https://docs.polymarket.com/trading/quickstart
+
+Install the necessary SDKs for TypeScript, Python, or Rust to interact with the Polymarket CLOB.
+
+```bash
+npm install @polymarket/clob-client-v2 ethers@5
+```
+
+```bash
+pip install py-clob-client-v2
+```
+
+```bash
+cargo add polymarket-client-sdk --features clob
+```
+
+--------------------------------
+
+### Install Python CLOB Client
+
+Source: https://docs.polymarket.com/api-reference/clients-sdks
+
+Install the Python CLOB client for interacting with Polymarket's CLOB API.
+
+```bash
+pip install py-clob-client-v2
+```
+
+--------------------------------
+
+### SDK Migration Guide
+
+Source: https://docs.polymarket.com/v2-migration
+
+Information on migrating from CLOB V1 to CLOB V2, including installation and constructor changes.
+
+```APIDOC
+## SDK Migration
+
+### Install
+Install the new CLOB V2 packages directly.
+
+**TypeScript:**
+```bash
+npm install @polymarket/clob-client-v2@1.0.0
+```
+
+**Python:**
+```bash
+pip install py-clob-client-v2==1.0.0
+```
+
+ 
+The legacy `@polymarket/clob-client` and `py-clob-client` packages only work against V1 and will stop functioning after the April 28 cutover.
+ 
+
+ 
+**What's next.** We're planning a unified SDK that folds Gamma, Data, and CLOB into a single package. Future releases will converge there — for now, `clob-client-v2` / `py-clob-client-v2` are the V2 CLOB clients.
+ 
+
+### Constructor: positional args → options object
+
+The constructor arguments have changed from positional arguments to an options object. `chainId` is renamed to `chain`. `tickSizeTtlMs` is no longer configurable.
+
+**Before (V1):**
+```typescript
+const client = new ClobClient(
+  host,
+  chainId,
+  signer,
+  creds,
+  signatureType,
+  funderAddress,
+  useServerTime,
+  builderConfig,
+  getSigner,
+  retryOnError,
+  tickSizeTtlMs,   // ← removed in V2
+  throwOnError,
+);
+```
+
+**After (V2):**
+```typescript
+const client = new ClobClient({
+  host,
+  chain: chainId,  // ← renamed from chainId
+  signer,
+  creds,
+  signatureType,
+  funderAddress,
+  useServerTime,
+  builderConfig,   // shape changed — see Builder Program below
+  getSigner,
+  retryOnError,
+  throwOnError,
+});
+```
+
+ 
+The only mental shift: wrap args in `{}` and rename `chainId` → `chain`. Everything else is the same.
+ 
+
+### Order creation
+
+Three fields are no longer user-settable: `feeRateBps`, `nonce`, `taker`. One new optional field: `builderCode`.
+
+**Before (V1):**
+```typescript
+const order: UserOrder = {
+  tokenID: "0x123...",
+  price: 0.55,
+  size: 100,
+  side: Side.BUY,
+  feeRateBps: 100,        // ← removed
+  nonce: 12345,           // ← removed
+  taker: "0xabc...",      // ← removed
+  expiration: 1714000000,
+};
+```
+
+**After (V2):**
+```typescript
+const order: UserOrderV2 = {
+  tokenID: "0x123...",
+  price: 0.55,
+  size: 100,
+  side: Side.BUY,
+  expiration: 1714000000,
+  builderCode: "0x...",   // optional — your builder code
+};
+```
+
+**Market orders** follow the same pattern and add an optional `userUSDCBalance` field so the SDK can calculate fee-adjusted fill amounts:
+
+```typescript
+const marketOrder: UserMarketOrderV2 = {
+  tokenID: "0x123...",
+  amount: 500,
+  side: Side.BUY,
+  orderType: OrderType.FOK,
+  userUSDCBalance: 1000,   // optional — enables fee-aware calculations
+  builderCode: "0x...",    // optional
+};
+```
+
+## Fee model
+
+Fees are now **determined by the protocol at match time**, not embedded in your signed order.
+
+* **Platform fees** are dynamic per market: `fee = C × feeRate × p × (1 - p)`
+* **Makers are never charged fees** — only takers pay.
+* You no longer set `feeRateBps` on orders. The SDK handles fee calculation automatically.
+```
+
+--------------------------------
+
+### Get Market Prices Request Body Example (YAML)
+
+Source: https://docs.polymarket.com/api-reference/market-data/get-market-prices-request-body
+
+Example of a request body for the /prices endpoint, specifying token IDs and sides for which to retrieve prices. Each item requires a token_id and optionally a side.
+
+```yaml
+openapi: 3.1.0
+info:
+  title: Polymarket CLOB API
+  description: Polymarket CLOB API Reference
+  license:
+    name: MIT
+    identifier: MIT
+  version: 1.0.0
+servers:
+  - url: https://clob.polymarket.com
+    description: Production CLOB API
+  - url: https://clob-staging.polymarket.com
+    description: Staging CLOB API
+security: []
+tags:
+  - name: Trade
+    description: Trade endpoints
+  - name: Markets
+    description: Market data endpoints
+  - name: Account
+    description: Account and authentication endpoints
+  - name: Notifications
+    description: User notification endpoints
+  - name: Rewards
+    description: Rewards and earnings endpoints
+  - name: Rebates
+    description: Maker rebate endpoints
+paths:
+  /prices:
+    post:
+      tags:
+        - Market Data
+      summary: Get market prices (request body)
+      description: >
+        Retrieves market prices for multiple token IDs and sides using a request
+        body.
+
+        Each request must include both token_id and side.
+      operationId: getPricesPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/BookRequest'
+            example:
+              - token_id: 0xabc123def456...
+                side: BUY
+              - token_id: 0xdef456abc123...
+                side: SELL
+      responses:
+        '200':
+          description: Successfully retrieved market prices
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  additionalProperties:
+                    type: number
+                    format: double
+                description: Map of token ID to map of side to price
+              example:
+                0xabc123def456...:
+                  BUY: 0.45
+                0xdef456abc123...:
+                  SELL: 0.52
+        '400':
+          description: Bad request - Invalid payload or side
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_payload:
+                  summary: Invalid payload
+                  value:
+                    error: Invalid payload
+                invalid_side:
+                  summary: Invalid side
+                  value:
+                    error: Invalid side
+        '404':
+          description: Not found - No orderbook exists for the requested token id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: No orderbook exists for the requested token id
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Internal server error
+      security: []
+components:
+  schemas:
+    BookRequest:
+      type: object
+      required:
+        - token_id
+      properties:
+        token_id:
+          type: string
+          description: Token ID (asset ID)
+          example: 0xabc123def456...
+        side:
+          type: string
+          description: Order side (optional, not used for midpoint calculation)
+          enum:
+            - BUY
+            - SELL
+          example: BUY
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+
+```
+
+--------------------------------
+
+### Get Market Prices Response Body Example (YAML)
+
+Source: https://docs.polymarket.com/api-reference/market-data/get-market-prices-request-body
+
+Example of a successful response from the /prices endpoint, showing market prices for specified token IDs and sides. The response is a map where keys are token IDs and values are maps of sides to their respective prices.
+
+```yaml
+0xabc123def456...:
+  BUY: 0.45
+0xdef456abc123...:
+  SELL: 0.52
+```
+
+--------------------------------
+
+### Install CLOB V2 SDK for Python
+
+Source: https://docs.polymarket.com/builders/fees
+
+Install the CLOB V2 client library for Python using pip. This is necessary for integrating with the Polymarket V2 SDK.
+
+```bash
+pip install py-clob-client-v2==1.0.0
+```
+
+--------------------------------
+
+### Install Polymarket CLOB Client (TypeScript)
+
+Source: https://docs.polymarket.com/trading/overview
+
+Install the TypeScript client for interacting with the Polymarket CLOB. This is the recommended way to manage order signing, authentication, and submission.
+
+```typescript
+npm install @polymarket/clob-client-v2
+```
+
+--------------------------------
+
+### Install TypeScript CLOB Client
+
+Source: https://docs.polymarket.com/api-reference/clients-sdks
+
+Install the TypeScript CLOB client and ethers v5 for interacting with Polymarket's CLOB API.
+
+```bash
+npm install @polymarket/clob-client-v2 ethers@5
+```
+
+--------------------------------
+
+### Profit Example - Selling Before Resolution
+
+Source: https://docs.polymarket.com/concepts/positions-tokens
+
+Demonstrates how to lock in profits or cut losses by selling tokens before market resolution. This example shows a profit of $0.30 per token (75%) when selling Yes at $0.70 after buying at $0.40.
+
+```text
+Bought Yes at $0.40
+Price rises to $0.70
+Sell at $0.70 → Profit of $0.30 per token (75%)
+```
+
+--------------------------------
+
+### Quick Example: Fetch Markets (Python)
+
+Source: https://docs.polymarket.com/api-reference/clients-sdks
+
+Instantiate the ClobClient in Python and retrieve market data. Requires a private key and API credentials.
+
+```python
+from py_clob_client.client import ClobClient
+
+client = ClobClient(
+    "https://clob.polymarket.com",
+    key=private_key,
+    chain=137,
+    creds=api_creds,
+)
+
+markets = client.get_markets()
+```
+
+--------------------------------
+
+### Quick Example: Fetch Markets (TypeScript)
+
+Source: https://docs.polymarket.com/api-reference/clients-sdks
+
+Instantiate the ClobClient in TypeScript and fetch available markets. Ensure you have valid API credentials and a signer.
+
+```typescript
+import { ClobClient } from "@polymarket/clob-client-v2";
+
+const client = new ClobClient({
+    host: "https://clob.polymarket.com",
+    chain: 137,
+    signer,
+    creds: apiCreds,
+  });
+
+const markets = await client.getMarkets();
+```
+
+--------------------------------
+
+### Quick Example: Fetch Markets (Rust)
+
+Source: https://docs.polymarket.com/api-reference/clients-sdks
+
+Initialize the Rust CLOB client and authenticate using a signer to fetch market data. Note the use of the `?` operator for error handling.
+
+```rust
+use polymarket_client_sdk::clob::{Client, Config};
+
+let client = Client::new("https://clob.polymarket.com", Config::default())?
+    .authentication_builder(&signer)
+    .authenticate()
+    .await?;
+
+let markets = client.markets(None).await?;
+```
+
+--------------------------------
+
+### Get Current Rebated Fees - OpenAPI Spec
+
+Source: https://docs.polymarket.com/api-reference/rebates/get-current-rebated-fees-for-a-maker
+
+This OpenAPI specification defines the endpoint for retrieving current rebated fees for a maker. It includes request parameters, response schemas, and example data for successful and error cases. Use this to understand the API contract.
+
+```yaml
+openapi: 3.1.0
+info:
+  title: Polymarket CLOB API
+  description: Polymarket CLOB API Reference
+  license:
+    name: MIT
+    identifier: MIT
+  version: 1.0.0
+servers:
+  - url: https://clob.polymarket.com
+    description: Production CLOB API
+  - url: https://clob-staging.polymarket.com
+    description: Staging CLOB API
+security: []
+tags:
+  - name: Trade
+    description: Trade endpoints
+  - name: Markets
+    description: Market data endpoints
+  - name: Account
+    description: Account and authentication endpoints
+  - name: Notifications
+    description: User notification endpoints
+  - name: Rewards
+    description: Rewards and earnings endpoints
+  - name: Rebates
+    description: Maker rebate endpoints
+paths:
+  /rebates/current:
+    get:
+      tags:
+        - Rebates
+      summary: Get current rebated fees for a maker
+      description: >
+        Returns the current rebated fees for a maker address on a given date.
+
+        Each entry includes the condition ID, asset address, and the USDC amount
+        rebated.
+
+        This endpoint does not require authentication.
+      operationId: getCurrentRebatedFees
+      parameters:
+        - name: date
+          in: query
+          description: Date in YYYY-MM-DD format
+          required: true
+          schema:
+            type: string
+            format: date
+          example: '2026-02-27'
+        - name: maker_address
+          in: query
+          description: Ethereum address of the maker
+          required: true
+          schema:
+            type: string
+          example: '0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604'
+      responses:
+        '200':
+          description: Successfully retrieved rebated fees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RebatedFees'
+              example:
+                - date: '2026-02-27'
+                  condition_id: >-
+                    0xbd31dc8a20211944f6b70f31557f1001557b59905b7738480ca09bd4532f84af
+                  asset_address: '0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB'
+                  maker_address: '0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604'
+                  rebated_fees_usdc: '0.237519'
+        '400':
+          description: Bad request - Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_date:
+                  summary: Invalid date
+                  value:
+                    error: Invalid date
+                invalid_maker_address:
+                  summary: Invalid maker address
+                  value:
+                    error: Invalid maker_address
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Internal server error
+components:
+  schemas:
+    RebatedFees:
+      type: object
+      description: Rebated fees for a maker on a specific market and date
+      required:
+        - date
+        - condition_id
+        - asset_address
+        - maker_address
+        - rebated_fees_usdc
+      properties:
+        date:
+          type: string
+          description: Date of the rebate (YYYY-MM-DD)
+          example: '2026-02-27'
+        condition_id:
+          type: string
+          description: Condition ID of the market
+          example: '0xbd31dc8a20211944f6b70f31557f1001557b59905b7738480ca09bd4532f84af'
+        asset_address:
+          type: string
+          description: Asset address (e.g. USDC contract)
+          example: '0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB'
+        maker_address:
+          type: string
+          description: Maker's Ethereum address
+          example: '0xFeA4cB3dD4ca7CefD3368653B7D6FF9BcDFca604'
+        rebated_fees_usdc:
+          type: string
+          description: Rebated fee amount in USDC
+          example: '0.237519'
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+
+```
+
+--------------------------------
+
+### Create and Post Limit Order (Rust)
+
+Source: https://docs.polymarket.com/trading/orders/create
+
+This Rust example demonstrates creating, signing, and posting a limit order using the SDK. Ensure the signer is available.
+
+```rust
+use polymarket_client_sdk::clob::types::Side;
+use polymarket_client_sdk::types::dec;
+
+let token_id = "TOKEN_ID".parse()?;
+let order = client
+    .limit_order()
+    .token_id(token_id)
+    .price(dec!(0.50))
+    .size(dec!(10))
+    .side(Side::Buy)
+    .build()
+    .await?;
+let signed = client.sign(&signer, order).await?;
+let response = client.post_order(signed).await?;
+
+println!("Order ID: {}", response.order_id);
+println!("Status: {:?}", response.status);
+```
+
+--------------------------------
+
+### GET /getOrder
+
+Source: https://docs.polymarket.com/trading/clients/builder
+
+Get details for a specific order by ID.
+
+```APIDOC
+## GET /getOrder
+
+### Description
+Get details for a specific order by ID.
+
+### Method
+GET
+
+### Endpoint
+`/getOrder`
+
+### Parameters
+#### Query Parameters
+- **orderID** (string) - Required - The ID of the order to retrieve.
+
+### Request Example (TypeScript)
+```typescript
+const order = await client.getOrder("0xb816482a...");
+console.log(order);
+```
+
+### Request Example (Python)
+```python
+order = client.get_order("0xb816482a...")
+print(order)
+```
+
+### Response
+#### Success Response (200)
+- **OpenOrder** (object) - Details of the requested order.
+```
+
+--------------------------------
+
+### Post New Order Example
+
+Source: https://docs.polymarket.com/api-reference/trade/post-a-new-order
+
+Use this to create a new order in the order book. Ensure all required fields like maker, signer, amounts, side, expiration, and signature are correctly populated.
+
+```yaml
+openapi: 3.1.0
+info:
+  title: Polymarket CLOB API
+  description: Polymarket CLOB API Reference
+  license:
+    name: MIT
+    identifier: MIT
+  version: 1.0.0
+servers:
+  - url: https://clob.polymarket.com
+    description: Production CLOB API
+  - url: https://clob-staging.polymarket.com
+    description: Staging CLOB API
+security: []
+tags:
+  - name: Trade
+    description: Trade endpoints
+  - name: Markets
+    description: Market data endpoints
+  - name: Account
+    description: Account and authentication endpoints
+  - name: Notifications
+    description: User notification endpoints
+  - name: Rewards
+    description: Rewards and earnings endpoints
+  - name: Rebates
+    description: Maker rebate endpoints
+paths:
+  /order:
+    post:
+      tags:
+        - Trade
+      summary: Post a new order
+      description: |
+        Creates a new order in the order book
+      operationId: postOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendOrder'
+            examples:
+              example:
+                summary: Send order example
+                value:
+                  order:
+                    maker: '0x1234567890123456789012345678901234567890'
+                    signer: '0x1234567890123456789012345678901234567890'
+                    tokenId: 0xabc123def456...
+                    makerAmount: '100000000'
+                    takerAmount: '200000000'
+                    side: BUY
+                    expiration: '1735689600'
+                    timestamp: '1735689600000'
+                    metadata: ''
+                    builder: >-
+                      0x0000000000000000000000000000000000000000000000000000000000000000
+                    signature: 0x1234abcd...
+                    salt: 1234567890
+                    signatureType: 0
+                  owner: f4f247b7-4ac7-ff29-a152-04fda0a8755a
+                  orderType: GTC
+                  deferExec: false
+      responses:
+        '200':
+          description: Order successfully processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendOrderResponse'
+              examples:
+                live_order:
+                  summary: Order placed on book
+                  value:
+                    success: true
+                    orderID: '0xabcdef1234567890abcdef1234567890abcdef12'
+                    status: live
+                    makingAmount: '100000000'
+                    takingAmount: '200000000'
+                    errorMsg: ''
+                matched_order:
+                  summary: Order immediately matched
+                  value:
+                    success: true
+                    orderID: '0xabcdef1234567890abcdef1234567890abcdef12'
+                    status: matched
+                    makingAmount: '100000000'
+                    takingAmount: '200000000'
+                    transactionsHashes:
+                      - '0x1234567890abcdef1234567890abcdef12345678'
+                    tradeIDs:
+                      - trade-123
+                    errorMsg: ''
+                delayed_order:
+                  summary: Order delayed
+                  value:
+                    success: true
+                    orderID: '0xabcdef1234567890abcdef1234567890abcdef12'
+                    status: delayed
+                    makingAmount: '100000000'
+                    takingAmount: '200000000'
+                    errorMsg: ''
+        '400':
+          description: Bad request - Invalid order payload or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_payload:
+                  summary: Invalid order payload
+                  value:
+                    error: Invalid order payload
+                owner_mismatch:
+                  summary: Owner mismatch
+                  value:
+                    error: the order owner has to be the owner of the API KEY
+                signer_mismatch:
+                  summary: Signer mismatch
+                  value:
+                    error: >-
+                      the order signer address has to be the address of the API
+                      KEY
+                banned_address:
+                  summary: Banned address
+                  value:
+                    error: '''0x1234...'' address banned'
+                closed_only_mode:
+                  summary: Closed only mode violation
+                  value:
+                    error: '''0x1234...'' address in closed only mode'
+                invalid_order:
+                  summary: Invalid order details
+                  value:
+                    error: >-
+                      order 0xabc... is invalid. Price (100) breaks minimum tick
+                      size rule: 0.1
+
+```
+
+--------------------------------
+
+### Initialize Trading Client (Rust)
+
+Source: https://docs.polymarket.com/quickstart
+
+Set up the Polymarket SDK client in Rust, including a signer derived from a private key and configured for the Polygon mainnet.
+
+```rust
+use std::str::FromStr;
+use polymarket_client_sdk::POLYGON;
+use polymarket_client_sdk::auth::{LocalSigner, Signer};
+use polymarket_client_sdk::clob::{Client, Config};
+
+let private_key = std::env::var("POLYMARKET_PRIVATE_KEY")?;
+let signer = LocalSigner::from_str(&private_key)?
+    .with_chain_id(Some(POLYGON));
+
+// Derive API credentials and initialize trading client (L1 → L2 auth)
+// Signature type defaults to EOA (0)
+```
+
+--------------------------------
+
+### GET /getOpenOrders
+
+Source: https://docs.polymarket.com/trading/clients/builder
+
+Get all open orders attributed to your builder code.
+
+```APIDOC
+## GET /getOpenOrders
+
+### Description
+Get all open orders attributed to your builder code.
+
+### Method
+GET
+
+### Endpoint
+`/getOpenOrders`
+
+### Parameters
+#### Query Parameters
+- **params** (object) - Optional - Parameters for filtering open orders.
+  - **id** (string) - Optional - Filter by order ID.
+  - **market** (string) - Optional - Filter by market condition ID.
+  - **asset_id** (string) - Optional - Filter by token ID.
+- **only_first_page** (boolean) - Optional - If true, only returns the first page of results.
+
+### Request Example (TypeScript)
+```typescript
+// All open orders for this builder
+const orders = await client.getOpenOrders();
+
+// Filtered by market
+const marketOrders = await client.getOpenOrders({
+  market: "0xbd31dc8a...",
+});
+```
+
+### Response
+#### Success Response (200)
+- **OpenOrder[]** (array) - An array of open orders.
+```
+
+--------------------------------
+
+### GET /price
+
+Source: https://docs.polymarket.com/trading/orderbook
+
+Get the best available price for buying or selling a token.
+
+```APIDOC
+## GET /price
+
+### Description
+Get the best available price for buying or selling a token.
+
+### Method
+GET
+
+### Endpoint
+https://clob.polymarket.com/price
+
+#### Query Parameters
+- **token_id** (string) - Required - The ID of the token.
+- **side** (string) - Required - The side of the market to get the price for. Accepted values: "BUY" or "SELL".
+
+### Response
+#### Success Response (200)
+- **price** (string) - The best available price for the specified side.
+
+#### Response Example
+```json
+{
+  "price": "0.50"
+}
+```
+```
+
+--------------------------------
+
+### Initialize CLOB Client and Post Order (Python)
+
+Source: https://docs.polymarket.com/api-reference/authentication
+
+Initialize the ClobClient in Python with host, chain, private key, API credentials, signature type, and funder address. Then, create and post a limit order.
+
+```python
+from py_clob_client.client import ClobClient
+import os
+
+client = ClobClient(
+    host="https://clob.polymarket.com",
+    chain=137,
+    key=os.getenv("PRIVATE_KEY"),
+    creds=api_creds,  # Generated from L1 auth, API credentials enable L2 methods
+    signature_type=1,  # signatureType explained below
+    funder=os.getenv("FUNDER_ADDRESS") # funder explained below
+)
+
+# Now you can trade!
+order = client.create_and_post_order(
+    {"token_id": "123456", "price": 0.65, "size": 100, "side": "BUY"},
+    {"tick_size": "0.01", "neg_risk": False}
+)
+```
+
+--------------------------------
+
+### Place an Order with Polymarket SDK
+
+Source: https://docs.polymarket.com/trading/quickstart
+
+Demonstrates how to sign and post an order using the Polymarket SDK. Ensure you have a valid signer and order details.
+
+```typescript
+let signed_order = client.sign(&signer, order).await?;
+let response = client.post_order(signed_order).await?;
+
+println!("Order ID: {}", response.order_id);
+println!("Status: {:?}", response.status);
+```
+
+--------------------------------
+
+### GET /markets: `closed` parameter default
+
+Source: https://docs.polymarket.com/changelog
+
+The default behavior of the `closed` query parameter for the `GET /markets` endpoint has been changed.
+
+```APIDOC
+## GET /markets
+
+### Description
+Updates the default behavior for the `closed` query parameter on the `GET /markets` endpoint.
+
+### Method
+GET
+
+### Endpoint
+/markets
+
+### Parameters
+#### Query Parameters
+- **closed** (boolean) - Optional - Defaults to `false`. If `true`, closed markets are included in the results. If `false` (default), closed markets are excluded.
+```
+
+--------------------------------
+
+### Initialize Safe Wallet (Python)
+
+Source: https://docs.polymarket.com/cn/trading/gasless
+
+Use Safe wallet for most builder integrations. Deploy the wallet before the first transaction by calling `deploy()`.
+
+```python
+from py_builder_relayer_client.client import RelayClient
+
+# client initialized with relayer credentials (see Client Setup above)
+
+# Deploy before first transaction
+response = client.deploy()
+result = response.wait()
+print("Safe Address:", result.get("proxyAddress"))
+```
+
+--------------------------------
+
+### GET /simplified-markets
+
+Source: https://docs.polymarket.com/api-reference/markets/get-simplified-markets
+
+Retrieves a paginated list of simplified markets. This endpoint is useful for getting a high-level overview of available markets.
+
+```APIDOC
+## GET /simplified-markets
+
+### Description
+Retrieves a paginated list of simplified markets. This endpoint is useful for getting a high-level overview of available markets.
+
+### Method
+GET
+
+### Endpoint
+/simplified-markets
+
+### Parameters
+#### Query Parameters
+- **next_cursor** (string) - Optional - Used for pagination to fetch the next set of results.
+
+### Request Example
+(No request body for GET requests)
+
+### Response
+#### Success Response (200)
+- **limit** (integer) - The number of items per page.
+- **next_cursor** (string) - A cursor for fetching the next page of results.
+- **count** (integer) - The total number of items returned in this response.
+- **data** (array) - An array of SimplifiedMarket objects.
+  - **condition_id** (string) - The unique identifier for the market condition.
+  - **rewards** (object) - Information about rewards associated with the market.
+    - **rates** (array) - An array of reward rate objects.
+      - **asset_address** (string) - The address of the asset for the reward rate.
+      - **rewards_daily_rate** (number) - The daily reward rate.
+    - **min_size** (number) - The minimum size for reward eligibility.
+    - **max_spread** (number) - The maximum spread for reward eligibility.
+  - **tokens** (array) - An array of Token objects representing market outcomes.
+    - **token_id** (string) - The unique identifier for the token.
+    - **outcome** (string) - The outcome represented by the token.
+    - **price** (number) - The current price of the token.
+    - **winner** (boolean) - Indicates if this token represents the winning outcome.
+  - **active** (boolean) - Indicates if the market is currently active.
+  - **closed** (boolean) - Indicates if the market has been closed.
+  - **archived** (boolean) - Indicates if the market has been archived.
+  - **accepting_orders** (boolean) - Indicates if the market is currently accepting orders.
+
+#### Response Example
+```json
+{
+  "limit": 100,
+  "next_cursor": "some_cursor_string",
+  "count": 1,
+  "data": [
+    {
+      "condition_id": "0x123abc...",
+      "rewards": {
+        "rates": [
+          {
+            "asset_address": "0xassetaddr...",
+            "rewards_daily_rate": 0.05
+          }
+        ],
+        "min_size": 10,
+        "max_spread": 0.01
+      },
+      "tokens": [
+        {
+          "token_id": "0xtokenid1...",
+          "outcome": "Yes",
+          "price": 0.75,
+          "winner": false
+        },
+        {
+          "token_id": "0xtokenid2...",
+          "outcome": "No",
+          "price": 0.25,
+          "winner": false
+        }
+      ],
+      "active": true,
+      "closed": false,
+      "archived": false,
+      "accepting_orders": true
+    }
+  ]
+}
+```
+
+#### Error Response (400)
+Invalid request.
+
+#### Error Response (500)
+Internal server error.
+```
+
+--------------------------------
+
+### Initialize Proxy Wallet (Python)
+
+Source: https://docs.polymarket.com/cn/trading/gasless
+
+Use Proxy wallet for Magic Link users. The wallet auto-deploys on the first transaction, so no explicit deployment call is needed.
+
+```python
+from py_builder_relayer_client.client import RelayClient
+
+# client initialized with relayer credentials (see Client Setup above)
+# No deploy needed - auto-deploys on first transaction
+```
+
+--------------------------------
+
+### GET /sampling-simplified-markets
+
+Source: https://docs.polymarket.com/api-reference/markets/get-sampling-simplified-markets
+
+Retrieves a paginated list of simplified market data. This endpoint is useful for getting a quick overview of active markets.
+
+```APIDOC
+## GET /sampling-simplified-markets
+
+### Description
+Retrieves a paginated list of simplified market data. This endpoint is useful for getting a quick overview of active markets.
+
+### Method
+GET
+
+### Endpoint
+/sampling-simplified-markets
+
+### Parameters
+#### Query Parameters
+- **next_cursor** (string) - Optional - Used for pagination to fetch the next set of results.
+
+### Request Example
+(No request body for GET requests)
+
+### Response
+#### Success Response (200)
+- **limit** (integer) - The number of items per page.
+- **next_cursor** (string) - A cursor for fetching the next page of results.
+- **count** (integer) - The total number of items returned in this response.
+- **data** (array) - An array of SimplifiedMarket objects.
+  - **condition_id** (string) - The unique identifier for the market condition.
+  - **rewards** (object) - Information about rewards associated with the market.
+    - **rates** (array) - An array of reward rate objects.
+      - **asset_address** (string) - The address of the asset for the reward rate.
+      - **rewards_daily_rate** (number) - The daily reward rate.
+    - **min_size** (number) - The minimum size for reward eligibility.
+    - **max_spread** (number) - The maximum spread for reward eligibility.
+  - **tokens** (array) - An array of Token objects representing market outcomes.
+    - **token_id** (string) - The unique identifier for the token.
+    - **outcome** (string) - The outcome represented by the token.
+    - **price** (number) - The current price of the token.
+    - **winner** (boolean) - Indicates if this token represents the winning outcome.
+  - **active** (boolean) - Indicates if the market is currently active.
+  - **closed** (boolean) - Indicates if the market has been closed.
+  - **archived** (boolean) - Indicates if the market has been archived.
+  - **accepting_orders** (boolean) - Indicates if the market is currently accepting orders.
+
+#### Response Example
+```json
+{
+  "limit": 10,
+  "next_cursor": "some_cursor_string",
+  "count": 5,
+  "data": [
+    {
+      "condition_id": "0x123abc",
+      "rewards": {
+        "rates": [
+          {
+            "asset_address": "0xasset1",
+            "rewards_daily_rate": 0.05
+          }
+        ],
+        "min_size": 100,
+        "max_spread": 0.01
+      },
+      "tokens": [
+        {
+          "token_id": "0xtoken1",
+          "outcome": "Yes",
+          "price": 0.75,
+          "winner": false
+        },
+        {
+          "token_id": "0xtoken2",
+          "outcome": "No",
+          "price": 0.25,
+          "winner": false
+        }
+      ],
+      "active": true,
+      "closed": false,
+      "archived": false,
+      "accepting_orders": true
+    }
+  ]
+}
+```
+
+#### Error Response (400)
+Description: Invalid request
+
+#### Error Response (500)
+Description: Internal server error
+```
+
+--------------------------------
+
+### Initialize Trading Client (Rust)
+
+Source: https://docs.polymarket.com/trading/overview
+
+Initialize the Polymarket Rust SDK client. This example demonstrates setting the signature type to GnosisSafe, with the funder address being auto-derived.
+
+```rust
+use polymarket_client_sdk::clob::types::SignatureType;
+
+let client = Client::new("https://clob.polymarket.com", Config::default())?
+    .authentication_builder(&signer)
+    .signature_type(SignatureType::GnosisSafe) // Funder auto-derived via CREATE2
+    .authenticate()
+    .await?;
+```
+
+--------------------------------
+
+### Create and Post Order (Python)
+
+Source: https://docs.polymarket.com/index
+
+Utilize the ClobClient to construct and submit a buy order. This requires importing necessary components from the py_clob_client library.
+
+```python
+from py_clob_client.client import ClobClient
+from py_clob_client.order_builder.constants import BUY
+
+```
+
+--------------------------------
+
+### Get Transaction by ID
+
+Source: https://docs.polymarket.com/api-reference/relayer/get-a-transaction-by-id
+
+Retrieves a transaction submitted to the Relayer using its transaction ID. This is useful for polling to get the on-chain transaction hash after submission.
+
+```APIDOC
+## GET /transactions
+
+### Description
+Gets a transaction submitted to the Relayer. Takes in a required transaction ID as a query parameter. Poll this endpoint with the `transactionID` returned from `POST /submit` to retrieve the onchain `transactionHash` once the transaction has been broadcast.
+
+### Method
+GET
+
+### Endpoint
+/transactions
+
+### Parameters
+#### Query Parameters
+- **transactionID** (string) - Required - The ID of the transaction to retrieve.
+```
+
+--------------------------------
+
+### Position Value Example
+
+Source: https://docs.polymarket.com/concepts/positions-tokens
+
+Example calculation for position value. If you hold 100 Yes tokens and Yes is trading at $0.75, the position value is $75.
+
+```text
+Position value = 100 × $0.75 = $75
+```
+
+--------------------------------
+
+### Profit/Loss Example - Buying Yes at 0.40
+
+Source: https://docs.polymarket.com/concepts/positions-tokens
+
+Illustrates profit and loss scenarios based on market resolution after buying Yes tokens at $0.40. Shows potential returns and losses per token.
+
+```text
+Event occurs        | Yes wins | $1.00      | +$0.60 per token (150%)  
+```
+
+```text
+Event doesn't occur | No wins  | $0.00      | -$0.40 per token (-100%) 
+```
+
+--------------------------------
+
+### Create and Post Order (TypeScript)
+
+Source: https://docs.polymarket.com/index
+
+Use the ClobClient to create and post a buy order. Ensure you have the necessary client, signer, and credentials initialized.
+
+```typescript
+import { ClobClient, Side } from "@polymarket/clob-client-v2";
+
+const client = new ClobClient({ host, chain: chainId, signer, creds });
+
+const order = await client.createAndPostOrder(
+  { tokenID, price: 0.50, size: 10, side: Side.BUY },
+  { tickSize: "0.01", negRisk: false }
+);
+```
+
+--------------------------------
+
+### Initialize CLOB Client and Post Order (Rust)
+
+Source: https://docs.polymarket.com/api-reference/authentication
+
+Initialize the CLOB client in Rust using a signer and configuration, then build, sign, and post a limit order.
+
+```rust
+use polymarket_client_sdk::clob::types::{Side, SignatureType};
+use polymarket_client_sdk::types::dec;
+
+let client = Client::new("https://clob.polymarket.com", Config::default())?
+    .authentication_builder(&signer)
+    .signature_type(SignatureType::Proxy) // signatureType explained below
+    // Funder auto-derived via CREATE2 for Proxy/GnosisSafe
+    .authenticate()
+    .await?;
+
+// Now you can trade!
+let order = client.limit_order()
+    .token_id("123456".parse()?)
+    .price(dec!(0.65))
+    .size(dec!(100))
+    .side(Side::Buy)
+    .build().await?;
+let signed = client.sign(&signer, order).await?;
+let response = client.post_order(signed).await?;
+```
+
+--------------------------------
+
+### Create and Post Limit Order (Python)
+
+Source: https://docs.polymarket.com/index
+
+Use the ClobClient to create and post a limit order. Ensure you have the ClobClient initialized with host, key, chain, and creds.
+
+```python
+client = ClobClient(host, key=key, chain=chain, creds=creds)
+order = client.create_and_post_order(
+    OrderArgs(token_id=token_id, price=0.50, size=10, side=BUY),
+    options={"tick_size": "0.01", "neg_risk": False}
+)
+
+```
+
+--------------------------------
+
+### Install CLOB V2 SDK for TypeScript
+
+Source: https://docs.polymarket.com/builders/fees
+
+Install the CLOB V2 client library for TypeScript using npm. This is required for integrating with the Polymarket V2 SDK.
+
+```bash
+npm install @polymarket/clob-client-v2@1.0.0
+```
+
+--------------------------------
+
+### Place a Limit Order with Python
+
+Source: https://docs.polymarket.com/quickstart
+
+This Python code demonstrates how to place a limit order. It requires fetching market details for tick size and negative risk before creating the order.
+
+```python
+from py_clob_client.clob_types import OrderArgs, OrderType
+from py_clob_client.order_builder.constants import BUY
+
+# Fetch market details to get tick size and neg risk
+market = client.get_market("YOUR_CONDITION_ID")
+tick_size = str(market["minimum_tick_size"])   # e.g., "0.01"
+neg_risk = market["neg_risk"]             # e.g., False
+
+response = client.create_and_post_order(
+    OrderArgs(
+        token_id="YOUR_TOKEN_ID",  # From Step 1
+        price=0.50,
+        size=10,
+        side=BUY,
+        order_type=OrderType.GTC,
+    ),
+    options={
+        "tick_size": tick_size,
+        "neg_risk": neg_risk,
+    },
+)
+
+print("Order ID:", response["orderID"])
+print("Status:", response["status"])
+```
+
+--------------------------------
+
+### Check Geoblock Status in Python
+
+Source: https://docs.polymarket.com/api-reference/geoblock
+
+This Python function utilizes the requests library to query the geoblock API. Ensure the 'requests' library is installed (`pip install requests`).
+
+```python
+import requests
+
+def check_geoblock() -> dict:
+    response = requests.get("https://polymarket.com/api/geoblock")
+    return response.json()
+
+# Usage
+geo = check_geoblock()
+
+if geo["blocked"]:
+    print(f"Trading not available in {geo['country']}")
+else:
+    print("Trading available")
+```
+
+--------------------------------
+
+### Market Channel 'new_market' Message Example
+
+Source: https://docs.polymarket.com/cn/market-data/websocket/market-channel
+
+Example of a 'new_market' event message. This message is triggered when a new market is created. Requires `custom_feature_enabled: true` in the subscription payload.
+
+```json
+{
+  "id": "1031769",
+  "question": "Will NVIDIA (NVDA) close above $240 end of January?",
+  "market": "0x311d0c4b6671ab54af4970c06fcf58662516f5168997bdda209ec3db5aa6b0c1",
+  "slug": "nvda-above-240-on-january-30-2026",
+  "description": "This market will resolve to \"Yes\" if the official closing price...",
+  "assets_ids": [
+    "76043073756653678226373981964075571318267289248134717369284518995922789326425",
+    "31690934263385727664202099278545688007799199447969475608906331829650099442770"
+  ],
+  "outcomes": ["Yes", "No"],
+  "event_message": {
+    "id": "125819",
+    "ticker": "nvda-above-in-january-2026",
+    "slug": "nvda-above-in-january-2026",
+    "title": "Will NVIDIA (NVDA) close above ___ end of January?",
+    "description": "This market will resolve to \"Yes\" if the official closing price..."
+  },
+  "timestamp": "1766790415550",
+  "event_type": "new_market"
+}
+```
+
+--------------------------------
+
+### Initialize Proxy Wallet (TypeScript)
+
+Source: https://docs.polymarket.com/cn/trading/gasless
+
+Use Proxy wallet for Magic Link users. The wallet auto-deploys on the first transaction, so no explicit deployment call is needed.
+
+```typescript
+import { RelayClient, RelayerTxType } from "@polymarket/builder-relayer-client";
+
+const client = new RelayClient({
+  host: "https://relayer-v2.polymarket.com/",
+  chain: 137,
+  signer: wallet,
+  relayerApiKey: process.env.RELAYER_API_KEY!,
+  relayerApiKeyAddress: process.env.RELAYER_API_KEY_ADDRESS!,
+  txType: RelayerTxType.PROXY,
+});
+
+// No deploy needed - auto-deploys on first transaction
+```
+
+--------------------------------
+
+### Error Response Example (YAML)
+
+Source: https://docs.polymarket.com/api-reference/market-data/get-market-prices-request-body
+
+Example of an error response from the /prices endpoint, indicating issues such as an invalid payload or side. The response contains an 'error' field with a descriptive message.
+
+```yaml
+error: Invalid payload
+```
+
+--------------------------------
+
+### Initialize Trading Client (Python)
+
+Source: https://docs.polymarket.com/quickstart
+
+Initialize the ClobClient in Python, providing host, private key, chain ID, and derived API credentials. Ensure the funder address is correctly set.
+
+```python
+from py_clob_client.client import ClobClient
+import os
+
+host = "https://clob.polymarket.com"
+chain = 137  # Polygon mainnet
+private_key = os.getenv("PRIVATE_KEY")
+
+# Derive API credentials (L1 → L2 auth)
+temp_client = ClobClient(host, key=private_key, chain=chain)
+api_creds = temp_client.create_or_derive_api_creds()
+
+# Initialize trading client
+client = ClobClient(
+    host,
+    key=private_key,
+    chain=chain,
+    creds=api_creds,
+    signature_type=0,  # Signature type: 0 = EOA
+    funder="YOUR_WALLET_ADDRESS",  # Funder address
+)
+```
+
+--------------------------------
+
+### Market Channel 'last_trade_price' Message Example
+
+Source: https://docs.polymarket.com/cn/market-data/websocket/market-channel
+
+Example of a 'last_trade_price' event message. This message is triggered when a Maker and Taker order match, resulting in a trade execution. It includes details of the trade.
+
+```json
+{
+  "asset_id": "114122071509644379678018727908709560226618148003371446110114509806601493071694",
+  "event_type": "last_trade_price",
+  "fee_rate_bps": "0",
+  "market": "0x6a67b9d828d53862160e470329ffea5246f338ecfffdf2cab45211ec578b0347",
+  "price": "0.456",
+  "side": "BUY",
+  "size": "219.217767",
+  "timestamp": "1750428146322"
+}
+```
+
+--------------------------------
+
+### EIP-712 Signing Example (Python)
+
+Source: https://docs.polymarket.com/api-reference/authentication
+
+Example of signing an EIP-712 struct in Python to generate the POLY_SIGNATURE for L1 authentication. This requires a signer object and correctly defined domain, types, and value.
+
+```python
+domain = {
+    "name": "ClobAuthDomain",
+    "version": "1",
+    "chainId": chainId,  # Polygon Chain ID 137
+}
+
+types = {
+    "ClobAuth": [
+        {"name": "address", "type": "address"},
+        {"name": "timestamp", "type": "string"},
+        {"name": "nonce", "type": "uint256"},
+        {"name": "message", "type": "string"},
+    ]
+}
+
+value = {
+    "address": signingAddress,  # The signing address
+    "timestamp": ts,            # The CLOB API server timestamp
+    "nonce": nonce,             # The nonce used
+    "message": "This message attests that I control the given wallet",
+}
+
+sig = signer.sign_typed_data(domain, types, value)
+```
+===== END DOCSET 1: https://context7.com/websites/polymarket/llms.txt?tokens=10000 =====

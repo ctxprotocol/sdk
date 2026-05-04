@@ -1,0 +1,101 @@
+{
+  "id": "13-polymarket-chart-how-live-trading-attention-is-distributed-",
+  "index": 12,
+  "provider": "polymarket",
+  "prompt": "Chart how live trading attention is distributed across 'Will Bitcoin hit $150k by June 30, 2026?', 'Will the Iranian regime fall by May 31?', 'US x Iran permanent peace deal by May 31, 2026?', 'Will the U.S. invade Iran before 2027?', and 'Strait of Hormuz traffic returns to normal by May 15?' using 24h volume, current probability, open interest, and spread.",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-05-02T14:56:15.311Z",
+  "finishedAt": "2026-05-02T14:58:12.213Z",
+  "durationMs": 116902,
+  "outcomeType": "answer",
+  "responseChars": 1353,
+  "responsePreview": "As of May 2, 2026, trading attention is highest for the market predicting a U.S. invasion of Iran before 2027, which leads the group in both total volume and probability. \n\nThe following data summarizes the current activity across these five markets:\n\n| Market | Volume (Total) | Current Probability | Spread (%) | Open Interest |\n| :--- | :--- | :--- | :--- | :--- |\n| **Will the U.S. invade Iran before 2027?** | $19,601,981.42 | 29.5% | 3.39% | $0.00* |\n| **Will Bitcoin hit $150k by June 30, 2026?** | $15,734,008.01 | 2.1% | 4.88% | $0.00* |\n| **Will the Iranian regime fall by May 31?** | $12,639,592.13 | 2.4% | 4.26% | $0.00* |\n| **US x Iran permanent peace deal by May 31, 2026?** | $10,082,396.61 | 21.5% | 4.65% | $0.00* |\n| **Strait of Hormuz traffic returns to normal by May 15?** | $4,176,705.70 | 5.5% | 18.18% | $0.00* |\n\n***Data Gap:** Open Interest data for these specific contracts was not available in the current tool snapshot and returned zero values. \n\nThe accompanying chart illustrates that while the \"U.S. invasion\" market dominates in volume and probability, the \"Strait of Hormuz\" market suffers from significantly lower liquidity, evidenced by its wide 18.18% spread. In ...",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 0,
+  "chartSummaries": [
+    {
+      "title": "Live trading attention across five Polymarket markets",
+      "type": "bar",
+      "rowCount": 5,
+      "distinctXCount": 5,
+      "numericSeriesCount": 4,
+      "numericSeriesWithVariation": 4,
+      "xKey": "market",
+      "seriesKeys": [
+        "attentionScore",
+        "volume24hM",
+        "probabilityPct",
+        "spreadPct"
+      ],
+      "sampleRows": [
+        {
+          "market": "Will the U.S. invade Iran before 2027?",
+          "volume24hM": 19.6,
+          "probabilityPct": 29.5,
+          "spreadPct": 3.39,
+          "openInterest": null,
+          "attentionScore": 1
+        },
+        {
+          "market": "US x Iran permanent peace deal by...?",
+          "volume24hM": 10.08,
+          "probabilityPct": 21.5,
+          "spreadPct": 4.65,
+          "openInterest": null,
+          "attentionScore": 0.6695
+        },
+        {
+          "market": "When will Bitcoin hit $150k?",
+          "volume24hM": 15.73,
+          "probabilityPct": 2.1,
+          "spreadPct": 4.88,
+          "openInterest": null,
+          "attentionScore": 0.566
+        }
+      ],
+      "needsDualAxis": true,
+      "willRenderDualAxis": true,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": true,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "Live trading attention across five Polymarket markets",
+        "type": "bar",
+        "xKey": "market",
+        "seriesKeys": [
+          "attentionScore",
+          "volume24hM",
+          "probabilityPct",
+          "spreadPct"
+        ],
+        "passes": true,
+        "failures": []
+      }
+    ],
+    "pass": true
+  },
+  "semanticFailures": [],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [],
+  "buyerValueScore": 4,
+  "buyerVerdict": "pass",
+  "buyerReview": "Preliminary pass: produced a multi-row, varied chart with specific data and an actionable buyer takeaway.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/13-polymarket-chart-how-live-trading-attention-is-distributed-.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/13-polymarket-chart-how-live-trading-attention-is-distributed-.summary.json"
+}

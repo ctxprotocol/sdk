@@ -1,0 +1,3673 @@
+{
+  "promptId": "velo-10",
+  "index": 9,
+  "attempt": 1,
+  "status": 200,
+  "ok": true,
+  "durationMs": 152575,
+  "prompt": {
+    "prompt": "Compare BTC futures pressure across binance-futures BTCUSDT, bybit BTCUSDT, okex-swap BTC-USDT-SWAP, and hyperliquid BTC-USD using funding rate, dollar open interest change, dollar volume, and liquidation imbalance.",
+    "groundedEntity": {
+      "type": "market",
+      "slug": "btc-futures-venue-set",
+      "title": "BTC futures across binance-futures BTCUSDT, bybit BTCUSDT, okex-swap BTC-USDT-SWAP, and hyperliquid BTC-USD"
+    },
+    "answerabilityNote": "analyze_futures_market_structure can query BTC futures rows by coin/exchange and summarize funding, OI change, volume, and liquidation imbalance.",
+    "alphaCategory": "single-venue-cross-exchange-derivatives",
+    "whyAlpha": "Velo normalizes fragmented exchange derivatives crowding into one answer.",
+    "expectedDataFields": [
+      "market",
+      "latestFundingRate",
+      "openInterestChangeUsd",
+      "totalDollarVolume",
+      "liquidationImbalanceUsd"
+    ],
+    "difficultyTier": "comparison"
+  },
+  "responseText": "The following table compares BTC futures data across the requested venues as of approximately 03:17 UTC on April 30, 2026.\n\n| Venue | Funding Rate (bps) | Open Interest (USD) | 1h OI Change (USD) | Nearest Liquidation Cluster (Notional) |\n| :--- | :--- | :--- | :--- | :--- |\n| **Binance** | -0.4220 | $7.20B | -$43.78M | Sell: $2,016 |\n| **Bybit** | -0.0331 | $3.65B | -$86.59M | Buy: $3,313 |\n| **OKX** | -0.1106 | $2.35B | +$1.50M | Sell: $52,272 |\n| **Hyperliquid** | +0.0016 | $1.95B | -$57.84M | Buy/Sell: $503,625 |\n\n### Data Insights\n*   **Funding Pressure:** Binance shows the most significant negative funding rate (-0.422 bps), indicating bearish sentiment or heavy short positioning. Hyperliquid is the only venue currently showing a positive (though nearly neutral) funding rate.\n*   **Open Interest:** Binance maintains a dominant lead in market participation with $7.2B in open interest, nearly double that of Bybit.\n*   **Recent Activity:** Most venues saw a decrease in open interest over the last hour, with Bybit experiencing the largest outflow (-$86.59M). OKX was the outlier, showing a minor increase in positioning.\n*   **Liquidation Clusters:** Hyperliquid shows significantly larger concentrated liquidation clusters (~$503k) compared to the smaller \"nearest\" clusters detected on the other three exchanges.\n\n**Note on Data Gaps:** Dollar volume and a consolidated liquidation imbalance ratio were not available in the provided snapshots and are excluded from this comparison. The nearest liquidation clusters are used as a proxy for localized price pressure.",
+  "body": {
+    "success": true,
+    "response": "The following table compares BTC futures data across the requested venues as of approximately 03:17 UTC on April 30, 2026.\n\n| Venue | Funding Rate (bps) | Open Interest (USD) | 1h OI Change (USD) | Nearest Liquidation Cluster (Notional) |\n| :--- | :--- | :--- | :--- | :--- |\n| **Binance** | -0.4220 | $7.20B | -$43.78M | Sell: $2,016 |\n| **Bybit** | -0.0331 | $3.65B | -$86.59M | Buy: $3,313 |\n| **OKX** | -0.1106 | $2.35B | +$1.50M | Sell: $52,272 |\n| **Hyperliquid** | +0.0016 | $1.95B | -$57.84M | Buy/Sell: $503,625 |\n\n### Data Insights\n*   **Funding Pressure:** Binance shows the most significant negative funding rate (-0.422 bps), indicating bearish sentiment or heavy short positioning. Hyperliquid is the only venue currently showing a positive (though nearly neutral) funding rate.\n*   **Open Interest:** Binance maintains a dominant lead in market participation with $7.2B in open interest, nearly double that of Bybit.\n*   **Recent Activity:** Most venues saw a decrease in open interest over the last hour, with Bybit experiencing the largest outflow (-$86.59M). OKX was the outlier, showing a minor increase in positioning.\n*   **Liquidation Clusters:** Hyperliquid shows significantly larger concentrated liquidation clusters (~$503k) compared to the smaller \"nearest\" clusters detected on the other three exchanges.\n\n**Note on Data Gaps:** Dollar volume and a consolidated liquidation imbalance ratio were not available in the provided snapshots and are excluded from this comparison. The nearest liquidation clusters are used as a proxy for localized price pressure.",
+    "toolsUsed": [
+      {
+        "id": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+        "name": "Meridian Market Data",
+        "skillCalls": 4
+      }
+    ],
+    "cost": {
+      "totalCostUsd": "0.150006",
+      "toolCostUsd": "0.100000",
+      "modelCostUsd": "0.050006"
+    },
+    "durationMs": 149872,
+    "outcomeType": "answer",
+    "querySession": {
+      "sessionId": "571340ae-929c-42d4-bdab-dd02fdd85816",
+      "attemptId": "3952b6d7-3458-4334-8d1e-9fd0702c121c",
+      "parentAttemptId": null,
+      "rootAttemptId": "3952b6d7-3458-4334-8d1e-9fd0702c121c",
+      "mode": "initial",
+      "origin": "initial_request",
+      "status": "completed",
+      "checkpoint": {
+        "currentStage": "synthesis",
+        "latestCheckpointArtifactId": "61393f64-256a-4382-b550-3ae116007f3d:8",
+        "canonicalDatasetId": "61393f64-256a-4382-b550-3ae116007f3d:canonical-execution",
+        "executionProgramCurrentRevisionId": "iterative-v1"
+      }
+    },
+    "computedArtifacts": [
+      {
+        "kind": "chart",
+        "spec": {
+          "type": "composed",
+          "xKey": "venue",
+          "series": [
+            {
+              "key": "funding_rate",
+              "label": "Funding rate",
+              "type": "bar",
+              "yAxis": "left"
+            },
+            {
+              "key": "oi_delta_1h_usd",
+              "label": "1h OI change (USD)",
+              "type": "bar",
+              "yAxis": "right"
+            }
+          ],
+          "yAxis": {
+            "label": "Funding rate",
+            "format": "percent"
+          },
+          "yAxisRight": {
+            "label": "USD",
+            "format": "currency"
+          },
+          "legend": true,
+          "xAxis": {
+            "label": "Venue"
+          }
+        },
+        "data": [
+          {
+            "venue": "binance",
+            "symbol": "BTCUSDT",
+            "funding_rate": -0.0000422,
+            "oi_usd": 7199836127.694,
+            "oi_delta_1h_usd": -43778678.0943,
+            "oi_delta_4h_usd": -26676083.9188,
+            "oi_delta_24h_usd": -250679476.162,
+            "liquidation_side": "sell",
+            "liquidation_notional_usd": 2016.07874
+          },
+          {
+            "venue": "okx",
+            "symbol": "BTC-USDT-SWAP",
+            "funding_rate": -0.0000110614215021,
+            "oi_usd": 2353074812.5488415,
+            "oi_delta_1h_usd": 1501204.3141496703,
+            "oi_delta_4h_usd": -6861563.575271868,
+            "oi_delta_24h_usd": -93878488.10742146,
+            "liquidation_side": "sell",
+            "liquidation_notional_usd": 52272.606
+          },
+          {
+            "venue": "bybit",
+            "symbol": "BTCUSDT",
+            "funding_rate": -0.00000331,
+            "oi_usd": 3649341135.3212,
+            "oi_delta_1h_usd": -86592349.3998,
+            "oi_delta_4h_usd": -128343077.16484,
+            "oi_delta_24h_usd": -246868041.4108,
+            "liquidation_side": "buy",
+            "liquidation_notional_usd": 3313.6752
+          },
+          {
+            "venue": "hyperliquid",
+            "symbol": "BTC",
+            "funding_rate": 1.564e-7,
+            "oi_usd": 1953860402.468,
+            "oi_delta_1h_usd": -57844762.87122,
+            "oi_delta_4h_usd": -53577540.357,
+            "oi_delta_24h_usd": -156499176.3301,
+            "liquidation_side": "both",
+            "liquidation_notional_usd": 1007250.34004
+          }
+        ],
+        "title": "BTC futures pressure comparison"
+      },
+      {
+        "kind": "chart",
+        "spec": {
+          "type": "bar",
+          "xKey": "venue",
+          "series": [
+            {
+              "key": "funding_rate_bps",
+              "label": "Funding rate (bps)"
+            },
+            {
+              "key": "oi_delta_usd_mil",
+              "label": "Δ Open interest ($M)"
+            },
+            {
+              "key": "volume_usd_bil",
+              "label": "Volume ($B)"
+            },
+            {
+              "key": "liquidation_imbalance",
+              "label": "Liquidation imbalance"
+            }
+          ],
+          "yAxis": {
+            "label": "Normalized comparison"
+          },
+          "legend": true,
+          "xAxis": {
+            "label": "Venue"
+          }
+        },
+        "data": [
+          {
+            "venue": "binance",
+            "funding_rate_bps": -0.42200000000000004,
+            "open_interest_usd_bil": 7.199836127694001,
+            "oi_delta_usd_mil": null,
+            "volume_usd_bil": null,
+            "liquidation_imbalance": null
+          },
+          {
+            "venue": "bybit",
+            "funding_rate_bps": -0.0331,
+            "open_interest_usd_bil": 3.6493411353211997,
+            "oi_delta_usd_mil": null,
+            "volume_usd_bil": null,
+            "liquidation_imbalance": null
+          },
+          {
+            "venue": "okx",
+            "funding_rate_bps": -0.11061421502100001,
+            "open_interest_usd_bil": 2.3530748125488414,
+            "oi_delta_usd_mil": null,
+            "volume_usd_bil": null,
+            "liquidation_imbalance": null
+          },
+          {
+            "venue": "hyperliquid",
+            "funding_rate_bps": 0.001564,
+            "open_interest_usd_bil": 1.953860402468,
+            "oi_delta_usd_mil": null,
+            "volume_usd_bil": null,
+            "liquidation_imbalance": null
+          }
+        ],
+        "title": "BTC futures pressure comparison"
+      }
+    ],
+    "artifacts": {
+      "dataUrl": null,
+      "canonicalDataRef": {
+        "datasetId": "61393f64-256a-4382-b550-3ae116007f3d:canonical-execution",
+        "hash": "52888e7b612615d306c267ff9d03c674e521b3d1e01e61bee3b8629353dc3f0c",
+        "bytes": 26032,
+        "publicDataUrl": null
+      },
+      "stageArtifactKinds": [
+        "query-session-contract",
+        "tool-selection",
+        "first-pass-execution",
+        "execution-program-lineage",
+        "completeness-evaluation",
+        "canonical-dataset-registered",
+        "final-execution",
+        "synthesis-context-selection"
+      ]
+    },
+    "developerTrace": {
+      "summary": {
+        "toolCalls": 8,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "fallbackCount": 0,
+        "failureCount": 3,
+        "recoveryCount": 0,
+        "completionChecks": 0,
+        "loopCount": 16,
+        "toolStepCount": 16
+      },
+      "timeline": [
+        {
+          "stepType": "orchestration",
+          "event": "query-start",
+          "status": "ok",
+          "message": "Query orchestration started",
+          "timestampMs": 1777519153694,
+          "metadata": {
+            "requestId": "61393f64-256a-4382-b550-3ae116007f3d",
+            "queryDepth": "auto"
+          }
+        },
+        {
+          "stepType": "selection",
+          "event": "selected-tools",
+          "status": "ok",
+          "timestampMs": 1777519153695,
+          "metadata": {
+            "selectedPolicy": "exploratory",
+            "plannerReasoningStage": "mechanical",
+            "oneShotBias": false,
+            "selectedTools": [
+              {
+                "toolId": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+                "toolName": "Meridian Market Data",
+                "priceUsd": "0.100000",
+                "selectedMethodCount": 9,
+                "selectedMethods": [
+                  "list_supported_instruments",
+                  "get_ohlcv_history",
+                  "get_funding_history",
+                  "compare_perp_funding_history",
+                  "get_oi_summary",
+                  "get_oi_history",
+                  "get_oi_delta",
+                  "get_normalized_market_snapshot",
+                  "get_venue_health"
+                ],
+                "omittedSelectedMethodCount": 0
+              }
+            ]
+          }
+        },
+        {
+          "stepType": "execution-setup",
+          "event": "iterative-execution-entry",
+          "status": "ok",
+          "timestampMs": 1777519153696,
+          "message": "Iterative execution received the selected tools and any clarification assumption.",
+          "metadata": {
+            "initialCode": "// iterative execution: no generated code",
+            "finalCode": "// iterative execution: no generated code",
+            "plannerQuery": "Compare BTC futures pressure across binance-futures BTCUSDT, bybit BTCUSDT, okex-swap BTC-USDT-SWAP, and hyperliquid BTC-USD using funding rate, dollar open interest change, dollar volume, and liquidation imbalance.",
+            "allowedModules": [],
+            "availableToolCount": 9,
+            "availableMethodNamesSample": [
+              "Meridian Market Data.list_supported_instruments",
+              "Meridian Market Data.get_ohlcv_history",
+              "Meridian Market Data.get_funding_history",
+              "Meridian Market Data.compare_perp_funding_history",
+              "Meridian Market Data.get_oi_summary",
+              "Meridian Market Data.get_oi_history",
+              "Meridian Market Data.get_oi_delta",
+              "Meridian Market Data.get_normalized_market_snapshot",
+              "Meridian Market Data.get_venue_health"
+            ],
+            "selectedMethodCount": 9,
+            "selectedButFilteredOut": [],
+            "toolCallCount": 8,
+            "toolCallAttemptCount": 4,
+            "toolCallSuccessCount": 4,
+            "toolCallFailureCount": 0,
+            "toolCallFailureSamples": [],
+            "grounded": true
+          }
+        },
+        {
+          "stepType": "execution-program",
+          "event": "execution-program-lineage",
+          "status": "ok",
+          "timestampMs": 1777519153697,
+          "metadata": {
+            "executionProgram": {
+              "baseRevisionId": "iterative-v1",
+              "currentRevisionId": "iterative-v1",
+              "revisionCount": 1,
+              "patchCount": 0,
+              "replanCount": 0,
+              "deterministicChangeCount": 0,
+              "revisions": [
+                {
+                  "revisionId": "iterative-v1",
+                  "parentRevisionId": null,
+                  "attempt": 1,
+                  "action": "initial",
+                  "reason": "initial",
+                  "summary": "Iterative AI SDK tool loop",
+                  "codeHash": "iterative",
+                  "codeLength": 41,
+                  "changedLineCount": 0,
+                  "diffPreview": null,
+                  "editCount": null,
+                  "preservesPriorLogic": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153704,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 13852
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153705,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 13852
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153706,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 13852
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153707,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 13852
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153708,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 21028
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153709,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 26362
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153710,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 30820
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153711,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 36999
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153712,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 43090
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153713,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 47512
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153714,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 52174
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153715,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 56471
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153716,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 60740
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153717,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 65441
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153718,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 69851
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153719,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 73561
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153720,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 77901
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153721,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 106779
+          }
+        },
+        {
+          "stepType": "execution-attempt",
+          "event": "execution",
+          "status": "success",
+          "timestampMs": 1777519153722,
+          "attempt": 1,
+          "metadata": {
+            "durationMs": 109954
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1777519154694,
+          "tool": {
+            "id": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+            "name": "get_normalized_market_snapshot"
+          },
+          "metadata": {
+            "args": {
+              "instrument_id": "BTC-PERP-BINANCE"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"venue\":\"binance\",\"venue_symbol\":\"BTCUSDT\",\"canonical_symbol\":\"BTC/USDT:PERP\",\"market_type\":\"perp\",\"contract_type\":\"linear_perp\",\"base_asset\":\"BTC\",\"quote_asset\":\"USDT\",\"current_price\":\"75800.80\",\"funding_rate\":\"-0.00004220\",\"next_funding_time\":\"2026-04-30T08:00:00.002000Z\",\"open_interest_usd\":\"7199836127.69400000\",\"oi_delta_1h_usd\":\"-43778678.09430000\",\"oi_delta_4h_usd\":\"-26676083.91880000\",\"oi_delta_24h_usd\":\"-250679476.16200000\",\"oi_delta_7d_usd\":\"-763141717.23624600\",\"nearest_liquidation_clusters\":[{\"side\":\"sell\",\"venue\":\"binance\",\"metadata\":{\"bucket_bps\":\"25\"},\"cluster_id\":\"binance:perp:linear_perp:BTC:USDT:sell:398:1\",\"event_count\":1,\"lower_price\":\"77472.690000\",\"snapshot_ts\":\"2026-04-23T17:02:11.598+00:00\",\"upper_price\":\"77667.345000\",\"cluster_rank\":1,\"data_quality\":\"derived\",\"inst...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1777519154695,
+          "tool": {
+            "id": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+            "name": "get_normalized_market_snapshot"
+          },
+          "metadata": {
+            "args": {
+              "instrument_id": "BTC-PERP-BYBIT"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"venue\":\"bybit\",\"venue_symbol\":\"BTCUSDT\",\"canonical_symbol\":\"BTC/USDT:PERP\",\"market_type\":\"perp\",\"contract_type\":\"linear_perp\",\"base_asset\":\"BTC\",\"quote_asset\":\"USDT\",\"current_price\":\"75799.9\",\"funding_rate\":\"-0.00000331\",\"next_funding_time\":\"2026-04-30T08:00:00Z\",\"open_interest_usd\":\"3649341135.3212000000\",\"oi_delta_1h_usd\":\"-86592349.3998000000\",\"oi_delta_4h_usd\":\"-128343077.1648400000\",\"oi_delta_24h_usd\":\"-246868041.4108000000\",\"oi_delta_7d_usd\":\"-642895296.0146700000\",\"nearest_liquidation_clusters\":[{\"side\":\"buy\",\"venue\":\"bybit\",\"metadata\":{\"bucket_bps\":\"25\"},\"cluster_id\":\"bybit:perp:linear_perp:BTC:USDT:buy:400:1\",\"event_count\":1,\"lower_price\":\"75310.800000\",\"snapshot_ts\":\"2026-04-30T02:56:46.612+00:00\",\"upper_price\":\"75499.077000\",\"cluster_rank\":1,\"data_quality\":\"derived\",\"instrumen...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1777519154696,
+          "tool": {
+            "id": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+            "name": "get_normalized_market_snapshot"
+          },
+          "metadata": {
+            "args": {
+              "instrument_id": "BTC-PERP-OKX"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"venue\":\"okx\",\"venue_symbol\":\"BTC-USDT-SWAP\",\"canonical_symbol\":\"BTC/USDT:PERP\",\"market_type\":\"perp\",\"contract_type\":\"linear_perp\",\"base_asset\":\"BTC\",\"quote_asset\":\"USDT\",\"current_price\":\"75814\",\"funding_rate\":\"-0.0000110614215021\",\"next_funding_time\":\"2026-04-30T08:00:00Z\",\"open_interest_usd\":\"2353074812.54884146428847\",\"oi_delta_1h_usd\":\"1501204.31414967022551\",\"oi_delta_4h_usd\":\"-6861563.57527186779033\",\"oi_delta_24h_usd\":\"-93878488.10742145755528\",\"oi_delta_7d_usd\":\"-476863577.15251061339762\",\"nearest_liquidation_clusters\":[{\"side\":\"sell\",\"venue\":\"okx\",\"metadata\":{\"bucket_bps\":\"25\"},\"cluster_id\":\"okx:perp:linear_perp:BTC:USDT:sell:400:1\",\"event_count\":1,\"lower_price\":\"75757.40000\",\"snapshot_ts\":\"2026-04-30T03:06:21.766+00:00\",\"upper_price\":\"75946.79350\",\"cluster_rank\":1,\"data_quality\"...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1777519154697,
+          "tool": {
+            "id": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+            "name": "get_normalized_market_snapshot"
+          },
+          "metadata": {
+            "args": {
+              "instrument_id": "BTC-PERP-HYPERLIQUID"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"venue\":\"hyperliquid\",\"venue_symbol\":\"BTC\",\"canonical_symbol\":\"BTC/USDC:PERP\",\"market_type\":\"perp\",\"contract_type\":\"linear_perp\",\"base_asset\":\"BTC\",\"quote_asset\":\"USDC\",\"current_price\":\"75792.0\",\"funding_rate\":\"0.0000001564\",\"next_funding_time\":\"2026-04-30T04:00:00Z\",\"open_interest_usd\":\"1953860402.468000\",\"oi_delta_1h_usd\":\"-57844762.871220\",\"oi_delta_4h_usd\":\"-53577540.357000\",\"oi_delta_24h_usd\":\"-156499176.330100\",\"oi_delta_7d_usd\":\"-204653959.714220\",\"nearest_liquidation_clusters\":[{\"side\":\"buy\",\"venue\":\"hyperliquid\",\"metadata\":{\"bucket_bps\":\"25\"},\"cluster_id\":\"hyperliquid:perp:linear_perp:BTC:USDC:buy:400:1\",\"event_count\":55,\"lower_price\":\"76358.11202651754763290402572\",\"snapshot_ts\":\"2026-04-30T01:54:13.945+00:00\",\"upper_price\":\"76549.00730658384150198628578\",\"cluster_rank\":1,\"data_...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "error",
+          "timestampMs": 1777519154698,
+          "tool": {
+            "id": "code_interpreter",
+            "name": "code_interpreter"
+          },
+          "metadata": {
+            "args": {
+              "truncated": true,
+              "preview": "{\"intent\":\"Compute derived comparison table and emit requested chart from snapshot aliases.\",\"codePreview\":\"const rows = [];\\nfunction extract(obj){ return obj?.result ?? obj; }\\nconst snaps = [extract(get_normalized_market_snapshot_1), extract(get_normalized_market_snapshot_2), extract(get_normalized_market_snapshot_3), extract(get_normalized_market_snapshot_4)];\\nfor (const s of snaps) {\\n  if (!s) continue;\\n  rows.push({\\n    venue: s.venue,\\n    symbol: s.venue_symbol,\\n    funding_rate: Number(s.funding_rate),\\n    oi_usd: Number(s.open_interest_usd),\\n    oi_delta_1h_usd: Number(s.oi_delta_1h_usd),\\n    l\",\"inputs\":{\"get_normalized_market_snapshot_1\":\"get_normalized_market_snapshot_1\",\"get_normalized_market_snapshot_2\":\"get_normalized_market_snapshot_2\",\"get_normalized_market_snapsh...[truncated]"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"ok\":false,\"error\":\"code_interpreter VM error: Generated code appears to include TypeScript syntax. Return executable JavaScript only; do not include type annotations, interfaces, or generics.. RETRY by calling code_interpreter again in your next step with corrected JavaScript that fixes this exact error — do NOT call returnResult yet, do NOT call any other tool, and do NOT silently drop the requested artifact. You have 4 more code_interpreter retry attempt(s) before the runtime force-stops the per-turn budget. Common fixes: declare every helper function before calling it (for example const returnDrawdown = (returns) => {...}), guard with optional chaining and length checks, sort time-series ascending, and read array shape via Array.isArray(rows) and rows[0] keys before iterating.\",\"stdou...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "error",
+          "timestampMs": 1777519154699,
+          "tool": {
+            "id": "code_interpreter",
+            "name": "code_interpreter"
+          },
+          "metadata": {
+            "args": {
+              "truncated": true,
+              "preview": "{\"intent\":\"Compute derived comparison table and emit requested chart from snapshot aliases.\",\"codePreview\":\"function pick(obj){ return obj && obj.result ? obj.result : obj; }\\nconst snaps = [pick(get_normalized_market_snapshot_1), pick(get_normalized_market_snapshot_2), pick(get_normalized_market_snapshot_3), pick(get_normalized_market_snapshot_4)];\\nconst rows = [];\\nfor (let i = 0; i < snaps.length; i++) {\\n  const s = snaps[i];\\n  if (!s) continue;\\n  const clusters = Array.isArray(s.nearest_liquidation_clusters) ? s.nearest_liquidation_clusters : [];\\n  let liquidationSide = 'none';\\n  if (clusters.length\",\"inputs\":{\"get_normalized_market_snapshot_1\":\"get_normalized_market_snapshot_1\",\"get_normalized_market_snapshot_2\":\"get_normalized_market_snapshot_2\",\"get_normalized_market_snapshot_...[truncated]"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"ok\":false,\"error\":\"code_interpreter postProcessingContract expected artifact(s) metric_table, but the script emitted only chart. Emit the missing artifact(s) with renderChart(...) for charts or metricTable(...) for tables, then retry.\",\"stdout\":[],\"durationMs\":9,\"artifacts\":[{\"kind\":\"chart\",\"spec\":{\"type\":\"composed\",\"xKey\":\"venue\",\"series\":[{\"key\":\"funding_rate\",\"label\":\"Funding rate\",\"type\":\"bar\",\"yAxis\":\"left\"},{\"key\":\"oi_delta_1h_usd\",\"label\":\"1h OI change (USD)\",\"type\":\"bar\",\"yAxis\":\"right\"}],\"yAxis\":{\"label\":\"Funding rate\",\"format\":\"percent\"},\"yAxisRight\":{\"label\":\"USD\",\"format\":\"currency\"},\"legend\":true,\"xAxis\":{\"label\":\"Venue\"}},\"data\":[{\"venue\":\"binance\",\"symbol\":\"BTCUSDT\",\"funding_rate\":-0.0000422,\"oi_usd\":7199836127.694,\"oi_delta_1h_usd\":-43778678.0943,\"oi_delta_4h_usd\":-266760...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "error",
+          "timestampMs": 1777519154700,
+          "tool": {
+            "id": "code_interpreter",
+            "name": "code_interpreter"
+          },
+          "metadata": {
+            "args": {
+              "truncated": true,
+              "preview": "{\"intent\":\"Render the requested BTC futures pressure comparison chart from the existing snapshot aliases.\",\"codePreview\":\"function rowsFrom(alias) {\\n  return Array.isArray(alias) ? alias : (alias?.data ?? alias?.rows ?? alias?.items ?? alias?.results ?? alias?.outcomes ?? alias?.markets ?? alias?.quotes ?? alias?.records ?? alias?.candles ?? alias?.ohlcv ?? alias?.points ?? alias?.series ?? alias?.values ?? []);\\n}\\nconst sources = [\\n  ['binance', dataset1],\\n  ['bybit', dataset2],\\n  ['okx', dataset3],\\n  ['hyperliquid', dataset4],\\n];\\nconst rows = [];\\nfor (const [source, ds] of sources) {\\n  const arr = rowsFrom(ds);\\n  \",\"inputs\":{\"dataset1\":\"get_normalized_market_snapshot_1\",\"dataset2\":\"get_normalized_market_snapshot_2\",\"dataset3\":\"get_normalized_market_snapshot_3\",\"dataset4\":\"get_...[truncated]"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"ok\":false,\"error\":\"code_interpreter VM error: Chart has no finite numeric values across any series (funding_rate, open_interest_usd, volume_usd, liquidation_imbalance) over 4 row(s); refusing to render. This usually means the input was diagnostic/control-flow content (recovery prompts, pagination notes, error messages) rather than tabular data.. RETRY by calling code_interpreter again in your next step with corrected JavaScript that fixes this exact error — do NOT call returnResult yet, do NOT call any other tool, and do NOT silently drop the requested artifact. You have 2 more code_interpreter retry attempt(s) before the runtime force-stops the per-turn budget. Common fixes: declare every helper function before calling it (for example const returnDrawdown = (returns) => {...}), guard wi...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "tool-call",
+          "event": "tool-call",
+          "status": "success",
+          "timestampMs": 1777519154701,
+          "tool": {
+            "id": "code_interpreter",
+            "name": "code_interpreter"
+          },
+          "metadata": {
+            "args": {
+              "truncated": true,
+              "preview": "{\"intent\":\"Rebuild a chart-ready comparison from the existing normalized market snapshot aliases, defensively extracting numeric fields for BTC futures across four venues and computing a composite pressure view. This addresses the prior failure by reading actual array shapes/keys, optional-chaining all nested fields, and only charting finite numeric values. The marketplace method does not already provide the combined comparison chart, so derived reshaping is required.\",\"codePreview\":\"const extractRows = (obj) => {\\n  if (!obj) return [];\\n  if (Array.isArray(obj)) return obj;\\n  const candidates = [obj.data, obj.rows, obj.items, obj.results, obj.outcomes, obj.markets, obj.quotes, obj.records, obj.candles, obj.ohlcv, obj.points, obj.series, obj.values];\\n  for (const c of candidates) if (Ar...[truncated]"
+            },
+            "result": {
+              "truncated": true,
+              "preview": "{\"ok\":true,\"result\":{\"debug\":[{\"alias\":\"binance\",\"rawType\":\"object\",\"rowCount\":0,\"firstKeys\":[\"venue\",\"venue_symbol\",\"canonical_symbol\",\"market_type\",\"contract_type\",\"base_asset\",\"quote_asset\",\"current_price\",\"funding_rate\",\"next_funding_time\",\"open_interest_usd\",\"oi_delta_1h_usd\",\"oi_delta_4h_usd\",\"oi_delta_24h_usd\",\"oi_delta_7d_usd\",\"nearest_liquidation_clusters\",\"as_of\",\"freshness_seconds\",\"source_method\",\"data_quality\"],\"topKeys\":[\"venue\",\"venue_symbol\",\"canonical_symbol\",\"market_type\",\"contract_type\",\"base_asset\",\"quote_asset\",\"current_price\",\"funding_rate\",\"next_funding_time\",\"open_interest_usd\",\"oi_delta_1h_usd\",\"oi_delta_4h_usd\",\"oi_delta_24h_usd\",\"oi_delta_7d_usd\",\"nearest_liquidation_clusters\",\"as_of\",\"freshness_seconds\",\"source_method\",\"data_quality\"],\"hasDataField\":false},{\"ali...[truncated]"
+            }
+          }
+        },
+        {
+          "stepType": "orchestration",
+          "event": "query-complete",
+          "status": "success",
+          "timestampMs": 1777519155702,
+          "metadata": {
+            "durationMs": 149872,
+            "executionOk": true
+          }
+        }
+      ],
+      "requestId": "61393f64-256a-4382-b550-3ae116007f3d",
+      "query": "Compare BTC futures pressure across binance-futures BTCUSDT, bybit BTCUSDT, okex-swap BTC-USDT-SWAP, and hyperliquid BTC-USD using funding rate, dollar open interest change, dollar volume, and liquidation imbalance.",
+      "source": "backend-runtime",
+      "executionSuccess": true,
+      "executionResult": {
+        "comparison": [
+          {
+            "venue": "binance",
+            "funding_rate_bps": -0.42200000000000004,
+            "open_interest_usd_bil": 7.199836127694001,
+            "oi_delta_usd_mil": null,
+            "volume_usd_bil": null,
+            "liquidation_imbalance": null
+          },
+          {
+            "venue": "bybit",
+            "funding_rate_bps": -0.0331,
+            "open_interest_usd_bil": 3.6493411353211997,
+            "oi_delta_usd_mil": null,
+            "volume_usd_bil": null,
+            "liquidation_imbalance": null
+          },
+          {
+            "venue": "okx",
+            "funding_rate_bps": -0.11061421502100001,
+            "open_interest_usd_bil": 2.3530748125488414,
+            "oi_delta_usd_mil": null,
+            "volume_usd_bil": null,
+            "liquidation_imbalance": null
+          },
+          {
+            "venue": "hyperliquid",
+            "funding_rate_bps": 0.001564,
+            "open_interest_usd_bil": 1.953860402468,
+            "oi_delta_usd_mil": null,
+            "volume_usd_bil": null,
+            "liquidation_imbalance": null
+          }
+        ],
+        "note": "The available normalized snapshots exposed funding rate and open interest, but not dollar OI change, dollar volume, or liquidation imbalance in the extracted top-level numeric fields. Those fields were therefore null in the chart-ready comparison."
+      },
+      "initialCode": "// iterative execution: no generated code",
+      "finalCode": "// iterative execution: no generated code",
+      "executionTrace": [
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 13852,
+          "stepNumber": 1,
+          "toolName": "meridian_market_data__get_normalized_market_snapshot",
+          "outputAlias": "get_normalized_market_snapshot_1"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 13852,
+          "stepNumber": 1,
+          "toolName": "meridian_market_data__get_normalized_market_snapshot",
+          "outputAlias": "get_normalized_market_snapshot_2"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 13852,
+          "stepNumber": 1,
+          "toolName": "meridian_market_data__get_normalized_market_snapshot",
+          "outputAlias": "get_normalized_market_snapshot_3"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 13852,
+          "stepNumber": 1,
+          "toolName": "meridian_market_data__get_normalized_market_snapshot",
+          "outputAlias": "get_normalized_market_snapshot_4"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 21028,
+          "stepNumber": 2,
+          "toolName": "returnResult",
+          "outputAlias": "returnresult_1"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 26362,
+          "stepNumber": 3,
+          "toolName": "code_interpreter",
+          "outputAlias": "code_interpreter_1"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 30820,
+          "stepNumber": 4,
+          "toolName": "code_interpreter",
+          "outputAlias": "code_interpreter_2",
+          "intent": "Compute derived comparison table and emit requested chart from snapshot aliases.",
+          "artifactCount": 0
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 36999,
+          "stepNumber": 5,
+          "toolName": "code_interpreter",
+          "outputAlias": "code_interpreter_3",
+          "intent": "Compute derived comparison table and emit requested chart from snapshot aliases.",
+          "artifactCount": 1
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 43090,
+          "stepNumber": 6,
+          "toolName": "returnResult",
+          "outputAlias": "returnresult_2"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 47512,
+          "stepNumber": 7,
+          "toolName": "returnResult",
+          "outputAlias": "returnresult_3"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 52174,
+          "stepNumber": 8,
+          "toolName": "returnResult",
+          "outputAlias": "returnresult_4"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 56471,
+          "stepNumber": 9,
+          "toolName": "returnResult",
+          "outputAlias": "returnresult_5"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 60740,
+          "stepNumber": 10,
+          "toolName": "returnResult",
+          "outputAlias": "returnresult_6"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 65441,
+          "stepNumber": 11,
+          "toolName": "returnResult",
+          "outputAlias": "returnresult_7"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 69851,
+          "stepNumber": 12,
+          "toolName": "returnResult",
+          "outputAlias": "returnresult_8"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 73561,
+          "stepNumber": 13,
+          "toolName": "code_interpreter",
+          "outputAlias": "code_interpreter_4"
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 77901,
+          "stepNumber": 14,
+          "toolName": "code_interpreter",
+          "outputAlias": "code_interpreter_5",
+          "intent": "Render the requested BTC futures pressure comparison chart from the existing snapshot aliases.",
+          "artifactCount": 0
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 106779,
+          "stepNumber": 15,
+          "toolName": "code_interpreter",
+          "outputAlias": "code_interpreter_6",
+          "intent": "Rebuild a chart-ready comparison from the existing normalized market snapshot aliases, defensively extracting numeric fields for BTC futures across four venues and computing a composite pressure view. This addresses the prior failure by reading actual array shapes/keys, optional-chaining all nested fields, and only charting finite numeric values. The marketplace method does not already provide the combined comparison chart, so derived reshaping is required.",
+          "executorDiagnostics": {
+            "normalizedEntrypoint": "wrapped_top_level_script",
+            "asyncBudget": {
+              "timeoutMs": 120000,
+              "reason": "code interpreter budget",
+              "consumedMs": 2,
+              "timeoutHeadroomMs": 119998
+            },
+            "consoleSignals": {
+              "warningCount": 0,
+              "errorCount": 0,
+              "hadWarnings": false,
+              "hadErrors": false
+            }
+          },
+          "artifactCount": 1
+        },
+        {
+          "attempt": 1,
+          "phase": "execution",
+          "result": "success",
+          "durationMs": 109954,
+          "stepNumber": 16,
+          "toolName": "returnResult",
+          "outputAlias": "returnresult_9"
+        }
+      ],
+      "executionProgram": {
+        "baseRevisionId": "iterative-v1",
+        "currentRevisionId": "iterative-v1",
+        "revisionCount": 1,
+        "patchCount": 0,
+        "replanCount": 0,
+        "deterministicChangeCount": 0,
+        "revisions": [
+          {
+            "revisionId": "iterative-v1",
+            "parentRevisionId": null,
+            "attempt": 1,
+            "action": "initial",
+            "reason": "initial",
+            "summary": "Iterative AI SDK tool loop",
+            "codeHash": "iterative",
+            "codeLength": 41,
+            "changedLineCount": 0,
+            "diffPreview": null,
+            "editCount": null,
+            "preservesPriorLogic": true
+          }
+        ]
+      },
+      "attemptCount": 1,
+      "toolCallHistory": [
+        {
+          "toolId": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+          "toolName": "get_normalized_market_snapshot",
+          "args": {
+            "instrument_id": "BTC-PERP-BINANCE"
+          },
+          "result": {
+            "venue": "binance",
+            "venue_symbol": "BTCUSDT",
+            "canonical_symbol": "BTC/USDT:PERP",
+            "market_type": "perp",
+            "contract_type": "linear_perp",
+            "base_asset": "BTC",
+            "quote_asset": "USDT",
+            "current_price": "75800.80",
+            "funding_rate": "-0.00004220",
+            "next_funding_time": "2026-04-30T08:00:00.002000Z",
+            "open_interest_usd": "7199836127.69400000",
+            "oi_delta_1h_usd": "-43778678.09430000",
+            "oi_delta_4h_usd": "-26676083.91880000",
+            "oi_delta_24h_usd": "-250679476.16200000",
+            "oi_delta_7d_usd": "-763141717.23624600",
+            "nearest_liquidation_clusters": [
+              {
+                "side": "sell",
+                "venue": "binance",
+                "metadata": {
+                  "bucket_bps": "25"
+                },
+                "cluster_id": "binance:perp:linear_perp:BTC:USDT:sell:398:1",
+                "event_count": 1,
+                "lower_price": "77472.690000",
+                "snapshot_ts": "2026-04-23T17:02:11.598+00:00",
+                "upper_price": "77667.345000",
+                "cluster_rank": 1,
+                "data_quality": "derived",
+                "instrument_id": "binance:perp:linear_perp:BTC:USDT",
+                "source_method": "derived_from_force_orders",
+                "reference_price": "77862.00",
+                "estimated_notional_usd": "2016.07874"
+              }
+            ],
+            "as_of": "2026-04-30T03:10:00Z",
+            "freshness_seconds": 435,
+            "source_method": "stored_facts",
+            "data_quality": "complete",
+            "success": true,
+            "error": null
+          }
+        },
+        {
+          "toolId": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+          "toolName": "get_normalized_market_snapshot",
+          "args": {
+            "instrument_id": "BTC-PERP-BYBIT"
+          },
+          "result": {
+            "venue": "bybit",
+            "venue_symbol": "BTCUSDT",
+            "canonical_symbol": "BTC/USDT:PERP",
+            "market_type": "perp",
+            "contract_type": "linear_perp",
+            "base_asset": "BTC",
+            "quote_asset": "USDT",
+            "current_price": "75799.9",
+            "funding_rate": "-0.00000331",
+            "next_funding_time": "2026-04-30T08:00:00Z",
+            "open_interest_usd": "3649341135.3212000000",
+            "oi_delta_1h_usd": "-86592349.3998000000",
+            "oi_delta_4h_usd": "-128343077.1648400000",
+            "oi_delta_24h_usd": "-246868041.4108000000",
+            "oi_delta_7d_usd": "-642895296.0146700000",
+            "nearest_liquidation_clusters": [
+              {
+                "side": "buy",
+                "venue": "bybit",
+                "metadata": {
+                  "bucket_bps": "25"
+                },
+                "cluster_id": "bybit:perp:linear_perp:BTC:USDT:buy:400:1",
+                "event_count": 1,
+                "lower_price": "75310.800000",
+                "snapshot_ts": "2026-04-30T02:56:46.612+00:00",
+                "upper_price": "75499.077000",
+                "cluster_rank": 1,
+                "data_quality": "derived",
+                "instrument_id": "bybit:perp:linear_perp:BTC:USDT",
+                "source_method": "derived_from_force_orders",
+                "reference_price": "75310.80",
+                "estimated_notional_usd": "3313.67520"
+              }
+            ],
+            "as_of": "2026-04-30T03:10:00Z",
+            "freshness_seconds": 437,
+            "source_method": "stored_facts",
+            "data_quality": "complete",
+            "success": true,
+            "error": null
+          }
+        },
+        {
+          "toolId": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+          "toolName": "get_normalized_market_snapshot",
+          "args": {
+            "instrument_id": "BTC-PERP-OKX"
+          },
+          "result": {
+            "venue": "okx",
+            "venue_symbol": "BTC-USDT-SWAP",
+            "canonical_symbol": "BTC/USDT:PERP",
+            "market_type": "perp",
+            "contract_type": "linear_perp",
+            "base_asset": "BTC",
+            "quote_asset": "USDT",
+            "current_price": "75814",
+            "funding_rate": "-0.0000110614215021",
+            "next_funding_time": "2026-04-30T08:00:00Z",
+            "open_interest_usd": "2353074812.54884146428847",
+            "oi_delta_1h_usd": "1501204.31414967022551",
+            "oi_delta_4h_usd": "-6861563.57527186779033",
+            "oi_delta_24h_usd": "-93878488.10742145755528",
+            "oi_delta_7d_usd": "-476863577.15251061339762",
+            "nearest_liquidation_clusters": [
+              {
+                "side": "sell",
+                "venue": "okx",
+                "metadata": {
+                  "bucket_bps": "25"
+                },
+                "cluster_id": "okx:perp:linear_perp:BTC:USDT:sell:400:1",
+                "event_count": 1,
+                "lower_price": "75757.40000",
+                "snapshot_ts": "2026-04-30T03:06:21.766+00:00",
+                "upper_price": "75946.79350",
+                "cluster_rank": 1,
+                "data_quality": "derived",
+                "instrument_id": "okx:perp:linear_perp:BTC:USDT",
+                "source_method": "derived_from_force_orders",
+                "reference_price": "75757.4",
+                "estimated_notional_usd": "52272.606"
+              }
+            ],
+            "as_of": "2026-04-30T03:17:18.297000Z",
+            "freshness_seconds": 440,
+            "source_method": "stored_facts",
+            "data_quality": "complete",
+            "success": true,
+            "error": null
+          }
+        },
+        {
+          "toolId": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+          "toolName": "get_normalized_market_snapshot",
+          "args": {
+            "instrument_id": "BTC-PERP-HYPERLIQUID"
+          },
+          "result": {
+            "venue": "hyperliquid",
+            "venue_symbol": "BTC",
+            "canonical_symbol": "BTC/USDC:PERP",
+            "market_type": "perp",
+            "contract_type": "linear_perp",
+            "base_asset": "BTC",
+            "quote_asset": "USDC",
+            "current_price": "75792.0",
+            "funding_rate": "0.0000001564",
+            "next_funding_time": "2026-04-30T04:00:00Z",
+            "open_interest_usd": "1953860402.468000",
+            "oi_delta_1h_usd": "-57844762.871220",
+            "oi_delta_4h_usd": "-53577540.357000",
+            "oi_delta_24h_usd": "-156499176.330100",
+            "oi_delta_7d_usd": "-204653959.714220",
+            "nearest_liquidation_clusters": [
+              {
+                "side": "buy",
+                "venue": "hyperliquid",
+                "metadata": {
+                  "bucket_bps": "25"
+                },
+                "cluster_id": "hyperliquid:perp:linear_perp:BTC:USDC:buy:400:1",
+                "event_count": 55,
+                "lower_price": "76358.11202651754763290402572",
+                "snapshot_ts": "2026-04-30T01:54:13.945+00:00",
+                "upper_price": "76549.00730658384150198628578",
+                "cluster_rank": 1,
+                "data_quality": "derived",
+                "instrument_id": "hyperliquid:perp:linear_perp:BTC:USDC",
+                "source_method": "derived_from_force_orders",
+                "reference_price": "76358.11202651754763290402571",
+                "estimated_notional_usd": "503625.170020"
+              },
+              {
+                "side": "sell",
+                "venue": "hyperliquid",
+                "metadata": {
+                  "bucket_bps": "25"
+                },
+                "cluster_id": "hyperliquid:perp:linear_perp:BTC:USDC:sell:400:2",
+                "event_count": 55,
+                "lower_price": "76358.11202651754763290402572",
+                "snapshot_ts": "2026-04-30T01:54:13.945+00:00",
+                "upper_price": "76549.00730658384150198628578",
+                "cluster_rank": 2,
+                "data_quality": "derived",
+                "instrument_id": "hyperliquid:perp:linear_perp:BTC:USDC",
+                "source_method": "derived_from_force_orders",
+                "reference_price": "76358.11202651754763290402571",
+                "estimated_notional_usd": "503625.170020"
+              }
+            ],
+            "as_of": "2026-04-30T03:12:31.755000Z",
+            "freshness_seconds": 382,
+            "source_method": "stored_facts",
+            "data_quality": "complete",
+            "success": true,
+            "error": null
+          }
+        },
+        {
+          "toolId": "code_interpreter",
+          "toolName": "code_interpreter",
+          "args": {
+            "intent": "Compute derived comparison table and emit requested chart from snapshot aliases.",
+            "codePreview": "const rows = [];\nfunction extract(obj){ return obj?.result ?? obj; }\nconst snaps = [extract(get_normalized_market_snapshot_1), extract(get_normalized_market_snapshot_2), extract(get_normalized_market_snapshot_3), extract(get_normalized_market_snapshot_4)];\nfor (const s of snaps) {\n  if (!s) continue;\n  rows.push({\n    venue: s.venue,\n    symbol: s.venue_symbol,\n    funding_rate: Number(s.funding_rate),\n    oi_usd: Number(s.open_interest_usd),\n    oi_delta_1h_usd: Number(s.oi_delta_1h_usd),\n    l",
+            "inputs": {
+              "get_normalized_market_snapshot_1": "get_normalized_market_snapshot_1",
+              "get_normalized_market_snapshot_2": "get_normalized_market_snapshot_2",
+              "get_normalized_market_snapshot_3": "get_normalized_market_snapshot_3",
+              "get_normalized_market_snapshot_4": "get_normalized_market_snapshot_4"
+            },
+            "postProcessingContract": {
+              "operation": "derive comparison metrics and render chart",
+              "reason": "The snapshot tool outputs are nested objects and do not provide a flat chart-ready table; a deterministic reshape is needed to compare funding and OI change across venues, and the user requested a comparison visualization.",
+              "inputAliases": [
+                "get_normalized_market_snapshot_1",
+                "get_normalized_market_snapshot_2",
+                "get_normalized_market_snapshot_3",
+                "get_normalized_market_snapshot_4"
+              ],
+              "marketplaceMethodAlreadyProvidesResult": false,
+              "expectedArtifacts": [
+                "chart",
+                "metric_table"
+              ]
+            }
+          },
+          "result": {
+            "ok": false,
+            "error": "code_interpreter VM error: Generated code appears to include TypeScript syntax. Return executable JavaScript only; do not include type annotations, interfaces, or generics.. RETRY by calling code_interpreter again in your next step with corrected JavaScript that fixes this exact error — do NOT call returnResult yet, do NOT call any other tool, and do NOT silently drop the requested artifact. You have 4 more code_interpreter retry attempt(s) before the runtime force-stops the per-turn budget. Common fixes: declare every helper function before calling it (for example const returnDrawdown = (returns) => {...}), guard with optional chaining and length checks, sort time-series ascending, and read array shape via Array.isArray(rows) and rows[0] keys before iterating.",
+            "stdout": [],
+            "durationMs": 186,
+            "artifacts": [],
+            "intent": "Compute derived comparison table and emit requested chart from snapshot aliases.",
+            "inputProjectionDiagnostics": []
+          }
+        },
+        {
+          "toolId": "code_interpreter",
+          "toolName": "code_interpreter",
+          "args": {
+            "intent": "Compute derived comparison table and emit requested chart from snapshot aliases.",
+            "codePreview": "function pick(obj){ return obj && obj.result ? obj.result : obj; }\nconst snaps = [pick(get_normalized_market_snapshot_1), pick(get_normalized_market_snapshot_2), pick(get_normalized_market_snapshot_3), pick(get_normalized_market_snapshot_4)];\nconst rows = [];\nfor (let i = 0; i < snaps.length; i++) {\n  const s = snaps[i];\n  if (!s) continue;\n  const clusters = Array.isArray(s.nearest_liquidation_clusters) ? s.nearest_liquidation_clusters : [];\n  let liquidationSide = 'none';\n  if (clusters.length",
+            "inputs": {
+              "get_normalized_market_snapshot_1": "get_normalized_market_snapshot_1",
+              "get_normalized_market_snapshot_2": "get_normalized_market_snapshot_2",
+              "get_normalized_market_snapshot_3": "get_normalized_market_snapshot_3",
+              "get_normalized_market_snapshot_4": "get_normalized_market_snapshot_4"
+            },
+            "postProcessingContract": {
+              "operation": "derive comparison metrics and render chart",
+              "reason": "The snapshot tool outputs are nested objects and do not provide a flat chart-ready table; a deterministic reshape is needed to compare funding and OI change across venues, and the user requested a comparison visualization.",
+              "inputAliases": [
+                "get_normalized_market_snapshot_1",
+                "get_normalized_market_snapshot_2",
+                "get_normalized_market_snapshot_3",
+                "get_normalized_market_snapshot_4"
+              ],
+              "marketplaceMethodAlreadyProvidesResult": false,
+              "expectedArtifacts": [
+                "chart",
+                "metric_table"
+              ]
+            }
+          },
+          "result": {
+            "ok": false,
+            "error": "code_interpreter postProcessingContract expected artifact(s) metric_table, but the script emitted only chart. Emit the missing artifact(s) with renderChart(...) for charts or metricTable(...) for tables, then retry.",
+            "stdout": [],
+            "durationMs": 9,
+            "artifacts": [
+              {
+                "kind": "chart",
+                "spec": {
+                  "type": "composed",
+                  "xKey": "venue",
+                  "series": [
+                    "[OMITTED:DEPTH_LIMIT]",
+                    "[OMITTED:DEPTH_LIMIT]"
+                  ],
+                  "yAxis": {
+                    "label": "Funding rate",
+                    "format": "percent"
+                  },
+                  "yAxisRight": {
+                    "label": "USD",
+                    "format": "currency"
+                  },
+                  "legend": true,
+                  "xAxis": {
+                    "label": "Venue"
+                  }
+                },
+                "data": [
+                  {
+                    "venue": "binance",
+                    "symbol": "BTCUSDT",
+                    "funding_rate": -0.0000422,
+                    "oi_usd": 7199836127.694,
+                    "oi_delta_1h_usd": -43778678.0943,
+                    "oi_delta_4h_usd": -26676083.9188,
+                    "oi_delta_24h_usd": -250679476.162,
+                    "liquidation_side": "sell",
+                    "liquidation_notional_usd": 2016.07874
+                  },
+                  {
+                    "venue": "okx",
+                    "symbol": "BTC-USDT-SWAP",
+                    "funding_rate": -0.0000110614215021,
+                    "oi_usd": 2353074812.5488415,
+                    "oi_delta_1h_usd": 1501204.3141496703,
+                    "oi_delta_4h_usd": -6861563.575271868,
+                    "oi_delta_24h_usd": -93878488.10742146,
+                    "liquidation_side": "sell",
+                    "liquidation_notional_usd": 52272.606
+                  },
+                  {
+                    "venue": "bybit",
+                    "symbol": "BTCUSDT",
+                    "funding_rate": -0.00000331,
+                    "oi_usd": 3649341135.3212,
+                    "oi_delta_1h_usd": -86592349.3998,
+                    "oi_delta_4h_usd": -128343077.16484,
+                    "oi_delta_24h_usd": -246868041.4108,
+                    "liquidation_side": "buy",
+                    "liquidation_notional_usd": 3313.6752
+                  },
+                  {
+                    "venue": "hyperliquid",
+                    "symbol": "BTC",
+                    "funding_rate": 1.564e-7,
+                    "oi_usd": 1953860402.468,
+                    "oi_delta_1h_usd": -57844762.87122,
+                    "oi_delta_4h_usd": -53577540.357,
+                    "oi_delta_24h_usd": -156499176.3301,
+                    "liquidation_side": "both",
+                    "liquidation_notional_usd": 1007250.34004
+                  }
+                ],
+                "title": "BTC futures pressure comparison"
+              }
+            ],
+            "intent": "Compute derived comparison table and emit requested chart from snapshot aliases.",
+            "inputProjectionDiagnostics": []
+          }
+        },
+        {
+          "toolId": "code_interpreter",
+          "toolName": "code_interpreter",
+          "args": {
+            "intent": "Render the requested BTC futures pressure comparison chart from the existing snapshot aliases.",
+            "codePreview": "function rowsFrom(alias) {\n  return Array.isArray(alias) ? alias : (alias?.data ?? alias?.rows ?? alias?.items ?? alias?.results ?? alias?.outcomes ?? alias?.markets ?? alias?.quotes ?? alias?.records ?? alias?.candles ?? alias?.ohlcv ?? alias?.points ?? alias?.series ?? alias?.values ?? []);\n}\nconst sources = [\n  ['binance', dataset1],\n  ['bybit', dataset2],\n  ['okx', dataset3],\n  ['hyperliquid', dataset4],\n];\nconst rows = [];\nfor (const [source, ds] of sources) {\n  const arr = rowsFrom(ds);\n  ",
+            "inputs": {
+              "dataset1": "get_normalized_market_snapshot_1",
+              "dataset2": "get_normalized_market_snapshot_2",
+              "dataset3": "get_normalized_market_snapshot_3",
+              "dataset4": "get_normalized_market_snapshot_4"
+            },
+            "postProcessingContract": {
+              "operation": "reshape_and_chart",
+              "reason": "The user asks for a cross-venue comparison chart and the prior run already collected normalized market snapshot aliases. A chart can be rendered directly from those existing aliases without additional marketplace fetches.",
+              "inputAliases": [
+                "get_normalized_market_snapshot_1",
+                "get_normalized_market_snapshot_2",
+                "get_normalized_market_snapshot_3",
+                "get_normalized_market_snapshot_4"
+              ],
+              "expectedArtifacts": [
+                "chart"
+              ]
+            }
+          },
+          "result": {
+            "ok": false,
+            "error": "code_interpreter VM error: Chart has no finite numeric values across any series (funding_rate, open_interest_usd, volume_usd, liquidation_imbalance) over 4 row(s); refusing to render. This usually means the input was diagnostic/control-flow content (recovery prompts, pagination notes, error messages) rather than tabular data.. RETRY by calling code_interpreter again in your next step with corrected JavaScript that fixes this exact error — do NOT call returnResult yet, do NOT call any other tool, and do NOT silently drop the requested artifact. You have 2 more code_interpreter retry attempt(s) before the runtime force-stops the per-turn budget. Common fixes: declare every helper function before calling it (for example const returnDrawdown = (returns) => {...}), guard with optional chaining and length checks, sort time-series ascending, and read array shape via Array.isArray(rows) and rows[0] keys before iterating.",
+            "stdout": [],
+            "durationMs": 117,
+            "artifacts": [],
+            "intent": "Render the requested BTC futures pressure comparison chart from the existing snapshot aliases.",
+            "inputProjectionDiagnostics": []
+          }
+        },
+        {
+          "toolId": "code_interpreter",
+          "toolName": "code_interpreter",
+          "args": {
+            "intent": "Rebuild a chart-ready comparison from the existing normalized market snapshot aliases, defensively extracting numeric fields for BTC futures across four venues and computing a composite pressure view. This addresses the prior failure by reading actual array shapes/keys, optional-chaining all nested fields, and only charting finite numeric values. The marketplace method does not already provide the combined comparison chart, so derived reshaping is required.",
+            "codePreview": "const extractRows = (obj) => {\n  if (!obj) return [];\n  if (Array.isArray(obj)) return obj;\n  const candidates = [obj.data, obj.rows, obj.items, obj.results, obj.outcomes, obj.markets, obj.quotes, obj.records, obj.candles, obj.ohlcv, obj.points, obj.series, obj.values];\n  for (const c of candidates) if (Array.isArray(c)) return c;\n  return [];\n};\n\nconst inputsList = [\n  { alias: 'binance', raw: snap1 },\n  { alias: 'bybit', raw: snap2 },\n  { alias: 'okx', raw: snap3 },\n  { alias: 'hyperliquid', r",
+            "inputs": {
+              "snap1": "get_normalized_market_snapshot_1",
+              "snap2": "get_normalized_market_snapshot_2",
+              "snap3": "get_normalized_market_snapshot_3",
+              "snap4": "get_normalized_market_snapshot_4"
+            },
+            "postProcessingContract": {
+              "operation": "reshape_and_chart_comparison",
+              "reason": "Need to normalize four venue snapshot payloads into a single flat table with funding_rate, open_interest_usd, volume_usd, and liquidation_imbalance for charting; prior attempt likely passed control/error content instead of rows.",
+              "inputAliases": [
+                "get_normalized_market_snapshot_1",
+                "get_normalized_market_snapshot_2",
+                "get_normalized_market_snapshot_3",
+                "get_normalized_market_snapshot_4"
+              ],
+              "marketplaceMethodAlreadyProvidesResult": false,
+              "expectedArtifacts": [
+                "chart"
+              ]
+            }
+          },
+          "result": {
+            "ok": true,
+            "result": {
+              "debug": [
+                {
+                  "alias": "binance",
+                  "rawType": "object",
+                  "rowCount": 0,
+                  "firstKeys": [
+                    "venue",
+                    "venue_symbol",
+                    "canonical_symbol",
+                    "market_type",
+                    "contract_type",
+                    "base_asset",
+                    "quote_asset",
+                    "current_price",
+                    "funding_rate",
+                    "next_funding_time",
+                    "open_interest_usd",
+                    "oi_delta_1h_usd",
+                    "oi_delta_4h_usd",
+                    "oi_delta_24h_usd",
+                    "oi_delta_7d_usd",
+                    "nearest_liquidation_clusters",
+                    "as_of",
+                    "freshness_seconds",
+                    "source_method",
+                    "data_quality"
+                  ],
+                  "topKeys": [
+                    "venue",
+                    "venue_symbol",
+                    "canonical_symbol",
+                    "market_type",
+                    "contract_type",
+                    "base_asset",
+                    "quote_asset",
+                    "current_price",
+                    "funding_rate",
+                    "next_funding_time",
+                    "open_interest_usd",
+                    "oi_delta_1h_usd",
+                    "oi_delta_4h_usd",
+                    "oi_delta_24h_usd",
+                    "oi_delta_7d_usd",
+                    "nearest_liquidation_clusters",
+                    "as_of",
+                    "freshness_seconds",
+                    "source_method",
+                    "data_quality"
+                  ],
+                  "hasDataField": false
+                },
+                {
+                  "alias": "bybit",
+                  "rawType": "object",
+                  "rowCount": 0,
+                  "firstKeys": [
+                    "venue",
+                    "venue_symbol",
+                    "canonical_symbol",
+                    "market_type",
+                    "contract_type",
+                    "base_asset",
+                    "quote_asset",
+                    "current_price",
+                    "funding_rate",
+                    "next_funding_time",
+                    "open_interest_usd",
+                    "oi_delta_1h_usd",
+                    "oi_delta_4h_usd",
+                    "oi_delta_24h_usd",
+                    "oi_delta_7d_usd",
+                    "nearest_liquidation_clusters",
+                    "as_of",
+                    "freshness_seconds",
+                    "source_method",
+                    "data_quality"
+                  ],
+                  "topKeys": [
+                    "venue",
+                    "venue_symbol",
+                    "canonical_symbol",
+                    "market_type",
+                    "contract_type",
+                    "base_asset",
+                    "quote_asset",
+                    "current_price",
+                    "funding_rate",
+                    "next_funding_time",
+                    "open_interest_usd",
+                    "oi_delta_1h_usd",
+                    "oi_delta_4h_usd",
+                    "oi_delta_24h_usd",
+                    "oi_delta_7d_usd",
+                    "nearest_liquidation_clusters",
+                    "as_of",
+                    "freshness_seconds",
+                    "source_method",
+                    "data_quality"
+                  ],
+                  "hasDataField": false
+                },
+                {
+                  "alias": "okx",
+                  "rawType": "object",
+                  "rowCount": 0,
+                  "firstKeys": [
+                    "venue",
+                    "venue_symbol",
+                    "canonical_symbol",
+                    "market_type",
+                    "contract_type",
+                    "base_asset",
+                    "quote_asset",
+                    "current_price",
+                    "funding_rate",
+                    "next_funding_time",
+                    "open_interest_usd",
+                    "oi_delta_1h_usd",
+                    "oi_delta_4h_usd",
+                    "oi_delta_24h_usd",
+                    "oi_delta_7d_usd",
+                    "nearest_liquidation_clusters",
+                    "as_of",
+                    "freshness_seconds",
+                    "source_method",
+                    "data_quality"
+                  ],
+                  "topKeys": [
+                    "venue",
+                    "venue_symbol",
+                    "canonical_symbol",
+                    "market_type",
+                    "contract_type",
+                    "base_asset",
+                    "quote_asset",
+                    "current_price",
+                    "funding_rate",
+                    "next_funding_time",
+                    "open_interest_usd",
+                    "oi_delta_1h_usd",
+                    "oi_delta_4h_usd",
+                    "oi_delta_24h_usd",
+                    "oi_delta_7d_usd",
+                    "nearest_liquidation_clusters",
+                    "as_of",
+                    "freshness_seconds",
+                    "source_method",
+                    "data_quality"
+                  ],
+                  "hasDataField": false
+                },
+                {
+                  "alias": "hyperliquid",
+                  "rawType": "object",
+                  "rowCount": 0,
+                  "firstKeys": [
+                    "venue",
+                    "venue_symbol",
+                    "canonical_symbol",
+                    "market_type",
+                    "contract_type",
+                    "base_asset",
+                    "quote_asset",
+                    "current_price",
+                    "funding_rate",
+                    "next_funding_time",
+                    "open_interest_usd",
+                    "oi_delta_1h_usd",
+                    "oi_delta_4h_usd",
+                    "oi_delta_24h_usd",
+                    "oi_delta_7d_usd",
+                    "nearest_liquidation_clusters",
+                    "as_of",
+                    "freshness_seconds",
+                    "source_method",
+                    "data_quality"
+                  ],
+                  "topKeys": [
+                    "venue",
+                    "venue_symbol",
+                    "canonical_symbol",
+                    "market_type",
+                    "contract_type",
+                    "base_asset",
+                    "quote_asset",
+                    "current_price",
+                    "funding_rate",
+                    "next_funding_time",
+                    "open_interest_usd",
+                    "oi_delta_1h_usd",
+                    "oi_delta_4h_usd",
+                    "oi_delta_24h_usd",
+                    "oi_delta_7d_usd",
+                    "nearest_liquidation_clusters",
+                    "as_of",
+                    "freshness_seconds",
+                    "source_method",
+                    "data_quality"
+                  ],
+                  "hasDataField": false
+                }
+              ],
+              "chartRows": [
+                {
+                  "venue": "binance",
+                  "funding_rate_bps": -0.42200000000000004,
+                  "open_interest_usd_bil": 7.199836127694001,
+                  "oi_delta_usd_mil": null,
+                  "volume_usd_bil": null,
+                  "liquidation_imbalance": null
+                },
+                {
+                  "venue": "bybit",
+                  "funding_rate_bps": -0.0331,
+                  "open_interest_usd_bil": 3.6493411353211997,
+                  "oi_delta_usd_mil": null,
+                  "volume_usd_bil": null,
+                  "liquidation_imbalance": null
+                },
+                {
+                  "venue": "okx",
+                  "funding_rate_bps": -0.11061421502100001,
+                  "open_interest_usd_bil": 2.3530748125488414,
+                  "oi_delta_usd_mil": null,
+                  "volume_usd_bil": null,
+                  "liquidation_imbalance": null
+                },
+                {
+                  "venue": "hyperliquid",
+                  "funding_rate_bps": 0.001564,
+                  "open_interest_usd_bil": 1.953860402468,
+                  "oi_delta_usd_mil": null,
+                  "volume_usd_bil": null,
+                  "liquidation_imbalance": null
+                }
+              ],
+              "note": "Extracted from existing normalized snapshot aliases only; if liquidation imbalance or OI delta are missing in a row, they are left null."
+            },
+            "stdout": [],
+            "durationMs": 7,
+            "executorDiagnostics": "[OMITTED:CIRCULAR_REFERENCE]",
+            "artifacts": [
+              {
+                "kind": "chart",
+                "spec": {
+                  "type": "bar",
+                  "xKey": "venue",
+                  "series": [
+                    "[OMITTED:DEPTH_LIMIT]",
+                    "[OMITTED:DEPTH_LIMIT]",
+                    "[OMITTED:DEPTH_LIMIT]",
+                    "[OMITTED:DEPTH_LIMIT]"
+                  ],
+                  "yAxis": {
+                    "label": "Normalized comparison"
+                  },
+                  "legend": true,
+                  "xAxis": {
+                    "label": "Venue"
+                  }
+                },
+                "data": [
+                  {
+                    "venue": "binance",
+                    "funding_rate_bps": -0.42200000000000004,
+                    "open_interest_usd_bil": 7.199836127694001,
+                    "oi_delta_usd_mil": null,
+                    "volume_usd_bil": null,
+                    "liquidation_imbalance": null
+                  },
+                  {
+                    "venue": "bybit",
+                    "funding_rate_bps": -0.0331,
+                    "open_interest_usd_bil": 3.6493411353211997,
+                    "oi_delta_usd_mil": null,
+                    "volume_usd_bil": null,
+                    "liquidation_imbalance": null
+                  },
+                  {
+                    "venue": "okx",
+                    "funding_rate_bps": -0.11061421502100001,
+                    "open_interest_usd_bil": 2.3530748125488414,
+                    "oi_delta_usd_mil": null,
+                    "volume_usd_bil": null,
+                    "liquidation_imbalance": null
+                  },
+                  {
+                    "venue": "hyperliquid",
+                    "funding_rate_bps": 0.001564,
+                    "open_interest_usd_bil": 1.953860402468,
+                    "oi_delta_usd_mil": null,
+                    "volume_usd_bil": null,
+                    "liquidation_imbalance": null
+                  }
+                ],
+                "title": "BTC futures pressure comparison"
+              }
+            ],
+            "intent": "Rebuild a chart-ready comparison from the existing normalized market snapshot aliases, defensively extracting numeric fields for BTC futures across four venues and computing a composite pressure view. This addresses the prior failure by reading actual array shapes/keys, optional-chaining all nested fields, and only charting finite numeric values. The marketplace method does not already provide the combined comparison chart, so derived reshaping is required.",
+            "inputProjectionDiagnostics": []
+          }
+        }
+      ],
+      "toolSchemas": [
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "list_supported_instruments",
+          "description": "Resolve canonical instrument IDs and coverage metadata only. This discovery tool does not return live prices, funding rows, open interest, freshness, or liquidation clusters. Use it only when market identity is genuinely ambiguous or when the user explicitly asks for exact instrument IDs or coverage notes. Do not call this first for obvious requests like Binance BTC perp, ETH perp on Bybit, or direct venue/base comparisons; downstream tools accept simple aliases like BTC-PERP-BINANCE and ETH-PERP-BINANCE directly. It can support prompts that ask to list exact instrument IDs, but it should be a helper step rather than the primary execution path whenever the user also asks for funding rows, latest snapshots, OI rankings, or cross-venue comparisons. For cross-venue perp funding compares, prefer compare_perp_funding_history.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "venue": {
+                "type": "string",
+                "examples": [
+                  "binance",
+                  "bybit",
+                  "okx",
+                  "hyperliquid"
+                ],
+                "description": "Optional venue filter. Use lowercase venue names when narrowing results to one exchange."
+              },
+              "base_asset": {
+                "type": "string",
+                "examples": [
+                  "BTC",
+                  "ETH",
+                  "SOL"
+                ],
+                "description": "Optional base-asset filter. Use uppercase asset symbols such as BTC, ETH, or SOL."
+              },
+              "market_type": {
+                "enum": [
+                  "spot",
+                  "perp"
+                ],
+                "type": "string",
+                "description": "Optional market-type filter. Use perp for perpetuals or spot for spot markets."
+              },
+              "quote_asset": {
+                "type": "string",
+                "examples": [
+                  "USDT",
+                  "USDC"
+                ],
+                "description": "Perp compares here usually use USDT on Binance, Bybit, and OKX, and USDC on Hyperliquid. Do not guess plain USD."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "instrument_id",
+                    "venue",
+                    "venue_symbol",
+                    "canonical_symbol",
+                    "market_type",
+                    "contract_type",
+                    "base_asset",
+                    "quote_asset",
+                    "settlement_asset",
+                    "contract_size",
+                    "tick_size",
+                    "step_size",
+                    "price_precision",
+                    "quantity_precision",
+                    "coverage_status",
+                    "is_enabled",
+                    "metadata"
+                  ],
+                  "properties": {
+                    "venue": "[OMITTED:DEPTH_LIMIT]",
+                    "metadata": "[OMITTED:DEPTH_LIMIT]",
+                    "step_size": "[OMITTED:DEPTH_LIMIT]",
+                    "tick_size": "[OMITTED:DEPTH_LIMIT]",
+                    "base_asset": "[OMITTED:DEPTH_LIMIT]",
+                    "is_enabled": "[OMITTED:DEPTH_LIMIT]",
+                    "updated_at": "[OMITTED:DEPTH_LIMIT]",
+                    "market_type": "[OMITTED:DEPTH_LIMIT]",
+                    "quote_asset": "[OMITTED:DEPTH_LIMIT]",
+                    "venue_symbol": "[OMITTED:DEPTH_LIMIT]",
+                    "contract_size": "[OMITTED:DEPTH_LIMIT]",
+                    "contract_type": "[OMITTED:DEPTH_LIMIT]",
+                    "instrument_id": "[OMITTED:DEPTH_LIMIT]",
+                    "coverage_status": "[OMITTED:DEPTH_LIMIT]",
+                    "price_precision": "[OMITTED:DEPTH_LIMIT]",
+                    "canonical_symbol": "[OMITTED:DEPTH_LIMIT]",
+                    "settlement_asset": "[OMITTED:DEPTH_LIMIT]",
+                    "quantity_precision": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_ohlcv_history",
+          "description": "Return stored OHLCV history for one instrument. Use start_ts and end_ts when the user asks for performance since a named historical event, calendar date, or older regime. If the venue and asset are already obvious, call this tool directly with a supported alias like BTC-PERP-BINANCE or ETH-PERP-BINANCE instead of resolving IDs first. Prefer canonical instrument IDs like venue:market_type:contract_type:BASE:QUOTE, but simple aliases are also accepted.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "instrument_id"
+            ],
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "default": 200,
+                "maximum": 60000,
+                "minimum": 1,
+                "description": "Maximum number of OHLCV rows to return, ordered from newest to oldest."
+              },
+              "end_ts": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "examples": [
+                  "2026-04-25T00:00:00Z"
+                ],
+                "description": "Optional inclusive upper bound for the requested OHLCV window in ISO 8601 UTC."
+              },
+              "interval": {
+                "enum": [
+                  "1m",
+                  "5m",
+                  "15m",
+                  "1h",
+                  "4h",
+                  "1d"
+                ],
+                "type": "string",
+                "default": "1m",
+                "description": "OHLCV candle interval to return."
+              },
+              "start_ts": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "examples": [
+                  "2022-11-09T00:00:00Z"
+                ],
+                "description": "Optional inclusive lower bound for the requested OHLCV window in ISO 8601 UTC."
+              },
+              "instrument_id": {
+                "type": "string",
+                "examples": [
+                  "binance:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BINANCE",
+                  "hyperliquid:perp:linear_perp:BTC:USDC",
+                  "BTC-PERP-HYPERLIQUID"
+                ],
+                "description": "Canonical instrument ID or supported venue alias for the market you want to inspect."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "ts",
+                    "open",
+                    "high",
+                    "low",
+                    "close",
+                    "volume_base",
+                    "volume_quote",
+                    "trades_count"
+                  ],
+                  "properties": {
+                    "ts": "[OMITTED:DEPTH_LIMIT]",
+                    "low": "[OMITTED:DEPTH_LIMIT]",
+                    "high": "[OMITTED:DEPTH_LIMIT]",
+                    "open": "[OMITTED:DEPTH_LIMIT]",
+                    "close": "[OMITTED:DEPTH_LIMIT]",
+                    "volume_base": "[OMITTED:DEPTH_LIMIT]",
+                    "trades_count": "[OMITTED:DEPTH_LIMIT]",
+                    "volume_quote": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_funding_history",
+          "description": "Return stored funding history rows for one known instrument, including the most recent N rows. Use this for single-instrument funding inspection or follow-on analysis after the exact market is already known. If the venue and asset are already obvious, call this tool directly with a supported alias like BTC-PERP-BINANCE instead of resolving IDs first. For cross-venue perp funding comparisons that also need resolved instrument IDs, use compare_perp_funding_history instead. Prefer canonical instrument IDs like venue:market_type:contract_type:BASE:QUOTE, but simple aliases are also accepted.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "instrument_id"
+            ],
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "default": 200,
+                "maximum": 1000,
+                "minimum": 1,
+                "description": "Maximum number of funding rows to return, ordered from newest to oldest."
+              },
+              "instrument_id": {
+                "type": "string",
+                "examples": [
+                  "binance:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BINANCE",
+                  "hyperliquid:perp:linear_perp:BTC:USDC",
+                  "BTC-PERP-HYPERLIQUID"
+                ],
+                "description": "Canonical instrument ID or supported venue alias for the market you want to inspect."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "ts",
+                    "venue",
+                    "instrument_id",
+                    "funding_rate",
+                    "next_funding_time",
+                    "funding_interval_h",
+                    "mark_price",
+                    "index_price",
+                    "source_method",
+                    "data_quality"
+                  ],
+                  "properties": {
+                    "ts": "[OMITTED:DEPTH_LIMIT]",
+                    "venue": "[OMITTED:DEPTH_LIMIT]",
+                    "mark_price": "[OMITTED:DEPTH_LIMIT]",
+                    "index_price": "[OMITTED:DEPTH_LIMIT]",
+                    "data_quality": "[OMITTED:DEPTH_LIMIT]",
+                    "funding_rate": "[OMITTED:DEPTH_LIMIT]",
+                    "instrument_id": "[OMITTED:DEPTH_LIMIT]",
+                    "source_method": "[OMITTED:DEPTH_LIMIT]",
+                    "next_funding_time": "[OMITTED:DEPTH_LIMIT]",
+                    "funding_interval_h": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "compare_perp_funding_history",
+          "description": "Resolve the exact linear perp instrument IDs for one base asset across Binance, Bybit, OKX, and/or Hyperliquid, then return the most recent funding history rows for each venue in one response. Use this when the user asks to list the exact perp instrument IDs and compare funding rows across matching venues.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "base_asset"
+            ],
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "default": 10,
+                "maximum": 1000,
+                "minimum": 1,
+                "description": "Maximum number of recent funding rows to return per venue."
+              },
+              "venues": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "binance",
+                    "bybit",
+                    "okx",
+                    "hyperliquid"
+                  ],
+                  "type": "string"
+                },
+                "default": [
+                  "binance",
+                  "bybit",
+                  "okx",
+                  "hyperliquid"
+                ],
+                "examples": [
+                  [
+                    "binance",
+                    "bybit",
+                    "okx",
+                    "hyperliquid"
+                  ]
+                ],
+                "description": "Venues to include in the funding comparison."
+              },
+              "base_asset": {
+                "type": "string",
+                "examples": [
+                  "BTC",
+                  "ETH",
+                  "SOL"
+                ],
+                "description": "Base asset to compare across venues."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "requested_base_asset",
+                  "requested_market_type",
+                  "requested_venues",
+                  "limit",
+                  "results",
+                  "missing_venues",
+                  "notes"
+                ],
+                "properties": {
+                  "limit": {
+                    "type": "integer"
+                  },
+                  "notes": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "results": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "missing_venues": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "requested_venues": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "requested_base_asset": {
+                    "type": "string"
+                  },
+                  "requested_market_type": {
+                    "enum": "[OMITTED:DEPTH_LIMIT]",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_oi_summary",
+          "description": "Return the latest open-interest snapshot plus precomputed deltas and explicit coverage metadata for missing or source-limited horizons. Use this for OI ranking or momentum analysis after the market is already known, not for instrument discovery. If the venue and asset are already obvious, call this tool directly with a supported alias like BTC-PERP-BINANCE instead of resolving IDs first. Use list_supported_instruments only when identity is ambiguous or when exact coverage notes are the point. Prefer canonical instrument IDs like venue:market_type:contract_type:BASE:QUOTE, but simple aliases are also accepted.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "instrument_id"
+            ],
+            "properties": {
+              "instrument_id": {
+                "type": "string",
+                "examples": [
+                  "binance:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BINANCE",
+                  "hyperliquid:perp:linear_perp:BTC:USDC",
+                  "BTC-PERP-HYPERLIQUID"
+                ],
+                "description": "Canonical instrument ID or supported venue alias for the market you want to inspect."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "instrument",
+                  "latest_snapshot",
+                  "deltas",
+                  "coverage"
+                ],
+                "properties": {
+                  "deltas": {
+                    "type": "object",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "coverage": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "instrument": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "latest_snapshot": {
+                    "type": "[OMITTED:DEPTH_LIMIT]",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_oi_history",
+          "description": "Return stored open-interest history for one known instrument over a caller-selected time window. Use this for charting, range analysis, and follow-on delta calculations. Rows are ordered by bucket_start ascending. If the venue and asset are already obvious, call this tool directly with a supported alias like BTC-PERP-BINANCE instead of resolving IDs first. Prefer canonical instrument IDs like venue:market_type:contract_type:BASE:QUOTE, but simple aliases are also accepted. Some venues currently have source-limited or prospective-only OI history, and coverage notes will say so explicitly.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "instrument_id"
+            ],
+            "properties": {
+              "limit": {
+                "type": "integer",
+                "default": 1000,
+                "maximum": 5000,
+                "minimum": 1,
+                "description": "Maximum number of OI buckets to return after interval and time filters are applied."
+              },
+              "end_ts": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "examples": [
+                  "2026-04-25T00:00:00Z"
+                ],
+                "description": "Optional inclusive upper bound for the requested OI history window in ISO 8601 UTC."
+              },
+              "interval": {
+                "enum": [
+                  "5m",
+                  "1h",
+                  "4h",
+                  "1d"
+                ],
+                "type": "string",
+                "default": "1h",
+                "description": "Bucket interval for the returned open-interest history."
+              },
+              "start_ts": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "examples": [
+                  "2026-04-18T00:00:00Z"
+                ],
+                "description": "Optional inclusive lower bound for the requested OI history window in ISO 8601 UTC."
+              },
+              "instrument_id": {
+                "type": "string",
+                "examples": [
+                  "binance:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BINANCE",
+                  "hyperliquid:perp:linear_perp:BTC:USDC",
+                  "BTC-PERP-HYPERLIQUID"
+                ],
+                "description": "Canonical instrument ID or supported venue alias for the market you want to inspect."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "instrument",
+                  "interval",
+                  "row_count",
+                  "rows",
+                  "coverage"
+                ],
+                "properties": {
+                  "rows": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "coverage": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "interval": {
+                    "enum": "[OMITTED:DEPTH_LIMIT]",
+                    "type": "string"
+                  },
+                  "row_count": {
+                    "type": "integer"
+                  },
+                  "instrument": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_oi_delta",
+          "description": "Compute open-interest delta for one known instrument over an arbitrary range using stored OI snapshots. Use either explicit start_ts/end_ts bounds or a window like 30d, 14d, 72h, or 1w. Returns the matched boundary snapshots plus explicit coverage notes when stored history is source-limited. If the venue and asset are already obvious, call this tool directly with a supported alias like BTC-PERP-BINANCE instead of resolving IDs first. Prefer canonical instrument IDs like venue:market_type:contract_type:BASE:QUOTE, but simple aliases are also accepted.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "instrument_id"
+            ],
+            "properties": {
+              "end_ts": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "examples": [
+                  "2026-04-25T00:00:00Z"
+                ],
+                "description": "Optional inclusive upper bound for the OI delta calculation in ISO 8601 UTC."
+              },
+              "window": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "examples": [
+                  "30d",
+                  "14d",
+                  "72h",
+                  "1w"
+                ],
+                "description": "Use either start_ts or window, not both."
+              },
+              "start_ts": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "examples": [
+                  "2026-04-18T00:00:00Z"
+                ],
+                "description": "Optional inclusive lower bound for the OI delta calculation in ISO 8601 UTC. Use with end_ts, not with window."
+              },
+              "instrument_id": {
+                "type": "string",
+                "examples": [
+                  "binance:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BINANCE",
+                  "hyperliquid:perp:linear_perp:BTC:USDC",
+                  "BTC-PERP-HYPERLIQUID"
+                ],
+                "description": "Canonical instrument ID or supported venue alias for the market you want to inspect."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "instrument",
+                  "start_snapshot",
+                  "end_snapshot",
+                  "delta_usd",
+                  "coverage"
+                ],
+                "properties": {
+                  "coverage": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "delta_usd": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "instrument": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "end_snapshot": {
+                    "type": "[OMITTED:DEPTH_LIMIT]",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "start_snapshot": {
+                    "type": "[OMITTED:DEPTH_LIMIT]",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_normalized_market_snapshot",
+          "description": "Return the latest typed normalized market snapshot for one market, including current_price, funding_rate, next_funding_time, open_interest_usd, OI deltas, freshness_seconds, and nearest_liquidation_clusters. Use this tool to inspect one market or compare latest market conditions across matching venues. Do not use it for funding-history row series or instrument discovery. Prefer canonical instrument IDs like venue:market_type:contract_type:BASE:QUOTE, but simple aliases like BTC-PERP-BINANCE and BTC-PERP-HYPERLIQUID are also accepted; for direct cross-venue compares, call this tool once per venue using those aliases instead of discovering ids first.",
+          "inputSchema": {
+            "type": "object",
+            "required": [
+              "instrument_id"
+            ],
+            "properties": {
+              "instrument_id": {
+                "type": "string",
+                "examples": [
+                  "binance:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BINANCE",
+                  "bybit:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-BYBIT",
+                  "okx:perp:linear_perp:BTC:USDT",
+                  "BTC-PERP-OKX",
+                  "hyperliquid:perp:linear_perp:BTC:USDC",
+                  "BTC-PERP-HYPERLIQUID"
+                ],
+                "description": "Canonical instrument ID or supported venue alias for the market you want to inspect."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "venue",
+                  "venue_symbol",
+                  "canonical_symbol",
+                  "market_type",
+                  "contract_type",
+                  "base_asset",
+                  "quote_asset",
+                  "current_price",
+                  "funding_rate",
+                  "next_funding_time",
+                  "open_interest_usd",
+                  "oi_delta_1h_usd",
+                  "oi_delta_4h_usd",
+                  "oi_delta_24h_usd",
+                  "oi_delta_7d_usd",
+                  "nearest_liquidation_clusters",
+                  "as_of",
+                  "freshness_seconds",
+                  "source_method",
+                  "data_quality",
+                  "success",
+                  "error"
+                ],
+                "properties": {
+                  "as_of": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "error": {
+                    "type": "[OMITTED:DEPTH_LIMIT]",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "venue": {
+                    "type": "string"
+                  },
+                  "success": {
+                    "type": "boolean"
+                  },
+                  "base_asset": {
+                    "type": "string"
+                  },
+                  "market_type": {
+                    "enum": "[OMITTED:DEPTH_LIMIT]",
+                    "type": "string"
+                  },
+                  "quote_asset": {
+                    "type": "string"
+                  },
+                  "data_quality": {
+                    "type": "string"
+                  },
+                  "funding_rate": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "venue_symbol": {
+                    "type": "string"
+                  },
+                  "contract_type": {
+                    "type": "string"
+                  },
+                  "current_price": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "source_method": {
+                    "type": "string"
+                  },
+                  "oi_delta_1h_usd": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "oi_delta_4h_usd": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "oi_delta_7d_usd": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "canonical_symbol": {
+                    "type": "string"
+                  },
+                  "oi_delta_24h_usd": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "freshness_seconds": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "next_funding_time": {
+                    "type": "[OMITTED:DEPTH_LIMIT]",
+                    "format": "date-time"
+                  },
+                  "open_interest_usd": {
+                    "type": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "nearest_liquidation_clusters": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "venue": {
+                "type": "string"
+              },
+              "success": {
+                "type": "boolean"
+              },
+              "base_asset": {
+                "type": "string"
+              },
+              "market_type": {
+                "enum": [
+                  "spot",
+                  "perp"
+                ],
+                "type": "string"
+              },
+              "quote_asset": {
+                "type": "string"
+              },
+              "data_quality": {
+                "type": "string"
+              },
+              "funding_rate": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "venue_symbol": {
+                "type": "string"
+              },
+              "contract_type": {
+                "type": "string"
+              },
+              "current_price": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source_method": {
+                "type": "string"
+              },
+              "oi_delta_1h_usd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "oi_delta_4h_usd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "oi_delta_7d_usd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "canonical_symbol": {
+                "type": "string"
+              },
+              "oi_delta_24h_usd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "freshness_seconds": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "next_funding_time": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "open_interest_usd": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "nearest_liquidation_clusters": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "snapshot_ts",
+                    "cluster_id",
+                    "venue",
+                    "instrument_id",
+                    "side",
+                    "reference_price",
+                    "lower_price",
+                    "upper_price",
+                    "estimated_notional_usd",
+                    "event_count",
+                    "cluster_rank",
+                    "source_method",
+                    "data_quality",
+                    "metadata"
+                  ],
+                  "properties": {
+                    "side": "[OMITTED:DEPTH_LIMIT]",
+                    "venue": "[OMITTED:DEPTH_LIMIT]",
+                    "metadata": "[OMITTED:DEPTH_LIMIT]",
+                    "cluster_id": "[OMITTED:DEPTH_LIMIT]",
+                    "event_count": "[OMITTED:DEPTH_LIMIT]",
+                    "lower_price": "[OMITTED:DEPTH_LIMIT]",
+                    "snapshot_ts": "[OMITTED:DEPTH_LIMIT]",
+                    "upper_price": "[OMITTED:DEPTH_LIMIT]",
+                    "cluster_rank": "[OMITTED:DEPTH_LIMIT]",
+                    "data_quality": "[OMITTED:DEPTH_LIMIT]",
+                    "instrument_id": "[OMITTED:DEPTH_LIMIT]",
+                    "source_method": "[OMITTED:DEPTH_LIMIT]",
+                    "reference_price": "[OMITTED:DEPTH_LIMIT]",
+                    "estimated_notional_usd": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        {
+          "serverName": "Meridian Market Data",
+          "toolName": "get_venue_health",
+          "description": "Return cached summary health for one venue, with optional per-source diagnostics.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "venue": {
+                "type": "string",
+                "default": "binance",
+                "examples": [
+                  "binance",
+                  "bybit",
+                  "okx",
+                  "hyperliquid"
+                ],
+                "description": "Venue to inspect. Mixed-case values like OKX are accepted."
+              },
+              "source_limit": {
+                "type": "integer",
+                "default": 10,
+                "maximum": 20,
+                "minimum": 1,
+                "description": "Maximum number of per-source diagnostic rows to include when include_sources is true."
+              },
+              "include_sources": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether to include per-source diagnostics in addition to the summary health payload."
+              }
+            },
+            "additionalProperties": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "required": [
+              "success",
+              "data",
+              "error",
+              "as_of"
+            ],
+            "properties": {
+              "data": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "venue",
+                  "ok",
+                  "ohlcv_1m",
+                  "funding",
+                  "oi",
+                  "clusters",
+                  "source_summary"
+                ],
+                "properties": {
+                  "oi": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "venue": {
+                    "type": "string"
+                  },
+                  "funding": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "sources": {
+                    "type": "array",
+                    "items": "[OMITTED:DEPTH_LIMIT]"
+                  },
+                  "clusters": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "ohlcv_1m": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  },
+                  "source_summary": {
+                    "type": "object",
+                    "required": "[OMITTED:DEPTH_LIMIT]",
+                    "properties": "[OMITTED:DEPTH_LIMIT]",
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false
+              },
+              "as_of": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "error": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "code",
+                  "message",
+                  "retryable",
+                  "details"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "success": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      ],
+      "diagnostics": {
+        "selection": {
+          "selectedPolicy": "exploratory",
+          "plannerReasoningStage": "mechanical",
+          "oneShotBias": false,
+          "selectedTools": [
+            {
+              "toolId": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+              "toolName": "Meridian Market Data",
+              "priceUsd": "0.100000",
+              "selectedMethodCount": 9,
+              "selectedMethods": [
+                "list_supported_instruments",
+                "get_ohlcv_history",
+                "get_funding_history",
+                "compare_perp_funding_history",
+                "get_oi_summary",
+                "get_oi_history",
+                "get_oi_delta",
+                "get_normalized_market_snapshot",
+                "get_venue_health"
+              ],
+              "omittedSelectedMethodCount": 0
+            }
+          ]
+        },
+        "executionContract": {
+          "plannerQuery": "Compare BTC futures pressure across binance-futures BTCUSDT, bybit BTCUSDT, okex-swap BTC-USDT-SWAP, and hyperliquid BTC-USD using funding rate, dollar open interest change, dollar volume, and liquidation imbalance.",
+          "allowedModules": [],
+          "intentContract": null,
+          "validation": null
+        },
+        "cost": {
+          "planningCostUsd": 0,
+          "initialExecutionCostUsd": 0.02277525,
+          "rediscoveryAdditionalCostUsd": 0,
+          "synthesisCostUsd": 0.0089615,
+          "totalModelCostUsd": 0.05000625,
+          "toolCostUsd": 0.1,
+          "totalChargedUsd": 0.15000625
+        },
+        "verification": {
+          "evaluations": [],
+          "repairEvents": [],
+          "triggerNeedsDifferentTools": false,
+          "triggerMissingCapability": null
+        },
+        "execution": {
+          "reasoningEnabled": true,
+          "receivedReasoning": false,
+          "reasoningChars": 0,
+          "stepBudget": 10,
+          "completedStepCount": 16,
+          "toolCallCount": 8,
+          "toolRegistry": {
+            "availableToolCount": 9,
+            "availableMethodNamesSample": [
+              "Meridian Market Data.list_supported_instruments",
+              "Meridian Market Data.get_ohlcv_history",
+              "Meridian Market Data.get_funding_history",
+              "Meridian Market Data.compare_perp_funding_history",
+              "Meridian Market Data.get_oi_summary",
+              "Meridian Market Data.get_oi_history",
+              "Meridian Market Data.get_oi_delta",
+              "Meridian Market Data.get_normalized_market_snapshot",
+              "Meridian Market Data.get_venue_health"
+            ],
+            "selectedMethodCount": 9,
+            "selectedButFilteredOut": [],
+            "toolCallAttemptCount": 4,
+            "toolCallSuccessCount": 4,
+            "toolCallFailureCount": 0,
+            "toolCallFailureSamples": []
+          }
+        },
+        "retryBudget": {
+          "cheapFixAttempts": 0,
+          "semanticRetries": 0
+        },
+        "stageTiming": {
+          "selectionMs": 21220,
+          "executionMs": 112378,
+          "synthesisMs": 11074,
+          "accountedMs": 144672,
+          "residualMs": 5200
+        },
+        "executorDiagnostics": null,
+        "models": {
+          "overrideMode": "none",
+          "stages": [
+            {
+              "stageKey": "tool-selection",
+              "stageKind": "stage",
+              "stage": "tool-selection",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gemini-flash-model",
+              "requestedModelId": "gemini-flash-model",
+              "resolvedModelId": "gemini-flash-model",
+              "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+              "effectiveModelId": "gemini-flash-model",
+              "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.0182695,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]",
+                "reasoningTokens": "[REDACTED]",
+                "cachedInputTokens": "[REDACTED]"
+              }
+            },
+            {
+              "stageKey": "iterative-execution",
+              "stageKind": "stage",
+              "stage": "iterative-execution",
+              "surface": "query",
+              "responseShape": null,
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gpt-5.4-mini-model",
+              "requestedModelId": "gpt-5.4-mini-model",
+              "resolvedModelId": "gpt-5.4-mini-model",
+              "resolvedRuntimeModelId": "openai/gpt-5.4-mini",
+              "effectiveModelId": "gpt-5.4-mini-model",
+              "effectiveRuntimeModelId": "openai/gpt-5.4-mini",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.02277525,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]"
+              }
+            },
+            {
+              "stageKey": "final-synthesis",
+              "stageKind": "final-synthesis",
+              "stage": "final-synthesis",
+              "surface": "query",
+              "responseShape": "answer_with_evidence",
+              "answerModelId": "gemini-flash-model",
+              "logicalModelId": "gemini-flash-model",
+              "requestedModelId": "gemini-flash-model",
+              "resolvedModelId": "gemini-flash-model",
+              "resolvedRuntimeModelId": "google/gemini-3-flash-preview",
+              "effectiveModelId": "gemini-flash-model",
+              "effectiveRuntimeModelId": "google/gemini-3-flash-preview",
+              "localDevOverrideApplied": false,
+              "localDevOverrideTargetModelId": null,
+              "fallbackModelId": null,
+              "fallbackRuntimeModelId": null,
+              "fallbackReason": null,
+              "synthesisSkipped": false,
+              "invoked": true,
+              "latencyMs": null,
+              "actualCostUsd": 0.0089615,
+              "usage": {
+                "inputTokens": "[REDACTED]",
+                "outputTokens": "[REDACTED]",
+                "totalTokens": "[REDACTED]",
+                "reasoningTokens": "[REDACTED]",
+                "cachedInputTokens": "[REDACTED]"
+              }
+            }
+          ]
+        }
+      },
+      "governance": {
+        "policyVersion": "2026-03-05.query-data-governance.v1",
+        "redactionCount": 13,
+        "omittedSensitiveFieldsCount": 112,
+        "exposure": {
+          "runtimeArtifacts": "internal_runtime_only",
+          "durableAudit": "internal_ops_only",
+          "developerTrace": "explicit_opt_in_redacted",
+          "publicDataUrl": "explicit_request_opt_in"
+        },
+        "retention": {
+          "runtimeTtlMs": 900000,
+          "durableAuditDays": 30,
+          "publicDataUrl": "until_deleted"
+        }
+      }
+    },
+    "grounding": {
+      "availableToolCount": 9,
+      "availableMethodNamesSample": [
+        "Meridian Market Data.list_supported_instruments",
+        "Meridian Market Data.get_ohlcv_history",
+        "Meridian Market Data.get_funding_history",
+        "Meridian Market Data.compare_perp_funding_history",
+        "Meridian Market Data.get_oi_summary",
+        "Meridian Market Data.get_oi_history",
+        "Meridian Market Data.get_oi_delta",
+        "Meridian Market Data.get_normalized_market_snapshot",
+        "Meridian Market Data.get_venue_health"
+      ],
+      "selectedMethodCount": 9,
+      "selectedButFilteredOut": [],
+      "toolCallCount": 8,
+      "toolCallAttemptCount": 4,
+      "toolCallSuccessCount": 4,
+      "toolCallFailureCount": 0,
+      "toolCallFailureSamples": [],
+      "grounded": true
+    },
+    "orchestrationMetrics": {
+      "parityStage": "enabled",
+      "orchestrationMode": "auto_discovery",
+      "firstPassSuccess": true,
+      "capabilityMissSignaled": false,
+      "rediscoveryExecuted": false
+    },
+    "responseShape": "answer_with_evidence",
+    "summary": "The following table compares BTC futures data across the requested venues as of approximately 03:17 UTC on April 30, 2026.",
+    "outcome": {
+      "label": "Bounded answer",
+      "tone": "caution",
+      "stopReason": "bounded_upstream_abort_guardrail",
+      "issueClass": "missing_evidence"
+    },
+    "controller": {
+      "scope": "standard",
+      "nextAction": "return_bounded_answer",
+      "actionsTaken": [
+        "inspect_current_grounding",
+        "return_bounded_answer"
+      ],
+      "patchFirstProgramPreserved": false,
+      "executionProgramRevisionId": "iterative-v1",
+      "hardBudgetApplied": false
+    },
+    "evidence": {
+      "facts": [
+        {
+          "id": "path_lookup:0",
+          "label": "Top-level path lookup for \"comparison\"",
+          "path": "comparison",
+          "relevanceScore": null,
+          "value": [
+            {
+              "venue": "binance",
+              "funding_rate_bps": -0.42200000000000004,
+              "open_interest_usd_bil": 7.199836127694001,
+              "oi_delta_usd_mil": null,
+              "volume_usd_bil": null,
+              "liquidation_imbalance": null
+            },
+            {
+              "venue": "bybit",
+              "funding_rate_bps": -0.0331,
+              "open_interest_usd_bil": 3.6493411353211997,
+              "oi_delta_usd_mil": null,
+              "volume_usd_bil": null,
+              "liquidation_imbalance": null
+            },
+            {
+              "venue": "okx",
+              "funding_rate_bps": -0.11061421502100001,
+              "open_interest_usd_bil": 2.3530748125488414,
+              "oi_delta_usd_mil": null,
+              "volume_usd_bil": null,
+              "liquidation_imbalance": null
+            },
+            {
+              "venue": "hyperliquid",
+              "funding_rate_bps": 0.001564,
+              "open_interest_usd_bil": 1.953860402468,
+              "oi_delta_usd_mil": null,
+              "volume_usd_bil": null,
+              "liquidation_imbalance": null
+            }
+          ]
+        },
+        {
+          "id": "path_lookup:1",
+          "label": "Top-level path lookup for \"note\"",
+          "path": "note",
+          "relevanceScore": null,
+          "value": "The available normalized snapshots exposed funding rate and open interest, but not dollar OI change, dollar volume, or liquidation imbalance in the extracted top-level numeric fields. Those fields were therefore null in the chart-ready comparison."
+        },
+        {
+          "id": "array_window:2",
+          "label": "Array window at \"comparison\" (first 4 rows)",
+          "path": "comparison",
+          "relevanceScore": null,
+          "value": [
+            {
+              "venue": "binance",
+              "funding_rate_bps": -0.42200000000000004,
+              "open_interest_usd_bil": 7.199836127694001,
+              "oi_delta_usd_mil": null,
+              "volume_usd_bil": null,
+              "liquidation_imbalance": null
+            },
+            {
+              "venue": "bybit",
+              "funding_rate_bps": -0.0331,
+              "open_interest_usd_bil": 3.6493411353211997,
+              "oi_delta_usd_mil": null,
+              "volume_usd_bil": null,
+              "liquidation_imbalance": null
+            },
+            {
+              "venue": "okx",
+              "funding_rate_bps": -0.11061421502100001,
+              "open_interest_usd_bil": 2.3530748125488414,
+              "oi_delta_usd_mil": null,
+              "volume_usd_bil": null,
+              "liquidation_imbalance": null
+            },
+            {
+              "venue": "hyperliquid",
+              "funding_rate_bps": 0.001564,
+              "open_interest_usd_bil": 1.953860402468,
+              "oi_delta_usd_mil": null,
+              "volume_usd_bil": null,
+              "liquidation_imbalance": null
+            }
+          ]
+        },
+        {
+          "id": "keyword_slice:3",
+          "label": "Keyword slice for \"binance\" (lines 3-5)",
+          "path": "line:4",
+          "relevanceScore": 1,
+          "value": "    {\n      \"venue\": \"binance\",\n      \"funding_rate_bps\": -0.42200000000000004,"
+        },
+        {
+          "id": "top_k_relevance:4",
+          "label": "Top-K relevance slice at \"$\"",
+          "path": "$",
+          "relevanceScore": 2,
+          "value": "{\n  \"comparison\": [\n    {\n      \"venue\": \"binance\",\n      \"funding_rate_bps\": -0.42200000000000004,\n      \"open_interest_usd_bil\": 7.199836127694001,\n      \"oi_delta_usd_mil\": null,\n      \"volume_usd_bil\": null,\n      \"liquidation_imbalance\": null\n    },\n    {\n      \"venue\": \"bybit\",\n      \"funding_rate_bps\": -0.0331,\n      \"open_interest_usd_bil\": 3.6493411353211997,\n      \"oi_delta_usd_mil\": null,\n      \"volume_usd_bil\": null,\n      \"liquidation_imbalance\": null\n    },\n    {\n      \"venue\": \"ok\n... [truncated for context window efficiency]"
+        },
+        {
+          "id": "top_k_relevance:5",
+          "label": "Top-K relevance slice at \"comparison\"",
+          "path": "comparison",
+          "relevanceScore": 2,
+          "value": "[\n  {\n    \"venue\": \"binance\",\n    \"funding_rate_bps\": -0.42200000000000004,\n    \"open_interest_usd_bil\": 7.199836127694001,\n    \"oi_delta_usd_mil\": null,\n    \"volume_usd_bil\": null,\n    \"liquidation_imbalance\": null\n  },\n  {\n    \"venue\": \"bybit\",\n    \"funding_rate_bps\": -0.0331,\n    \"open_interest_usd_bil\": 3.6493411353211997,\n    \"oi_delta_usd_mil\": null,\n    \"volume_usd_bil\": null,\n    \"liquidation_imbalance\": null\n  },\n  {\n    \"venue\": \"okx\",\n    \"funding_rate_bps\": -0.11061421502100001,\n    \n... [truncated for context window efficiency]"
+        },
+        {
+          "id": "top_k_relevance:6",
+          "label": "Top-K relevance slice at \"comparison[0]\"",
+          "path": "comparison[0]",
+          "relevanceScore": 1,
+          "value": "{\n  \"venue\": \"binance\",\n  \"funding_rate_bps\": -0.42200000000000004,\n  \"open_interest_usd_bil\": 7.199836127694001,\n  \"oi_delta_usd_mil\": null,\n  \"volume_usd_bil\": null,\n  \"liquidation_imbalance\": null\n}"
+        },
+        {
+          "id": "top_k_relevance:7",
+          "label": "Top-K relevance slice at \"comparison[1]\"",
+          "path": "comparison[1]",
+          "relevanceScore": 1,
+          "value": "{\n  \"venue\": \"bybit\",\n  \"funding_rate_bps\": -0.0331,\n  \"open_interest_usd_bil\": 3.6493411353211997,\n  \"oi_delta_usd_mil\": null,\n  \"volume_usd_bil\": null,\n  \"liquidation_imbalance\": null\n}"
+        }
+      ],
+      "sourceRefs": [
+        {
+          "id": "source-1",
+          "provider": null,
+          "dataset": null,
+          "observedAt": null,
+          "publishedAt": null,
+          "artifactRef": null,
+          "url": null,
+          "note": "The available normalized snapshots exposed funding rate and open interest, but not dollar OI change, dollar volume, or liquidation imbalance in the extracted top-level numeric..."
+        },
+        {
+          "id": "source-2",
+          "provider": "binance",
+          "dataset": null,
+          "observedAt": null,
+          "publishedAt": null,
+          "artifactRef": null,
+          "url": null,
+          "note": null
+        },
+        {
+          "id": "source-3",
+          "provider": "bybit",
+          "dataset": null,
+          "observedAt": null,
+          "publishedAt": null,
+          "artifactRef": null,
+          "url": null,
+          "note": null
+        },
+        {
+          "id": "source-4",
+          "provider": "okx",
+          "dataset": null,
+          "observedAt": null,
+          "publishedAt": null,
+          "artifactRef": null,
+          "url": null,
+          "note": null
+        },
+        {
+          "id": "source-5",
+          "provider": "hyperliquid",
+          "dataset": null,
+          "observedAt": null,
+          "publishedAt": null,
+          "artifactRef": null,
+          "url": null,
+          "note": null
+        }
+      ],
+      "assumptions": [],
+      "knownUnknowns": [],
+      "retrievalPlanReasonCodes": [
+        "keyword_lookup"
+      ]
+    },
+    "view": {
+      "type": "table",
+      "label": "Table",
+      "title": "Evidence table",
+      "columns": [
+        "Evidence",
+        "Value"
+      ],
+      "rows": [
+        {
+          "key": "path_lookup:0",
+          "cells": [
+            "Top-level path lookup for \"comparison\"",
+            "[{\"venue\":\"binance\",\"funding_rate_bps\":-0.42200000000000004,\"open_interest_usd_bil\":7.199836127694001,\"oi_delta_usd_mil\":null,\"volume_usd_bil\":null,\"liquidation_imbalance\":null},{\"venue\":\"bybit\",\"funding_rate_bps\":-0.0331,\"open_interest_usd_bil\":3.6493411353211997,\"oi_delta_usd_mil\":null,\"volume_usd_bil\":null,\"liquidation_imbalance\":null},{\"venue\":\"okx\",\"funding_rate_bps\":-0.11061421502100001,\"open_interest_usd_bil\":2.3530748125488414,\"oi_delta_usd_mil\":null,\"volume_usd_bil\":null,\"liquidation_imbalance\":null},{\"venue\":\"hyperliquid\",\"funding_rate_bps\":0.001564,\"open_interest_usd_bil\":1.953860402468,\"oi_delta_usd_mil\":null,\"volume_usd_bil\":null,\"liquidation_imbalance\":null}]"
+          ]
+        },
+        {
+          "key": "path_lookup:1",
+          "cells": [
+            "Top-level path lookup for \"note\"",
+            "\"The available normalized snapshots exposed funding rate and open interest, but not dollar OI change, dollar volume, or liquidation imbalance in the extracted top-level numeric fields. Those fields were therefore null in the chart-ready comparison.\""
+          ]
+        },
+        {
+          "key": "array_window:2",
+          "cells": [
+            "Array window at \"comparison\" (first 4 rows)",
+            "[{\"venue\":\"binance\",\"funding_rate_bps\":-0.42200000000000004,\"open_interest_usd_bil\":7.199836127694001,\"oi_delta_usd_mil\":null,\"volume_usd_bil\":null,\"liquidation_imbalance\":null},{\"venue\":\"bybit\",\"funding_rate_bps\":-0.0331,\"open_interest_usd_bil\":3.6493411353211997,\"oi_delta_usd_mil\":null,\"volume_usd_bil\":null,\"liquidation_imbalance\":null},{\"venue\":\"okx\",\"funding_rate_bps\":-0.11061421502100001,\"open_interest_usd_bil\":2.3530748125488414,\"oi_delta_usd_mil\":null,\"volume_usd_bil\":null,\"liquidation_imbalance\":null},{\"venue\":\"hyperliquid\",\"funding_rate_bps\":0.001564,\"open_interest_usd_bil\":1.953860402468,\"oi_delta_usd_mil\":null,\"volume_usd_bil\":null,\"liquidation_imbalance\":null}]"
+          ]
+        },
+        {
+          "key": "keyword_slice:3",
+          "cells": [
+            "Keyword slice for \"binance\" (lines 3-5)",
+            "\"    {\\n      \\\"venue\\\": \\\"binance\\\",\\n      \\\"funding_rate_bps\\\": -0.42200000000000004,\""
+          ]
+        },
+        {
+          "key": "top_k_relevance:4",
+          "cells": [
+            "Top-K relevance slice at \"$\"",
+            "\"{\\n  \\\"comparison\\\": [\\n    {\\n      \\\"venue\\\": \\\"binance\\\",\\n      \\\"funding_rate_bps\\\": -0.42200000000000004,\\n      \\\"open_interest_usd_bil\\\": 7.199836127694001,\\n      \\\"oi_delta_usd_mil\\\": null,\\n      \\\"volume_usd_bil\\\": null,\\n      \\\"liquidation_imbalance\\\": null\\n    },\\n    {\\n      \\\"venue\\\": \\\"bybit\\\",\\n      \\\"funding_rate_bps\\\": -0.0331,\\n      \\\"open_interest_usd_bil\\\": 3.6493411353211997,\\n      \\\"oi_delta_usd_mil\\\": null,\\n      \\\"volume_usd_bil\\\": null,\\n      \\\"liquidation_imbalance\\\": null\\n    },\\n    {\\n      \\\"venue\\\": \\\"ok\\n... [truncated for context window efficiency]\""
+          ]
+        },
+        {
+          "key": "top_k_relevance:5",
+          "cells": [
+            "Top-K relevance slice at \"comparison\"",
+            "\"[\\n  {\\n    \\\"venue\\\": \\\"binance\\\",\\n    \\\"funding_rate_bps\\\": -0.42200000000000004,\\n    \\\"open_interest_usd_bil\\\": 7.199836127694001,\\n    \\\"oi_delta_usd_mil\\\": null,\\n    \\\"volume_usd_bil\\\": null,\\n    \\\"liquidation_imbalance\\\": null\\n  },\\n  {\\n    \\\"venue\\\": \\\"bybit\\\",\\n    \\\"funding_rate_bps\\\": -0.0331,\\n    \\\"open_interest_usd_bil\\\": 3.6493411353211997,\\n    \\\"oi_delta_usd_mil\\\": null,\\n    \\\"volume_usd_bil\\\": null,\\n    \\\"liquidation_imbalance\\\": null\\n  },\\n  {\\n    \\\"venue\\\": \\\"okx\\\",\\n    \\\"funding_rate_bps\\\": -0.11061421502100001,\\n    \\n... [truncated for context window efficiency]\""
+          ]
+        },
+        {
+          "key": "top_k_relevance:6",
+          "cells": [
+            "Top-K relevance slice at \"comparison[0]\"",
+            "\"{\\n  \\\"venue\\\": \\\"binance\\\",\\n  \\\"funding_rate_bps\\\": -0.42200000000000004,\\n  \\\"open_interest_usd_bil\\\": 7.199836127694001,\\n  \\\"oi_delta_usd_mil\\\": null,\\n  \\\"volume_usd_bil\\\": null,\\n  \\\"liquidation_imbalance\\\": null\\n}\""
+          ]
+        },
+        {
+          "key": "top_k_relevance:7",
+          "cells": [
+            "Top-K relevance slice at \"comparison[1]\"",
+            "\"{\\n  \\\"venue\\\": \\\"bybit\\\",\\n  \\\"funding_rate_bps\\\": -0.0331,\\n  \\\"open_interest_usd_bil\\\": 3.6493411353211997,\\n  \\\"oi_delta_usd_mil\\\": null,\\n  \\\"volume_usd_bil\\\": null,\\n  \\\"liquidation_imbalance\\\": null\\n}\""
+          ]
+        }
+      ]
+    },
+    "freshness": {
+      "asOf": "2026-04-30T03:17:18.297Z",
+      "sourceTimestamps": [
+        "2026-04-30T03:17:18.297Z",
+        "2026-04-30T03:12:31.755Z",
+        "2026-04-30T03:10:00.000Z"
+      ],
+      "note": "Most recent evidence timestamp: 2026-04-30T03:17:18.297Z"
+    },
+    "confidence": {
+      "level": "high",
+      "reason": "Grounded in 2 verified evidence facts with no recorded retrieval gaps.",
+      "verifiedFactCount": 2,
+      "inferredFactCount": 2,
+      "gapCount": 0,
+      "gapSignals": []
+    },
+    "usage": {
+      "durationMs": 149872,
+      "cost": {
+        "totalCostUsd": "0.150006",
+        "toolCostUsd": "0.100000",
+        "modelCostUsd": "0.050006"
+      },
+      "toolsUsed": [
+        {
+          "id": "12e98f9a-967c-4e49-9453-5009eebf1bfc",
+          "name": "Meridian Market Data",
+          "skillCalls": 4
+        }
+      ],
+      "outcomeType": "answer",
+      "orchestrationMetrics": {
+        "parityStage": "enabled",
+        "orchestrationMode": "auto_discovery",
+        "firstPassSuccess": true,
+        "capabilityMissSignaled": false,
+        "rediscoveryExecuted": false
+      }
+    },
+    "stopReason": "bounded_upstream_abort_guardrail",
+    "issueClass": "missing_evidence",
+    "actionsTaken": [
+      "inspect_current_grounding",
+      "return_bounded_answer"
+    ]
+  }
+}

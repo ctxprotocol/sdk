@@ -1,0 +1,95 @@
+{
+  "id": "14-polymarket-for-will-the-iranian-regime-fall-by-may-31-chart",
+  "index": 13,
+  "provider": "polymarket",
+  "prompt": "For 'Will the Iranian regime fall by May 31?', chart top-holder concentration, YES versus NO whale exposure, recent trade-size buckets, and price history to show whether the 2-3% probability is smart-money supported.",
+  "expectedMinimumRows": 20,
+  "expectedReason": "time-series chart needs enough history to show shape",
+  "startedAt": "2026-05-02T14:58:14.222Z",
+  "finishedAt": "2026-05-02T15:00:02.540Z",
+  "durationMs": 108318,
+  "outcomeType": "answer",
+  "responseChars": 2145,
+  "responsePreview": "The market currently pricing the fall of the Iranian regime by May 31 at **2.35%** (0.0235 USD) reflects a significant divergence between established positions and recent \"smart money\" activity.\n\nWhile a chart of historical prices could not be produced due to lack of historical data from the source, the following data from past queries as of May 2, 2026, details the current market structure.\n\n### Holder Concentration and Whale Exposure\nThe market is heavily weighted toward the \"NO\" side in terms of total capital, but top-holder concentration remains remarkably similar across both outcomes.\n\n| Metric | YES Side | NO Side |\n| :--- | :--- | :--- |\n| **Top 10 Concentration %** | 46.12% | 45.73% |\n| **Whale Count (>$1k position)** | 12 | 142 |\n| **Total Value of Scanned Positions** | $54,161.58 | $2,251,295.99 |\n\n### Recent Trade-Size Buckets (Last 24 Hours)\nRecent activity shows a \"Whale Divergence.\" While retail (small) traders are selling out of \"YES\" positions, large-scale traders are aggressively buying.\n\n| Bucket | Trade Count | Net Flow (USD) | Sentiment |\n| :--- | :--- | :--- | :--- |\n| **Small (Retail)** | 172 | -$284.25 | Bearish |\n| **Medium** | 18 | +$234.88 | Bullish |\n| **...",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 1,
+  "chartSummaries": [
+    {
+      "title": "'Will the Iranian regime fall by May 31?' — smart-money support snapshot",
+      "type": "bar",
+      "rowCount": 1,
+      "distinctXCount": 1,
+      "numericSeriesCount": 1,
+      "numericSeriesWithVariation": 0,
+      "xKey": "x",
+      "seriesKeys": [
+        "value"
+      ],
+      "sampleRows": [
+        {
+          "x": "No data returned",
+          "value": 0,
+          "chart": "Fallback"
+        }
+      ],
+      "needsDualAxis": false,
+      "willRenderDualAxis": false,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": true,
+      "expectsProbabilityMetric": true,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [
+      "no chart matched the prompt's requested axis, chart type, and metrics",
+      "chart 0: time-series prompt did not use date/time-like x-axis labels",
+      "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+    ],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "'Will the Iranian regime fall by May 31?' — smart-money support snapshot",
+        "type": "bar",
+        "xKey": "x",
+        "seriesKeys": [
+          "value"
+        ],
+        "passes": false,
+        "failures": [
+          "time-series prompt did not use date/time-like x-axis labels",
+          "probability prompt did not chart a probability, odds, yes-price, or price series"
+        ]
+      }
+    ],
+    "pass": false
+  },
+  "semanticFailures": [
+    "no chart matched the prompt's requested axis, chart type, and metrics",
+    "chart 0: time-series prompt did not use date/time-like x-axis labels",
+    "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+  ],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "response text signals sparse/no-value output",
+    "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+    "semantic chart audit failed: chart 0: time-series prompt did not use date/time-like x-axis labels",
+    "semantic chart audit failed: chart 0: probability prompt did not chart a probability, odds, yes-price, or price series",
+    "chart \"'Will the Iranian regime fall by May 31?' — smart-money support snapshot\" had 1 row(s), expected at least 20",
+    "chart \"'Will the Iranian regime fall by May 31?' — smart-money support snapshot\" had only 1 distinct x-axis value(s)",
+    "chart \"'Will the Iranian regime fall by May 31?' — smart-money support snapshot\" had no numeric series variation"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/14-polymarket-for-will-the-iranian-regime-fall-by-may-31-chart.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/14-polymarket-for-will-the-iranian-regime-fall-by-may-31-chart.summary.json"
+}

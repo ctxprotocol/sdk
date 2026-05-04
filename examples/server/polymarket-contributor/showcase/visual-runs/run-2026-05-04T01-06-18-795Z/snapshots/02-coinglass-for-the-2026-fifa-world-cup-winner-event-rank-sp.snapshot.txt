@@ -1,0 +1,17 @@
+Page URL: http://localhost:3000/chat/4c19add4-1722-4c9b-ae34-8322ae00326e?showcaseCapture=1
+
+Snapshot summary (post showcaseCapture, scroll-scan):
+- Sticky composer hidden (showcaseCapture layout applied)
+- 2 markdown tables present:
+  1. Event Rankings (Rank | Implied Probability | 24h Volume | Bid-Ask Spread | Exit Quality) — 6 rows for France/Spain/England/Switzerland/South Korea/New Zealand
+  2. Market Tradability Data (Outcome | Implied Prob. | 24h Volume (USD) | Spread | Exit Quality | $5k Slippage)
+- Headings: "Event Rankings" (h3), "Market Tradability Data" (h3)
+- Footer: Copy table as markdown x2, Download table x2, Polymarket Event Page link, Raw execution data link, Upvote/Downvote/Report Tool Issue
+- Page is at scroll boundary (browser_scroll down returned "no scroll occurred (may be at edge)" twice with amount=700 then amount=1500)
+- browser_search "chart" → no matches
+- browser_search "implied probability" → no matches
+- browser_search "Ranking" → 1 match (heading "Event Rankings")
+- browser_search "tradability" → 3 matches (sidebar entries + h3 heading), no chart-title match
+- No <canvas>, no [data-testid*="chart"], no chart heading with plotted-chart language anywhere in DOM
+
+Conclusion: response is table-only; the agent did not produce a plotted chart for this prompt.

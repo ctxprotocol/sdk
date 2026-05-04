@@ -1,0 +1,91 @@
+{
+  "id": "09-polymarket-inside-the-polymarket-what-will-wti-crude-oil-wt",
+  "index": 8,
+  "provider": "polymarket",
+  "prompt": "Inside the Polymarket 'What will WTI Crude Oil (WTI) hit in May 2026?' event, chart the implied probability across every HIGH strike from $90 through $150 plus the LOW $80 strike — this is the term-structure / strike-skew view of how the market is pricing oil's May range.",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-05-02T05:26:33.761Z",
+  "finishedAt": "2026-05-02T05:28:23.713Z",
+  "durationMs": 109951,
+  "outcomeType": "answer",
+  "responseChars": 978,
+  "responsePreview": "As of May 2, 2026, the implied probability across the requested strikes in the \"What will WTI Crude Oil hit in May 2026?\" event reflects a market that has already seen several lower high-strikes settle.\n\nHere is the complete returned collection for allOutcomes (20 items).\n\n| Name | Current Price | Date Status | End Date |\n| :--- | :--- | :--- | :--- |\n| ↑ $90 | 1 | undated |  |\n| ↑ $150 | 0.055 | undated |  |\n| ↑ $120 | 0.435 | undated |  |\n| ↑ $110 | 0.745 | undated |  |\n| ↑ $200 | 0.0145 | undated |  |\n| ↑ $130 | 0.235 | undated |  |\n| ↑ $140 | 0.1225 | undated |  |\n| ↑ $100 | 1 | undated |  |\n| ↓ $70 | 0.07 | undated |  |\n| ↓ $80 | 0.275 | undated |  |\n| ↓ $60 | 0.019 | undated |  |\n| ↑ $105 | 0.925 | undated |  |\n| ↓ $20 | 0.0035 | undated |  |\n| ↓ $95 | 0.785 | undated |  |\n| ↓ $90 | 0.685 | undated |  |\n| ↓ $85 | 0.415 | undated |  |\n| ↑ $115 | 0.575 | undated |  |\n| ↓ $30 | 0.005 | undated |  |\n| ↓ $50 | 0.0095 | undated |  |\n| ↓ $40 | 0.0045 | undated |  |",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 0,
+  "chartSummaries": [
+    {
+      "title": "WTI May 2026 strike skew",
+      "type": "line",
+      "rowCount": 10,
+      "distinctXCount": 10,
+      "numericSeriesCount": 2,
+      "numericSeriesWithVariation": 2,
+      "xKey": "strike",
+      "seriesKeys": [
+        "impliedProbability",
+        "volume"
+      ],
+      "sampleRows": [
+        {
+          "strike": "↓ $80",
+          "impliedProbability": 0.275,
+          "volume": 119752.934427,
+          "status": "live"
+        },
+        {
+          "strike": "↑ $90",
+          "impliedProbability": 1,
+          "volume": 583419.5451259994,
+          "status": "closed"
+        },
+        {
+          "strike": "↑ $100",
+          "impliedProbability": 1,
+          "volume": 234380.38799199992,
+          "status": "closed"
+        }
+      ],
+      "needsDualAxis": true,
+      "willRenderDualAxis": true,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": true,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "WTI May 2026 strike skew",
+        "type": "line",
+        "xKey": "strike",
+        "seriesKeys": [
+          "impliedProbability",
+          "volume"
+        ],
+        "passes": true,
+        "failures": []
+      }
+    ],
+    "pass": true
+  },
+  "semanticFailures": [],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [],
+  "buyerValueScore": 4,
+  "buyerVerdict": "pass",
+  "buyerReview": "Preliminary pass: produced a multi-row, varied chart with specific data and an actionable buyer takeaway.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T05-14-18-958Z/raw/09-polymarket-inside-the-polymarket-what-will-wti-crude-oil-wt.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T05-14-18-958Z/summaries/09-polymarket-inside-the-polymarket-what-will-wti-crude-oil-wt.summary.json"
+}

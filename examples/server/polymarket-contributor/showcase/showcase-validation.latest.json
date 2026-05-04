@@ -1,0 +1,1664 @@
+{
+  "generatedAt": "2026-05-02T15:05:04.795Z",
+  "sourceFile": "/Users/alex/Documents/context/components/suggested-actions.tsx",
+  "promptBlock": {
+    "markerMode": "BEGIN SHOWCASE blocks with legacy fallback",
+    "legacyStartMarker": "// Coinglass chart prompts",
+    "legacyEndMarker": "// Polymarket: Liquidity screening",
+    "totalPrompts": 17,
+    "validatedOffset": 0,
+    "validatedCount": 17
+  },
+  "acceptanceGate": "A homepage showcase pass requires a real chart artifact, enough rows to be visually meaningful, varied numeric data, grounded marketplace tool usage, clean numeric tooltips, non-redundant charts, dual-axis rendering for mixed magnitudes, semantic alignment between prompt and chart axes/metrics/type, and an actionable buyer takeaway. One-row charts, table-only answers, wrong x-axis labels, wrong chart metrics, sparse/no-qualifying-result answers, and generic/no-live-data answers are hard failures.",
+  "passCount": 6,
+  "failCount": 11,
+  "summaries": [
+    {
+      "id": "01-coinglass-chart-the-implied-probability-curve-across-the-w",
+      "index": 0,
+      "provider": "coinglass",
+      "prompt": "Chart the implied probability curve across the 'When will Bitcoin hit $150k?' event, comparing 'Will Bitcoin hit $150k by June 30, 2026?' and 'Will Bitcoin hit $150k by December 31, 2026?' by price, 24h volume, and bid-ask spread.",
+      "expectedMinimumRows": 5,
+      "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+      "startedAt": "2026-05-02T14:39:21.240Z",
+      "finishedAt": "2026-05-02T14:40:14.049Z",
+      "durationMs": 52809,
+      "outcomeType": "answer",
+      "responseChars": 406,
+      "responsePreview": "As of May 2, 2026, here is the comparison of the two target dates for Bitcoin hitting $150k.\n\nHere is the complete returned collection for When will Bitcoin hit $150k? (2 items).\n\n| Requested Name | Best Ask | Best Bid | Current Price |\n| :--- | :--- | :--- | :--- |\n| Will Bitcoin hit $150k by June 30, 2026? | 0.023 | 0.019 | 0.021 |\n| Will Bitcoin hit $150k by December 31, 2026? | 0.12 | 0.11 | 0.115 |",
+      "toolsUsed": [
+        "Polymarket Intelligence",
+        "Polymarket Intelligence",
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "When will Bitcoin hit $150k? — implied probability, 24h volume, and bid-ask spread",
+          "type": "line",
+          "rowCount": 2,
+          "distinctXCount": 2,
+          "numericSeriesCount": 1,
+          "numericSeriesWithVariation": 1,
+          "xKey": "matchedName",
+          "seriesKeys": [
+            "volume"
+          ],
+          "sampleRows": [
+            {
+              "requestedName": "Will Bitcoin hit $150k by June 30, 2026?",
+              "matchedName": "by June 30, 2026",
+              "tokenId": "13915689317269078219168496739008737517740566192006337297676041270492637394586",
+              "conditionId": "0xa0f4c4924ea1a8b410b4ce821c2a9955fad21a1b19bdcfde90816732278b3dd5",
+              "currentPrice": 0.021,
+              "price": 0.021,
+              "yesMid": 0.021,
+              "impliedProbability": "2.1%",
+              "bestBid": 0.019,
+              "bestAsk": 0.023,
+              "spread": 0.004,
+              "spreadPercent": 19.05,
+              "spreadPercentDisplay": "19.05%",
+              "spreadCentsDisplay": "0.40¢",
+              "priceChange": 0,
+              "priceChangePercent": 0,
+              "historyWindow": "",
+              "volume": 15734008.014241,
+              "readableQuote": "Will Bitcoin hit $150k by June 30, 2026? → matched \"by June 30, 2026\": YES mid 2.1% (0–1: 0.0210), bid 1.9¢ / ask 2.3¢, spread 0.40¢ (19.05% pts)."
+            },
+            {
+              "requestedName": "Will Bitcoin hit $150k by December 31, 2026?",
+              "matchedName": "by December 31, 2026",
+              "tokenId": "93694900555669388759405753550770573998169287228984912881955464376232163096213",
+              "conditionId": "0x02deb9538f5c123373adaa4ee6217b01745f1662bc902e46ac92f3fe6f8741e8",
+              "currentPrice": 0.115,
+              "price": 0.115,
+              "yesMid": 0.115,
+              "impliedProbability": "11.5%",
+              "bestBid": 0.11,
+              "bestAsk": 0.12,
+              "spread": 0.01,
+              "spreadPercent": 8.7,
+              "spreadPercentDisplay": "8.70%",
+              "spreadCentsDisplay": "1.00¢",
+              "priceChange": 0,
+              "priceChangePercent": 0,
+              "historyWindow": "",
+              "volume": 291903.3091739995,
+              "readableQuote": "Will Bitcoin hit $150k by December 31, 2026? → matched \"by December 31, 2026\": YES mid 11.5% (0–1: 0.1150), bid 11.0¢ / ask 12.0¢, spread 1.00¢ (8.70% pts)."
+            }
+          ],
+          "needsDualAxis": false,
+          "willRenderDualAxis": false,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": false,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [
+          "no chart matched the prompt's requested axis, chart type, and metrics",
+          "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+        ],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "When will Bitcoin hit $150k? — implied probability, 24h volume, and bid-ask spread",
+            "type": "line",
+            "xKey": "matchedName",
+            "seriesKeys": [
+              "volume"
+            ],
+            "passes": false,
+            "failures": [
+              "probability prompt did not chart a probability, odds, yes-price, or price series"
+            ]
+          }
+        ],
+        "pass": false
+      },
+      "semanticFailures": [
+        "no chart matched the prompt's requested axis, chart type, and metrics",
+        "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+      ],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [
+        "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+        "semantic chart audit failed: chart 0: probability prompt did not chart a probability, odds, yes-price, or price series",
+        "chart \"When will Bitcoin hit $150k? — implied probability, 24h volume, and bid-ask spread\" had 2 row(s), expected at least 5",
+        "chart \"When will Bitcoin hit $150k? — implied probability, 24h volume, and bid-ask spread\" had only 2 distinct x-axis value(s)"
+      ],
+      "buyerValueScore": 2,
+      "buyerVerdict": "fail",
+      "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/01-coinglass-chart-the-implied-probability-curve-across-the-w.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/01-coinglass-chart-the-implied-probability-curve-across-the-w.summary.json"
+    },
+    {
+      "id": "02-coinglass-for-the-2026-fifa-world-cup-winner-event-rank-sp",
+      "index": 1,
+      "provider": "coinglass",
+      "prompt": "For the '2026 FIFA World Cup Winner' event, rank Spain, France, England, South Korea, New Zealand, and Switzerland by implied probability, 24h volume, bid-ask spread, and exit quality, then show the results as a chart plus a tradability table.",
+      "expectedMinimumRows": 5,
+      "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+      "startedAt": "2026-05-02T14:40:16.062Z",
+      "finishedAt": "2026-05-02T14:41:21.956Z",
+      "durationMs": 65894,
+      "outcomeType": "answer",
+      "responseChars": 1674,
+      "responsePreview": "Based on the data for the **2026 FIFA World Cup Winner** event, here are the metrics and rankings for the requested teams as of May 2, 2026.\n\n### Tradability Table\n\n| Outcome | Implied Probability | 24h Volume | Bid-Ask Spread (%) | Exit Quality |\n| :--- | :--- | :--- | :--- | :--- |\n| **France** | 16.45% | $22,813,238.11 | 0.61% | 73.00 |\n| **Spain** | 15.25% | $17,949,727.25 | 0.66% | 71.39 |\n| **England** | 11.05% | $14,707,389.67 | 0.90% | 66.41 |\n| **Switzerland** | 0.95% | $14,228,955.66 | 10.53% | 41.16 |\n| **South Korea** | 0.45% | $20,812,930.80 | 22.22% | 39.43 |\n| **New Zealand** | 0.25% | $26,915,867.71 | 40.00% | 38.87 |\n\n### Comparative Rankings\n\n*   **Implied Probability**: France > Spain > England > Switzerland > South Korea > New Zealand\n*   **24h Volume**: New Zealand > France > South Korea > Spain > England > Switzerland\n*   **Bid-Ask Spread (Tightness)**: France > Spain > England > Switzerland > South Korea > New Zealand\n*   **Exit Quality**: France > Spain > England > Switzerland > South Korea > New Zealand\n\n### Market Insights\nThe accompanying chart highlights a significant divergence between trading activity and market efficiency. While **New Zealand** leads ...",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "2026 FIFA World Cup Winner: requested outcomes",
+          "type": "bar",
+          "rowCount": 6,
+          "distinctXCount": 6,
+          "numericSeriesCount": 4,
+          "numericSeriesWithVariation": 4,
+          "xKey": "outcome",
+          "seriesKeys": [
+            "impliedProbability",
+            "volume",
+            "spreadPercent",
+            "exitQuality"
+          ],
+          "sampleRows": [
+            {
+              "outcome": "Spain",
+              "impliedProbability": 15.25,
+              "volume": 17.94972725,
+              "spreadPercent": 0.66,
+              "spreadCents": 0.1,
+              "exitQuality": 71.39
+            },
+            {
+              "outcome": "France",
+              "impliedProbability": 16.45,
+              "volume": 22.81323811,
+              "spreadPercent": 0.61,
+              "spreadCents": 0.1,
+              "exitQuality": 73
+            },
+            {
+              "outcome": "England",
+              "impliedProbability": 11.05,
+              "volume": 14.70738967,
+              "spreadPercent": 0.9,
+              "spreadCents": 0.1,
+              "exitQuality": 66.41
+            }
+          ],
+          "needsDualAxis": true,
+          "willRenderDualAxis": true,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": true,
+          "expectsTimeSeries": false,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "2026 FIFA World Cup Winner: requested outcomes",
+            "type": "bar",
+            "xKey": "outcome",
+            "seriesKeys": [
+              "impliedProbability",
+              "volume",
+              "spreadPercent",
+              "exitQuality"
+            ],
+            "passes": true,
+            "failures": []
+          }
+        ],
+        "pass": true
+      },
+      "semanticFailures": [],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [],
+      "buyerValueScore": 4,
+      "buyerVerdict": "pass",
+      "buyerReview": "Preliminary pass: produced a multi-row, varied chart with specific data and an actionable buyer takeaway.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/02-coinglass-for-the-2026-fifa-world-cup-winner-event-rank-sp.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/02-coinglass-for-the-2026-fifa-world-cup-winner-event-rank-sp.summary.json"
+    },
+    {
+      "id": "03-coinglass-compare-the-2026-nba-champion-event-outcomes-for",
+      "index": 2,
+      "provider": "coinglass",
+      "prompt": "Compare the '2026 NBA Champion' event outcomes for Oklahoma City Thunder, Houston Rockets, Toronto Raptors, Cleveland Cavaliers, New York Knicks, and Minnesota Timberwolves by implied probability, 24h volume, whale positioning, and tradability.",
+      "expectedMinimumRows": 5,
+      "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+      "startedAt": "2026-05-02T14:41:23.971Z",
+      "finishedAt": "2026-05-02T14:42:43.002Z",
+      "durationMs": 79031,
+      "outcomeType": "answer",
+      "responseChars": 2048,
+      "responsePreview": "Based on market data as of May 2, 2026, the Oklahoma City Thunder lead the field for the 2026 NBA Championship in both implied probability and tradability. While teams like the Toronto Raptors and Minnesota Timberwolves show high 24-hour volume, their markets suffer from extreme slippage for larger trade sizes.\n\nI could not produce a meaningful tradability score for the **Houston Rockets** because the quote snapshot returned a 0.0% probability and 0.00 spread, which does not reflect a normal live-book state.\n\n### 2026 NBA Champion Comparison\n\n| Outcome | Implied Probability | 24h Volume | Whale Positioning (Value) | Whale Count | Tradability Score | $5k Slippage |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n| **Oklahoma City Thunder** | 55.5% | $9,981,295.75 | $2,451,782.56 | 165 | 99 | 0.9% |\n| **New York Knicks** | 5.3% | $11,001,218.49 | $220,020.40 | 47 | 58 | 13.7% |\n| **Cleveland Cavaliers** | 2.8% | $11,307,368.58 | $115,545.83 | 28 | 44 | 65.4% |\n| **Minnesota Timberwolves** | 1.1% | $13,068,031.21 | $49,825.98 | 10 | 38 | 89.1% |\n| **Toronto Raptors** | 0.5% | $17,072,749.09 | $23,659.44 | 6 | 38 | 78.7% |\n| **Houston Rockets** | 0.0%* | $8,698,094.42 | $2,287,255.6...",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 0,
+      "metricTableCount": 0,
+      "chartSummaries": [],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": false,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [
+          "semantic audit expected a chart but no chart summary existed"
+        ],
+        "chartResults": [],
+        "pass": false
+      },
+      "semanticFailures": [
+        "semantic audit expected a chart but no chart summary existed"
+      ],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [
+        "no chart artifact was emitted",
+        "response text signals sparse/no-value output",
+        "semantic chart audit failed: semantic audit expected a chart but no chart summary existed"
+      ],
+      "buyerValueScore": 2,
+      "buyerVerdict": "fail",
+      "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/03-coinglass-compare-the-2026-nba-champion-event-outcomes-for.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/03-coinglass-compare-the-2026-nba-champion-event-outcomes-for.summary.json"
+    },
+    {
+      "id": "04-coinglass-chart-the-eurovision-winner-2026-market-across-a",
+      "index": 3,
+      "provider": "coinglass",
+      "prompt": "Chart the 'Eurovision Winner 2026' market across Albania, Austria, Belgium, Croatia, Czechia, Estonia, France, and Germany by implied probability and 24h volume, and flag which outcomes look tradable versus too thin.",
+      "expectedMinimumRows": 5,
+      "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+      "startedAt": "2026-05-02T14:42:45.009Z",
+      "finishedAt": "2026-05-02T14:43:51.022Z",
+      "durationMs": 66013,
+      "outcomeType": "answer",
+      "responseChars": 1894,
+      "responsePreview": "As of May 2, 2026, the Eurovision Winner 2026 market shows significant activity across the requested countries. Based on recent market data, France currently leads this specific group in win probability, while Austria and Estonia have attracted the highest volumes despite their lower implied odds.\n\nThe chart illustrates a general trend where lower-probability \"long shots\" like Austria and Estonia have accumulated higher volumes, likely due to early speculative betting, while France represents a more established contender with a 7.4% probability.\n\n### Eurovision Winner 2026: Market Comparison\n\n| Country | Implied Probability | Volume | Tradability Status |\n| :--- | :--- | :--- | :--- |\n| **France** | 7.4% | $2,517,928 | **Tradable** (High probability/Good volume) |\n| **Czechia** | 0.9% | $1,476,432 | **Tradable** |\n| **Croatia** | 0.5% | $2,786,554 | **Tradable** |\n| **Germany** | 0.5% | $2,640,509 | **Tradable** |\n| **Belgium** | 0.4% | $3,259,163 | **Tradable** |\n| **Austria** | 0.3% | $6,376,805 | **Tradable** (Very high liquidity) |\n| **Estonia** | 0.3% | $5,533,994 | **Tradable** (Very high liquidity) |\n| **Albania** | 0.1% | $5,419,215 | **Tradable** (High volume/Low price) |\n...",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "Eurovision Winner 2026: requested outcomes by implied probability and 24h volume",
+          "type": "line",
+          "rowCount": 35,
+          "distinctXCount": 17,
+          "numericSeriesCount": 1,
+          "numericSeriesWithVariation": 1,
+          "xKey": "impliedProbability",
+          "seriesKeys": [
+            "volume"
+          ],
+          "sampleRows": [
+            {
+              "name": "Austria",
+              "price": 0.0025,
+              "currentPrice": 0.0025,
+              "impliedProbability": "0.3%",
+              "pricePercent": "0.3%",
+              "volume": 6376805.015768903,
+              "conditionId": "0x3dbf1d213f9048353b073e8b02585b1d378b88cd05599abd23b00709120ad1f7",
+              "tokenId": "103415634005536188719544775929333330970248034372896702178158893005574962725101",
+              "active": "true",
+              "closed": "false",
+              "endDate": "",
+              "dateStatus": "undated"
+            },
+            {
+              "name": "Georgia",
+              "price": 0.0025,
+              "currentPrice": 0.0025,
+              "impliedProbability": "0.3%",
+              "pricePercent": "0.3%",
+              "volume": 5578968.998467964,
+              "conditionId": "0x295d35d1c69380d0938903dc7f70cf035c0f1283bccb502d651be8a1c1e1d390",
+              "tokenId": "57039171877618957364343868222846014933207507601621521785751536699706815828804",
+              "active": "true",
+              "closed": "false",
+              "endDate": "",
+              "dateStatus": "undated"
+            },
+            {
+              "name": "Estonia",
+              "price": 0.0025,
+              "currentPrice": 0.0025,
+              "impliedProbability": "0.3%",
+              "pricePercent": "0.3%",
+              "volume": 5533994.770888964,
+              "conditionId": "0xe39dd4dda2144c32921db11ee31127555dcf7dbabbf4a3b65f2413cf601f3908",
+              "tokenId": "30789889237777559657127194919243089284049186924698609383684181401113388029205",
+              "active": "true",
+              "closed": "false",
+              "endDate": "",
+              "dateStatus": "undated"
+            }
+          ],
+          "needsDualAxis": false,
+          "willRenderDualAxis": false,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": false,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [
+          "no chart matched the prompt's requested axis, chart type, and metrics",
+          "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+        ],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "Eurovision Winner 2026: requested outcomes by implied probability and 24h volume",
+            "type": "line",
+            "xKey": "impliedProbability",
+            "seriesKeys": [
+              "volume"
+            ],
+            "passes": false,
+            "failures": [
+              "probability prompt did not chart a probability, odds, yes-price, or price series"
+            ]
+          }
+        ],
+        "pass": false
+      },
+      "semanticFailures": [
+        "no chart matched the prompt's requested axis, chart type, and metrics",
+        "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+      ],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [
+        "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+        "semantic chart audit failed: chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+      ],
+      "buyerValueScore": 2,
+      "buyerVerdict": "fail",
+      "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/04-coinglass-chart-the-eurovision-winner-2026-market-across-a.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/04-coinglass-chart-the-eurovision-winner-2026-market-across-a.summary.json"
+    },
+    {
+      "id": "05-coinglass-build-a-chart-comparing-will-the-iranian-regime-",
+      "index": 4,
+      "provider": "coinglass",
+      "prompt": "Build a chart comparing 'Will the Iranian regime fall by May 31?', 'US x Iran permanent peace deal by May 31, 2026?', 'Will the U.S. invade Iran before 2027?', and 'US obtains Iranian enriched uranium by May 31?' by implied probability, 24h volume, open interest, and recent whale flow.",
+      "expectedMinimumRows": 5,
+      "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+      "startedAt": "2026-05-02T14:43:53.033Z",
+      "finishedAt": "2026-05-02T14:45:25.925Z",
+      "durationMs": 92892,
+      "outcomeType": "answer",
+      "responseChars": 1532,
+      "responsePreview": "Based on data from a past query (as of May 2, 2026), here is a comparison of the requested Iran-related Polymarket prediction markets. \n\nThe accompanying chart highlights that \"Will the U.S. invade Iran before 2027?\" currently leads in both implied probability (29.5%) and net whale inflow (~$133.9k). Conversely, the \"Iranian regime fall\" market shows a sharp divergence where retail is selling, but whales are net buyers of \"Yes\" positions.\n\n**Note:** Open Interest data was unavailable for these specific markets at the time of retrieval.\n\n| Market | Implied Probability | 24h Volume | Whale Net Flow (24h) | Whale Sentiment |\n| :--- | :--- | :--- | :--- | :--- |\n| **Will the U.S. invade Iran before 2027?** | 29.5% | $19,601,970.92 | +$133,860.01 | Bullish |\n| **US x Iran permanent peace deal by May 31, 2026?** | 22.5% | $10,082,228.88 | -$7,356.03 | Bearish |\n| **US obtains Iranian enriched uranium by May 31?** | 8.5% | $7,804,928.12 | +$69,806.96 | Bullish |\n| **Will the Iranian regime fall by May 31?** | 2.4% | $12,639,051.65 | +$45,091.32 | Bullish |\n\n### Key Observations\n*   **Highest Conviction:** The 2027 invasion market shows the strongest alignment between retail volume and wha...",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "Iran-related Polymarket markets: implied probability, 24h volume, and whale flow",
+          "type": "bar",
+          "rowCount": 4,
+          "distinctXCount": 4,
+          "numericSeriesCount": 3,
+          "numericSeriesWithVariation": 3,
+          "xKey": "market",
+          "seriesKeys": [
+            "probabilityPct",
+            "volume24hM",
+            "whaleNetFlow24hK"
+          ],
+          "sampleRows": [
+            {
+              "market": "Will the Iranian regime fall by May 31?",
+              "probabilityPct": 2.35,
+              "volume24hM": 12.639051647336832,
+              "whaleNetFlow24hK": 45.09132
+            },
+            {
+              "market": "US x Iran permanent peace deal by...?",
+              "probabilityPct": 22.5,
+              "volume24hM": 10.082228878115103,
+              "whaleNetFlow24hK": -7.35603
+            },
+            {
+              "market": "Will the U.S. invade Iran before 2027?",
+              "probabilityPct": 29.5,
+              "volume24hM": 19.60197092420917,
+              "whaleNetFlow24hK": 133.86001000000002
+            }
+          ],
+          "needsDualAxis": true,
+          "willRenderDualAxis": true,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": false,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "Iran-related Polymarket markets: implied probability, 24h volume, and whale flow",
+            "type": "bar",
+            "xKey": "market",
+            "seriesKeys": [
+              "probabilityPct",
+              "volume24hM",
+              "whaleNetFlow24hK"
+            ],
+            "passes": true,
+            "failures": []
+          }
+        ],
+        "pass": true
+      },
+      "semanticFailures": [],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [
+        "chart \"Iran-related Polymarket markets: implied probability, 24h volume, and whale flow\" had 4 row(s), expected at least 5",
+        "chart \"Iran-related Polymarket markets: implied probability, 24h volume, and whale flow\" had only 4 distinct x-axis value(s)"
+      ],
+      "buyerValueScore": 2,
+      "buyerVerdict": "fail",
+      "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/05-coinglass-build-a-chart-comparing-will-the-iranian-regime-.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/05-coinglass-build-a-chart-comparing-will-the-iranian-regime-.summary.json"
+    },
+    {
+      "id": "06-coinglass-for-will-the-u-s-invade-iran-before-2027-chart-t",
+      "index": 5,
+      "provider": "coinglass",
+      "prompt": "For 'Will the U.S. invade Iran before 2027?', chart the recent price history alongside recent whale-vs-retail flow and current open interest, then summarize whether the move is liquid enough to trade.",
+      "expectedMinimumRows": 20,
+      "expectedReason": "time-series chart needs enough history to show shape",
+      "startedAt": "2026-05-02T14:45:27.936Z",
+      "finishedAt": "2026-05-02T14:48:47.218Z",
+      "durationMs": 199282,
+      "outcomeType": "answer",
+      "responseChars": 1432,
+      "responsePreview": "The market for **\"Will the U.S. invade Iran before 2027?\"** currently shows a strong consensus that an invasion is unlikely, with recent trades for the \"No\" outcome executing at approximately $0.71 and \"Yes\" outcomes at $0.30.\n\nThe emitted chart reflects this price spread over the most recent 20 trades, capturing a period of active trading where the largest individual buy was recorded at $58,799.99.\n\n### Market Liquidity and Activity\nAs of May 2, 2026, the market is highly liquid and actively traded.\n\n| Metric | Value |\n| :--- | :--- |\n| **Current Open Interest** | $5,477,042.07 |\n| **24h Trading Volume** | $501,218.16 |\n| **Available Liquidity** | $875,267.98 |\n\n### Whale-vs-Retail Flow (Last 24 Hours)\nWhale activity is significantly driving the current price action, showing strong alignment with smaller retail traders.\n\n| Trader Segment | Net Flow | Sentiment |\n| :--- | :--- | :--- |\n| **Small** | +$366.69 | Bullish |\n| **Medium** | +$492.36 | Bull|sh |\n| **Whale** | +$133,860.01 | Bullish |\n\n**Summary:** This move is **highly liquid** and suitable for trading. With over $5.4 million in open interest and nearly $900,000 in immediate liquidity, traders can enter or exit significan...",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "Will the U.S. invade Iran before 2027? — recent price/history, whale-vs-retail flow, and OI context",
+          "type": "line",
+          "rowCount": 20,
+          "distinctXCount": 18,
+          "numericSeriesCount": 1,
+          "numericSeriesWithVariation": 1,
+          "xKey": "timestamp",
+          "seriesKeys": [
+            "price"
+          ],
+          "sampleRows": [
+            {
+              "id": "",
+              "timestamp": 1777732472,
+              "side": "BUY",
+              "outcome": "No",
+              "price": 0.7099999502999869,
+              "size": 4.225351,
+              "notional": 3,
+              "trader": "0xd47f0ac03cde213d9a17d4d2917694eac4ce6532"
+            },
+            {
+              "id": "",
+              "timestamp": 1777732450,
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.29,
+              "size": 14.51,
+              "notional": 4.21,
+              "trader": "0x91bef4262ebdaf8c126865a815b98aa509c53246"
+            },
+            {
+              "id": "",
+              "timestamp": 1777732450,
+              "side": "SELL",
+              "outcome": "Yes",
+              "price": 0.29,
+              "size": 24.2,
+              "notional": 7.02,
+              "trader": "0x23e755bb6b90b2f984bac6dbe944426b6bd60212"
+            }
+          ],
+          "needsDualAxis": false,
+          "willRenderDualAxis": false,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": true,
+          "expectsProbabilityMetric": false,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [
+          "no chart matched the prompt's requested axis, chart type, and metrics",
+          "chart 0: time-series prompt did not use date/time-like x-axis labels"
+        ],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "Will the U.S. invade Iran before 2027? — recent price/history, whale-vs-retail flow, and OI context",
+            "type": "line",
+            "xKey": "timestamp",
+            "seriesKeys": [
+              "price"
+            ],
+            "passes": false,
+            "failures": [
+              "time-series prompt did not use date/time-like x-axis labels"
+            ]
+          }
+        ],
+        "pass": false
+      },
+      "semanticFailures": [
+        "no chart matched the prompt's requested axis, chart type, and metrics",
+        "chart 0: time-series prompt did not use date/time-like x-axis labels"
+      ],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [
+        "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+        "semantic chart audit failed: chart 0: time-series prompt did not use date/time-like x-axis labels"
+      ],
+      "buyerValueScore": 2,
+      "buyerVerdict": "fail",
+      "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/06-coinglass-for-will-the-u-s-invade-iran-before-2027-chart-t.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/06-coinglass-for-will-the-u-s-invade-iran-before-2027-chart-t.summary.json"
+    },
+    {
+      "id": "07-coinglass-for-will-bitcoin-hit-150k-by-june-30-2026-chart-",
+      "index": 6,
+      "provider": "coinglass",
+      "prompt": "For 'Will Bitcoin hit $150k by June 30, 2026?', chart the bid-ask spread, orderbook depth, and simulated slippage for $1k, $5k, and $10k YES positions, with a tradability recommendation.",
+      "expectedMinimumRows": 5,
+      "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+      "startedAt": "2026-05-02T14:48:49.227Z",
+      "finishedAt": "2026-05-02T14:49:58.401Z",
+      "durationMs": 69174,
+      "outcomeType": "answer",
+      "responseChars": 1613,
+      "responsePreview": "The market for \"Will Bitcoin hit $150k by June 30, 2026?\" is currently tradeable but exhibits extremely low liquidity for market orders. \n\nAs of May 2, 2026, the execution metrics for YES positions are as follows:\n\n| Metric | Value |\n| :--- | :--- |\n| **Current Price** | 0.021 |\n| **Best Bid** | 0.02 |\n| **Best Ask** | 0.022 |\n| **Bid-Ask Spread (bps)** | 952.4 |\n| **Total Orderbook Depth** | $21,673,446.74 |\n| **Slippage ($1k Buy YES)** | 64.2% |\n| **Slippage ($5k Buy YES)** | 382.7% |\n| **Slippage ($10k Buy YES)** | 621.6% |\n\n### Execution Analysis\nThe provided chart illustrates a severe escalation in execution costs as trade size increases. While the total orderbook depth appears high at over $21 million, this includes synthetic liquidity from complement tokens. In practice, the \"YES\" side is quite thin; a market buy of just $1,000 would result in an average entry price of 0.0345 (64.2% slippage), while a $10,000 buy would push the average price to 0.1515, a 621.6% premium over the current mid-price.\n\n### Tradability Recommendation\n**Tradeable, but poor for market buys.** \nYou should strictly use **limit orders** for this market. Avoid $5,000 and $10,000 YES market buys entirely...",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "Bitcoin $150k by June 30, 2026 — execution quality",
+          "type": "bar",
+          "rowCount": 5,
+          "distinctXCount": 5,
+          "numericSeriesCount": 1,
+          "numericSeriesWithVariation": 1,
+          "xKey": "metric",
+          "seriesKeys": [
+            "value"
+          ],
+          "sampleRows": [
+            {
+              "metric": "Bid-ask spread (bps)",
+              "value": 952.4
+            },
+            {
+              "metric": "Orderbook depth (USD)",
+              "value": 21673446.74
+            },
+            {
+              "metric": "Slippage $1k buy YES (%)",
+              "value": 64.2
+            }
+          ],
+          "needsDualAxis": false,
+          "willRenderDualAxis": false,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": false,
+          "expectsProbabilityMetric": false,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "Bitcoin $150k by June 30, 2026 — execution quality",
+            "type": "bar",
+            "xKey": "metric",
+            "seriesKeys": [
+              "value"
+            ],
+            "passes": true,
+            "failures": []
+          }
+        ],
+        "pass": true
+      },
+      "semanticFailures": [],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [],
+      "buyerValueScore": 5,
+      "buyerVerdict": "pass",
+      "buyerReview": "Preliminary pass: produced a multi-row, varied chart with specific data and an actionable buyer takeaway.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/07-coinglass-for-will-bitcoin-hit-150k-by-june-30-2026-chart-.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/07-coinglass-for-will-bitcoin-hit-150k-by-june-30-2026-chart-.summary.json"
+    },
+    {
+      "id": "08-coinglass-for-strait-of-hormuz-traffic-returns-to-normal-b",
+      "index": 7,
+      "provider": "coinglass",
+      "prompt": "For 'Strait of Hormuz traffic returns to normal by May 15?', chart price history, current implied probability, 24h volume, open interest, and recent trade-size buckets to show whether traders are leaning YES or NO.",
+      "expectedMinimumRows": 20,
+      "expectedReason": "time-series chart needs enough history to show shape",
+      "startedAt": "2026-05-02T14:50:00.410Z",
+      "finishedAt": "2026-05-02T14:51:44.469Z",
+      "durationMs": 104059,
+      "outcomeType": "answer",
+      "responseChars": 1184,
+      "responsePreview": "Based on the available market data for **\"Strait of Hormuz traffic returns to normal by May 15?\"**, traders are currently leaning heavily toward **NO**. The market indicates only a **5.5%** implied probability that traffic will return to normal by the deadline.\n\nThe accompanying chart provides a snapshot of the current price and volume metrics as of May 2, 2026.\n\n### Market Statistics\n| Metric | Value |\n| :--- | :--- |\n| **Current Implied Probability** | 5.5% |\n| **Current Price (YES)** | $0.055 |\n| **Total Volume** | $4,170,916.22 |\n| **Market Status** | Active |\n| **End Date** | May 15, 2026 |\n\n**Trader Sentiment:**\nWith a price of $0.055 for a \"YES\" outcome, the market consensus is overwhelmingly that traffic will not return to normal by mid-May. The high total volume of over $4.17 million suggests significant conviction behind this low probability.\n\n**Remaining Data Gap:**\nDue to the bounded nature of the data execution, specific 24h volume breakdowns and recent trade-size buckets for this exact market were not retrieved. While the broader market activity was analyzed, detailed individual transaction history for the Hormuz contract was unavailable in this query.",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "Strait of Hormuz traffic returns to normal by May 15? — price history and key market stats",
+          "type": "bar",
+          "rowCount": 3,
+          "distinctXCount": 3,
+          "numericSeriesCount": 1,
+          "numericSeriesWithVariation": 1,
+          "xKey": "metric",
+          "seriesKeys": [
+            "value"
+          ],
+          "sampleRows": [
+            {
+              "metric": "Current implied probability",
+              "value": 0.055
+            },
+            {
+              "metric": "24h volume",
+              "value": 4170916.2220619842
+            },
+            {
+              "metric": "Open interest",
+              "value": 0
+            }
+          ],
+          "needsDualAxis": false,
+          "willRenderDualAxis": false,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": true,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [
+          "no chart matched the prompt's requested axis, chart type, and metrics",
+          "chart 0: time-series prompt did not use date/time-like x-axis labels",
+          "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+        ],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "Strait of Hormuz traffic returns to normal by May 15? — price history and key market stats",
+            "type": "bar",
+            "xKey": "metric",
+            "seriesKeys": [
+              "value"
+            ],
+            "passes": false,
+            "failures": [
+              "time-series prompt did not use date/time-like x-axis labels",
+              "probability prompt did not chart a probability, odds, yes-price, or price series"
+            ]
+          }
+        ],
+        "pass": false
+      },
+      "semanticFailures": [
+        "no chart matched the prompt's requested axis, chart type, and metrics",
+        "chart 0: time-series prompt did not use date/time-like x-axis labels",
+        "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+      ],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [
+        "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+        "semantic chart audit failed: chart 0: time-series prompt did not use date/time-like x-axis labels",
+        "semantic chart audit failed: chart 0: probability prompt did not chart a probability, odds, yes-price, or price series",
+        "chart \"Strait of Hormuz traffic returns to normal by May 15? — price history and key market stats\" had 3 row(s), expected at least 20",
+        "chart \"Strait of Hormuz traffic returns to normal by May 15? — price history and key market stats\" had only 3 distinct x-axis value(s)"
+      ],
+      "buyerValueScore": 2,
+      "buyerVerdict": "fail",
+      "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/08-coinglass-for-strait-of-hormuz-traffic-returns-to-normal-b.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/08-coinglass-for-strait-of-hormuz-traffic-returns-to-normal-b.summary.json"
+    },
+    {
+      "id": "09-polymarket-for-us-obtains-iranian-enriched-uranium-by-may-3",
+      "index": 8,
+      "provider": "polymarket",
+      "prompt": "For 'US obtains Iranian enriched uranium by May 31?', chart current probability, price history, top-holder concentration, and recent whale flow, then annotate the resolution-rule risks that could affect trade sizing.",
+      "expectedMinimumRows": 20,
+      "expectedReason": "time-series chart needs enough history to show shape",
+      "startedAt": "2026-05-02T14:51:46.476Z",
+      "finishedAt": "2026-05-02T14:53:01.100Z",
+      "durationMs": 74624,
+      "outcomeType": "answer",
+      "responseChars": 2081,
+      "responsePreview": "As of May 2, 2026, the market for \"US obtains Iranian enriched uranium by May 31?\" shows a **current probability of 8.5%**. \n\nThe provided bar chart highlights this low probability, reflecting significant market skepticism that physical possession will occur within the next four weeks. No historical price data points were available from the source at the time of the query to establish a long-term trendline.\n\n### Top-Holder Concentration\nThe \"YES\" side is heavily concentrated among a few large accounts, while the \"NO\" side is more widely distributed.\n\n| Side | Top 10 Concentration | Whale Count | Total Position Value |\n| :--- | :--- | :--- | :--- |\n| **YES** | 82.09% | 18 | $227,998.56 |\n| **NO** | 43.66% | 178 | $2,443,120.45 |\n\n### Recent Whale Flow (Last 24 Hours)\nActivity in the last 24 hours shows a strong bullish divergence, with whales exclusively on the buy side.\n\n| Tier | Trade Count | Buy Volume | Sell Volume | Net Flow | Sentiment |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| **Whale** | 17 | $70,606.96 | $0.00 | +$70,606.96 | Bullish |\n| **Medium** | 34 | $5,817.62 | $1,765.19 | +$4,052.43 | Bullish |\n| **Small** | 149 | $817.42 | $212.59 | +$604.83 | Bullish |\n\n### Re...",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "US obtains Iranian enriched uranium by May 31? — current probability",
+          "type": "bar",
+          "rowCount": 1,
+          "distinctXCount": 1,
+          "numericSeriesCount": 1,
+          "numericSeriesWithVariation": 0,
+          "xKey": "label",
+          "seriesKeys": [
+            "probability"
+          ],
+          "sampleRows": [
+            {
+              "label": "Current probability",
+              "probability": 8.5,
+              "currentPrice": 8.5
+            }
+          ],
+          "needsDualAxis": false,
+          "willRenderDualAxis": false,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": true,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [
+          "no chart matched the prompt's requested axis, chart type, and metrics",
+          "chart 0: time-series prompt did not use date/time-like x-axis labels"
+        ],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "US obtains Iranian enriched uranium by May 31? — current probability",
+            "type": "bar",
+            "xKey": "label",
+            "seriesKeys": [
+              "probability"
+            ],
+            "passes": false,
+            "failures": [
+              "time-series prompt did not use date/time-like x-axis labels"
+            ]
+          }
+        ],
+        "pass": false
+      },
+      "semanticFailures": [
+        "no chart matched the prompt's requested axis, chart type, and metrics",
+        "chart 0: time-series prompt did not use date/time-like x-axis labels"
+      ],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [
+        "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+        "semantic chart audit failed: chart 0: time-series prompt did not use date/time-like x-axis labels",
+        "chart \"US obtains Iranian enriched uranium by May 31? — current probability\" had 1 row(s), expected at least 20",
+        "chart \"US obtains Iranian enriched uranium by May 31? — current probability\" had only 1 distinct x-axis value(s)",
+        "chart \"US obtains Iranian enriched uranium by May 31? — current probability\" had no numeric series variation"
+      ],
+      "buyerValueScore": 2,
+      "buyerVerdict": "fail",
+      "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/09-polymarket-for-us-obtains-iranian-enriched-uranium-by-may-3.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/09-polymarket-for-us-obtains-iranian-enriched-uranium-by-may-3.summary.json"
+    },
+    {
+      "id": "10-polymarket-for-us-x-iran-permanent-peace-deal-by-may-31-202",
+      "index": 9,
+      "provider": "polymarket",
+      "prompt": "For 'US x Iran permanent peace deal by May 31, 2026?', chart price history, vig-adjusted true probability, bid-ask spread, 24h volume, and recent trade flow to evaluate whether the market is efficiently priced.",
+      "expectedMinimumRows": 20,
+      "expectedReason": "time-series chart needs enough history to show shape",
+      "startedAt": "2026-05-02T14:53:03.106Z",
+      "finishedAt": "2026-05-02T14:54:20.902Z",
+      "durationMs": 77796,
+      "outcomeType": "answer",
+      "responseChars": 2094,
+      "responsePreview": "The market for a **US x Iran permanent peace deal by May 31, 2026** is currently **efficiently priced**. With a 0% vig and a tight bid-ask spread, the market prices reflect a high degree of liquidity and competition. As of May 2, 2026, the data shows that any perceived edge would likely need to come from superior outside information rather than market friction.\n\n### Market Metrics Summary\n| Metric | Value |\n| :--- | :--- |\n| **YES Price** | 0.225 |\n| **NO Price** | 0.775 |\n| **Vig-Adjusted True Probability (YES)** | 22.5% |\n| **Bid-Ask Spread** | $0.01 (4.44%) |\n| **24h Volume** | $555,349.32 |\n| **Open Interest** | $1,973,787.06 |\n| **Efficiency Status** | Excellent (0 Bps Vig) |\n\n### Price History and Trade Flow\nThe price for a \"YES\" outcome has experienced a significant decline over the past week. From a high of **0.345** on April 25, the price has dropped **34.78%** to its current level of **0.225**. \n*   **Volatility:** The market hit a low of 0.175 on April 30 before recovering slightly to the current level.\n*   **Recent Tape:** The last 50 trades show a total volume of $4,574.31 with a **mild sell pressure**. Sell volume ($2,502.80) has slightly outpaced buy volume ($2,071.5...",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "US x Iran permanent peace deal by May 31, 2026? — price history and true probability",
+          "type": "line",
+          "rowCount": 168,
+          "distinctXCount": 168,
+          "numericSeriesCount": 2,
+          "numericSeriesWithVariation": 1,
+          "xKey": "timestamp",
+          "seriesKeys": [
+            "price",
+            "vigAdjustedTrueProb"
+          ],
+          "sampleRows": [
+            {
+              "timestamp": "2026-04-25T15:00:04.000Z",
+              "price": 0.345,
+              "vigAdjustedTrueProb": 0.225
+            },
+            {
+              "timestamp": "2026-04-25T16:00:05.000Z",
+              "price": 0.315,
+              "vigAdjustedTrueProb": 0.225
+            },
+            {
+              "timestamp": "2026-04-25T17:00:17.000Z",
+              "price": 0.295,
+              "vigAdjustedTrueProb": 0.225
+            }
+          ],
+          "needsDualAxis": false,
+          "willRenderDualAxis": false,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": true,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [
+          "no chart matched the prompt's requested axis, chart type, and metrics",
+          "chart 0: time-series prompt did not use date/time-like x-axis labels"
+        ],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "US x Iran permanent peace deal by May 31, 2026? — price history and true probability",
+            "type": "line",
+            "xKey": "timestamp",
+            "seriesKeys": [
+              "price",
+              "vigAdjustedTrueProb"
+            ],
+            "passes": false,
+            "failures": [
+              "time-series prompt did not use date/time-like x-axis labels"
+            ]
+          }
+        ],
+        "pass": false
+      },
+      "semanticFailures": [
+        "no chart matched the prompt's requested axis, chart type, and metrics",
+        "chart 0: time-series prompt did not use date/time-like x-axis labels"
+      ],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [
+        "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+        "semantic chart audit failed: chart 0: time-series prompt did not use date/time-like x-axis labels"
+      ],
+      "buyerValueScore": 2,
+      "buyerVerdict": "fail",
+      "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/10-polymarket-for-us-x-iran-permanent-peace-deal-by-may-31-202.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/10-polymarket-for-us-x-iran-permanent-peace-deal-by-may-31-202.summary.json"
+    },
+    {
+      "id": "11-polymarket-for-the-2026-nba-champion-event-compare-the-trad",
+      "index": 10,
+      "provider": "polymarket",
+      "prompt": "For the '2026 NBA Champion' event, compare the trading parameters and negative-risk status for Oklahoma City Thunder, Cleveland Cavaliers, New York Knicks, Minnesota Timberwolves, Detroit Pistons, and Orlando Magic, then chart fee rate, tick size, minimum order size, and current probability.",
+      "expectedMinimumRows": 5,
+      "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+      "startedAt": "2026-05-02T14:54:22.912Z",
+      "finishedAt": "2026-05-02T14:55:21.514Z",
+      "durationMs": 58602,
+      "outcomeType": "answer",
+      "responseChars": 1439,
+      "responsePreview": "For the **2026 NBA Champion** event, the following table compares the trading parameters and risk status for the requested teams as of May 2, 2026.\n\n| Team | Fee Rate (BPS) | Tick Size | Min Order Size | Neg-Risk Status | Current Probability |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| Oklahoma City Thunder | 100000 | 0.01 | 5 | True | 55.5% |\n| New York Knicks | 100000 | 0.001 | 5 | True | 5.3% |\n| Detroit Pistons | 100000 | 0.001 | 5 | True | 3.1% |\n| Cleveland Cavaliers | 100000 | 0.001 | 5 | True | 2.8% |\n| Minnesota Timberwolves | 100000 | 0.001 | 5 | True | 1.1% |\n| Orlando Magic | 100000 | 0.001 | 5 | True | 0.7% |\n\n### Market Observations\n*   **Probability Distribution**: The Oklahoma City Thunder are the heavy favorites among this group with a 55.5% probability, creating a significant gap compared to the New York Knicks (5.3%) and the rest of the field.\n*   **Uniform Parameters**: All listed outcomes share a minimum order size of 5, a fee rate of 100,000 BPS, and are designated as negative-risk markets.\n*   **Tick Size Variation**: The Oklahoma City Thunder outcome utilizes a larger tick size (0.01) compared to the other five teams, which all share a tick size of 0.001....",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "2026 NBA Champion: fee rate, tick size, min order size, and current probability",
+          "type": "line",
+          "rowCount": 6,
+          "distinctXCount": 6,
+          "numericSeriesCount": 1,
+          "numericSeriesWithVariation": 1,
+          "xKey": "impliedProbability",
+          "seriesKeys": [
+            "currentPrice"
+          ],
+          "sampleRows": [
+            {
+              "requestedName": "Oklahoma City Thunder",
+              "matchedName": "Oklahoma City Thunder",
+              "tokenId": "49500299856831034491021962156746701298730459370557900271970866855042624695770",
+              "conditionId": "0x22e7b5e35423e76842dd3a5e1a21d13793811080d5e7b2896d0c001bd5e97d54",
+              "currentPrice": 0.555,
+              "price": 0.555,
+              "yesMid": 0.555,
+              "impliedProbability": "55.5%",
+              "bestBid": 0.55,
+              "bestAsk": 0.56,
+              "spread": 0.01,
+              "spreadPercent": 1.8,
+              "spreadPercentDisplay": "1.80%",
+              "spreadCentsDisplay": "1.00¢",
+              "priceChange": 0,
+              "priceChangePercent": 0,
+              "historyWindow": "",
+              "volume": 9981337.288525485,
+              "readableQuote": "Oklahoma City Thunder → matched \"Oklahoma City Thunder\": YES mid 55.5% (0–1: 0.5550), bid 55.0¢ / ask 56.0¢, spread 1.00¢ (1.80% pts)."
+            },
+            {
+              "requestedName": "Cleveland Cavaliers",
+              "matchedName": "Cleveland Cavaliers",
+              "tokenId": "21929863894047830651599085392978377118642353711084157807549430066031384497667",
+              "conditionId": "0x6b44bd667fad6cb5b3b68d8bd1055a038c77d9176dbd51f123879797cc3368a7",
+              "currentPrice": 0.0275,
+              "price": 0.0275,
+              "yesMid": 0.0275,
+              "impliedProbability": "2.8%",
+              "bestBid": 0.027,
+              "bestAsk": 0.028,
+              "spread": 0.001,
+              "spreadPercent": 3.64,
+              "spreadPercentDisplay": "3.64%",
+              "spreadCentsDisplay": "0.10¢",
+              "priceChange": 0,
+              "priceChangePercent": 0,
+              "historyWindow": "",
+              "volume": 11307728.88247996,
+              "readableQuote": "Cleveland Cavaliers → matched \"Cleveland Cavaliers\": YES mid 2.8% (0–1: 0.0275), bid 2.7¢ / ask 2.8¢, spread 0.10¢ (3.64% pts)."
+            },
+            {
+              "requestedName": "New York Knicks",
+              "matchedName": "New York Knicks",
+              "tokenId": "20257190540739490630509657713144742134547949967093643458458133445357169845406",
+              "conditionId": "0x713641f745d71f6ec61f906237ffca3c8583f251e49384429a63ceb0ccdb2d37",
+              "currentPrice": 0.0525,
+              "price": 0.0525,
+              "yesMid": 0.0525,
+              "impliedProbability": "5.3%",
+              "bestBid": 0.052,
+              "bestAsk": 0.053,
+              "spread": 0.001,
+              "spreadPercent": 1.9,
+              "spreadPercentDisplay": "1.90%",
+              "spreadCentsDisplay": "0.10¢",
+              "priceChange": 0,
+              "priceChangePercent": 0,
+              "historyWindow": "",
+              "volume": 11001239.757702868,
+              "readableQuote": "New York Knicks → matched \"New York Knicks\": YES mid 5.3% (0–1: 0.0525), bid 5.2¢ / ask 5.3¢, spread 0.10¢ (1.90% pts)."
+            }
+          ],
+          "needsDualAxis": false,
+          "willRenderDualAxis": false,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": false,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "2026 NBA Champion: fee rate, tick size, min order size, and current probability",
+            "type": "line",
+            "xKey": "impliedProbability",
+            "seriesKeys": [
+              "currentPrice"
+            ],
+            "passes": true,
+            "failures": []
+          }
+        ],
+        "pass": true
+      },
+      "semanticFailures": [],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [],
+      "buyerValueScore": 5,
+      "buyerVerdict": "pass",
+      "buyerReview": "Preliminary pass: produced a multi-row, varied chart with specific data and an actionable buyer takeaway.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/11-polymarket-for-the-2026-nba-champion-event-compare-the-trad.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/11-polymarket-for-the-2026-nba-champion-event-compare-the-trad.summary.json"
+    },
+    {
+      "id": "12-polymarket-for-the-2026-fifa-world-cup-winner-event-compare",
+      "index": 11,
+      "provider": "polymarket",
+      "prompt": "For the '2026 FIFA World Cup Winner' event, compare Spain, France, England, South Korea, Haiti, and New Zealand by negative-risk setting, fee rate, minimum order size, tick size, current probability, and 24h volume.",
+      "expectedMinimumRows": 5,
+      "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+      "startedAt": "2026-05-02T14:55:23.523Z",
+      "finishedAt": "2026-05-02T14:56:13.304Z",
+      "durationMs": 49781,
+      "outcomeType": "answer",
+      "responseChars": 1212,
+      "responsePreview": "As of May 2, 2026, here is the comparison for the requested teams in the **2026 FIFA World Cup Winner** event. \n\nAll outcomes share a negative-risk setting of **True**, a fee rate summarized as **1%** (represented as 100,000 bps in the system), a minimum order size of **5**, and a tick size of **0.001**.\n\n| Team | Current Probability | 24h Volume | Negative Risk | Fee Rate | Min Order | Tick Size |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n| **France** | 16.4% | 22,813,646.82 | True | 1% | 5 | 0.001 |\n| **Spain** | 15.3% | 17,950,004.32 | True | 1% | 5 | 0.001 |\n| **England** | 11.1% | 14,707,389.67 | True | 1% | 5 | 0.001 |\n| **South Korea** | 0.4% | 20,813,061.32 | True | 1% | 5 | 0.001 |\n| **New Zealand** | 0.3% | 26,916,341.52 | True | 1% | 5 | 0.001 |\n| **Haiti** | 0.1% | 16,317,526.51 | True | 1% | 5 | 0.001 |\n\n**Data Notes:**\n*   The data above is synthesized from current market results. \n*   **Fee Rate:** The tool returned a raw value of 100,000 bps, which is interpreted here as a 1% fee. \n*   **Event Metadata:** While the live pricing is current for the 2026 World Cup Winner event, some underlying metadata referenced an older variant title (\"arch 2026 FIFA World C...",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 0,
+      "metricTableCount": 0,
+      "chartSummaries": [],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": false,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [
+          "semantic audit expected a chart but no chart summary existed"
+        ],
+        "chartResults": [],
+        "pass": false
+      },
+      "semanticFailures": [
+        "semantic audit expected a chart but no chart summary existed"
+      ],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [
+        "no chart artifact was emitted",
+        "semantic chart audit failed: semantic audit expected a chart but no chart summary existed"
+      ],
+      "buyerValueScore": 2,
+      "buyerVerdict": "fail",
+      "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/12-polymarket-for-the-2026-fifa-world-cup-winner-event-compare.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/12-polymarket-for-the-2026-fifa-world-cup-winner-event-compare.summary.json"
+    },
+    {
+      "id": "13-polymarket-chart-how-live-trading-attention-is-distributed-",
+      "index": 12,
+      "provider": "polymarket",
+      "prompt": "Chart how live trading attention is distributed across 'Will Bitcoin hit $150k by June 30, 2026?', 'Will the Iranian regime fall by May 31?', 'US x Iran permanent peace deal by May 31, 2026?', 'Will the U.S. invade Iran before 2027?', and 'Strait of Hormuz traffic returns to normal by May 15?' using 24h volume, current probability, open interest, and spread.",
+      "expectedMinimumRows": 5,
+      "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+      "startedAt": "2026-05-02T14:56:15.311Z",
+      "finishedAt": "2026-05-02T14:58:12.213Z",
+      "durationMs": 116902,
+      "outcomeType": "answer",
+      "responseChars": 1353,
+      "responsePreview": "As of May 2, 2026, trading attention is highest for the market predicting a U.S. invasion of Iran before 2027, which leads the group in both total volume and probability. \n\nThe following data summarizes the current activity across these five markets:\n\n| Market | Volume (Total) | Current Probability | Spread (%) | Open Interest |\n| :--- | :--- | :--- | :--- | :--- |\n| **Will the U.S. invade Iran before 2027?** | $19,601,981.42 | 29.5% | 3.39% | $0.00* |\n| **Will Bitcoin hit $150k by June 30, 2026?** | $15,734,008.01 | 2.1% | 4.88% | $0.00* |\n| **Will the Iranian regime fall by May 31?** | $12,639,592.13 | 2.4% | 4.26% | $0.00* |\n| **US x Iran permanent peace deal by May 31, 2026?** | $10,082,396.61 | 21.5% | 4.65% | $0.00* |\n| **Strait of Hormuz traffic returns to normal by May 15?** | $4,176,705.70 | 5.5% | 18.18% | $0.00* |\n\n***Data Gap:** Open Interest data for these specific contracts was not available in the current tool snapshot and returned zero values. \n\nThe accompanying chart illustrates that while the \"U.S. invasion\" market dominates in volume and probability, the \"Strait of Hormuz\" market suffers from significantly lower liquidity, evidenced by its wide 18.18% spread. In ...",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "Live trading attention across five Polymarket markets",
+          "type": "bar",
+          "rowCount": 5,
+          "distinctXCount": 5,
+          "numericSeriesCount": 4,
+          "numericSeriesWithVariation": 4,
+          "xKey": "market",
+          "seriesKeys": [
+            "attentionScore",
+            "volume24hM",
+            "probabilityPct",
+            "spreadPct"
+          ],
+          "sampleRows": [
+            {
+              "market": "Will the U.S. invade Iran before 2027?",
+              "volume24hM": 19.6,
+              "probabilityPct": 29.5,
+              "spreadPct": 3.39,
+              "openInterest": null,
+              "attentionScore": 1
+            },
+            {
+              "market": "US x Iran permanent peace deal by...?",
+              "volume24hM": 10.08,
+              "probabilityPct": 21.5,
+              "spreadPct": 4.65,
+              "openInterest": null,
+              "attentionScore": 0.6695
+            },
+            {
+              "market": "When will Bitcoin hit $150k?",
+              "volume24hM": 15.73,
+              "probabilityPct": 2.1,
+              "spreadPct": 4.88,
+              "openInterest": null,
+              "attentionScore": 0.566
+            }
+          ],
+          "needsDualAxis": true,
+          "willRenderDualAxis": true,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": false,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "Live trading attention across five Polymarket markets",
+            "type": "bar",
+            "xKey": "market",
+            "seriesKeys": [
+              "attentionScore",
+              "volume24hM",
+              "probabilityPct",
+              "spreadPct"
+            ],
+            "passes": true,
+            "failures": []
+          }
+        ],
+        "pass": true
+      },
+      "semanticFailures": [],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [],
+      "buyerValueScore": 4,
+      "buyerVerdict": "pass",
+      "buyerReview": "Preliminary pass: produced a multi-row, varied chart with specific data and an actionable buyer takeaway.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/13-polymarket-chart-how-live-trading-attention-is-distributed-.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/13-polymarket-chart-how-live-trading-attention-is-distributed-.summary.json"
+    },
+    {
+      "id": "14-polymarket-for-will-the-iranian-regime-fall-by-may-31-chart",
+      "index": 13,
+      "provider": "polymarket",
+      "prompt": "For 'Will the Iranian regime fall by May 31?', chart top-holder concentration, YES versus NO whale exposure, recent trade-size buckets, and price history to show whether the 2-3% probability is smart-money supported.",
+      "expectedMinimumRows": 20,
+      "expectedReason": "time-series chart needs enough history to show shape",
+      "startedAt": "2026-05-02T14:58:14.222Z",
+      "finishedAt": "2026-05-02T15:00:02.540Z",
+      "durationMs": 108318,
+      "outcomeType": "answer",
+      "responseChars": 2145,
+      "responsePreview": "The market currently pricing the fall of the Iranian regime by May 31 at **2.35%** (0.0235 USD) reflects a significant divergence between established positions and recent \"smart money\" activity.\n\nWhile a chart of historical prices could not be produced due to lack of historical data from the source, the following data from past queries as of May 2, 2026, details the current market structure.\n\n### Holder Concentration and Whale Exposure\nThe market is heavily weighted toward the \"NO\" side in terms of total capital, but top-holder concentration remains remarkably similar across both outcomes.\n\n| Metric | YES Side | NO Side |\n| :--- | :--- | :--- |\n| **Top 10 Concentration %** | 46.12% | 45.73% |\n| **Whale Count (>$1k position)** | 12 | 142 |\n| **Total Value of Scanned Positions** | $54,161.58 | $2,251,295.99 |\n\n### Recent Trade-Size Buckets (Last 24 Hours)\nRecent activity shows a \"Whale Divergence.\" While retail (small) traders are selling out of \"YES\" positions, large-scale traders are aggressively buying.\n\n| Bucket | Trade Count | Net Flow (USD) | Sentiment |\n| :--- | :--- | :--- | :--- |\n| **Small (Retail)** | 172 | -$284.25 | Bearish |\n| **Medium** | 18 | +$234.88 | Bullish |\n| **...",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 1,
+      "chartSummaries": [
+        {
+          "title": "'Will the Iranian regime fall by May 31?' — smart-money support snapshot",
+          "type": "bar",
+          "rowCount": 1,
+          "distinctXCount": 1,
+          "numericSeriesCount": 1,
+          "numericSeriesWithVariation": 0,
+          "xKey": "x",
+          "seriesKeys": [
+            "value"
+          ],
+          "sampleRows": [
+            {
+              "x": "No data returned",
+              "value": 0,
+              "chart": "Fallback"
+            }
+          ],
+          "needsDualAxis": false,
+          "willRenderDualAxis": false,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": true,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [
+          "no chart matched the prompt's requested axis, chart type, and metrics",
+          "chart 0: time-series prompt did not use date/time-like x-axis labels",
+          "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+        ],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "'Will the Iranian regime fall by May 31?' — smart-money support snapshot",
+            "type": "bar",
+            "xKey": "x",
+            "seriesKeys": [
+              "value"
+            ],
+            "passes": false,
+            "failures": [
+              "time-series prompt did not use date/time-like x-axis labels",
+              "probability prompt did not chart a probability, odds, yes-price, or price series"
+            ]
+          }
+        ],
+        "pass": false
+      },
+      "semanticFailures": [
+        "no chart matched the prompt's requested axis, chart type, and metrics",
+        "chart 0: time-series prompt did not use date/time-like x-axis labels",
+        "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+      ],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [
+        "response text signals sparse/no-value output",
+        "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+        "semantic chart audit failed: chart 0: time-series prompt did not use date/time-like x-axis labels",
+        "semantic chart audit failed: chart 0: probability prompt did not chart a probability, odds, yes-price, or price series",
+        "chart \"'Will the Iranian regime fall by May 31?' — smart-money support snapshot\" had 1 row(s), expected at least 20",
+        "chart \"'Will the Iranian regime fall by May 31?' — smart-money support snapshot\" had only 1 distinct x-axis value(s)",
+        "chart \"'Will the Iranian regime fall by May 31?' — smart-money support snapshot\" had no numeric series variation"
+      ],
+      "buyerValueScore": 2,
+      "buyerVerdict": "fail",
+      "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/14-polymarket-for-will-the-iranian-regime-fall-by-may-31-chart.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/14-polymarket-for-will-the-iranian-regime-fall-by-may-31-chart.summary.json"
+    },
+    {
+      "id": "15-polymarket-for-eurovision-winner-2026-rank-france-estonia-a",
+      "index": 14,
+      "provider": "polymarket",
+      "prompt": "For 'Eurovision Winner 2026', rank France, Estonia, Austria, Albania, Belgium, Croatia, Czechia, and Germany by whale exposure, current probability, and 24h volume, then chart which outcomes have meaningful smart-money support.",
+      "expectedMinimumRows": 5,
+      "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+      "startedAt": "2026-05-02T15:00:04.551Z",
+      "finishedAt": "2026-05-02T15:01:48.536Z",
+      "durationMs": 103985,
+      "outcomeType": "answer",
+      "responseChars": 1508,
+      "responsePreview": "As of May 2, 2026, the following rankings for the **Eurovision Winner 2026** market are based on current probability, whale exposure, and 24h volume.\n\nHere is the complete returned collection for fullEventOutcomes (35 items).\n\n| Name | Current Price | Date Status | End Date |\n| :--- | :--- | :--- | :--- |\n| Austria | 0.0025 | undated |  |\n| Georgia | 0.0025 | undated |  |\n| Estonia | 0.0025 | undated |  |\n| Montenegro | 0.0015 | undated |  |\n| San Marino | 0.0015 | undated |  |\n| Armenia | 0.0025 | undated |  |\n| Albania | 0.0015 | undated |  |\n| Azerbaijan | 0.0025 | undated |  |\n| Poland | 0.0025 | undated |  |\n| Latvia | 0.0015 | undated |  |\n| Portugal | 0.0025 | undated |  |\n| Switzerland | 0.0035 | undated |  |\n| Serbia | 0.0035 | undated |  |\n| Lithuania | 0.0025 | undated |  |\n| Finland | 0.3445 | undated |  |\n| Norway | 0.0045 | undated |  |\n| Belgium | 0.0035 | undated |  |\n| Luxembourg | 0.0045 | undated |  |\n| Italy | 0.0265 | undated |  |\n| Croatia | 0.0055 | undated |  |\n| Moldova | 0.007 | undated |  |\n| United Kingdom | 0.0035 | undated |  |\n| Germany | 0.0045 | undated |  |\n| France | 0.0745 | undated |  |\n| Malta | 0.012 | undated |  |\n| Greece | 0.193 | undated |...",
+      "toolsUsed": [
+        "Polymarket Intelligence",
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "Eurovision Winner 2026: smart-money support vs probability",
+          "type": "bar",
+          "rowCount": 8,
+          "distinctXCount": 8,
+          "numericSeriesCount": 2,
+          "numericSeriesWithVariation": 2,
+          "xKey": "outcome",
+          "seriesKeys": [
+            "currentProbability",
+            "whaleSupportScore"
+          ],
+          "sampleRows": [
+            {
+              "outcome": "France",
+              "currentProbability": 0.0745,
+              "volume24h": 2518059.8079930074,
+              "whaleSupportScore": 1
+            },
+            {
+              "outcome": "Czechia",
+              "currentProbability": 0.0085,
+              "volume24h": 1476608.2062910034,
+              "whaleSupportScore": 0
+            },
+            {
+              "outcome": "Croatia",
+              "currentProbability": 0.0055,
+              "volume24h": 2786554.4622780047,
+              "whaleSupportScore": 0
+            }
+          ],
+          "needsDualAxis": true,
+          "willRenderDualAxis": true,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": true,
+          "expectsTimeSeries": false,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "Eurovision Winner 2026: smart-money support vs probability",
+            "type": "bar",
+            "xKey": "outcome",
+            "seriesKeys": [
+              "currentProbability",
+              "whaleSupportScore"
+            ],
+            "passes": true,
+            "failures": []
+          }
+        ],
+        "pass": true
+      },
+      "semanticFailures": [],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [],
+      "buyerValueScore": 4,
+      "buyerVerdict": "pass",
+      "buyerReview": "Preliminary pass: produced a multi-row, varied chart with specific data and an actionable buyer takeaway.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/15-polymarket-for-eurovision-winner-2026-rank-france-estonia-a.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/15-polymarket-for-eurovision-winner-2026-rank-france-estonia-a.summary.json"
+    },
+    {
+      "id": "16-polymarket-compare-will-bitcoin-hit-150k-by-june-30-2026-an",
+      "index": 15,
+      "provider": "polymarket",
+      "prompt": "Compare 'Will Bitcoin hit $150k by June 30, 2026?' and 'Will Bitcoin hit $150k by December 31, 2026?' with a two-line price-history chart plus current volume, spread, and orderbook-depth table.",
+      "expectedMinimumRows": 20,
+      "expectedReason": "time-series chart needs enough history to show shape",
+      "startedAt": "2026-05-02T15:01:50.544Z",
+      "finishedAt": "2026-05-02T15:03:23.693Z",
+      "durationMs": 93149,
+      "outcomeType": "answer",
+      "responseChars": 628,
+      "responsePreview": "The market for Bitcoin hitting $150,000 by the end of 2026 shows significantly higher conviction (11.5% probability) compared to the mid-year deadline (2.1%). As of May 2, 2026, the June 30 deadline has seen much higher total volume, though its price has trended downward over the past week while the December deadline has strengthened.\n\nHere is the complete returned collection for allOutcomes (2 items).\n\n| Requested | Best Ask | Best Bid | Current Price |\n| :--- | :--- | :--- | :--- |\n| Will Bitcoin hit $150k by June 30, 2026? | 0.021 | 0.02 | 0.0205 |\n| Will Bitcoin hit $150k by December 31, 2026? | 0.12 | 0.11 | 0.115 |",
+      "toolsUsed": [
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "Bitcoin $150k deadline markets: price history",
+          "type": "line",
+          "rowCount": 336,
+          "distinctXCount": 201,
+          "numericSeriesCount": 1,
+          "numericSeriesWithVariation": 1,
+          "xKey": "timestamp",
+          "seriesKeys": [
+            "price"
+          ],
+          "sampleRows": [
+            {
+              "timestamp": "2026-04-25T16:00:06.000Z",
+              "outcome": "by June 30, 2026",
+              "price": 0.0265
+            },
+            {
+              "timestamp": "2026-04-25T16:00:06.000Z",
+              "outcome": "by December 31, 2026",
+              "price": 0.105
+            },
+            {
+              "timestamp": "2026-04-25T17:00:26.000Z",
+              "outcome": "by June 30, 2026",
+              "price": 0.0265
+            }
+          ],
+          "needsDualAxis": false,
+          "willRenderDualAxis": false,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": true,
+          "expectsProbabilityMetric": false,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [
+          "no chart matched the prompt's requested axis, chart type, and metrics",
+          "chart 0: time-series prompt did not use date/time-like x-axis labels"
+        ],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "Bitcoin $150k deadline markets: price history",
+            "type": "line",
+            "xKey": "timestamp",
+            "seriesKeys": [
+              "price"
+            ],
+            "passes": false,
+            "failures": [
+              "time-series prompt did not use date/time-like x-axis labels"
+            ]
+          }
+        ],
+        "pass": false
+      },
+      "semanticFailures": [
+        "no chart matched the prompt's requested axis, chart type, and metrics",
+        "chart 0: time-series prompt did not use date/time-like x-axis labels"
+      ],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [
+        "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+        "semantic chart audit failed: chart 0: time-series prompt did not use date/time-like x-axis labels"
+      ],
+      "buyerValueScore": 2,
+      "buyerVerdict": "fail",
+      "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/16-polymarket-compare-will-bitcoin-hit-150k-by-june-30-2026-an.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/16-polymarket-compare-will-bitcoin-hit-150k-by-june-30-2026-an.summary.json"
+    },
+    {
+      "id": "17-unknown-for-2026-fifa-world-cup-winner-chart-live-volume",
+      "index": 16,
+      "provider": "unknown",
+      "prompt": "For '2026 FIFA World Cup Winner', chart live volume share and implied probability for Spain, France, England, South Korea, New Zealand, Switzerland, and Haiti, then identify which outcomes have volume that looks outsized relative to probability.",
+      "expectedMinimumRows": 5,
+      "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+      "startedAt": "2026-05-02T15:03:25.702Z",
+      "finishedAt": "2026-05-02T15:05:02.787Z",
+      "durationMs": 97085,
+      "outcomeType": "answer",
+      "responseChars": 1874,
+      "responsePreview": "As of May 2, 2026, the volume and probability data for the selected 2026 FIFA World Cup Winner outcomes show a significant disconnect between market sentiment (volume) and winning expectations (price).\n\nThe following data is synthesized from the market results fetched during this query:\n\n| Outcome | Implied Probability | Live Volume | Volume Share |\n| :--- | :--- | :--- | :--- |\n| **France** | 16.4% | $22,813,802.25 | 2.60% |\n| **Spain** | 15.3% | $17,950,230.34 | 2.05% |\n| **England** | 11.1% | $14,707,439.90 | 1.68% |\n| **Switzerland** | 0.9% | $14,229,189.77 | 1.62% |\n| **South Korea** | 0.5% | $20,813,061.32 | 2.37% |\n| **New Zealand** | 0.3% | $26,916,994.31 | 3.07% |\n| **Haiti** | 0.1% | $16,317,526.51 | 1.86% |\n\n### Outsized Volume Identification\nBased on the chart and data, three outcomes show volume that is heavily disproportionate to their actual probability of winning:\n\n*   **New Zealand:** This is the most extreme case. Despite an implied probability of just **0.3%**, it holds a **3.07%** volume share—the highest of the entire requested group, even surpassing favorites like France and Spain.\n*   **Haiti:** With a near-zero probability of **0.1%**, Haiti has attracted ov...",
+      "toolsUsed": [
+        "Polymarket Intelligence",
+        "Polymarket Intelligence"
+      ],
+      "chartCount": 1,
+      "metricTableCount": 0,
+      "chartSummaries": [
+        {
+          "title": "2026 FIFA World Cup Winner: live volume share vs implied probability",
+          "type": "composed",
+          "rowCount": 7,
+          "distinctXCount": 7,
+          "numericSeriesCount": 2,
+          "numericSeriesWithVariation": 2,
+          "xKey": "outcome",
+          "seriesKeys": [
+            "liveVolumeSharePct",
+            "impliedProbabilityPct"
+          ],
+          "sampleRows": [
+            {
+              "outcome": "Spain",
+              "impliedProbabilityPct": 15.3,
+              "liveVolumeSharePct": 2.0470068294746975,
+              "volume": 17950230.341300417,
+              "price": 0.1525,
+              "spreadPercent": 0.66
+            },
+            {
+              "outcome": "France",
+              "impliedProbabilityPct": 16.4,
+              "liveVolumeSharePct": 2.601638425748976,
+              "volume": 22813802.24752668,
+              "price": 0.1645,
+              "spreadPercent": 0.61
+            },
+            {
+              "outcome": "England",
+              "impliedProbabilityPct": 11.1,
+              "liveVolumeSharePct": 1.6772057712254533,
+              "volume": 14707439.901888922,
+              "price": 0.1105,
+              "spreadPercent": 0.9
+            }
+          ],
+          "needsDualAxis": true,
+          "willRenderDualAxis": true,
+          "hasNumericSeriesValues": true
+        }
+      ],
+      "semanticAudit": {
+        "intent": {
+          "expectsCategoricalComparison": false,
+          "expectsTimeSeries": false,
+          "expectsProbabilityMetric": true,
+          "expectsVolumeLiquidityMetrics": false,
+          "expectsOutcomeLabels": false,
+          "expectsMarketLabels": false
+        },
+        "failures": [],
+        "chartResults": [
+          {
+            "index": 0,
+            "title": "2026 FIFA World Cup Winner: live volume share vs implied probability",
+            "type": "composed",
+            "xKey": "outcome",
+            "seriesKeys": [
+              "liveVolumeSharePct",
+              "impliedProbabilityPct"
+            ],
+            "passes": true,
+            "failures": []
+          }
+        ],
+        "pass": true
+      },
+      "semanticFailures": [],
+      "visualAuditStatus": "not_run",
+      "hardFailures": [],
+      "buyerValueScore": 4,
+      "buyerVerdict": "pass",
+      "buyerReview": "Preliminary pass: produced a multi-row, varied chart with specific data and an actionable buyer takeaway.",
+      "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/17-unknown-for-2026-fifa-world-cup-winner-chart-live-volume.json",
+      "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/17-unknown-for-2026-fifa-world-cup-winner-chart-live-volume.summary.json"
+    }
+  ]
+}

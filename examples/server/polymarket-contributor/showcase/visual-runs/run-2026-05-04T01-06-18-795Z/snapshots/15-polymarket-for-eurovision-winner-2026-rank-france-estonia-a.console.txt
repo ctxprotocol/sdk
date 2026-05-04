@@ -1,0 +1,8 @@
+Console errors summary (post-capture, viewId 874ac7) — all benign cross-cutting noise unrelated to chart rendering:
+
+- "The resource http://localhost:3000/_next/static/chunks/%5Broot-of-the-server%5D__4d3d4bd4._.css was preloaded using link preload but not used within a few seconds from the window's load event." — recurring Next.js CSS preload hint, not an app error.
+- "ClientFetchError: Failed to fetch. Read more at https://errors.authjs.dev#autherror" — Auth.js session refresh attempts; site renders fine without authenticated session.
+- "Failed to add embedded wallet connector: Wallet proxy not initialized" — third-party wallet provider noise; chat surface unaffected.
+- React hydration-mismatch warning on root layout (HTTPAccessFallbackBoundary) — pre-existing baseline; chart container still renders.
+
+No chart-render or canvas/draw exceptions observed. Approximate "method":"error" count in this captured stream: 88 (dominated by repeated CSS-preload + auth fetch entries).

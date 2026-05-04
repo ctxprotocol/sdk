@@ -1,0 +1,76 @@
+{
+  "reviewedAt": "2026-04-30T05:46:30.000Z",
+  "perQueryEvaluations": [
+    {
+      "promptId": "velo-03",
+      "query": "For deribit options BTC, what are the latest Velo options values for index_price, iv_1w, iv_1m, skew_1w, skew_1m, and dollar_volume?",
+      "quotedExcerpts": [
+        "As of April 30, 2026, the latest Velo options values for BTC on Deribit are as follows:",
+        "| **index_price** | 75682.12 |",
+        "| **iv_1w** | 0.35968386232639205 |\n| **iv_1m** | 0.38185014647197413 |\n| **skew_1w** | 0.13001395245878114 |\n| **skew_1m** | 0.1416986491482828 |\n| **dollar_volume** | 14342169.631000001 |"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 4,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "The response gives the exact requested option metrics, making it directly usable for a volatility-surface lookup, though it does not add derived interpretation such as IV term spread or skew change.",
+        "dataFreshness": "The response says the data is latest and dated April 30, 2026, while the trace shows fetchedAt values at 2026-04-30T05:44:43.202Z and 2026-04-30T05:44:47.228Z; it loses one point because the buyer-facing answer omits the precise retrieval time.",
+        "specificity": "It names Deribit BTC options and reports all requested fields with exact numeric values, including index_price 75682.12, iv_1w 0.35968386232639205, and dollar_volume 14342169.631000001.",
+        "uniqueness": "The answer is grounded in Velo market rows rather than generic crypto commentary, but it is a single-market lookup rather than a broader cross-venue or threshold screen.",
+        "completeness": "It answers every requested field: index_price, iv_1w, iv_1m, skew_1w, skew_1m, and dollar_volume.",
+        "dataAccuracy": "The returned values match the latest row in toolCallHistory.result, the two hourly rows vary plausibly, and there are no suspicious uniform-value or magnitude red flags."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 0,
+        "fragilityRisk": "low",
+        "selectionIssue": null,
+        "planningIssue": null,
+        "executionIssue": null,
+        "completenessIssue": null,
+        "codeIssueDetail": null,
+        "dataAccuracyRedFlags": null,
+        "rootCauseCategory": null,
+        "rootCauseEvidence": null,
+        "responseQualityNote": "The response gives a clean exact lookup with fresh Velo-derived values and all requested fields; its main buyer-facing weakness is omitting the precise row timestamp or fetchedAt time.",
+        "improvementLever": "Include the exact latest row timestamp and fetchedAt time in the final answer so freshness is auditable from the response text.",
+        "diagnosticBrief": {
+          "toolUsed": "list_options_products, get_market_rows",
+          "toolShouldHaveUsed": null,
+          "argsUsed": "{\"list_options_products\":{\"limit\":20,\"search\":\"BTC\"},\"get_market_rows\":{\"type\":\"options\",\"coins\":[\"BTC\"],\"products\":[\"BTC\"],\"exchanges\":[\"deribit\"],\"columns\":[\"index_price\",\"iv_1w\",\"iv_1m\",\"skew_1w\",\"skew_1m\",\"dollar_volume\"],\"resolution\":\"1h\",\"lookbackHours\":1,\"limit\":10}}",
+          "argsShouldHaveUsed": null,
+          "codeSnippet": "executionTrace step 1: velo_market_data__list_options_products success\nexecutionTrace step 2: velo_market_data__get_market_rows success\ntoolCallHistory.get_market_rows.result.rowCount: 2\nlatest row time: 1777525200000",
+          "toolResultSample": "{\"params\":{\"type\":\"options\",\"columns\":[\"index_price\",\"iv_1w\",\"iv_1m\",\"skew_1w\",\"skew_1m\",\"dollar_volume\"],\"exchanges\":[\"deribit\"],\"products\":[],\"coins\":[\"BTC\"],\"begin\":1777524287038,\"end\":1777527887038,\"resolution\":\"1h\"},\"rowCount\":2,\"rows\":[{\"exchange\":\"deribit\",\"coin\":\"BTC\",\"product\":\"BTC\",\"time\":1777521600000,\"index_price\":75452.13,\"iv_1w\":0.36181410762152666,\"iv_1m\":0.3887049740141375,\"skew_1w\":0.1315337564050437,\"skew_1m\":0.13796872968672966",
+          "completenessVerdict": "diagnostics.verification.evaluations was empty, repairEvents was empty, triggerNeedsDifferentTools was false, and the successful result covered all requested fields.",
+          "stageTimingBottleneck": "execution=13664ms"
+        }
+      },
+      "overallVerdict": "Yes, I would pay again for this exact lookup, with the caveat that the answer should expose the precise row timestamp."
+    }
+  ],
+  "aggregate": {
+    "satisfactionMean": 4.5,
+    "satisfactionMin": 4.5,
+    "queryCount": 1,
+    "queriesAbove4": 1,
+    "queriesBelow3": 0,
+    "fragilityReport": {
+      "highCount": 0,
+      "mediumCount": 0,
+      "lowCount": 1,
+      "highFragilityRate": 0,
+      "highFragilityQueryIds": []
+    },
+    "topImprovementLevers": [
+      "Include the exact row timestamp and fetchedAt time in buyer-facing answers."
+    ]
+  }
+}

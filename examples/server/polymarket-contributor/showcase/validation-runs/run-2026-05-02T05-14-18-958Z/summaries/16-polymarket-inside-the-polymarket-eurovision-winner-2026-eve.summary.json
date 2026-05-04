@@ -1,0 +1,157 @@
+{
+  "id": "16-polymarket-inside-the-polymarket-eurovision-winner-2026-eve",
+  "index": 15,
+  "provider": "polymarket",
+  "prompt": "Inside the Polymarket 'Eurovision Winner 2026' event (50 countries), take the top 10 countries by current implied probability and chart total whale-position value against implied probability per country — does whale conviction match the headline odds heading into the May 16 final?",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-05-02T05:39:17.692Z",
+  "finishedAt": "2026-05-02T05:41:21.281Z",
+  "durationMs": 123589,
+  "outcomeType": "answer",
+  "responseChars": 1538,
+  "responsePreview": "Whale conviction matches the headline odds with near-perfect alignment heading into the May 16 final. As of May 2, 2026, the correlation between implied probability and total whale-position value for the top 10 countries is **0.999**, indicating that large-scale bettors are positioned in strict lockstep with market prices.\n\n### Eurovision Winner 2026: Top 10 Countries by Implied Probability\n\n| Country | Implied Probability | Total Whale-Position Value | Whale Count | Conviction Level |\n| :--- | :--- | :--- | :--- | :--- |\n| Finland | 34.6% | $413,933.57 | 23 | Extreme |\n| Greece | 17.8% | $204,946.86 | 19 | Extreme |\n| Denmark | 12.8% | $139,484.55 | 17 | Extreme |\n| Australia | 7.6% | $81,998.32 | 16 | Extreme |\n| France | 6.8% | $73,615.52 | 12 | Extreme |\n| Israel | 4.0% | $45,120.74 | 7 | High |\n| Italy | 2.8% | $29,612.43 | 5 | High |\n| Sweden | 2.6% | $28,281.53 | 4 | High |\n| Romania | 2.6% | $27,307.78 | 5 | High |\n| Ukraine | 1.4% | $15,472.10 | 2 | High |\n\nThe scatter chart shows a linear relationship where whale interest intensifies significantly as winning odds increase. **Finland** is the dominant \"smart money\" favorite, commanding over $413,000 in whale positions—more...",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 2,
+  "metricTableCount": 0,
+  "chartSummaries": [
+    {
+      "title": "Eurovision Winner 2026: whale-position value vs implied probability (top 10 countries)",
+      "type": "scatter",
+      "rowCount": 10,
+      "distinctXCount": 10,
+      "numericSeriesCount": 1,
+      "numericSeriesWithVariation": 1,
+      "xKey": "country",
+      "seriesKeys": [
+        "totalWhaleValue"
+      ],
+      "sampleRows": [
+        {
+          "country": "Finland",
+          "rank": 1,
+          "impliedProbability": 0.3465,
+          "totalWhaleValue": 413933.57,
+          "whaleCount": 23
+        },
+        {
+          "country": "Greece",
+          "rank": 2,
+          "impliedProbability": 0.1785,
+          "totalWhaleValue": 204946.86,
+          "whaleCount": 19
+        },
+        {
+          "country": "Denmark",
+          "rank": 3,
+          "impliedProbability": 0.1285,
+          "totalWhaleValue": 139484.55,
+          "whaleCount": 17
+        }
+      ],
+      "needsDualAxis": false,
+      "willRenderDualAxis": false,
+      "hasNumericSeriesValues": true
+    },
+    {
+      "title": "Eurovision Winner 2026: whale-position value vs implied probability (top 10 countries)",
+      "type": "scatter",
+      "rowCount": 10,
+      "distinctXCount": 10,
+      "numericSeriesCount": 1,
+      "numericSeriesWithVariation": 1,
+      "xKey": "country",
+      "seriesKeys": [
+        "totalWhaleValue"
+      ],
+      "sampleRows": [
+        {
+          "country": "Finland",
+          "rank": 1,
+          "impliedProbability": 0.3465,
+          "totalWhaleValue": 413933.57,
+          "whaleCount": 23
+        },
+        {
+          "country": "Greece",
+          "rank": 2,
+          "impliedProbability": 0.1785,
+          "totalWhaleValue": 204946.86,
+          "whaleCount": 19
+        },
+        {
+          "country": "Denmark",
+          "rank": 3,
+          "impliedProbability": 0.1285,
+          "totalWhaleValue": 139484.55,
+          "whaleCount": 17
+        }
+      ],
+      "needsDualAxis": false,
+      "willRenderDualAxis": false,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": true,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": true,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [
+      "no chart matched the prompt's requested axis, chart type, and metrics",
+      "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series",
+      "chart 1: probability prompt did not chart a probability, odds, yes-price, or price series"
+    ],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "Eurovision Winner 2026: whale-position value vs implied probability (top 10 countries)",
+        "type": "scatter",
+        "xKey": "country",
+        "seriesKeys": [
+          "totalWhaleValue"
+        ],
+        "passes": false,
+        "failures": [
+          "probability prompt did not chart a probability, odds, yes-price, or price series"
+        ]
+      },
+      {
+        "index": 1,
+        "title": "Eurovision Winner 2026: whale-position value vs implied probability (top 10 countries)",
+        "type": "scatter",
+        "xKey": "country",
+        "seriesKeys": [
+          "totalWhaleValue"
+        ],
+        "passes": false,
+        "failures": [
+          "probability prompt did not chart a probability, odds, yes-price, or price series"
+        ]
+      }
+    ],
+    "pass": false
+  },
+  "semanticFailures": [
+    "no chart matched the prompt's requested axis, chart type, and metrics",
+    "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series",
+    "chart 1: probability prompt did not chart a probability, odds, yes-price, or price series"
+  ],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+    "semantic chart audit failed: chart 0: probability prompt did not chart a probability, odds, yes-price, or price series",
+    "semantic chart audit failed: chart 1: probability prompt did not chart a probability, odds, yes-price, or price series"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T05-14-18-958Z/raw/16-polymarket-inside-the-polymarket-eurovision-winner-2026-eve.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T05-14-18-958Z/summaries/16-polymarket-inside-the-polymarket-eurovision-winner-2026-eve.summary.json"
+}

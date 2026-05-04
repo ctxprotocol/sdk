@@ -1,0 +1,99 @@
+{
+  "id": "10-polymarket-for-us-x-iran-permanent-peace-deal-by-may-31-202",
+  "index": 9,
+  "provider": "polymarket",
+  "prompt": "For 'US x Iran permanent peace deal by May 31, 2026?', chart price history, vig-adjusted true probability, bid-ask spread, 24h volume, and recent trade flow to evaluate whether the market is efficiently priced.",
+  "expectedMinimumRows": 20,
+  "expectedReason": "time-series chart needs enough history to show shape",
+  "startedAt": "2026-05-02T14:53:03.106Z",
+  "finishedAt": "2026-05-02T14:54:20.902Z",
+  "durationMs": 77796,
+  "outcomeType": "answer",
+  "responseChars": 2094,
+  "responsePreview": "The market for a **US x Iran permanent peace deal by May 31, 2026** is currently **efficiently priced**. With a 0% vig and a tight bid-ask spread, the market prices reflect a high degree of liquidity and competition. As of May 2, 2026, the data shows that any perceived edge would likely need to come from superior outside information rather than market friction.\n\n### Market Metrics Summary\n| Metric | Value |\n| :--- | :--- |\n| **YES Price** | 0.225 |\n| **NO Price** | 0.775 |\n| **Vig-Adjusted True Probability (YES)** | 22.5% |\n| **Bid-Ask Spread** | $0.01 (4.44%) |\n| **24h Volume** | $555,349.32 |\n| **Open Interest** | $1,973,787.06 |\n| **Efficiency Status** | Excellent (0 Bps Vig) |\n\n### Price History and Trade Flow\nThe price for a \"YES\" outcome has experienced a significant decline over the past week. From a high of **0.345** on April 25, the price has dropped **34.78%** to its current level of **0.225**. \n*   **Volatility:** The market hit a low of 0.175 on April 30 before recovering slightly to the current level.\n*   **Recent Tape:** The last 50 trades show a total volume of $4,574.31 with a **mild sell pressure**. Sell volume ($2,502.80) has slightly outpaced buy volume ($2,071.5...",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 0,
+  "chartSummaries": [
+    {
+      "title": "US x Iran permanent peace deal by May 31, 2026? — price history and true probability",
+      "type": "line",
+      "rowCount": 168,
+      "distinctXCount": 168,
+      "numericSeriesCount": 2,
+      "numericSeriesWithVariation": 1,
+      "xKey": "timestamp",
+      "seriesKeys": [
+        "price",
+        "vigAdjustedTrueProb"
+      ],
+      "sampleRows": [
+        {
+          "timestamp": "2026-04-25T15:00:04.000Z",
+          "price": 0.345,
+          "vigAdjustedTrueProb": 0.225
+        },
+        {
+          "timestamp": "2026-04-25T16:00:05.000Z",
+          "price": 0.315,
+          "vigAdjustedTrueProb": 0.225
+        },
+        {
+          "timestamp": "2026-04-25T17:00:17.000Z",
+          "price": 0.295,
+          "vigAdjustedTrueProb": 0.225
+        }
+      ],
+      "needsDualAxis": false,
+      "willRenderDualAxis": false,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": true,
+      "expectsProbabilityMetric": true,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [
+      "no chart matched the prompt's requested axis, chart type, and metrics",
+      "chart 0: time-series prompt did not use date/time-like x-axis labels"
+    ],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "US x Iran permanent peace deal by May 31, 2026? — price history and true probability",
+        "type": "line",
+        "xKey": "timestamp",
+        "seriesKeys": [
+          "price",
+          "vigAdjustedTrueProb"
+        ],
+        "passes": false,
+        "failures": [
+          "time-series prompt did not use date/time-like x-axis labels"
+        ]
+      }
+    ],
+    "pass": false
+  },
+  "semanticFailures": [
+    "no chart matched the prompt's requested axis, chart type, and metrics",
+    "chart 0: time-series prompt did not use date/time-like x-axis labels"
+  ],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+    "semantic chart audit failed: chart 0: time-series prompt did not use date/time-like x-axis labels"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/raw/10-polymarket-for-us-x-iran-permanent-peace-deal-by-may-31-202.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-02T14-39-21-238Z/summaries/10-polymarket-for-us-x-iran-permanent-peace-deal-by-may-31-202.summary.json"
+}

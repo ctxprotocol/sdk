@@ -1,0 +1,160 @@
+{
+  "schemaVersion": "2026-04-30",
+  "contributor": "polymarket-contributor",
+  "generatedAt": "2026-05-04T02:14:10.934Z",
+  "missingArtifacts": [],
+  "attribution": {
+    "totalFailingPrompts": 15,
+    "promptsWithRuntimeAttribution": 11,
+    "runtimeAttributionRate": 0.7333333333333333,
+    "classes": [
+      {
+        "failureClass": "chart_time_series_no_date_axis",
+        "count": 6,
+        "fixTargets": [
+          "context/lib/ai/skills/chart.ts",
+          "context/lib/ai/synthesis-safety.ts"
+        ],
+        "hypothesis": "Synthesis / code interpreter does not recognize time-series intent (history, over time, recent trend, deadline curve) and falls back to a categorical xKey.",
+        "occurrences": [
+          {
+            "promptId": "06-coinglass-for-will-the-u-s-invade-iran-before-2027-chart-t",
+            "prompt": "For 'Will the U.S. invade Iran before 2027?', chart the recent price history alongside recent whale-vs-retail flow and current open interest, then summarize whether the move is liquid enough to trade.",
+            "evidence": "chart 0: time-series prompt did not use date/time-like x-axis labels"
+          },
+          {
+            "promptId": "08-coinglass-for-strait-of-hormuz-traffic-returns-to-normal-b",
+            "prompt": "For 'Strait of Hormuz traffic returns to normal by May 15?', chart price history, current implied probability, 24h volume, open interest, and recent trade-size buckets to show whether traders are leaning YES or NO.",
+            "evidence": "chart 0: time-series prompt did not use date/time-like x-axis labels | probability intent prompt"
+          },
+          {
+            "promptId": "09-polymarket-for-us-obtains-iranian-enriched-uranium-by-may-3",
+            "prompt": "For 'US obtains Iranian enriched uranium by May 31?', chart current probability, price history, top-holder concentration, and recent whale flow, then annotate the resolution-rule risks that could affect trade sizing.",
+            "evidence": "chart 0: time-series prompt did not use date/time-like x-axis labels | probability intent prompt"
+          },
+          {
+            "promptId": "10-polymarket-for-us-x-iran-permanent-peace-deal-by-may-31-202",
+            "prompt": "For 'US x Iran permanent peace deal by May 31, 2026?', chart price history, vig-adjusted true probability, bid-ask spread, 24h volume, and recent trade flow to evaluate whether the market is efficiently priced.",
+            "evidence": "chart 0: time-series prompt did not use date/time-like x-axis labels | probability intent prompt"
+          },
+          {
+            "promptId": "14-polymarket-for-will-the-iranian-regime-fall-by-may-31-chart",
+            "prompt": "For 'Will the Iranian regime fall by May 31?', chart top-holder concentration, YES versus NO whale exposure, recent trade-size buckets, and price history to show whether the 2-3% probability is smart-money supported.",
+            "evidence": "chart 0: time-series prompt did not use date/time-like x-axis labels | probability intent prompt"
+          },
+          {
+            "promptId": "16-polymarket-compare-will-bitcoin-hit-150k-by-june-30-2026-an",
+            "prompt": "Compare 'Will Bitcoin hit $150k by June 30, 2026?' and 'Will Bitcoin hit $150k by December 31, 2026?' with a two-line price-history chart plus current volume, spread, and orderbook-depth table.",
+            "evidence": "chart 0: time-series prompt did not use date/time-like x-axis labels"
+          }
+        ]
+      },
+      {
+        "failureClass": "chart_row_count_truncation",
+        "count": 5,
+        "fixTargets": [
+          "context/lib/ai/iterative-execution.ts",
+          "context/lib/ai/code-executor.ts"
+        ],
+        "hypothesis": "Iterative execution stops after the first contributor call instead of looping over the listed sibling entities, so charts emit 1-3 rows when the prompt explicitly named 5+ entities.",
+        "occurrences": [
+          {
+            "promptId": "01-coinglass-chart-the-implied-probability-curve-across-the-w",
+            "prompt": "Chart the implied probability curve across the 'When will Bitcoin hit $150k?' event, comparing 'Will Bitcoin hit $150k by June 30, 2026?' and 'Will Bitcoin hit $150k by December 31, 2026?' by price, 24h volume, and bid-ask spread.",
+            "evidence": "chart \"When will Bitcoin hit $150k? — implied probability, 24h volume, and bid-ask spread\" had 2 row(s), expected at least 5 | probability intent prompt"
+          },
+          {
+            "promptId": "05-coinglass-build-a-chart-comparing-will-the-iranian-regime-",
+            "prompt": "Build a chart comparing 'Will the Iranian regime fall by May 31?', 'US x Iran permanent peace deal by May 31, 2026?', 'Will the U.S. invade Iran before 2027?', and 'US obtains Iranian enriched uranium by May 31?' by implied probability, 24h volume, open interest, and recent whale flow.",
+            "evidence": "chart \"Iran-related Polymarket markets: implied probability, 24h volume, and whale flow\" had 4 row(s), expected at least 5 | probability intent prompt"
+          },
+          {
+            "promptId": "08-coinglass-for-strait-of-hormuz-traffic-returns-to-normal-b",
+            "prompt": "For 'Strait of Hormuz traffic returns to normal by May 15?', chart price history, current implied probability, 24h volume, open interest, and recent trade-size buckets to show whether traders are leaning YES or NO.",
+            "evidence": "chart \"Strait of Hormuz traffic returns to normal by May 15? — price history and key market stats\" had 3 row(s), expected at least 20 | probability intent prompt"
+          },
+          {
+            "promptId": "09-polymarket-for-us-obtains-iranian-enriched-uranium-by-may-3",
+            "prompt": "For 'US obtains Iranian enriched uranium by May 31?', chart current probability, price history, top-holder concentration, and recent whale flow, then annotate the resolution-rule risks that could affect trade sizing.",
+            "evidence": "chart \"US obtains Iranian enriched uranium by May 31? — current probability\" had 1 row(s), expected at least 20 | probability intent prompt"
+          },
+          {
+            "promptId": "14-polymarket-for-will-the-iranian-regime-fall-by-may-31-chart",
+            "prompt": "For 'Will the Iranian regime fall by May 31?', chart top-holder concentration, YES versus NO whale exposure, recent trade-size buckets, and price history to show whether the 2-3% probability is smart-money supported.",
+            "evidence": "chart \"'Will the Iranian regime fall by May 31?' — smart-money support snapshot\" had 1 row(s), expected at least 20 | probability intent prompt"
+          }
+        ]
+      },
+      {
+        "failureClass": "chart_series_metric_mismatch",
+        "count": 4,
+        "fixTargets": [
+          "context/lib/ai/skills/chart.ts",
+          "context/lib/ai/synthesis-safety.ts",
+          "context/lib/ai/code-executor.ts"
+        ],
+        "hypothesis": "Synthesis or code interpreter does not pin the requested metric verbs (probability, volume, liquidity, spread) into series keys, so the chart plots a different metric than the prompt asked for.",
+        "occurrences": [
+          {
+            "promptId": "01-coinglass-chart-the-implied-probability-curve-across-the-w",
+            "prompt": "Chart the implied probability curve across the 'When will Bitcoin hit $150k?' event, comparing 'Will Bitcoin hit $150k by June 30, 2026?' and 'Will Bitcoin hit $150k by December 31, 2026?' by price, 24h volume, and bid-ask spread.",
+            "evidence": "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series | probability intent prompt"
+          },
+          {
+            "promptId": "04-coinglass-chart-the-eurovision-winner-2026-market-across-a",
+            "prompt": "Chart the 'Eurovision Winner 2026' market across Albania, Austria, Belgium, Croatia, Czechia, Estonia, France, and Germany by implied probability and 24h volume, and flag which outcomes look tradable versus too thin.",
+            "evidence": "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series | probability intent prompt"
+          },
+          {
+            "promptId": "08-coinglass-for-strait-of-hormuz-traffic-returns-to-normal-b",
+            "prompt": "For 'Strait of Hormuz traffic returns to normal by May 15?', chart price history, current implied probability, 24h volume, open interest, and recent trade-size buckets to show whether traders are leaning YES or NO.",
+            "evidence": "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series | probability intent prompt"
+          },
+          {
+            "promptId": "14-polymarket-for-will-the-iranian-regime-fall-by-may-31-chart",
+            "prompt": "For 'Will the Iranian regime fall by May 31?', chart top-holder concentration, YES versus NO whale exposure, recent trade-size buckets, and price history to show whether the 2-3% probability is smart-money supported.",
+            "evidence": "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series | probability intent prompt"
+          }
+        ]
+      },
+      {
+        "failureClass": "chart_artifact_missing_in_viewport",
+        "count": 2,
+        "fixTargets": [
+          ".cursor/skills/showcase-generation-pipeline/SKILL.md",
+          ".cursor/agents/pipeline-orchestrator.md",
+          "context/app/(chat)/api/chat/route.ts",
+          "context/lib/chat/computed-artifact-replay.ts",
+          "context/components/message.tsx",
+          "context/components/artifacts/chart-artifact.tsx",
+          "context/lib/ai/code-executor.ts",
+          "context/lib/ai/iterative-execution.ts",
+          "context/lib/ai/chart-artifact-guard.ts"
+        ],
+        "hypothesis": "Two distinct failure modes share this signature; rule out the first before treating the second as a runtime defect. (a) Capture-pipeline regression: the visual capture took a viewport-only screenshot (`browser_take_screenshot` without `fullPage: true`), so the chart card rendered into the DOM but was clipped below the heading + table + bullets above it; the visual reviewer correctly reports `chart_card_missing` because the image is one viewport tall. Confirmed on polymarket-contributor 2026-04-30 run-2026-04-30T10-56-31-996Z: 5 of 7 prompts had screenshots exactly 3385x2097 px (= 2x retina viewport) and the failing prompts had long buyer narratives that placed the chart below the visible area; the 2 prompts with short narratives passed because the chart fit in the viewport. Fix is in the capture procedure / orchestrator agent / SKILL Phase 3b, not the chart runtime. (b) Real render bug: even with a full-page screenshot the chart card title is absent; this can happen when two chart artifacts with the same title are persisted in `Message_v2.parts.data-computedArtifacts.data` (a half-baked provisional chart plus the final chart), and the chat surface's dedupe / normalize / replay path filters out one or both. Direct DB inspection shows multi-artifact persistence does occur (e.g. line@1-row[xKey=rank] + bar@20-rows[xKey=title], same title), so the second-bucket fix likely spans preventing duplicate artifact emission in code-executor / iterative-execution, replacing-not-appending in computed-artifact-replay so later artifacts supersede earlier same-title ones, and tightening dedupeArtifacts to prefer the most-complete shape on collision.",
+        "occurrences": [
+          {
+            "promptId": "03-coinglass-compare-the-2026-nba-champion-event-outcomes-for",
+            "prompt": "Compare the '2026 NBA Champion' event outcomes for Oklahoma City Thunder, Houston Rockets, Toronto Raptors, Cleveland Cavaliers, New York Knicks, and Minnesota Timberwolves by implied probability, 24h volume, whale positioning, and tradability.",
+            "evidence": "captureStatus=missing_chart | probability intent prompt"
+          },
+          {
+            "promptId": "12-polymarket-for-the-2026-fifa-world-cup-winner-event-compare",
+            "prompt": "For the '2026 FIFA World Cup Winner' event, compare Spain, France, England, South Korea, Haiti, and New Zealand by negative-risk setting, fee rate, minimum order size, tick size, current probability, and 24h volume.",
+            "evidence": "captureStatus=missing_chart | probability intent prompt"
+          }
+        ]
+      }
+    ],
+    "dominantClass": "chart_time_series_no_date_axis",
+    "routing": "runtime_research_handoff",
+    "recommendation": "11/15 failing prompts attribute to shared chart runtime classes. Hand off to /query-runtime-research-loop with the listed fix targets before swapping more prompts.",
+    "capturePipelineRegressions": []
+  },
+  "sourcePaths": {
+    "validation": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/showcase-validation.latest.json",
+    "reviewer": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/showcase-reviewer.latest.json",
+    "visualCapture": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/showcase-visual-capture.latest.json",
+    "visualReview": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/showcase-visual-review.latest.json"
+  }
+}
