@@ -1,0 +1,98 @@
+{
+  "id": "13-polymarket-pull-the-maximum-history-price-chart-at-daily-fi",
+  "index": 12,
+  "provider": "polymarket",
+  "prompt": "Pull the maximum-history price chart at daily fidelity for the YES token on 'Will Eric Trump win the 2028 US Presidential Election?' so I can see how the implied probability has tracked through the life of this contract and where the speculative spikes happened.",
+  "expectedMinimumRows": 20,
+  "expectedReason": "time-series chart needs enough history to show shape",
+  "startedAt": "2026-05-05T08:28:05.793Z",
+  "finishedAt": "2026-05-05T08:28:37.722Z",
+  "durationMs": 31929,
+  "outcomeType": "answer",
+  "responseChars": 1562,
+  "responsePreview": "The price history for the **YES** token on Eric Trump winning the 2028 Presidential Election shows a market that has remained largely speculative, with implied probability fluctuating in a narrow band between **0.45% and 0.90%**.\n\nAs shown in the chart, the market experienced its most significant activity shortly after launch in late February 2026, followed by a gradual stabilization.\n\n### Notable Price Moves & Speculative Spikes\n\n| Date | Price (USD) | Implied Probability | Context / Move |\n| :--- | :--- | :--- | :--- |\n| 2026-02-20 | $0.0045 | 0.45% | Contract launch price |\n| 2026-02-21 | $0.0075 | 0.75% | First major speculative spike |\n| 2026-03-04 | $0.0090 | 0.90% | **All-time high** |\n| 2026-03-20 | $0.0065 | 0.65% | Breakdown from the peak regime |\n| 2026-03-22 | $0.0055 | 0.55% | Drop to a lower support level |\n| 2026-04-09 | $0.0065 | 0.65% | Brief recovery and plateau |\n| 2026-05-05 | $0.0055 | 0.55% | Current price (as of 08:28 UTC) |\n\n### Market Summary\nAs of May 5, 2026, Eric Trump’s implied probability of winning the 2028 election sits at **0.55%**. In the broader context of the \"Presidential Election Winner 2028\" market, he is currently ranked 36th among potential ...",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 0,
+  "agentDeclaredArtifacts": {
+    "chart": 1,
+    "metricTable": 0
+  },
+  "chartSummaries": [
+    {
+      "title": "Eric Trump 2028 Presidential Win — max-history daily implied probability",
+      "type": "line",
+      "rowCount": 49,
+      "distinctXCount": 49,
+      "numericSeriesCount": 1,
+      "numericSeriesWithVariation": 1,
+      "xKey": "timestamp",
+      "seriesKeys": [
+        "price"
+      ],
+      "sampleRows": [
+        {
+          "timestamp": "2026-02-20T00:00:54.000Z",
+          "price": 0.0045
+        },
+        {
+          "timestamp": "2026-02-21T00:00:36.000Z",
+          "price": 0.0075
+        },
+        {
+          "timestamp": "2026-02-22T00:00:37.000Z",
+          "price": 0.0085
+        }
+      ],
+      "needsDualAxis": false,
+      "willRenderDualAxis": false,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": true,
+      "expectsProbabilityMetric": true,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [
+      "no chart matched the prompt's requested axis, chart type, and metrics",
+      "chart 0: time-series prompt did not use date/time-like x-axis labels"
+    ],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "Eric Trump 2028 Presidential Win — max-history daily implied probability",
+        "type": "line",
+        "xKey": "timestamp",
+        "seriesKeys": [
+          "price"
+        ],
+        "passes": false,
+        "failures": [
+          "time-series prompt did not use date/time-like x-axis labels"
+        ]
+      }
+    ],
+    "pass": false
+  },
+  "semanticFailures": [
+    "no chart matched the prompt's requested axis, chart type, and metrics",
+    "chart 0: time-series prompt did not use date/time-like x-axis labels"
+  ],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+    "semantic chart audit failed: chart 0: time-series prompt did not use date/time-like x-axis labels"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-05T08-13-46-477Z/raw/13-polymarket-pull-the-maximum-history-price-chart-at-daily-fi.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-05T08-13-46-477Z/summaries/13-polymarket-pull-the-maximum-history-price-chart-at-daily-fi.summary.json"
+}

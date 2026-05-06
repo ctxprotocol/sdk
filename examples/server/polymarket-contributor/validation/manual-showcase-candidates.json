@@ -1,0 +1,226 @@
+{
+  "schemaVersion": "2026-05-05.2",
+  "contributor": "polymarket-contributor",
+  "generatedAt": "2026-05-05T15:40:12.098Z",
+  "filters": {
+    "minDaysToEnd": 30,
+    "freshnessCutoff": "2026-06-04T15:40:12.098Z",
+    "rule": "Exclude prompts whose explicit market/event date or metadata endDate is expired or within the freshness horizon."
+  },
+  "promptMix": {
+    "policy": "80_percent_natural_primary_20_percent_explicit_chart_primary",
+    "explicitPrimaryRatio": 0.2,
+    "explicitPrimaryCount": 1,
+    "naturalPrimaryCount": 5,
+    "rationale": "Natural buyer prompts exercise implicit chart-worthy runtime behavior; explicit chart prompts teach first-time users that direct chart requests are supported."
+  },
+  "source": {
+    "reviewerEvaluationPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/reviewer-evaluation.json",
+    "releaseDecisionPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/release-decision.json",
+    "liveMarketSnapshotPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/live-market-snapshot.json",
+    "promptPoolPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/prompt-pool.json",
+    "queryResultsPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/pipeline-query-results.json",
+    "verticalAlphaPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/validation/vertical-alpha-research.json"
+  },
+  "status": "manual_qa_pending",
+  "releaseStatus": "ready",
+  "candidates": [
+    {
+      "id": "p6",
+      "rank": 1,
+      "prompt": "Who are the top 10 holders of Yes on the 'Will Jon Stewart win the 2028 Democratic presidential nomination?' market, what is their combined share, and is concentration bullish or bearish? Create a bar chart ranking the relevant outcomes/entities for Will Jon Stewart win the 2028 Democratic presidential nomination? (market: will-jon-stewart-win-the-2028-democratic-presidential-nomination-518). Plot the primary buyer-relevant metric on the y-axis, use human-readable labels on the x-axis, and include a short buyer takeaway.",
+      "primaryPromptStyle": "explicit_chart",
+      "naturalPrompt": "Who are the top 10 holders of Yes on the 'Will Jon Stewart win the 2028 Democratic presidential nomination?' market, what is their combined share, and is concentration bullish or bearish?",
+      "explicitChartPrompt": "Who are the top 10 holders of Yes on the 'Will Jon Stewart win the 2028 Democratic presidential nomination?' market, what is their combined share, and is concentration bullish or bearish? Create a bar chart ranking the relevant outcomes/entities for Will Jon Stewart win the 2028 Democratic presidential nomination? (market: will-jon-stewart-win-the-2028-democratic-presidential-nomination-518). Plot the primary buyer-relevant metric on the y-axis, use human-readable labels on the x-axis, and include a short buyer takeaway.",
+      "originalPrompt": "Who are the top 10 holders of Yes on the 'Will Jon Stewart win the 2028 Democratic presidential nomination?' market, what is their combined share, and is concentration bullish or bearish?",
+      "alphaCategory": "whale-flow",
+      "groundedEntity": "Will Jon Stewart win the 2028 Democratic presidential nomination? (market: will-jon-stewart-win-the-2028-democratic-presidential-nomination-518)",
+      "expectedChartShape": "categorical_comparison",
+      "whyThisShouldChart": [
+        "High differentiation vs free baseline.",
+        "Reviewer mean score 4.67.",
+        "Prompt asks for a chart-like comparison, trend, distribution, or curve.",
+        "Expected chart shape: categorical_comparison."
+      ],
+      "chartLikelihoodStatus": "likely",
+      "freshnessStatus": "fresh",
+      "freshnessReason": "No explicit expiry date detected.",
+      "earliestRelevantEndDate": "",
+      "reviewerMeanScore": 4.67,
+      "differentiation": "high_differentiation",
+      "toolsUsed": [
+        "analyze_top_holders (x2)",
+        "search_markets",
+        "get_event_by_slug",
+        "get_top_holders"
+      ],
+      "rawResultPath": "",
+      "summaryPath": "",
+      "manualQaStatus": "untested",
+      "manualQaNotes": ""
+    },
+    {
+      "id": "p7",
+      "rank": 2,
+      "prompt": "Break down whale flow across every sub-market of the 'Democratic Presidential Nominee 2028' event — which candidate markets have the largest single-wallet positions?",
+      "primaryPromptStyle": "natural",
+      "naturalPrompt": "Break down whale flow across every sub-market of the 'Democratic Presidential Nominee 2028' event — which candidate markets have the largest single-wallet positions?",
+      "explicitChartPrompt": "Break down whale flow across every sub-market of the 'Democratic Presidential Nominee 2028' event — which candidate markets have the largest single-wallet positions? Create a bar chart ranking the relevant outcomes/entities for Democratic Presidential Nominee 2028 (event: democratic-presidential-nominee-2028). Plot the primary buyer-relevant metric on the y-axis, use human-readable labels on the x-axis, and include a short buyer takeaway.",
+      "originalPrompt": "Break down whale flow across every sub-market of the 'Democratic Presidential Nominee 2028' event — which candidate markets have the largest single-wallet positions?",
+      "alphaCategory": "whale-flow",
+      "groundedEntity": "Democratic Presidential Nominee 2028 (event: democratic-presidential-nominee-2028)",
+      "expectedChartShape": "categorical_comparison",
+      "whyThisShouldChart": [
+        "High differentiation vs free baseline.",
+        "Reviewer mean score 4.17.",
+        "Prompt asks for a chart-like comparison, trend, distribution, or curve.",
+        "Expected chart shape: categorical_comparison."
+      ],
+      "chartLikelihoodStatus": "likely",
+      "freshnessStatus": "fresh",
+      "freshnessReason": "No explicit expiry date detected.",
+      "earliestRelevantEndDate": "",
+      "reviewerMeanScore": 4.17,
+      "differentiation": "high_differentiation",
+      "toolsUsed": [
+        "analyze_event_whale_breakdown"
+      ],
+      "rawResultPath": "",
+      "summaryPath": "",
+      "manualQaStatus": "untested",
+      "manualQaNotes": ""
+    },
+    {
+      "id": "p12",
+      "rank": 3,
+      "prompt": "Compare outcome probabilities, 24h volume, and orderbook depth for the top 8 teams in the '2026 FIFA World Cup Winner' event on Polymarket.",
+      "primaryPromptStyle": "natural",
+      "naturalPrompt": "Compare outcome probabilities, 24h volume, and orderbook depth for the top 8 teams in the '2026 FIFA World Cup Winner' event on Polymarket.",
+      "explicitChartPrompt": "Compare outcome probabilities, 24h volume, and orderbook depth for the top 8 teams in the '2026 FIFA World Cup Winner' event on Polymarket. Create a bar chart ranking the relevant outcomes/entities for 2026 FIFA World Cup Winner (event: 2026-fifa-world-cup-winner-595). Plot the primary buyer-relevant metric on the y-axis, use human-readable labels on the x-axis, and include a short buyer takeaway.",
+      "originalPrompt": "Compare outcome probabilities, 24h volume, and orderbook depth for the top 8 teams in the '2026 FIFA World Cup Winner' event on Polymarket.",
+      "alphaCategory": "event-tradability",
+      "groundedEntity": "2026 FIFA World Cup Winner (event: 2026-fifa-world-cup-winner-595)",
+      "expectedChartShape": "categorical_comparison",
+      "whyThisShouldChart": [
+        "High differentiation vs free baseline.",
+        "Reviewer mean score 4.17.",
+        "Prompt asks for a chart-like comparison, trend, distribution, or curve.",
+        "Expected chart shape: categorical_comparison."
+      ],
+      "chartLikelihoodStatus": "likely",
+      "freshnessStatus": "fresh",
+      "freshnessReason": "No explicit expiry date detected.",
+      "earliestRelevantEndDate": "",
+      "reviewerMeanScore": 4.17,
+      "differentiation": "high_differentiation",
+      "toolsUsed": [
+        "search_and_get_outcomes + compare_event_outcome_quotes + get_batch_orderbooks"
+      ],
+      "rawResultPath": "",
+      "summaryPath": "",
+      "manualQaStatus": "untested",
+      "manualQaNotes": ""
+    },
+    {
+      "id": "p13",
+      "rank": 4,
+      "prompt": "Compare whale concentration and top-10-holder composition for 'Will the Oklahoma City Thunder win the 2026 NBA Finals?' vs 'Will the Cleveland Cavaliers win the 2026 NBA Finals?' vs 'Will the New York Knicks win the 2026 NBA Finals?' — where is smart money most concentrated?",
+      "primaryPromptStyle": "natural",
+      "naturalPrompt": "Compare whale concentration and top-10-holder composition for 'Will the Oklahoma City Thunder win the 2026 NBA Finals?' vs 'Will the Cleveland Cavaliers win the 2026 NBA Finals?' vs 'Will the New York Knicks win the 2026 NBA Finals?' — where is smart money most concentrated?",
+      "explicitChartPrompt": "Compare whale concentration and top-10-holder composition for 'Will the Oklahoma City Thunder win the 2026 NBA Finals?' vs 'Will the Cleveland Cavaliers win the 2026 NBA Finals?' vs 'Will the New York Knicks win the 2026 NBA Finals?' — where is smart money most concentrated? Create a bar chart ranking the relevant outcomes/entities for 2026 NBA Champion (event: 2026-nba-champion). Plot the primary buyer-relevant metric on the y-axis, use human-readable labels on the x-axis, and include a short buyer takeaway.",
+      "originalPrompt": "Compare whale concentration and top-10-holder composition for 'Will the Oklahoma City Thunder win the 2026 NBA Finals?' vs 'Will the Cleveland Cavaliers win the 2026 NBA Finals?' vs 'Will the New York Knicks win the 2026 NBA Finals?' — where is smart money most concentrated?",
+      "alphaCategory": "whale-flow",
+      "groundedEntity": "2026 NBA Champion (event: 2026-nba-champion)",
+      "expectedChartShape": "categorical_comparison",
+      "whyThisShouldChart": [
+        "High differentiation vs free baseline.",
+        "Reviewer mean score 4.17.",
+        "Prompt asks for a chart-like comparison, trend, distribution, or curve.",
+        "Expected chart shape: categorical_comparison."
+      ],
+      "chartLikelihoodStatus": "likely",
+      "freshnessStatus": "fresh",
+      "freshnessReason": "No explicit expiry date detected.",
+      "earliestRelevantEndDate": "",
+      "reviewerMeanScore": 4.17,
+      "differentiation": "high_differentiation",
+      "toolsUsed": [
+        "analyze_top_holders x3 (one per market)"
+      ],
+      "rawResultPath": "",
+      "summaryPath": "",
+      "manualQaStatus": "untested",
+      "manualQaNotes": ""
+    },
+    {
+      "id": "p15",
+      "rank": 5,
+      "prompt": "Run a high-conviction workflow on the 'Will Jon Stewart win the 2028 Democratic presidential nomination?' market: pull rules, current midpoint/spread, top-holder concentration, 7-day price history, and give me a one-page memo with a recommendation and max sizing given $25k risk.",
+      "primaryPromptStyle": "natural",
+      "naturalPrompt": "Run a high-conviction workflow on the 'Will Jon Stewart win the 2028 Democratic presidential nomination?' market: pull rules, current midpoint/spread, top-holder concentration, 7-day price history, and give me a one-page memo with a recommendation and max sizing given $25k risk.",
+      "explicitChartPrompt": "Run a high-conviction workflow on the 'Will Jon Stewart win the 2028 Democratic presidential nomination?' market: pull rules, current midpoint/spread, top-holder concentration, 7-day price history, and give me a one-page memo with a recommendation and max sizing given $25k risk. Chart the most important time-series metric over time for Will Jon Stewart win the 2028 Democratic presidential nomination? (market: will-jon-stewart-win-the-2028-democratic-presidential-nomination-518). Include enough historical points to show trend, label the x-axis with dates, label the y-axis with the metric, and include a short buyer takeaway.",
+      "originalPrompt": "Run a high-conviction workflow on the 'Will Jon Stewart win the 2028 Democratic presidential nomination?' market: pull rules, current midpoint/spread, top-holder concentration, 7-day price history, and give me a one-page memo with a recommendation and max sizing given $25k risk.",
+      "alphaCategory": "workflow-synthesis",
+      "groundedEntity": "Will Jon Stewart win the 2028 Democratic presidential nomination? (market: will-jon-stewart-win-the-2028-democratic-presidential-nomination-518)",
+      "expectedChartShape": "time_series",
+      "whyThisShouldChart": [
+        "High differentiation vs free baseline.",
+        "Reviewer mean score 4.5.",
+        "Prompt asks for a chart-like comparison, trend, distribution, or curve.",
+        "Expected chart shape: time_series."
+      ],
+      "chartLikelihoodStatus": "likely",
+      "freshnessStatus": "fresh",
+      "freshnessReason": "No explicit expiry date detected.",
+      "earliestRelevantEndDate": "",
+      "reviewerMeanScore": 4.5,
+      "differentiation": "high_differentiation",
+      "toolsUsed": [
+        "build_market_tradability_memo",
+        "check_market_rules",
+        "check_market_efficiency",
+        "analyze_top_holders",
+        "get_price_history x2",
+        "get_event_by_slug"
+      ],
+      "rawResultPath": "",
+      "summaryPath": "",
+      "manualQaStatus": "untested",
+      "manualQaNotes": ""
+    },
+    {
+      "id": "p17",
+      "rank": 6,
+      "prompt": "Browse the 'Fed interest rates' category and the 'Crypto' category on Polymarket, rank the top 5 markets by 24h volume in each, and produce a combined watchlist with implied probabilities and end dates.",
+      "primaryPromptStyle": "natural",
+      "naturalPrompt": "Browse the 'Fed interest rates' category and the 'Crypto' category on Polymarket, rank the top 5 markets by 24h volume in each, and produce a combined watchlist with implied probabilities and end dates.",
+      "explicitChartPrompt": "Browse the 'Fed interest rates' category and the 'Crypto' category on Polymarket, rank the top 5 markets by 24h volume in each, and produce a combined watchlist with implied probabilities and end dates. Create a bar chart ranking the relevant outcomes/entities for Fed interest rates (category: fed-interest-rates). Plot the primary buyer-relevant metric on the y-axis, use human-readable labels on the x-axis, and include a short buyer takeaway.",
+      "originalPrompt": "Browse the 'Fed interest rates' category and the 'Crypto' category on Polymarket, rank the top 5 markets by 24h volume in each, and produce a combined watchlist with implied probabilities and end dates.",
+      "alphaCategory": "screening-and-discovery",
+      "groundedEntity": "Fed interest rates (category: fed-interest-rates)",
+      "expectedChartShape": "categorical_comparison",
+      "whyThisShouldChart": [
+        "High differentiation vs free baseline.",
+        "Reviewer mean score 4.33.",
+        "Prompt asks for a chart-like comparison, trend, distribution, or curve.",
+        "Expected chart shape: categorical_comparison."
+      ],
+      "chartLikelihoodStatus": "likely",
+      "freshnessStatus": "fresh",
+      "freshnessReason": "No explicit expiry date detected.",
+      "earliestRelevantEndDate": "",
+      "reviewerMeanScore": 4.33,
+      "differentiation": "high_differentiation",
+      "toolsUsed": [
+        "browse_category",
+        "search_markets",
+        "get_event_by_slug",
+        "search_and_get_outcomes"
+      ],
+      "rawResultPath": "",
+      "summaryPath": "",
+      "manualQaStatus": "untested",
+      "manualQaNotes": ""
+    }
+  ]
+}

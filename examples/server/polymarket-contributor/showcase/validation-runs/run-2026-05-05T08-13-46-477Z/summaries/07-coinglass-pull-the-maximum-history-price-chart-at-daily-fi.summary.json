@@ -1,0 +1,87 @@
+{
+  "id": "07-coinglass-pull-the-maximum-history-price-chart-at-daily-fi",
+  "index": 6,
+  "provider": "coinglass",
+  "prompt": "Pull the maximum-history price chart at daily fidelity for the YES token on 'Will Bitcoin hit $150k by June 30, 2026?' Plot the implied probability over time so I can see how the curve has compressed or run as the deadline has approached and BTC spot has moved.",
+  "expectedMinimumRows": 20,
+  "expectedReason": "time-series chart needs enough history to show shape",
+  "startedAt": "2026-05-05T08:21:16.776Z",
+  "finishedAt": "2026-05-05T08:22:18.827Z",
+  "durationMs": 62051,
+  "outcomeType": "answer",
+  "responseChars": 1678,
+  "responsePreview": "As of May 5, 2026, the implied probability for Bitcoin hitting $150,000 by June 30, 2026, has experienced a near-total compression, falling from a peak of 67% in August 2025 to just 1.35% today.\n\nThe line chart shows a steady downward curve with several distinct phases of market repricing. After peaking in mid-August 2025, the probability compressed throughout the autumn. A major regime shift occurred in early November 2025, where the odds collapsed from approximately 41% into the high-20s, eventually hitting the teens by year-end. For the last several months (February through May 2026), the market has remained pinned in a narrow band between 1.3% and 2.6%.\n\n### Market Summary: YES Token\n| Metric | Value |\n| :--- | :--- |\n| **Current Implied Probability** | 1.35% |\n| **All-Time High (Prob %)** | 67.0% (Aug 14, 2025) |\n| **All-Time Low (Prob %)** | 1.25% (Apr 27, 2026) |\n| **Start Date** | August 8, 2025 |\n| **Total History** | 251 Days |\n| **Net Change (Points)** | -55.65% |\n| **Net Change (%)** | -97.63% |\n\n**Key Trend Observations:**\n*   **Initial Optimism:** The market opened strong at 57% and saw its highest conviction in mid-August 2025.\n*   **Nov '25 Break:** A sharp decline ...",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 0,
+  "agentDeclaredArtifacts": {
+    "chart": 2,
+    "metricTable": 0
+  },
+  "chartSummaries": [
+    {
+      "title": "Will Bitcoin hit $150k by June 30, 2026? — YES implied probability (daily, max history)",
+      "type": "line",
+      "rowCount": 251,
+      "distinctXCount": 249,
+      "numericSeriesCount": 1,
+      "numericSeriesWithVariation": 1,
+      "xKey": "date",
+      "seriesKeys": [
+        "impliedProbability"
+      ],
+      "sampleRows": [
+        {
+          "date": "2025-08-08",
+          "impliedProbability": 56.99999999999999
+        },
+        {
+          "date": "2025-08-09",
+          "impliedProbability": 59.5
+        },
+        {
+          "date": "2025-08-10",
+          "impliedProbability": 61.5
+        }
+      ],
+      "needsDualAxis": false,
+      "willRenderDualAxis": false,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": true,
+      "expectsProbabilityMetric": true,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "Will Bitcoin hit $150k by June 30, 2026? — YES implied probability (daily, max history)",
+        "type": "line",
+        "xKey": "date",
+        "seriesKeys": [
+          "impliedProbability"
+        ],
+        "passes": true,
+        "failures": []
+      }
+    ],
+    "pass": true
+  },
+  "semanticFailures": [],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [],
+  "buyerValueScore": 4,
+  "buyerVerdict": "pass",
+  "buyerReview": "Preliminary pass: produced a multi-row, varied chart with specific data and an actionable buyer takeaway.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-05T08-13-46-477Z/raw/07-coinglass-pull-the-maximum-history-price-chart-at-daily-fi.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-05T08-13-46-477Z/summaries/07-coinglass-pull-the-maximum-history-price-chart-at-daily-fi.summary.json"
+}

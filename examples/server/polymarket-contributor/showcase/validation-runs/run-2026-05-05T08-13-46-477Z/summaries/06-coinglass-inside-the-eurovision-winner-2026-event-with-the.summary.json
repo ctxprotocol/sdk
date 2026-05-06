@@ -1,0 +1,128 @@
+{
+  "id": "06-coinglass-inside-the-eurovision-winner-2026-event-with-the",
+  "index": 5,
+  "provider": "coinglass",
+  "prompt": "Inside the 'Eurovision Winner 2026' event with the contest only ~10 days out, list the 12 most-traded national entries with current YES probability and 24h volume per outcome so I can see the implied podium distribution and which nations the market is actually concentrating on.",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-05-05T08:19:27.034Z",
+  "finishedAt": "2026-05-05T08:21:14.768Z",
+  "durationMs": 107734,
+  "outcomeType": "answer",
+  "responseChars": 1780,
+  "responsePreview": "As of May 5, 2026, the Eurovision Winner 2026 market shows a unique distribution where the highest trading volumes are concentrated on long-shot entries rather than the current favorites.\n\nThe following table lists the 12 most-traded national entries based on total volume. Note that while these nations dominate market activity, their current implied win probabilities remain very low.\n\n### 12 Most-Traded National Entries\n| Rank | National Entry | YES Probability | Total Volume |\n| :--- | :--- | :--- | :--- |\n| 1 | Austria | 0.3% | $6,577,766.63 |\n| 2 | Georgia | 0.1% | $5,815,088.37 |\n| 3 | Estonia | 0.3% | $5,739,487.41 |\n| 4 | Montenegro | 0.1% | $5,639,713.89 |\n| 5 | Albania | 0.1% | $5,620,105.55 |\n| 6 | Armenia | 0.3% | $5,599,623.75 |\n| 7 | Azerbaijan | 0.3% | $5,595,628.60 |\n| 8 | San Marino | 0.1% | $5,540,004.68 |\n| 9 | Poland | 0.3% | $5,036,337.56 |\n| 10 | Portugal | 0.1% | $4,873,938.83 |\n| 11 | Switzerland | 0.3% | $4,873,742.98 |\n| 12 | Latvia | 0.1% | $4,834,623.89 |\n\n### Implied Podium Distribution (Top Probability)\nWhile the volume is concentrated on the entries above, the actual market \"podium\" (the entries with the highest implied probability of winning) is curren...",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 0,
+  "agentDeclaredArtifacts": {
+    "chart": 1,
+    "metricTable": 0
+  },
+  "chartSummaries": [
+    {
+      "title": "Eurovision Winner 2026: 12 most-traded national entries",
+      "type": "line",
+      "rowCount": 35,
+      "distinctXCount": 16,
+      "numericSeriesCount": 1,
+      "numericSeriesWithVariation": 1,
+      "xKey": "impliedProbability",
+      "seriesKeys": [
+        "price"
+      ],
+      "sampleRows": [
+        {
+          "name": "Austria",
+          "price": 0.0025,
+          "currentPrice": 0.0025,
+          "impliedProbability": "0.3%",
+          "pricePercent": "0.3%",
+          "volume": 6577766.629099895,
+          "conditionId": "0x3dbf1d213f9048353b073e8b02585b1d378b88cd05599abd23b00709120ad1f7",
+          "tokenId": "103415634005536188719544775929333330970248034372896702178158893005574962725101",
+          "active": "true",
+          "closed": "false",
+          "endDate": "",
+          "dateStatus": "undated"
+        },
+        {
+          "name": "Georgia",
+          "price": 0.0015,
+          "currentPrice": 0.0015,
+          "impliedProbability": "0.1%",
+          "pricePercent": "0.1%",
+          "volume": 5815088.369631968,
+          "conditionId": "0x295d35d1c69380d0938903dc7f70cf035c0f1283bccb502d651be8a1c1e1d390",
+          "tokenId": "57039171877618957364343868222846014933207507601621521785751536699706815828804",
+          "active": "true",
+          "closed": "false",
+          "endDate": "",
+          "dateStatus": "undated"
+        },
+        {
+          "name": "Estonia",
+          "price": 0.0025,
+          "currentPrice": 0.0025,
+          "impliedProbability": "0.3%",
+          "pricePercent": "0.3%",
+          "volume": 5739487.411551972,
+          "conditionId": "0xe39dd4dda2144c32921db11ee31127555dcf7dbabbf4a3b65f2413cf601f3908",
+          "tokenId": "30789889237777559657127194919243089284049186924698609383684181401113388029205",
+          "active": "true",
+          "closed": "false",
+          "endDate": "",
+          "dateStatus": "undated"
+        }
+      ],
+      "needsDualAxis": false,
+      "willRenderDualAxis": false,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": true,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": true,
+      "expectsMarketLabels": false
+    },
+    "failures": [
+      "no chart matched the prompt's requested axis, chart type, and metrics",
+      "chart 0: x-axis does not use human-readable outcome, candidate, or market labels"
+    ],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "Eurovision Winner 2026: 12 most-traded national entries",
+        "type": "line",
+        "xKey": "impliedProbability",
+        "seriesKeys": [
+          "price"
+        ],
+        "passes": false,
+        "failures": [
+          "x-axis does not use human-readable outcome, candidate, or market labels"
+        ]
+      }
+    ],
+    "pass": false
+  },
+  "semanticFailures": [
+    "no chart matched the prompt's requested axis, chart type, and metrics",
+    "chart 0: x-axis does not use human-readable outcome, candidate, or market labels"
+  ],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+    "semantic chart audit failed: chart 0: x-axis does not use human-readable outcome, candidate, or market labels"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-05T08-13-46-477Z/raw/06-coinglass-inside-the-eurovision-winner-2026-event-with-the.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-05T08-13-46-477Z/summaries/06-coinglass-inside-the-eurovision-winner-2026-event-with-the.summary.json"
+}

@@ -1,317 +1,244 @@
 {
   "schemaVersion": "2026-04-30",
   "contributor": "polymarket-contributor",
-  "generatedAt": "2026-05-02T14:37:30.000Z",
-  "targetCount": 7,
+  "generatedAt": "2026-05-05T08:01:30.000Z",
+  "targetCount": 6,
   "candidates": [
     {
-      "id": "btc-150k-timeline-prices",
-      "prompt": "Chart the implied probability curve across the 'When will Bitcoin hit $150k?' event, comparing 'Will Bitcoin hit $150k by June 30, 2026?' and 'Will Bitcoin hit $150k by December 31, 2026?' by price, 24h volume, and bid-ask spread.",
-      "alphaCategory": "event-term-structure",
-      "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "when-will-bitcoin-hit-150k",
-        "title": "When will Bitcoin hit $150k?"
-      },
-      "answerabilityNote": "get_event_by_slug/get_event_outcomes return the event markets, outcome prices, volumes, and token IDs; get_spreads or get_orderbook returns bid-ask spreads. The chart can compare deadline buckets by price, volume24hr, and spread.",
-      "expectedChartShape": "multi_series"
-    },
-    {
-      "id": "world-cup-liquidity-table",
-      "prompt": "For the '2026 FIFA World Cup Winner' event, rank Spain, France, England, South Korea, New Zealand, and Switzerland by implied probability, 24h volume, bid-ask spread, and exit quality, then show the results as a chart plus a tradability table.",
-      "alphaCategory": "event-liquidity-ranking",
-      "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "2026-fifa-world-cup-winner-595",
-        "title": "2026 FIFA World Cup Winner"
-      },
-      "answerabilityNote": "rank_event_tradability and analyze_event_outcome_liquidity accept the event slug and outcome shortlist, then combine live spreads, depth, slippage, volume, and whale participation for chartable rankings.",
-      "expectedChartShape": "metric_table_plus_chart"
-    },
-    {
-      "id": "nba-champion-whale-liquidity",
-      "prompt": "Compare the '2026 NBA Champion' event outcomes for Oklahoma City Thunder, Houston Rockets, Toronto Raptors, Cleveland Cavaliers, New York Knicks, and Minnesota Timberwolves by implied probability, 24h volume, whale positioning, and tradability.",
-      "alphaCategory": "smart-money-event-screening",
-      "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "2026-nba-champion",
-        "title": "2026 NBA Champion"
-      },
-      "answerabilityNote": "analyze_event_whale_breakdown returns whale value and holder counts by outcome; rank_event_tradability and get_event_outcomes provide live prices, volumes, spreads, and tradability metrics for a categorical comparison.",
-      "expectedChartShape": "metric_table_plus_chart"
-    },
-    {
-      "id": "eurovision-outcome-map",
-      "prompt": "Chart the 'Eurovision Winner 2026' market across Albania, Austria, Belgium, Croatia, Czechia, Estonia, France, and Germany by implied probability and 24h volume, and flag which outcomes look tradable versus too thin.",
-      "alphaCategory": "long-tail-event-screening",
-      "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "eurovision-winner-2026",
-        "title": "Eurovision Winner 2026"
-      },
-      "answerabilityNote": "get_event_outcomes returns individual outcome prices and volumes; analyze_event_outcome_liquidity or rank_event_tradability can add spread, depth, and slippage metrics for the named outcomes.",
+      "id": "01-fifa-event-tradability-rank",
+      "prompt": "Inside the '2026 FIFA World Cup Winner' event, rank the 8 most-active national outcomes by combined live tradability — show YES price, bid-ask spread, $5k exit slippage, 24h volume, and total whale dollars per nation so I can see which World Cup contracts combine tight quotes with real conviction and which are headline-only.",
+      "alphaCategory": "liquidity-screening",
+      "difficulty": "ceiling",
+      "groundedEntity": { "type": "event", "title": "2026 FIFA World Cup Winner", "slug": "2026-fifa-world-cup-winner-595" },
+      "answerabilityNote": "rank_event_tradability with slug='2026-fifa-world-cup-winner-595', limit=8 returns rankedOutcomes[] with currentPrice, spreadCents, slippage5kPercent, volume, whaleValue, tradabilityScore, classification per outcome — chart 8 rows with bars on slippage% and whale$, plus secondary axis on 24h volume",
       "expectedChartShape": "categorical_comparison"
     },
     {
-      "id": "iran-geopolitics-relative-pricing",
-      "prompt": "Build a chart comparing 'Will the Iranian regime fall by May 31?', 'US x Iran permanent peace deal by May 31, 2026?', 'Will the U.S. invade Iran before 2027?', and 'US obtains Iranian enriched uranium by May 31?' by implied probability, 24h volume, open interest, and recent whale flow.",
-      "alphaCategory": "thematic-market-screening",
+      "id": "02-wti-strike-ladder-curve",
+      "prompt": "Across the 'What will WTI Crude Oil (WTI) hit in May 2026?' strike ladder, compare the YES probability and 24h trading volume for the $90, $100, $110, $120, $130, $140, and $150 HIGH strikes — chart the implied probability curve so I can see exactly where the market expects WTI to settle this month and where the volume actually is.",
+      "alphaCategory": "event-distribution",
       "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "theme",
-        "title": "Iran-related Polymarket markets",
-        "slugs": [
-          "will-the-iranian-regime-fall-by-may-31",
-          "us-x-iran-permanent-peace-deal-by-may-31-2026-333-871",
-          "will-the-us-invade-iran-before-2027",
-          "us-obtains-iranian-enriched-uranium-by-may-31-396"
-        ]
-      },
-      "answerabilityNote": "check_market_efficiency returns implied probabilities; get_market_open_interest returns current OI; analyze_whale_flow and get_market_trades return recent trade-size buckets and directional flow for each named market.",
+      "groundedEntity": { "type": "event", "title": "What will WTI Crude Oil (WTI) hit in May 2026?", "slug": "what-price-will-wti-hit-in-may-2026" },
+      "answerabilityNote": "compare_event_outcome_quotes with eventQuery='What will WTI Crude Oil (WTI) hit in May 2026?' and outcomes=['$90','$100','$110','$120','$130','$140','$150'] returns matchedOutcomes[] with currentPrice, volume, spread per strike — chart 7 strike rows with price line + volume bars (dual axis)",
       "expectedChartShape": "multi_series"
     },
     {
-      "id": "us-invade-iran-history-flow",
-      "prompt": "For 'Will the U.S. invade Iran before 2027?', chart the recent price history alongside recent whale-vs-retail flow and current open interest, then summarize whether the move is liquid enough to trade.",
-      "alphaCategory": "single-market-deep-dive",
+      "id": "03-btc-150k-whale-flow-buckets",
+      "prompt": "For the highest-volume Polymarket binary right now — 'Will Bitcoin hit $150k by June 30, 2026?' (~$5.8M 24h volume, YES at $0.014) — break down the last 48 hours of trading into Small (<$50), Medium ($50-$500), and Whale (>$1k) buckets. Chart buy volume, sell volume, net flow, and trade count per bucket so I can see whether whales and retail are agreeing or diverging on this BTC longshot.",
+      "alphaCategory": "whale-tracking",
       "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "will-the-us-invade-iran-before-2027",
-        "title": "Will the U.S. invade Iran before 2027?"
-      },
-      "answerabilityNote": "get_price_history returns historical market prices; analyze_whale_flow buckets recent trades by size; get_market_open_interest returns current OI; analyze_market_liquidity adds spread/depth/slippage.",
-      "expectedChartShape": "time_series"
-    },
-    {
-      "id": "bitcoin-june-liquidity-depth",
-      "prompt": "For 'Will Bitcoin hit $150k by June 30, 2026?', chart the bid-ask spread, orderbook depth, and simulated slippage for $1k, $5k, and $10k YES positions, with a tradability recommendation.",
-      "alphaCategory": "liquidity-depth",
-      "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "will-bitcoin-hit-150k-by-june-30-2026",
-        "title": "Will Bitcoin hit $150k by June 30, 2026?"
-      },
-      "answerabilityNote": "analyze_market_liquidity simulates $1k/$5k/$10k fills from merged orderbooks; get_orderbook returns level-2 depth; check_market_efficiency returns spread and implied probability.",
-      "expectedChartShape": "metric_table_plus_chart"
-    },
-    {
-      "id": "hormuz-traffic-deep-dive",
-      "prompt": "For 'Strait of Hormuz traffic returns to normal by May 15?', chart price history, current implied probability, 24h volume, open interest, and recent trade-size buckets to show whether traders are leaning YES or NO.",
-      "alphaCategory": "event-risk-flow",
-      "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "strait-of-hormuz-traffic-returns-to-normal-by-may-15",
-        "title": "Strait of Hormuz traffic returns to normal by May 15?"
-      },
-      "answerabilityNote": "get_price_history returns time-series price data; check_market_efficiency returns implied probabilities and vig; get_market_open_interest returns OI; analyze_whale_flow returns trade-size buckets and side bias.",
-      "expectedChartShape": "time_series"
-    },
-    {
-      "id": "iran-uranium-rules-flow",
-      "prompt": "For 'US obtains Iranian enriched uranium by May 31?', chart current probability, price history, top-holder concentration, and recent whale flow, then annotate the resolution-rule risks that could affect trade sizing.",
-      "alphaCategory": "rules-aware-tradability",
-      "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "us-obtains-iranian-enriched-uranium-by-may-31-396",
-        "title": "US obtains Iranian enriched uranium by May 31?"
-      },
-      "answerabilityNote": "check_market_rules returns resolution rules and gotchas; get_price_history returns time-series prices; analyze_top_holders returns holder concentration; analyze_whale_flow returns recent whale-vs-retail activity.",
-      "expectedChartShape": "metric_table_plus_chart"
-    },
-    {
-      "id": "peace-deal-efficiency-history",
-      "prompt": "For 'US x Iran permanent peace deal by May 31, 2026?', chart price history, vig-adjusted true probability, bid-ask spread, 24h volume, and recent trade flow to evaluate whether the market is efficiently priced.",
-      "alphaCategory": "pricing-efficiency",
-      "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "us-x-iran-permanent-peace-deal-by-may-31-2026-333-871",
-        "title": "US x Iran permanent peace deal by May 31, 2026?"
-      },
-      "answerabilityNote": "check_market_efficiency returns vig, spread, implied probabilities, and true probabilities; get_price_history provides historical prices; analyze_whale_flow provides recent trade-size and direction data.",
-      "expectedChartShape": "time_series"
-    },
-    {
-      "id": "nba-finals-neg-risk-parameters",
-      "prompt": "For the '2026 NBA Champion' event, compare the trading parameters and negative-risk status for Oklahoma City Thunder, Cleveland Cavaliers, New York Knicks, Minnesota Timberwolves, Detroit Pistons, and Orlando Magic, then chart fee rate, tick size, minimum order size, and current probability.",
-      "alphaCategory": "trading-parameters",
-      "difficulty": "analysis",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "2026-nba-champion",
-        "title": "2026 NBA Champion"
-      },
-      "answerabilityNote": "get_event_outcomes resolves outcome markets and token IDs; get_market_parameters returns tick size, fee rate, minimum order size, and negRisk; prices and volume come from event outcomes or get_prices.",
-      "expectedChartShape": "metric_table_plus_chart"
-    },
-    {
-      "id": "world-cup-neg-risk-parameters",
-      "prompt": "For the '2026 FIFA World Cup Winner' event, compare Spain, France, England, South Korea, Haiti, and New Zealand by negative-risk setting, fee rate, minimum order size, tick size, current probability, and 24h volume.",
-      "alphaCategory": "trading-parameters",
-      "difficulty": "analysis",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "2026-fifa-world-cup-winner-595",
-        "title": "2026 FIFA World Cup Winner"
-      },
-      "answerabilityNote": "get_event_outcomes returns the named outcome markets; get_market_parameters returns negRisk, fee rate, minimum order size, and tick size; outcomePrices and volume24hr support the comparison chart.",
-      "expectedChartShape": "metric_table_plus_chart"
-    },
-    {
-      "id": "top-volume-live-leaders",
-      "prompt": "Chart how live trading attention is distributed across 'Will Bitcoin hit $150k by June 30, 2026?', 'Will the Iranian regime fall by May 31?', 'US x Iran permanent peace deal by May 31, 2026?', 'Will the U.S. invade Iran before 2027?', and 'Strait of Hormuz traffic returns to normal by May 15?' using 24h volume, current probability, open interest, and spread.",
-      "alphaCategory": "discovery-screening",
-      "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "market_set",
-        "title": "High-volume longer-lived snapshot markets",
-        "slugs": [
-          "will-bitcoin-hit-150k-by-june-30-2026",
-          "will-the-iranian-regime-fall-by-may-31",
-          "us-x-iran-permanent-peace-deal-by-may-31-2026-333-871",
-          "will-the-us-invade-iran-before-2027",
-          "strait-of-hormuz-traffic-returns-to-normal-by-may-15"
-        ]
-      },
-      "answerabilityNote": "get_top_markets discovers high-volume markets; check_market_efficiency provides current probability and spread; get_market_open_interest returns OI for condition IDs; live snapshot/Gamma fields include volume24hr.",
+      "groundedEntity": { "type": "market", "title": "Will Bitcoin hit $150k by June 30, 2026?", "slug": "will-bitcoin-hit-150k-by-june-30-2026" },
+      "answerabilityNote": "analyze_whale_flow with slug='will-bitcoin-hit-150k-by-june-30-2026', hoursBack=48 returns flowBySize.{small,medium,whale}.{count,buyVolume,sellVolume,netFlow} plus whaleActivity.netWhaleVolume — chart grouped bars: 3 size buckets × 3 series (buy/sell/net) for 9+ data points",
       "expectedChartShape": "categorical_comparison"
     },
     {
-      "id": "iran-regime-holder-concentration",
-      "prompt": "For 'Will the Iranian regime fall by May 31?', chart top-holder concentration, YES versus NO whale exposure, recent trade-size buckets, and price history to show whether the 2-3% probability is smart-money supported.",
-      "alphaCategory": "whale-concentration",
-      "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "will-the-iranian-regime-fall-by-may-31",
-        "title": "Will the Iranian regime fall by May 31?"
-      },
-      "answerabilityNote": "analyze_single_market_whales combines recent whale flow with top-holder concentration; get_price_history returns price trend; check_market_efficiency returns current implied and true probabilities.",
+      "id": "04-nba-finals-liquidity-stack",
+      "prompt": "For the '2026 NBA Champion' event, analyze the YES-side liquidity for the top 6 contenders — Oklahoma City Thunder, Cleveland Cavaliers, Minnesota Timberwolves, New York Knicks, Houston Rockets, and Boston Celtics — and show $1k, $5k, and $10k exit slippage per team so I can see exactly where the biggest positions can actually be exited as the playoffs deepen.",
+      "alphaCategory": "liquidity-screening",
+      "difficulty": "ceiling",
+      "groundedEntity": { "type": "event", "title": "2026 NBA Champion", "slug": "2026-nba-champion" },
+      "answerabilityNote": "analyze_event_outcome_liquidity with slug='2026-nba-champion' and outcomes=['Oklahoma City Thunder','Cleveland Cavaliers','Minnesota Timberwolves','New York Knicks','Houston Rockets','Boston Celtics'] returns analyzedOutcomes[] with currentPrice, spreadCents, slippage1kPercent, slippage5kPercent, slippage10kPercent, totalDepthUsd per team — chart grouped bars: 6 teams × 3 size buckets",
       "expectedChartShape": "metric_table_plus_chart"
     },
     {
-      "id": "eurovision-whale-ranking",
-      "prompt": "For 'Eurovision Winner 2026', rank France, Estonia, Austria, Albania, Belgium, Croatia, Czechia, and Germany by whale exposure, current probability, and 24h volume, then chart which outcomes have meaningful smart-money support.",
-      "alphaCategory": "smart-money-event-screening",
-      "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "eurovision-winner-2026",
-        "title": "Eurovision Winner 2026"
-      },
-      "answerabilityNote": "analyze_event_whale_breakdown returns total whale value, top whale position, whale count, and current price for named outcomes; get_event_outcomes provides volumes for charting alongside whale metrics.",
+      "id": "05-trending-crypto-markets",
+      "prompt": "Show me the top 10 trending crypto markets on Polymarket right now — for each, give the title, current YES price, 24h volume, trend score, and a short explanation of why activity is unusual today. I want to see which crypto narratives are catching fire vs which are bleeding.",
+      "alphaCategory": "momentum-detection",
+      "difficulty": "lookup",
+      "groundedEntity": { "type": "category", "title": "Crypto", "slug": "crypto" },
+      "answerabilityNote": "discover_trending_markets with category='crypto', sortBy='volume', limit=10 returns trendingMarkets[] with title, currentPrice, volume24h, trendScore, signal, whyTrending per market — chart 10 rows ranked by 24h volume with secondary axis on trendScore",
       "expectedChartShape": "categorical_comparison"
     },
     {
-      "id": "bitcoin-december-vs-june-history",
-      "prompt": "Compare 'Will Bitcoin hit $150k by June 30, 2026?' and 'Will Bitcoin hit $150k by December 31, 2026?' with a two-line price-history chart plus current volume, spread, and orderbook-depth table.",
-      "alphaCategory": "term-structure-time-series",
-      "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "market_pair",
-        "title": "Bitcoin $150k June and December 2026 deadlines",
-        "slugs": [
-          "will-bitcoin-hit-150k-by-june-30-2026",
-          "will-bitcoin-hit-150k-by-december-31-2026"
-        ]
-      },
-      "answerabilityNote": "get_price_history can be called for each market to build the two-line chart; get_spreads/get_orderbook provide quote quality; get_event_outcomes or market fields provide current prices and volume24hr.",
+      "id": "06-eurovision-distribution",
+      "prompt": "Inside the 'Eurovision Winner 2026' event with the contest only ~10 days out, list the 12 most-traded national entries with current YES probability and 24h volume per outcome so I can see the implied podium distribution and which nations the market is actually concentrating on.",
+      "alphaCategory": "event-distribution",
+      "difficulty": "lookup",
+      "groundedEntity": { "type": "event", "title": "Eurovision Winner 2026", "slug": "eurovision-winner-2026" },
+      "answerabilityNote": "get_event_outcomes with slug='eurovision-winner-2026', sortBy='volume', limit=12 returns outcomes[] with name, price (YES probability), volume per nation — chart 12 rows showing probability bars + volume secondary axis",
       "expectedChartShape": "multi_series"
     },
     {
-      "id": "world-cup-live-volume-breakdown",
-      "prompt": "For '2026 FIFA World Cup Winner', chart live volume share and implied probability for Spain, France, England, South Korea, New Zealand, Switzerland, and Haiti, then identify which outcomes have volume that looks outsized relative to probability.",
-      "alphaCategory": "volume-probability-divergence",
-      "difficulty": "analysis",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "2026-fifa-world-cup-winner-595",
-        "title": "2026 FIFA World Cup Winner"
-      },
-      "answerabilityNote": "get_event_live_volume returns event-level live-volume breakdown when available; get_event_outcomes returns outcome prices and 24h volume. The divergence can be computed as volume share versus probability share.",
+      "id": "07-btc-150k-price-history",
+      "prompt": "Pull the maximum-history price chart at daily fidelity for the YES token on 'Will Bitcoin hit $150k by June 30, 2026?' Plot the implied probability over time so I can see how the curve has compressed or run as the deadline has approached and BTC spot has moved.",
+      "alphaCategory": "momentum-detection",
+      "difficulty": "lookup",
+      "groundedEntity": { "type": "market", "title": "Will Bitcoin hit $150k by June 30, 2026?", "slug": "will-bitcoin-hit-150k-by-june-30-2026" },
+      "answerabilityNote": "Resolve YES tokenId via get_event_by_slug for slug='will-bitcoin-hit-150k-by-june-30-2026' (conditionId 0xa0f4c4924ea1a8b410), then get_price_history with that tokenId, interval='max', fidelity=1440 returns history[] of {timestamp, price} — chart line of implied probability over many daily timestamps (>=8 rows guaranteed for a months-old market)",
+      "expectedChartShape": "time_series"
+    },
+    {
+      "id": "08-england-wc-sibling-comparison",
+      "prompt": "For the 'Will England win the 2026 FIFA World Cup?' contract (currently ~11% YES), compare against its sibling national outcomes (Spain, France, South Korea, Switzerland, New Zealand, Haiti) inside the same World Cup event — show price, spread, and 24h volume per sibling so I can see whether England's quote is rich, cheap, or fairly priced vs the rest of the field.",
+      "alphaCategory": "efficiency-arbitrage",
+      "difficulty": "workflow",
+      "groundedEntity": { "type": "market", "title": "Will England win the 2026 FIFA World Cup?", "slug": "will-england-win-the-2026-fifa-world-cup-937" },
+      "answerabilityNote": "compare_market_against_related_contracts with marketQuery='Will England win the 2026 FIFA World Cup?' returns siblingOutcomes[] with matchedName, currentPrice, spread, volume per nation + richOrCheap classification + relativeValueAssessment — chart 7-8 rows ranked by price with spread + volume columns",
+      "expectedChartShape": "categorical_comparison"
+    },
+    {
+      "id": "09-eric-trump-holder-concentration",
+      "prompt": "For 'Will Eric Trump win the 2028 US Presidential Election?' (slug `will-eric-trump-win-the-2028-us-presidential-election`, $2.08M 24h volume but YES at just $0.0055), pull the top 10 YES holders and top 10 NO holders side by side — each with USD position value and percent of total supply — so I can see whether the YES side is real conviction or vanity money chasing a longshot.",
+      "alphaCategory": "whale-tracking",
+      "difficulty": "workflow",
+      "groundedEntity": { "type": "market", "title": "Will Eric Trump win the 2028 US Presidential Election?", "slug": "will-eric-trump-win-the-2028-us-presidential-election" },
+      "answerabilityNote": "get_top_holders with slug='will-eric-trump-win-the-2028-us-presidential-election', outcome='BOTH', limit=10 returns topHolders.{yes,no}[] with rank, value (USD), percentOfSupply per holder — chart 20 rows split by side, ranked by USD value with two-tone bars",
+      "expectedChartShape": "categorical_comparison"
+    },
+    {
+      "id": "10-btc-may-5-strike-curve",
+      "prompt": "Across the 'Bitcoin above ___ on May 5?' event (today's daily-close strike ladder), compare the YES probability and 24h volume for the $66k, $68k, $70k, $72k, $74k, $76k, $78k, and $80k strikes so I can see exactly where the market thinks BTC will close today and where the volume cliff sits.",
+      "alphaCategory": "event-distribution",
+      "difficulty": "workflow",
+      "groundedEntity": { "type": "event", "title": "Bitcoin above ___ on May 5?", "slug": "bitcoin-above-on-may-5" },
+      "answerabilityNote": "compare_event_outcome_quotes with eventQuery='Bitcoin above on May 5' and outcomes=['$66,000','$68,000','$70,000','$72,000','$74,000','$76,000','$78,000','$80,000'] returns matchedOutcomes[] with currentPrice, spread, volume per strike — chart 8 rows showing probability curve + volume bars (dual axis exposes the cliff between $78k and $80k)",
+      "expectedChartShape": "multi_series"
+    },
+    {
+      "id": "11-iran-cluster-correlated",
+      "prompt": "For 'Will the U.S. invade Iran before 2027?' (slug `will-the-us-invade-iran-before-2027`, $1.19M 24h volume), pull the correlated/sibling Iran markets — Iran airspace closure, Iranian regime fall, US-Iran peace deal, Strait of Hormuz traffic — and show price, correlation type, correlation score, and a hedge note per related contract so I can see the entire Iran complex priced as a portfolio.",
+      "alphaCategory": "efficiency-arbitrage",
+      "difficulty": "ceiling",
+      "groundedEntity": { "type": "market", "title": "Will the U.S. invade Iran before 2027?", "slug": "will-the-us-invade-iran-before-2027" },
+      "answerabilityNote": "find_correlated_markets with slug='will-the-us-invade-iran-before-2027' returns correlatedMarkets[] with title, currentPrice, correlationType, correlationScore, hedgeNote per related contract — chart 8-12 rows ranked by correlationScore with price column and correlation-type color",
+      "expectedChartShape": "categorical_comparison"
+    },
+    {
+      "id": "12-democratic-nominee-distribution",
+      "prompt": "Inside the 'Democratic Presidential Nominee 2028' event, rank the top 10 named candidates by 24h trading volume — Stephen A. Smith, Gretchen Whitmer, Oprah Winfrey, Bernie Sanders plus the next highest-volume names. For each, show YES probability and 24h volume so I can see the implied front-runner distribution and where the volume actually is on the Democratic side.",
+      "alphaCategory": "event-distribution",
+      "difficulty": "workflow",
+      "groundedEntity": { "type": "event", "title": "Democratic Presidential Nominee 2028", "slug": "democratic-presidential-nominee-2028" },
+      "answerabilityNote": "get_event_outcomes with slug='democratic-presidential-nominee-2028', sortBy='volume', limit=10 returns outcomes[] with name, price, volume per candidate (placeholder 'Person X' entries auto-filtered) — chart 10 rows showing probability bars + volume secondary axis",
+      "expectedChartShape": "multi_series"
+    },
+    {
+      "id": "13-eric-trump-price-history",
+      "prompt": "Pull the maximum-history price chart at daily fidelity for the YES token on 'Will Eric Trump win the 2028 US Presidential Election?' so I can see how the implied probability has tracked through the life of this contract and where the speculative spikes happened.",
+      "alphaCategory": "momentum-detection",
+      "difficulty": "workflow",
+      "groundedEntity": { "type": "market", "title": "Will Eric Trump win the 2028 US Presidential Election?", "slug": "will-eric-trump-win-the-2028-us-presidential-election" },
+      "answerabilityNote": "Resolve YES tokenId via get_event_by_slug for slug='will-eric-trump-win-the-2028-us-presidential-election' (conditionId 0x2d3c4fc5cde6dfb434), then get_price_history with that tokenId, interval='max', fidelity=1440 returns history[] of {timestamp, price} — chart line of implied probability over many daily timestamps",
+      "expectedChartShape": "time_series"
+    },
+    {
+      "id": "14-top-volume-markets-with-btc-anchor",
+      "prompt": "Show me the top 15 highest-24h-volume markets on Polymarket today and where 'Will Bitcoin hit $150k by June 30, 2026?' ranks among them. For each, give title, category, current YES price, and 24h volume so I can see today's actual trading hotlist with the BTC longshot in context.",
+      "alphaCategory": "liquidity-screening",
+      "difficulty": "lookup",
+      "groundedEntity": { "type": "market", "title": "Will Bitcoin hit $150k by June 30, 2026?", "slug": "will-bitcoin-hit-150k-by-june-30-2026" },
+      "answerabilityNote": "get_top_markets with sortBy='volume', limit=15 returns top markets ranked by 24h volume with title, category, currentPrice, volume24h — chart 15 rows ranked descending by 24h volume with category color coding; flag the BTC $150k row explicitly",
+      "expectedChartShape": "categorical_comparison"
+    },
+    {
+      "id": "15-wti-120-strike-rich-cheap",
+      "prompt": "For 'Will WTI Crude Oil (WTI) hit (HIGH) $120 in May?' (slug `will-wti-reach-120-in-may-2026-592-217`, currently ~42.5% YES), compare against its sibling May strikes ($90, $100, $110, $130, $140, $150 HIGH) and show whether the $120 leg is rich, cheap, or fairly priced once event-curve consistency is checked.",
+      "alphaCategory": "efficiency-arbitrage",
+      "difficulty": "workflow",
+      "groundedEntity": { "type": "market", "title": "Will WTI Crude Oil (WTI) hit (HIGH) $120 in May?", "slug": "will-wti-reach-120-in-may-2026-592-217" },
+      "answerabilityNote": "compare_market_against_related_contracts with marketQuery='Will WTI Crude Oil (WTI) hit (HIGH) $120 in May?' returns siblingOutcomes[] with matchedName, currentPrice, spread, volume per strike + richOrCheap classification + eventPriceSum + relativeValueDifference — chart 7 rows ordered by strike with price line plus rich/cheap badge",
+      "expectedChartShape": "categorical_comparison"
+    },
+    {
+      "id": "16-btc-150k-expiry-ladder",
+      "prompt": "Inside the 'When will Bitcoin hit $150k?' event ladder, compare the YES probability and 24h volume per expiry bucket — September 30 2025, December 31 2025, March 31 2026, June 30 2026, December 31 2026 — so I can see the implied timeline distribution for BTC reaching $150k and which expiries actually trade.",
+      "alphaCategory": "event-distribution",
+      "difficulty": "workflow",
+      "groundedEntity": { "type": "event", "title": "When will Bitcoin hit $150k?", "slug": "when-will-bitcoin-hit-150k" },
+      "answerabilityNote": "compare_event_outcome_quotes with eventQuery='When will Bitcoin hit $150k?' and outcomes=['September 30','December 31','March 31, 2026','June 30, 2026','December 31, 2026'] returns matchedOutcomes[] with currentPrice and volume per expiry — chart 5 rows showing implied probability + volume (dual axis)",
+      "expectedChartShape": "multi_series"
+    },
+    {
+      "id": "17-lakers-thunder-live-tape",
+      "prompt": "For the 'Lakers vs. Thunder' game-day market (slug `nba-lal-okc-2026-05-05`, $847k 24h volume, Lakers YES at $0.125 / Thunder at $0.875), pull the 100 most recent trades and chart notional USD per trade over time, color-coded by side (BUY vs SELL), so I can see how the live tape moved through the game and where the biggest single tickets hit.",
+      "alphaCategory": "momentum-detection",
+      "difficulty": "workflow",
+      "groundedEntity": { "type": "market", "title": "Lakers vs. Thunder", "slug": "nba-lal-okc-2026-05-05" },
+      "answerabilityNote": "get_market_trades with conditionId='0xa1f3c8115c6145f1c2', limit=100 returns trades[] with timestamp, side, price, size, notional per trade plus summary{buyVolume,sellVolume} — chart x=timestamp, y=notional with side coloring; >=50 timestamps for an $847k market",
+      "expectedChartShape": "time_series"
+    },
+    {
+      "id": "18-fifa-live-volume-share",
+      "prompt": "For the '2026 FIFA World Cup Winner' event, pull the live-volume breakdown across all submarkets and rank the top 10 country contracts by share of event total volume right now — I want to see where today's trading concentration is happening inside this multi-month tournament market.",
+      "alphaCategory": "liquidity-screening",
+      "difficulty": "lookup",
+      "groundedEntity": { "type": "event", "title": "2026 FIFA World Cup Winner", "slug": "2026-fifa-world-cup-winner-595" },
+      "answerabilityNote": "get_event_live_volume with slug='2026-fifa-world-cup-winner-595' returns markets[] with title, value (live volume), shareOfEventTotal per submarket plus volumeBreakdownAvailable flag — chart top 10 rows ranked by shareOfEventTotal as a horizontal bar",
+      "expectedChartShape": "categorical_comparison"
+    },
+    {
+      "id": "19-presidential-2028-tradability",
+      "prompt": "Inside the 'Presidential Election Winner 2028' event, rank the top 8 most-active named outcomes by combined live tradability — show YES price, bid-ask spread, $5k exit slippage, total whale dollars, and a tradable_now / watchlist / headline_only classification per candidate so I can see which 2028 names actually trade vs which are headline-price only.",
+      "alphaCategory": "liquidity-screening",
+      "difficulty": "ceiling",
+      "groundedEntity": { "type": "event", "title": "Presidential Election Winner 2028", "slug": "presidential-election-winner-2028" },
+      "answerabilityNote": "rank_event_tradability with slug='presidential-election-winner-2028', limit=8 returns rankedOutcomes[] with currentPrice, spreadCents, slippage5kPercent, whaleValue, tradabilityScore, classification per candidate — chart 8 rows with bars on slippage% and whale$ + classification badges (placeholder 'Person X' candidates auto-filtered)",
+      "expectedChartShape": "categorical_comparison"
+    },
+    {
+      "id": "20-eurovision-whale-breakdown",
+      "prompt": "Inside the 'Eurovision Winner 2026' event with the contest only ~10 days out, show which national entries have the largest whale positions stacked behind them — total whale dollars per outcome, top single whale position size, whale count, and current YES probability for the top 8 nations by whale concentration.",
+      "alphaCategory": "whale-tracking",
+      "difficulty": "workflow",
+      "groundedEntity": { "type": "event", "title": "Eurovision Winner 2026", "slug": "eurovision-winner-2026" },
+      "answerabilityNote": "analyze_event_whale_breakdown with slug='eurovision-winner-2026', maxOutcomes=10 returns whalesByOutcome[] with outcome, currentPrice, totalWhaleValue, topWhalePosition, whaleCount, convictionLevel — chart top 8 rows ranked by totalWhaleValue with currentPrice secondary axis",
       "expectedChartShape": "categorical_comparison"
     }
   ],
   "reserveCandidates": [
     {
-      "id": "diplomatic-meeting-near-term-flow",
-      "prompt": "For 'US x Iran diplomatic meeting by May 5, 2026?', chart price history, current implied probability, 24h volume, spread, and recent whale flow to decide whether the low-probability price is liquid enough to trade.",
-      "alphaCategory": "near-resolution-tradability",
+      "id": "R1-cross-category-trending-heatmap",
+      "prompt": "Pull trending markets across all categories on Polymarket right now — for each of crypto, politics, sports, and pop-culture, show the top 5 markets by 24h volume so I can compare which category is generating the most volume today and which specific contracts are driving the action inside each.",
+      "alphaCategory": "momentum-detection",
       "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "us-x-iran-diplomatic-meeting-by-may-5-2026",
-        "title": "US x Iran diplomatic meeting by May 5, 2026?"
-      },
-      "answerabilityNote": "get_price_history returns historical prices; check_market_efficiency returns spread and true probability; analyze_whale_flow returns recent trade-size buckets and directional flow.",
-      "expectedChartShape": "time_series"
-    },
-    {
-      "id": "bayern-event-three-way",
-      "prompt": "For 'FC Bayern München vs. 1. FC Heidenheim 1846', compare 'Will FC Bayern München win on 2026-05-02?', 'Will 1. FC Heidenheim 1846 win on 2026-05-02?', and 'Will FC Bayern München vs. 1. FC Heidenheim 1846 end in a draw?' by probability, 24h volume, neg-risk status, and spread.",
-      "alphaCategory": "same-event-relative-pricing",
-      "difficulty": "analysis",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "bun-bay-hei-2026-05-02",
-        "title": "FC Bayern München vs. 1. FC Heidenheim 1846"
-      },
-      "answerabilityNote": "compare_market_against_related_contracts or get_event_outcomes returns sibling markets and prices; get_market_parameters returns negRisk; get_spreads returns bid-ask spread for the outcome tokens.",
+      "groundedEntity": { "type": "category", "title": "Crypto", "slug": "crypto" },
+      "answerabilityNote": "discover_trending_markets with sortBy='volume', limit=20 returns topLiquidMarketsByCategory keyed by category with arrays of {title, liquidity, volume24h} per category — chart 20 rows grouped by category with bars on 24h volume",
       "expectedChartShape": "categorical_comparison"
     },
     {
-      "id": "villarreal-event-three-way",
-      "prompt": "For 'Villarreal CF vs. Levante UD', chart the three-way market across 'Will Villarreal CF win on 2026-05-02?', 'Will Levante UD win on 2026-05-02?', and 'Will Villarreal CF vs. Levante UD end in a draw?' by implied probability, 24h volume, and tradability.",
-      "alphaCategory": "same-event-relative-pricing",
-      "difficulty": "analysis",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "lal-vil-lev-2026-05-02",
-        "title": "Villarreal CF vs. Levante UD"
-      },
-      "answerabilityNote": "get_event_outcomes returns the event's three markets, prices, and volumes; rank_event_tradability or analyze_event_outcome_liquidity adds spreads, depth, and slippage metrics.",
+      "id": "R2-okc-thunder-holders",
+      "prompt": "For 'Will the Oklahoma City Thunder win the 2026 NBA Finals?' (slug `will-the-oklahoma-city-thunder-win-the-2026-nba-finals`, currently the favorite at ~60% YES), show me the top 15 YES holders by USD position value — with rank, position size, and percent of total YES supply — so I can see how concentrated the conviction is on the playoff favorite right now.",
+      "alphaCategory": "whale-tracking",
+      "difficulty": "lookup",
+      "groundedEntity": { "type": "market", "title": "Will the Oklahoma City Thunder win the 2026 NBA Finals?", "slug": "will-the-oklahoma-city-thunder-win-the-2026-nba-finals" },
+      "answerabilityNote": "get_top_holders with slug='will-the-oklahoma-city-thunder-win-the-2026-nba-finals', outcome='YES', limit=15 returns topHolders.yes[] with rank, value, percentOfSupply per holder — chart 15 rows ranked descending by USD value",
       "expectedChartShape": "categorical_comparison"
     },
     {
-      "id": "ufc-main-card-liquidity",
-      "prompt": "For 'UFC Fight Night: Carlos Prates vs. Jack Della Maddalena (Welterweight, Main Card)', chart implied probability, recent trade-size buckets, top-holder concentration, and exit slippage for both outcome tokens.",
-      "alphaCategory": "single-market-fight-liquidity",
+      "id": "R3-jd-vance-yes-no-split",
+      "prompt": "For 'Will JD Vance win the 2028 US Presidential Election?' (slug `will-jd-vance-win-the-2028-us-presidential-election`, YES at $0.205 and $784k 24h volume), pull the top 12 YES holders and top 12 NO holders side by side with USD position value per holder so I can see whether smart money is loading the YES side at the current 20% implied probability or fading it.",
+      "alphaCategory": "whale-tracking",
       "difficulty": "workflow",
-      "groundedEntity": {
-        "type": "market",
-        "slug": "ufc-car19-jac9-2026-05-02",
-        "title": "UFC Fight Night: Carlos Prates vs. Jack Della Maddalena (Welterweight, Main Card)"
-      },
-      "answerabilityNote": "analyze_single_market_whales returns whale flow and top-holder concentration; analyze_market_liquidity returns exit slippage; check_market_efficiency returns current implied probabilities and spread.",
-      "expectedChartShape": "metric_table_plus_chart"
+      "groundedEntity": { "type": "market", "title": "Will JD Vance win the 2028 US Presidential Election?", "slug": "will-jd-vance-win-the-2028-us-presidential-election" },
+      "answerabilityNote": "get_top_holders with slug='will-jd-vance-win-the-2028-us-presidential-election', outcome='BOTH', limit=12 returns topHolders.{yes,no}[] with rank, value, percentOfSupply — chart 24 rows split YES vs NO with two color series",
+      "expectedChartShape": "multi_series"
     },
     {
-      "id": "lol-drx-ns-market-map",
-      "prompt": "For 'LoL: Kiwoom DRX vs Nongshim Red Force (BO3) - LCK Rounds 1-2', chart the main match, Game 1 Winner, Game 2 Winner, Games Total: O/U 2.5, and Game Handicap: NS (-1.5) vs Kiwoom DRX (+1.5) by implied probability and 24h volume.",
-      "alphaCategory": "event-submarket-map",
-      "difficulty": "analysis",
-      "groundedEntity": {
-        "type": "event",
-        "slug": "lol-drx-ns-2026-05-02",
-        "title": "LoL: Kiwoom DRX vs Nongshim Red Force (BO3) - LCK Rounds 1-2"
-      },
-      "answerabilityNote": "get_event_outcomes returns all associated submarkets with prices and volume; get_event_live_volume can return live event-level volume breakdown when available.",
+      "id": "R4-fed-june-rate-distribution",
+      "prompt": "For 'Will the Fed decrease interest rates by 25 bps after the June 2026 meeting?' (slug `will-the-fed-decrease-interest-rates-by-25-bps-after-the-june-2026-meeting`, currently $0.0245 YES), compare against the sibling Fed June 2026 outcomes (no change, 50+ bps cut, hike, etc.) — show YES price, spread, and 24h volume per outcome so I can see the implied Fed-decision distribution and whether 25bps is rich, cheap, or fair vs the rest of the curve.",
+      "alphaCategory": "efficiency-arbitrage",
+      "difficulty": "workflow",
+      "groundedEntity": { "type": "market", "title": "Will the Fed decrease interest rates by 25 bps after the June 2026 meeting?", "slug": "will-the-fed-decrease-interest-rates-by-25-bps-after-the-june-2026-meeting" },
+      "answerabilityNote": "compare_market_against_related_contracts with marketQuery='Will the Fed decrease interest rates by 25 bps after the June 2026 meeting?' returns siblingOutcomes[] with matchedName, currentPrice, spread, volume per Fed outcome + richOrCheap classification + eventPriceSum — chart 5-6 sibling rows showing rate-decision distribution",
       "expectedChartShape": "categorical_comparison"
+    },
+    {
+      "id": "R5-wti-full-strike-curve",
+      "prompt": "Across all strikes in the 'What will WTI Crude Oil (WTI) hit in May 2026?' event, pull every YES probability + 24h volume from the LOW $80 strike up through the HIGH $150 strike (15+ outcomes total) so I can plot the full implied probability curve and see where the market expects WTI to settle in May.",
+      "alphaCategory": "event-distribution",
+      "difficulty": "ceiling",
+      "groundedEntity": { "type": "event", "title": "What will WTI Crude Oil (WTI) hit in May 2026?", "slug": "what-price-will-wti-hit-in-may-2026" },
+      "answerabilityNote": "get_event_outcomes with slug='what-price-will-wti-hit-in-may-2026', sortBy='volume', limit=21 returns outcomes[] with name (strike), price (YES probability), volume per strike — chart 15-21 rows showing full probability curve + volume secondary axis",
+      "expectedChartShape": "multi_series"
+    },
+    {
+      "id": "R6-iran-airspace-whale-composite",
+      "prompt": "For 'Iran closes its airspace by May 8?' (slug `iran-closes-its-airspace-by-may-8`, $2.68M 24h volume, YES at $0.225), run a combined whale + recent-flow analysis — show the top 8 holder positions on each side (YES vs NO) with USD value and conviction tier, plus the small/medium/whale buy/sell breakdown over the last 24h so I can see whether smart money has piled into the May 8 deadline.",
+      "alphaCategory": "whale-tracking",
+      "difficulty": "ceiling",
+      "groundedEntity": { "type": "market", "title": "Iran closes its airspace by May 8?", "slug": "iran-closes-its-airspace-by-may-8" },
+      "answerabilityNote": "analyze_single_market_whales with slug='iran-closes-its-airspace-by-may-8', hoursBack=24 returns yesWhales[] and noWhales[] (top holders per side with USD value and conviction tier) plus whaleFlow.flowBySize buckets — chart 16 holder rows split by side with USD value bars; secondary mini-chart of bucket flow",
+      "expectedChartShape": "multi_series"
     }
-  ],
-  "droppedThemes": [
-    "Five-minute crypto Up or Down markets from endingSoon were dropped because they are likely to expire before homepage capture.",
-    "Cross-venue arbitrage or comparison prompts were dropped to keep the showcase single-contributor.",
-    "Generic category discovery prompts were dropped because they did not name enough concrete live entities.",
-    "Same-day sports markets were mostly moved to reserves because longer-lived markets are more stable for showcase capture.",
-    "Narrative-only resolution-rule prompts were dropped unless paired with chartable price, flow, liquidity, or holder data."
   ]
 }

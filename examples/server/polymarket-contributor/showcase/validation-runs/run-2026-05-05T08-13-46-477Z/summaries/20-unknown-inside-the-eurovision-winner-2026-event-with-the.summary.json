@@ -1,0 +1,130 @@
+{
+  "id": "20-unknown-inside-the-eurovision-winner-2026-event-with-the",
+  "index": 19,
+  "provider": "unknown",
+  "prompt": "Inside the 'Eurovision Winner 2026' event with the contest only ~10 days out, show which national entries have the largest whale positions stacked behind them — total whale dollars per outcome, top single whale position size, whale count, and current YES probability for the top 8 nations by whale concentration.",
+  "expectedMinimumRows": 8,
+  "expectedReason": "prompt asks for an eight-item comparison",
+  "startedAt": "2026-05-05T08:37:33.090Z",
+  "finishedAt": "2026-05-05T08:38:55.465Z",
+  "durationMs": 82375,
+  "outcomeType": "answer",
+  "responseChars": 1208,
+  "responsePreview": "As of May 5, 2026, whale conviction for the Eurovision Winner 2026 event is heavily concentrated in Finland and Greece. Finland leads with over $455,000 in whale-backed positions, more than double the next closest competitor.\n\nThe following table displays the top 8 nations by whale concentration:\n\n| Nation | Current YES Probability | Total Whale Dollars | Top Single Whale Position | Whale Count |\n| :--- | :--- | :--- | :--- | :--- |\n| Finland | 0.3535 | $455,887.48 | $194,288.45 | 25 |\n| Greece | 0.1745 | $203,983.28 | $68,819.76 | 20 |\n| Austria | 0.0025 | $2,780.85 | $1,250.00 | 1 |\n| Estonia | 0.0025 | $2,747.34 | $1,169.28 | 1 |\n| Armenia | 0.0025 | $2,732.70 | $968.64 | 0 |\n| Albania | 0.0015 | $1,637.95 | $344.48 | 0 |\n| Montenegro | 0.0015 | $1,636.78 | $237.61 | 0 |\n| Georgia | 0.0015 | $1,635.41 | $416.61 | 0 |\n\nThe associated whale concentration data reveals a significant \"long tail\" effect. While Finland and Greece have \"extreme\" conviction levels with dozens of active whales, the remaining nations see a sharp drop-off, with very low probability and minimal large-scale position sizes. This suggests smart money is currently focused almost exclusively on the top two front-...",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 0,
+  "agentDeclaredArtifacts": {
+    "chart": 1,
+    "metricTable": 0
+  },
+  "chartSummaries": [
+    {
+      "title": "Eurovision Winner 2026 — whale concentration by nation",
+      "type": "line",
+      "rowCount": 8,
+      "distinctXCount": 8,
+      "numericSeriesCount": 1,
+      "numericSeriesWithVariation": 1,
+      "xKey": "rank",
+      "seriesKeys": [
+        "totalWhaleValue"
+      ],
+      "sampleRows": [
+        {
+          "rank": 1,
+          "outcome": "Finland",
+          "conditionId": "0xc6ddb19f848ac363330d0a690cfe6818d4c51e837161a41d42675eda27767ed0",
+          "currentPrice": 0.3535,
+          "totalWhaleValue": 455887.48,
+          "topWhalePosition": 194288.45,
+          "whaleCount": 25,
+          "holdersScanned": 500,
+          "returnedHolderSampleCount": 20,
+          "convictionLevel": "extreme"
+        },
+        {
+          "rank": 2,
+          "outcome": "Greece",
+          "conditionId": "0x7382a5e41b0fec7ba5fd4d62191fc1cf4504d3768970c46d4c9185615c416872",
+          "currentPrice": 0.1745,
+          "totalWhaleValue": 203983.28,
+          "topWhalePosition": 68819.76,
+          "whaleCount": 20,
+          "holdersScanned": 500,
+          "returnedHolderSampleCount": 20,
+          "convictionLevel": "extreme"
+        },
+        {
+          "rank": 3,
+          "outcome": "Austria",
+          "conditionId": "0x3dbf1d213f9048353b073e8b02585b1d378b88cd05599abd23b00709120ad1f7",
+          "currentPrice": 0.0025,
+          "totalWhaleValue": 2780.85,
+          "topWhalePosition": 1250,
+          "whaleCount": 1,
+          "holdersScanned": 264,
+          "returnedHolderSampleCount": 20,
+          "convictionLevel": "moderate"
+        }
+      ],
+      "needsDualAxis": false,
+      "willRenderDualAxis": false,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": true,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": true,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": true,
+      "expectsMarketLabels": false
+    },
+    "failures": [
+      "no chart matched the prompt's requested axis, chart type, and metrics",
+      "chart 0: categorical comparison prompt rendered as a line chart instead of a categorical chart",
+      "chart 0: x-axis does not use human-readable outcome, candidate, or market labels",
+      "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+    ],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "Eurovision Winner 2026 — whale concentration by nation",
+        "type": "line",
+        "xKey": "rank",
+        "seriesKeys": [
+          "totalWhaleValue"
+        ],
+        "passes": false,
+        "failures": [
+          "categorical comparison prompt rendered as a line chart instead of a categorical chart",
+          "x-axis does not use human-readable outcome, candidate, or market labels",
+          "probability prompt did not chart a probability, odds, yes-price, or price series"
+        ]
+      }
+    ],
+    "pass": false
+  },
+  "semanticFailures": [
+    "no chart matched the prompt's requested axis, chart type, and metrics",
+    "chart 0: categorical comparison prompt rendered as a line chart instead of a categorical chart",
+    "chart 0: x-axis does not use human-readable outcome, candidate, or market labels",
+    "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+  ],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+    "semantic chart audit failed: chart 0: categorical comparison prompt rendered as a line chart instead of a categorical chart",
+    "semantic chart audit failed: chart 0: x-axis does not use human-readable outcome, candidate, or market labels",
+    "semantic chart audit failed: chart 0: probability prompt did not chart a probability, odds, yes-price, or price series"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-05T08-13-46-477Z/raw/20-unknown-inside-the-eurovision-winner-2026-event-with-the.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-05T08-13-46-477Z/summaries/20-unknown-inside-the-eurovision-winner-2026-event-with-the.summary.json"
+}

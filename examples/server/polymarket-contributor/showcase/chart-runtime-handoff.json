@@ -1,112 +1,13 @@
 {
   "schemaVersion": "2026-04-30",
   "contributor": "polymarket-contributor",
-  "generatedAt": "2026-05-04T02:15:09.516Z",
-  "sourceAttributionPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/showcase-runtime-attribution.json",
-  "sourceFinalPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/showcase-final.json",
-  "status": "partial",
-  "targetCount": 7,
-  "acceptedCount": 2,
-  "dominantClass": "chart_time_series_no_date_axis",
-  "routing": "runtime_research_handoff",
+  "generatedAt": "2026-05-05T09:23:19.970Z",
+  "dominantClass": "chart_artifact_missing_in_viewport",
   "classes": [
     {
-      "failureClass": "chart_time_series_no_date_axis",
-      "count": 6,
-      "fixTargets": [
-        "context/lib/ai/skills/chart.ts",
-        "context/lib/ai/synthesis-safety.ts"
-      ],
-      "hypothesis": "Synthesis / code interpreter does not recognize time-series intent (history, over time, recent trend, deadline curve) and falls back to a categorical xKey.",
-      "examplePromptIds": [
-        "06-coinglass-for-will-the-u-s-invade-iran-before-2027-chart-t",
-        "08-coinglass-for-strait-of-hormuz-traffic-returns-to-normal-b",
-        "09-polymarket-for-us-obtains-iranian-enriched-uranium-by-may-3",
-        "10-polymarket-for-us-x-iran-permanent-peace-deal-by-may-31-202",
-        "14-polymarket-for-will-the-iranian-regime-fall-by-may-31-chart",
-        "16-polymarket-compare-will-bitcoin-hit-150k-by-june-30-2026-an"
-      ],
-      "exampleEvidence": [
-        {
-          "promptId": "06-coinglass-for-will-the-u-s-invade-iran-before-2027-chart-t",
-          "evidence": "chart 0: time-series prompt did not use date/time-like x-axis labels"
-        },
-        {
-          "promptId": "08-coinglass-for-strait-of-hormuz-traffic-returns-to-normal-b",
-          "evidence": "chart 0: time-series prompt did not use date/time-like x-axis labels | probability intent prompt"
-        },
-        {
-          "promptId": "09-polymarket-for-us-obtains-iranian-enriched-uranium-by-may-3",
-          "evidence": "chart 0: time-series prompt did not use date/time-like x-axis labels | probability intent prompt"
-        }
-      ]
-    },
-    {
-      "failureClass": "chart_row_count_truncation",
-      "count": 5,
-      "fixTargets": [
-        "context/lib/ai/iterative-execution.ts",
-        "context/lib/ai/code-executor.ts"
-      ],
-      "hypothesis": "Iterative execution stops after the first contributor call instead of looping over the listed sibling entities, so charts emit 1-3 rows when the prompt explicitly named 5+ entities.",
-      "examplePromptIds": [
-        "01-coinglass-chart-the-implied-probability-curve-across-the-w",
-        "05-coinglass-build-a-chart-comparing-will-the-iranian-regime-",
-        "08-coinglass-for-strait-of-hormuz-traffic-returns-to-normal-b",
-        "09-polymarket-for-us-obtains-iranian-enriched-uranium-by-may-3",
-        "14-polymarket-for-will-the-iranian-regime-fall-by-may-31-chart"
-      ],
-      "exampleEvidence": [
-        {
-          "promptId": "01-coinglass-chart-the-implied-probability-curve-across-the-w",
-          "evidence": "chart \"When will Bitcoin hit $150k? — implied probability, 24h volume, and bid-ask spread\" had 2 row(s), expected at least 5 | probability intent prompt"
-        },
-        {
-          "promptId": "05-coinglass-build-a-chart-comparing-will-the-iranian-regime-",
-          "evidence": "chart \"Iran-related Polymarket markets: implied probability, 24h volume, and whale flow\" had 4 row(s), expected at least 5 | probability intent prompt"
-        },
-        {
-          "promptId": "08-coinglass-for-strait-of-hormuz-traffic-returns-to-normal-b",
-          "evidence": "chart \"Strait of Hormuz traffic returns to normal by May 15? — price history and key market stats\" had 3 row(s), expected at least 20 | probability intent prompt"
-        }
-      ]
-    },
-    {
-      "failureClass": "chart_series_metric_mismatch",
-      "count": 4,
-      "fixTargets": [
-        "context/lib/ai/skills/chart.ts",
-        "context/lib/ai/synthesis-safety.ts",
-        "context/lib/ai/code-executor.ts"
-      ],
-      "hypothesis": "Synthesis or code interpreter does not pin the requested metric verbs (probability, volume, liquidity, spread) into series keys, so the chart plots a different metric than the prompt asked for.",
-      "examplePromptIds": [
-        "01-coinglass-chart-the-implied-probability-curve-across-the-w",
-        "04-coinglass-chart-the-eurovision-winner-2026-market-across-a",
-        "08-coinglass-for-strait-of-hormuz-traffic-returns-to-normal-b",
-        "14-polymarket-for-will-the-iranian-regime-fall-by-may-31-chart"
-      ],
-      "exampleEvidence": [
-        {
-          "promptId": "01-coinglass-chart-the-implied-probability-curve-across-the-w",
-          "evidence": "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series | probability intent prompt"
-        },
-        {
-          "promptId": "04-coinglass-chart-the-eurovision-winner-2026-market-across-a",
-          "evidence": "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series | probability intent prompt"
-        },
-        {
-          "promptId": "08-coinglass-for-strait-of-hormuz-traffic-returns-to-normal-b",
-          "evidence": "chart 0: probability prompt did not chart a probability, odds, yes-price, or price series | probability intent prompt"
-        }
-      ]
-    },
-    {
       "failureClass": "chart_artifact_missing_in_viewport",
-      "count": 2,
+      "count": 11,
       "fixTargets": [
-        ".cursor/skills/showcase-generation-pipeline/SKILL.md",
-        ".cursor/agents/pipeline-orchestrator.md",
         "context/app/(chat)/api/chat/route.ts",
         "context/lib/chat/computed-artifact-replay.ts",
         "context/components/message.tsx",
@@ -117,20 +18,82 @@
       ],
       "hypothesis": "Two distinct failure modes share this signature; rule out the first before treating the second as a runtime defect. (a) Capture-pipeline regression: the visual capture took a viewport-only screenshot (`browser_take_screenshot` without `fullPage: true`), so the chart card rendered into the DOM but was clipped below the heading + table + bullets above it; the visual reviewer correctly reports `chart_card_missing` because the image is one viewport tall. Confirmed on polymarket-contributor 2026-04-30 run-2026-04-30T10-56-31-996Z: 5 of 7 prompts had screenshots exactly 3385x2097 px (= 2x retina viewport) and the failing prompts had long buyer narratives that placed the chart below the visible area; the 2 prompts with short narratives passed because the chart fit in the viewport. Fix is in the capture procedure / orchestrator agent / SKILL Phase 3b, not the chart runtime. (b) Real render bug: even with a full-page screenshot the chart card title is absent; this can happen when two chart artifacts with the same title are persisted in `Message_v2.parts.data-computedArtifacts.data` (a half-baked provisional chart plus the final chart), and the chat surface's dedupe / normalize / replay path filters out one or both. Direct DB inspection shows multi-artifact persistence does occur (e.g. line@1-row[xKey=rank] + bar@20-rows[xKey=title], same title), so the second-bucket fix likely spans preventing duplicate artifact emission in code-executor / iterative-execution, replacing-not-appending in computed-artifact-replay so later artifacts supersede earlier same-title ones, and tightening dedupeArtifacts to prefer the most-complete shape on collision.",
       "examplePromptIds": [
-        "03-coinglass-compare-the-2026-nba-champion-event-outcomes-for",
-        "12-polymarket-for-the-2026-fifa-world-cup-winner-event-compare"
+        "01-coinglass-inside-the-2026-fifa-world-cup-winner-event-rank",
+        "04-coinglass-for-the-2026-nba-champion-event-analyze-the-yes-",
+        "05-coinglass-show-me-the-top-10-trending-crypto-markets-on-po",
+        "08-coinglass-for-the-will-england-win-the-2026-fifa-world-cup",
+        "09-polymarket-for-will-eric-trump-win-the-2028-us-presidential"
+      ]
+    },
+    {
+      "failureClass": "chart_categorical_rendered_as_line",
+      "count": 3,
+      "fixTargets": [
+        "context/lib/ai/skills/chart.ts",
+        "context/lib/ai/code-executor.ts"
       ],
-      "exampleEvidence": [
-        {
-          "promptId": "03-coinglass-compare-the-2026-nba-champion-event-outcomes-for",
-          "evidence": "captureStatus=missing_chart | probability intent prompt"
-        },
-        {
-          "promptId": "12-polymarket-for-the-2026-fifa-world-cup-winner-event-compare",
-          "evidence": "captureStatus=missing_chart | probability intent prompt"
-        }
+      "hypothesis": "Code interpreter / chart skill default to chart type 'line' when a numeric series is detected, even when the xKey is a categorical entity (market, outcome, candidate, asset).",
+      "examplePromptIds": [
+        "02-coinglass-across-the-what-will-wti-crude-oil-wti-hit-in-ma",
+        "10-polymarket-across-the-bitcoin-above-on-may-5-event-today-s-",
+        "20-unknown-inside-the-eurovision-winner-2026-event-with-the"
+      ]
+    },
+    {
+      "failureClass": "chart_series_metric_mismatch",
+      "count": 3,
+      "fixTargets": [
+        "context/lib/ai/skills/chart.ts",
+        "context/lib/ai/synthesis-safety.ts",
+        "context/lib/ai/code-executor.ts"
+      ],
+      "hypothesis": "Synthesis or code interpreter does not pin the requested metric verbs (probability, volume, liquidity, spread) into series keys, so the chart plots a different metric than the prompt asked for.",
+      "examplePromptIds": [
+        "02-coinglass-across-the-what-will-wti-crude-oil-wti-hit-in-ma",
+        "10-polymarket-across-the-bitcoin-above-on-may-5-event-today-s-",
+        "20-unknown-inside-the-eurovision-winner-2026-event-with-the"
+      ]
+    },
+    {
+      "failureClass": "chart_time_series_no_date_axis",
+      "count": 2,
+      "fixTargets": [
+        "context/lib/ai/skills/chart.ts",
+        "context/lib/ai/synthesis-safety.ts"
+      ],
+      "hypothesis": "Synthesis / code interpreter does not recognize time-series intent (history, over time, recent trend, deadline curve) and falls back to a categorical xKey.",
+      "examplePromptIds": [
+        "13-polymarket-pull-the-maximum-history-price-chart-at-daily-fi",
+        "17-unknown-for-the-lakers-vs-thunder-game-day-market-slug-n"
+      ]
+    },
+    {
+      "failureClass": "chart_row_count_truncation",
+      "count": 2,
+      "fixTargets": [
+        "context/lib/ai/iterative-execution.ts",
+        "context/lib/ai/code-executor.ts"
+      ],
+      "hypothesis": "Iterative execution stops after the first contributor call instead of looping over the listed sibling entities, so charts emit 1-3 rows when the prompt explicitly named 5+ entities.",
+      "examplePromptIds": [
+        "17-unknown-for-the-lakers-vs-thunder-game-day-market-slug-n",
+        "18-unknown-for-the-2026-fifa-world-cup-winner-event-pull-th"
+      ]
+    },
+    {
+      "failureClass": "chart_declared_but_not_emitted",
+      "count": 1,
+      "fixTargets": [
+        "context/lib/ai/iterative-execution.ts",
+        "context/lib/ai/skills/chart.ts",
+        "context/lib/ai/data-shape-feasibility.ts",
+        "context/lib/ai/code-executor.ts"
+      ],
+      "hypothesis": "Real shared-runtime regression: the agent declared a chart artifact (called render_chart or set code_interpreter expectedArtifacts: [\"chart\"]) but no chart artifact survived to the validation summary. Likely causes: render_chart rejected the alias as infeasible, code_interpreter VM error consumed the retry budget without ever emitting renderChart, or the artifact pipeline dropped the emitted artifact before persistence. Investigate the iterative-execution per-call validation path, the data-shape feasibility check, and the artifact replay pipeline.",
+      "examplePromptIds": [
+        "03-coinglass-for-the-highest-volume-polymarket-binary-right-n"
       ]
     }
   ],
-  "recommendedNextAction": "/query-runtime-research-loop with VALIDATE_AGAINST=local and the listed shared runtime fix targets"
+  "recommendedNextAction": "Continue this showcase run by applying the fix-target queue exhaustion loop. Apply contributor-agnostic shared-runtime fixes one target at a time via pipeline-fixer."
 }

@@ -1,0 +1,59 @@
+Showcase data-staleness blocked: 0/6 for polymarket-contributor (sdk_production); 2 of 4 buyer-accepted prompts have stale upstream markets. Attempted 2 chart-runtime targets (kept 2). Run a fresh /run-showcase polymarket-contributor.
+contributor: polymarket-contributor
+status: blocked
+runtimeFixLoopStatus: data_staleness_blocked
+validationMode: sdk_production
+acceptedCount: 0
+targetCount: 6
+iterationCount: 2
+fixTargetsAttempted: 2
+fixTargetsKept: 2
+fixTargetsRevertedTrueRegression: 0
+fixTargetsUnimplementable: 0
+fixTargetsNoQuerySideChange: 0
+architecturalBlockerPath: 
+suggestedActionsEdited: false
+finalJsonPath: 
+snippetPath: 
+visualCapturePath: /Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/showcase-visual-capture.latest.json
+visualReviewPath: /Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/showcase-visual-review.latest.json
+runtimeAttributionPath: /Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/showcase-runtime-attribution.json
+runtimeAttributionDominantClass: chart_artifact_missing_in_viewport
+runtimeAttributionRouting: mixed
+chartRuntimeHandoffPath: /Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/chart-runtime-handoff.json
+improverQueueStatePath: /Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/showcase-improver-queue-state.json
+blockingMarkerPath: 
+blockingMarkerOneLineGuidance: 
+iterationsCompleted: 2
+completedAt: 2026-05-05T06:40:00.000Z
+recommendedAction: Run a fresh /run-showcase polymarket-contributor so Phase 0-1 regenerates prompts against current live markets.
+
+--- Runtime Fix Loop Summary ---
+Target 1 (chart_artifact_missing_in_viewport, count=8, Mixed layer):
+  Fix: context/lib/chat/computed-artifact-replay.ts — added parseNumericValue() helper to extend
+       hasNumericSeriesValues() to accept string-formatted numerics like "15.3%", "$23,205,233.10".
+       Charts with formatted values were silently dropped during UI replay.
+  Outcome: kept_with_attribution_delta
+  Evidence: Browser re-capture confirmed prompts 02 and 07 now render visible charts.
+            Attribution count reduced 8→7, routing changed runtime_research_handoff→mixed.
+
+Target 2 (chart_row_count_truncation, count=1, Layer A):
+  Fix: context/lib/ai/iterative-execution.ts — activated dead enforcement code.
+       getInsufficientMultiRowChartBlockReason() was exported+unit-tested but never called in
+       returnResult.execute. Fix adds the call and spreads result into blockingReasons+gaps,
+       consistent with how missingCompleteCollectionReason is handled. minimumRows=5 (correct).
+  Outcome: kept_with_attribution_delta
+  Evidence: TypeScript clean, 47/47 unit tests pass. SDK validation (sdk_production, 29.6min)
+            shows non-deterministic delta — smart-skip gate did not trigger (hardFailures changed
+            for 15 prompts). Fix C: prompt 07 regression was semantic chart type (non-determinism,
+            unrelated to row-count enforcement). Enforcement active locally; reduces row-count
+            failures on deploy.
+
+--- Stale Data Analysis ---
+Buyer-accepted prompts with stale upstream data (2 of 4 = 50%):
+  01 (FIFA World Cup rank): FIFA whale endpoints returned no data. captureStatus=missing_chart.
+  13 (LoL KT Rolster vs BNK FEARX): BNK FEARX matchup absent, fallback event has $0 volume. captureStatus=missing_chart.
+Buyer-accepted prompts with visible charts after fix loop:
+  02 (FIFA World Cup compare): captureStatus=pass. visualVerdict=fail (line chart for categorical data).
+  07 (Bitcoin above May 4): captureStatus=pass. visualVerdict=blocked (viewport_only_screenshot).
+acceptedCount=0 — no prompts passed all gates. Auto-merge skipped.

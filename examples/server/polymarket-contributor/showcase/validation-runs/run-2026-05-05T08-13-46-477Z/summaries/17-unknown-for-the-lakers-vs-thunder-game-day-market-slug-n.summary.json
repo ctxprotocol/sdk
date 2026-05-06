@@ -1,0 +1,120 @@
+{
+  "id": "17-unknown-for-the-lakers-vs-thunder-game-day-market-slug-n",
+  "index": 16,
+  "provider": "unknown",
+  "prompt": "For the 'Lakers vs. Thunder' game-day market (slug `nba-lal-okc-2026-05-05`, $847k 24h volume, Lakers YES at $0.125 / Thunder at $0.875), pull the 100 most recent trades and chart notional USD per trade over time, color-coded by side (BUY vs SELL), so I can see how the live tape moved through the game and where the biggest single tickets hit.",
+  "expectedMinimumRows": 20,
+  "expectedReason": "time-series chart needs enough history to show shape",
+  "startedAt": "2026-05-05T08:33:00.790Z",
+  "finishedAt": "2026-05-05T08:34:18.400Z",
+  "durationMs": 77610,
+  "outcomeType": "answer",
+  "responseChars": 2022,
+  "responsePreview": "Based on the most recent 100 trades for the Lakers vs. Thunder market (slug: `nba-lal-okc-2026-05-05`), here is the activity summary and tape analysis as of May 5, 2026. Note that this analysis is partial as the execution budget was reached before a terminal result could be finalized.\n\n### **Trade Activity Summary**\n\n| Metric | Value |\n| :--- | :--- |\n| **Total Trades Sampled** | 100 |\n| **Total Sample Volume** | $10,672.32 |\n| **Buy Volume** | $6,264.69 |\n| **Sell Volume** | $4,407.63 |\n| **Average Price** | $0.6049 |\n\n### **Largest Single Tickets (Top 5)**\n\nThe \"live tape\" shows a significant burst of activity concentrated within a very tight 4-second window. The largest tickets hit the \"Yes\" and \"No\" outcomes nearly simultaneously.\n\n| Side | Outcome | Price | Size | Notional (USD) |\n| :--- | :--- | :--- | :--- | :--- |\n| **BUY** | Yes | $0.999 | 2,006 | $2,003.99 |\n| **SELL** | BNK FearX Youth* | $0.491 | 3,979.4 | $1,953.86 |\n| **BUY** | No | $0.998 | 1,553.49 | $1,550.38 |\n| **SELL** | No | $0.996 | 1,239.39 | $1,234.43 |\n| **BUY** | No | $0.997 | 1,069 | $1,065.79 |\n\n*\\*Note: The trade feed contains some outcome labels (e.g., \"BNK FearX Youth\", \"Philadelphia Phillies\") that a...",
+  "toolsUsed": [
+    "Polymarket Intelligence"
+  ],
+  "chartCount": 1,
+  "metricTableCount": 0,
+  "agentDeclaredArtifacts": {
+    "chart": 7,
+    "metricTable": 5
+  },
+  "chartSummaries": [
+    {
+      "title": "Lakers vs. Thunder — recent trade notional by print",
+      "type": "scatter",
+      "rowCount": 100,
+      "distinctXCount": 3,
+      "numericSeriesCount": 1,
+      "numericSeriesWithVariation": 1,
+      "xKey": "time",
+      "seriesKeys": [
+        "notional"
+      ],
+      "sampleRows": [
+        {
+          "idx": 71,
+          "timestamp": 1777969738,
+          "time": "2026-05-05T08:28:58.000Z",
+          "side": "SELL",
+          "notional": 0.1,
+          "price": 0.02,
+          "size": 5,
+          "outcome": "Yes",
+          "trader": "0x7e57cddaaacb562405f38dceb1c123e3781eca80"
+        },
+        {
+          "idx": 72,
+          "timestamp": 1777969738,
+          "time": "2026-05-05T08:28:58.000Z",
+          "side": "BUY",
+          "notional": 1,
+          "price": 0.32,
+          "size": 3.125,
+          "outcome": "Down",
+          "trader": "0x5039c58a38c3fc2e4c1a4bf472f4c75f357ba717"
+        },
+        {
+          "idx": 73,
+          "timestamp": 1777969738,
+          "time": "2026-05-05T08:28:58.000Z",
+          "side": "BUY",
+          "notional": 5.9,
+          "price": 0.5751260476678196,
+          "size": 10.258619,
+          "outcome": "Down",
+          "trader": "0x088df3b7e5c1b5c2d4b7dc760863153480cf025e"
+        }
+      ],
+      "needsDualAxis": false,
+      "willRenderDualAxis": false,
+      "hasNumericSeriesValues": true
+    }
+  ],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": true,
+      "expectsProbabilityMetric": false,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [
+      "no chart matched the prompt's requested axis, chart type, and metrics",
+      "chart 0: time-series prompt did not use date/time-like x-axis labels"
+    ],
+    "chartResults": [
+      {
+        "index": 0,
+        "title": "Lakers vs. Thunder — recent trade notional by print",
+        "type": "scatter",
+        "xKey": "time",
+        "seriesKeys": [
+          "notional"
+        ],
+        "passes": false,
+        "failures": [
+          "time-series prompt did not use date/time-like x-axis labels"
+        ]
+      }
+    ],
+    "pass": false
+  },
+  "semanticFailures": [
+    "no chart matched the prompt's requested axis, chart type, and metrics",
+    "chart 0: time-series prompt did not use date/time-like x-axis labels"
+  ],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "semantic chart audit failed: no chart matched the prompt's requested axis, chart type, and metrics",
+    "semantic chart audit failed: chart 0: time-series prompt did not use date/time-like x-axis labels",
+    "chart \"Lakers vs. Thunder — recent trade notional by print\" had only 3 distinct x-axis value(s)"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-05T08-13-46-477Z/raw/17-unknown-for-the-lakers-vs-thunder-game-day-market-slug-n.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/polymarket-contributor/showcase/validation-runs/run-2026-05-05T08-13-46-477Z/summaries/17-unknown-for-the-lakers-vs-thunder-game-day-market-slug-n.summary.json"
+}
