@@ -20,9 +20,7 @@ const client = new ContextClient({
 const QUERY = [
   "Using BTC and ETH daily price data, calculate the last 90 days of daily returns,",
   "compare cumulative return, annualized volatility, and annualized Sharpe ratio,",
-  "and include both:",
-  "1. an inline return-series chart comparing BTC vs ETH cumulative returns over time",
-  "2. a compact metric table with the computed BTC/ETH metrics.",
+  "and include an inline return-series chart comparing BTC vs ETH cumulative returns over time.",
   "Then explain which asset had better risk-adjusted performance.",
 ].join(" ");
 
@@ -36,16 +34,6 @@ function summarizeChart(
     seriesKeys: artifact.spec.series.map((s) => s.key),
     rowCount: artifact.data.length,
     sampleRow: artifact.data[0],
-  };
-}
-
-function summarizeMetricTable(
-  artifact: Extract<QueryComputedArtifact, { kind: "metric_table" }>
-) {
-  return {
-    title: artifact.title,
-    rowCount: artifact.rows.length,
-    rows: artifact.rows,
   };
 }
 
@@ -91,28 +79,19 @@ async function main() {
           continue;
         }
         console.log(JSON.stringify(summarizeChart(artifact), null, 2));
-      } else if (artifact.kind === "metric_table") {
-        console.log(JSON.stringify(summarizeMetricTable(artifact), null, 2));
       } else {
         console.warn("⚠ Unknown artifact kind:", artifact);
       }
     }
 
     const chartCount = computed.filter((a) => a.kind === "chart").length;
-    const tableCount = computed.filter((a) => a.kind === "metric_table").length;
     console.log("\n=== SUMMARY ===");
     console.log("chart artifacts:", chartCount);
-    console.log("metric_table artifacts:", tableCount);
     if (chartCount === 0) {
       console.error("✗ Expected at least 1 chart artifact, got 0.");
       process.exitCode = 1;
-    }
-    if (tableCount === 0) {
-      console.error("✗ Expected at least 1 metric_table artifact, got 0.");
-      process.exitCode = 1;
-    }
-    if (chartCount > 0 && tableCount > 0) {
-      console.log("✓ Both chart and metric_table artifacts received.");
+    } else {
+      console.log("✓ Chart artifact received.");
     }
   } catch (error) {
     if (error instanceof ContextError) {

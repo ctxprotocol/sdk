@@ -850,18 +850,11 @@ describe("Query Resource", () => {
         toolCallCount: 2,
         grounded: true,
       });
-      expect(result.computedArtifacts).toHaveLength(2);
+      expect(result.computedArtifacts).toHaveLength(1);
       expect(result.computedArtifacts?.[0]?.kind).toBe("chart");
       if (result.computedArtifacts?.[0]?.kind === "chart") {
         expect(result.computedArtifacts[0].spec.xKey).toBe("date");
         expect(result.computedArtifacts[0].data[1]?.btcReturn).toBe(0.034);
-      }
-      expect(result.computedArtifacts?.[1]?.kind).toBe("metric_table");
-      if (result.computedArtifacts?.[1]?.kind === "metric_table") {
-        expect(result.computedArtifacts[1].rows[0]).toEqual({
-          metric: "BTC cumulative return",
-          value: "3.4%",
-        });
       }
       expect(
         result.developerTrace?.diagnostics?.execution?.toolRegistry
@@ -881,7 +874,14 @@ describe("Query Resource", () => {
               xKey: "x",
               yKey: "y",
               valueKey: "value",
-              series: [{ key: "value", label: "Correlation" }],
+              expectedMeasures: ["correlation"],
+              series: [
+                {
+                  key: "value",
+                  label: "Correlation",
+                  satisfies: "correlation",
+                },
+              ],
               yAxis: { label: "Asset" },
             },
             data: [
@@ -915,16 +915,47 @@ describe("Query Resource", () => {
               },
             ],
           },
+          {
+            kind: "chart",
+            title: "Probability and Volume",
+            spec: {
+              type: "composed",
+              xKey: "market",
+              expectedMeasures: ["probability", "volume"],
+              series: [
+                {
+                  key: "probability",
+                  label: "Probability",
+                  satisfies: "probability",
+                  yAxis: "left",
+                },
+                {
+                  key: "volumeUsd",
+                  label: "Volume",
+                  satisfies: "volume",
+                  yAxis: "right",
+                },
+              ],
+              yAxis: { format: "percent", valueScale: "fraction" },
+              yAxisRight: { format: "currency" },
+            },
+            data: [
+              { market: "A", probability: 0.42, volumeUsd: 1_500_000 },
+              { market: "B", probability: 0.31, volumeUsd: 900_000 },
+            ],
+          },
         ],
       });
 
       const result = await client.query.run("Render richer chart artifacts");
 
-      expect(result.computedArtifacts).toHaveLength(2);
+      expect(result.computedArtifacts).toHaveLength(3);
       const heatmap = result.computedArtifacts?.[0];
       expect(heatmap?.kind).toBe("chart");
       if (heatmap?.kind === "chart") {
         expect(heatmap.spec.type).toBe("heatmap");
+        expect(heatmap.spec.expectedMeasures).toEqual(["correlation"]);
+        expect(heatmap.spec.series[0]?.satisfies).toBe("correlation");
         expect(heatmap.spec.valueKey).toBe("value");
         expect(heatmap.data[1]?.value).toBe(0.82);
       }
@@ -934,6 +965,14 @@ describe("Query Resource", () => {
         expect(candlestick.spec.type).toBe("candlestick");
         expect(candlestick.spec.ohlc?.closeKey).toBe("close");
         expect(candlestick.spec.xAxis?.label).toBe("Date");
+      }
+      const mixedAxis = result.computedArtifacts?.[2];
+      expect(mixedAxis?.kind).toBe("chart");
+      if (mixedAxis?.kind === "chart") {
+        expect(mixedAxis.spec.yAxis?.valueScale).toBe("fraction");
+        expect(mixedAxis.spec.yAxisRight?.format).toBe("currency");
+        expect(mixedAxis.spec.series[1]?.yAxis).toBe("right");
+        expect(mixedAxis.spec.series[1]?.satisfies).toBe("volume");
       }
     });
 

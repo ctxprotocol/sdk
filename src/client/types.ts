@@ -529,6 +529,8 @@ export interface QueryChartSeries {
   label?: string;
   type?: QueryChartSeriesType;
   errorKey?: string;
+  yAxis?: "left" | "right";
+  satisfies?: string;
 }
 
 /** Optional axis configuration for a structured chart spec. */
@@ -536,6 +538,7 @@ export interface QueryChartAxis {
   type?: QueryChartAxisType;
   label?: string;
   format?: QueryChartValueFormat;
+  valueScale?: "fraction" | "percent_points";
 }
 
 /** Structured chart spec describing layout for a chart artifact. */
@@ -543,8 +546,10 @@ export interface QueryChartSpec {
   type: QueryChartType;
   xKey: string;
   series: QueryChartSeries[];
+  expectedMeasures?: string[];
   xAxis?: QueryChartAxis;
   yAxis?: QueryChartAxis;
+  yAxisRight?: QueryChartAxis;
   legend?: boolean;
   stacked?: boolean;
   brush?: boolean;
@@ -575,21 +580,14 @@ export interface QueryChartSpec {
  *
  * Charts are returned as a structured `{ spec, data }` pair so SDK consumers
  * can render them with any compatible charting library. The first-party web UI
- * renders these specs with Recharts. Metric tables are rendered as compact
- * key-value tables.
+ * renders these specs with Recharts.
  */
-export type QueryComputedArtifact =
-  | {
-      kind: "chart";
-      spec: QueryChartSpec;
-      data: QueryChartDataRow[];
-      title?: string;
-    }
-  | {
-      kind: "metric_table";
-      title?: string;
-      rows: Array<{ metric: string; value: string }>;
-    };
+export type QueryComputedArtifact = {
+  kind: "chart";
+  spec: QueryChartSpec;
+  data: QueryChartDataRow[];
+  title?: string;
+};
 
 export interface QueryToolCallFailureSample {
   /** Display name of the contributor tool whose call failed. */
