@@ -42,6 +42,11 @@ const HOP_BY_HOP_HEADERS = new Set([
   "upgrade",
 ]);
 
+// Context signs MCP requests with a platform JWT in Authorization. Exa's hosted
+// MCP at mcp.exa.ai interprets Bearer as an Exa access token; forwarding our
+// JWT produces JSON-RPC -32000 "The access token is invalid or expired."
+const STRIP_FROM_EXA_UPSTREAM = new Set(["authorization"]);
+
 const ADVANCED_SEARCH_ARG_KEYS = [
   "category",
   "endCrawlDate",
@@ -154,7 +159,12 @@ function buildUpstreamHeaders(req: Request): Headers {
   const headers = new Headers();
 
   for (const [name, rawValue] of Object.entries(req.headers)) {
-    if (rawValue === undefined || HOP_BY_HOP_HEADERS.has(name.toLowerCase())) {
+    const lower = name.toLowerCase();
+    if (
+      rawValue === undefined ||
+      HOP_BY_HOP_HEADERS.has(lower) ||
+      STRIP_FROM_EXA_UPSTREAM.has(lower)
+    ) {
       continue;
     }
 
