@@ -1,0 +1,47 @@
+{
+  "id": "08-coinglass-for-deribit-options-eth-analyze-whether-the-eth-",
+  "index": 7,
+  "provider": "coinglass",
+  "prompt": "For deribit options ETH, analyze whether the ETH volatility surface is front-loaded by comparing iv_1w, iv_1m, iv_3m, skew_1w, skew_1m, and dvol_close from Velo options rows.",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-05-14T12:31:27.599Z",
+  "finishedAt": "2026-05-14T12:36:52.805Z",
+  "durationMs": 325206,
+  "outcomeType": "answer",
+  "responseChars": 3042,
+  "responsePreview": "The ETH Deribit options volatility surface is **not front-loaded** over the May 7–14, 2026 period. Instead, it displays a normal, upward-sloping term structure with front-dated IVs consistently trading below back-dated IVs.\n\n### 7-Day Average Summary\n\n| Metric | Average Value |\n|---|---|\n| iv_1w | 45.718462043498405 |\n| iv_1m | 51.33634581721233 |\n| iv_3m | 55.77347137315529 |\n| dvol_close | 53.94 |\n| skew_1w | 2.378275453224803 |\n| skew_1m | 4.3876176970804615 |\n| iv_1w / iv_1m | 0.8904891409623983 |\n| iv_1m / iv_3m | 0.920433381437396 |\n\n### Daily Breakdown (May 7 – May 14, 2026)\n\n| Date | iv_1w | iv_1m | iv_3m | skew_1w | skew_1m | dvol_close | iv_1w/1m | iv_1m/3m |\n|---|---|---|---|---|---|---|---|---|\n| 2026-05-07 | 46.88410768011977 | 52.251581187066165 | 56.22427852895573 | 0.5574180107759136 | 4.986685609013702 | 54.22 | 0.8972763429353405 | 0.9293419596332639 |\n| 2026-05-08 | 43.187359079861665 | 50.707571849888566 | 55.86190062468983 | 0.5354479613898977 | 3.015067127656426 | 53.45 | 0.8516944808106912 | 0.9077308735083898 |\n| 2026-05-09 | 45.55497280505989 | 51.480225998884066 | 55.991866294487735 | 2.451938827339938 | 2.8668877456256747 | 53.79 | 0.8849023468942693 | 0....",
+  "toolsUsed": [
+    "Velo Data"
+  ],
+  "chartCount": 0,
+  "metricTableCount": 0,
+  "agentDeclaredArtifacts": {
+    "chart": 0,
+    "metricTable": 0
+  },
+  "chartSummaries": [],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": false,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [],
+    "chartResults": [],
+    "pass": true
+  },
+  "semanticFailures": [],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "no chart artifact was emitted"
+  ],
+  "buyerValueScore": 1,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/showcase/validation-runs/run-2026-05-14T12-15-44-280Z/raw/08-coinglass-for-deribit-options-eth-analyze-whether-the-eth-.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/showcase/validation-runs/run-2026-05-14T12-15-44-280Z/summaries/08-coinglass-for-deribit-options-eth-analyze-whether-the-eth-.summary.json"
+}

@@ -1,0 +1,1553 @@
+{
+  "success": true,
+  "response": "No. The analyzed futures data for **binance-futures:SOLUSDT** shows the opposite structure. As of the latest data (fetched **2026-05-14T12:26:26.755Z**), funding is **negative** and open interest is **decreasing**.\n\n| Metric | Value |\n|---|---|\n| `latestFundingRate` | -0.00005538 |\n| `averageFundingRate` | -0.00001018 |\n| `firstOpenInterestUsd` | 1,098,123,268.15 |\n| `latestOpenInterestUsd` | 946,535,670.72 |\n| `openInterestChangeUsd` | -151,587,597.43 |\n| `buyLiquidationsUsd` | 8,562,864.39 |\n| `sellLiquidationsUsd` | 13,085,181.38 |\n| `liquidationImbalanceUsd` | -4,522,316.99 |\n\n**Implications for crowded long risk:**\n\n- **Negative funding** indicates shorts are paying longs, not a premium driven by over-crowded long demand.\n- **Open interest fell by ~$151.6M** (~13.8%), showing net deleveraging rather than leveraged long accumulation.\n- **`sellLiquidationsUsd` exceeded `buyLiquidationsUsd` by ~$4.5M**, indicating more forced selling to close longs than forced buying to close shorts.\n\nOverall, this structure suggests **crowded long risk is diminishing**, not building. The market is unwinding leverage and flushing out long positions rather than attracting new crowded long exposure.",
+  "toolsUsed": [
+    {
+      "id": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+      "name": "Velo Data",
+      "skillCalls": 1
+    }
+  ],
+  "cost": {
+    "totalCostUsd": "0.031507",
+    "toolCostUsd": "0.000000",
+    "modelCostUsd": "0.031507"
+  },
+  "durationMs": 99696,
+  "outcomeType": "answer",
+  "querySession": {
+    "sessionId": "f825e840-66b8-4eec-90f5-3fd2dc1d115e",
+    "attemptId": "b1969a93-4039-441c-ac90-10fb38e37e87",
+    "parentAttemptId": null,
+    "rootAttemptId": "b1969a93-4039-441c-ac90-10fb38e37e87",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "completed",
+    "checkpoint": {
+      "currentStage": "execution",
+      "latestCheckpointArtifactId": "cdc0abde-10c4-4c28-ac70-bd17421a6d80:9",
+      "canonicalDatasetId": "cdc0abde-10c4-4c28-ac70-bd17421a6d80:canonical-execution",
+      "executionProgramCurrentRevisionId": "iterative-v1"
+    }
+  },
+  "data": null,
+  "dataUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/d2191b63-a04e-49e1-9d6b-e9114a5bb069-api_query_execution_cdc0abde-10c4-4c28-ac70-bd17421a6d80_1778761666577.json",
+  "developerTrace": {
+    "summary": {
+      "toolCalls": 1,
+      "retryCount": 0,
+      "selfHealCount": 0,
+      "fallbackCount": 0,
+      "failureCount": 0,
+      "recoveryCount": 0,
+      "completionChecks": 0,
+      "loopCount": 2,
+      "toolStepCount": 2
+    },
+    "timeline": [
+      {
+        "stepType": "orchestration",
+        "event": "query-start",
+        "status": "ok",
+        "message": "Query orchestration started",
+        "timestampMs": 1778761666674,
+        "metadata": {
+          "requestId": "cdc0abde-10c4-4c28-ac70-bd17421a6d80",
+          "queryDepth": "auto"
+        }
+      },
+      {
+        "stepType": "selection",
+        "event": "selected-tools",
+        "status": "ok",
+        "timestampMs": 1778761666675,
+        "metadata": {
+          "selectedPolicy": "exploratory",
+          "plannerReasoningStage": "mechanical",
+          "oneShotBias": false,
+          "selectedTools": [
+            {
+              "toolId": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+              "toolName": "Velo Data",
+              "priceUsd": "0.000000",
+              "selectedMethodCount": 12,
+              "selectedMethods": [
+                "check_api_status",
+                "list_futures_products",
+                "list_spot_products",
+                "list_options_products",
+                "get_available_columns",
+                "get_market_rows",
+                "analyze_futures_market_structure",
+                "get_market_caps",
+                "get_futures_term_structure",
+                "get_order_book_depth",
+                "get_recent_news",
+                "build_crypto_market_memo"
+              ],
+              "omittedSelectedMethodCount": 0
+            }
+          ]
+        }
+      },
+      {
+        "stepType": "execution-setup",
+        "event": "iterative-execution-entry",
+        "status": "ok",
+        "timestampMs": 1778761666676,
+        "message": "Iterative execution received the selected tools and any clarification assumption.",
+        "metadata": {
+          "initialCode": "// iterative execution: no generated code",
+          "finalCode": "// iterative execution: no generated code",
+          "plannerQuery": "For binance-futures SOLUSDT, does the recent Velo futures structure show positive funding being paired with increasing open interest, and what does that imply about crowded long risk?",
+          "allowedModules": [],
+          "availableToolCount": 12,
+          "availableMethodNamesSample": [
+            "Velo Data.check_api_status",
+            "Velo Data.list_futures_products",
+            "Velo Data.list_spot_products",
+            "Velo Data.list_options_products",
+            "Velo Data.get_available_columns",
+            "Velo Data.get_market_rows",
+            "Velo Data.analyze_futures_market_structure",
+            "Velo Data.get_market_caps",
+            "Velo Data.get_futures_term_structure",
+            "Velo Data.get_order_book_depth",
+            "Velo Data.get_recent_news",
+            "Velo Data.build_crypto_market_memo"
+          ],
+          "selectedMethodCount": 12,
+          "selectedButFilteredOut": [],
+          "toolCallCount": 1,
+          "toolCallAttemptCount": 1,
+          "toolCallSuccessCount": 1,
+          "toolCallFailureCount": 0,
+          "toolCallFailureSamples": [],
+          "grounded": true
+        }
+      },
+      {
+        "stepType": "execution-program",
+        "event": "execution-program-lineage",
+        "status": "ok",
+        "timestampMs": 1778761666677,
+        "metadata": {
+          "executionProgram": {
+            "baseRevisionId": "iterative-v1",
+            "currentRevisionId": "iterative-v1",
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "deterministicChangeCount": 0,
+            "revisions": [
+              {
+                "revisionId": "iterative-v1",
+                "parentRevisionId": null,
+                "attempt": 1,
+                "action": "initial",
+                "reason": "initial",
+                "summary": "Iterative AI SDK tool loop",
+                "codeHash": "iterative",
+                "codeLength": 41,
+                "changedLineCount": 0,
+                "diffPreview": null,
+                "editCount": null,
+                "preservesPriorLogic": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778761666684,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 11172
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778761666685,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 27726
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1778761667674,
+        "tool": {
+          "id": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+          "name": "analyze_futures_market_structure"
+        },
+        "metadata": {
+          "args": {
+            "exchanges": [
+              "binance-futures"
+            ],
+            "products": [
+              "SOLUSDT"
+            ],
+            "lookbackHours": 72,
+            "resolution": "1h"
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"summary\":\"Analyzed 73 futures rows across 1 market groups. Compare latestFundingRate, openInterestChangeUsd, totalDollarVolume, and liquidationImbalanceUsd for directional pressure.\",\"markets\":[{\"market\":\"binance-futures:SOLUSDT\",\"firstTime\":null,\"latestTime\":null,\"latestFundingRate\":-0.00005538,\"averageFundingRate\":-0.000010182191780821899,\"latestOpenInterestUsd\":946535670.721,\"firstOpenInterestUsd\":1098123268.152,\"latestDollarVolume\":19827014.98800001,\"totalDollarVolume\":7851255410.321996,\"buyLiquidationsUsd\":8562864.39,\"sellLiquidationsUsd\":13085181.381999997,\"rowCount\":73,\"openInterestChangeUsd\":-151587597.431,\"liquidationImbalanceUsd\":-4522316.991999997}],\"rowCount\":73,\"params\":{\"type\":\"futures\",\"columns\":[\"close_price\",\"dollar_volume\",\"funding_rate\",\"dollar_open_interest_close\",\"bu...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "query-complete",
+        "status": "success",
+        "timestampMs": 1778761668675,
+        "metadata": {
+          "durationMs": 99696,
+          "executionOk": true
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "query-start",
+        "status": "ok",
+        "message": "Query orchestration started",
+        "timestampMs": 1778761666674,
+        "metadata": {
+          "requestId": "cdc0abde-10c4-4c28-ac70-bd17421a6d80",
+          "queryDepth": "auto"
+        }
+      },
+      {
+        "stepType": "selection",
+        "event": "selected-tools",
+        "status": "ok",
+        "timestampMs": 1778761666675,
+        "metadata": {
+          "selectedPolicy": "exploratory",
+          "plannerReasoningStage": "mechanical",
+          "oneShotBias": false,
+          "selectedTools": [
+            {
+              "toolId": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+              "toolName": "Velo Data",
+              "priceUsd": "0.000000",
+              "selectedMethodCount": 12,
+              "selectedMethods": [
+                "check_api_status",
+                "list_futures_products",
+                "list_spot_products",
+                "list_options_products",
+                "get_available_columns",
+                "get_market_rows",
+                "analyze_futures_market_structure",
+                "get_market_caps",
+                "get_futures_term_structure",
+                "get_order_book_depth",
+                "get_recent_news",
+                "build_crypto_market_memo"
+              ],
+              "omittedSelectedMethodCount": 0
+            }
+          ]
+        }
+      },
+      {
+        "stepType": "execution-setup",
+        "event": "iterative-execution-entry",
+        "status": "ok",
+        "timestampMs": 1778761666676,
+        "message": "Iterative execution received the selected tools and any clarification assumption.",
+        "metadata": {
+          "initialCode": "// iterative execution: no generated code",
+          "finalCode": "// iterative execution: no generated code",
+          "plannerQuery": "For binance-futures SOLUSDT, does the recent Velo futures structure show positive funding being paired with increasing open interest, and what does that imply about crowded long risk?",
+          "allowedModules": [],
+          "availableToolCount": 12,
+          "availableMethodNamesSample": [
+            "Velo Data.check_api_status",
+            "Velo Data.list_futures_products",
+            "Velo Data.list_spot_products",
+            "Velo Data.list_options_products",
+            "Velo Data.get_available_columns",
+            "Velo Data.get_market_rows",
+            "Velo Data.analyze_futures_market_structure",
+            "Velo Data.get_market_caps",
+            "Velo Data.get_futures_term_structure",
+            "Velo Data.get_order_book_depth",
+            "Velo Data.get_recent_news",
+            "Velo Data.build_crypto_market_memo"
+          ],
+          "selectedMethodCount": 12,
+          "selectedButFilteredOut": [],
+          "toolCallCount": 1,
+          "toolCallAttemptCount": 1,
+          "toolCallSuccessCount": 1,
+          "toolCallFailureCount": 0,
+          "toolCallFailureSamples": [],
+          "grounded": true
+        }
+      },
+      {
+        "stepType": "execution-program",
+        "event": "execution-program-lineage",
+        "status": "ok",
+        "timestampMs": 1778761666677,
+        "metadata": {
+          "executionProgram": {
+            "baseRevisionId": "iterative-v1",
+            "currentRevisionId": "iterative-v1",
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "deterministicChangeCount": 0,
+            "revisions": [
+              {
+                "revisionId": "iterative-v1",
+                "parentRevisionId": null,
+                "attempt": 1,
+                "action": "initial",
+                "reason": "initial",
+                "summary": "Iterative AI SDK tool loop",
+                "codeHash": "iterative",
+                "codeLength": 41,
+                "changedLineCount": 0,
+                "diffPreview": null,
+                "editCount": null,
+                "preservesPriorLogic": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778761666684,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 11172
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778761666685,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 27726
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1778761667674,
+        "tool": {
+          "id": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+          "name": "analyze_futures_market_structure"
+        },
+        "metadata": {
+          "args": {
+            "exchanges": [
+              "binance-futures"
+            ],
+            "products": [
+              "SOLUSDT"
+            ],
+            "lookbackHours": 72,
+            "resolution": "1h"
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"summary\":\"Analyzed 73 futures rows across 1 market groups. Compare latestFundingRate, openInterestChangeUsd, totalDollarVolume, and liquidationImbalanceUsd for directional pressure.\",\"markets\":[{\"market\":\"binance-futures:SOLUSDT\",\"firstTime\":null,\"latestTime\":null,\"latestFundingRate\":-0.00005538,\"averageFundingRate\":-0.000010182191780821899,\"latestOpenInterestUsd\":946535670.721,\"firstOpenInterestUsd\":1098123268.152,\"latestDollarVolume\":19827014.98800001,\"totalDollarVolume\":7851255410.321996,\"buyLiquidationsUsd\":8562864.39,\"sellLiquidationsUsd\":13085181.381999997,\"rowCount\":73,\"openInterestChangeUsd\":-151587597.431,\"liquidationImbalanceUsd\":-4522316.991999997}],\"rowCount\":73,\"params\":{\"type\":\"futures\",\"columns\":[\"close_price\",\"dollar_volume\",\"funding_rate\",\"dollar_open_interest_close\",\"bu...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "query-complete",
+        "status": "success",
+        "timestampMs": 1778761668675,
+        "metadata": {
+          "durationMs": 99696,
+          "executionOk": true
+        }
+      }
+    ],
+    "requestId": "cdc0abde-10c4-4c28-ac70-bd17421a6d80",
+    "query": "For binance-futures SOLUSDT, does the recent Velo futures structure show positive funding being paired with increasing open interest, and what does that imply about crowded long risk?",
+    "source": "backend-runtime",
+    "executionSuccess": true,
+    "executionResult": null,
+    "initialCode": "// iterative execution: no generated code",
+    "finalCode": "// iterative execution: no generated code",
+    "executionTrace": [
+      {
+        "attempt": 1,
+        "phase": "execution",
+        "result": "success",
+        "durationMs": 11172,
+        "stepNumber": 1,
+        "toolName": "velo_data__analyze_futures_market_structure",
+        "outputAlias": "analyze_futures_market_structure_1"
+      },
+      {
+        "attempt": 1,
+        "phase": "execution",
+        "result": "success",
+        "durationMs": 27726,
+        "stepNumber": 2,
+        "toolName": "finalResponse",
+        "outputAlias": "finalresponse_1"
+      }
+    ],
+    "executionProgram": {
+      "baseRevisionId": "iterative-v1",
+      "currentRevisionId": "iterative-v1",
+      "revisionCount": 1,
+      "patchCount": 0,
+      "replanCount": 0,
+      "deterministicChangeCount": 0,
+      "revisions": [
+        {
+          "revisionId": "iterative-v1",
+          "parentRevisionId": null,
+          "attempt": 1,
+          "action": "initial",
+          "reason": "initial",
+          "summary": "Iterative AI SDK tool loop",
+          "codeHash": "iterative",
+          "codeLength": 41,
+          "changedLineCount": 0,
+          "diffPreview": null,
+          "editCount": null,
+          "preservesPriorLogic": true
+        }
+      ]
+    },
+    "attemptCount": 1,
+    "toolCallHistory": [
+      {
+        "toolId": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+        "toolName": "analyze_futures_market_structure",
+        "args": {
+          "exchanges": [
+            "binance-futures"
+          ],
+          "products": [
+            "SOLUSDT"
+          ],
+          "lookbackHours": 72,
+          "resolution": "1h"
+        },
+        "result": {
+          "summary": "Analyzed 73 futures rows across 1 market groups. Compare latestFundingRate, openInterestChangeUsd, totalDollarVolume, and liquidationImbalanceUsd for directional pressure.",
+          "markets": [
+            {
+              "market": "binance-futures:SOLUSDT",
+              "firstTime": null,
+              "latestTime": null,
+              "latestFundingRate": -0.00005538,
+              "averageFundingRate": -0.000010182191780821899,
+              "latestOpenInterestUsd": 946535670.721,
+              "firstOpenInterestUsd": 1098123268.152,
+              "latestDollarVolume": 19827014.98800001,
+              "totalDollarVolume": 7851255410.321996,
+              "buyLiquidationsUsd": 8562864.39,
+              "sellLiquidationsUsd": 13085181.381999997,
+              "rowCount": 73,
+              "openInterestChangeUsd": -151587597.431,
+              "liquidationImbalanceUsd": -4522316.991999997
+            }
+          ],
+          "rowCount": 73,
+          "params": {
+            "type": "futures",
+            "columns": [
+              "close_price",
+              "dollar_volume",
+              "funding_rate",
+              "dollar_open_interest_close",
+              "buy_liquidations_dollar_volume",
+              "sell_liquidations_dollar_volume"
+            ],
+            "exchanges": [
+              "binance-futures"
+            ],
+            "products": [
+              "SOLUSDT"
+            ],
+            "coins": [],
+            "begin": 1778502386229,
+            "end": 1778761586229,
+            "resolution": "1h"
+          },
+          "fetchedAt": "2026-05-14T12:26:26.755Z"
+        }
+      }
+    ],
+    "toolSchemas": [
+      {
+        "serverName": "Velo Data",
+        "toolName": "check_api_status",
+        "description": "Check Velo API connectivity and the velo-node client version. Use this first when validating the API key or diagnosing upstream availability.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "clientVersion",
+            "fetchedAt"
+          ],
+          "properties": {
+            "status": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "clientVersion": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "list_futures_products",
+        "description": "List Velo futures products across supported exchanges. Supports filtering by exchange, product substring, coin/product text, and including delisted contracts.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number"
+            },
+            "search": {
+              "type": "string"
+            },
+            "exchange": {
+              "type": "string"
+            },
+            "includeDelisted": {
+              "type": "boolean"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "productCount",
+            "products",
+            "fetchedAt"
+          ],
+          "properties": {
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "productCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "list_spot_products",
+        "description": "List Velo spot products across supported exchanges. Useful for finding BTC, ETH, SOL, or exchange-specific spot pairs before requesting rows.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number"
+            },
+            "search": {
+              "type": "string"
+            },
+            "exchange": {
+              "type": "string"
+            },
+            "includeDelisted": {
+              "type": "boolean"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "productCount",
+            "products",
+            "fetchedAt"
+          ],
+          "properties": {
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "productCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "list_options_products",
+        "description": "List Velo options products, currently centered on Deribit under the upstream API. Use before options IV/skew queries.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number"
+            },
+            "search": {
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "productCount",
+            "products",
+            "fetchedAt"
+          ],
+          "properties": {
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "productCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "get_available_columns",
+        "description": "Return Velo's available futures, spot, and options data columns so the caller can request valid row metrics.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "futures",
+            "spot",
+            "options"
+          ],
+          "properties": {
+            "spot": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "futures": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "get_market_rows",
+        "description": "Fetch exact Velo market rows for futures, spot, or Deribit options. Use when the buyer asks for Velo rows, latest row values, OHLCV, close_price, dollar_volume, funding_rate, dollar_open_interest_close, buy/sell liquidation dollar volumes, options index_price, iv_1w, iv_1m, iv_3m, skew_1w, skew_1m, or dvol_close.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "end": {
+              "type": "number",
+              "description": "End timestamp in milliseconds."
+            },
+            "type": {
+              "enum": [
+                "futures",
+                "spot",
+                "options"
+              ],
+              "type": "string",
+              "description": "Velo row family: futures for perp metrics, spot for spot OHLCV, options for Deribit IV/skew/DVOL rows."
+            },
+            "begin": {
+              "type": "number",
+              "description": "Start timestamp in milliseconds."
+            },
+            "coins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Underlying coin filters such as BTC, ETH, or SOL; useful for options rows and cross-exchange futures rows."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum streamed rows to return."
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Exact Velo row columns to return, such as close_price, dollar_volume, funding_rate, dollar_open_interest_close, iv_1w, skew_1m, or dvol_close."
+            },
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Exchange product symbols such as BTCUSDT, ETHUSDT, SOLUSDT, or BTC-USDT-SWAP."
+            },
+            "exchanges": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Velo exchange names such as binance-futures, bybit, okex-swap, hyperliquid, binance, or deribit."
+            },
+            "resolution": {
+              "type": "string",
+              "description": "Velo row resolution such as 1m, 5m, 1h, 1d, or 1w."
+            },
+            "lookbackHours": {
+              "type": "number",
+              "description": "Relative lookback window when begin is omitted."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "params",
+            "rowCount",
+            "rows",
+            "fetchedAt"
+          ],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "analyze_futures_market_structure",
+        "description": "Analyze Velo futures rows for funding, open-interest change, dollar volume, buy/sell liquidations, and liquidation imbalance. Use for futures leverage pressure across binance-futures, bybit, okex-swap, hyperliquid, BTCUSDT, ETHUSDT, and SOLUSDT.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "coins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Underlying coins to compare across futures venues, such as BTC, ETH, or SOL."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum futures rows to stream before summarizing."
+            },
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Futures products such as BTCUSDT, ETHUSDT, SOLUSDT, BTC-USDT-SWAP, or BTC-USD."
+            },
+            "exchanges": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Velo futures exchanges, for example binance-futures, bybit, okex-swap, or hyperliquid."
+            },
+            "resolution": {
+              "type": "string",
+              "description": "Velo row resolution such as 1h for hourly futures rows."
+            },
+            "lookbackHours": {
+              "type": "number",
+              "description": "Window for open-interest change, volume, and liquidation aggregation."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "summary",
+            "markets",
+            "rowCount",
+            "params",
+            "fetchedAt"
+          ],
+          "properties": {
+            "params": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "markets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "summary": {
+              "type": "string"
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "get_market_caps",
+        "description": "Fetch Velo market-cap rows for selected coins. Use for current circ, circ_dollars, fdv, fdv_dollars, circulating supply, fully diluted valuation, or OI-to-market-cap leverage context.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "end": {
+              "type": "number",
+              "description": "End timestamp in milliseconds."
+            },
+            "begin": {
+              "type": "number",
+              "description": "Start timestamp in milliseconds."
+            },
+            "coins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Coin symbols such as BTC, ETH, or SOL."
+            },
+            "resolution": {
+              "type": "string",
+              "description": "Velo market-cap resolution, commonly 1d."
+            },
+            "lookbackHours": {
+              "type": "number",
+              "description": "Relative lookback window when begin is omitted."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "rows",
+            "rowCount",
+            "params",
+            "fetchedAt"
+          ],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "get_futures_term_structure",
+        "description": "Fetch Velo futures term-structure rows for selected coins. Use for curve-shape questions about dte points, forward IV fields when returned, basis, carry, contango, backwardation, upward-sloping, or inverted term structure.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "end": {
+              "type": "number",
+              "description": "End timestamp in milliseconds."
+            },
+            "begin": {
+              "type": "number",
+              "description": "Start timestamp in milliseconds."
+            },
+            "coins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Coin symbols such as BTC or ETH."
+            },
+            "resolution": {
+              "type": "string",
+              "description": "Velo term-structure resolution such as 1h."
+            },
+            "lookbackHours": {
+              "type": "number",
+              "description": "Relative lookback window when begin is omitted."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "rows",
+            "rowCount",
+            "params",
+            "fetchedAt"
+          ],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "get_order_book_depth",
+        "description": "Fetch Velo level-2 order book depth snapshots by exchange/product or by coin. Use for order book depth, latest mid, executable liquidity, market-impact, slippage, and venue cost comparisons.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "end": {
+              "type": "number",
+              "description": "End timestamp in milliseconds."
+            },
+            "coin": {
+              "type": "string",
+              "description": "Optional coin symbol for cross-exchange depth, such as BTC, ETH, or SOL."
+            },
+            "begin": {
+              "type": "number",
+              "description": "Start timestamp in milliseconds."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum streamed depth rows to return."
+            },
+            "product": {
+              "type": "string",
+              "description": "Product symbol such as BTCUSDT, ETHUSDT, SOLUSDT, BTC-USDT-SWAP, or BTC-USD."
+            },
+            "exchange": {
+              "type": "string",
+              "description": "Velo exchange name such as binance-futures, bybit, okex-swap, or hyperliquid."
+            },
+            "resolution": {
+              "type": "number",
+              "description": "Depth resolution in minutes, such as 1, 5, 10, 15, 30, or 60."
+            },
+            "lookbackHours": {
+              "type": "number",
+              "description": "Relative depth snapshot lookback when begin is omitted."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "rows",
+            "rowCount",
+            "latestMid",
+            "params",
+            "fetchedAt"
+          ],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "latestMid": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "get_recent_news",
+        "description": "Fetch recent Velo crypto news stories. Pair BTC-, ETH-, or SOL-tagged news with futures rows, market caps, depth, funding, liquidation, open-interest, or volatility analysis.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "begin": {
+              "type": "number",
+              "description": "Start timestamp in milliseconds."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum recent stories to return."
+            },
+            "lookbackHours": {
+              "type": "number",
+              "description": "Recent news lookback window."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "stories",
+            "storyCount",
+            "fetchedAt"
+          ],
+          "properties": {
+            "stories": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "storyCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "build_crypto_market_memo",
+        "description": "Build a compact Velo market memo for selected coins by combining futures structure, market caps, and recent news. Use for buyer-facing positioning or leverage summaries that need multiple Velo data families.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "coins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "limit": {
+              "type": "number"
+            },
+            "exchanges": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "resolution": {
+              "type": "string"
+            },
+            "lookbackHours": {
+              "type": "number"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "memo",
+            "futuresMarkets",
+            "marketCaps",
+            "news",
+            "fetchedAt"
+          ],
+          "properties": {
+            "memo": {
+              "type": "string"
+            },
+            "news": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "marketCaps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "futuresMarkets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    ],
+    "diagnostics": {
+      "selection": {
+        "selectedPolicy": "exploratory",
+        "plannerReasoningStage": "mechanical",
+        "oneShotBias": false,
+        "selectedTools": [
+          {
+            "toolId": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+            "toolName": "Velo Data",
+            "priceUsd": "0.000000",
+            "selectedMethodCount": 12,
+            "selectedMethods": [
+              "check_api_status",
+              "list_futures_products",
+              "list_spot_products",
+              "list_options_products",
+              "get_available_columns",
+              "get_market_rows",
+              "analyze_futures_market_structure",
+              "get_market_caps",
+              "get_futures_term_structure",
+              "get_order_book_depth",
+              "get_recent_news",
+              "build_crypto_market_memo"
+            ],
+            "omittedSelectedMethodCount": 0
+          }
+        ]
+      },
+      "executionContract": {
+        "plannerQuery": "For binance-futures SOLUSDT, does the recent Velo futures structure show positive funding being paired with increasing open interest, and what does that imply about crowded long risk?",
+        "allowedModules": [],
+        "intentContract": null,
+        "validation": null
+      },
+      "cost": {
+        "planningCostUsd": 0,
+        "initialExecutionCostUsd": 0.013493999999999999,
+        "rediscoveryAdditionalCostUsd": 0,
+        "synthesisCostUsd": 0.013969,
+        "totalModelCostUsd": 0.031507068,
+        "toolCostUsd": 0,
+        "totalChargedUsd": 0.031507068
+      },
+      "verification": {
+        "evaluations": [],
+        "repairEvents": [],
+        "triggerNeedsDifferentTools": false,
+        "triggerMissingCapability": null
+      },
+      "execution": {
+        "reasoningEnabled": true,
+        "receivedReasoning": true,
+        "reasoningChars": 2728,
+        "stepBudget": 10,
+        "completedStepCount": 2,
+        "toolCallCount": 1,
+        "toolRegistry": {
+          "availableToolCount": 12,
+          "availableMethodNamesSample": [
+            "Velo Data.check_api_status",
+            "Velo Data.list_futures_products",
+            "Velo Data.list_spot_products",
+            "Velo Data.list_options_products",
+            "Velo Data.get_available_columns",
+            "Velo Data.get_market_rows",
+            "Velo Data.analyze_futures_market_structure",
+            "Velo Data.get_market_caps",
+            "Velo Data.get_futures_term_structure",
+            "Velo Data.get_order_book_depth",
+            "Velo Data.get_recent_news",
+            "Velo Data.build_crypto_market_memo"
+          ],
+          "selectedMethodCount": 12,
+          "selectedButFilteredOut": [],
+          "toolCallAttemptCount": 1,
+          "toolCallSuccessCount": 1,
+          "toolCallFailureCount": 0,
+          "toolCallFailureSamples": []
+        }
+      },
+      "retryBudget": {
+        "cheapFixAttempts": 0,
+        "semanticRetries": 0
+      },
+      "stageTiming": {
+        "selectionMs": 7353,
+        "executionMs": 28917,
+        "synthesisMs": 63195,
+        "accountedMs": 99465,
+        "residualMs": 231
+      },
+      "executorDiagnostics": null,
+      "models": {
+        "overrideMode": "none",
+        "stages": [
+          {
+            "stageKey": "tool-selection",
+            "stageKind": "stage",
+            "stage": "tool-selection",
+            "surface": "query",
+            "responseShape": null,
+            "answerModelId": "kimi-k2.6-model",
+            "logicalModelId": "deepseek-v4-flash-model",
+            "requestedModelId": "deepseek-v4-flash-model",
+            "resolvedModelId": "deepseek-v4-flash-model",
+            "resolvedRuntimeModelId": "deepseek/deepseek-v4-flash",
+            "effectiveModelId": "deepseek-v4-flash-model",
+            "effectiveRuntimeModelId": "deepseek/deepseek-v4-flash",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.004044068000000001,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]",
+              "reasoningTokens": "[REDACTED]",
+              "cachedInputTokens": "[REDACTED]"
+            }
+          },
+          {
+            "stageKey": "iterative-execution",
+            "stageKind": "stage",
+            "stage": "iterative-execution",
+            "surface": "query",
+            "responseShape": null,
+            "answerModelId": "kimi-k2.6-model",
+            "logicalModelId": "kimi-k2.6-model",
+            "requestedModelId": "kimi-k2.6-model",
+            "resolvedModelId": "kimi-k2.6-model",
+            "resolvedRuntimeModelId": "moonshotai/kimi-k2.6",
+            "effectiveModelId": "kimi-k2.6-model",
+            "effectiveRuntimeModelId": "moonshotai/kimi-k2.6",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.013493999999999999,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]"
+            }
+          },
+          {
+            "stageKey": "final-synthesis",
+            "stageKind": "final-synthesis",
+            "stage": "final-synthesis",
+            "surface": "query",
+            "responseShape": "answer_with_evidence",
+            "answerModelId": "kimi-k2.6-model",
+            "logicalModelId": "kimi-k2.6-model",
+            "requestedModelId": "kimi-k2.6-model",
+            "resolvedModelId": "kimi-k2.6-model",
+            "resolvedRuntimeModelId": "moonshotai/kimi-k2.6",
+            "effectiveModelId": "kimi-k2.6-model",
+            "effectiveRuntimeModelId": "moonshotai/kimi-k2.6",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.013969,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]",
+              "reasoningTokens": "[REDACTED]",
+              "cachedInputTokens": "[REDACTED]"
+            }
+          }
+        ]
+      }
+    },
+    "governance": {
+      "policyVersion": "2026-03-05.query-data-governance.v1",
+      "redactionCount": 13,
+      "omittedSensitiveFieldsCount": 0,
+      "exposure": {
+        "runtimeArtifacts": "internal_runtime_only",
+        "durableAudit": "internal_ops_only",
+        "developerTrace": "explicit_opt_in_redacted",
+        "publicDataUrl": "explicit_request_opt_in"
+      },
+      "retention": {
+        "runtimeTtlMs": 900000,
+        "durableAuditDays": 30,
+        "publicDataUrl": "until_deleted"
+      }
+    }
+  },
+  "grounding": {
+    "availableToolCount": 12,
+    "availableMethodNamesSample": [
+      "Velo Data.check_api_status",
+      "Velo Data.list_futures_products",
+      "Velo Data.list_spot_products",
+      "Velo Data.list_options_products",
+      "Velo Data.get_available_columns",
+      "Velo Data.get_market_rows",
+      "Velo Data.analyze_futures_market_structure",
+      "Velo Data.get_market_caps",
+      "Velo Data.get_futures_term_structure",
+      "Velo Data.get_order_book_depth",
+      "Velo Data.get_recent_news",
+      "Velo Data.build_crypto_market_memo"
+    ],
+    "selectedMethodCount": 12,
+    "selectedButFilteredOut": [],
+    "toolCallCount": 1,
+    "toolCallAttemptCount": 1,
+    "toolCallSuccessCount": 1,
+    "toolCallFailureCount": 0,
+    "toolCallFailureSamples": [],
+    "grounded": true
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "auto_discovery",
+    "firstPassSuccess": true,
+    "capabilityMissSignaled": false,
+    "rediscoveryExecuted": false
+  },
+  "responseShape": "answer_with_evidence",
+  "summary": "No.",
+  "outcome": {
+    "label": "Complete answer with disclosed gaps",
+    "tone": "caution",
+    "stopReason": "complete_answer",
+    "issueClass": "missing_evidence"
+  },
+  "controller": {
+    "scope": "standard",
+    "nextAction": "return_complete_answer",
+    "actionsTaken": [
+      "inspect_current_grounding",
+      "return_complete_answer"
+    ],
+    "patchFirstProgramPreserved": false,
+    "executionProgramRevisionId": "iterative-v1",
+    "hardBudgetApplied": false
+  },
+  "evidence": {
+    "facts": [
+      {
+        "id": "path_lookup:0",
+        "label": "Root payload snapshot",
+        "path": "$",
+        "relevanceScore": null,
+        "value": null
+      }
+    ],
+    "sourceRefs": [
+      {
+        "id": "source-1",
+        "provider": "Context",
+        "dataset": "canonical execution data",
+        "observedAt": null,
+        "publishedAt": null,
+        "artifactRef": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/d2191b63-a04e-49e1-9d6b-e9114a5bb069-api_query_execution_cdc0abde-10c4-4c28-ac70-bd17421a6d80_1778761666577.json",
+        "url": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/d2191b63-a04e-49e1-9d6b-e9114a5bb069-api_query_execution_cdc0abde-10c4-4c28-ac70-bd17421a6d80_1778761666577.json",
+        "note": "Raw execution artifact for this answer."
+      }
+    ],
+    "assumptions": [],
+    "knownUnknowns": [
+      "Canonical payload is empty, so confidence is constrained by missing data.",
+      "Only one retrieval slice was selected, reducing cross-section confidence."
+    ],
+    "retrievalPlanReasonCodes": [
+      "keyword_lookup"
+    ]
+  },
+  "artifacts": {
+    "dataUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/d2191b63-a04e-49e1-9d6b-e9114a5bb069-api_query_execution_cdc0abde-10c4-4c28-ac70-bd17421a6d80_1778761666577.json",
+    "canonicalDataRef": {
+      "datasetId": "cdc0abde-10c4-4c28-ac70-bd17421a6d80:canonical-execution",
+      "hash": "9318f57b14807381e7c8b02428b3320fd210641c5f9ba99269fda94956b6c32a",
+      "bytes": 1773,
+      "publicDataUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/d2191b63-a04e-49e1-9d6b-e9114a5bb069-api_query_execution_cdc0abde-10c4-4c28-ac70-bd17421a6d80_1778761666577.json"
+    },
+    "stageArtifactKinds": [
+      "query-session-contract",
+      "tool-selection",
+      "first-pass-execution",
+      "execution-program-lineage",
+      "completeness-evaluation",
+      "canonical-dataset-registered",
+      "final-execution",
+      "synthesis-context-selection",
+      "canonical-data-url-linked"
+    ]
+  },
+  "view": null,
+  "freshness": {
+    "asOf": "2026-05-14T12:26:26.755Z",
+    "sourceTimestamps": [
+      "2026-05-14T12:26:26.755Z"
+    ],
+    "note": "Most recent evidence timestamp: 2026-05-14T12:26:26.755Z"
+  },
+  "confidence": {
+    "level": "low",
+    "reason": "Confidence is constrained by missing or weakly grounded retrieval coverage.",
+    "verifiedFactCount": 2,
+    "inferredFactCount": 2,
+    "gapCount": 2,
+    "gapSignals": [
+      {
+        "code": "empty_canonical_payload",
+        "severity": "high",
+        "detail": "Canonical payload is empty, so confidence is constrained by missing data."
+      },
+      {
+        "code": "limited_slice_coverage",
+        "severity": "medium",
+        "detail": "Only one retrieval slice was selected, reducing cross-section confidence."
+      }
+    ]
+  },
+  "usage": {
+    "durationMs": 99696,
+    "cost": {
+      "totalCostUsd": "0.031507",
+      "toolCostUsd": "0.000000",
+      "modelCostUsd": "0.031507"
+    },
+    "toolsUsed": [
+      {
+        "id": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+        "name": "Velo Data",
+        "skillCalls": 1
+      }
+    ],
+    "outcomeType": "answer",
+    "orchestrationMetrics": {
+      "parityStage": "enabled",
+      "orchestrationMode": "auto_discovery",
+      "firstPassSuccess": true,
+      "capabilityMissSignaled": false,
+      "rediscoveryExecuted": false
+    }
+  },
+  "stopReason": "complete_answer",
+  "issueClass": "missing_evidence",
+  "actionsTaken": [
+    "inspect_current_grounding",
+    "return_complete_answer"
+  ]
+}

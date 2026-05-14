@@ -1,0 +1,47 @@
+{
+  "id": "11-polymarket-compare-binance-futures-btcusdt-ethusdt-and-solu",
+  "index": 10,
+  "provider": "polymarket",
+  "prompt": "Compare binance-futures BTCUSDT, ETHUSDT, and SOLUSDT over the last 24 hours: which has the most stretched combination of funding rate, open-interest change, liquidation imbalance, and dollar volume?",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-05-14T12:52:20.480Z",
+  "finishedAt": "2026-05-14T12:56:50.673Z",
+  "durationMs": 270193,
+  "outcomeType": "answer",
+  "responseChars": 1865,
+  "responsePreview": "**BTCUSDT** shows the most stretched combination over the last 24 hours, though **ETHUSDT** is a close second. **SOLUSDT** is a distant third because its extreme funding rate is offset by much smaller absolute activity in volume, OI, and liquidations.\n\nAs of **2026-05-14T12:52:47.092Z**, here are the exact 24-hour metrics:\n\n| Market | Latest Funding Rate | Avg Funding Rate | OI Change (USD) | Total Volume (USD) | Liq Imbalance (USD) | Composite Score |\n|---|---|---|---|---|---|---|\n| binance-futures:BTCUSDT | 0.00000775 | 0.000024847200000000012 | -103183490.79500008 | 12216575411.081005 | -29582020.30300001 | 0.6945086944237648 |\n| binance-futures:ETHUSDT | 0.00001421 | 0.000043713599999999994 | 103039747.20699978 | 8644653556.966984 | -36346782.86 | 0.6811792485044867 |\n| binance-futures:SOLUSDT | -0.00005535 | -0.00009178200000000001 | -89134892.58399999 | 3303825556.396 | -5870105.087000001 | 0.25 |\n\n**How the ranking breaks down**\n\n- **BTCUSDT** leads on **dollar volume** ($12.22B) and **open-interest change** ($103.2M decline), which together dominate the composite score. Its liquidation imbalance is sell-heavy (~$29.6M) but middle-of-the-pack, and its funding rate is the lea...",
+  "toolsUsed": [
+    "Velo Data"
+  ],
+  "chartCount": 0,
+  "metricTableCount": 0,
+  "agentDeclaredArtifacts": {
+    "chart": 0,
+    "metricTable": 0
+  },
+  "chartSummaries": [],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": false,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [],
+    "chartResults": [],
+    "pass": true
+  },
+  "semanticFailures": [],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "no chart artifact was emitted"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/showcase/validation-runs/run-2026-05-14T12-15-44-280Z/raw/11-polymarket-compare-binance-futures-btcusdt-ethusdt-and-solu.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/showcase/validation-runs/run-2026-05-14T12-15-44-280Z/summaries/11-polymarket-compare-binance-futures-btcusdt-ethusdt-and-solu.summary.json"
+}

@@ -1,0 +1,47 @@
+{
+  "id": "10-polymarket-compare-btc-futures-pressure-across-binance-futu",
+  "index": 9,
+  "provider": "polymarket",
+  "prompt": "Compare BTC futures pressure across binance-futures BTCUSDT, bybit BTCUSDT, okex-swap BTC-USDT-SWAP, and hyperliquid BTC-USD using funding rate, dollar open interest change, dollar volume, and liquidation imbalance.",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-05-14T12:39:14.969Z",
+  "finishedAt": "2026-05-14T12:52:18.469Z",
+  "durationMs": 783500,
+  "outcomeType": "answer",
+  "responseChars": 2050,
+  "responsePreview": "As of **2026-05-14T12:39:35.376Z**, here is the BTC futures pressure comparison across the four requested markets. The data covers the prior **24 hours** (25 × 1h rows per venue). \n\n**Note:** Attempts to generate additional derived visualizations did not complete, so the analysis is presented in tabular and prose form only.\n\n| Market | Latest Funding Rate | Avg Funding Rate (24h) | OI Change ($) | 24h Volume ($) | Liquidation Imbalance ($) |\n|---|---|---|---|---|---|\n| binance-futures:BTCUSDT | 0.00000722 | 0.000024826 | -113469033.668 | 12125283143.834 | -29632209.694 |\n| bybit:BTCUSDT | 0.00004369 | 0.0000384656 | -17317869.368 | 5077409631.467 | -10638307.462 |\n| hyperliquid:BTC-USD | 0.0000301584 | 0.000041186784 | -53618831.413 | 2206051205.159 | -16514311.548 |\n| okex-swap:BTC-USDT-SWAP | 0.0000748875018531 | 0.000062610164733732 | 38547427.972 | 7411830871.421 | -3453500.371 |\n\n### Pressure Summary\n\n- **Funding rates**: **OKEx** shows the highest latest and average funding, indicating the strongest long-side bias and longs paying shorts. **Binance** funding is the lowest and near flat.  \n- **Open interest change**: **OKEx** is the only venue with net OI growth (+$38.55M). **...",
+  "toolsUsed": [
+    "Velo Data"
+  ],
+  "chartCount": 0,
+  "metricTableCount": 0,
+  "agentDeclaredArtifacts": {
+    "chart": 0,
+    "metricTable": 0
+  },
+  "chartSummaries": [],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": false,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [],
+    "chartResults": [],
+    "pass": true
+  },
+  "semanticFailures": [],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "no chart artifact was emitted"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/showcase/validation-runs/run-2026-05-14T12-15-44-280Z/raw/10-polymarket-compare-btc-futures-pressure-across-binance-futu.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/showcase/validation-runs/run-2026-05-14T12-15-44-280Z/summaries/10-polymarket-compare-btc-futures-pressure-across-binance-futu.summary.json"
+}

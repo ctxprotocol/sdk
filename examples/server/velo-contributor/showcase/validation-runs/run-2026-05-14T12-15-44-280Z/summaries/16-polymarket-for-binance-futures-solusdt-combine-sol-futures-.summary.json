@@ -1,0 +1,47 @@
+{
+  "id": "16-polymarket-for-binance-futures-solusdt-combine-sol-futures-",
+  "index": 15,
+  "provider": "polymarket",
+  "prompt": "For binance-futures SOLUSDT, combine SOL futures funding/OI/liquidations with SOL market-cap context from Velo to estimate whether current SOL perp leverage looks large relative to the coin size.",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-05-14T13:22:18.459Z",
+  "finishedAt": "2026-05-14T13:26:37.352Z",
+  "durationMs": 258893,
+  "outcomeType": "answer",
+  "responseChars": 1995,
+  "responsePreview": "As of the latest data (~13:22 UTC on May 14, 2026), SOL perp leverage on **Binance Futures SOLUSDT alone** looks **moderate—not excessively large** relative to SOL’s overall market cap.\n\n### Key metrics\n\n| Metric | Value |\n|---|---|\n| Open Interest (OI) | $953.1M |\n| 24h OI Change | **−$64.3M** |\n| 24h Perp Volume | $3.00B |\n| Volume / OI | 3.14x |\n| Latest Funding Rate | **−0.00626%** |\n| 24h Avg Funding Rate | **−0.00903%** |\n| 24h Buy Liquidations | $1.23M |\n| 24h Sell Liquidations | $3.83M |\n| Liquidation Imbalance | **−$2.59M** (more sells) |\n| SOL Circulating Market Cap | $52.66B |\n| OI / Circulating Market Cap | **1.81%** |\n| OI / FDV | 1.67% |\n| Latest Price | $91.27 |\n\n### Interpretation\n\n- **Size relative to the coin:** At **1.81% of circulating market cap**, Binance SOLUSDT OI is fairly low for a major L1 token. Typical “elevated” leverage scenarios often see OI/Mcap well above 3–5%; this reading suggests leverage is not bloated at the coin level.\n- **Funding:** Rates are slightly negative, indicating a modest short skew (shorts paying longs), but the magnitude is mild and has been easing over recent hours (from roughly −0.016% earlier toward −0.006% now).\n- **Deleveragi...",
+  "toolsUsed": [
+    "Velo Data"
+  ],
+  "chartCount": 0,
+  "metricTableCount": 0,
+  "agentDeclaredArtifacts": {
+    "chart": 0,
+    "metricTable": 0
+  },
+  "chartSummaries": [],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": false,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [],
+    "chartResults": [],
+    "pass": true
+  },
+  "semanticFailures": [],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "no chart artifact was emitted"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/showcase/validation-runs/run-2026-05-14T12-15-44-280Z/raw/16-polymarket-for-binance-futures-solusdt-combine-sol-futures-.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/showcase/validation-runs/run-2026-05-14T12-15-44-280Z/summaries/16-polymarket-for-binance-futures-solusdt-combine-sol-futures-.summary.json"
+}

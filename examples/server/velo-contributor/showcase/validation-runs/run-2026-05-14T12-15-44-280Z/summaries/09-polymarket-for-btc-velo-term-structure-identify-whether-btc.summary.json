@@ -1,0 +1,47 @@
+{
+  "id": "09-polymarket-for-btc-velo-term-structure-identify-whether-btc",
+  "index": 8,
+  "provider": "polymarket",
+  "prompt": "For BTC Velo term structure, identify whether BTC forward IV is upward sloping or inverted across the dte points currently returned by Velo.",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-05-14T12:36:54.816Z",
+  "finishedAt": "2026-05-14T12:39:12.961Z",
+  "durationMs": 138145,
+  "outcomeType": "answer",
+  "responseChars": 610,
+  "responsePreview": "The BTC forward IV term structure from Velo is **upward sloping** overall.\n\n| DTE | Forward IV (%) |\n|-----|----------------|\n| 0.8 | 44.42 |\n| 1.8 | 36.95 |\n| 2.8 | 20.93 |\n| 3.8 | 35.48 |\n| 7.8 | 39.41 |\n| 15 | 38.50 |\n| 22 | 37.87 |\n| 43 | 38.82 |\n| 78 | 39.93 |\n| 134 | 43.09 |\n| 225 | 47.70 |\n| 316 | 46.34 |\n\nFront-to-back, forward IV rises from roughly **44.4%** at 0.8 DTE to about **46.3%** at 316 DTE, peaking at **~47.7%** around 225 DTE. The slope is not strictly monotonic: there is a sharp dip at **2.8 DTE (~20.9%)** and a slight step-down from 225 DTE to 316 DTE.\n\n*As of 2026-05-14 12:37 UTC.*",
+  "toolsUsed": [
+    "Velo Data"
+  ],
+  "chartCount": 0,
+  "metricTableCount": 0,
+  "agentDeclaredArtifacts": {
+    "chart": 0,
+    "metricTable": 0
+  },
+  "chartSummaries": [],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": false,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [],
+    "chartResults": [],
+    "pass": true
+  },
+  "semanticFailures": [],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "no chart artifact was emitted"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/showcase/validation-runs/run-2026-05-14T12-15-44-280Z/raw/09-polymarket-for-btc-velo-term-structure-identify-whether-btc.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/velo-contributor/showcase/validation-runs/run-2026-05-14T12-15-44-280Z/summaries/09-polymarket-for-btc-velo-term-structure-identify-whether-btc.summary.json"
+}

@@ -1,0 +1,2983 @@
+{
+  "success": true,
+  "response": "The latest ~48 h decline (BTC –1.39 %) is **better supported by spot dollar volume** than by perp open‑interest expansion or funding. The futures data shows high churn and long deleveraging rather than fresh leveraged conviction driving the move.\n\n**Key metrics** (Binance BTCUSDT, ~48 h through 2026‑05‑14 12:59 UTC)\n\n| Metric | Spot (Binance) | Perp (Binance‑Futures) |\n|---|---|---|\n| Price change | –1.388 % | –1.408 % |\n| Total volume | **$2.26 B** | **$21.19 B** |\n| Avg hourly volume | $46.1 M | $432.5 M |\n| Max hourly volume | $137.2 M (drop candle) | $1.53 B (drop candle) |\n| OI change | — | **+$13.5 M (+0.164 %)** |\n| Funding (start → end) | — | **0.273 % → 0.056 %** |\n| Funding range | — | –0.062 % to +0.946 % |\n\n**Why spot is the stronger support**\n\n- **Minimal OI expansion**: Despite $21 B in perp volume, OI barely budged (+0.16 %). A leverage‑driven trend usually shows material OI growth; here the volume was offset by liquidations and position closing, not new directional bets.\n- **Funding compression**: The funding rate fell from an elevated 0.27 % to near‑flat 0.06 %, even dipping slightly negative (–0.062 %). That signals long leverage being flushed out, not aggressive new shorts entering to push price lower.\n- **Spot volume spiked on the down‑candle**: The largest spot volume hour ($137 M) coincided with the sharpest hourly drop (–$929 at 2026‑05‑13 15:00 UTC), suggesting actual spot selling/rotation during the move.\n\n**Bottom line**: The move looks driven by genuine spot‑side pressure and perp long liquidation, rather than by perp open‑interest expansion or sustained funding incentives. The perp market amplified price action through churn, but did not provide the primary directional fuel.\n\n**Gaps / caveats**: This comparison is bounded to hourly OHLCV, OI, and funding from Binance venues only. Order‑book depth was not fetched, and other exchanges may show different spot/perp dynamics.",
+  "toolsUsed": [
+    {
+      "id": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+      "name": "Velo Data",
+      "skillCalls": 2
+    }
+  ],
+  "cost": {
+    "totalCostUsd": "0.071446",
+    "toolCostUsd": "0.000000",
+    "modelCostUsd": "0.071446"
+  },
+  "durationMs": 309342,
+  "outcomeType": "answer",
+  "querySession": {
+    "sessionId": "6c0ce656-978a-4c6a-aca1-4c0793e69531",
+    "attemptId": "a4151331-7c13-49c8-9616-bcccc5fc4401",
+    "parentAttemptId": null,
+    "rootAttemptId": "a4151331-7c13-49c8-9616-bcccc5fc4401",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "completed",
+    "checkpoint": {
+      "currentStage": "execution",
+      "latestCheckpointArtifactId": "e1de5af7-adf1-4caf-840d-f3f859aa826c:9",
+      "canonicalDatasetId": "e1de5af7-adf1-4caf-840d-f3f859aa826c:canonical-execution",
+      "executionProgramCurrentRevisionId": "iterative-v1"
+    }
+  },
+  "data": {
+    "spotRows": 49,
+    "futuresRows": 49,
+    "summary": {
+      "spot": {
+        "price_start": 80881.26,
+        "price_end": 79758.54,
+        "price_change_usd": -1122.72,
+        "price_change_pct": -1.388,
+        "total_volume_usd": 2258479709.47,
+        "avg_hourly_volume_usd": 46091422.64,
+        "max_hourly_volume_usd": 137204913.51
+      },
+      "futures": {
+        "price_start": 80846.3,
+        "price_end": 79707.9,
+        "price_change_usd": -1138.4,
+        "price_change_pct": -1.408,
+        "total_volume_usd": 21192656600.57,
+        "avg_hourly_volume_usd": 432503195.93,
+        "max_hourly_volume_usd": 1528508268.51,
+        "oi_start_usd": 8239378088.38,
+        "oi_end_usd": 8252925800.14,
+        "oi_change_usd": 13547711.77,
+        "oi_change_pct": 0.164,
+        "funding_start_pct": 0.00273,
+        "funding_end_pct": 0.00056,
+        "funding_avg_pct": 0.00401,
+        "funding_min_pct": -0.00062,
+        "funding_max_pct": 0.00946
+      },
+      "max_drop_hour": "2026-05-13 15:00:00",
+      "max_drop_amount": -928.8,
+      "max_rise_hour": "2026-05-12 17:00:00",
+      "max_rise_amount": 527.68
+    },
+    "chartUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/8bd734eac8fed34642eed551f2ed7f20e5b93780488a3f2fe8016a0a985a0129.png"
+  },
+  "dataUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/e8d04dd1-53ce-42ef-9287-9fdb79fc03d1-api_query_execution_e1de5af7-adf1-4caf-840d-f3f859aa826c_1778763866934.json",
+  "computedArtifacts": [
+    {
+      "kind": "image",
+      "url": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/8bd734eac8fed34642eed551f2ed7f20e5b93780488a3f2fe8016a0a985a0129.png",
+      "alt": "BTC Spot vs Futures 48h: Price, Volume, OI, Funding",
+      "title": "BTC Spot vs Futures 48h Comparison",
+      "contentHash": "8bd734eac8fed34642eed551f2ed7f20e5b93780488a3f2fe8016a0a985a0129",
+      "bytes": 253345
+    }
+  ],
+  "artifacts": {
+    "dataUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/e8d04dd1-53ce-42ef-9287-9fdb79fc03d1-api_query_execution_e1de5af7-adf1-4caf-840d-f3f859aa826c_1778763866934.json",
+    "canonicalDataRef": {
+      "datasetId": "e1de5af7-adf1-4caf-840d-f3f859aa826c:canonical-execution",
+      "hash": "2fcfb39611508ad002e73a730c580ed079e864e03476b485d23108b975321d5e",
+      "bytes": 35130,
+      "publicDataUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/e8d04dd1-53ce-42ef-9287-9fdb79fc03d1-api_query_execution_e1de5af7-adf1-4caf-840d-f3f859aa826c_1778763866934.json"
+    },
+    "stageArtifactKinds": [
+      "query-session-contract",
+      "tool-selection",
+      "first-pass-execution",
+      "execution-program-lineage",
+      "completeness-evaluation",
+      "canonical-dataset-registered",
+      "final-execution",
+      "synthesis-context-selection",
+      "canonical-data-url-linked"
+    ]
+  },
+  "developerTrace": {
+    "summary": {
+      "toolCalls": 4,
+      "retryCount": 0,
+      "selfHealCount": 0,
+      "fallbackCount": 0,
+      "failureCount": 1,
+      "recoveryCount": 0,
+      "completionChecks": 0,
+      "loopCount": 4,
+      "toolStepCount": 4
+    },
+    "timeline": [
+      {
+        "stepType": "orchestration",
+        "event": "query-start",
+        "status": "ok",
+        "message": "Query orchestration started",
+        "timestampMs": 1778763867259,
+        "metadata": {
+          "requestId": "e1de5af7-adf1-4caf-840d-f3f859aa826c",
+          "queryDepth": "auto"
+        }
+      },
+      {
+        "stepType": "selection",
+        "event": "selected-tools",
+        "status": "ok",
+        "timestampMs": 1778763867260,
+        "metadata": {
+          "selectedPolicy": "exploratory",
+          "plannerReasoningStage": "mechanical",
+          "oneShotBias": false,
+          "selectedTools": [
+            {
+              "toolId": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+              "toolName": "Velo Data",
+              "priceUsd": "0.000000",
+              "selectedMethodCount": 12,
+              "selectedMethods": [
+                "check_api_status",
+                "list_futures_products",
+                "list_spot_products",
+                "list_options_products",
+                "get_available_columns",
+                "get_market_rows",
+                "analyze_futures_market_structure",
+                "get_market_caps",
+                "get_futures_term_structure",
+                "get_order_book_depth",
+                "get_recent_news",
+                "build_crypto_market_memo"
+              ],
+              "omittedSelectedMethodCount": 0
+            }
+          ]
+        }
+      },
+      {
+        "stepType": "execution-setup",
+        "event": "iterative-execution-entry",
+        "status": "ok",
+        "timestampMs": 1778763867261,
+        "message": "Iterative execution received the selected tools and any clarification assumption.",
+        "metadata": {
+          "initialCode": "// iterative execution: no generated code",
+          "finalCode": "// iterative execution: no generated code",
+          "plannerQuery": "Compare binance spot BTCUSDT with binance-futures BTCUSDT: is the latest BTC move better supported by spot dollar volume or by perp open-interest expansion and funding?",
+          "allowedModules": [],
+          "availableToolCount": 12,
+          "availableMethodNamesSample": [
+            "Velo Data.check_api_status",
+            "Velo Data.list_futures_products",
+            "Velo Data.list_spot_products",
+            "Velo Data.list_options_products",
+            "Velo Data.get_available_columns",
+            "Velo Data.get_market_rows",
+            "Velo Data.analyze_futures_market_structure",
+            "Velo Data.get_market_caps",
+            "Velo Data.get_futures_term_structure",
+            "Velo Data.get_order_book_depth",
+            "Velo Data.get_recent_news",
+            "Velo Data.build_crypto_market_memo"
+          ],
+          "selectedMethodCount": 12,
+          "selectedButFilteredOut": [],
+          "toolCallCount": 4,
+          "toolCallAttemptCount": 2,
+          "toolCallSuccessCount": 2,
+          "toolCallFailureCount": 0,
+          "toolCallFailureSamples": [],
+          "grounded": true
+        }
+      },
+      {
+        "stepType": "execution-program",
+        "event": "execution-program-lineage",
+        "status": "ok",
+        "timestampMs": 1778763867262,
+        "metadata": {
+          "executionProgram": {
+            "baseRevisionId": "iterative-v1",
+            "currentRevisionId": "iterative-v1",
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "deterministicChangeCount": 0,
+            "revisions": [
+              {
+                "revisionId": "iterative-v1",
+                "parentRevisionId": null,
+                "attempt": 1,
+                "action": "initial",
+                "reason": "initial",
+                "summary": "Iterative AI SDK tool loop",
+                "codeHash": "iterative",
+                "codeLength": 41,
+                "changedLineCount": 0,
+                "diffPreview": null,
+                "editCount": null,
+                "preservesPriorLogic": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778763867269,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 12699
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778763867270,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 12699
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778763867271,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 93148
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778763867272,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 164594
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778763867273,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 244657
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1778763868259,
+        "tool": {
+          "id": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+          "name": "get_market_rows"
+        },
+        "metadata": {
+          "args": {
+            "type": "spot",
+            "exchanges": [
+              "binance"
+            ],
+            "products": [
+              "BTCUSDT"
+            ],
+            "columns": [
+              "close_price",
+              "dollar_volume"
+            ],
+            "resolution": "1h",
+            "lookbackHours": 48
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"params\":{\"type\":\"spot\",\"columns\":[\"close_price\",\"dollar_volume\"],\"exchanges\":[\"binance\"],\"products\":[\"BTCUSDT\"],\"coins\":[],\"begin\":1778590778699,\"end\":1778763578699,\"resolution\":\"1h\"},\"rowCount\":49,\"rows\":[{\"exchange\":\"binance\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778587200000,\"close_price\":80881.26,\"dollar_volume\":47353845.85199963},{\"exchange\":\"binance\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778590800000,\"close_price\":80466.91,\"dollar_volume\":64237912.560999796},{\"exchange\":\"binance\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778594400000,\"close_price\":80540,\"dollar_volume\":69783490.39500022},{\"exchange\":\"binance\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778598000000,\"close_price\":80336.01,\"dollar_volume\":77034621.42499983},{\"exchange\":\"binance\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"ti...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1778763868260,
+        "tool": {
+          "id": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+          "name": "get_market_rows"
+        },
+        "metadata": {
+          "args": {
+            "type": "futures",
+            "exchanges": [
+              "binance-futures"
+            ],
+            "products": [
+              "BTCUSDT"
+            ],
+            "columns": [
+              "close_price",
+              "dollar_volume",
+              "dollar_open_interest_close",
+              "funding_rate"
+            ],
+            "resolution": "1h",
+            "lookbackHours": 48
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"params\":{\"type\":\"futures\",\"columns\":[\"close_price\",\"dollar_volume\",\"dollar_open_interest_close\",\"funding_rate\"],\"exchanges\":[\"binance-futures\"],\"products\":[\"BTCUSDT\"],\"coins\":[],\"begin\":1778590779995,\"end\":1778763579995,\"resolution\":\"1h\"},\"rowCount\":49,\"rows\":[{\"exchange\":\"binance-futures\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778587200000,\"close_price\":80846.3,\"dollar_volume\":619732983.8659997,\"dollar_open_interest_close\":8239378088.375,\"funding_rate\":0.00002733},{\"exchange\":\"binance-futures\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778590800000,\"close_price\":80433.6,\"dollar_volume\":684711649.3589995,\"dollar_open_interest_close\":8239083497.611,\"funding_rate\":0.00004088},{\"exchange\":\"binance-futures\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778594400000,\"close_price\":80511,\"dollar_vol...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "error",
+        "timestampMs": 1778763868261,
+        "tool": {
+          "id": "code_interpreter",
+          "name": "code_interpreter"
+        },
+        "metadata": {
+          "args": {
+            "truncated": true,
+            "preview": "{\"intent\":\"derived metrics\",\"code\":\"import pandas as pd\\nimport matplotlib.pyplot as plt\\nimport matplotlib.ticker as mticker\\n\\nspot = get_market_rows_1[\\\"result\\\"][\\\"rows\\\"]\\nfut = get_market_rows_2[\\\"result\\\"][\\\"rows\\\"]\\n\\ndf_spot = pd.DataFrame(spot)\\ndf_fut = pd.DataFrame(fut)\\n\\ndf_spot[\\\"time\\\"] = pd.to_datetime(df_spot[\\\"time\\\"], unit=\\\"ms\\\")\\ndf_fut[\\\"time\\\"] = pd.to_datetime(df_fut[\\\"time\\\"], unit=\\\"ms\\\")\\n\\n# Sort by time ascending\\ndf_spot = df_spot.sort_values(\\\"time\\\").reset_index(drop=True)\\ndf_fut = df_fut.sort_values(\\\"time\\\").reset_index(drop=True)\\n\\n# Compute changes\\nspot_price_start = df_spot[\\\"close_price\\\"].iloc[0]\\nspot_price_end = df_spot[\\\"close_price\\\"].iloc[-1]\\nspot_change = spot_price_end - spot_price_start\\nspot_pct = spot_change / spot_price_start\\n\\nfut_pr...[truncated]"
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"ok\":false,\"error\":\"code_interpreter sandbox error: Python exited with code 1: Traceback (most recent call last):\\n  File \\\"/vercel/sandbox/bootstrap.py\\\", line 168, in <module>\\n    exec(compiled, exec_globals)\\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"user_code.py\\\", line 5, in <module>\\n    spot = get_market_rows_1[\\\"result\\\"][\\\"rows\\\"]\\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^\\nKeyError: 'result'\\n. RETRY by calling code_interpreter again in your next step with corrected Python that fixes this exact error — do NOT call finalResponse yet, do NOT call any other tool, and do NOT silently drop the requested artifact. You have 4 more code_interpreter retry attempt(s) before the runtime force-stops the per-turn budget. Common Python fixes: import pandas/numpy/matplotlib at the top of the sc...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1778763868262,
+        "tool": {
+          "id": "code_interpreter",
+          "name": "code_interpreter"
+        },
+        "metadata": {
+          "args": {
+            "truncated": true,
+            "preview": "{\"intent\":\"derived metrics\",\"code\":\"import pandas as pd\\nimport matplotlib.pyplot as plt\\n\\n# Access raw tool outputs directly (they are dicts with a 'rows' list)\\nspot = get_market_rows_1\\nfut = get_market_rows_2\\n\\n# Defensive array extraction\\ndef get_rows(data):\\n    if isinstance(data, list):\\n        return data\\n    if isinstance(data, dict):\\n        return data.get(\\\"rows\\\") or data.get(\\\"data\\\") or data.get(\\\"result\\\", {}).get(\\\"rows\\\") or []\\n    return []\\n\\nspot_rows = get_rows(spot)\\nfut_rows = get_rows(fut)\\n\\n# Build DataFrames\\ndf_spot = pd.DataFrame(spot_rows)\\ndf_fut = pd.DataFrame(fut_rows)\\n\\n# Convert timestamps\\ndf_spot[\\\"time\\\"] = pd.to_datetime(df_spot[\\\"time\\\"], unit=\\\"ms\\\")\\ndf_fut[\\\"time\\\"] = pd.to_datetime(df_fut[\\\"time\\\"], unit=\\\"ms\\\")\\n\\n# Sort ascending by t...[truncated]"
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"ok\":true,\"result\":{\"spot\":{\"price_start\":80881.26,\"price_end\":79758.54,\"price_change_usd\":-1122.72,\"price_change_pct\":-1.388,\"total_volume_usd\":2258479709.47,\"avg_hourly_volume_usd\":46091422.64,\"max_hourly_volume_usd\":137204913.51},\"futures\":{\"price_start\":80846.3,\"price_end\":79707.9,\"price_change_usd\":-1138.4,\"price_change_pct\":-1.408,\"total_volume_usd\":21192656600.57,\"avg_hourly_volume_usd\":432503195.93,\"max_hourly_volume_usd\":1528508268.51,\"oi_start_usd\":8239378088.38,\"oi_end_usd\":8252925800.14,\"oi_change_usd\":13547711.77,\"oi_change_pct\":0.164,\"funding_start_pct\":0.00273,\"funding_end_pct\":0.00056,\"funding_avg_pct\":0.00401,\"funding_min_pct\":-0.00062,\"funding_max_pct\":0.00946},\"max_drop_hour\":\"2026-05-13 15:00:00\",\"max_drop_amount\":-928.8,\"max_rise_hour\":\"2026-05-12 17:00:00\",\"max_rise_...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "query-complete",
+        "status": "success",
+        "timestampMs": 1778763869263,
+        "metadata": {
+          "durationMs": 309342,
+          "executionOk": true
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "query-start",
+        "status": "ok",
+        "message": "Query orchestration started",
+        "timestampMs": 1778763867259,
+        "metadata": {
+          "requestId": "e1de5af7-adf1-4caf-840d-f3f859aa826c",
+          "queryDepth": "auto"
+        }
+      },
+      {
+        "stepType": "selection",
+        "event": "selected-tools",
+        "status": "ok",
+        "timestampMs": 1778763867260,
+        "metadata": {
+          "selectedPolicy": "exploratory",
+          "plannerReasoningStage": "mechanical",
+          "oneShotBias": false,
+          "selectedTools": [
+            {
+              "toolId": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+              "toolName": "Velo Data",
+              "priceUsd": "0.000000",
+              "selectedMethodCount": 12,
+              "selectedMethods": [
+                "check_api_status",
+                "list_futures_products",
+                "list_spot_products",
+                "list_options_products",
+                "get_available_columns",
+                "get_market_rows",
+                "analyze_futures_market_structure",
+                "get_market_caps",
+                "get_futures_term_structure",
+                "get_order_book_depth",
+                "get_recent_news",
+                "build_crypto_market_memo"
+              ],
+              "omittedSelectedMethodCount": 0
+            }
+          ]
+        }
+      },
+      {
+        "stepType": "execution-setup",
+        "event": "iterative-execution-entry",
+        "status": "ok",
+        "timestampMs": 1778763867261,
+        "message": "Iterative execution received the selected tools and any clarification assumption.",
+        "metadata": {
+          "initialCode": "// iterative execution: no generated code",
+          "finalCode": "// iterative execution: no generated code",
+          "plannerQuery": "Compare binance spot BTCUSDT with binance-futures BTCUSDT: is the latest BTC move better supported by spot dollar volume or by perp open-interest expansion and funding?",
+          "allowedModules": [],
+          "availableToolCount": 12,
+          "availableMethodNamesSample": [
+            "Velo Data.check_api_status",
+            "Velo Data.list_futures_products",
+            "Velo Data.list_spot_products",
+            "Velo Data.list_options_products",
+            "Velo Data.get_available_columns",
+            "Velo Data.get_market_rows",
+            "Velo Data.analyze_futures_market_structure",
+            "Velo Data.get_market_caps",
+            "Velo Data.get_futures_term_structure",
+            "Velo Data.get_order_book_depth",
+            "Velo Data.get_recent_news",
+            "Velo Data.build_crypto_market_memo"
+          ],
+          "selectedMethodCount": 12,
+          "selectedButFilteredOut": [],
+          "toolCallCount": 4,
+          "toolCallAttemptCount": 2,
+          "toolCallSuccessCount": 2,
+          "toolCallFailureCount": 0,
+          "toolCallFailureSamples": [],
+          "grounded": true
+        }
+      },
+      {
+        "stepType": "execution-program",
+        "event": "execution-program-lineage",
+        "status": "ok",
+        "timestampMs": 1778763867262,
+        "metadata": {
+          "executionProgram": {
+            "baseRevisionId": "iterative-v1",
+            "currentRevisionId": "iterative-v1",
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "deterministicChangeCount": 0,
+            "revisions": [
+              {
+                "revisionId": "iterative-v1",
+                "parentRevisionId": null,
+                "attempt": 1,
+                "action": "initial",
+                "reason": "initial",
+                "summary": "Iterative AI SDK tool loop",
+                "codeHash": "iterative",
+                "codeLength": 41,
+                "changedLineCount": 0,
+                "diffPreview": null,
+                "editCount": null,
+                "preservesPriorLogic": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778763867269,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 12699
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778763867270,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 12699
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778763867271,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 93148
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778763867272,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 164594
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1778763867273,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 244657
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1778763868259,
+        "tool": {
+          "id": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+          "name": "get_market_rows"
+        },
+        "metadata": {
+          "args": {
+            "type": "spot",
+            "exchanges": [
+              "binance"
+            ],
+            "products": [
+              "BTCUSDT"
+            ],
+            "columns": [
+              "close_price",
+              "dollar_volume"
+            ],
+            "resolution": "1h",
+            "lookbackHours": 48
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"params\":{\"type\":\"spot\",\"columns\":[\"close_price\",\"dollar_volume\"],\"exchanges\":[\"binance\"],\"products\":[\"BTCUSDT\"],\"coins\":[],\"begin\":1778590778699,\"end\":1778763578699,\"resolution\":\"1h\"},\"rowCount\":49,\"rows\":[{\"exchange\":\"binance\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778587200000,\"close_price\":80881.26,\"dollar_volume\":47353845.85199963},{\"exchange\":\"binance\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778590800000,\"close_price\":80466.91,\"dollar_volume\":64237912.560999796},{\"exchange\":\"binance\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778594400000,\"close_price\":80540,\"dollar_volume\":69783490.39500022},{\"exchange\":\"binance\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778598000000,\"close_price\":80336.01,\"dollar_volume\":77034621.42499983},{\"exchange\":\"binance\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"ti...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1778763868260,
+        "tool": {
+          "id": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+          "name": "get_market_rows"
+        },
+        "metadata": {
+          "args": {
+            "type": "futures",
+            "exchanges": [
+              "binance-futures"
+            ],
+            "products": [
+              "BTCUSDT"
+            ],
+            "columns": [
+              "close_price",
+              "dollar_volume",
+              "dollar_open_interest_close",
+              "funding_rate"
+            ],
+            "resolution": "1h",
+            "lookbackHours": 48
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"params\":{\"type\":\"futures\",\"columns\":[\"close_price\",\"dollar_volume\",\"dollar_open_interest_close\",\"funding_rate\"],\"exchanges\":[\"binance-futures\"],\"products\":[\"BTCUSDT\"],\"coins\":[],\"begin\":1778590779995,\"end\":1778763579995,\"resolution\":\"1h\"},\"rowCount\":49,\"rows\":[{\"exchange\":\"binance-futures\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778587200000,\"close_price\":80846.3,\"dollar_volume\":619732983.8659997,\"dollar_open_interest_close\":8239378088.375,\"funding_rate\":0.00002733},{\"exchange\":\"binance-futures\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778590800000,\"close_price\":80433.6,\"dollar_volume\":684711649.3589995,\"dollar_open_interest_close\":8239083497.611,\"funding_rate\":0.00004088},{\"exchange\":\"binance-futures\",\"coin\":\"BTC\",\"product\":\"BTCUSDT\",\"time\":1778594400000,\"close_price\":80511,\"dollar_vol...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "error",
+        "timestampMs": 1778763868261,
+        "tool": {
+          "id": "code_interpreter",
+          "name": "code_interpreter"
+        },
+        "metadata": {
+          "args": {
+            "truncated": true,
+            "preview": "{\"intent\":\"derived metrics\",\"code\":\"import pandas as pd\\nimport matplotlib.pyplot as plt\\nimport matplotlib.ticker as mticker\\n\\nspot = get_market_rows_1[\\\"result\\\"][\\\"rows\\\"]\\nfut = get_market_rows_2[\\\"result\\\"][\\\"rows\\\"]\\n\\ndf_spot = pd.DataFrame(spot)\\ndf_fut = pd.DataFrame(fut)\\n\\ndf_spot[\\\"time\\\"] = pd.to_datetime(df_spot[\\\"time\\\"], unit=\\\"ms\\\")\\ndf_fut[\\\"time\\\"] = pd.to_datetime(df_fut[\\\"time\\\"], unit=\\\"ms\\\")\\n\\n# Sort by time ascending\\ndf_spot = df_spot.sort_values(\\\"time\\\").reset_index(drop=True)\\ndf_fut = df_fut.sort_values(\\\"time\\\").reset_index(drop=True)\\n\\n# Compute changes\\nspot_price_start = df_spot[\\\"close_price\\\"].iloc[0]\\nspot_price_end = df_spot[\\\"close_price\\\"].iloc[-1]\\nspot_change = spot_price_end - spot_price_start\\nspot_pct = spot_change / spot_price_start\\n\\nfut_pr...[truncated]"
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"ok\":false,\"error\":\"code_interpreter sandbox error: Python exited with code 1: Traceback (most recent call last):\\n  File \\\"/vercel/sandbox/bootstrap.py\\\", line 168, in <module>\\n    exec(compiled, exec_globals)\\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^\\n  File \\\"user_code.py\\\", line 5, in <module>\\n    spot = get_market_rows_1[\\\"result\\\"][\\\"rows\\\"]\\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^\\nKeyError: 'result'\\n. RETRY by calling code_interpreter again in your next step with corrected Python that fixes this exact error — do NOT call finalResponse yet, do NOT call any other tool, and do NOT silently drop the requested artifact. You have 4 more code_interpreter retry attempt(s) before the runtime force-stops the per-turn budget. Common Python fixes: import pandas/numpy/matplotlib at the top of the sc...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1778763868262,
+        "tool": {
+          "id": "code_interpreter",
+          "name": "code_interpreter"
+        },
+        "metadata": {
+          "args": {
+            "truncated": true,
+            "preview": "{\"intent\":\"derived metrics\",\"code\":\"import pandas as pd\\nimport matplotlib.pyplot as plt\\n\\n# Access raw tool outputs directly (they are dicts with a 'rows' list)\\nspot = get_market_rows_1\\nfut = get_market_rows_2\\n\\n# Defensive array extraction\\ndef get_rows(data):\\n    if isinstance(data, list):\\n        return data\\n    if isinstance(data, dict):\\n        return data.get(\\\"rows\\\") or data.get(\\\"data\\\") or data.get(\\\"result\\\", {}).get(\\\"rows\\\") or []\\n    return []\\n\\nspot_rows = get_rows(spot)\\nfut_rows = get_rows(fut)\\n\\n# Build DataFrames\\ndf_spot = pd.DataFrame(spot_rows)\\ndf_fut = pd.DataFrame(fut_rows)\\n\\n# Convert timestamps\\ndf_spot[\\\"time\\\"] = pd.to_datetime(df_spot[\\\"time\\\"], unit=\\\"ms\\\")\\ndf_fut[\\\"time\\\"] = pd.to_datetime(df_fut[\\\"time\\\"], unit=\\\"ms\\\")\\n\\n# Sort ascending by t...[truncated]"
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"ok\":true,\"result\":{\"spot\":{\"price_start\":80881.26,\"price_end\":79758.54,\"price_change_usd\":-1122.72,\"price_change_pct\":-1.388,\"total_volume_usd\":2258479709.47,\"avg_hourly_volume_usd\":46091422.64,\"max_hourly_volume_usd\":137204913.51},\"futures\":{\"price_start\":80846.3,\"price_end\":79707.9,\"price_change_usd\":-1138.4,\"price_change_pct\":-1.408,\"total_volume_usd\":21192656600.57,\"avg_hourly_volume_usd\":432503195.93,\"max_hourly_volume_usd\":1528508268.51,\"oi_start_usd\":8239378088.38,\"oi_end_usd\":8252925800.14,\"oi_change_usd\":13547711.77,\"oi_change_pct\":0.164,\"funding_start_pct\":0.00273,\"funding_end_pct\":0.00056,\"funding_avg_pct\":0.00401,\"funding_min_pct\":-0.00062,\"funding_max_pct\":0.00946},\"max_drop_hour\":\"2026-05-13 15:00:00\",\"max_drop_amount\":-928.8,\"max_rise_hour\":\"2026-05-12 17:00:00\",\"max_rise_...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "query-complete",
+        "status": "success",
+        "timestampMs": 1778763869263,
+        "metadata": {
+          "durationMs": 309342,
+          "executionOk": true
+        }
+      }
+    ],
+    "requestId": "e1de5af7-adf1-4caf-840d-f3f859aa826c",
+    "query": "Compare binance spot BTCUSDT with binance-futures BTCUSDT: is the latest BTC move better supported by spot dollar volume or by perp open-interest expansion and funding?",
+    "source": "backend-runtime",
+    "executionSuccess": true,
+    "executionResult": {
+      "spotRows": 49,
+      "futuresRows": 49,
+      "summary": {
+        "spot": {
+          "price_start": 80881.26,
+          "price_end": 79758.54,
+          "price_change_usd": -1122.72,
+          "price_change_pct": -1.388,
+          "total_volume_usd": 2258479709.47,
+          "avg_hourly_volume_usd": 46091422.64,
+          "max_hourly_volume_usd": 137204913.51
+        },
+        "futures": {
+          "price_start": 80846.3,
+          "price_end": 79707.9,
+          "price_change_usd": -1138.4,
+          "price_change_pct": -1.408,
+          "total_volume_usd": 21192656600.57,
+          "avg_hourly_volume_usd": 432503195.93,
+          "max_hourly_volume_usd": 1528508268.51,
+          "oi_start_usd": 8239378088.38,
+          "oi_end_usd": 8252925800.14,
+          "oi_change_usd": 13547711.77,
+          "oi_change_pct": 0.164,
+          "funding_start_pct": 0.00273,
+          "funding_end_pct": 0.00056,
+          "funding_avg_pct": 0.00401,
+          "funding_min_pct": -0.00062,
+          "funding_max_pct": 0.00946
+        },
+        "max_drop_hour": "2026-05-13 15:00:00",
+        "max_drop_amount": -928.8,
+        "max_rise_hour": "2026-05-12 17:00:00",
+        "max_rise_amount": 527.68
+      },
+      "chartUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/8bd734eac8fed34642eed551f2ed7f20e5b93780488a3f2fe8016a0a985a0129.png"
+    },
+    "initialCode": "// iterative execution: no generated code",
+    "finalCode": "// iterative execution: no generated code",
+    "executionTrace": [
+      {
+        "attempt": 1,
+        "phase": "execution",
+        "result": "success",
+        "durationMs": 12699,
+        "stepNumber": 1,
+        "toolName": "velo_data__get_market_rows",
+        "outputAlias": "get_market_rows_1"
+      },
+      {
+        "attempt": 1,
+        "phase": "execution",
+        "result": "success",
+        "durationMs": 12699,
+        "stepNumber": 1,
+        "toolName": "velo_data__get_market_rows",
+        "outputAlias": "get_market_rows_2"
+      },
+      {
+        "attempt": 1,
+        "phase": "execution",
+        "result": "success",
+        "durationMs": 93148,
+        "stepNumber": 2,
+        "toolName": "code_interpreter",
+        "outputAlias": "code_interpreter_1",
+        "intent": "derived metrics",
+        "artifactCount": 0
+      },
+      {
+        "attempt": 1,
+        "phase": "execution",
+        "result": "success",
+        "durationMs": 164594,
+        "stepNumber": 3,
+        "toolName": "code_interpreter",
+        "outputAlias": "code_interpreter_2",
+        "intent": "derived metrics",
+        "artifactCount": 1
+      },
+      {
+        "attempt": 1,
+        "phase": "execution",
+        "result": "success",
+        "durationMs": 244657,
+        "stepNumber": 4,
+        "toolName": "finalResponse",
+        "outputAlias": "finalresponse_1"
+      }
+    ],
+    "executionProgram": {
+      "baseRevisionId": "iterative-v1",
+      "currentRevisionId": "iterative-v1",
+      "revisionCount": 1,
+      "patchCount": 0,
+      "replanCount": 0,
+      "deterministicChangeCount": 0,
+      "revisions": [
+        {
+          "revisionId": "iterative-v1",
+          "parentRevisionId": null,
+          "attempt": 1,
+          "action": "initial",
+          "reason": "initial",
+          "summary": "Iterative AI SDK tool loop",
+          "codeHash": "iterative",
+          "codeLength": 41,
+          "changedLineCount": 0,
+          "diffPreview": null,
+          "editCount": null,
+          "preservesPriorLogic": true
+        }
+      ]
+    },
+    "attemptCount": 1,
+    "toolCallHistory": [
+      {
+        "toolId": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+        "toolName": "get_market_rows",
+        "args": {
+          "type": "spot",
+          "exchanges": [
+            "binance"
+          ],
+          "products": [
+            "BTCUSDT"
+          ],
+          "columns": [
+            "close_price",
+            "dollar_volume"
+          ],
+          "resolution": "1h",
+          "lookbackHours": 48
+        },
+        "result": {
+          "params": {
+            "type": "spot",
+            "columns": [
+              "close_price",
+              "dollar_volume"
+            ],
+            "exchanges": [
+              "binance"
+            ],
+            "products": [
+              "BTCUSDT"
+            ],
+            "coins": [],
+            "begin": 1778590778699,
+            "end": 1778763578699,
+            "resolution": "1h"
+          },
+          "rowCount": 49,
+          "rows": [
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778587200000,
+              "close_price": 80881.26,
+              "dollar_volume": 47353845.85199963
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778590800000,
+              "close_price": 80466.91,
+              "dollar_volume": 64237912.560999796
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778594400000,
+              "close_price": 80540,
+              "dollar_volume": 69783490.39500022
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778598000000,
+              "close_price": 80336.01,
+              "dollar_volume": 77034621.42499983
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778601600000,
+              "close_price": 80000.01,
+              "dollar_volume": 118151504.98499846
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778605200000,
+              "close_price": 80527.69,
+              "dollar_volume": 39093638.40000026
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778608800000,
+              "close_price": 80679.12,
+              "dollar_volume": 29601095.367000043
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778612400000,
+              "close_price": 80834.64,
+              "dollar_volume": 27967842.235000096
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778616000000,
+              "close_price": 80696.87,
+              "dollar_volume": 23632767.8580002
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778619600000,
+              "close_price": 80587.44,
+              "dollar_volume": 16328207.558999995
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778623200000,
+              "close_price": 80656.43,
+              "dollar_volume": 12191877.420999965
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778626800000,
+              "close_price": 80504.47,
+              "dollar_volume": 19935178.853000004
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778630400000,
+              "close_price": 80718,
+              "dollar_volume": 18606486.640999947
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778634000000,
+              "close_price": 81006,
+              "dollar_volume": 51363106.282000035
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778637600000,
+              "close_price": 81050,
+              "dollar_volume": 27073363.668999963
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778641200000,
+              "close_price": 81249.99,
+              "dollar_volume": 30613275.71599993
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778644800000,
+              "close_price": 81231.96,
+              "dollar_volume": 20602047.714000024
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778648400000,
+              "close_price": 81019.99,
+              "dollar_volume": 21644840.271999963
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778652000000,
+              "close_price": 80980.05,
+              "dollar_volume": 40461584.37199994
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778655600000,
+              "close_price": 81026.92,
+              "dollar_volume": 38536753.40800003
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778659200000,
+              "close_price": 81196.57,
+              "dollar_volume": 30238042.66800002
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778662800000,
+              "close_price": 81291.38,
+              "dollar_volume": 35384047.97700004
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778666400000,
+              "close_price": 80809.01,
+              "dollar_volume": 29553001.642000012
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778670000000,
+              "close_price": 80501.22,
+              "dollar_volume": 53867443.1729998
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778673600000,
+              "close_price": 80202.78,
+              "dollar_volume": 95781621.47499944
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778677200000,
+              "close_price": 79656.01,
+              "dollar_volume": 96298957.94200042
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778680800000,
+              "close_price": 79756.01,
+              "dollar_volume": 75108253.1990009
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778684400000,
+              "close_price": 78827.21,
+              "dollar_volume": 137204913.50600106
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778688000000,
+              "close_price": 79108.39,
+              "dollar_volume": 120176827.35499972
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778691600000,
+              "close_price": 79514.97,
+              "dollar_volume": 48490118.75500013
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778695200000,
+              "close_price": 79598.15,
+              "dollar_volume": 59574410.94699991
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778698800000,
+              "close_price": 79642.41,
+              "dollar_volume": 36860911.13200015
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778702400000,
+              "close_price": 79698.95,
+              "dollar_volume": 17925035.2260001
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778706000000,
+              "close_price": 79398.54,
+              "dollar_volume": 33219202.35200019
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778709600000,
+              "close_price": 79428.46,
+              "dollar_volume": 26845331.335999977
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778713200000,
+              "close_price": 79313.61,
+              "dollar_volume": 39478896.011999965
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778716800000,
+              "close_price": 79580,
+              "dollar_volume": 35278540.59099993
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778720400000,
+              "close_price": 79604.6,
+              "dollar_volume": 29403676.38999993
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778724000000,
+              "close_price": 79370.24,
+              "dollar_volume": 54437936.95600061
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778727600000,
+              "close_price": 79044.85,
+              "dollar_volume": 56419945.41700017
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778731200000,
+              "close_price": 79451.63,
+              "dollar_volume": 34678524.83900011
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778734800000,
+              "close_price": 79809.16,
+              "dollar_volume": 67714773.90800034
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778738400000,
+              "close_price": 79804.71,
+              "dollar_volume": 24047929.58899993
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778742000000,
+              "close_price": 79745.98,
+              "dollar_volume": 38349621.34600006
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778745600000,
+              "close_price": 79821.56,
+              "dollar_volume": 52099204.221999966
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778749200000,
+              "close_price": 79635.52,
+              "dollar_volume": 35535609.66499997
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778752800000,
+              "close_price": 79570.01,
+              "dollar_volume": 30645096.30700001
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778756400000,
+              "close_price": 79258.27,
+              "dollar_volume": 28814110.145000026
+            },
+            {
+              "exchange": "binance",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778760000000,
+              "close_price": 79758.54,
+              "dollar_volume": 40834284.415999904
+            }
+          ],
+          "fetchedAt": "2026-05-14T12:59:39.207Z"
+        }
+      },
+      {
+        "toolId": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+        "toolName": "get_market_rows",
+        "args": {
+          "type": "futures",
+          "exchanges": [
+            "binance-futures"
+          ],
+          "products": [
+            "BTCUSDT"
+          ],
+          "columns": [
+            "close_price",
+            "dollar_volume",
+            "dollar_open_interest_close",
+            "funding_rate"
+          ],
+          "resolution": "1h",
+          "lookbackHours": 48
+        },
+        "result": {
+          "params": {
+            "type": "futures",
+            "columns": [
+              "close_price",
+              "dollar_volume",
+              "dollar_open_interest_close",
+              "funding_rate"
+            ],
+            "exchanges": [
+              "binance-futures"
+            ],
+            "products": [
+              "BTCUSDT"
+            ],
+            "coins": [],
+            "begin": 1778590779995,
+            "end": 1778763579995,
+            "resolution": "1h"
+          },
+          "rowCount": 49,
+          "rows": [
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778587200000,
+              "close_price": 80846.3,
+              "dollar_volume": 619732983.8659997,
+              "dollar_open_interest_close": 8239378088.375,
+              "funding_rate": 0.00002733
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778590800000,
+              "close_price": 80433.6,
+              "dollar_volume": 684711649.3589995,
+              "dollar_open_interest_close": 8239083497.611,
+              "funding_rate": 0.00004088
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778594400000,
+              "close_price": 80511,
+              "dollar_volume": 791828040.9409988,
+              "dollar_open_interest_close": 8288872492.212,
+              "funding_rate": 0.000047
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778598000000,
+              "close_price": 80301.6,
+              "dollar_volume": 819091586.8400018,
+              "dollar_open_interest_close": 8374493701.404,
+              "funding_rate": 0.00005809
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778601600000,
+              "close_price": 79967.1,
+              "dollar_volume": 931606829.4420018,
+              "dollar_open_interest_close": 8408515503.397,
+              "funding_rate": 0.00006503
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778605200000,
+              "close_price": 80492.9,
+              "dollar_volume": 597867994.5600001,
+              "dollar_open_interest_close": 8511650840.131,
+              "funding_rate": 0.00007747
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778608800000,
+              "close_price": 80641.2,
+              "dollar_volume": 319570496.03300035,
+              "dollar_open_interest_close": 8555269967.693,
+              "funding_rate": 0.0000946
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778612400000,
+              "close_price": 80799.5,
+              "dollar_volume": 207000440.66999987,
+              "dollar_open_interest_close": 8566554637.508,
+              "funding_rate": 0.00008557
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778616000000,
+              "close_price": 80656.8,
+              "dollar_volume": 150272095.92600003,
+              "dollar_open_interest_close": 8546276619.899,
+              "funding_rate": 0.00007543
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778619600000,
+              "close_price": 80550,
+              "dollar_volume": 144879381.13100007,
+              "dollar_open_interest_close": 8512870993.007,
+              "funding_rate": 0.00007127
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778623200000,
+              "close_price": 80613.4,
+              "dollar_volume": 122326479.32199994,
+              "dollar_open_interest_close": 8516189098.104,
+              "funding_rate": 0.00006458
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778626800000,
+              "close_price": 80461,
+              "dollar_volume": 182799884.19400004,
+              "dollar_open_interest_close": 8487698096.707,
+              "funding_rate": 0.000054
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778630400000,
+              "close_price": 80673.4,
+              "dollar_volume": 205456946.411,
+              "dollar_open_interest_close": 8494318275.867,
+              "funding_rate": 0.00005158
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778634000000,
+              "close_price": 80960.1,
+              "dollar_volume": 467452067.1659986,
+              "dollar_open_interest_close": 8513676285.901,
+              "funding_rate": 0.00004349
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778637600000,
+              "close_price": 81018.1,
+              "dollar_volume": 245408879.97199997,
+              "dollar_open_interest_close": 8540744920.076,
+              "funding_rate": 0.00004971
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778641200000,
+              "close_price": 81217.1,
+              "dollar_volume": 229717568.97599995,
+              "dollar_open_interest_close": 8575043547.925,
+              "funding_rate": 0.00005602
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778644800000,
+              "close_price": 81199.9,
+              "dollar_volume": 194655578.925,
+              "dollar_open_interest_close": 8581805986.461,
+              "funding_rate": 0.0000594
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778648400000,
+              "close_price": 80985.5,
+              "dollar_volume": 218426726.74799985,
+              "dollar_open_interest_close": 8556565962.24,
+              "funding_rate": 0.00005855
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778652000000,
+              "close_price": 80945.6,
+              "dollar_volume": 180818683.60000005,
+              "dollar_open_interest_close": 8566788273.979,
+              "funding_rate": 0.00005688
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778655600000,
+              "close_price": 80981.9,
+              "dollar_volume": 186875797.9910001,
+              "dollar_open_interest_close": 8545561166.863,
+              "funding_rate": 0.0000542
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778659200000,
+              "close_price": 81161,
+              "dollar_volume": 206928087.84599993,
+              "dollar_open_interest_close": 8562326048.655,
+              "funding_rate": 0.00004835
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778662800000,
+              "close_price": 81255.5,
+              "dollar_volume": 343875522.164,
+              "dollar_open_interest_close": 8621649801.28,
+              "funding_rate": 0.0000472
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778666400000,
+              "close_price": 80766.2,
+              "dollar_volume": 375315726.9730002,
+              "dollar_open_interest_close": 8498079996.153,
+              "funding_rate": 0.00003559
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778670000000,
+              "close_price": 80460.1,
+              "dollar_volume": 506769732.24300075,
+              "dollar_open_interest_close": 8426904957.241,
+              "funding_rate": 0.00002458
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778673600000,
+              "close_price": 80160.1,
+              "dollar_volume": 1254564474.4870007,
+              "dollar_open_interest_close": 8347648172.309,
+              "funding_rate": 0.00001661
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778677200000,
+              "close_price": 79617.9,
+              "dollar_volume": 1067404909.7499994,
+              "dollar_open_interest_close": 8275828854.111,
+              "funding_rate": 0.00001124
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778680800000,
+              "close_price": 79727.3,
+              "dollar_volume": 753244428.9990035,
+              "dollar_open_interest_close": 8286786169.872,
+              "funding_rate": 0.00001388
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778684400000,
+              "close_price": 78794.7,
+              "dollar_volume": 1528508268.5110018,
+              "dollar_open_interest_close": 8178174916.139,
+              "funding_rate": 0.00001786
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778688000000,
+              "close_price": 79069.5,
+              "dollar_volume": 1052455431.1330009,
+              "dollar_open_interest_close": 8278344656.693,
+              "funding_rate": 0.00001549
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778691600000,
+              "close_price": 79470.1,
+              "dollar_volume": 502897540.1170024,
+              "dollar_open_interest_close": 8343543050.675,
+              "funding_rate": 0.00000736
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778695200000,
+              "close_price": 79554.9,
+              "dollar_volume": 435964472.30900013,
+              "dollar_open_interest_close": 8311103468.632,
+              "funding_rate": -2.8e-7
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778698800000,
+              "close_price": 79604.8,
+              "dollar_volume": 316646571.7929998,
+              "dollar_open_interest_close": 8307487320.417,
+              "funding_rate": -0.00000617
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778702400000,
+              "close_price": 79671.4,
+              "dollar_volume": 180156164.75400013,
+              "dollar_open_interest_close": 8319018214.276,
+              "funding_rate": -0.00000421
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778706000000,
+              "close_price": 79363.2,
+              "dollar_volume": 246743102.0939999,
+              "dollar_open_interest_close": 8258700848.261,
+              "funding_rate": 0.00000589
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778709600000,
+              "close_price": 79395.1,
+              "dollar_volume": 254444126.3279999,
+              "dollar_open_interest_close": 8262148013.276,
+              "funding_rate": 0.00002389
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778713200000,
+              "close_price": 79288.3,
+              "dollar_volume": 212756125.52400005,
+              "dollar_open_interest_close": 8268877337.352,
+              "funding_rate": 0.00003875
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778716800000,
+              "close_price": 79540,
+              "dollar_volume": 275364315.8549999,
+              "dollar_open_interest_close": 8291830309.678,
+              "funding_rate": 0.00005811
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778720400000,
+              "close_price": 79565.9,
+              "dollar_volume": 221669147.05200008,
+              "dollar_open_interest_close": 8289210583.622,
+              "funding_rate": 0.00006933
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778724000000,
+              "close_price": 79329,
+              "dollar_volume": 378650994.3379999,
+              "dollar_open_interest_close": 8271349290.375,
+              "funding_rate": 0.00007244
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778727600000,
+              "close_price": 79005.3,
+              "dollar_volume": 605876356.29,
+              "dollar_open_interest_close": 8223269710.977,
+              "funding_rate": 0.00006414
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778731200000,
+              "close_price": 79403.7,
+              "dollar_volume": 291437230.91200024,
+              "dollar_open_interest_close": 8269907777.667,
+              "funding_rate": 0.00006394
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778734800000,
+              "close_price": 79771.5,
+              "dollar_volume": 616015892.0199993,
+              "dollar_open_interest_close": 8284200028.053,
+              "funding_rate": 0.00005088
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778738400000,
+              "close_price": 79769.7,
+              "dollar_volume": 289216736.11399996,
+              "dollar_open_interest_close": 8278127811.482,
+              "funding_rate": 0.00004151
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778742000000,
+              "close_price": 79699.9,
+              "dollar_volume": 296654654.4570001,
+              "dollar_open_interest_close": 8280810444.512,
+              "funding_rate": 0.00003032
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778745600000,
+              "close_price": 79776.8,
+              "dollar_volume": 300906897.8990001,
+              "dollar_open_interest_close": 8309209644.412,
+              "funding_rate": 0.00001843
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778749200000,
+              "close_price": 79594.9,
+              "dollar_volume": 219446257.8569998,
+              "dollar_open_interest_close": 8283205901.096,
+              "funding_rate": 0.00000304
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778752800000,
+              "close_price": 79530,
+              "dollar_volume": 258562083.18499997,
+              "dollar_open_interest_close": 8272925267.617,
+              "funding_rate": 0.00000186
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778756400000,
+              "close_price": 79216.6,
+              "dollar_volume": 301350880.98399985,
+              "dollar_open_interest_close": 8242464653.269,
+              "funding_rate": -8.8e-7
+            },
+            {
+              "exchange": "binance-futures",
+              "coin": "BTC",
+              "product": "BTCUSDT",
+              "time": 1778760000000,
+              "close_price": 79707.9,
+              "dollar_volume": 398330356.512999,
+              "dollar_open_interest_close": 8252925800.14,
+              "funding_rate": 0.00000561
+            }
+          ],
+          "fetchedAt": "2026-05-14T12:59:40.200Z"
+        }
+      },
+      {
+        "toolId": "code_interpreter",
+        "toolName": "code_interpreter",
+        "args": {
+          "intent": "derived metrics",
+          "code": "import pandas as pd\nimport matplotlib.pyplot as plt\nimport matplotlib.ticker as mticker\n\nspot = get_market_rows_1[\"result\"][\"rows\"]\nfut = get_market_rows_2[\"result\"][\"rows\"]\n\ndf_spot = pd.DataFrame(spot)\ndf_fut = pd.DataFrame(fut)\n\ndf_spot[\"time\"] = pd.to_datetime(df_spot[\"time\"], unit=\"ms\")\ndf_fut[\"time\"] = pd.to_datetime(df_fut[\"time\"], unit=\"ms\")\n\n# Sort by time ascending\ndf_spot = df_spot.sort_values(\"time\").reset_index(drop=True)\ndf_fut = df_fut.sort_values(\"time\").reset_index(drop=True)\n\n# Compute changes\nspot_price_start = df_spot[\"close_price\"].iloc[0]\nspot_price_end = df_spot[\"close_price\"].iloc[-1]\nspot_change = spot_price_end - spot_price_start\nspot_pct = spot_change / spot_price_start\n\nfut_price_start = df_fut[\"close_price\"].iloc[0]\nfut_price_end = df_fut[\"close_price\"].iloc[-1]\nfut_change = fut_price_end - fut_price_start\nfut_pct = fut_change / fut_price_start\n\n# Aggregate metrics\nspot_vol_total = df_spot[\"dollar_volume\"].sum()\nspot_vol_avg = df_spot[\"dollar_volume\"].mean()\nspot_vol_max = df_spot[\"dollar_volume\"].max()\n\nfut_vol_total = df_fut[\"dollar_volume\"].sum()\nfut_vol_avg = df_fut[\"dollar_volume\"].mean()\nfut_vol_max = df_fut[\"dollar_volume\"].max()\n\noi_start = df_fut[\"dollar_open_interest_close\"].iloc[0]\noi_end = df_fut[\"dollar_open_interest_close\"].iloc[-1]\noi_change = oi_end - oi_start\noi_pct = oi_change / oi_start\n\nfunding_start = df_fut[\"funding_rate\"].iloc[0]\nfunding_end = df_fut[\"funding_rate\"].iloc[-1]\nfunding_avg = df_fut[\"funding_rate\"].mean()\nfunding_min = df_fut[\"funding_rate\"].min()\nfunding_max = df_fut[\"funding_rate\"].max()\n\n# Identify the largest price drop window (spot)\ndf_spot[\"price_change\"] = df_spot[\"close_price\"].diff()\nmax_drop_idx = df_spot[\"price_change\"].idxmin()\nmax_rise_idx = df_spot[\"price_change\"].idxmax()\n\n# Chart: 4-panel comparison\nfig, axes = plt.subplots(2, 2, figsize=(14, 9))\n\n# 1. Price comparison\nax = axes[0, 0]\nax.plot(df_spot[\"time\"], df_spot[\"close_price\"], label=\"Binance Spot BTCUSDT\", color=\"orange\", linewidth=1.5)\nax.plot(df_fut[\"time\"], df_fut[\"close_price\"], label=\"Binance Futures BTCUSDT\", color=\"blue\", linewidth=1.5)\nax.set_title(\"BTC Price: Spot vs Futures\")\nax.set_ylabel(\"Price (USDT)\")\nax.legend(loc=\"best\")\nax.grid(True, alpha=0.3)\n\n# 2. Spot vs Futures Volume\nax = axes[0, 1]\nax.plot(df_spot[\"time\"], df_spot[\"dollar_volume\"]/1e6, label=\"Spot Volume\", color=\"orange\", linewidth=1.5)\nax.plot(df_fut[\"time\"], df_fut[\"dollar_volume\"]/1e6, label=\"Futures Volume\", color=\"blue\", linewidth=1.5)\nax.set_title(\"Hourly Dollar Volume ($M)\")\nax.set_ylabel(\"Volume ($M)\")\nax.legend(loc=\"best\")\nax.grid(True, alpha=0.3)\n\n# 3. Open Interest\nax = axes[1, 0]\nax.plot(df_fut[\"time\"], df_fut[\"dollar_open_interest_close\"]/1e9, color=\"green\", linewidth=1.5)\nax.set_title(\"Futures Open Interest ($B)\")\nax.set_ylabel(\"OI ($B)\")\nax.grid(True, alpha=0.3)\n\n# 4. Funding Rate\nax = axes[1, 1]\nax.plot(df_fut[\"time\"], df_fut[\"funding_rate\"]*100, color=\"purple\", linewidth=1.5)\nax.axhline(0, color=\"black\", linestyle=\"--\", alpha=0.5)\nax.set_title(\"Funding Rate (%)\")\nax.set_ylabel(\"Funding (%)\")\nax.grid(True, alpha=0.3)\n\nplt.tight_layout()\nsave_figure(alt=\"BTC Spot vs Futures: Price, Volume, OI, Funding over 48h\", title=\"BTC Spot vs Futures 48h Comparison\")\n\n# Return summary dict\nresult = {\n    \"spot\": {\n        \"price_start\": round(spot_price_start, 2),\n        \"price_end\": round(spot_price_end, 2),\n        \"price_change_usd\": round(spot_change, 2),\n        \"price_change_pct\": round(spot_pct * 100, 3),\n        \"total_volume_usd\": round(spot_vol_total, 2),\n        \"avg_hourly_volume_usd\": round(spot_vol_avg, 2),\n        \"max_hourly_volume_usd\": round(spot_vol_max, 2),\n    },\n    \"futures\": {\n        \"price_start\": round(fut_price_start, 2),\n        \"price_end\": round(fut_price_end, 2),\n        \"price_change_usd\": round(fut_change, 2),\n        \"price_change_pct\": round(fut_pct * 100, 3),\n        \"total_volume_usd\": round(fut_vol_total, 2),\n        \"avg_hourly_volume_usd\": round(fut_vol_avg, 2),\n        \"max_hourly_volume_usd\": round(fut_vol_max, 2),\n        \"oi_start_usd\": round(oi_start, 2),\n        \"oi_end_usd\": round(oi_end, 2),\n        \"oi_change_usd\": round(oi_change, 2),\n        \"oi_change_pct\": round(oi_pct * 100, 3),\n        \"funding_start_pct\": round(funding_start * 100, 5),\n        \"funding_end_pct\": round(funding_end * 100, 5),\n        \"funding_avg_pct\": round(funding_avg * 100, 5),\n        \"funding_min_pct\": round(funding_min * 100, 5),\n        \"funding_max_pct\": round(funding_max * 100, 5),\n    },\n    \"max_drop_hour\": str(df_spot.loc[max_drop_idx, \"time\"]),\n    \"max_drop_amount\": round(df_spot.loc[max_drop_idx, \"price_change\"], 2),\n    \"max_rise_hour\": str(df_spot.loc[max_rise_idx, \"time\"]),\n    \"max_rise_amount\": round(df_spot.loc[max_rise_idx, \"price_change\"], 2),\n}\nset_result(result)\n",
+          "inputs": {},
+          "postProcessingContract": {
+            "expectedArtifacts": [
+              "image"
+            ],
+            "inputAliases": [
+              "get_market_rows_1",
+              "get_market_rows_2"
+            ],
+            "operation": "Compute summary stats and plot 48h BTC spot vs futures price, volume, OI, funding",
+            "reason": "Need derived comparison metrics and a 4-panel chart to assess whether spot volume or perp OI/funding better supported the latest BTC move"
+          }
+        },
+        "result": {
+          "ok": false,
+          "error": "code_interpreter sandbox error: Python exited with code 1: Traceback (most recent call last):\n  File \"/vercel/sandbox/bootstrap.py\", line 168, in <module>\n    exec(compiled, exec_globals)\n    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"user_code.py\", line 5, in <module>\n    spot = get_market_rows_1[\"result\"][\"rows\"]\n           ~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'result'\n. RETRY by calling code_interpreter again in your next step with corrected Python that fixes this exact error — do NOT call finalResponse yet, do NOT call any other tool, and do NOT silently drop the requested artifact. You have 4 more code_interpreter retry attempt(s) before the runtime force-stops the per-turn budget. Common Python fixes: import pandas/numpy/matplotlib at the top of the script; access prior data via its canonical _contextAlias (each alias is a Python global AND a key in the inputs dict — e.g. tool_method_1 and inputs[\"tool_method_1\"] resolve to the same object), or via friendly local names if you declared them in args.inputs; use df.loc[]/df.iloc[] for indexed access; sort time series with df.sort_values(); call set_result({...}) at the end with a JSON-serializable dict so the agent can read the value back; call save_figure(alt=..., title=...) after building a matplotlib figure to emit an image artifact. NEVER import requests/urllib/httpx/yfinance/aiohttp — outbound network is blocked at the sandbox level and these libraries are not installed; all data must come from prior MCP tool calls.",
+          "stdout": [],
+          "durationMs": 2197,
+          "artifacts": [],
+          "intent": "derived metrics",
+          "inputProjectionDiagnostics": []
+        }
+      },
+      {
+        "toolId": "code_interpreter",
+        "toolName": "code_interpreter",
+        "args": {
+          "intent": "derived metrics",
+          "code": "import pandas as pd\nimport matplotlib.pyplot as plt\n\n# Access raw tool outputs directly (they are dicts with a 'rows' list)\nspot = get_market_rows_1\nfut = get_market_rows_2\n\n# Defensive array extraction\ndef get_rows(data):\n    if isinstance(data, list):\n        return data\n    if isinstance(data, dict):\n        return data.get(\"rows\") or data.get(\"data\") or data.get(\"result\", {}).get(\"rows\") or []\n    return []\n\nspot_rows = get_rows(spot)\nfut_rows = get_rows(fut)\n\n# Build DataFrames\ndf_spot = pd.DataFrame(spot_rows)\ndf_fut = pd.DataFrame(fut_rows)\n\n# Convert timestamps\ndf_spot[\"time\"] = pd.to_datetime(df_spot[\"time\"], unit=\"ms\")\ndf_fut[\"time\"] = pd.to_datetime(df_fut[\"time\"], unit=\"ms\")\n\n# Sort ascending by time\ndf_spot = df_spot.sort_values(\"time\").reset_index(drop=True)\ndf_fut = df_fut.sort_values(\"time\").reset_index(drop=True)\n\n# Basic stats\nspot_start = float(df_spot[\"close_price\"].iloc[0])\nspot_end = float(df_spot[\"close_price\"].iloc[-1])\nspot_change = spot_end - spot_start\nspot_pct = spot_change / spot_start\n\nfut_start = float(df_fut[\"close_price\"].iloc[0])\nfut_end = float(df_fut[\"close_price\"].iloc[-1])\nfut_change = fut_end - fut_start\nfut_pct = fut_change / fut_start\n\nspot_vol_total = float(df_spot[\"dollar_volume\"].sum())\nspot_vol_avg = float(df_spot[\"dollar_volume\"].mean())\nspot_vol_max = float(df_spot[\"dollar_volume\"].max())\n\nfut_vol_total = float(df_fut[\"dollar_volume\"].sum())\nfut_vol_avg = float(df_fut[\"dollar_volume\"].mean())\nfut_vol_max = float(df_fut[\"dollar_volume\"].max())\n\noi_start = float(df_fut[\"dollar_open_interest_close\"].iloc[0])\noi_end = float(df_fut[\"dollar_open_interest_close\"].iloc[-1])\noi_change = oi_end - oi_start\noi_pct = oi_change / oi_start\n\nfunding_start = float(df_fut[\"funding_rate\"].iloc[0])\nfunding_end = float(df_fut[\"funding_rate\"].iloc[-1])\nfunding_avg = float(df_fut[\"funding_rate\"].mean())\nfunding_min = float(df_fut[\"funding_rate\"].min())\nfunding_max = float(df_fut[\"funding_rate\"].max())\n\n# Identify largest hourly drop/rise in spot\ndf_spot[\"price_diff\"] = df_spot[\"close_price\"].diff()\nmax_drop_idx = df_spot[\"price_diff\"].idxmin()\nmax_rise_idx = df_spot[\"price_diff\"].idxmax()\n\n# 4-panel chart\nfig, axes = plt.subplots(2, 2, figsize=(14, 9))\n\n# Panel 1: Price\nax = axes[0, 0]\nax.plot(df_spot[\"time\"], df_spot[\"close_price\"], label=\"Binance Spot BTCUSDT\", color=\"orange\", linewidth=1.5)\nax.plot(df_fut[\"time\"], df_fut[\"close_price\"], label=\"Binance Futures BTCUSDT\", color=\"blue\", linewidth=1.5)\nax.set_title(\"BTC Price: Spot vs Futures\")\nax.set_ylabel(\"Price (USDT)\")\nax.legend(loc=\"best\")\nax.grid(True, alpha=0.3)\n\n# Panel 2: Volume\nax = axes[0, 1]\nax.plot(df_spot[\"time\"], df_spot[\"dollar_volume\"] / 1e6, label=\"Spot Volume\", color=\"orange\", linewidth=1.5)\nax.plot(df_fut[\"time\"], df_fut[\"dollar_volume\"] / 1e6, label=\"Futures Volume\", color=\"blue\", linewidth=1.5)\nax.set_title(\"Hourly Dollar Volume ($M)\")\nax.set_ylabel(\"Volume ($M)\")\nax.legend(loc=\"best\")\nax.grid(True, alpha=0.3)\n\n# Panel 3: Open Interest\nax = axes[1, 0]\nax.plot(df_fut[\"time\"], df_fut[\"dollar_open_interest_close\"] / 1e9, color=\"green\", linewidth=1.5)\nax.set_title(\"Futures Open Interest ($B)\")\nax.set_ylabel(\"OI ($B)\")\nax.grid(True, alpha=0.3)\n\n# Panel 4: Funding Rate\nax = axes[1, 1]\nax.plot(df_fut[\"time\"], df_fut[\"funding_rate\"] * 100, color=\"purple\", linewidth=1.5)\nax.axhline(0, color=\"black\", linestyle=\"--\", alpha=0.5)\nax.set_title(\"Funding Rate (%)\")\nax.set_ylabel(\"Funding (%)\")\nax.grid(True, alpha=0.3)\n\nplt.tight_layout()\nsave_figure(alt=\"BTC Spot vs Futures 48h: Price, Volume, OI, Funding\", title=\"BTC Spot vs Futures 48h Comparison\")\n\nresult = {\n    \"spot\": {\n        \"price_start\": round(spot_start, 2),\n        \"price_end\": round(spot_end, 2),\n        \"price_change_usd\": round(spot_change, 2),\n        \"price_change_pct\": round(spot_pct * 100, 3),\n        \"total_volume_usd\": round(spot_vol_total, 2),\n        \"avg_hourly_volume_usd\": round(spot_vol_avg, 2),\n        \"max_hourly_volume_usd\": round(spot_vol_max, 2),\n    },\n    \"futures\": {\n        \"price_start\": round(fut_start, 2),\n        \"price_end\": round(fut_end, 2),\n        \"price_change_usd\": round(fut_change, 2),\n        \"price_change_pct\": round(fut_pct * 100, 3),\n        \"total_volume_usd\": round(fut_vol_total, 2),\n        \"avg_hourly_volume_usd\": round(fut_vol_avg, 2),\n        \"max_hourly_volume_usd\": round(fut_vol_max, 2),\n        \"oi_start_usd\": round(oi_start, 2),\n        \"oi_end_usd\": round(oi_end, 2),\n        \"oi_change_usd\": round(oi_change, 2),\n        \"oi_change_pct\": round(oi_pct * 100, 3),\n        \"funding_start_pct\": round(funding_start * 100, 5),\n        \"funding_end_pct\": round(funding_end * 100, 5),\n        \"funding_avg_pct\": round(funding_avg * 100, 5),\n        \"funding_min_pct\": round(funding_min * 100, 5),\n        \"funding_max_pct\": round(funding_max * 100, 5),\n    },\n    \"max_drop_hour\": str(df_spot.loc[max_drop_idx, \"time\"]),\n    \"max_drop_amount\": round(float(df_spot.loc[max_drop_idx, \"price_diff\"]), 2),\n    \"max_rise_hour\": str(df_spot.loc[max_rise_idx, \"time\"]),\n    \"max_rise_amount\": round(float(df_spot.loc[max_rise_idx, \"price_diff\"]), 2),\n}\nset_result(result)\n",
+          "inputs": {},
+          "postProcessingContract": {
+            "expectedArtifacts": [
+              "image"
+            ],
+            "inputAliases": [
+              "get_market_rows_1",
+              "get_market_rows_2"
+            ],
+            "operation": "Compute summary stats and plot 48h BTC spot vs futures price, volume, OI, funding",
+            "reason": "Need derived comparison metrics and a 4-panel chart to assess whether spot volume or perp OI/funding better supported the latest BTC move"
+          }
+        },
+        "result": {
+          "ok": true,
+          "result": {
+            "spot": {
+              "price_start": 80881.26,
+              "price_end": 79758.54,
+              "price_change_usd": -1122.72,
+              "price_change_pct": -1.388,
+              "total_volume_usd": 2258479709.47,
+              "avg_hourly_volume_usd": 46091422.64,
+              "max_hourly_volume_usd": 137204913.51
+            },
+            "futures": {
+              "price_start": 80846.3,
+              "price_end": 79707.9,
+              "price_change_usd": -1138.4,
+              "price_change_pct": -1.408,
+              "total_volume_usd": 21192656600.57,
+              "avg_hourly_volume_usd": 432503195.93,
+              "max_hourly_volume_usd": 1528508268.51,
+              "oi_start_usd": 8239378088.38,
+              "oi_end_usd": 8252925800.14,
+              "oi_change_usd": 13547711.77,
+              "oi_change_pct": 0.164,
+              "funding_start_pct": 0.00273,
+              "funding_end_pct": 0.00056,
+              "funding_avg_pct": 0.00401,
+              "funding_min_pct": -0.00062,
+              "funding_max_pct": 0.00946
+            },
+            "max_drop_hour": "2026-05-13 15:00:00",
+            "max_drop_amount": -928.8,
+            "max_rise_hour": "2026-05-12 17:00:00",
+            "max_rise_amount": 527.68
+          },
+          "stdout": [],
+          "durationMs": 2822,
+          "artifacts": [
+            {
+              "kind": "image",
+              "url": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/8bd734eac8fed34642eed551f2ed7f20e5b93780488a3f2fe8016a0a985a0129.png",
+              "alt": "BTC Spot vs Futures 48h: Price, Volume, OI, Funding",
+              "title": "BTC Spot vs Futures 48h Comparison",
+              "contentHash": "8bd734eac8fed34642eed551f2ed7f20e5b93780488a3f2fe8016a0a985a0129",
+              "bytes": 253345
+            }
+          ],
+          "intent": "derived metrics",
+          "inputProjectionDiagnostics": []
+        }
+      }
+    ],
+    "toolSchemas": [
+      {
+        "serverName": "Velo Data",
+        "toolName": "check_api_status",
+        "description": "Check Velo API connectivity and the velo-node client version. Use this first when validating the API key or diagnosing upstream availability.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "clientVersion",
+            "fetchedAt"
+          ],
+          "properties": {
+            "status": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "clientVersion": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "list_futures_products",
+        "description": "List Velo futures products across supported exchanges. Supports filtering by exchange, product substring, coin/product text, and including delisted contracts.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number"
+            },
+            "search": {
+              "type": "string"
+            },
+            "exchange": {
+              "type": "string"
+            },
+            "includeDelisted": {
+              "type": "boolean"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "productCount",
+            "products",
+            "fetchedAt"
+          ],
+          "properties": {
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "productCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "list_spot_products",
+        "description": "List Velo spot products across supported exchanges. Useful for finding BTC, ETH, SOL, or exchange-specific spot pairs before requesting rows.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number"
+            },
+            "search": {
+              "type": "string"
+            },
+            "exchange": {
+              "type": "string"
+            },
+            "includeDelisted": {
+              "type": "boolean"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "productCount",
+            "products",
+            "fetchedAt"
+          ],
+          "properties": {
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "productCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "list_options_products",
+        "description": "List Velo options products, currently centered on Deribit under the upstream API. Use before options IV/skew queries.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number"
+            },
+            "search": {
+              "type": "string"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "productCount",
+            "products",
+            "fetchedAt"
+          ],
+          "properties": {
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "productCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "get_available_columns",
+        "description": "Return Velo's available futures, spot, and options data columns so the caller can request valid row metrics.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "futures",
+            "spot",
+            "options"
+          ],
+          "properties": {
+            "spot": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "futures": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "get_market_rows",
+        "description": "Fetch exact Velo market rows for futures, spot, or Deribit options. Use when the buyer asks for Velo rows, latest row values, OHLCV, close_price, dollar_volume, funding_rate, dollar_open_interest_close, buy/sell liquidation dollar volumes, options index_price, iv_1w, iv_1m, iv_3m, skew_1w, skew_1m, or dvol_close.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "end": {
+              "type": "number",
+              "description": "End timestamp in milliseconds."
+            },
+            "type": {
+              "enum": [
+                "futures",
+                "spot",
+                "options"
+              ],
+              "type": "string",
+              "description": "Velo row family: futures for perp metrics, spot for spot OHLCV, options for Deribit IV/skew/DVOL rows."
+            },
+            "begin": {
+              "type": "number",
+              "description": "Start timestamp in milliseconds."
+            },
+            "coins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Underlying coin filters such as BTC, ETH, or SOL; useful for options rows and cross-exchange futures rows."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum streamed rows to return."
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Exact Velo row columns to return, such as close_price, dollar_volume, funding_rate, dollar_open_interest_close, iv_1w, skew_1m, or dvol_close."
+            },
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Exchange product symbols such as BTCUSDT, ETHUSDT, SOLUSDT, or BTC-USDT-SWAP."
+            },
+            "exchanges": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Velo exchange names such as binance-futures, bybit, okex-swap, hyperliquid, binance, or deribit."
+            },
+            "resolution": {
+              "type": "string",
+              "description": "Velo row resolution such as 1m, 5m, 1h, 1d, or 1w."
+            },
+            "lookbackHours": {
+              "type": "number",
+              "description": "Relative lookback window when begin is omitted."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "params",
+            "rowCount",
+            "rows",
+            "fetchedAt"
+          ],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "analyze_futures_market_structure",
+        "description": "Analyze Velo futures rows for funding, open-interest change, dollar volume, buy/sell liquidations, and liquidation imbalance. Use for futures leverage pressure across binance-futures, bybit, okex-swap, hyperliquid, BTCUSDT, ETHUSDT, and SOLUSDT.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "coins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Underlying coins to compare across futures venues, such as BTC, ETH, or SOL."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum futures rows to stream before summarizing."
+            },
+            "products": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Futures products such as BTCUSDT, ETHUSDT, SOLUSDT, BTC-USDT-SWAP, or BTC-USD."
+            },
+            "exchanges": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Velo futures exchanges, for example binance-futures, bybit, okex-swap, or hyperliquid."
+            },
+            "resolution": {
+              "type": "string",
+              "description": "Velo row resolution such as 1h for hourly futures rows."
+            },
+            "lookbackHours": {
+              "type": "number",
+              "description": "Window for open-interest change, volume, and liquidation aggregation."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "summary",
+            "markets",
+            "rowCount",
+            "params",
+            "fetchedAt"
+          ],
+          "properties": {
+            "params": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "markets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "summary": {
+              "type": "string"
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "get_market_caps",
+        "description": "Fetch Velo market-cap rows for selected coins. Use for current circ, circ_dollars, fdv, fdv_dollars, circulating supply, fully diluted valuation, or OI-to-market-cap leverage context.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "end": {
+              "type": "number",
+              "description": "End timestamp in milliseconds."
+            },
+            "begin": {
+              "type": "number",
+              "description": "Start timestamp in milliseconds."
+            },
+            "coins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Coin symbols such as BTC, ETH, or SOL."
+            },
+            "resolution": {
+              "type": "string",
+              "description": "Velo market-cap resolution, commonly 1d."
+            },
+            "lookbackHours": {
+              "type": "number",
+              "description": "Relative lookback window when begin is omitted."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "rows",
+            "rowCount",
+            "params",
+            "fetchedAt"
+          ],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "get_futures_term_structure",
+        "description": "Fetch Velo futures term-structure rows for selected coins. Use for curve-shape questions about dte points, forward IV fields when returned, basis, carry, contango, backwardation, upward-sloping, or inverted term structure.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "end": {
+              "type": "number",
+              "description": "End timestamp in milliseconds."
+            },
+            "begin": {
+              "type": "number",
+              "description": "Start timestamp in milliseconds."
+            },
+            "coins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Coin symbols such as BTC or ETH."
+            },
+            "resolution": {
+              "type": "string",
+              "description": "Velo term-structure resolution such as 1h."
+            },
+            "lookbackHours": {
+              "type": "number",
+              "description": "Relative lookback window when begin is omitted."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "rows",
+            "rowCount",
+            "params",
+            "fetchedAt"
+          ],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "get_order_book_depth",
+        "description": "Fetch Velo level-2 order book depth snapshots by exchange/product or by coin. Use for order book depth, latest mid, executable liquidity, market-impact, slippage, and venue cost comparisons.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "end": {
+              "type": "number",
+              "description": "End timestamp in milliseconds."
+            },
+            "coin": {
+              "type": "string",
+              "description": "Optional coin symbol for cross-exchange depth, such as BTC, ETH, or SOL."
+            },
+            "begin": {
+              "type": "number",
+              "description": "Start timestamp in milliseconds."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum streamed depth rows to return."
+            },
+            "product": {
+              "type": "string",
+              "description": "Product symbol such as BTCUSDT, ETHUSDT, SOLUSDT, BTC-USDT-SWAP, or BTC-USD."
+            },
+            "exchange": {
+              "type": "string",
+              "description": "Velo exchange name such as binance-futures, bybit, okex-swap, or hyperliquid."
+            },
+            "resolution": {
+              "type": "number",
+              "description": "Depth resolution in minutes, such as 1, 5, 10, 15, 30, or 60."
+            },
+            "lookbackHours": {
+              "type": "number",
+              "description": "Relative depth snapshot lookback when begin is omitted."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "rows",
+            "rowCount",
+            "latestMid",
+            "params",
+            "fetchedAt"
+          ],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "params": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "latestMid": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "get_recent_news",
+        "description": "Fetch recent Velo crypto news stories. Pair BTC-, ETH-, or SOL-tagged news with futures rows, market caps, depth, funding, liquidation, open-interest, or volatility analysis.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "begin": {
+              "type": "number",
+              "description": "Start timestamp in milliseconds."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Maximum recent stories to return."
+            },
+            "lookbackHours": {
+              "type": "number",
+              "description": "Recent news lookback window."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "stories",
+            "storyCount",
+            "fetchedAt"
+          ],
+          "properties": {
+            "stories": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "storyCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Velo Data",
+        "toolName": "build_crypto_market_memo",
+        "description": "Build a compact Velo market memo for selected coins by combining futures structure, market caps, and recent news. Use for buyer-facing positioning or leverage summaries that need multiple Velo data families.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "coins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "limit": {
+              "type": "number"
+            },
+            "exchanges": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "resolution": {
+              "type": "string"
+            },
+            "lookbackHours": {
+              "type": "number"
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "memo",
+            "futuresMarkets",
+            "marketCaps",
+            "news",
+            "fetchedAt"
+          ],
+          "properties": {
+            "memo": {
+              "type": "string"
+            },
+            "news": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "marketCaps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "futuresMarkets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    ],
+    "diagnostics": {
+      "selection": {
+        "selectedPolicy": "exploratory",
+        "plannerReasoningStage": "mechanical",
+        "oneShotBias": false,
+        "selectedTools": [
+          {
+            "toolId": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+            "toolName": "Velo Data",
+            "priceUsd": "0.000000",
+            "selectedMethodCount": 12,
+            "selectedMethods": [
+              "check_api_status",
+              "list_futures_products",
+              "list_spot_products",
+              "list_options_products",
+              "get_available_columns",
+              "get_market_rows",
+              "analyze_futures_market_structure",
+              "get_market_caps",
+              "get_futures_term_structure",
+              "get_order_book_depth",
+              "get_recent_news",
+              "build_crypto_market_memo"
+            ],
+            "omittedSelectedMethodCount": 0
+          }
+        ]
+      },
+      "executionContract": {
+        "plannerQuery": "Compare binance spot BTCUSDT with binance-futures BTCUSDT: is the latest BTC move better supported by spot dollar volume or by perp open-interest expansion and funding?",
+        "allowedModules": [],
+        "intentContract": null,
+        "validation": null
+      },
+      "cost": {
+        "planningCostUsd": 0,
+        "initialExecutionCostUsd": 0.0493285,
+        "rediscoveryAdditionalCostUsd": 0,
+        "synthesisCostUsd": 0.018203,
+        "totalModelCostUsd": 0.07144550799999999,
+        "toolCostUsd": 0,
+        "totalChargedUsd": 0.07144550799999999
+      },
+      "verification": {
+        "evaluations": [],
+        "repairEvents": [],
+        "triggerNeedsDifferentTools": false,
+        "triggerMissingCapability": null
+      },
+      "execution": {
+        "reasoningEnabled": true,
+        "receivedReasoning": false,
+        "reasoningChars": 0,
+        "stepBudget": 10,
+        "completedStepCount": 4,
+        "toolCallCount": 4,
+        "toolRegistry": {
+          "availableToolCount": 12,
+          "availableMethodNamesSample": [
+            "Velo Data.check_api_status",
+            "Velo Data.list_futures_products",
+            "Velo Data.list_spot_products",
+            "Velo Data.list_options_products",
+            "Velo Data.get_available_columns",
+            "Velo Data.get_market_rows",
+            "Velo Data.analyze_futures_market_structure",
+            "Velo Data.get_market_caps",
+            "Velo Data.get_futures_term_structure",
+            "Velo Data.get_order_book_depth",
+            "Velo Data.get_recent_news",
+            "Velo Data.build_crypto_market_memo"
+          ],
+          "selectedMethodCount": 12,
+          "selectedButFilteredOut": [],
+          "toolCallAttemptCount": 2,
+          "toolCallSuccessCount": 2,
+          "toolCallFailureCount": 0,
+          "toolCallFailureSamples": []
+        }
+      },
+      "retryBudget": {
+        "cheapFixAttempts": 0,
+        "semanticRetries": 0
+      },
+      "stageTiming": {
+        "selectionMs": 8038,
+        "executionMs": 246074,
+        "synthesisMs": 54612,
+        "accountedMs": 308724,
+        "residualMs": 618
+      },
+      "executorDiagnostics": null,
+      "models": {
+        "overrideMode": "none",
+        "stages": [
+          {
+            "stageKey": "tool-selection",
+            "stageKind": "stage",
+            "stage": "tool-selection",
+            "surface": "query",
+            "responseShape": null,
+            "answerModelId": "kimi-k2.6-model",
+            "logicalModelId": "deepseek-v4-flash-model",
+            "requestedModelId": "deepseek-v4-flash-model",
+            "resolvedModelId": "deepseek-v4-flash-model",
+            "resolvedRuntimeModelId": "deepseek/deepseek-v4-flash",
+            "effectiveModelId": "deepseek-v4-flash-model",
+            "effectiveRuntimeModelId": "deepseek/deepseek-v4-flash",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.003914008,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]",
+              "reasoningTokens": "[REDACTED]",
+              "cachedInputTokens": "[REDACTED]"
+            }
+          },
+          {
+            "stageKey": "iterative-execution",
+            "stageKind": "stage",
+            "stage": "iterative-execution",
+            "surface": "query",
+            "responseShape": null,
+            "answerModelId": "kimi-k2.6-model",
+            "logicalModelId": "kimi-k2.6-model",
+            "requestedModelId": "kimi-k2.6-model",
+            "resolvedModelId": "kimi-k2.6-model",
+            "resolvedRuntimeModelId": "moonshotai/kimi-k2.6",
+            "effectiveModelId": "kimi-k2.6-model",
+            "effectiveRuntimeModelId": "moonshotai/kimi-k2.6",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.0493285,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]"
+            }
+          },
+          {
+            "stageKey": "final-synthesis",
+            "stageKind": "final-synthesis",
+            "stage": "final-synthesis",
+            "surface": "query",
+            "responseShape": "answer_with_evidence",
+            "answerModelId": "kimi-k2.6-model",
+            "logicalModelId": "kimi-k2.6-model",
+            "requestedModelId": "kimi-k2.6-model",
+            "resolvedModelId": "kimi-k2.6-model",
+            "resolvedRuntimeModelId": "moonshotai/kimi-k2.6",
+            "effectiveModelId": "kimi-k2.6-model",
+            "effectiveRuntimeModelId": "moonshotai/kimi-k2.6",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.018203,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]",
+              "reasoningTokens": "[REDACTED]",
+              "cachedInputTokens": "[REDACTED]"
+            }
+          }
+        ]
+      }
+    },
+    "governance": {
+      "policyVersion": "2026-03-05.query-data-governance.v1",
+      "redactionCount": 13,
+      "omittedSensitiveFieldsCount": 0,
+      "exposure": {
+        "runtimeArtifacts": "internal_runtime_only",
+        "durableAudit": "internal_ops_only",
+        "developerTrace": "explicit_opt_in_redacted",
+        "publicDataUrl": "explicit_request_opt_in"
+      },
+      "retention": {
+        "runtimeTtlMs": 900000,
+        "durableAuditDays": 30,
+        "publicDataUrl": "until_deleted"
+      }
+    }
+  },
+  "grounding": {
+    "availableToolCount": 12,
+    "availableMethodNamesSample": [
+      "Velo Data.check_api_status",
+      "Velo Data.list_futures_products",
+      "Velo Data.list_spot_products",
+      "Velo Data.list_options_products",
+      "Velo Data.get_available_columns",
+      "Velo Data.get_market_rows",
+      "Velo Data.analyze_futures_market_structure",
+      "Velo Data.get_market_caps",
+      "Velo Data.get_futures_term_structure",
+      "Velo Data.get_order_book_depth",
+      "Velo Data.get_recent_news",
+      "Velo Data.build_crypto_market_memo"
+    ],
+    "selectedMethodCount": 12,
+    "selectedButFilteredOut": [],
+    "toolCallCount": 4,
+    "toolCallAttemptCount": 2,
+    "toolCallSuccessCount": 2,
+    "toolCallFailureCount": 0,
+    "toolCallFailureSamples": [],
+    "grounded": true
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "auto_discovery",
+    "firstPassSuccess": true,
+    "capabilityMissSignaled": false,
+    "rediscoveryExecuted": false
+  },
+  "responseShape": "answer_with_evidence",
+  "summary": "The latest ~48 h decline (BTC –1.39 %) is **better supported by spot dollar volume** than by perp open‑interest expansion or funding.",
+  "outcome": {
+    "label": "Bounded answer",
+    "tone": "caution",
+    "stopReason": "bounded_upstream_abort_guardrail",
+    "issueClass": "missing_evidence"
+  },
+  "controller": {
+    "scope": "standard",
+    "nextAction": "return_bounded_answer",
+    "actionsTaken": [
+      "inspect_current_grounding",
+      "return_bounded_answer"
+    ],
+    "patchFirstProgramPreserved": false,
+    "executionProgramRevisionId": "iterative-v1",
+    "hardBudgetApplied": false
+  },
+  "evidence": {
+    "facts": [
+      {
+        "id": "path_lookup:0",
+        "label": "Top-level path lookup for \"futuresRows\"",
+        "path": "futuresRows",
+        "relevanceScore": 1,
+        "value": 49
+      },
+      {
+        "id": "path_lookup:1",
+        "label": "Top-level path lookup for \"spotRows\"",
+        "path": "spotRows",
+        "relevanceScore": 1,
+        "value": 49
+      },
+      {
+        "id": "path_lookup:2",
+        "label": "Top-level path lookup for \"chartUrl\"",
+        "path": "chartUrl",
+        "relevanceScore": null,
+        "value": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/8bd734eac8fed34642eed551f2ed7f20e5b93780488a3f2fe8016a0a985a0129.png"
+      },
+      {
+        "id": "keyword_slice:3",
+        "label": "Keyword slice for \"spot\" (lines 1-3)",
+        "path": "line:2",
+        "relevanceScore": 1,
+        "value": "{\n  \"spotRows\": 49,\n  \"futuresRows\": 49,"
+      },
+      {
+        "id": "keyword_slice:4",
+        "label": "Keyword slice for \"futures\" (lines 2-4)",
+        "path": "line:3",
+        "relevanceScore": 1,
+        "value": "  \"spotRows\": 49,\n  \"futuresRows\": 49,\n  \"summary\": {"
+      },
+      {
+        "id": "top_k_relevance:5",
+        "label": "Top-K relevance slice at \"$\"",
+        "path": "$",
+        "relevanceScore": 2,
+        "value": "{\n  \"spotRows\": 49,\n  \"futuresRows\": 49,\n  \"summary\": {\n    \"spot\": {\n      \"price_start\": 80881.26,\n      \"price_end\": 79758.54,\n      \"price_change_usd\": -1122.72,\n      \"price_change_pct\": -1.388,\n      \"total_volume_usd\": 2258479709.47,\n      \"avg_hourly_volume_usd\": 46091422.64,\n      \"max_hourly_volume_usd\": 137204913.51\n    },\n    \"futures\": {\n      \"price_start\": 80846.3,\n      \"price_end\": 79707.9,\n      \"price_change_usd\": -1138.4,\n      \"price_change_pct\": -1.408,\n      \"total_volume_\n... [truncated for context window efficiency]"
+      },
+      {
+        "id": "top_k_relevance:6",
+        "label": "Top-K relevance slice at \"summary\"",
+        "path": "summary",
+        "relevanceScore": 2,
+        "value": "{\n  \"spot\": {\n    \"price_start\": 80881.26,\n    \"price_end\": 79758.54,\n    \"price_change_usd\": -1122.72,\n    \"price_change_pct\": -1.388,\n    \"total_volume_usd\": 2258479709.47,\n    \"avg_hourly_volume_usd\": 46091422.64,\n    \"max_hourly_volume_usd\": 137204913.51\n  },\n  \"futures\": {\n    \"price_start\": 80846.3,\n    \"price_end\": 79707.9,\n    \"price_change_usd\": -1138.4,\n    \"price_change_pct\": -1.408,\n    \"total_volume_usd\": 21192656600.57,\n    \"avg_hourly_volume_usd\": 432503195.93,\n    \"max_hourly_vol\n... [truncated for context window efficiency]"
+      }
+    ],
+    "sourceRefs": [
+      {
+        "id": "source-1",
+        "provider": "Context",
+        "dataset": "canonical execution data",
+        "observedAt": null,
+        "publishedAt": null,
+        "artifactRef": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/e8d04dd1-53ce-42ef-9287-9fdb79fc03d1-api_query_execution_e1de5af7-adf1-4caf-840d-f3f859aa826c_1778763866934.json",
+        "url": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/e8d04dd1-53ce-42ef-9287-9fdb79fc03d1-api_query_execution_e1de5af7-adf1-4caf-840d-f3f859aa826c_1778763866934.json",
+        "note": "Raw execution artifact for this answer."
+      }
+    ],
+    "assumptions": [],
+    "knownUnknowns": [],
+    "retrievalPlanReasonCodes": [
+      "keyword_lookup"
+    ]
+  },
+  "view": {
+    "type": "table",
+    "label": "Table",
+    "title": "Evidence table",
+    "columns": [
+      "Evidence",
+      "Value"
+    ],
+    "rows": [
+      {
+        "key": "path_lookup:0",
+        "cells": [
+          "Top-level path lookup for \"futuresRows\"",
+          "49"
+        ]
+      },
+      {
+        "key": "path_lookup:1",
+        "cells": [
+          "Top-level path lookup for \"spotRows\"",
+          "49"
+        ]
+      },
+      {
+        "key": "path_lookup:2",
+        "cells": [
+          "Top-level path lookup for \"chartUrl\"",
+          "\"https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/8bd734eac8fed34642eed551f2ed7f20e5b93780488a3f2fe8016a0a985a0129.png\""
+        ]
+      },
+      {
+        "key": "keyword_slice:3",
+        "cells": [
+          "Keyword slice for \"spot\" (lines 1-3)",
+          "\"{\\n  \\\"spotRows\\\": 49,\\n  \\\"futuresRows\\\": 49,\""
+        ]
+      },
+      {
+        "key": "keyword_slice:4",
+        "cells": [
+          "Keyword slice for \"futures\" (lines 2-4)",
+          "\"  \\\"spotRows\\\": 49,\\n  \\\"futuresRows\\\": 49,\\n  \\\"summary\\\": {\""
+        ]
+      },
+      {
+        "key": "top_k_relevance:5",
+        "cells": [
+          "Top-K relevance slice at \"$\"",
+          "\"{\\n  \\\"spotRows\\\": 49,\\n  \\\"futuresRows\\\": 49,\\n  \\\"summary\\\": {\\n    \\\"spot\\\": {\\n      \\\"price_start\\\": 80881.26,\\n      \\\"price_end\\\": 79758.54,\\n      \\\"price_change_usd\\\": -1122.72,\\n      \\\"price_change_pct\\\": -1.388,\\n      \\\"total_volume_usd\\\": 2258479709.47,\\n      \\\"avg_hourly_volume_usd\\\": 46091422.64,\\n      \\\"max_hourly_volume_usd\\\": 137204913.51\\n    },\\n    \\\"futures\\\": {\\n      \\\"price_start\\\": 80846.3,\\n      \\\"price_end\\\": 79707.9,\\n      \\\"price_change_usd\\\": -1138.4,\\n      \\\"price_change_pct\\\": -1.408,\\n      \\\"total_volume_\\n... [truncated for context window efficiency]\""
+        ]
+      },
+      {
+        "key": "top_k_relevance:6",
+        "cells": [
+          "Top-K relevance slice at \"summary\"",
+          "\"{\\n  \\\"spot\\\": {\\n    \\\"price_start\\\": 80881.26,\\n    \\\"price_end\\\": 79758.54,\\n    \\\"price_change_usd\\\": -1122.72,\\n    \\\"price_change_pct\\\": -1.388,\\n    \\\"total_volume_usd\\\": 2258479709.47,\\n    \\\"avg_hourly_volume_usd\\\": 46091422.64,\\n    \\\"max_hourly_volume_usd\\\": 137204913.51\\n  },\\n  \\\"futures\\\": {\\n    \\\"price_start\\\": 80846.3,\\n    \\\"price_end\\\": 79707.9,\\n    \\\"price_change_usd\\\": -1138.4,\\n    \\\"price_change_pct\\\": -1.408,\\n    \\\"total_volume_usd\\\": 21192656600.57,\\n    \\\"avg_hourly_volume_usd\\\": 432503195.93,\\n    \\\"max_hourly_vol\\n... [truncated for context window efficiency]\""
+        ]
+      }
+    ]
+  },
+  "freshness": {
+    "asOf": "2026-05-14T12:59:40.200Z",
+    "sourceTimestamps": [
+      "2026-05-14T12:59:40.200Z",
+      "2026-05-14T12:59:39.207Z"
+    ],
+    "note": "Most recent evidence timestamp: 2026-05-14T12:59:40.200Z"
+  },
+  "confidence": {
+    "level": "high",
+    "reason": "Grounded in 2 verified evidence facts with no recorded retrieval gaps.",
+    "verifiedFactCount": 2,
+    "inferredFactCount": 2,
+    "gapCount": 0,
+    "gapSignals": []
+  },
+  "usage": {
+    "durationMs": 309342,
+    "cost": {
+      "totalCostUsd": "0.071446",
+      "toolCostUsd": "0.000000",
+      "modelCostUsd": "0.071446"
+    },
+    "toolsUsed": [
+      {
+        "id": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
+        "name": "Velo Data",
+        "skillCalls": 2
+      }
+    ],
+    "outcomeType": "answer",
+    "orchestrationMetrics": {
+      "parityStage": "enabled",
+      "orchestrationMode": "auto_discovery",
+      "firstPassSuccess": true,
+      "capabilityMissSignaled": false,
+      "rediscoveryExecuted": false
+    }
+  },
+  "stopReason": "bounded_upstream_abort_guardrail",
+  "issueClass": "missing_evidence",
+  "actionsTaken": [
+    "inspect_current_grounding",
+    "return_bounded_answer"
+  ]
+}
