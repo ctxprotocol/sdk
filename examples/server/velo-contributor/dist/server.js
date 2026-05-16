@@ -20,6 +20,19 @@ const DEFAULT_PORT = 4010;
 const DEFAULT_LOOKBACK_HOURS = getConfiguredNumber("VELO_DEFAULT_LOOKBACK_HOURS", 24, 1, 24 * 90);
 const DEFAULT_RESOLUTION = process.env.VELO_DEFAULT_RESOLUTION?.trim() || "1h";
 const DEFAULT_EXECUTE_USD = process.env.VELO_DEFAULT_EXECUTE_USD?.trim() || "0.002";
+/** Optional ops-only circuit breaker. Unset = stream until velo-node ends the query. */
+function getOptionalEmergencyMaxRows() {
+    const raw = process.env.VELO_EMERGENCY_MAX_ROWS?.trim();
+    if (!raw) {
+        return null;
+    }
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        return null;
+    }
+    return Math.floor(parsed);
+}
+const EMERGENCY_MAX_ROWS = getOptionalEmergencyMaxRows();
 const FUTURES_DEFAULT_COLUMNS = [
     "close_price",
     "dollar_volume",
@@ -29,7 +42,21 @@ const FUTURES_DEFAULT_COLUMNS = [
     "sell_liquidations_dollar_volume",
 ];
 const SPOT_DEFAULT_COLUMNS = ["close_price", "dollar_volume"];
-const OPTIONS_DEFAULT_COLUMNS = ["index_price", "iv_1w", "skew_1w", "dollar_volume"];
+const OPTIONS_DEFAULT_COLUMNS = [
+    "index_price",
+    "iv_1w",
+    "iv_1m",
+    "iv_3m",
+    "skew_1w",
+    "skew_1m",
+    "dollar_volume",
+    "dvol_close",
+];
+const ROW_COLUMN_ALIASES = {
+    buy_liquidation_dollar_volume: "buy_liquidations_dollar_volume",
+    sell_liquidation_dollar_volume: "sell_liquidations_dollar_volume",
+    liquidation_dollar_volume: "liquidations_dollar_volume",
+};
 function getConfiguredNumber(name, fallback, min, max) {
     const raw = process.env[name];
     if (!raw) {
@@ -127,11 +154,21 @@ function getMarketType(args) {
     }
     return "futures";
 }
+function shouldUseRelativeTimeRange(args) {
+    return "lookbackHours" in args;
+}
 function getTimeRange(args) {
-    const end = getNumber(args, "end", Date.now(), 0, Number.MAX_SAFE_INTEGER);
-    const explicitBegin = args.begin;
+    const now = Date.now();
+    const requestedEnd = getNumber(args, "end", now, 0, Number.MAX_SAFE_INTEGER);
+    const useRelativeRange = shouldUseRelativeTimeRange(args);
+    const end = !useRelativeRange && requestedEnd > 0 ? requestedEnd : now;
+    const explicitBegin = useRelativeRange ? null : args.begin;
     const lookbackHours = getNumber(args, "lookbackHours", DEFAULT_LOOKBACK_HOURS, 1, 24 * 365);
-    const begin = typeof explicitBegin === "number" && Number.isFinite(explicitBegin)
+    const validExplicitBegin = typeof explicitBegin === "number" &&
+        Number.isFinite(explicitBegin) &&
+        explicitBegin > 0 &&
+        explicitBegin < end;
+    const begin = validExplicitBegin
         ? explicitBegin
         : end - lookbackHours * 60 * 60 * 1000;
     return {
@@ -162,22 +199,122 @@ function requestedColumns(client, type, args) {
     const availableColumns = new Set(columnsForClient(client, type));
     const requested = getStringArray(args, "columns", defaultColumnsFor(type));
     const selected = [];
+    const seen = new Set();
     for (const column of requested) {
-        if (availableColumns.has(column)) {
-            selected.push(column);
+        const normalizedColumn = ROW_COLUMN_ALIASES[column] ?? column;
+        if (availableColumns.has(normalizedColumn) && !seen.has(normalizedColumn)) {
+            selected.push(normalizedColumn);
+            seen.add(normalizedColumn);
         }
     }
     return selected.length > 0 ? selected : defaultColumnsFor(type);
 }
-async function collectAsyncRows(iterable, maxRows) {
+function requestedLimitFromArgs(args) {
+    if (!("limit" in args)) {
+        return null;
+    }
+    const value = args.limit;
+    if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+        return Math.floor(value);
+    }
+    return null;
+}
+function parseExplicitRowLimit(args) {
+    return requestedLimitFromArgs(args);
+}
+function resolveStreamCap(explicitLimit) {
+    if (explicitLimit !== null) {
+        return explicitLimit;
+    }
+    return EMERGENCY_MAX_ROWS;
+}
+function buildRowStreamOptions(args, range) {
+    const explicitLimit = parseExplicitRowLimit(args);
+    return {
+        requestedLimit: explicitLimit,
+        streamCap: resolveStreamCap(explicitLimit),
+        requestedBeginMs: range.begin,
+        requestedEndMs: range.end,
+        resolution: range.resolution,
+    };
+}
+function rowTimeMs(row) {
+    const time = row.time;
+    if (typeof time === "number" && Number.isFinite(time)) {
+        return time;
+    }
+    if (typeof time === "string") {
+        const asNumber = Number(time);
+        if (Number.isFinite(asNumber)) {
+            return asNumber;
+        }
+        const asDate = Date.parse(time);
+        if (Number.isFinite(asDate)) {
+            return asDate;
+        }
+    }
+    return null;
+}
+function buildRowCoverage(rows, options) {
+    let minTime = null;
+    let maxTime = null;
+    for (const row of rows) {
+        const timestamp = rowTimeMs(row);
+        if (timestamp === null) {
+            continue;
+        }
+        if (minTime === null || timestamp < minTime) {
+            minTime = timestamp;
+        }
+        if (maxTime === null || timestamp > maxTime) {
+            maxTime = timestamp;
+        }
+    }
+    const rowCount = rows.length;
+    const stream_completed = options.stopReason === "none";
+    const row_count_at_cap = options.stopReason === "requested_limit" || options.stopReason === "emergency_cap";
+    const endGapMs = 6 * 60 * 60 * 1000;
+    const historyGapTruncated = stream_completed &&
+        maxTime !== null &&
+        maxTime < options.requestedEndMs - endGapMs;
+    const likely_truncated = row_count_at_cap || historyGapTruncated;
+    return {
+        rowCount,
+        requestedLimit: options.requestedLimit,
+        effectiveLimit: options.streamCap,
+        stream_completed,
+        stop_reason: options.stopReason,
+        likely_truncated,
+        row_count_at_cap,
+        min_time_ms: minTime,
+        max_time_ms: maxTime,
+        requested_begin_ms: options.requestedBeginMs,
+        requested_end_ms: options.requestedEndMs,
+        resolution: options.resolution,
+        days_behind_now: maxTime !== null ? Math.max(0, (Date.now() - maxTime) / (24 * 60 * 60 * 1000)) : 0,
+    };
+}
+async function collectRowsWithCoverage(iterable, options) {
     const rows = [];
+    let stopReason = "none";
     for await (const row of iterable) {
         rows.push(toJsonObject(row));
-        if (rows.length >= maxRows) {
+        if (options.streamCap !== null && rows.length >= options.streamCap) {
+            stopReason =
+                options.requestedLimit !== null && options.streamCap === options.requestedLimit
+                    ? "requested_limit"
+                    : "emergency_cap";
             break;
         }
     }
-    return rows;
+    return {
+        rows,
+        coverage: buildRowCoverage(rows, {
+            ...options,
+            stoppedEarly: stopReason !== "none",
+            stopReason,
+        }),
+    };
 }
 function jsonNumber(row, key) {
     const value = row[key];
@@ -249,8 +386,9 @@ function summarizeFuturesRows(rows) {
 function buildRowsParams(client, args) {
     const type = getMarketType(args);
     const range = getTimeRange(args);
-    const products = getStringArray(args, "products");
-    const coins = getStringArray(args, "coins", products.length > 0 ? [] : ["BTC"]);
+    const requestedProducts = getStringArray(args, "products");
+    const requestedCoins = getStringArray(args, "coins", requestedProducts.length > 0 ? [] : ["BTC"]);
+    const { products, coins } = normalizeRowFilters(type, requestedProducts, requestedCoins);
     return {
         type,
         columns: requestedColumns(client, type, args),
@@ -261,6 +399,15 @@ function buildRowsParams(client, args) {
         end: range.end,
         resolution: getString(args, "resolution") ?? DEFAULT_RESOLUTION,
     };
+}
+function normalizeRowFilters(type, products, coins) {
+    if (products.length === 0 || coins.length === 0) {
+        return { products, coins };
+    }
+    if (type === "options") {
+        return { products: [], coins };
+    }
+    return { products, coins: [] };
 }
 function successResult(text, structuredContent) {
     return {
@@ -280,18 +427,23 @@ function errorResult(error) {
     };
 }
 function toolMeta(latencyClass, notes, executeUsd = null) {
+    const rateLimitNotes = [
+        "Contributor-hosted Velo API key (VELO_API_KEY) required; no user wallet context injection.",
+        "Velo API rate limits apply.",
+        notes,
+        "velo-node auto-chunks large windows upstream; omit limit to stream the full requested window.",
+        "For multi-month or multi-year series prefer 1d/1w unless intraday is required.",
+        "Check coverage before charting.",
+    ]
+        .filter((entry) => entry.trim().length > 0)
+        .join(" ");
     return {
         surface: "answer",
         queryEligible: true,
         latencyClass,
-        contextRequirements: {
-            requiresUserApiKey: true,
-            upstream: "Velo Data API",
-            notes,
-        },
         rateLimit: {
             maxConcurrency: 1,
-            notes: "Velo API key limits apply. Prefer narrow time windows and explicit coins/products.",
+            notes: rateLimitNotes,
         },
         ...(executeUsd
             ? {
@@ -305,6 +457,42 @@ function toolMeta(latencyClass, notes, executeUsd = null) {
 const genericObjectSchema = {
     type: "object",
     additionalProperties: true,
+};
+const rowCoverageSchema = {
+    type: "object",
+    properties: {
+        rowCount: { type: "number" },
+        requestedLimit: { type: ["number", "null"] },
+        effectiveLimit: { type: ["number", "null"] },
+        stream_completed: { type: "boolean" },
+        stop_reason: {
+            type: "string",
+            enum: ["none", "requested_limit", "emergency_cap"],
+        },
+        likely_truncated: { type: "boolean" },
+        row_count_at_cap: { type: "boolean" },
+        min_time_ms: { type: ["number", "null"] },
+        max_time_ms: { type: ["number", "null"] },
+        requested_begin_ms: { type: "number" },
+        requested_end_ms: { type: "number" },
+        resolution: {},
+        days_behind_now: { type: "number" },
+    },
+    required: [
+        "rowCount",
+        "requestedLimit",
+        "effectiveLimit",
+        "stream_completed",
+        "stop_reason",
+        "likely_truncated",
+        "row_count_at_cap",
+        "min_time_ms",
+        "max_time_ms",
+        "requested_begin_ms",
+        "requested_end_ms",
+        "resolution",
+        "days_behind_now",
+    ],
 };
 const listProductsOutputSchema = {
     type: "object",
@@ -405,20 +593,43 @@ const TOOLS = [
     },
     {
         name: "get_market_rows",
-        description: "Fetch historical futures, spot, or options rows from Velo. Defaults to BTC futures over the last 24 hours with funding, open interest, volume, and liquidation metrics.",
+        description: "Fetch exact Velo market rows for futures, spot, or Deribit options. Use when the buyer asks for Velo rows, latest row values, OHLCV, close_price, dollar_volume, funding_rate, dollar_open_interest_close, buy/sell liquidation dollar volumes, options index_price, iv_1w, iv_1m, iv_3m, skew_1w, skew_1m, or dvol_close. Pass either products or coins, never both: prefer products for exchange-specific futures/spot rows and coins for Deribit options rows. For latest/current/recent windows, set lookbackHours; when lookbackHours is present the server ignores begin/end and resolves a fresh window ending at request time. Use begin/end only when the user names a historical window. For windows longer than ~90 days, prefer resolution 1d or 1w unless intraday is required. Response includes coverage metadata (likely_truncated, row_count_at_cap, max_time_ms) — refetch with a narrower window, coarser resolution, or higher limit when truncated.",
         inputSchema: {
             type: "object",
             properties: {
-                type: { type: "string", enum: ["futures", "spot", "options"] },
-                columns: { type: "array", items: { type: "string" } },
-                exchanges: { type: "array", items: { type: "string" } },
-                products: { type: "array", items: { type: "string" } },
-                coins: { type: "array", items: { type: "string" } },
-                begin: { type: "number" },
-                end: { type: "number" },
-                lookbackHours: { type: "number" },
-                resolution: { type: "string" },
-                limit: { type: "number" },
+                type: {
+                    type: "string",
+                    enum: ["futures", "spot", "options"],
+                    description: "Velo row family: futures for perp metrics, spot for spot OHLCV, options for Deribit IV/skew/DVOL rows.",
+                },
+                columns: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Exact Velo row columns to return, such as close_price, dollar_volume, funding_rate, dollar_open_interest_close, iv_1w, skew_1m, or dvol_close.",
+                },
+                exchanges: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Velo exchange names such as binance-futures, bybit, okex-swap, hyperliquid, binance, or deribit.",
+                },
+                products: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Exchange product symbols such as BTCUSDT, ETHUSDT, SOLUSDT, or BTC-USDT-SWAP. Do not combine with coins.",
+                },
+                coins: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Underlying coin filters such as BTC, ETH, or SOL; useful for options rows and cross-exchange futures rows. Do not combine with products.",
+                },
+                begin: { type: "number", description: "Start timestamp in milliseconds." },
+                end: { type: "number", description: "End timestamp in milliseconds." },
+                lookbackHours: { type: "number", description: "Relative lookback window ending at request time; overrides begin/end when present." },
+                resolution: { type: "string", description: "Velo row resolution such as 1m, 5m, 1h, 1d, or 1w. Use 1d/1w for multi-month history." },
+                limit: {
+                    type: "number",
+                    description: "Optional cap on rows returned. Omit to stream until Velo finishes the requested begin/end window (velo-node handles upstream chunking). Set only when you need the latest N rows.",
+                },
             },
             required: [],
         },
@@ -428,24 +639,40 @@ const TOOLS = [
                 params: genericObjectSchema,
                 rowCount: { type: "number" },
                 rows: { type: "array", items: genericObjectSchema },
+                coverage: rowCoverageSchema,
                 fetchedAt: { type: "string" },
             },
-            required: ["params", "rowCount", "rows", "fetchedAt"],
+            required: ["params", "rowCount", "rows", "coverage", "fetchedAt"],
         },
-        _meta: toolMeta("slow", "Streams historical rows; narrow time windows are recommended.", DEFAULT_EXECUTE_USD),
+        _meta: toolMeta("slow", "Streams historical rows via velo-node chunked upstream requests; inspect coverage when charting long windows.", DEFAULT_EXECUTE_USD),
     },
     {
         name: "analyze_futures_market_structure",
-        description: "Analyze recent futures funding, open interest, dollar volume, and liquidation pressure for one or more coins/products across exchanges.",
+        description: "Analyze Velo futures rows for funding, open-interest change, dollar volume, buy/sell liquidations, and liquidation imbalance. Use for futures leverage pressure across binance-futures, bybit, okex-swap, hyperliquid, BTCUSDT, ETHUSDT, and SOLUSDT. Pass either products or coins, never both: use products for named exchange/product markets and coins for cross-exchange coin comparisons. For latest/current/recent windows, set lookbackHours; when lookbackHours is present the server ignores begin/end and resolves a fresh window ending at request time. Use begin/end only when the user names a historical window.",
         inputSchema: {
             type: "object",
             properties: {
-                exchanges: { type: "array", items: { type: "string" } },
-                products: { type: "array", items: { type: "string" } },
-                coins: { type: "array", items: { type: "string" } },
-                lookbackHours: { type: "number" },
-                resolution: { type: "string" },
-                limit: { type: "number" },
+                exchanges: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Velo futures exchanges, for example binance-futures, bybit, okex-swap, or hyperliquid.",
+                },
+                products: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Futures products such as BTCUSDT, ETHUSDT, SOLUSDT, BTC-USDT-SWAP, or BTC-USD. Do not combine with coins.",
+                },
+                coins: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Underlying coins to compare across futures venues, such as BTC, ETH, or SOL. Do not combine with products.",
+                },
+                lookbackHours: { type: "number", description: "Fresh relative window for open-interest change, volume, and liquidation aggregation." },
+                resolution: { type: "string", description: "Velo row resolution such as 1h for hourly futures rows." },
+                limit: {
+                    type: "number",
+                    description: "Optional cap on raw futures rows before summarizing. Omit to use the full requested window.",
+                },
             },
             required: [],
         },
@@ -456,23 +683,28 @@ const TOOLS = [
                 markets: { type: "array", items: genericObjectSchema },
                 rowCount: { type: "number" },
                 params: genericObjectSchema,
+                coverage: rowCoverageSchema,
                 fetchedAt: { type: "string" },
             },
-            required: ["summary", "markets", "rowCount", "params", "fetchedAt"],
+            required: ["summary", "markets", "rowCount", "params", "coverage", "fetchedAt"],
         },
         _meta: toolMeta("slow", "Composite analysis over Velo futures rows.", DEFAULT_EXECUTE_USD),
     },
     {
         name: "get_market_caps",
-        description: "Fetch Velo circulating-supply market cap rows for selected coins over a time window.",
+        description: "Fetch Velo market-cap rows for selected coins. Use for current circ, circ_dollars, fdv, fdv_dollars, circulating supply, fully diluted valuation, or OI-to-market-cap leverage context.",
         inputSchema: {
             type: "object",
             properties: {
-                coins: { type: "array", items: { type: "string" } },
-                begin: { type: "number" },
-                end: { type: "number" },
-                lookbackHours: { type: "number" },
-                resolution: { type: "string" },
+                coins: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Coin symbols such as BTC, ETH, or SOL.",
+                },
+                begin: { type: "number", description: "Start timestamp in milliseconds." },
+                end: { type: "number", description: "End timestamp in milliseconds." },
+                lookbackHours: { type: "number", description: "Relative lookback window ending at request time; overrides begin/end when present." },
+                resolution: { type: "string", description: "Velo market-cap resolution, commonly 1d." },
             },
             required: [],
         },
@@ -490,15 +722,19 @@ const TOOLS = [
     },
     {
         name: "get_futures_term_structure",
-        description: "Fetch Velo futures term structure data for selected coins. Useful for basis, carry, contango/backwardation, and curve-shape research.",
+        description: "Fetch Velo futures term-structure rows for selected coins. Use for curve-shape questions about dte points, forward IV fields when returned, basis, carry, contango, backwardation, upward-sloping, or inverted term structure.",
         inputSchema: {
             type: "object",
             properties: {
-                coins: { type: "array", items: { type: "string" } },
-                begin: { type: "number" },
-                end: { type: "number" },
-                lookbackHours: { type: "number" },
-                resolution: { type: "string" },
+                coins: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Coin symbols such as BTC or ETH.",
+                },
+                begin: { type: "number", description: "Start timestamp in milliseconds." },
+                end: { type: "number", description: "End timestamp in milliseconds." },
+                lookbackHours: { type: "number", description: "Relative lookback window ending at request time; overrides begin/end when present." },
+                resolution: { type: "string", description: "Velo term-structure resolution such as 1h." },
             },
             required: [],
         },
@@ -516,18 +752,21 @@ const TOOLS = [
     },
     {
         name: "get_order_book_depth",
-        description: "Fetch Velo order book depth snapshots by exchange/product or by coin. Use for liquidity, depth, and market-impact analysis.",
+        description: "Fetch Velo level-2 order book depth snapshots by exchange/product or by coin. Use for order book depth, latest mid, executable liquidity, market-impact, slippage, and venue cost comparisons.",
         inputSchema: {
             type: "object",
             properties: {
-                exchange: { type: "string" },
-                product: { type: "string" },
-                coin: { type: "string" },
-                begin: { type: "number" },
-                end: { type: "number" },
-                lookbackHours: { type: "number" },
-                resolution: { type: "number" },
-                limit: { type: "number" },
+                exchange: { type: "string", description: "Velo exchange name such as binance-futures, bybit, okex-swap, or hyperliquid." },
+                product: { type: "string", description: "Product symbol such as BTCUSDT, ETHUSDT, SOLUSDT, BTC-USDT-SWAP, or BTC-USD." },
+                coin: { type: "string", description: "Optional coin symbol for cross-exchange depth, such as BTC, ETH, or SOL." },
+                begin: { type: "number", description: "Start timestamp in milliseconds." },
+                end: { type: "number", description: "End timestamp in milliseconds." },
+                lookbackHours: { type: "number", description: "Relative depth snapshot window ending at request time; overrides begin/end when present." },
+                resolution: { type: "number", description: "Depth resolution in minutes, such as 1, 5, 10, 15, 30, or 60." },
+                limit: {
+                    type: "number",
+                    description: "Optional cap on depth rows. Omit to stream the full requested window.",
+                },
             },
             required: [],
         },
@@ -538,21 +777,22 @@ const TOOLS = [
                 rowCount: { type: "number" },
                 latestMid: { type: ["number", "null"] },
                 params: genericObjectSchema,
+                coverage: rowCoverageSchema,
                 fetchedAt: { type: "string" },
             },
-            required: ["rows", "rowCount", "latestMid", "params", "fetchedAt"],
+            required: ["rows", "rowCount", "latestMid", "params", "coverage", "fetchedAt"],
         },
         _meta: toolMeta("slow", "Streams order book depth snapshots.", DEFAULT_EXECUTE_USD),
     },
     {
         name: "get_recent_news",
-        description: "Fetch recent crypto news stories from Velo. Pair with market data tools when explaining funding, liquidation, open-interest, or volatility changes.",
+        description: "Fetch recent Velo crypto news stories. Pair BTC-, ETH-, or SOL-tagged news with futures rows, market caps, depth, funding, liquidation, open-interest, or volatility analysis.",
         inputSchema: {
             type: "object",
             properties: {
-                lookbackHours: { type: "number" },
-                begin: { type: "number" },
-                limit: { type: "number" },
+                lookbackHours: { type: "number", description: "Recent news lookback window." },
+                begin: { type: "number", description: "Start timestamp in milliseconds." },
+                limit: { type: "number", description: "Maximum recent stories to return." },
             },
             required: [],
         },
@@ -569,7 +809,7 @@ const TOOLS = [
     },
     {
         name: "build_crypto_market_memo",
-        description: "Build a compact market memo for selected coins by combining futures structure, market caps, and recent news. Good for buyer-facing alpha summaries.",
+        description: "Build a compact Velo market memo for selected coins by combining futures structure, market caps, and recent news. Use for buyer-facing positioning or leverage summaries that need multiple Velo data families.",
         inputSchema: {
             type: "object",
             properties: {
@@ -595,25 +835,28 @@ const TOOLS = [
         _meta: toolMeta("slow", "Composite Velo market memo across several endpoints.", DEFAULT_EXECUTE_USD),
     },
 ];
-const server = new Server({
-    name: "velo-contributor",
-    version: SERVER_VERSION,
-}, {
-    capabilities: {
-        tools: {},
-    },
-});
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-    tools: TOOLS,
-}));
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    try {
-        return await handleToolCall(request);
-    }
-    catch (error) {
-        return errorResult(error);
-    }
-});
+function createMcpServer() {
+    const server = new Server({
+        name: "velo-contributor",
+        version: SERVER_VERSION,
+    }, {
+        capabilities: {
+            tools: {},
+        },
+    });
+    server.setRequestHandler(ListToolsRequestSchema, async () => ({
+        tools: TOOLS,
+    }));
+    server.setRequestHandler(CallToolRequestSchema, async (request) => {
+        try {
+            return await handleToolCall(request);
+        }
+        catch (error) {
+            return errorResult(error);
+        }
+    });
+    return server;
+}
 async function handleToolCall(request) {
     const name = request.params.name;
     const args = getArgs(request);
@@ -662,11 +905,13 @@ async function handleToolCall(request) {
         }
         case "get_market_rows": {
             const params = buildRowsParams(client, args);
-            const rows = await collectAsyncRows(client.rows(params), getNumber(args, "limit", 100, 1, 1_000));
+            const streamOptions = buildRowStreamOptions(args, params);
+            const { rows, coverage } = await collectRowsWithCoverage(client.rows(params), streamOptions);
             return successResult(`Fetched ${rows.length} Velo market rows.`, {
                 params: toJsonObject(params),
                 rowCount: rows.length,
                 rows,
+                coverage,
                 fetchedAt: new Date().toISOString(),
             });
         }
@@ -676,7 +921,8 @@ async function handleToolCall(request) {
                 type: "futures",
                 columns: FUTURES_DEFAULT_COLUMNS.filter((column) => client.futuresColumns().includes(column)),
             };
-            const rows = await collectAsyncRows(client.rows(params), getNumber(args, "limit", 500, 1, 2_000));
+            const streamOptions = buildRowStreamOptions(args, params);
+            const { rows, coverage } = await collectRowsWithCoverage(client.rows(params), streamOptions);
             const markets = summarizeFuturesRows(rows);
             const summary = `Analyzed ${rows.length} futures rows across ${markets.length} market groups. Compare latestFundingRate, openInterestChangeUsd, totalDollarVolume, and liquidationImbalanceUsd for directional pressure.`;
             return successResult(summary, {
@@ -684,6 +930,7 @@ async function handleToolCall(request) {
                 markets,
                 rowCount: rows.length,
                 params: toJsonObject(params),
+                coverage,
                 fetchedAt: new Date().toISOString(),
             });
         }
@@ -724,21 +971,27 @@ async function handleToolCall(request) {
             const coin = getString(args, "coin");
             const exchange = getString(args, "exchange") ?? "binance-futures";
             const product = getString(args, "product") ?? "BTCUSDT";
-            const params = coin
+            const resolution = getNumber(args, "resolution", 5, 1, 1_440);
+            const params = getString(args, "exchange") || getString(args, "product")
                 ? {
-                    coin,
-                    begin: range.begin,
-                    end: range.end,
-                    resolution: getNumber(args, "resolution", 5, 1, 1_440),
-                }
-                : {
                     exchange,
                     product,
                     begin: range.begin,
                     end: range.end,
-                    resolution: getNumber(args, "resolution", 5, 1, 1_440),
+                    resolution,
+                }
+                : {
+                    coin: coin ?? "BTC",
+                    begin: range.begin,
+                    end: range.end,
+                    resolution,
                 };
-            const rows = await collectAsyncRows(client.depth(params), getNumber(args, "limit", 100, 1, 1_000));
+            const streamOptions = buildRowStreamOptions(args, {
+                begin: range.begin,
+                end: range.end,
+                resolution,
+            });
+            const { rows, coverage } = await collectRowsWithCoverage(client.depth(params), streamOptions);
             const latestRow = rows.at(-1);
             const latestMid = latestRow ? jsonNumber(latestRow, "mid") : null;
             return successResult(`Fetched ${rows.length} Velo depth rows.`, {
@@ -746,6 +999,7 @@ async function handleToolCall(request) {
                 rowCount: rows.length,
                 latestMid,
                 params: toJsonObject(params),
+                coverage,
                 fetchedAt: new Date().toISOString(),
             });
         }
@@ -792,7 +1046,6 @@ async function filterProducts(rawProducts, args) {
 }
 async function buildCryptoMarketMemo(client, args) {
     const coins = getStringArray(args, "coins", ["BTC", "ETH"]);
-    const limit = getNumber(args, "limit", 200, 1, 1_000);
     const futuresParams = {
         ...buildRowsParams(client, {
             ...args,
@@ -802,7 +1055,8 @@ async function buildCryptoMarketMemo(client, args) {
         }),
         type: "futures",
     };
-    const futuresRows = await collectAsyncRows(client.rows(futuresParams), limit);
+    const streamOptions = buildRowStreamOptions(args, futuresParams);
+    const { rows: futuresRows, coverage: futuresCoverage } = await collectRowsWithCoverage(client.rows(futuresParams), streamOptions);
     const futuresMarkets = summarizeFuturesRows(futuresRows);
     const range = getTimeRange(args);
     const marketCaps = (await client.marketCaps({
@@ -823,6 +1077,7 @@ async function buildCryptoMarketMemo(client, args) {
     return successResult(memo, {
         memo,
         futuresMarkets,
+        futuresCoverage,
         marketCaps,
         news,
         fetchedAt: new Date().toISOString(),
@@ -872,7 +1127,7 @@ app.post("/mcp", mcpAuthMiddleware, async (req, res) => {
                 delete transports[transport.sessionId];
             }
         };
-        await server.connect(transport);
+        await createMcpServer().connect(transport);
     }
     else {
         res.status(400).json({

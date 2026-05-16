@@ -85,6 +85,24 @@ type TimeRange = {
   lookbackHours: number;
 };
 
+type RowStreamStopReason = "none" | "requested_limit" | "emergency_cap";
+
+type RowCoverage = {
+  rowCount: number;
+  requestedLimit: number | null;
+  effectiveLimit: number | null;
+  stream_completed: boolean;
+  stop_reason: RowStreamStopReason;
+  likely_truncated: boolean;
+  row_count_at_cap: boolean;
+  min_time_ms: number | null;
+  max_time_ms: number | null;
+  requested_begin_ms: number;
+  requested_end_ms: number;
+  resolution: string | number;
+  days_behind_now: number;
+};
+
 type ToolDefinition = {
   name: string;
   description: string;
@@ -107,6 +125,22 @@ const DEFAULT_LOOKBACK_HOURS = getConfiguredNumber(
 const DEFAULT_RESOLUTION = process.env.VELO_DEFAULT_RESOLUTION?.trim() || "1h";
 const DEFAULT_EXECUTE_USD =
   process.env.VELO_DEFAULT_EXECUTE_USD?.trim() || "0.002";
+/** Optional ops-only circuit breaker. Unset = stream until velo-node ends the query. */
+function getOptionalEmergencyMaxRows(): number | null {
+  const raw = process.env.VELO_EMERGENCY_MAX_ROWS?.trim();
+  if (!raw) {
+    return null;
+  }
+
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null;
+  }
+
+  return Math.floor(parsed);
+}
+
+const EMERGENCY_MAX_ROWS = getOptionalEmergencyMaxRows();
 
 const FUTURES_DEFAULT_COLUMNS = [
   "close_price",
@@ -345,18 +379,151 @@ function requestedColumns(
   return selected.length > 0 ? selected : defaultColumnsFor(type);
 }
 
-async function collectAsyncRows(
+function requestedLimitFromArgs(args: Record<string, unknown>): number | null {
+  if (!("limit" in args)) {
+    return null;
+  }
+
+  const value = args.limit;
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return Math.floor(value);
+  }
+
+  return null;
+}
+
+function parseExplicitRowLimit(args: Record<string, unknown>): number | null {
+  return requestedLimitFromArgs(args);
+}
+
+function resolveStreamCap(explicitLimit: number | null): number | null {
+  if (explicitLimit !== null) {
+    return explicitLimit;
+  }
+
+  return EMERGENCY_MAX_ROWS;
+}
+
+type RowStreamOptions = {
+  requestedLimit: number | null;
+  streamCap: number | null;
+  requestedBeginMs: number;
+  requestedEndMs: number;
+  resolution: string | number;
+};
+
+function buildRowStreamOptions(
+  args: Record<string, unknown>,
+  range: { begin: number; end: number; resolution: string | number }
+): RowStreamOptions {
+  const explicitLimit = parseExplicitRowLimit(args);
+  return {
+    requestedLimit: explicitLimit,
+    streamCap: resolveStreamCap(explicitLimit),
+    requestedBeginMs: range.begin,
+    requestedEndMs: range.end,
+    resolution: range.resolution,
+  };
+}
+
+function rowTimeMs(row: JsonObject): number | null {
+  const time = row.time;
+  if (typeof time === "number" && Number.isFinite(time)) {
+    return time;
+  }
+
+  if (typeof time === "string") {
+    const asNumber = Number(time);
+    if (Number.isFinite(asNumber)) {
+      return asNumber;
+    }
+    const asDate = Date.parse(time);
+    if (Number.isFinite(asDate)) {
+      return asDate;
+    }
+  }
+
+  return null;
+}
+
+function buildRowCoverage(
+  rows: JsonObject[],
+  options: RowStreamOptions & {
+    stoppedEarly: boolean;
+    stopReason: RowStreamStopReason;
+  }
+): RowCoverage {
+  let minTime: number | null = null;
+  let maxTime: number | null = null;
+
+  for (const row of rows) {
+    const timestamp = rowTimeMs(row);
+    if (timestamp === null) {
+      continue;
+    }
+    if (minTime === null || timestamp < minTime) {
+      minTime = timestamp;
+    }
+    if (maxTime === null || timestamp > maxTime) {
+      maxTime = timestamp;
+    }
+  }
+
+  const rowCount = rows.length;
+  const stream_completed = options.stopReason === "none";
+  const row_count_at_cap =
+    options.stopReason === "requested_limit" || options.stopReason === "emergency_cap";
+  const endGapMs = 6 * 60 * 60 * 1000;
+  const historyGapTruncated =
+    stream_completed &&
+    maxTime !== null &&
+    maxTime < options.requestedEndMs - endGapMs;
+  const likely_truncated = row_count_at_cap || historyGapTruncated;
+
+  return {
+    rowCount,
+    requestedLimit: options.requestedLimit,
+    effectiveLimit: options.streamCap,
+    stream_completed,
+    stop_reason: options.stopReason,
+    likely_truncated,
+    row_count_at_cap,
+    min_time_ms: minTime,
+    max_time_ms: maxTime,
+    requested_begin_ms: options.requestedBeginMs,
+    requested_end_ms: options.requestedEndMs,
+    resolution: options.resolution,
+    days_behind_now:
+      maxTime !== null ? Math.max(0, (Date.now() - maxTime) / (24 * 60 * 60 * 1000)) : 0,
+  };
+}
+
+async function collectRowsWithCoverage(
   iterable: AsyncIterable<unknown>,
-  maxRows: number
-): Promise<JsonObject[]> {
+  options: RowStreamOptions
+): Promise<{ rows: JsonObject[]; coverage: RowCoverage }> {
   const rows: JsonObject[] = [];
+  let stopReason: RowStreamStopReason = "none";
+
   for await (const row of iterable) {
     rows.push(toJsonObject(row));
-    if (rows.length >= maxRows) {
+    if (options.streamCap !== null && rows.length >= options.streamCap) {
+      stopReason =
+        options.requestedLimit !== null && options.streamCap === options.requestedLimit
+          ? "requested_limit"
+          : "emergency_cap";
       break;
     }
   }
-  return rows;
+
+  return {
+    rows,
+    coverage: buildRowCoverage(rows, {
+      ...options,
+      stoppedEarly: stopReason !== "none",
+      stopReason,
+    }),
+  };
 }
 
 function jsonNumber(row: JsonObject, key: string): number | null {
@@ -506,18 +673,24 @@ function toolMeta(
   notes: string,
   executeUsd: string | null = null
 ): JsonObject {
+  const rateLimitNotes = [
+    "Contributor-hosted Velo API key (VELO_API_KEY) required; no user wallet context injection.",
+    "Velo API rate limits apply.",
+    notes,
+    "velo-node auto-chunks large windows upstream; omit limit to stream the full requested window.",
+    "For multi-month or multi-year series prefer 1d/1w unless intraday is required.",
+    "Check coverage before charting.",
+  ]
+    .filter((entry) => entry.trim().length > 0)
+    .join(" ");
+
   return {
     surface: "answer",
     queryEligible: true,
     latencyClass,
-    contextRequirements: {
-      requiresUserApiKey: true,
-      upstream: "Velo Data API",
-      notes,
-    },
     rateLimit: {
       maxConcurrency: 1,
-      notes: "Velo API key limits apply. Prefer narrow time windows and explicit coins/products.",
+      notes: rateLimitNotes,
     },
     ...(executeUsd
       ? {
@@ -532,6 +705,43 @@ function toolMeta(
 const genericObjectSchema: JsonObject = {
   type: "object",
   additionalProperties: true,
+};
+
+const rowCoverageSchema: JsonObject = {
+  type: "object",
+  properties: {
+    rowCount: { type: "number" },
+    requestedLimit: { type: ["number", "null"] },
+    effectiveLimit: { type: ["number", "null"] },
+    stream_completed: { type: "boolean" },
+    stop_reason: {
+      type: "string",
+      enum: ["none", "requested_limit", "emergency_cap"],
+    },
+    likely_truncated: { type: "boolean" },
+    row_count_at_cap: { type: "boolean" },
+    min_time_ms: { type: ["number", "null"] },
+    max_time_ms: { type: ["number", "null"] },
+    requested_begin_ms: { type: "number" },
+    requested_end_ms: { type: "number" },
+    resolution: {},
+    days_behind_now: { type: "number" },
+  },
+  required: [
+    "rowCount",
+    "requestedLimit",
+    "effectiveLimit",
+    "stream_completed",
+    "stop_reason",
+    "likely_truncated",
+    "row_count_at_cap",
+    "min_time_ms",
+    "max_time_ms",
+    "requested_begin_ms",
+    "requested_end_ms",
+    "resolution",
+    "days_behind_now",
+  ],
 };
 
 const listProductsOutputSchema: JsonObject = {
@@ -640,7 +850,7 @@ const TOOLS: ToolDefinition[] = [
   {
     name: "get_market_rows",
     description:
-      "Fetch exact Velo market rows for futures, spot, or Deribit options. Use when the buyer asks for Velo rows, latest row values, OHLCV, close_price, dollar_volume, funding_rate, dollar_open_interest_close, buy/sell liquidation dollar volumes, options index_price, iv_1w, iv_1m, iv_3m, skew_1w, skew_1m, or dvol_close. Pass either products or coins, never both: prefer products for exchange-specific futures/spot rows and coins for Deribit options rows. For latest/current/recent windows, set lookbackHours; when lookbackHours is present the server ignores begin/end and resolves a fresh window ending at request time. Use begin/end only when the user names a historical window.",
+      "Fetch exact Velo market rows for futures, spot, or Deribit options. Use when the buyer asks for Velo rows, latest row values, OHLCV, close_price, dollar_volume, funding_rate, dollar_open_interest_close, buy/sell liquidation dollar volumes, options index_price, iv_1w, iv_1m, iv_3m, skew_1w, skew_1m, or dvol_close. Pass either products or coins, never both: prefer products for exchange-specific futures/spot rows and coins for Deribit options rows. For latest/current/recent windows, set lookbackHours; when lookbackHours is present the server ignores begin/end and resolves a fresh window ending at request time. Use begin/end only when the user names a historical window. For windows longer than ~90 days, prefer resolution 1d or 1w unless intraday is required. Response includes coverage metadata (likely_truncated, row_count_at_cap, max_time_ms) — refetch with a narrower window, coarser resolution, or higher limit when truncated.",
     inputSchema: {
       type: "object",
       properties: {
@@ -672,8 +882,12 @@ const TOOLS: ToolDefinition[] = [
         begin: { type: "number", description: "Start timestamp in milliseconds." },
         end: { type: "number", description: "End timestamp in milliseconds." },
         lookbackHours: { type: "number", description: "Relative lookback window ending at request time; overrides begin/end when present." },
-        resolution: { type: "string", description: "Velo row resolution such as 1m, 5m, 1h, 1d, or 1w." },
-        limit: { type: "number", description: "Maximum streamed rows to return." },
+        resolution: { type: "string", description: "Velo row resolution such as 1m, 5m, 1h, 1d, or 1w. Use 1d/1w for multi-month history." },
+        limit: {
+          type: "number",
+          description:
+            "Optional cap on rows returned. Omit to stream until Velo finishes the requested begin/end window (velo-node handles upstream chunking). Set only when you need the latest N rows.",
+        },
       },
       required: [],
     },
@@ -683,11 +897,16 @@ const TOOLS: ToolDefinition[] = [
         params: genericObjectSchema,
         rowCount: { type: "number" },
         rows: { type: "array", items: genericObjectSchema },
+        coverage: rowCoverageSchema,
         fetchedAt: { type: "string" },
       },
-      required: ["params", "rowCount", "rows", "fetchedAt"],
+      required: ["params", "rowCount", "rows", "coverage", "fetchedAt"],
     },
-    _meta: toolMeta("slow", "Streams historical rows; narrow time windows are recommended.", DEFAULT_EXECUTE_USD),
+    _meta: toolMeta(
+      "slow",
+      "Streams historical rows via velo-node chunked upstream requests; inspect coverage when charting long windows.",
+      DEFAULT_EXECUTE_USD
+    ),
   },
   {
     name: "analyze_futures_market_structure",
@@ -713,7 +932,11 @@ const TOOLS: ToolDefinition[] = [
         },
         lookbackHours: { type: "number", description: "Fresh relative window for open-interest change, volume, and liquidation aggregation." },
         resolution: { type: "string", description: "Velo row resolution such as 1h for hourly futures rows." },
-        limit: { type: "number", description: "Maximum futures rows to stream before summarizing." },
+        limit: {
+          type: "number",
+          description:
+            "Optional cap on raw futures rows before summarizing. Omit to use the full requested window.",
+        },
       },
       required: [],
     },
@@ -724,9 +947,10 @@ const TOOLS: ToolDefinition[] = [
         markets: { type: "array", items: genericObjectSchema },
         rowCount: { type: "number" },
         params: genericObjectSchema,
+        coverage: rowCoverageSchema,
         fetchedAt: { type: "string" },
       },
-      required: ["summary", "markets", "rowCount", "params", "fetchedAt"],
+      required: ["summary", "markets", "rowCount", "params", "coverage", "fetchedAt"],
     },
     _meta: toolMeta("slow", "Composite analysis over Velo futures rows.", DEFAULT_EXECUTE_USD),
   },
@@ -806,7 +1030,11 @@ const TOOLS: ToolDefinition[] = [
         end: { type: "number", description: "End timestamp in milliseconds." },
         lookbackHours: { type: "number", description: "Relative depth snapshot window ending at request time; overrides begin/end when present." },
         resolution: { type: "number", description: "Depth resolution in minutes, such as 1, 5, 10, 15, 30, or 60." },
-        limit: { type: "number", description: "Maximum streamed depth rows to return." },
+        limit: {
+          type: "number",
+          description:
+            "Optional cap on depth rows. Omit to stream the full requested window.",
+        },
       },
       required: [],
     },
@@ -817,9 +1045,10 @@ const TOOLS: ToolDefinition[] = [
         rowCount: { type: "number" },
         latestMid: { type: ["number", "null"] },
         params: genericObjectSchema,
+        coverage: rowCoverageSchema,
         fetchedAt: { type: "string" },
       },
-      required: ["rows", "rowCount", "latestMid", "params", "fetchedAt"],
+      required: ["rows", "rowCount", "latestMid", "params", "coverage", "fetchedAt"],
     },
     _meta: toolMeta("slow", "Streams order book depth snapshots.", DEFAULT_EXECUTE_USD),
   },
@@ -977,14 +1206,16 @@ async function handleToolCall(request: CallToolRequest): Promise<CallToolResult>
 
     case "get_market_rows": {
       const params = buildRowsParams(client, args);
-      const rows = await collectAsyncRows(
+      const streamOptions = buildRowStreamOptions(args, params);
+      const { rows, coverage } = await collectRowsWithCoverage(
         client.rows(params),
-        getNumber(args, "limit", 100, 1, 1_000)
+        streamOptions
       );
       return successResult(`Fetched ${rows.length} Velo market rows.`, {
         params: toJsonObject(params),
         rowCount: rows.length,
         rows,
+        coverage,
         fetchedAt: new Date().toISOString(),
       });
     }
@@ -997,9 +1228,10 @@ async function handleToolCall(request: CallToolRequest): Promise<CallToolResult>
           client.futuresColumns().includes(column)
         ),
       };
-      const rows = await collectAsyncRows(
+      const streamOptions = buildRowStreamOptions(args, params);
+      const { rows, coverage } = await collectRowsWithCoverage(
         client.rows(params),
-        getNumber(args, "limit", 500, 1, 2_000)
+        streamOptions
       );
       const markets = summarizeFuturesRows(rows);
       const summary = `Analyzed ${rows.length} futures rows across ${markets.length} market groups. Compare latestFundingRate, openInterestChangeUsd, totalDollarVolume, and liquidationImbalanceUsd for directional pressure.`;
@@ -1008,6 +1240,7 @@ async function handleToolCall(request: CallToolRequest): Promise<CallToolResult>
         markets,
         rowCount: rows.length,
         params: toJsonObject(params),
+        coverage,
         fetchedAt: new Date().toISOString(),
       });
     }
@@ -1067,9 +1300,14 @@ async function handleToolCall(request: CallToolRequest): Promise<CallToolResult>
               end: range.end,
               resolution,
             };
-      const rows = await collectAsyncRows(
+      const streamOptions = buildRowStreamOptions(args, {
+        begin: range.begin,
+        end: range.end,
+        resolution,
+      });
+      const { rows, coverage } = await collectRowsWithCoverage(
         client.depth(params),
-        getNumber(args, "limit", 100, 1, 1_000)
+        streamOptions
       );
       const latestRow = rows.at(-1);
       const latestMid = latestRow ? jsonNumber(latestRow, "mid") : null;
@@ -1078,6 +1316,7 @@ async function handleToolCall(request: CallToolRequest): Promise<CallToolResult>
         rowCount: rows.length,
         latestMid,
         params: toJsonObject(params),
+        coverage,
         fetchedAt: new Date().toISOString(),
       });
     }
@@ -1140,7 +1379,6 @@ async function buildCryptoMarketMemo(
   args: Record<string, unknown>
 ): Promise<CallToolResult> {
   const coins = getStringArray(args, "coins", ["BTC", "ETH"]);
-  const limit = getNumber(args, "limit", 200, 1, 1_000);
   const futuresParams = {
     ...buildRowsParams(client, {
       ...args,
@@ -1150,7 +1388,11 @@ async function buildCryptoMarketMemo(
     }),
     type: "futures" as const,
   };
-  const futuresRows = await collectAsyncRows(client.rows(futuresParams), limit);
+  const streamOptions = buildRowStreamOptions(args, futuresParams);
+  const { rows: futuresRows, coverage: futuresCoverage } = await collectRowsWithCoverage(
+    client.rows(futuresParams),
+    streamOptions
+  );
   const futuresMarkets = summarizeFuturesRows(futuresRows);
 
   const range = getTimeRange(args);
@@ -1174,6 +1416,7 @@ async function buildCryptoMarketMemo(
   return successResult(memo, {
     memo,
     futuresMarkets,
+    futuresCoverage,
     marketCaps,
     news,
     fetchedAt: new Date().toISOString(),
