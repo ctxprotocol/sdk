@@ -621,16 +621,28 @@ function buildRowsParams(
     requestedCoins
   );
 
-  return {
+  const columns = requestedColumns(client, type, args);
+  const exchanges = getStringArray(args, "exchanges");
+  const resolution = getString(args, "resolution") ?? DEFAULT_RESOLUTION;
+  const base = {
     type,
-    columns: requestedColumns(client, type, args),
-    exchanges: getStringArray(args, "exchanges"),
-    products,
-    coins,
+    columns,
     begin: range.begin,
     end: range.end,
-    resolution: getString(args, "resolution") ?? DEFAULT_RESOLUTION,
+    resolution,
+    ...(exchanges.length > 0 ? { exchanges } : {}),
   };
+
+  // velo-node treats `products: []` as zero products (empty array is truthy),
+  // which disables upstream chunking and triggers Velo's 22_500 cell cap.
+  if (products.length > 0) {
+    return { ...base, products };
+  }
+  if (coins.length > 0) {
+    return { ...base, coins };
+  }
+
+  return { ...base, coins: ["BTC"] };
 }
 
 function normalizeRowFilters(
@@ -656,8 +668,24 @@ function successResult(text: string, structuredContent: JsonObject): CallToolRes
   };
 }
 
+function formatVeloRequestError(message: string): string {
+  const colCountMatch = message.match(/col count (\d+) > (\d+)/i);
+  if (colCountMatch) {
+    const [, requested, limit] = colCountMatch;
+    return (
+      `Velo API rejected the request: ${requested} data cells exceeds the ${limit} per-request limit. ` +
+      "Cell count is approximately time_steps × exchanges × markets × columns. " +
+      "For multi-year charts, prefer a specific product (e.g. BTCUSDT on binance-futures) instead of coins across all venues, " +
+      "use resolution 1w when daily is not required, or request fewer columns/exchanges."
+    );
+  }
+
+  return message;
+}
+
 function errorResult(error: unknown): CallToolResult {
-  const message = error instanceof Error ? error.message : String(error);
+  const raw = error instanceof Error ? error.message : String(error);
+  const message = formatVeloRequestError(raw);
   return {
     isError: true,
     content: [{ type: "text", text: message }],
