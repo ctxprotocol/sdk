@@ -1,50 +1,46 @@
 {
-  "testedAt": "2026-05-16T15:59:10.070Z",
+  "testedAt": "2026-05-21T07:15:02.413Z",
   "toolId": "d8e62b2b-d939-42d0-ad18-a0b2bda112ec",
   "baseUrl": "https://www.ctxprotocol.com",
   "endpoint": "https://mcp.ctxprotocol.com/velo/mcp",
   "execute": {
-    "mode": "tools.execute",
-    "durationMs": 3388,
-    "rowCount": 1096,
-    "coverage": {
-      "rowCount": 1096,
-      "requestedLimit": null,
-      "effectiveLimit": null,
-      "stream_completed": true,
-      "stop_reason": "none",
-      "likely_truncated": true,
-      "row_count_at_cap": false,
-      "min_time_ms": 1684281600000,
-      "max_time_ms": 1778889600000,
-      "requested_begin_ms": 1684339150070,
-      "requested_end_ms": 1778947150070,
-      "resolution": "1d",
-      "days_behind_now": 0.6661188773148148
-    },
-    "ok": true
+    "mode": "direct-mcp.get_market_rows",
+    "skipped": true,
+    "reason": "Deployed Velo MCP requires Context auth (401). Use query.run assertions as the primary gate."
   },
   "query": {
     "mode": "query.run",
-    "durationMs": 86976,
+    "durationMs": 159665,
     "outcomeType": "answer",
+    "stopReason": null,
     "toolsUsed": [
       "Velo Data"
     ],
-    "toolCallCount": 0,
-    "getMarketRowsCallCount": 0,
-    "responsePreview": "From the tool output for Velo `get_market_rows` on **binance-futures BTCUSDT** (daily resolution, past 3 years, no limit):\n\n| Metric | Value |\n|--------|-------|\n| **rowCount** | 1096 |\n| **coverage.stream_completed** | false |\n| **coverage.stop_reason** | requested_limit |\n\nThe stream hit the effective row cap (`requestedLimit` / `effectiveLimit` = 1096), so it stopped at the limit rather than completing the full 3-year window.",
+    "toolCallCount": 4,
+    "getMarketRowsCallCount": 2,
+    "responsePreview": "**Coverage status:** `upstream_end_natural` — the Velo daily funding-rate series for BTCUSDT on Binance Futures is current through the latest available candle and was not refetched.\n\n**Retrieved series**\n- **Velo**: 1,967 daily rows from **2021-01-01** to **2026-05-21** at 1-day resolution.\n- The full Velo funding-rate history over this window was plotted.\n\n**Remaining gap**\nCoinglass funding-rate data could not be fetched because Coinglass API tools are not configured in the current environment",
     "traceSummary": {
-      "toolCalls": 1,
+      "toolCalls": 4,
       "retryCount": 0,
       "selfHealCount": 0,
       "fallbackCount": 0,
       "failureCount": 0,
       "recoveryCount": 0,
       "completionChecks": 0,
-      "loopCount": 2,
-      "toolStepCount": 2
+      "loopCount": 4,
+      "toolStepCount": 4
     }
   },
+  "assertions": [
+    {
+      "stage": "direct-mcp.get_market_rows",
+      "skipped": true,
+      "reason": "Deployed Velo MCP requires Context auth (401). Use query.run assertions as the primary gate."
+    },
+    {
+      "stage": "query.run",
+      "ok": true
+    }
+  ],
   "errors": []
 }

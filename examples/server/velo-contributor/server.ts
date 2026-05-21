@@ -87,12 +87,20 @@ type TimeRange = {
 
 type RowStreamStopReason = "none" | "requested_limit" | "emergency_cap";
 
+type CoverageStatus =
+  | "complete"
+  | "row_cap"
+  | "upstream_end_natural"
+  | "partial";
+
 type RowCoverage = {
   rowCount: number;
   requestedLimit: number | null;
   effectiveLimit: number | null;
   stream_completed: boolean;
   stop_reason: RowStreamStopReason;
+  coverage_status: CoverageStatus;
+  /** @deprecated Prefer coverage_status. True only when coverage_status is row_cap. */
   likely_truncated: boolean;
   row_count_at_cap: boolean;
   min_time_ms: number | null;
@@ -474,11 +482,25 @@ function buildRowCoverage(
   const row_count_at_cap =
     options.stopReason === "requested_limit" || options.stopReason === "emergency_cap";
   const endGapMs = 6 * 60 * 60 * 1000;
-  const historyGapTruncated =
+  const upstreamEndNatural =
     stream_completed &&
     maxTime !== null &&
     maxTime < options.requestedEndMs - endGapMs;
-  const likely_truncated = row_count_at_cap || historyGapTruncated;
+
+  let coverage_status: CoverageStatus;
+  if (row_count_at_cap) {
+    coverage_status = "row_cap";
+  } else if (rowCount === 0) {
+    coverage_status = "partial";
+  } else if (upstreamEndNatural) {
+    coverage_status = "upstream_end_natural";
+  } else if (stream_completed) {
+    coverage_status = "complete";
+  } else {
+    coverage_status = "partial";
+  }
+
+  const likely_truncated = coverage_status === "row_cap";
 
   return {
     rowCount,
@@ -486,6 +508,7 @@ function buildRowCoverage(
     effectiveLimit: options.streamCap,
     stream_completed,
     stop_reason: options.stopReason,
+    coverage_status,
     likely_truncated,
     row_count_at_cap,
     min_time_ms: minTime,
@@ -696,10 +719,16 @@ function errorResult(error: unknown): CallToolResult {
   };
 }
 
+type ToolMetaRateLimitOptions = {
+  supportsBulk?: boolean;
+  recommendedBatchTools?: string[];
+};
+
 function toolMeta(
   latencyClass: ToolLatencyClass,
   notes: string,
-  executeUsd: string | null = null
+  executeUsd: string | null = null,
+  rateLimitOptions: ToolMetaRateLimitOptions = {}
 ): JsonObject {
   const rateLimitNotes = [
     "Contributor-hosted Velo API key (VELO_API_KEY) required; no user wallet context injection.",
@@ -707,7 +736,8 @@ function toolMeta(
     notes,
     "velo-node auto-chunks large windows upstream; omit limit to stream the full requested window.",
     "For multi-month or multi-year series prefer 1d/1w unless intraday is required.",
-    "Check coverage before charting.",
+    "coverage_status: complete | row_cap | upstream_end_natural | partial. upstream_end_natural means Velo finished the stream but the newest row is before requested end — do not refetch narrower windows. Only refetch when coverage_status is row_cap.",
+    "likely_truncated is deprecated; true only for row_cap.",
   ]
     .filter((entry) => entry.trim().length > 0)
     .join(" ");
@@ -717,7 +747,12 @@ function toolMeta(
     queryEligible: true,
     latencyClass,
     rateLimit: {
+      // TODO(velo-tier): populate maxRequestsPerMinute and cooldownMs from Velo subscription dashboard.
       maxConcurrency: 1,
+      ...(rateLimitOptions.supportsBulk === true ? { supportsBulk: true } : {}),
+      ...(rateLimitOptions.recommendedBatchTools
+        ? { recommendedBatchTools: rateLimitOptions.recommendedBatchTools }
+        : {}),
       notes: rateLimitNotes,
     },
     ...(executeUsd
@@ -737,6 +772,8 @@ const genericObjectSchema: JsonObject = {
 
 const rowCoverageSchema: JsonObject = {
   type: "object",
+  description:
+    "Row-stream coverage. likely_truncated is deprecated and true only when coverage_status is row_cap. upstream_end_natural is NOT truncation — do not refetch narrower windows.",
   properties: {
     rowCount: { type: "number" },
     requestedLimit: { type: ["number", "null"] },
@@ -746,7 +783,14 @@ const rowCoverageSchema: JsonObject = {
       type: "string",
       enum: ["none", "requested_limit", "emergency_cap"],
     },
-    likely_truncated: { type: "boolean" },
+    coverage_status: {
+      type: "string",
+      enum: ["complete", "row_cap", "upstream_end_natural", "partial"],
+    },
+    likely_truncated: {
+      type: "boolean",
+      description: "Deprecated. True only when coverage_status is row_cap.",
+    },
     row_count_at_cap: { type: "boolean" },
     min_time_ms: { type: ["number", "null"] },
     max_time_ms: { type: ["number", "null"] },
@@ -761,6 +805,7 @@ const rowCoverageSchema: JsonObject = {
     "effectiveLimit",
     "stream_completed",
     "stop_reason",
+    "coverage_status",
     "likely_truncated",
     "row_count_at_cap",
     "min_time_ms",
@@ -878,7 +923,7 @@ const TOOLS: ToolDefinition[] = [
   {
     name: "get_market_rows",
     description:
-      "Fetch exact Velo market rows for futures, spot, or Deribit options. Use when the buyer asks for Velo rows, latest row values, OHLCV, close_price, dollar_volume, funding_rate, dollar_open_interest_close, buy/sell liquidation dollar volumes, options index_price, iv_1w, iv_1m, iv_3m, skew_1w, skew_1m, or dvol_close. Pass either products or coins, never both: prefer products for exchange-specific futures/spot rows and coins for Deribit options rows. For latest/current/recent windows, set lookbackHours; when lookbackHours is present the server ignores begin/end and resolves a fresh window ending at request time. Use begin/end only when the user names a historical window. For windows longer than ~90 days, prefer resolution 1d or 1w unless intraday is required. Response includes coverage metadata (likely_truncated, row_count_at_cap, max_time_ms) — refetch with a narrower window, coarser resolution, or higher limit when truncated.",
+      "Fetch exact Velo market rows for futures, spot, or Deribit options. Use when the buyer asks for Velo rows, latest row values, OHLCV, close_price, dollar_volume, funding_rate, dollar_open_interest_close, buy/sell liquidation dollar volumes, options index_price, iv_1w, iv_1m, iv_3m, skew_1w, skew_1m, or dvol_close. Pass either products or coins, never both: prefer products for exchange-specific futures/spot rows and coins for Deribit options rows. For latest/current/recent windows, set lookbackHours; when lookbackHours is present the server ignores begin/end and resolves a fresh window ending at request time. Use begin/end only when the user names a historical window. For windows longer than ~90 days, prefer resolution 1d or 1w unless intraday is required. Response includes coverage metadata (coverage_status, row_count_at_cap, max_time_ms). When coverage_status is upstream_end_natural, the data is complete for what Velo has at the requested resolution — do not refetch a narrower window. Only refetch with a coarser resolution or higher limit when coverage_status is row_cap.",
     inputSchema: {
       type: "object",
       properties: {
@@ -932,8 +977,9 @@ const TOOLS: ToolDefinition[] = [
     },
     _meta: toolMeta(
       "slow",
-      "Streams historical rows via velo-node chunked upstream requests; inspect coverage when charting long windows.",
-      DEFAULT_EXECUTE_USD
+      "Streams historical rows via velo-node chunked upstream requests; inspect coverage_status when charting long windows.",
+      DEFAULT_EXECUTE_USD,
+      { supportsBulk: true }
     ),
   },
   {
@@ -980,7 +1026,12 @@ const TOOLS: ToolDefinition[] = [
       },
       required: ["summary", "markets", "rowCount", "params", "coverage", "fetchedAt"],
     },
-    _meta: toolMeta("slow", "Composite analysis over Velo futures rows.", DEFAULT_EXECUTE_USD),
+    _meta: toolMeta(
+      "slow",
+      "Composite analysis over Velo futures rows; uses get_market_rows batch semantics.",
+      DEFAULT_EXECUTE_USD,
+      { supportsBulk: true, recommendedBatchTools: ["get_market_rows"] }
+    ),
   },
   {
     name: "get_market_caps",
@@ -1078,7 +1129,12 @@ const TOOLS: ToolDefinition[] = [
       },
       required: ["rows", "rowCount", "latestMid", "params", "coverage", "fetchedAt"],
     },
-    _meta: toolMeta("slow", "Streams order book depth snapshots.", DEFAULT_EXECUTE_USD),
+    _meta: toolMeta(
+      "slow",
+      "Streams order book depth snapshots via velo-node chunked upstream requests.",
+      DEFAULT_EXECUTE_USD,
+      { supportsBulk: true }
+    ),
   },
   {
     name: "get_recent_news",
