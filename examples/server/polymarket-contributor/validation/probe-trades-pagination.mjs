@@ -155,6 +155,47 @@ async function probeSequentialPages(market) {
   console.log(`\nTotal rows fetched across pages: ${totalRows}`);
 }
 
+async function probeSizeFilteredPages(market) {
+  console.log("\n=== SIZE-FILTERED pages (CASH >= $500 and >= $10,000) ===");
+  const filters = [
+    { filterType: "CASH", filterAmount: 500 },
+    { filterType: "CASH", filterAmount: 10_000 },
+  ];
+  const results = [];
+  for (const filter of filters) {
+    for (const offset of [0, 1000, 2000, 3000]) {
+      const r = await fetchTrades({
+        market,
+        limit: 1000,
+        offset,
+        ...filter,
+      });
+      const range = timestampRange(r.trades);
+      const notionals = r.trades
+        .map((trade) => Number(trade.size || 0) * Number(trade.price || 0))
+        .filter((value) => Number.isFinite(value));
+      results.push({
+        label: `${filter.filterType}>=${filter.filterAmount} offset=${offset}`,
+        status: r.status,
+        rows: r.rows,
+        error: r.error,
+        ...range,
+        minUsd:
+          notionals.length > 0 ? Number(Math.min(...notionals).toFixed(2)) : null,
+        maxUsd:
+          notionals.length > 0 ? Number(Math.max(...notionals).toFixed(2)) : null,
+      });
+      if (r.status !== 200 || r.rows === 0) {
+        break;
+      }
+    }
+  }
+  console.log(JSON.stringify(results, null, 2));
+  console.log(
+    "\nSize-filter interpretation: filterType=CASH lets whale/large-flow tools spend the 4k public row budget on meaningful prints instead of tiny recent fills."
+  );
+}
+
 async function probeTimestampCursorWorkaround(market) {
   console.log("\n=== TIMESTAMP cursor workaround probe ===");
   const firstPage = await fetchTrades({ market, limit: 1000, offset: 0 });
@@ -263,6 +304,7 @@ async function main() {
   await probeLimitBehavior(HOT_MARKET);
   await probeOffsetBehavior(HOT_MARKET);
   await probeSequentialPages(HOT_MARKET);
+  await probeSizeFilteredPages(HOT_MARKET);
   await probeTimestampCursorWorkaround(HOT_MARKET);
   await probeClobTradesEndpoint(HOT_MARKET);
   await probeTakerOnly(HOT_MARKET);
