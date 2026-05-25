@@ -90,6 +90,43 @@ const DATA_API_URL = "https://data-api.polymarket.com";
 const DEEP_HOLDER_SCAN_LIMIT = 500;
 const LEGACY_HOLDER_PAGE_SIZE = 20;
 const SHALLOW_HOLDER_SCAN_LIMIT = 20;
+const TRADE_SMALL_MAX_USD = 50;
+const TRADE_MEDIUM_MAX_USD = 500;
+const TRADE_WHALE_MIN_USD = 10_000;
+const TRADE_FLOW_SAMPLE_LIMIT = 1_000;
+const HOLDER_LARGE_MIN_USD = 1_000;
+const HOLDER_WHALE_MIN_USD = 10_000;
+const HOLDER_WHALE_MIN_SUPPLY_PERCENT = 1;
+
+function formatUsdThreshold(value: number): string {
+  return `$${value.toLocaleString("en-US")}`;
+}
+
+function isMeaningfulHolderWhale(
+  positionValueUsd: number,
+  percentOfSupply: number
+): boolean {
+  return (
+    positionValueUsd >= HOLDER_WHALE_MIN_USD ||
+    percentOfSupply >= HOLDER_WHALE_MIN_SUPPLY_PERCENT
+  );
+}
+
+function getHolderConvictionScore(
+  positionValueUsd: number,
+  percentOfSupply: number
+): "extreme" | "high" | "moderate" | "low" {
+  if (positionValueUsd >= 100_000 || percentOfSupply >= 5) {
+    return "extreme";
+  }
+  if (positionValueUsd >= 50_000 || percentOfSupply >= 2) {
+    return "high";
+  }
+  if (isMeaningfulHolderWhale(positionValueUsd, percentOfSupply)) {
+    return "moderate";
+  }
+  return "low";
+}
 
 type UpstreamKey = "gamma" | "clob" | "data";
 
@@ -1123,9 +1160,13 @@ const TOOLS = [
 
   {
     name: "analyze_whale_flow",
-    description: `Track recent trading activity by analyzing trade sizes. Buckets trades into Small (<$50), Medium ($50-$500), and Whale (>$1000), then calculates net directional flow and detects whale-vs-retail divergence.
+    description: `Track recent trading activity by analyzing trade sizes. Buckets trades into Small (<${formatUsdThreshold(TRADE_SMALL_MAX_USD)}), Medium (${formatUsdThreshold(TRADE_SMALL_MAX_USD)}-${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)}), Large (${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)}-${formatUsdThreshold(TRADE_WHALE_MIN_USD)}), and Whale (>=${formatUsdThreshold(TRADE_WHALE_MIN_USD)}), then calculates YES-directional flow and detects whale-vs-retail divergence.
 
-⚠️ IMPORTANT: This analyzes RECENT TRADES (last N hours). May return zero data if no trades occurred in the time window.
+⚠️ DIRECTIONAL SEMANTICS: Positive netFlow means buying YES / selling NO. Negative netFlow means selling YES / buying NO. NO-token trades are inverted into YES-equivalent direction before aggregation.
+
+⚠️ IMPORTANT: This analyzes the most recent public trade sample (up to ${TRADE_FLOW_SAMPLE_LIMIT} trades) inside the requested time window. Compare tradeSample.sampledToReportedVolumeRatio and tradeSample.coverageWarning before making strong claims about total 24h flow.
+
+⚠️ "Whale" here means a single trade at or above ${formatUsdThreshold(TRADE_WHALE_MIN_USD)}. Trades between ${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)} and ${formatUsdThreshold(TRADE_WHALE_MIN_USD)} are meaningful large prints, not necessarily whale activity. Use analyze_top_holders for actual large holder concentration.
 
 USE THIS FOR: "Break down trading by size bucket", "Are whales buying or selling?", "Whale vs retail net flow", "Trading activity in the last 24h?", "What's happening RIGHT NOW?", "Trade size analysis", "Recent whale trades?"
 
@@ -1184,11 +1225,30 @@ USE analyze_top_holders INSTEAD FOR: "Who are the biggest holders?", "What are w
               type: "object",
               description: "Trades $50-$500",
             },
+            large: {
+              type: "object",
+              description: "Trades $500-$10,000",
+            },
             whale: {
               type: "object",
-              description: "Trades > $1000",
+              description: "Trades >= $10,000",
             },
           },
+        },
+        sizeBucketDefinitions: {
+          type: "object",
+          description:
+            "USD notional thresholds used to separate small, medium, large, and whale-sized trades.",
+        },
+        tradeSample: {
+          type: "object",
+          description:
+            "Diagnostics for the public trades sample. Includes sampled volume, Polymarket-reported 24h volume when available, and a warning when the sample is materially incomplete.",
+        },
+        directionalSemantics: {
+          type: "string",
+          description:
+            "Explains that positive netFlow means buying YES / selling NO, while negative netFlow means selling YES / buying NO.",
         },
         whaleActivity: {
           type: "object",
@@ -1196,6 +1256,7 @@ USE analyze_top_holders INSTEAD FOR: "Who are the biggest holders?", "What are w
             netWhaleVolume: { type: "number" },
             sentiment: { type: "string", enum: ["bullish", "bearish", "neutral"] },
             largestTrade: { type: "object" },
+            largestTradeOverall: { type: "object" },
           },
         },
         divergence: {
@@ -1215,14 +1276,16 @@ USE analyze_top_holders INSTEAD FOR: "Who are the biggest holders?", "What are w
 ⚠️ IMPORTANT: For MULTI-OUTCOME events (tournaments, elections with multiple candidates), use analyze_event_whale_breakdown instead! This tool only shows YES/NO for ONE market, not which specific outcome (player/candidate) whales favor.
 
 Returns:
-- yesWhales[]: Top holders betting YES (with shares, positionValue, convictionScore, name if public)
-- noWhales[]: Top holders betting NO (with shares, positionValue, convictionScore, name if public)
+- yesWhales[]: Largest holders betting YES (with shares, positionValue, convictionScore, name if public)
+- noWhales[]: Largest holders betting NO (with shares, positionValue, convictionScore, name if public)
 - smartMoneySignal: Which side whales favor (YES/NO/NEUTRAL)
 - totalUniqueHolders: Total holders found via deep fetching
 
 🔥 DEEP FETCHING: We now call /holders with limit=500 per side in a single request (the doc'd 20-cap is stale — the endpoint empirically returns up to 500 top holders sorted desc by share balance). The previous multi-tier minBalance workaround collapsed to exactly 20 unique holders for popular outcomes because every tier's top-20 was the same set once an outcome had 20+ holders. The new path routinely surfaces hundreds of unique holders, so whaleCount actually varies per outcome instead of saturating at 20. If the upstream ever regresses, we transparently fall back to the legacy tier sweep.
 
-CONVICTIONSCORES: "extreme" (>$10k), "high" ($5k-$10k), "moderate" ($1k-$5k), "low" (<$1k)
+WHALE THRESHOLD: a holder counts as a whale-sized position at >=${formatUsdThreshold(HOLDER_WHALE_MIN_USD)} current value OR >=${HOLDER_WHALE_MIN_SUPPLY_PERCENT}% of scanned side supply. >=${formatUsdThreshold(HOLDER_LARGE_MIN_USD)} remains a useful large-holder signal, but is not labeled whale by itself.
+
+CONVICTIONSCORES: "extreme" (>=${formatUsdThreshold(100_000)} or >=5% side supply), "high" (>=${formatUsdThreshold(50_000)} or >=2%), "moderate" (whale-sized), "low" (below whale threshold)
 
 USE THIS FOR: Single-outcome markets like "Will Bitcoin hit $100k?" or "Will Trump win?"
 USE analyze_event_whale_breakdown FOR: "Which player are whales betting on in Australian Open?"
@@ -1308,6 +1371,7 @@ If you need multiple analyses, call them SEQUENTIALLY, not with Promise.all().`,
             top5YesPercent: { type: "number" },
             top5NoPercent: { type: "number" },
             whaleCount: { type: "number" },
+            largeHolderCount: { type: "number" },
             concentrationRisk: { type: "string", enum: ["high", "moderate", "low"] },
           },
         },
@@ -1393,7 +1457,7 @@ Returns:
               whaleCount: {
                 type: "number",
                 description:
-                  "Number of whale-sized YES positions detected across the full deep holder scan",
+                  "Number of whale-sized YES positions detected across the full deep holder scan (>= $10k current value or >= 1% scanned side supply)",
               },
               holdersScanned: {
                 type: "number",
@@ -2427,6 +2491,9 @@ Do not prefetch get_top_markets or call analyze_top_holders separately unless th
             totalTrades: { type: "number" },
             totalVolume: { type: "number" },
             flowBySize: { type: "object" },
+            sizeBucketDefinitions: { type: "object" },
+            tradeSample: { type: "object" },
+            directionalSemantics: { type: "string" },
             whaleActivity: { type: "object" },
             divergence: { type: "string" },
           },
@@ -4622,9 +4689,11 @@ USE analyze_whale_flow FOR: "Break down trading by size bucket", "Are whales buy
 
   {
     name: "get_top_holders",
-    description: `Get the top holders (biggest positions) for a specific market. Shows who the whales are, their position sizes, and implied conviction. Essential for smart money analysis.
+    description: `Get the top holders (biggest positions) for a specific market. Shows the largest holders, their position sizes, and implied conviction. Essential for smart money analysis.
 
-DEEP FETCHING (default=true): Uses a single /holders call with limit=500 per side, returning up to 500 top holders sorted descending by share balance (well beyond the public docs' stated 20-cap, which is stale). This is the actual true whale set — not a top-20 sample — so whaleCount and totalWhaleValue reflect reality. If the upstream ever regresses to the doc'd 20-cap we automatically fall back to a paced minBalance tier sweep.
+DEEP FETCHING (default=true): Uses a single /holders call with limit=500 per side, returning up to 500 top holders sorted descending by share balance (well beyond the public docs' stated 20-cap, which is stale). This is the deepest public top-holder snapshot we can get from Polymarket's Data API, not a tiny top-20 sample. It should capture material whales, though it is still bounded by the upstream top-500-per-side response. If the upstream ever regresses to the doc'd 20-cap we automatically fall back to a paced minBalance tier sweep.
+
+WHALE THRESHOLD: a holder counts as whale-sized at >=${formatUsdThreshold(HOLDER_WHALE_MIN_USD)} current value OR >=${HOLDER_WHALE_MIN_SUPPLY_PERCENT}% of scanned side supply. >=${formatUsdThreshold(HOLDER_LARGE_MIN_USD)} is reported as large-holder participation, not whale participation by itself.
 
 Set deepFetch=false for faster but shallower results (20 per side max).
 
@@ -4679,6 +4748,12 @@ The response includes scanMode, perCallLimit, and perSideScanCeilingHit so calle
                   size: { type: "number", description: "Number of shares" },
                   value: { type: "number", description: "Current position value in USD" },
                   percentOfSupply: { type: "number", description: "% of total YES shares" },
+                  positionTier: {
+                    type: "string",
+                    enum: ["whale", "large", "small"],
+                    description:
+                      "whale means >= $10k current value or >= 1% of scanned side supply; large means >= $1k but below whale threshold",
+                  },
                 },
               },
             },
@@ -4692,6 +4767,10 @@ The response includes scanMode, perCallLimit, and perSideScanCeilingHit so calle
                   size: { type: "number" },
                   value: { type: "number" },
                   percentOfSupply: { type: "number" },
+                  positionTier: {
+                    type: "string",
+                    enum: ["whale", "large", "small"],
+                  },
                 },
               },
             },
@@ -4739,6 +4818,26 @@ The response includes scanMode, perCallLimit, and perSideScanCeilingHit so calle
               description:
                 "Number of NO holders above the whale threshold across the full scanned set",
             },
+            yesLargeHolderCount: {
+              type: "number",
+              description:
+                "Number of YES holders with at least $1k current value across the full scanned set",
+            },
+            noLargeHolderCount: {
+              type: "number",
+              description:
+                "Number of NO holders with at least $1k current value across the full scanned set",
+            },
+            yesWhaleValue: {
+              type: "number",
+              description:
+                "Current YES-side value held by whale-sized positions across the full scanned set",
+            },
+            noWhaleValue: {
+              type: "number",
+              description:
+                "Current NO-side value held by whale-sized positions across the full scanned set",
+            },
           },
         },
         concentration: {
@@ -4747,7 +4846,15 @@ The response includes scanMode, perCallLimit, and perSideScanCeilingHit so calle
           properties: {
             top10YesPercent: { type: "number", description: "% of YES held by top 10" },
             top10NoPercent: { type: "number", description: "% of NO held by top 10" },
-            whaleCount: { type: "number", description: "Holders with > $1000 position" },
+            whaleCount: {
+              type: "number",
+              description:
+                "Holders with >= $10k current value or >= 1% of scanned side supply",
+            },
+            largeHolderCount: {
+              type: "number",
+              description: "Holders with >= $1k current value",
+            },
           },
         },
         scanMode: {
@@ -4763,7 +4870,7 @@ The response includes scanMode, perCallLimit, and perSideScanCeilingHit so calle
         perSideScanCeilingHit: {
           type: "boolean",
           description:
-            "True when at least one side returned exactly the per-call limit, signalling a long tail of smaller holders may exist beyond the scan. All realistic whales (>$1k position) are still captured.",
+            "True when at least one side returned exactly the per-call limit, signalling a long tail of smaller holders may exist beyond the scan. The largest holders and material whale-sized positions should still be captured.",
         },
         fetchMethod: { type: "string" },
         note: { type: "string" },
@@ -9077,6 +9184,64 @@ async function handleCheckMarketEfficiency(
   });
 }
 
+type TradeSizeBucket = "small" | "medium" | "large" | "whale";
+
+function getTradeNotional(trade: TradeResponse): number {
+  return Number(trade.size || 0) * Number(trade.price || 0);
+}
+
+function getTradeBucket(notional: number): TradeSizeBucket {
+  if (notional < TRADE_SMALL_MAX_USD) {
+    return "small";
+  }
+  if (notional < TRADE_MEDIUM_MAX_USD) {
+    return "medium";
+  }
+  if (notional < TRADE_WHALE_MIN_USD) {
+    return "large";
+  }
+  return "whale";
+}
+
+function getYesDirectionalSign(trade: TradeResponse): 1 | -1 {
+  const side = (trade.side || "BUY").toUpperCase();
+  const outcome = (trade.outcome || "").toLowerCase();
+  const isBuy = side === "BUY" || side === "B";
+
+  if (outcome === "no") {
+    return isBuy ? -1 : 1;
+  }
+  return isBuy ? 1 : -1;
+}
+
+function formatTradeTime(timestamp: string | number | undefined): string | null {
+  const numericTimestamp = Number(timestamp || 0);
+  if (!Number.isFinite(numericTimestamp) || numericTimestamp <= 0) {
+    return null;
+  }
+  return new Date(numericTimestamp * 1000).toISOString();
+}
+
+async function fetchReportedMarketVolume24h(
+  conditionId: string | undefined
+): Promise<number | null> {
+  if (!conditionId) {
+    return null;
+  }
+
+  try {
+    const markets = (await fetchGamma(
+      `/markets?condition_ids=${encodeURIComponent(conditionId)}&limit=1`,
+      8_000
+    )) as GammaMarket[];
+    const market = Array.isArray(markets) ? markets[0] : null;
+    const volume = Number(market?.volume24hr ?? 0);
+    return Number.isFinite(volume) && volume > 0 ? volume : null;
+  } catch {
+    return null;
+  }
+}
+
 async function handleAnalyzeWhaleFlow(
   args: Record<string, unknown> | undefined
 ): Promise<CallToolResult> {
@@ -9110,7 +9275,9 @@ async function handleAnalyzeWhaleFlow(
   try {
     let tradesResp: TradeResponse[];
     if (conditionId) {
-      tradesResp = (await fetchDataApi(`/trades?market=${conditionId}&limit=200`)) as TradeResponse[];
+      tradesResp = (await fetchDataApi(
+        `/trades?market=${conditionId}&limit=${TRADE_FLOW_SAMPLE_LIMIT}`
+      )) as TradeResponse[];
     } else {
       tradesResp = (await fetchClob(`/trades?asset_id=${tokenId}`)) as TradeResponse[];
     }
@@ -9126,12 +9293,33 @@ async function handleAnalyzeWhaleFlow(
       flowBySize: {
         small: { count: 0, buyVolume: 0, sellVolume: 0, netFlow: 0, sentiment: "neutral" },
         medium: { count: 0, buyVolume: 0, sellVolume: 0, netFlow: 0, sentiment: "neutral" },
+        large: { count: 0, buyVolume: 0, sellVolume: 0, netFlow: 0, sentiment: "neutral" },
         whale: { count: 0, buyVolume: 0, sellVolume: 0, netFlow: 0, sentiment: "neutral" },
+      },
+      sizeBucketDefinitions: {
+        small: `<${formatUsdThreshold(TRADE_SMALL_MAX_USD)}`,
+        medium: `${formatUsdThreshold(TRADE_SMALL_MAX_USD)}-${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)}`,
+        large: `${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)}-${formatUsdThreshold(TRADE_WHALE_MIN_USD)}`,
+        whale: `>=${formatUsdThreshold(TRADE_WHALE_MIN_USD)}`,
+      },
+      directionalSemantics:
+        "Positive netFlow means buying YES / selling NO. Negative netFlow means selling YES / buying NO.",
+      tradeSample: {
+        fetchedTrades: 0,
+        maxTradesFetched: conditionId ? TRADE_FLOW_SAMPLE_LIMIT : null,
+        recentTradesAnalyzed: 0,
+        sampledTradeVolume: 0,
+        reportedMarketVolume24h: null,
+        sampledToReportedVolumeRatio: null,
+        oldestRecentTradeAt: null,
+        newestRecentTradeAt: null,
+        coverageWarning: "Trades endpoint was unavailable; no public trade-flow sample could be analyzed.",
       },
       whaleActivity: {
         netWhaleVolume: 0,
         sentiment: "neutral",
         largestTrade: null,
+        largestTradeOverall: null,
       },
       divergence: "Insufficient data - trades endpoint may require authentication",
       fetchedAt: new Date().toISOString(),
@@ -9145,39 +9333,80 @@ async function handleAnalyzeWhaleFlow(
     return tradeTime > cutoffTime;
   });
 
-  // Bucket trades by size
+  // Bucket trades by size, normalized into YES-equivalent direction:
+  // BUY YES and SELL NO are bullish YES; SELL YES and BUY NO are bearish YES.
   const buckets = {
     small: { count: 0, buyVolume: 0, sellVolume: 0 },
     medium: { count: 0, buyVolume: 0, sellVolume: 0 },
+    large: { count: 0, buyVolume: 0, sellVolume: 0 },
     whale: { count: 0, buyVolume: 0, sellVolume: 0 },
   };
 
-  let largestTrade: { size: number; side: string; price: number } | null = null;
+  let largestTradeOverall: {
+    size: number;
+    side: string;
+    price: number;
+    outcome: string | null;
+    yesDirection: "buying_yes" | "selling_yes";
+  } | null = null;
+  let largestWhaleTrade: {
+    size: number;
+    side: string;
+    price: number;
+    outcome: string | null;
+    yesDirection: "buying_yes" | "selling_yes";
+  } | null = null;
+  let oldestRecentTimestamp: string | number | undefined;
+  let newestRecentTimestamp: string | number | undefined;
 
   for (const trade of recentTrades) {
-    const size = Number(trade.size || 0);
     const price = Number(trade.price || 0);
-    const notional = size * price;
+    const notional = getTradeNotional(trade);
+    if (!Number.isFinite(notional) || notional <= 0) {
+      continue;
+    }
     const side = trade.side?.toLowerCase() || "buy";
+    const bucket = getTradeBucket(notional);
+    const yesDirection = getYesDirectionalSign(trade);
+    const timestamp = trade.match_time || trade.timestamp;
 
-    let bucket: keyof typeof buckets;
-    if (notional < 50) {
-      bucket = "small";
-    } else if (notional < 500) {
-      bucket = "medium";
-    } else {
-      bucket = "whale";
+    if (
+      timestamp &&
+      (!oldestRecentTimestamp || Number(timestamp) < Number(oldestRecentTimestamp))
+    ) {
+      oldestRecentTimestamp = timestamp;
+    }
+    if (
+      timestamp &&
+      (!newestRecentTimestamp || Number(timestamp) > Number(newestRecentTimestamp))
+    ) {
+      newestRecentTimestamp = timestamp;
     }
 
     buckets[bucket].count++;
-    if (side === "buy" || side === "b") {
+    if (yesDirection > 0) {
       buckets[bucket].buyVolume += notional;
     } else {
       buckets[bucket].sellVolume += notional;
     }
 
-    if (!largestTrade || notional > largestTrade.size) {
-      largestTrade = { size: notional, side, price };
+    if (!largestTradeOverall || notional > largestTradeOverall.size) {
+      largestTradeOverall = {
+        size: notional,
+        side,
+        price,
+        outcome: trade.outcome || null,
+        yesDirection: yesDirection > 0 ? "buying_yes" : "selling_yes",
+      };
+    }
+    if (bucket === "whale" && (!largestWhaleTrade || notional > largestWhaleTrade.size)) {
+      largestWhaleTrade = {
+        size: notional,
+        side,
+        price,
+        outcome: trade.outcome || null,
+        yesDirection: yesDirection > 0 ? "buying_yes" : "selling_yes",
+      };
     }
   }
 
@@ -9234,6 +9463,15 @@ async function handleAnalyzeWhaleFlow(
     (sum, b) => sum + b.buyVolume + b.sellVolume,
     0
   );
+  const reportedVolume24h = await fetchReportedMarketVolume24h(conditionId);
+  const sampledToReportedVolumeRatio =
+    reportedVolume24h && reportedVolume24h > 0
+      ? totalVolume / reportedVolume24h
+      : null;
+  const coverageWarning =
+    sampledToReportedVolumeRatio !== null && sampledToReportedVolumeRatio < 0.5
+      ? "Public trades sample is materially smaller than Polymarket-reported 24h volume; use direction as sampled tape, not full-market 24h volume."
+      : null;
 
   return successResult({
     market: marketLabel,
@@ -9242,10 +9480,34 @@ async function handleAnalyzeWhaleFlow(
     totalTrades: recentTrades.length,
     totalVolume: Number(totalVolume.toFixed(2)),
     flowBySize,
+    sizeBucketDefinitions: {
+      small: `<${formatUsdThreshold(TRADE_SMALL_MAX_USD)}`,
+      medium: `${formatUsdThreshold(TRADE_SMALL_MAX_USD)}-${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)}`,
+      large: `${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)}-${formatUsdThreshold(TRADE_WHALE_MIN_USD)}`,
+      whale: `>=${formatUsdThreshold(TRADE_WHALE_MIN_USD)}`,
+    },
+    directionalSemantics:
+      "Positive netFlow means buying YES / selling NO. Negative netFlow means selling YES / buying NO.",
+    tradeSample: {
+      fetchedTrades: trades.length,
+      maxTradesFetched: conditionId ? TRADE_FLOW_SAMPLE_LIMIT : null,
+      recentTradesAnalyzed: recentTrades.length,
+      sampledTradeVolume: Number(totalVolume.toFixed(2)),
+      reportedMarketVolume24h:
+        reportedVolume24h === null ? null : Number(reportedVolume24h.toFixed(2)),
+      sampledToReportedVolumeRatio:
+        sampledToReportedVolumeRatio === null
+          ? null
+          : Number(sampledToReportedVolumeRatio.toFixed(4)),
+      oldestRecentTradeAt: formatTradeTime(oldestRecentTimestamp),
+      newestRecentTradeAt: formatTradeTime(newestRecentTimestamp),
+      coverageWarning,
+    },
     whaleActivity: {
       netWhaleVolume: Number(whaleNetFlow.toFixed(2)),
       sentiment: whaleSentiment,
-      largestTrade,
+      largestTrade: largestWhaleTrade,
+      largestTradeOverall,
     },
     divergence,
     fetchedAt: new Date().toISOString(),
@@ -10884,7 +11146,37 @@ function isGenericMarketReferenceQuery(value: string): boolean {
   }
 
   return /\b(?:this|that)\s+(?:polymarket\s+)?(?:market|contract)\b/i.test(trimmed) ||
-    /\b(?:single[-\s]?outcome|yes\/no|live)\s+(?:market|contract)\b/i.test(trimmed);
+    /\b(?:single[-\s]?outcome|yes\/no|live)\s+(?:market|contract)\b/i.test(trimmed) ||
+    /\b(?:a|an|any|some)\s+(?:live\s+)?(?:polymarket\s+)?(?:(?:political|politics|geopolitical|geopolitics|sports|crypto|finance|financial|economic|economy|weather|tech|technology|culture)\s+)?(?:(?:single[-\s]?outcome|yes\/no)\s+)?(?:market|contract)\b/i.test(trimmed);
+}
+
+function inferGenericMarketCategory(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  if (/\b(?:politics|political|election|senate|congress|president)\b/i.test(normalized)) {
+    return "politics";
+  }
+  if (/\b(?:geopolitics|geopolitical|foreign policy|world|war|invasion)\b/i.test(normalized)) {
+    return "geopolitics";
+  }
+  if (/\b(?:crypto|bitcoin|ethereum|btc|eth)\b/i.test(normalized)) {
+    return "crypto";
+  }
+  if (/\b(?:sports|nba|nfl|mlb|nhl|soccer|football)\b/i.test(normalized)) {
+    return "sports";
+  }
+  if (/\b(?:finance|financial|economy|economic|stocks?|rates?)\b/i.test(normalized)) {
+    return "finance";
+  }
+  if (/\bweather\b/i.test(normalized)) {
+    return "weather";
+  }
+  if (/\b(?:tech|technology|ai)\b/i.test(normalized)) {
+    return "tech";
+  }
+  if (/\b(?:culture|entertainment|celebrity)\b/i.test(normalized)) {
+    return "culture";
+  }
+  return "";
 }
 
 function isGenericEventReferenceQuery(value: string): boolean {
@@ -12728,7 +13020,12 @@ async function handleAnalyzeSingleMarketWhales(
   const slugInput = typeof args?.slug === "string" ? args.slug.trim() : "";
   const marketQuery =
     typeof args?.marketQuery === "string" ? args.marketQuery.trim() : "";
-  const category = typeof args?.category === "string" ? args.category.trim() : "";
+  const explicitCategory =
+    typeof args?.category === "string" ? args.category.trim() : "";
+  const category =
+    explicitCategory.length > 0
+      ? explicitCategory
+      : inferGenericMarketCategory(marketQuery);
   const hoursBack = workflowToBoundedInteger(args?.hoursBack, 24, 1, 168);
   const genericMarketQuery =
     marketQuery.length > 0 && isGenericMarketReferenceQuery(marketQuery);
@@ -12756,7 +13053,7 @@ async function handleAnalyzeSingleMarketWhales(
       const discoveryData = workflowExtractToolData(
         await handleDiscoverTrendingMarkets({
           category,
-          sortBy: "liquidity",
+          sortBy: "recent_activity",
           limit: 6,
         }),
         "discover_trending_markets"
@@ -12766,7 +13063,7 @@ async function handleAnalyzeSingleMarketWhales(
         const topMarketsData = workflowExtractToolData(
           await handleGetTopMarkets({
             category,
-            sortBy: "liquidity",
+            sortBy: "recent_activity",
             limit: 6,
           }),
           "get_top_markets"
@@ -12804,7 +13101,7 @@ async function handleAnalyzeSingleMarketWhales(
           const event = (await fetchGamma(`/events/slug/${slug}`, 8_000)) as GammaEvent;
           if ((event.markets?.length ?? 0) <= 1) {
             resolved = candidateResolved;
-            selectionReason = `Picked the most liquid live single-outcome ${category} market from the current sample.`;
+            selectionReason = `Picked the highest recent-activity live single-outcome ${category} market from the current sample.`;
             break;
           }
         } catch {
@@ -12814,14 +13111,14 @@ async function handleAnalyzeSingleMarketWhales(
 
       if (!resolved && fallbackResolved) {
         resolved = fallbackResolved;
-        selectionReason = `Fell back to the most liquid live ${category} market because no clear single-outcome market was detected in the sample.`;
+        selectionReason = `Fell back to the highest recent-activity live ${category} market because no clear single-outcome market was detected in the sample.`;
       }
     }
 
     if (!resolved) {
       const fallbackCandidate = await resolveFallbackTopMarketCandidate({
         category: category || undefined,
-        sortBy: "volume",
+        sortBy: "recent_activity",
         preferSingleOutcome: true,
       });
       if (fallbackCandidate) {
@@ -12832,7 +13129,7 @@ async function handleAnalyzeSingleMarketWhales(
         if (resolved) {
           selectionReason =
             category.length > 0
-              ? `No concrete market was provided, so whale analysis used a strong live single-outcome ${category} fallback.`
+              ? `No concrete market was provided, so whale analysis used a high-volume live single-outcome ${category} fallback.`
               : "No concrete market was provided, so whale analysis used a strong live single-outcome fallback.";
         }
       }
@@ -12851,8 +13148,8 @@ async function handleAnalyzeSingleMarketWhales(
       handleAnalyzeTopHolders({
         conditionId: resolved.conditionId,
         slug: resolved.slug,
-        deepFetch: false,
-        limit: 20,
+        deepFetch: true,
+        limit: 50,
       }),
     ]);
     const whaleFlowData = workflowExtractToolData(
@@ -12887,6 +13184,12 @@ async function handleAnalyzeSingleMarketWhales(
         totalTrades: workflowToNumber(whaleFlowData.totalTrades, 0),
         totalVolume: workflowToNumber(whaleFlowData.totalVolume, 0),
         flowBySize: workflowObject(whaleFlowData.flowBySize),
+        sizeBucketDefinitions: workflowObject(whaleFlowData.sizeBucketDefinitions),
+        tradeSample: workflowObject(whaleFlowData.tradeSample),
+        directionalSemantics:
+          typeof whaleFlowData.directionalSemantics === "string"
+            ? whaleFlowData.directionalSemantics
+            : "Positive netFlow means buying YES / selling NO. Negative netFlow means selling YES / buying NO.",
         whaleActivity: workflowObject(whaleFlowData.whaleActivity),
         divergence:
           typeof whaleFlowData.divergence === "string"
@@ -18554,12 +18857,42 @@ async function handleGetTopHolders(
       (sum, holder) => sum + holder.size * noPrice,
       0
     );
+    const yesLargeHolderCount = yesHolders.filter(
+      (holder) => holder.size * yesPrice >= HOLDER_LARGE_MIN_USD
+    ).length;
+    const noLargeHolderCount = noHolders.filter(
+      (holder) => holder.size * noPrice >= HOLDER_LARGE_MIN_USD
+    ).length;
     const yesWhaleCount = yesHolders.filter(
-      (holder) => holder.size * yesPrice > 1000
+      (holder) =>
+        isMeaningfulHolderWhale(
+          holder.size * yesPrice,
+          totalYes > 0 ? (holder.size / totalYes) * 100 : 0
+        )
     ).length;
     const noWhaleCount = noHolders.filter(
-      (holder) => holder.size * noPrice > 1000
+      (holder) =>
+        isMeaningfulHolderWhale(
+          holder.size * noPrice,
+          totalNo > 0 ? (holder.size / totalNo) * 100 : 0
+        )
     ).length;
+    const yesWhaleValue = yesHolders.reduce((sum, holder) => {
+      const value = holder.size * yesPrice;
+      const percentOfSupply = totalYes > 0 ? (holder.size / totalYes) * 100 : 0;
+      if (isMeaningfulHolderWhale(value, percentOfSupply)) {
+        return sum + value;
+      }
+      return sum;
+    }, 0);
+    const noWhaleValue = noHolders.reduce((sum, holder) => {
+      const value = holder.size * noPrice;
+      const percentOfSupply = totalNo > 0 ? (holder.size / totalNo) * 100 : 0;
+      if (isMeaningfulHolderWhale(value, percentOfSupply)) {
+        return sum + value;
+      }
+      return sum;
+    }, 0);
 
     const formatHolders = (
       holders: Array<{ address: string; size: number; name?: string; profileImage?: string }>, 
@@ -18570,6 +18903,14 @@ async function handleGetTopHolders(
         .slice(0, requestedLimit)
         .map((p, idx) => {
           const value = p.size * price;
+          const percentOfSupply =
+            total > 0 ? Number(((p.size / total) * 100).toFixed(2)) : 0;
+          let positionTier = "small";
+          if (isMeaningfulHolderWhale(value, percentOfSupply)) {
+            positionTier = "whale";
+          } else if (value >= HOLDER_LARGE_MIN_USD) {
+            positionTier = "large";
+          }
           return {
             rank: idx + 1,
             address: p.address,
@@ -18577,7 +18918,8 @@ async function handleGetTopHolders(
             profileImage: p.profileImage || undefined,
             size: Number(p.size.toFixed(2)),
             value: Number(value.toFixed(2)),
-            percentOfSupply: total > 0 ? Number(((p.size / total) * 100).toFixed(2)) : 0,
+            percentOfSupply,
+            positionTier,
           };
         });
     };
@@ -18613,9 +18955,9 @@ async function handleGetTopHolders(
 
     const note =
       scanMode === "deep-single-call"
-        ? `Deep holder scan returned ${totalUniqueHolders} unique holders (up to ${perCallLimit} per side) via a single /holders call sorted descending by share balance. Whale counts and totals reflect the full scanned set.${perSideScanCeilingHit ? ` NOTE: at least one side hit the ${DEEP_HOLDER_SCAN_LIMIT} per-call ceiling; additional long-tail holders may exist below the scan floor but all top holders and realistic whales (> $1k position) are captured.` : ""}`
+        ? `Deep holder scan returned ${totalUniqueHolders} unique holders (up to ${perCallLimit} per side) via a single /holders call sorted descending by share balance. Whale counts use >=${formatUsdThreshold(HOLDER_WHALE_MIN_USD)} current value or >=${HOLDER_WHALE_MIN_SUPPLY_PERCENT}% of scanned side supply; >=${formatUsdThreshold(HOLDER_LARGE_MIN_USD)} is reported separately as large-holder participation.${perSideScanCeilingHit ? ` NOTE: at least one side hit the ${DEEP_HOLDER_SCAN_LIMIT} per-call ceiling; additional long-tail holders may exist below the scan floor, but the top holder set and material whale-sized positions should be captured.` : ""}`
         : scanMode === "legacy-tier-sweep"
-          ? `Fallback holder scan: the upstream appears to be enforcing the doc'd 20-per-call cap, so we swept 9 minBalance tiers [$100k…$1] and deduplicated. Whale counts and totals use the full deduplicated set; response samples may still be truncated for payload size.`
+          ? `Fallback holder scan: the upstream appears to be enforcing the doc'd 20-per-call cap, so we swept 9 minBalance tiers [$100k…$1] and deduplicated. Whale counts use >=${formatUsdThreshold(HOLDER_WHALE_MIN_USD)} current value or >=${HOLDER_WHALE_MIN_SUPPLY_PERCENT}% of scanned side supply; response samples may still be truncated for payload size.`
           : "Single API call (limit 20 per side). Use deepFetch=true for deep scan (up to 500 per side).";
 
     return successResult({
@@ -18630,11 +18972,16 @@ async function handleGetTopHolders(
         noTotalValue: Number(noTotalValue.toFixed(2)),
         yesWhaleCount,
         noWhaleCount,
+        yesLargeHolderCount,
+        noLargeHolderCount,
+        yesWhaleValue: Number(yesWhaleValue.toFixed(2)),
+        noWhaleValue: Number(noWhaleValue.toFixed(2)),
       },
       concentration: {
         top10YesPercent: Number(top10YesPercent.toFixed(2)),
         top10NoPercent: Number(top10NoPercent.toFixed(2)),
         whaleCount: yesWhaleCount + noWhaleCount,
+        largeHolderCount: yesLargeHolderCount + noLargeHolderCount,
       },
       scanMode,
       perCallLimit,
@@ -18986,12 +19333,10 @@ async function handleAnalyzeTopHolders(
     const currentValue = h.size * currentPrice;
     const estimatedInitial = h.size * estimatedEntry;
     const unrealizedPnL = currentValue - estimatedInitial;
-
-    let convictionScore: "extreme" | "high" | "moderate" | "low";
-    if (h.value > 10000) convictionScore = "extreme";
-    else if (h.value > 5000) convictionScore = "high";
-    else if (h.value > 1000) convictionScore = "moderate";
-    else convictionScore = "low";
+    const convictionScore = getHolderConvictionScore(
+      h.value,
+      h.percentOfSupply
+    );
 
     return {
       rank: h.rank,
@@ -19010,12 +19355,10 @@ async function handleAnalyzeTopHolders(
     const currentValue = h.size * noPrice;
     const estimatedInitial = h.size * estimatedEntry;
     const unrealizedPnL = currentValue - estimatedInitial;
-
-    let convictionScore: "extreme" | "high" | "moderate" | "low";
-    if (h.value > 10000) convictionScore = "extreme";
-    else if (h.value > 5000) convictionScore = "high";
-    else if (h.value > 1000) convictionScore = "moderate";
-    else convictionScore = "low";
+    const convictionScore = getHolderConvictionScore(
+      h.value,
+      h.percentOfSupply
+    );
 
     return {
       rank: h.rank,
@@ -19050,11 +19393,11 @@ async function handleAnalyzeTopHolders(
   if (totalYesValue > totalNoValue * 1.5 && yesExtreme > noExtreme) {
     direction = "YES";
     confidence = yesExtreme >= 3 ? "high" : "medium";
-    reasoning = `${yesWhales.length} whales with $${totalYesValue.toFixed(0)} in YES positions vs $${totalNoValue.toFixed(0)} in NO. ${yesExtreme} high-conviction YES holders.`;
+    reasoning = `${yesWhales.length} top holders with $${totalYesValue.toFixed(0)} in YES positions vs $${totalNoValue.toFixed(0)} in NO. ${yesExtreme} high-conviction YES holders.`;
   } else if (totalNoValue > totalYesValue * 1.5 && noExtreme > yesExtreme) {
     direction = "NO";
     confidence = noExtreme >= 3 ? "high" : "medium";
-    reasoning = `${noWhales.length} whales with $${totalNoValue.toFixed(0)} in NO positions vs $${totalYesValue.toFixed(0)} in YES. ${noExtreme} high-conviction NO holders.`;
+    reasoning = `${noWhales.length} top holders with $${totalNoValue.toFixed(0)} in NO positions vs $${totalYesValue.toFixed(0)} in YES. ${noExtreme} high-conviction NO holders.`;
   } else {
     direction = "NEUTRAL";
     confidence = "low";
@@ -19094,6 +19437,7 @@ async function handleAnalyzeTopHolders(
       top5YesPercent: Number(top5YesPercent.toFixed(2)),
       top5NoPercent: Number(top5NoPercent.toFixed(2)),
       whaleCount: holdersData.concentration?.whaleCount || 0,
+      largeHolderCount: holdersData.concentration?.largeHolderCount || 0,
       concentrationRisk,
     },
     smartMoneySignal: {
@@ -19314,18 +19658,39 @@ async function handleAnalyzeEventWhaleBreakdown(
           const holdersScanned = workflowObject(holdersData.holdersScanned);
 
           const totalWhaleValue = workflowToNumber(
-            positionValueSummary.yesTotalValue,
+            positionValueSummary.yesWhaleValue,
             yesHolders.reduce(
-              (sum: number, holder: { value?: number }) =>
-                sum + workflowToNumber(holder.value, 0),
+              (sum: number, holder: { percentOfSupply?: number; value?: number }) => {
+                const value = workflowToNumber(holder.value, 0);
+                if (
+                  isMeaningfulHolderWhale(
+                    value,
+                    workflowToNumber(holder.percentOfSupply, 0)
+                  )
+                ) {
+                  return sum + value;
+                }
+                return sum;
+              },
               0
             )
           );
-          const topWhalePosition = workflowToNumber(yesHolders[0]?.value, 0);
+          const topWhaleHolder = yesHolders.find(
+            (holder: { percentOfSupply?: number; value?: number }) =>
+              isMeaningfulHolderWhale(
+                workflowToNumber(holder.value, 0),
+                workflowToNumber(holder.percentOfSupply, 0)
+              )
+          );
+          const topWhalePosition = workflowToNumber(topWhaleHolder?.value, 0);
           const whaleCount = workflowToNumber(
             positionValueSummary.yesWhaleCount,
             yesHolders.filter(
-              (holder: { value?: number }) => workflowToNumber(holder.value, 0) > 1000
+              (holder: { percentOfSupply?: number; value?: number }) =>
+                isMeaningfulHolderWhale(
+                  workflowToNumber(holder.value, 0),
+                  workflowToNumber(holder.percentOfSupply, 0)
+                )
             ).length
           );
           const scannedHolderCount = workflowToNumber(
@@ -19627,12 +19992,16 @@ interface OrderbookResponse {
 interface TradeResponse {
   id?: string;
   market?: string;
+  conditionId?: string;
   asset_id?: string;
+  asset?: string;
+  outcome?: string;
+  outcomeIndex?: number;
   side?: string;
-  size?: string;
-  price?: string;
-  match_time?: string;
-  timestamp?: string;
+  size?: string | number;
+  price?: string | number;
+  match_time?: string | number;
+  timestamp?: string | number;
 }
 
 // PolymarketContext and PolymarketPosition are imported from @ctxprotocol/sdk
