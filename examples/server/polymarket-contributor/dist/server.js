@@ -61,10 +61,32 @@ const SHALLOW_HOLDER_SCAN_LIMIT = 20;
 const TRADE_SMALL_MAX_USD = 50;
 const TRADE_MEDIUM_MAX_USD = 500;
 const TRADE_WHALE_MIN_USD = 10_000;
-const TRADE_FLOW_SAMPLE_LIMIT = 1_000;
+const TRADE_DATA_API_PAGE_LIMIT = 1_000;
+const TRADE_DATA_API_MAX_OFFSET = 3_000;
+const TRADE_DATA_API_MAX_ROWS = TRADE_DATA_API_MAX_OFFSET + TRADE_DATA_API_PAGE_LIMIT;
 const HOLDER_LARGE_MIN_USD = 1_000;
 const HOLDER_WHALE_MIN_USD = 10_000;
 const HOLDER_WHALE_MIN_SUPPLY_PERCENT = 1;
+const TRADE_COVERAGE_POLICIES = {
+    quick: {
+        pageSize: TRADE_DATA_API_PAGE_LIMIT,
+        maxRows: TRADE_DATA_API_PAGE_LIMIT,
+        maxRequests: 1,
+        targetCoverageRatio: 0.3,
+    },
+    standard: {
+        pageSize: TRADE_DATA_API_PAGE_LIMIT,
+        maxRows: TRADE_DATA_API_MAX_ROWS,
+        maxRequests: 4,
+        targetCoverageRatio: 0.8,
+    },
+    deep: {
+        pageSize: TRADE_DATA_API_PAGE_LIMIT,
+        maxRows: TRADE_DATA_API_MAX_ROWS,
+        maxRequests: 4,
+        targetCoverageRatio: 0.9,
+    },
+};
 function formatUsdThreshold(value) {
     return `$${value.toLocaleString("en-US")}`;
 }
@@ -853,7 +875,7 @@ const TOOLS = [
 
 ⚠️ DIRECTIONAL SEMANTICS: Positive netFlow means buying YES / selling NO. Negative netFlow means selling YES / buying NO. NO-token trades are inverted into YES-equivalent direction before aggregation.
 
-⚠️ IMPORTANT: This analyzes the most recent public trade sample (up to ${TRADE_FLOW_SAMPLE_LIMIT} trades) inside the requested time window. Compare tradeSample.sampledToReportedVolumeRatio and tradeSample.coverageWarning before making strong claims about total 24h flow.
+⚠️ IMPORTANT: This adaptively pages the public trades API up to the live public pagination cap (${TRADE_DATA_API_MAX_ROWS.toLocaleString("en-US")} rows observed from 1,000-row pages through offset 3,000), then reports tradeCoverage.coverageLevel and tradeCoverage.coverageWarning. Strong whale/retail flow claims require high_coverage or complete coverage; otherwise treat results as sampled public tape.
 
 ⚠️ "Whale" here means a single trade at or above ${formatUsdThreshold(TRADE_WHALE_MIN_USD)}. Trades between ${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)} and ${formatUsdThreshold(TRADE_WHALE_MIN_USD)} are meaningful large prints, not necessarily whale activity. Use analyze_top_holders for actual large holder concentration.
 
@@ -929,7 +951,11 @@ USE analyze_top_holders INSTEAD FOR: "Who are the biggest holders?", "What are w
                 },
                 tradeSample: {
                     type: "object",
-                    description: "Diagnostics for the public trades sample. Includes sampled volume, Polymarket-reported 24h volume when available, and a warning when the sample is materially incomplete.",
+                    description: "Legacy alias for tradeCoverage. Includes sampled volume, Polymarket-reported 24h volume when available, and a warning when coverage is incomplete.",
+                },
+                tradeCoverage: {
+                    type: "object",
+                    description: "Coverage contract for the public trades window: pages fetched, rows analyzed, sampled/reported 24h volume ratio, coverageLevel, and whether directional/whale claims are supported.",
                 },
                 directionalSemantics: {
                     type: "string",
@@ -1543,6 +1569,10 @@ If the prompt names one outcome inside a multi-outcome event family, such as a s
                 quoteQuality: { type: "string" },
                 whalePositioning: { type: "string" },
                 recentActivity: { type: "string" },
+                tradeCoverage: {
+                    type: "object",
+                    description: "Coverage diagnostics for activity and whale-flow signals used by the memo.",
+                },
                 decision: {
                     type: "string",
                     enum: ["buy", "speculative_buy", "pass", "avoid"],
@@ -2126,6 +2156,7 @@ Do not prefetch get_top_markets or call analyze_top_holders separately unless th
                         flowBySize: { type: "object" },
                         sizeBucketDefinitions: { type: "object" },
                         tradeSample: { type: "object" },
+                        tradeCoverage: { type: "object" },
                         directionalSemantics: { type: "string" },
                         whaleActivity: { type: "object" },
                         divergence: { type: "string" },
@@ -2168,7 +2199,7 @@ If marketQuery/conditionId/slug is omitted, this tool picks a live market automa
 
 For prompts that ask for both recent trades and open interest together, call THIS TOOL ALONE instead of chaining get_top_markets + get_market_trades + get_market_open_interest.
 
-Important: the open-interest field is a point-in-time snapshot. Use it for current OI level only, not for a true change rate unless you have a second time-separated snapshot.
+Important: the open-interest field is a point-in-time snapshot. Use it for current OI level only, not for a true change rate unless you have a second time-separated snapshot. Trade summaries include tradeCoverage; if coverageLevel is partial or insufficient, describe buy/sell totals as sampled public tape.
 
 If sortBy is set to "open_interest_vs_volume", this tool screens a shortlist of live candidates and picks the market with the highest current openInterest-to-recent-volume ratio before returning the detailed trade/open-interest breakdown.`,
         inputSchema: {
@@ -2202,6 +2233,10 @@ If sortBy is set to "open_interest_vs_volume", this tool screens a shortlist of 
                 tradeLimit: {
                     type: "number",
                     description: "Maximum recent trades to return (default: 20, max: 100)",
+                },
+                hoursBack: {
+                    type: "number",
+                    description: "Lookback window for trade coverage and summary volume (default: 24)",
                 },
             },
             required: [],
@@ -2248,6 +2283,10 @@ If sortBy is set to "open_interest_vs_volume", this tool screens a shortlist of 
                 recentTrades: {
                     type: "array",
                     items: { type: "object" },
+                },
+                tradeCoverage: {
+                    type: "object",
+                    description: "Coverage diagnostics for the recent trade window used by tradesSummary.",
                 },
                 noResultsReason: {
                     type: "string",
@@ -3880,7 +3919,7 @@ Each result includes:
         name: "get_market_trades",
         description: `Get recent RAW trades for a specific market. Returns individual trade records with side, price, size, and notional value.
 
-⚠️ DO NOT USE for size-bucket analysis, whale-vs-retail breakdowns, or net directional flow. Use analyze_whale_flow instead -- it buckets trades into Small/Medium/Whale, calculates net flow by side, and detects divergence between whale and retail activity.
+⚠️ DO NOT USE for size-bucket analysis, whale-vs-retail breakdowns, or net directional flow. Use analyze_whale_flow instead -- it pages the trade tape, reports tradeCoverage, buckets trades into Small/Medium/Large/Whale, calculates YES-directional flow, and gates divergence claims by coverage.
 
 USE THIS FOR: "Show me the last 50 raw trades" or when you need individual trade records with wallet addresses.
 USE analyze_whale_flow FOR: "Break down trading by size bucket", "Are whales buying or selling?", "Whale vs retail activity", "Net directional flow", "Trade size analysis".`,
@@ -3893,7 +3932,16 @@ USE analyze_whale_flow FOR: "Break down trading by size bucket", "Are whales buy
                 },
                 limit: {
                     type: "number",
-                    description: "Number of trades to return (default: 50, max: 100)",
+                    description: "Number of raw trade records to return (default: 50, max: 500). The summary may analyze more rows depending on coverageMode.",
+                },
+                hoursBack: {
+                    type: "number",
+                    description: "Lookback window for the summary/coverage calculation (default: 24)",
+                },
+                coverageMode: {
+                    type: "string",
+                    enum: ["quick", "standard", "deep"],
+                    description: "How aggressively to page the public trades API for summary coverage (default: quick for raw trades).",
                 },
             },
             required: ["conditionId"],
@@ -3927,6 +3975,10 @@ USE analyze_whale_flow FOR: "Break down trading by size bucket", "Are whales buy
                         sellVolume: { type: "number" },
                         avgPrice: { type: "number" },
                     },
+                },
+                tradeCoverage: {
+                    type: "object",
+                    description: "Coverage diagnostics for the rows used in the summary; raw trades returned may be truncated to the requested limit.",
                 },
                 fetchedAt: { type: "string" },
             },
@@ -7770,6 +7822,17 @@ function formatTradeTime(timestamp) {
     }
     return new Date(numericTimestamp * 1000).toISOString();
 }
+function getTradeTimestampMs(trade) {
+    const timestamp = Number(trade.match_time || trade.timestamp || 0);
+    if (!Number.isFinite(timestamp) || timestamp <= 0) {
+        return null;
+    }
+    return timestamp > 1_000_000_000_000 ? timestamp : timestamp * 1_000;
+}
+function getTradeTimestampSeconds(trade) {
+    const timestampMs = getTradeTimestampMs(trade);
+    return timestampMs === null ? undefined : Math.floor(timestampMs / 1_000);
+}
 async function fetchReportedMarketVolume24h(conditionId) {
     if (!conditionId) {
         return null;
@@ -7783,6 +7846,164 @@ async function fetchReportedMarketVolume24h(conditionId) {
     catch {
         return null;
     }
+}
+function buildTradeCoverageWarning(params) {
+    const ratio = params.coverageRatio === null
+        ? "unknown"
+        : `${Math.round(params.coverageRatio * 100)}%`;
+    if (params.coverageLevel === "insufficient") {
+        return `Public trades coverage is insufficient for a full ${params.hoursBack}h flow claim (sample/reported volume ratio: ${ratio}; stop reason: ${params.endReason}). Treat buy/sell and whale-flow direction as unreliable.`;
+    }
+    if (params.coverageLevel === "partial") {
+        return `Public trades coverage is partial for the ${params.hoursBack}h window (sample/reported volume ratio: ${ratio}; stop reason: ${params.endReason}). Describe this as sampled public tape, not complete market flow.`;
+    }
+    return null;
+}
+function getTradeCoverageLevel(params) {
+    if (params.recentTrades === 0) {
+        return "insufficient";
+    }
+    if ((params.reachedWindowStart || params.sourceExhausted) &&
+        (params.sampledToReportedVolumeRatio === null ||
+            params.sampledToReportedVolumeRatio >= 0.95)) {
+        return "complete";
+    }
+    if (params.sampledToReportedVolumeRatio !== null &&
+        params.sampledToReportedVolumeRatio >= params.targetCoverageRatio) {
+        return "high_coverage";
+    }
+    if (params.sampledToReportedVolumeRatio !== null &&
+        params.sampledToReportedVolumeRatio < 0.2) {
+        return "insufficient";
+    }
+    return "partial";
+}
+async function fetchMarketTradesWindow(params) {
+    const policy = TRADE_COVERAGE_POLICIES[params.coverageMode];
+    const cutoffMs = Date.now() - params.hoursBack * 60 * 60 * 1_000;
+    const reportedVolume24h = await fetchReportedMarketVolume24h(params.conditionId);
+    const allFetchedTrades = [];
+    let pagesFetched = 0;
+    let endReason = "request_cap_reached";
+    let reachedWindowStart = false;
+    let sourceExhausted = false;
+    while (allFetchedTrades.length < policy.maxRows &&
+        pagesFetched < policy.maxRequests) {
+        const offset = pagesFetched * policy.pageSize;
+        if (offset > TRADE_DATA_API_MAX_OFFSET) {
+            endReason = "offset_cap_reached";
+            break;
+        }
+        const remainingRows = policy.maxRows - allFetchedTrades.length;
+        const pageLimit = Math.min(policy.pageSize, remainingRows);
+        const endpoint = `/trades?market=${encodeURIComponent(params.conditionId)}` +
+            `&limit=${pageLimit}&offset=${offset}`;
+        let page;
+        try {
+            page = (await fetchDataApi(endpoint));
+        }
+        catch (error) {
+            if (allFetchedTrades.length === 0) {
+                throw error;
+            }
+            endReason = "page_fetch_failed_after_partial_data";
+            break;
+        }
+        pagesFetched++;
+        if (!Array.isArray(page) || page.length === 0) {
+            sourceExhausted = true;
+            endReason = "source_exhausted";
+            break;
+        }
+        allFetchedTrades.push(...page);
+        const pageTimestamps = page
+            .map(getTradeTimestampMs)
+            .filter((value) => value !== null);
+        const oldestPageTimestamp = pageTimestamps.length > 0 ? Math.min(...pageTimestamps) : null;
+        if (oldestPageTimestamp !== null && oldestPageTimestamp <= cutoffMs) {
+            reachedWindowStart = true;
+            endReason = "reached_requested_window_start";
+            break;
+        }
+        if (page.length < pageLimit) {
+            sourceExhausted = true;
+            endReason = "source_exhausted";
+            break;
+        }
+        const recentVolumeSoFar = allFetchedTrades
+            .filter((trade) => {
+            const timestampMs = getTradeTimestampMs(trade);
+            return timestampMs !== null && timestampMs > cutoffMs;
+        })
+            .reduce((sum, trade) => sum + getTradeNotional(trade), 0);
+        if (reportedVolume24h !== null &&
+            recentVolumeSoFar / reportedVolume24h >= policy.targetCoverageRatio) {
+            endReason = "target_coverage_reached";
+            break;
+        }
+    }
+    const recentTrades = allFetchedTrades.filter((trade) => {
+        const timestampMs = getTradeTimestampMs(trade);
+        return timestampMs !== null && timestampMs > cutoffMs;
+    });
+    const sampledTradeVolume = recentTrades.reduce((sum, trade) => sum + getTradeNotional(trade), 0);
+    const sampledToReportedVolumeRatio = reportedVolume24h !== null && reportedVolume24h > 0
+        ? sampledTradeVolume / reportedVolume24h
+        : null;
+    const coverageLevel = getTradeCoverageLevel({
+        recentTrades: recentTrades.length,
+        sampledToReportedVolumeRatio,
+        reachedWindowStart,
+        sourceExhausted,
+        targetCoverageRatio: policy.targetCoverageRatio,
+    });
+    const canMakeDirectionalClaim = coverageLevel === "complete" || coverageLevel === "high_coverage";
+    const canMakeWhaleClaim = canMakeDirectionalClaim;
+    const oldestRecentTimestamp = recentTrades
+        .map(getTradeTimestampSeconds)
+        .filter((value) => value !== undefined)
+        .sort((left, right) => left - right)[0] ?? undefined;
+    const newestRecentTimestamp = recentTrades
+        .map(getTradeTimestampSeconds)
+        .filter((value) => value !== undefined)
+        .sort((left, right) => right - left)[0] ?? undefined;
+    const tradeCoverage = {
+        coverageMode: params.coverageMode,
+        coverageLevel,
+        rowsFetched: allFetchedTrades.length,
+        fetchedTrades: allFetchedTrades.length,
+        maxRows: policy.maxRows,
+        maxTradesFetched: policy.maxRows,
+        pageSize: policy.pageSize,
+        pagesFetched,
+        maxRequests: policy.maxRequests,
+        recentRowsAnalyzed: recentTrades.length,
+        recentTradesAnalyzed: recentTrades.length,
+        sampledTradeVolume: Number(sampledTradeVolume.toFixed(2)),
+        reportedMarketVolume24h: reportedVolume24h === null ? null : Number(reportedVolume24h.toFixed(2)),
+        sampledToReportedVolumeRatio: sampledToReportedVolumeRatio === null
+            ? null
+            : Number(sampledToReportedVolumeRatio.toFixed(4)),
+        targetCoverageRatio: policy.targetCoverageRatio,
+        oldestRecentTradeAt: formatTradeTime(oldestRecentTimestamp),
+        newestRecentTradeAt: formatTradeTime(newestRecentTimestamp),
+        endReason,
+        reachedWindowStart,
+        sourceExhausted,
+        canMakeDirectionalClaim,
+        canMakeWhaleClaim,
+        coverageWarning: buildTradeCoverageWarning({
+            coverageLevel,
+            coverageRatio: sampledToReportedVolumeRatio,
+            endReason,
+            hoursBack: params.hoursBack,
+        }),
+    };
+    return {
+        allFetchedTrades,
+        recentTrades,
+        tradeCoverage,
+    };
 }
 async function handleAnalyzeWhaleFlow(args) {
     const conditionIdInput = typeof args?.conditionId === "string" ? args.conditionId : undefined;
@@ -7805,18 +8026,87 @@ async function handleAnalyzeWhaleFlow(args) {
         marketLabel = resolved.marketTitle || resolved.conditionId;
     }
     let trades = [];
+    let tradeCoverage;
     try {
-        let tradesResp;
         if (conditionId) {
-            tradesResp = (await fetchDataApi(`/trades?market=${conditionId}&limit=${TRADE_FLOW_SAMPLE_LIMIT}`));
+            const fetched = await fetchMarketTradesWindow({
+                conditionId,
+                hoursBack,
+                coverageMode: "deep",
+            });
+            trades = fetched.recentTrades;
+            tradeCoverage = fetched.tradeCoverage;
         }
         else {
-            tradesResp = (await fetchClob(`/trades?asset_id=${tokenId}`));
+            const tradesResp = (await fetchClob(`/trades?asset_id=${tokenId}`));
+            const cutoffTime = Date.now() - hoursBack * 60 * 60 * 1000;
+            trades = (tradesResp || []).filter((trade) => {
+                const timestampMs = getTradeTimestampMs(trade);
+                return timestampMs !== null && timestampMs > cutoffTime;
+            });
+            const sampledTradeVolume = trades.reduce((sum, trade) => sum + getTradeNotional(trade), 0);
+            tradeCoverage = {
+                coverageMode: "quick",
+                coverageLevel: trades.length > 0 ? "partial" : "insufficient",
+                rowsFetched: tradesResp?.length ?? 0,
+                fetchedTrades: tradesResp?.length ?? 0,
+                maxRows: null,
+                maxTradesFetched: null,
+                pageSize: null,
+                pagesFetched: 1,
+                maxRequests: 1,
+                recentRowsAnalyzed: trades.length,
+                recentTradesAnalyzed: trades.length,
+                sampledTradeVolume: Number(sampledTradeVolume.toFixed(2)),
+                reportedMarketVolume24h: null,
+                sampledToReportedVolumeRatio: null,
+                targetCoverageRatio: null,
+                oldestRecentTradeAt: formatTradeTime(trades
+                    .map(getTradeTimestampSeconds)
+                    .filter((value) => value !== undefined)
+                    .sort((left, right) => left - right)[0]),
+                newestRecentTradeAt: formatTradeTime(trades
+                    .map(getTradeTimestampSeconds)
+                    .filter((value) => value !== undefined)
+                    .sort((left, right) => right - left)[0]),
+                endReason: "clob_unpaginated_asset_trades",
+                reachedWindowStart: false,
+                sourceExhausted: false,
+                canMakeDirectionalClaim: false,
+                canMakeWhaleClaim: false,
+                coverageWarning: "CLOB asset trades are an unpaginated public sample; describe direction as sampled tape only.",
+            };
         }
-        trades = tradesResp || [];
     }
     catch {
         // If trades endpoint fails, return limited analysis
+        const tradeCoverageUnavailable = {
+            coverageMode: conditionId ? "deep" : "quick",
+            coverageLevel: "insufficient",
+            rowsFetched: 0,
+            fetchedTrades: 0,
+            maxRows: conditionId ? TRADE_COVERAGE_POLICIES.deep.maxRows : null,
+            maxTradesFetched: conditionId ? TRADE_COVERAGE_POLICIES.deep.maxRows : null,
+            pageSize: conditionId ? TRADE_COVERAGE_POLICIES.deep.pageSize : null,
+            pagesFetched: 0,
+            maxRequests: conditionId ? TRADE_COVERAGE_POLICIES.deep.maxRequests : 1,
+            recentRowsAnalyzed: 0,
+            recentTradesAnalyzed: 0,
+            sampledTradeVolume: 0,
+            reportedMarketVolume24h: null,
+            sampledToReportedVolumeRatio: null,
+            targetCoverageRatio: conditionId
+                ? TRADE_COVERAGE_POLICIES.deep.targetCoverageRatio
+                : null,
+            oldestRecentTradeAt: null,
+            newestRecentTradeAt: null,
+            endReason: "trades_endpoint_unavailable",
+            reachedWindowStart: false,
+            sourceExhausted: false,
+            canMakeDirectionalClaim: false,
+            canMakeWhaleClaim: false,
+            coverageWarning: "Trades endpoint was unavailable; no public trade-flow sample could be analyzed.",
+        };
         return successResult({
             market: marketLabel,
             conditionId: conditionId || null,
@@ -7837,16 +8127,9 @@ async function handleAnalyzeWhaleFlow(args) {
             },
             directionalSemantics: "Positive netFlow means buying YES / selling NO. Negative netFlow means selling YES / buying NO.",
             tradeSample: {
-                fetchedTrades: 0,
-                maxTradesFetched: conditionId ? TRADE_FLOW_SAMPLE_LIMIT : null,
-                recentTradesAnalyzed: 0,
-                sampledTradeVolume: 0,
-                reportedMarketVolume24h: null,
-                sampledToReportedVolumeRatio: null,
-                oldestRecentTradeAt: null,
-                newestRecentTradeAt: null,
-                coverageWarning: "Trades endpoint was unavailable; no public trade-flow sample could be analyzed.",
+                ...tradeCoverageUnavailable,
             },
+            tradeCoverage: tradeCoverageUnavailable,
             whaleActivity: {
                 netWhaleVolume: 0,
                 sentiment: "neutral",
@@ -7857,12 +8140,6 @@ async function handleAnalyzeWhaleFlow(args) {
             fetchedAt: new Date().toISOString(),
         });
     }
-    // Filter by time
-    const cutoffTime = Date.now() - hoursBack * 60 * 60 * 1000;
-    const recentTrades = trades.filter((t) => {
-        const tradeTime = Number(t.match_time || t.timestamp || 0) * 1000;
-        return tradeTime > cutoffTime;
-    });
     // Bucket trades by size, normalized into YES-equivalent direction:
     // BUY YES and SELL NO are bullish YES; SELL YES and BUY NO are bearish YES.
     const buckets = {
@@ -7875,7 +8152,7 @@ async function handleAnalyzeWhaleFlow(args) {
     let largestWhaleTrade = null;
     let oldestRecentTimestamp;
     let newestRecentTimestamp;
-    for (const trade of recentTrades) {
+    for (const trade of trades) {
         const price = Number(trade.price || 0);
         const notional = getTradeNotional(trade);
         if (!Number.isFinite(notional) || notional <= 0) {
@@ -7953,12 +8230,30 @@ async function handleAnalyzeWhaleFlow(args) {
     else {
         whaleSentiment = "bearish";
     }
+    const canMakeDirectionalClaim = tradeCoverage.canMakeDirectionalClaim === true;
+    const canMakeWhaleClaim = tradeCoverage.canMakeWhaleClaim === true;
+    const coverageWarning = typeof tradeCoverage.coverageWarning === "string"
+        ? tradeCoverage.coverageWarning
+        : null;
+    const coverageLevel = typeof tradeCoverage.coverageLevel === "string"
+        ? tradeCoverage.coverageLevel
+        : "insufficient";
     // Check for divergence
     const retailNetFlow = buckets.small.buyVolume - buckets.small.sellVolume;
     const retailSentiment = retailNetFlow > 100 ? "buying" : retailNetFlow < -100 ? "selling" : "neutral";
     const whaleBehavior = whaleNetFlow > 500 ? "buying" : whaleNetFlow < -500 ? "selling" : "neutral";
     let divergence;
-    if (retailSentiment === "selling" && whaleBehavior === "buying") {
+    if (!canMakeDirectionalClaim) {
+        const whaleObservation = whaleBehavior === "neutral"
+            ? "no whale-sized prints were observed"
+            : `observed whale-sized prints lean ${whaleBehavior}`;
+        divergence = `Sampled public tape only (${coverageLevel} coverage): retail-sized trades are ${retailSentiment}; ${whaleObservation}. ${coverageWarning ?? "Avoid treating this as complete market-wide flow."}`;
+    }
+    else if (!canMakeWhaleClaim && whaleBehavior === "neutral") {
+        divergence =
+            "No whale-sized prints observed in the available high-coverage public tape; do not infer off-venue or private whale inactivity.";
+    }
+    else if (retailSentiment === "selling" && whaleBehavior === "buying") {
         divergence = "🐋 Divergence detected: Retail is selling, but whales are buying YES";
     }
     else if (retailSentiment === "buying" && whaleBehavior === "selling") {
@@ -7971,18 +8266,11 @@ async function handleAnalyzeWhaleFlow(args) {
         divergence = "No significant whale activity detected";
     }
     const totalVolume = Object.values(buckets).reduce((sum, b) => sum + b.buyVolume + b.sellVolume, 0);
-    const reportedVolume24h = await fetchReportedMarketVolume24h(conditionId);
-    const sampledToReportedVolumeRatio = reportedVolume24h && reportedVolume24h > 0
-        ? totalVolume / reportedVolume24h
-        : null;
-    const coverageWarning = sampledToReportedVolumeRatio !== null && sampledToReportedVolumeRatio < 0.5
-        ? "Public trades sample is materially smaller than Polymarket-reported 24h volume; use direction as sampled tape, not full-market 24h volume."
-        : null;
     return successResult({
         market: marketLabel,
         conditionId: conditionId || null,
         period: `Last ${hoursBack} hours`,
-        totalTrades: recentTrades.length,
+        totalTrades: trades.length,
         totalVolume: Number(totalVolume.toFixed(2)),
         flowBySize,
         sizeBucketDefinitions: {
@@ -7993,21 +8281,22 @@ async function handleAnalyzeWhaleFlow(args) {
         },
         directionalSemantics: "Positive netFlow means buying YES / selling NO. Negative netFlow means selling YES / buying NO.",
         tradeSample: {
-            fetchedTrades: trades.length,
-            maxTradesFetched: conditionId ? TRADE_FLOW_SAMPLE_LIMIT : null,
-            recentTradesAnalyzed: recentTrades.length,
+            ...tradeCoverage,
             sampledTradeVolume: Number(totalVolume.toFixed(2)),
-            reportedMarketVolume24h: reportedVolume24h === null ? null : Number(reportedVolume24h.toFixed(2)),
-            sampledToReportedVolumeRatio: sampledToReportedVolumeRatio === null
-                ? null
-                : Number(sampledToReportedVolumeRatio.toFixed(4)),
-            oldestRecentTradeAt: formatTradeTime(oldestRecentTimestamp),
-            newestRecentTradeAt: formatTradeTime(newestRecentTimestamp),
-            coverageWarning,
+            oldestRecentTradeAt: tradeCoverage.oldestRecentTradeAt ?? formatTradeTime(oldestRecentTimestamp),
+            newestRecentTradeAt: tradeCoverage.newestRecentTradeAt ?? formatTradeTime(newestRecentTimestamp),
+        },
+        tradeCoverage: {
+            ...tradeCoverage,
+            sampledTradeVolume: Number(totalVolume.toFixed(2)),
+            oldestRecentTradeAt: tradeCoverage.oldestRecentTradeAt ?? formatTradeTime(oldestRecentTimestamp),
+            newestRecentTradeAt: tradeCoverage.newestRecentTradeAt ?? formatTradeTime(newestRecentTimestamp),
         },
         whaleActivity: {
             netWhaleVolume: Number(whaleNetFlow.toFixed(2)),
             sentiment: whaleSentiment,
+            confidence: canMakeWhaleClaim ? "coverage_supported" : "sample_observation_only",
+            claimWarning: canMakeWhaleClaim ? null : coverageWarning,
             largestTrade: largestWhaleTrade,
             largestTradeOverall,
         },
@@ -9776,6 +10065,10 @@ async function handleBuildHighConvictionWorkflow(args) {
             let whaleSentiment = "neutral";
             let whaleNetVolume = 0;
             let whaleDivergence = "Whale flow not requested";
+            let whaleCoverage = {
+                canMakeWhaleClaim: !includeWhaleFlow,
+                coverageLevel: includeWhaleFlow ? "not_requested" : "not_applicable",
+            };
             let trueProbYes = null;
             let whaleAlignedWithTrade = !includeWhaleFlow;
             try {
@@ -9889,6 +10182,13 @@ async function handleBuildHighConvictionWorkflow(args) {
                     whaleNetVolume = workflowToNumber(whaleActivity.netWhaleVolume, 0);
                     whaleDivergence =
                         typeof whaleData.divergence === "string" ? whaleData.divergence : "No divergence data";
+                    whaleCoverage = workflowObject(whaleData.tradeCoverage ?? whaleData.tradeSample);
+                    if (whaleCoverage.canMakeWhaleClaim !== true) {
+                        const coverageWarning = typeof whaleCoverage.coverageWarning === "string"
+                            ? whaleCoverage.coverageWarning
+                            : "Whale-flow coverage is not strong enough for directional setup scoring.";
+                        risks.push(coverageWarning);
+                    }
                 }
                 catch (error) {
                     whaleSentiment = "neutral";
@@ -9896,6 +10196,7 @@ async function handleBuildHighConvictionWorkflow(args) {
                     analysisNotes.push(`Whale-flow check failed for "${candidate.title}": ${error instanceof Error ? error.message : "Unknown error"}`);
                 }
             }
+            const whaleSignalUsable = !includeWhaleFlow || whaleCoverage.canMakeWhaleClaim === true;
             let suggestedSide;
             if (edgePercent > 2) {
                 suggestedSide = "YES";
@@ -9903,10 +10204,10 @@ async function handleBuildHighConvictionWorkflow(args) {
             else if (edgePercent < -2) {
                 suggestedSide = "NO";
             }
-            else if (whaleSentiment === "bullish") {
+            else if (whaleSignalUsable && whaleSentiment === "bullish") {
                 suggestedSide = "YES";
             }
-            else if (whaleSentiment === "bearish") {
+            else if (whaleSignalUsable && whaleSentiment === "bearish") {
                 suggestedSide = "NO";
             }
             else {
@@ -9931,14 +10232,15 @@ async function handleBuildHighConvictionWorkflow(args) {
             if (includeWhaleFlow) {
                 const sideAligned = (suggestedSide === "YES" && whaleSentiment === "bullish") ||
                     (suggestedSide === "NO" && whaleSentiment === "bearish");
-                whaleAlignedWithTrade = sideAligned || whaleSentiment === "neutral";
+                whaleAlignedWithTrade =
+                    !whaleSignalUsable || sideAligned || whaleSentiment === "neutral";
                 if (sideAligned) {
-                    whalePoints = 6;
+                    whalePoints = whaleSignalUsable ? 6 : 0;
                 }
                 else if (whaleSentiment === "neutral") {
                     whalePoints = 0;
                 }
-                else {
+                else if (whaleSignalUsable) {
                     whalePoints = -4;
                     risks.push("Whale flow currently leans against this side.");
                 }
@@ -10019,6 +10321,7 @@ async function handleBuildHighConvictionWorkflow(args) {
                     alignedWithTrade: whaleAlignedWithTrade,
                     netVolume: Number(whaleNetVolume.toFixed(2)),
                     divergence: whaleDivergence,
+                    tradeCoverage: whaleCoverage,
                 },
                 risks: riskList,
                 isTradable,
@@ -10821,6 +11124,7 @@ async function handleAnalyzeSingleMarketWhales(args) {
                 flowBySize: workflowObject(whaleFlowData.flowBySize),
                 sizeBucketDefinitions: workflowObject(whaleFlowData.sizeBucketDefinitions),
                 tradeSample: workflowObject(whaleFlowData.tradeSample),
+                tradeCoverage: workflowObject(whaleFlowData.tradeCoverage ?? whaleFlowData.tradeSample),
                 directionalSemantics: typeof whaleFlowData.directionalSemantics === "string"
                     ? whaleFlowData.directionalSemantics
                     : "Positive netFlow means buying YES / selling NO. Negative netFlow means selling YES / buying NO.",
@@ -10851,7 +11155,8 @@ async function handleSummarizeLiveMarketActivity(args) {
     const slug = typeof args?.slug === "string" ? args.slug.trim() : "";
     const category = typeof args?.category === "string" ? args.category.trim() : "";
     const endingWithinDays = workflowToBoundedInteger(args?.endingWithinDays, 7, 1, 30);
-    const tradeLimit = workflowToBoundedInteger(args?.tradeLimit, 20, 5, 100);
+    const tradeLimit = workflowToBoundedInteger(args?.tradeLimit, 20, 5, 500);
+    const hoursBack = workflowToBoundedInteger(args?.hoursBack, 24, 1, 168);
     const sortByRaw = typeof args?.sortBy === "string" ? args.sortBy : "ending_soon";
     const sortBy = sortByRaw === "volume" ||
         sortByRaw === "liquidity" ||
@@ -10882,6 +11187,13 @@ async function handleSummarizeLiveMarketActivity(args) {
             value: 0,
         },
         recentTrades: [],
+        tradeCoverage: {
+            coverageMode: "standard",
+            coverageLevel: "insufficient",
+            coverageWarning: reason,
+            canMakeDirectionalClaim: false,
+            canMakeWhaleClaim: false,
+        },
         noResultsReason: reason,
         searchExhausted: true,
         fetchedAt: new Date().toISOString(),
@@ -10972,6 +11284,8 @@ async function handleSummarizeLiveMarketActivity(args) {
                         workflowExtractToolData(await handleGetMarketTrades({
                             conditionId: candidateResolved.conditionId,
                             limit: tradeLimit,
+                            hoursBack,
+                            coverageMode: "standard",
                         }), "get_market_trades"),
                         workflowExtractToolData(await handleGetMarketOpenInterest({
                             conditionId: candidateResolved.conditionId,
@@ -10979,8 +11293,21 @@ async function handleSummarizeLiveMarketActivity(args) {
                     ]);
                     const candidateOpenInterestValue = extractMatchedOpenInterest(candidateOpenInterestData, candidateResolved.conditionId);
                     const tradesSummary = workflowObject(candidateTradesData.summary);
+                    const tradeCoverage = workflowObject(candidateTradesData.tradeCoverage);
                     const totalVolume = workflowToNumber(tradesSummary.totalVolume, 0);
-                    const ratio = candidateOpenInterestValue / Math.max(totalVolume, 1);
+                    const coverageLevel = typeof tradeCoverage.coverageLevel === "string"
+                        ? tradeCoverage.coverageLevel
+                        : "insufficient";
+                    const coverageScore = coverageLevel === "complete"
+                        ? 3
+                        : coverageLevel === "high_coverage"
+                            ? 2
+                            : coverageLevel === "partial"
+                                ? 1
+                                : 0;
+                    const ratio = coverageScore === 0
+                        ? 0
+                        : candidateOpenInterestValue / Math.max(totalVolume, 1);
                     candidateSnapshots.push({
                         selectedMarketData: candidate,
                         resolved: candidateResolved,
@@ -10989,9 +11316,13 @@ async function handleSummarizeLiveMarketActivity(args) {
                         openInterestValue: candidateOpenInterestValue,
                         totalVolume,
                         ratio,
+                        coverageScore,
                     });
                 }
                 candidateSnapshots.sort((left, right) => {
+                    if (right.coverageScore !== left.coverageScore) {
+                        return right.coverageScore - left.coverageScore;
+                    }
                     if (right.ratio !== left.ratio) {
                         return right.ratio - left.ratio;
                     }
@@ -11011,7 +11342,7 @@ async function handleSummarizeLiveMarketActivity(args) {
                     const windowPart = usedVolumeFallback || effectiveEndingDays === 0
                         ? "volume-ranked live markets (no near-resolution window match)"
                         : `ending within ${effectiveEndingDays} days (widened from ${endingWithinDays} if needed)`;
-                    selectionReason = `Screened ${candidateSnapshots.length} live candidate markets (${windowPart}) and picked the one with the highest openInterest-to-recent-volume ratio.`;
+                    selectionReason = `Screened ${candidateSnapshots.length} live candidate markets (${windowPart}) and picked the one with the highest coverage-supported openInterest-to-recent-volume ratio.`;
                 }
                 else if (candidates[0]) {
                     selectedMarketData = candidates[0] ?? null;
@@ -11076,6 +11407,8 @@ async function handleSummarizeLiveMarketActivity(args) {
                     workflowExtractToolData(await handleGetMarketTrades({
                         conditionId: resolved.conditionId,
                         limit: tradeLimit,
+                        hoursBack,
+                        coverageMode: "standard",
                     }), "get_market_trades"),
                     workflowExtractToolData(await handleGetMarketOpenInterest({
                         conditionId: resolved.conditionId,
@@ -11106,6 +11439,7 @@ async function handleSummarizeLiveMarketActivity(args) {
                 selectionReason,
             },
             tradesSummary: workflowObject(tradesData.summary),
+            tradeCoverage: workflowObject(tradesData.tradeCoverage),
             openInterest: {
                 conditionId: resolved.conditionId,
                 value: matchedOpenInterest,
@@ -11600,9 +11934,11 @@ async function handleBuildMarketTradabilityMemo(args) {
         const whaleCost = workflowObject(liquidityData.whaleCost);
         const sell5k = workflowObject(whaleCost.sell5k);
         const tradesSummary = workflowObject(activityData.tradesSummary);
+        const activityTradeCoverage = workflowObject(activityData.tradeCoverage);
         const holderAnalysis = workflowObject(whaleData.holderAnalysis);
         const marketConcentration = workflowObject(holderAnalysis.marketConcentration);
         const whaleFlow = workflowObject(whaleData.whaleFlow);
+        const whaleTradeCoverage = workflowObject(whaleFlow.tradeCoverage ?? whaleFlow.tradeSample);
         const whaleActivity = workflowObject(whaleFlow.whaleActivity);
         const currentPrice = workflowToNumber(liquidityData.currentPrice, 0);
         const spreadCents = workflowToNumber(spreadData.spreadCents, 0);
@@ -11613,6 +11949,8 @@ async function handleBuildMarketTradabilityMemo(args) {
         const whaleSentiment = typeof whaleActivity.sentiment === "string"
             ? whaleActivity.sentiment
             : "neutral";
+        const canUseWhaleFlow = whaleTradeCoverage.canMakeWhaleClaim === true;
+        const canUseActivityFlow = activityTradeCoverage.canMakeDirectionalClaim === true;
         const totalTrades = workflowToNumber(tradesSummary.totalTrades, 0);
         const openInterest = workflowObject(activityData.openInterest);
         const openInterestValue = workflowToNumber(openInterest.value, 0);
@@ -11628,27 +11966,32 @@ async function handleBuildMarketTradabilityMemo(args) {
             : liquidityScore === "fair"
                 ? "mixed"
                 : "weak";
-        const whalePositioning = whaleSentiment === "bullish"
-            ? "Whale flow leans with the YES side."
-            : whaleSentiment === "bearish"
-                ? "Whale flow leans against the YES side."
-                : "Whale flow is not showing a strong directional edge.";
-        const recentActivity = totalTrades >= 25
-            ? "Recent tape is active enough to treat the quote as live, not stale."
-            : totalTrades >= 8
-                ? "Recent tape is present but not especially deep."
-                : "Recent tape is thin, so displayed prices deserve extra skepticism.";
+        const whalePositioning = !canUseWhaleFlow
+            ? "Whale-flow tape is partial, so it is treated as an observed sample rather than a decisive setup signal."
+            : whaleSentiment === "bullish"
+                ? "Whale flow leans with the YES side."
+                : whaleSentiment === "bearish"
+                    ? "Whale flow leans against the YES side."
+                    : "Whale flow is not showing a strong directional edge.";
+        const recentActivity = !canUseActivityFlow
+            ? "Recent trade summary is based on partial public tape; use it for recency context, not full-market buy/sell pressure."
+            : totalTrades >= 25
+                ? "Recent tape is active enough to treat the quote as live, not stale."
+                : totalTrades >= 8
+                    ? "Recent tape is present but not especially deep."
+                    : "Recent tape is thin, so displayed prices deserve extra skepticism.";
         let decision = "pass";
         if (rulesRisk === "high" || quoteQuality === "weak") {
             decision = "avoid";
         }
         else if (rulesRisk === "low" &&
             quoteQuality === "strong" &&
-            whaleSentiment !== "bearish" &&
+            (!canUseWhaleFlow || whaleSentiment !== "bearish") &&
+            canUseActivityFlow &&
             totalTrades >= 20) {
             decision = "buy";
         }
-        else if (whaleSentiment === "bullish") {
+        else if (canUseWhaleFlow && whaleSentiment === "bullish") {
             decision = "speculative_buy";
         }
         const concentrationRisk = workflowToNumber(marketConcentration.concentrationPercent, 0);
@@ -11677,6 +12020,10 @@ async function handleBuildMarketTradabilityMemo(args) {
             quoteQuality,
             whalePositioning,
             recentActivity,
+            tradeCoverage: {
+                activity: activityTradeCoverage,
+                whaleFlow: whaleTradeCoverage,
+            },
             decision,
             memo: memoParts.join(" "),
             fetchedAt: new Date().toISOString(),
@@ -14748,17 +15095,27 @@ async function handleSearchMarkets(args) {
 // ============================================================================
 async function handleGetMarketTrades(args) {
     const conditionId = args?.conditionId;
-    const limit = Math.min(args?.limit || 50, 100);
+    const limit = Math.min(args?.limit || 50, 500);
+    const hoursBack = workflowToBoundedInteger(args?.hoursBack, 24, 1, 168);
+    const coverageModeRaw = typeof args?.coverageMode === "string" ? args.coverageMode : "quick";
+    const coverageMode = coverageModeRaw === "standard" || coverageModeRaw === "deep"
+        ? coverageModeRaw
+        : "quick";
     if (!conditionId) {
         return errorResult("conditionId is required");
     }
     try {
-        const trades = (await fetchDataApi(`/trades?market=${conditionId}&limit=${limit}`));
+        const { recentTrades: trades, tradeCoverage } = await fetchMarketTradesWindow({
+            conditionId,
+            hoursBack,
+            coverageMode,
+        });
         if (!trades || !Array.isArray(trades)) {
             return successResult({
                 market: conditionId,
                 trades: [],
                 summary: { totalTrades: 0, totalVolume: 0, buyVolume: 0, sellVolume: 0, avgPrice: 0 },
+                tradeCoverage,
                 fetchedAt: new Date().toISOString(),
             });
         }
@@ -14766,20 +15123,14 @@ async function handleGetMarketTrades(args) {
         let buyVolume = 0;
         let sellVolume = 0;
         let priceSum = 0;
-        const formattedTrades = trades.map((t) => {
+        const formattedTrades = trades.slice(0, limit).map((t) => {
             const price = Number(t.price || 0);
             const size = Number(t.size || 0);
             const notional = price * size;
             const side = t.side?.toUpperCase() || "BUY";
-            totalVolume += notional;
-            priceSum += price;
-            if (side === "BUY")
-                buyVolume += notional;
-            else
-                sellVolume += notional;
             return {
                 id: t.id || "",
-                timestamp: t.timestamp || t.matchTime || "",
+                timestamp: t.timestamp || t.matchTime || t.match_time || "",
                 side,
                 outcome: t.outcome || "YES",
                 price,
@@ -14788,6 +15139,20 @@ async function handleGetMarketTrades(args) {
                 trader: t.trader || t.proxyWallet || "",
             };
         });
+        for (const trade of trades) {
+            const price = Number(trade.price || 0);
+            const size = Number(trade.size || 0);
+            const notional = price * size;
+            const side = trade.side?.toUpperCase() || "BUY";
+            totalVolume += notional;
+            priceSum += price;
+            if (side === "BUY") {
+                buyVolume += notional;
+            }
+            else {
+                sellVolume += notional;
+            }
+        }
         return successResult({
             market: conditionId,
             trades: formattedTrades,
@@ -14797,7 +15162,11 @@ async function handleGetMarketTrades(args) {
                 buyVolume: Number(buyVolume.toFixed(2)),
                 sellVolume: Number(sellVolume.toFixed(2)),
                 avgPrice: trades.length > 0 ? Number((priceSum / trades.length).toFixed(4)) : 0,
+                note: tradeCoverage.canMakeDirectionalClaim === true
+                    ? `Summary covers ${hoursBack}h public trade tape with ${String(tradeCoverage.coverageLevel)} coverage.`
+                    : `Summary is based on ${hoursBack}h sampled public trade tape; do not treat raw BUY/SELL totals as full-market direction.`,
             },
+            tradeCoverage,
             fetchedAt: new Date().toISOString(),
         });
     }

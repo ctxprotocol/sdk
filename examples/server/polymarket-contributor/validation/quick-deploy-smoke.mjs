@@ -99,14 +99,21 @@ const generic = await mcpCallTool(sessionId, "analyze_single_market_whales", {
 });
 
 const market = generic.parsed?.selectedMarket ?? generic.parsed?.market ?? {};
-const volume24h = market.volume24h ?? generic.parsed?.whaleFlow?.tradeSample?.reportedMarketVolume24h ?? 0;
+const flowCoverage = flow.parsed?.tradeCoverage ?? flow.parsed?.tradeSample ?? {};
+const genericCoverage =
+  generic.parsed?.whaleFlow?.tradeCoverage ??
+  generic.parsed?.whaleFlow?.tradeSample ??
+  {};
+const volume24h = market.volume24h ?? genericCoverage.reportedMarketVolume24h ?? 0;
 const whaleDefs = flow.parsed?.sizeBucketDefinitions ?? {};
 
 const checks = {
-  flowHasTradeSample: Boolean(flow.parsed?.tradeSample),
+  flowHasTradeCoverage: Boolean(flow.parsed?.tradeCoverage),
   flowHasLargeBucket: Boolean(whaleDefs.large),
   flowWhaleThreshold: whaleDefs.whale,
-  flowFetchedTrades: flow.parsed?.tradeSample?.fetchedTrades,
+  flowFetchedTrades: flowCoverage.fetchedTrades,
+  flowCoverageLevel: flowCoverage.coverageLevel,
+  flowPagesFetched: flowCoverage.pagesFetched,
   genericMarketTitle: market.title,
   genericSelectionReason: market.selectionReason ?? generic.parsed?.selectionReason,
   genericVolume24h: volume24h,
@@ -114,11 +121,12 @@ const checks = {
 };
 
 const pass =
-  checks.flowHasTradeSample &&
+  checks.flowHasTradeCoverage &&
   checks.flowHasLargeBucket &&
   typeof checks.flowWhaleThreshold === "string" &&
   checks.flowWhaleThreshold.includes("10") &&
   checks.flowFetchedTrades > 0 &&
+  checks.flowPagesFetched >= 1 &&
   Boolean(checks.genericMarketTitle) &&
   !/^0x[a-f0-9]{64}$/i.test(String(checks.genericMarketTitle)) &&
   checks.genericHasRecentActivity;
@@ -130,7 +138,7 @@ console.log(
       checks,
       flowSnippet: {
         netFlow: flow.parsed?.netFlow,
-        tradeSample: flow.parsed?.tradeSample,
+        tradeCoverage: flow.parsed?.tradeCoverage,
         sizeBuckets: flow.parsed?.sizeBuckets,
       },
       genericSnippet: {
