@@ -961,6 +961,10 @@ USE analyze_top_holders INSTEAD FOR: "Who are the biggest holders?", "What are w
                     type: "object",
                     description: "Coverage contract for the public trades window: pages fetched, rows analyzed, sampled/reported 24h volume ratio, coverageLevel, and whether directional/whale claims are supported.",
                 },
+                buyerGuidance: {
+                    type: "object",
+                    description: "Plain-English interpretation guardrails for buyer-facing answers: how to describe large prints vs whale prints, holder whales vs trade-size buckets, and coverage caveats.",
+                },
                 directionalSemantics: {
                     type: "string",
                     description: "Explains that positive netFlow means buying YES / selling NO, while negative netFlow means selling YES / buying NO.",
@@ -2161,6 +2165,7 @@ Do not prefetch get_top_markets or call analyze_top_holders separately unless th
                         sizeBucketDefinitions: { type: "object" },
                         tradeSample: { type: "object" },
                         tradeCoverage: { type: "object" },
+                        buyerGuidance: { type: "object" },
                         directionalSemantics: { type: "string" },
                         whaleActivity: { type: "object" },
                         divergence: { type: "string" },
@@ -2182,6 +2187,10 @@ Do not prefetch get_top_markets or call analyze_top_holders separately unless th
                 noWhales: {
                     type: "array",
                     items: { type: "object" },
+                },
+                buyerGuidance: {
+                    type: "object",
+                    description: "Plain-English guidance for synthesizing holder-whale and trade-flow data without confusing top holders, large prints, and whale-sized prints.",
                 },
                 fetchedAt: { type: "string" },
             },
@@ -8161,6 +8170,60 @@ function combineRawAndSizeFilteredTradeCoverage(params) {
         coverageWarning: coverageWarning.length > 0 ? coverageWarning : null,
     };
 }
+function tradeFlowBucketValue(flowBySize, bucketName, fieldName) {
+    const bucket = workflowObject(flowBySize[bucketName]);
+    return workflowToNumber(bucket[fieldName], 0);
+}
+function buildWhaleFlowBuyerGuidance(params) {
+    const rawCoverage = workflowObject(params.tradeCoverage.rawTradeCoverage);
+    const sizeFilteredCoverage = workflowObject(params.tradeCoverage.sizeFilteredTradeCoverage);
+    const rawCoverageLevel = typeof rawCoverage.coverageLevel === "string"
+        ? rawCoverage.coverageLevel
+        : typeof params.tradeCoverage.coverageLevel === "string"
+            ? params.tradeCoverage.coverageLevel
+            : "unknown";
+    const sizeFilteredCoverageLevel = typeof sizeFilteredCoverage.coverageLevel === "string"
+        ? sizeFilteredCoverage.coverageLevel
+        : typeof params.tradeCoverage.sizeFilteredCoverageLevel === "string"
+            ? params.tradeCoverage.sizeFilteredCoverageLevel
+            : "unknown";
+    const rawCoverageRatio = workflowToNumber(rawCoverage.sampledToReportedVolumeRatio ??
+        params.tradeCoverage.rawSampledToReportedVolumeRatio, 0);
+    const largeNetFlow = tradeFlowBucketValue(params.flowBySize, "large", "netFlow");
+    const whaleNetFlow = tradeFlowBucketValue(params.flowBySize, "whale", "netFlow");
+    const whaleCount = tradeFlowBucketValue(params.flowBySize, "whale", "count");
+    const largeDominatesWhale = Math.abs(largeNetFlow) > 0 &&
+        Math.abs(largeNetFlow) >= Math.max(Math.abs(whaleNetFlow) * 2, 1_000);
+    const rawRatioText = rawCoverageRatio > 0
+        ? ` Raw unfiltered tape covers about ${Math.round(rawCoverageRatio * 100)}% of reported 24h volume.`
+        : "";
+    const sizeFilteredText = sizeFilteredCoverageLevel === "complete"
+        ? ` All ${formatUsdThreshold(TRADE_SIZE_FILTER_MIN_USD)}+ trades in the requested window were captured.`
+        : ` ${formatUsdThreshold(TRADE_SIZE_FILTER_MIN_USD)}+ trade coverage is ${sizeFilteredCoverageLevel}; describe large-print flow as sampled.`;
+    const dominantFlowPlainEnglish = whaleCount === 0 && largeDominatesWhale
+        ? `Recent directional flow is dominated by large prints (${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)}-${formatUsdThreshold(TRADE_WHALE_MIN_USD)}); there were no whale-sized prints (${formatUsdThreshold(TRADE_WHALE_MIN_USD)}+) in this window.`
+        : largeDominatesWhale
+            ? `Recent directional flow is dominated by large prints (${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)}-${formatUsdThreshold(TRADE_WHALE_MIN_USD)}), not by the whale-print bucket.`
+            : `Use the large and whale buckets separately; do not merge ${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)}-${formatUsdThreshold(TRADE_WHALE_MIN_USD)} prints with ${formatUsdThreshold(TRADE_WHALE_MIN_USD)}+ prints.`;
+    return {
+        tradeSizeTaxonomy: {
+            small: `<${formatUsdThreshold(TRADE_SMALL_MAX_USD)} retail-sized prints`,
+            medium: `${formatUsdThreshold(TRADE_SMALL_MAX_USD)}-${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)} medium prints`,
+            large: `${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)}-${formatUsdThreshold(TRADE_WHALE_MIN_USD)} large prints`,
+            whale: `>=${formatUsdThreshold(TRADE_WHALE_MIN_USD)} whale-sized prints`,
+        },
+        wordingRules: [
+            `Reserve "whale prints" for single trades >=${formatUsdThreshold(TRADE_WHALE_MIN_USD)}.`,
+            `Call ${formatUsdThreshold(TRADE_MEDIUM_MAX_USD)}-${formatUsdThreshold(TRADE_WHALE_MIN_USD)} trades "large prints" or "large-sized trades", not whales or accounts.`,
+            "Use holder-whale language only for top-holder position data; trade buckets measure single-trade notional.",
+        ],
+        coveragePlainEnglish: `${sizeFilteredText}${rawRatioText}`.trim(),
+        rawRetailFlowCaveat: rawCoverageLevel === "complete" || rawCoverageLevel === "high_coverage"
+            ? `Raw retail tape has ${rawCoverageLevel} coverage for full-market direction.`
+            : `Raw retail tape is ${rawCoverageLevel}; retail flow is sampled and should not be overstated as exhaustive.`,
+        dominantFlowPlainEnglish,
+    };
+}
 async function handleAnalyzeWhaleFlow(args) {
     const conditionIdInput = typeof args?.conditionId === "string" ? args.conditionId : undefined;
     const slug = typeof args?.slug === "string" ? args.slug : undefined;
@@ -8470,6 +8533,10 @@ async function handleAnalyzeWhaleFlow(args) {
             oldestRecentTradeAt: tradeCoverage.oldestRecentTradeAt ?? formatTradeTime(oldestRecentTimestamp),
             newestRecentTradeAt: tradeCoverage.newestRecentTradeAt ?? formatTradeTime(newestRecentTimestamp),
         },
+        buyerGuidance: buildWhaleFlowBuyerGuidance({
+            flowBySize,
+            tradeCoverage,
+        }),
         whaleActivity: {
             netWhaleVolume: Number(whaleNetFlow.toFixed(2)),
             sentiment: whaleSentiment,
@@ -11303,6 +11370,7 @@ async function handleAnalyzeSingleMarketWhales(args) {
                 sizeBucketDefinitions: workflowObject(whaleFlowData.sizeBucketDefinitions),
                 tradeSample: workflowObject(whaleFlowData.tradeSample),
                 tradeCoverage: workflowObject(whaleFlowData.tradeCoverage ?? whaleFlowData.tradeSample),
+                buyerGuidance: workflowObject(whaleFlowData.buyerGuidance),
                 directionalSemantics: typeof whaleFlowData.directionalSemantics === "string"
                     ? whaleFlowData.directionalSemantics
                     : "Positive netFlow means buying YES / selling NO. Negative netFlow means selling YES / buying NO.",
@@ -11320,6 +11388,10 @@ async function handleAnalyzeSingleMarketWhales(args) {
             },
             yesWhales: workflowObjectArray(whaleAnalysis.yesWhales).slice(0, 5),
             noWhales: workflowObjectArray(whaleAnalysis.noWhales).slice(0, 5),
+            buyerGuidance: {
+                holderVsTradeWhaleNote: `Holder whales are top positions from holderAnalysis (>=${formatUsdThreshold(HOLDER_WHALE_MIN_USD)} current value or >=${HOLDER_WHALE_MIN_SUPPLY_PERCENT}% of scanned side supply). Trade-flow whale prints are single trades >=${formatUsdThreshold(TRADE_WHALE_MIN_USD)}. Keep these concepts separate in buyer-facing answers and chart labels.`,
+                whaleFlow: workflowObject(whaleFlowData.buyerGuidance),
+            },
             fetchedAt: new Date().toISOString(),
         });
     }
