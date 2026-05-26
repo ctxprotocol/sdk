@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { config as loadDotEnv } from "dotenv";
@@ -13,36 +12,35 @@ loadDotEnv({ path: path.resolve(__dirname, "../../../../../context/.env.local"),
 const apiKey = (process.env.CONTEXT_API_KEY ?? process.env.API_KEY ?? "").trim();
 if (!apiKey) throw new Error("Missing CONTEXT_API_KEY");
 
-const description = `Live prediction market intelligence for Polymarket with real-time CLOB orderbook data, whale flow tracking, and multi-tool analytical workflows.
+// Keep in sync with ../marketplace-listing-description.md (generated 2026-05-25)
+const description = `Live Polymarket intelligence with CLOB depth, four-tier trade-flow buckets, holder-whale analysis, and composite workflows that turn raw prediction-market tape into actionable tradability and smart-money reads.
 
 Features:
-- Order book liquidity analysis with simulated exit/entry slippage for positions up to $100K
-- Whale vs retail trade flow decomposition by size tier (small, medium, whale) with directional sentiment
-- Cross-market arbitrage scanning across 40+ live orderbooks with bid-ask spread analysis
-- Market efficiency scoring with vig-stripped implied probabilities
-- Top holder concentration analysis with smart money positioning signals
-- Volume spike detection ranked by deviation from weekly average with whale/retail attribution
-- Multi-outcome event-level whale breakdown comparing positioning against current odds
-- Low-probability lottery ticket screening filtered by price threshold and unusual activity
-- High-conviction composite workflow combining liquidity, whale flow, holder analysis, and resolution rules
+- Order book liquidity and walk-the-book slippage simulation for $1k/$5k/$10k and custom position sizes on YES/NO tokens
+- Trade-flow decomposition into small (<$50), medium ($50-$500), large prints ($500-$10k), and whale-sized prints (>= $10k) with YES-directional net flow
+- Dual public tape strategy: raw recent trades plus size-filtered ($500+) deep sampling so meaningful prints are not crowded out by tiny recent fills
+- Explicit tradeCoverage and buyerGuidance so answers distinguish holder whales, large prints, and whale-sized prints instead of overclaiming
+- Optional filtered trade pulls via minNotional, side, and wallet on get_market_trades and summarize_live_market_activity
+- One-call smart-money workflows: analyze_single_market_whales, build_high_conviction_workflow, build_market_tradability_memo
+- Multi-outcome event tools for outcome liquidity ranking, whale breakdown, tradability memos, and cross-outcome quote comparison
+- Discovery and screening: discover_trending_markets, get_top_markets, find_arbitrage_opportunities, find_moderate_probability_bets, polymarket_crossref_kalshi
+- Resolution and portfolio tools: check_market_rules, check_market_efficiency with vig-adjusted probabilities, analyze_my_positions
 
 Try asking:
-- "What's the current liquidity depth on Polymarket's highest-volume political market? Simulate exiting a $10,000 YES position and show me the expected slippage."
-- "Are there any verified arbitrage opportunities on Polymarket right now where buying both YES and NO costs less than $1?"
-- "What's the whale vs retail trading flow on the most active Fed interest rate market in the last 24 hours?"
-- "Find me Polymarket lottery ticket bets under 15 cents with unusual volume spikes."
-- "Deep-fetch the top holders on Polymarket's biggest political market and show concentration levels."
-- "Which markets have seen the biggest volume spike in the last 6 hours? For the top 3, is the move driven by whale buying or retail?"
-- "Compare liquidity depth and whale positioning across all outcomes in Polymarket's biggest multi-outcome political event."
-- "What's the true implied probability on Polymarket's most popular crypto market after stripping out the vig?"
-- "For the biggest multi-outcome sports event, which specific outcomes are whales betting on versus current odds?"
+- "For the most liquid live politics market, chart top-holder skew versus 24h trade-flow by size bucket and quantify whether large prints or whale-sized prints are driving the move."
+- "What Polymarket categories and tags are hottest right now, and which live markets have the biggest 24h volume spikes?"
+- "Inside the 2026 FIFA World Cup winner event, compare Spain, Brazil, and France on live implied odds, spreads, and exit slippage at $5k."
+- "Pull only >= $10k BUY-side trades for this conditionId in the last 24h and summarize coverage."
+- "Run analyze_single_market_whales on a live single-outcome politics market and tell me holder concentration plus recent flow divergence."
+- "This market looks illiquid—is it actually closed, resolved, or just orderbook-disabled? Show marketState before judging slippage."
+- "Rank tradability across outcomes in the biggest multi-outcome political event, then flag where top holders disagree with recent large-print flow."
 
 Agent tips:
-- For market discovery, use get_top_markets or search_markets before running deep analysis tools
-- Whale flow analysis works best with conditionId; use search_markets to resolve market names to IDs first
-- The high-conviction workflow (build_high_conviction_workflow) chains liquidity, whale flow, efficiency, and holder analysis into a single call
-- Most analysis tools accept either slug, conditionId, or tokenId for market identification
-- Rate limits apply to upstream Polymarket APIs; space concurrent deep-analysis calls when running multi-market workflows`;
+- Use analyze_whale_flow or analyze_single_market_whales for size-bucket flow; do not bucket trades manually from get_market_trades
+- Reserve whale-print language for >= $10k single trades; call $500-$10k trades large prints; use analyze_top_holders for position-level holder whales
+- Prefer composite tools (analyze_single_market_whales, summarize_live_market_activity, build_high_conviction_workflow) over chaining discovery plus raw primitives
+- Read tradeCoverage.coverageLevel and buyerGuidance before claiming complete market-wide flow; partial raw tape is common on hot markets
+- Heavy tools publish rateLimit hints—run one deep workflow at a time on high-volume markets`;
 
 async function pushDescription() {
   const urls = [
@@ -57,7 +55,7 @@ async function pushDescription() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({ description }),
       });
