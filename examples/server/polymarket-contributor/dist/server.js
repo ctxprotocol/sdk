@@ -2611,6 +2611,8 @@ Add discover_trending_markets only when the user explicitly wants trend/surge co
 
 Each returned row is the exact market contract chosen for ranking, not a vague event-family placeholder.
 
+For "highest", "top", or "biggest" questions, offset=0 already contains the highest-ranked matching markets. Do NOT page to later offsets unless the user asks for more results, asks to audit deeper pages, or you need results beyond the returned limit.
+
 Returns BOTH total volume AND 24h volume for each market, plus direct Polymarket URLs and YES/NO token IDs when available.`,
         inputSchema: {
             type: "object",
@@ -2654,7 +2656,7 @@ Returns BOTH total volume AND 24h volume for each market, plus direct Polymarket
                 },
                 offset: {
                     type: "number",
-                    description: "Skip first N results for pagination. Use to go DEEPER (e.g., offset=50 for results 51-100).",
+                    description: "Skip first N results for pagination. Use only to go DEEPER (e.g., offset=50 for results 51-100), not to answer a highest/top/biggest-market question where offset=0 is already the top page.",
                 },
                 limit: {
                     type: "number",
@@ -2672,7 +2674,14 @@ Returns BOTH total volume AND 24h volume for each market, plus direct Polymarket
                     items: {
                         type: "object",
                         properties: {
-                            rank: { type: "number" },
+                            rank: {
+                                type: "number",
+                                description: "Rank relative to the requested offset/page; offset=0 rank 1 is the highest matching market.",
+                            },
+                            pageRank: {
+                                type: "number",
+                                description: "Rank within this returned page only.",
+                            },
                             title: { type: "string" },
                             eventTitle: { type: "string" },
                             eventId: { type: "string" },
@@ -2701,6 +2710,10 @@ Returns BOTH total volume AND 24h volume for each market, plus direct Polymarket
                     },
                 },
                 summary: { type: "string" },
+                paginationGuidance: {
+                    type: "string",
+                    description: "Instruction for agents on whether another paginated get_top_markets call is useful.",
+                },
                 pagination: {
                     type: "object",
                     properties: {
@@ -13044,6 +13057,7 @@ async function handleGetTopMarkets(args) {
                     : (conditionId ? `https://polymarket.com/event/${conditionId}` : "");
                 markets.push({
                     rank: 0,
+                    pageRank: 0,
                     title: market.question || market.title || event.title || "Unknown",
                     eventTitle: event.title || market.title || market.question || "Unknown",
                     eventId: event.id !== undefined && event.id !== null ? String(event.id) : "",
@@ -13091,7 +13105,8 @@ async function handleGetTopMarkets(args) {
     // Assign ranks and limit
     const finalMarkets = markets.slice(0, limit);
     finalMarkets.forEach((m, idx) => {
-        m.rank = idx + 1;
+        m.pageRank = idx + 1;
+        m.rank = offset + idx + 1;
     });
     // Generate summary based on sortBy
     const topTotalVol = finalMarkets[0]?.totalVolume || 0;
@@ -13132,10 +13147,14 @@ async function handleGetTopMarkets(args) {
     // Add pagination info
     const paginationInfo = offset > 0 ? ` (showing results ${offset + 1}-${offset + finalMarkets.length})` : "";
     const hasMore = lastRawBatchSize === pageSize;
+    const paginationGuidance = offset === 0
+        ? "For highest/top/biggest matching-market questions, use markets[0] from this first page; do not call later offsets unless the user asked for more results or a deeper audit."
+        : "This is a deeper page. Do not treat pageRank=1 as the overall top market; compare rank/global position before using it as a highest-volume result.";
     return successResult({
         sortedBy: sortBy,
         markets: finalMarkets,
         summary: summary + paginationInfo,
+        paginationGuidance,
         pagination: {
             offset,
             returned: finalMarkets.length,
