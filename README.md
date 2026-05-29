@@ -11,15 +11,15 @@ Context Protocol is **npm for AI capabilities**. Just as you install packages to
 
 ---
 
-### 💰 $10,000 Developer Grant Program
+### Contributors
 
-We're funding the initial supply of MCP Tools for the Context Marketplace. **Become a Data Broker.**
+List MCP tools on the permissionless Context marketplace and keep **90% of usage fees** in USDC.
 
-- **🛠️ Build:** Create an MCP Server using this SDK (Solana data, Trading tools, Scrapers, etc.)
-- **📦 List:** Publish it to the Context Registry
-- **💵 Earn:** Get a **$250–$1,000 Grant** + earn USDC every time an agent queries your tool
+- **Build:** Create an MCP server with this SDK
+- **List:** Register at [ctxprotocol.com/contribute](https://ctxprotocol.com/contribute)
+- **Earn:** Revenue share on every Query response and eligible Execute call
 
-👉 [**View Open Bounties & Apply Here**](https://docs.ctxprotocol.com/grants)
+Grant batches open periodically — see [Developer Grants](https://docs.ctxprotocol.com/grants) for current batch status and contributor guidance.
 
 ---
 
