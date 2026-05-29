@@ -1,8 +1,8 @@
 # @ctxprotocol/sdk
 
-**The Universal Adapter for AI Agents.**
+**Grounded context for your AI agents — on demand.**
 
-Connect your AI to the real world without managing API keys, hosting servers, or reading documentation.
+Give your agent the live facts it's missing. Context is a pay-per-response data marketplace: your agent discovers tools at runtime, buys the data its question needs, and drops it straight into its context window — no API keys, no servers, no per-source integration work.
 
 Context Protocol is **npm for AI capabilities**. Just as you install packages to add functionality to your code, use the Context SDK to give your Agent instant access to thousands of live data sources and actions—from DeFi and Gas Oracles to Weather and Search.
 
