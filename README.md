@@ -4,7 +4,7 @@
 
 Give your agent the live facts it's missing. Context is a pay-per-response data marketplace: your agent discovers tools at runtime, buys the data its question needs, and drops it straight into its context window — no API keys, no servers, no per-source integration work.
 
-Context Protocol is **npm for AI capabilities**. Just as you install packages to add functionality to your code, use the Context SDK to give your Agent instant access to premium data feeds and live tools — the market intelligence usually locked behind steep monthly or annual subscriptions — unbundled into pay-per-response, from crypto and on-chain analytics to gas oracles, weather, and search.
+Context Protocol is **npm for AI capabilities**. Just as you install packages to add functionality to your code, use the Context SDK to give your Agent instant access to premium data feeds and live tools: the market intelligence usually locked behind steep monthly or annual subscriptions, unbundled into pay-per-response, from crypto and on-chain analytics to gas oracles, weather, and search.
 
 [![npm version](https://img.shields.io/npm/v/@ctxprotocol/sdk.svg)](https://www.npmjs.com/package/@ctxprotocol/sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -26,7 +26,7 @@ Grant batches open periodically — see [Developer Grants](https://docs.ctxproto
 ## Why use Context?
 
 - **🔌 One Interface, Everything:** Stop integrating APIs one by one. Use a single SDK to access any tool in the marketplace.
-- **🧠 Zero-Ops:** We're the gateway to premium data feeds usually locked behind steep subscriptions. We host the connections — you just send the JSON and get the result.
+- **🧠 Zero-Ops:** We're the gateway to premium data feeds usually locked behind steep subscriptions. We host the connections; you just send the JSON and get the result.
 - **⚡️ Agentic Discovery:** Your Agent can search the marketplace at runtime to find tools it didn't know it needed.
 - **💸 Dual-Surface Economics:** Use Query for pay-per-response intelligence or Execute for session-budgeted method calls.
 

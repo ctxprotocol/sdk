@@ -107,6 +107,15 @@ export interface HyperliquidAccountSummary {
 export interface HyperliquidContext {
   /** The wallet address this context is for */
   walletAddress: string;
+  /**
+   * The active wallet address for querying/signing.
+   * When multiple EOAs are linked, this is the single externally-owned account
+   * actually connected to Hyperliquid (determined by activity detection on the
+   * client). Contributors should prefer this over `walletAddress` when issuing
+   * Hyperliquid API calls, since `walletAddress` may be comma-joined across
+   * multiple linked wallets.
+   */
+  activeWalletAddress?: string;
   /** Perpetual positions */
   perpPositions: HyperliquidPerpPosition[];
   /** Open orders */

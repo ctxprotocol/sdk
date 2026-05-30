@@ -4085,7 +4085,10 @@ async function handleAnalyzeMyPositions(
     );
   }
 
-  const { perpPositions, accountSummary, walletAddress } = portfolio;
+  const { perpPositions, accountSummary } = portfolio;
+  // Use a single valid address for the advisory vault lookup / output echo, never a
+  // comma-joined multi-wallet string (see resolveSingleAddress).
+  const walletAddress = resolveSingleAddress(args) ?? portfolio.walletAddress;
 
   // Check if user has vault equity (for advisory note)
   let vaultExposureNote: string | null = null;
@@ -4252,12 +4255,9 @@ async function handleAnalyzeMyPositions(
 // ============================================================================
 
 async function handleAnalyzeVaultExposure(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
-  // Get address from args or portfolio context
-  let address = args?.address as string | undefined;
-  if (!address) {
-    const portfolio = args?.portfolio as { walletAddress?: string } | undefined;
-    address = portfolio?.walletAddress;
-  }
+  // Resolve to a single valid master address (never a comma-joined multi-wallet
+  // string — see resolveSingleAddress).
+  const address = resolveSingleAddress(args);
   if (!address) return errorResult("address or portfolio.walletAddress is required");
 
   // Fetch vault equities for this user
@@ -4435,17 +4435,15 @@ async function handleAnalyzeVaultExposure(args: Record<string, unknown> | undefi
 }
 
 async function handleAnalyzeFullPortfolio(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
-  // Get address from args or portfolio context
-  let address = args?.address as string | undefined;
-  const portfolio = args?.portfolio as HyperliquidContext | undefined;
-  if (!address && portfolio) {
-    address = portfolio.walletAddress;
-  }
+  // Resolve to a single valid master address (prefers injected activeWalletAddress,
+  // never a comma-joined multi-wallet string — see resolveSingleAddress).
+  const address = resolveSingleAddress(args);
   if (!address) return errorResult("address or portfolio.walletAddress is required");
 
-  // Fetch all data sources in parallel
+  // Fetch all data sources in parallel. Every fetch is defended so a single failing
+  // source (e.g. a stray/empty address) can never reject the whole tool.
   const [userState, vaultEquities, subAccounts, spotBalances, spotData] = await Promise.all([
-    fetchClearinghouseState(address),
+    fetchClearinghouseState(address).catch(() => EMPTY_CLEARINGHOUSE_STATE),
     fetchUserVaultEquities(address).catch(() => []),
     fetchSubAccounts(address).catch(() => null),
     fetchSpotClearinghouseState(address).catch(() => ({ balances: [] })),
@@ -6467,6 +6465,37 @@ async function hyperliquidPost(body: object): Promise<unknown> {
 
   return response.json();
 }
+
+/**
+ * Resolve a single Hyperliquid master address from args or injected portfolio context.
+ *
+ * The Context app injects an `activeWalletAddress` (the EOA actually connected to
+ * Hyperliquid) and a `walletAddress` that may be comma-joined across multiple linked
+ * EOAs. The Hyperliquid API expects a single `user` address and 422s on a joined
+ * string, so we always reduce to one valid address: prefer an explicit arg, then the
+ * injected active wallet, then the first segment of walletAddress.
+ */
+function resolveSingleAddress(
+  args: Record<string, unknown> | undefined
+): string | undefined {
+  const explicit = typeof args?.address === "string" ? args.address : undefined;
+  const portfolio = args?.portfolio as
+    | { walletAddress?: string; activeWalletAddress?: string }
+    | undefined;
+  const raw =
+    explicit ?? portfolio?.activeWalletAddress ?? portfolio?.walletAddress ?? "";
+  const first = raw.split(",")[0]?.trim();
+  return first && first.length > 0 ? first : undefined;
+}
+
+const EMPTY_CLEARINGHOUSE_STATE: ClearinghouseStateResponse = {
+  assetPositions: [],
+  crossMaintenanceMarginUsed: "0",
+  crossMarginSummary: { accountValue: "0", totalMarginUsed: "0", totalNtlPos: "0", totalRawUsd: "0" },
+  marginSummary: { accountValue: "0", totalMarginUsed: "0", totalNtlPos: "0", totalRawUsd: "0" },
+  time: 0,
+  withdrawable: "0",
+};
 
 function fetchL2Book(coin: string, nSigFigs?: number): Promise<L2BookResponse> {
   const body: Record<string, unknown> = { type: "l2Book", coin };
