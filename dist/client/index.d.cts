@@ -1,5 +1,5 @@
-import { al as UpdateToolOptions, am as UpdateToolResult, T as Tool, J as SearchOptions, K as ExecuteOptions, U as ExecutionResult, L as ExecuteSessionStartOptions, P as ExecuteSessionResult, a2 as QueryOptions, a3 as QueryResult, af as QueryStreamEvent, D as ContextClientOptions } from '../types-I0RPWn_K.cjs';
-export { aF as ALLOWED_TOOL_CATEGORIES, B as ContextError, an as ContextErrorCode, W as ExecuteApiErrorResponse, X as ExecuteApiResponse, V as ExecuteApiSuccessResponse, Z as ExecuteSessionApiResponse, Y as ExecuteSessionApiSuccessResponse, O as ExecuteSessionSpend, N as ExecuteSessionStatus, M as McpTool, G as McpToolMeta, H as McpToolRateLimitHints, ae as QueryApiResponse, ad as QueryApiSuccessResponse, as as QueryAssumptionMetadata, $ as QueryAttemptForkReason, a0 as QueryAttemptReference, ar as QueryCapabilityMissPayload, aC as QueryChartAxis, ax as QueryChartAxisType, aA as QueryChartDataRow, az as QueryChartDataValue, aB as QueryChartSeries, aw as QueryChartSeriesType, aD as QueryChartSpec, av as QueryChartType, ay as QueryChartValueFormat, ap as QueryClarificationOption, ao as QueryClarificationPayload, aq as QueryClarificationPolicy, a7 as QueryCompletenessRepairEvent, au as QueryComputedArtifact, a6 as QueryCost, _ as QueryDeepMode, Q as QueryDeveloperTrace, a8 as QueryDeveloperTraceDiagnostics, ac as QueryDeveloperTraceLoopInfo, aa as QueryDeveloperTraceStep, a9 as QueryDeveloperTraceSummary, ab as QueryDeveloperTraceToolRef, a1 as QueryForkReference, at as QueryOutcomeType, a4 as QuerySessionState, ai as QueryStreamDeveloperTraceEvent, aj as QueryStreamDoneEvent, ak as QueryStreamErrorEvent, ah as QueryStreamTextDeltaEvent, ag as QueryStreamToolStatusEvent, a5 as QueryToolUsage, I as SearchResponse, E as SuggestedPrompt, F as SuggestedPromptSource, aE as ToolCategory } from '../types-I0RPWn_K.cjs';
+import { ak as UpdateToolOptions, al as UpdateToolResult, T as Tool, J as SearchOptions, K as ExecuteOptions, U as ExecutionResult, L as ExecuteSessionStartOptions, P as ExecuteSessionResult, a1 as QueryOptions, a2 as QueryResult, ae as QueryStreamEvent, D as ContextClientOptions } from '../types-jbYPIQxq.cjs';
+export { aB as ALLOWED_TOOL_CATEGORIES, B as ContextError, am as ContextErrorCode, W as ExecuteApiErrorResponse, X as ExecuteApiResponse, V as ExecuteApiSuccessResponse, Z as ExecuteSessionApiResponse, Y as ExecuteSessionApiSuccessResponse, O as ExecuteSessionSpend, N as ExecuteSessionStatus, M as McpTool, G as McpToolMeta, H as McpToolRateLimitHints, ad as QueryApiResponse, ac as QueryApiSuccessResponse, ao as QueryAssumptionMetadata, _ as QueryAttemptForkReason, $ as QueryAttemptReference, an as QueryCapabilityMissPayload, ay as QueryChartAxis, at as QueryChartAxisType, aw as QueryChartDataRow, av as QueryChartDataValue, ax as QueryChartSeries, as as QueryChartSeriesType, az as QueryChartSpec, ar as QueryChartType, au as QueryChartValueFormat, a6 as QueryCompletenessRepairEvent, aq as QueryComputedArtifact, a5 as QueryCost, Q as QueryDeveloperTrace, a7 as QueryDeveloperTraceDiagnostics, ab as QueryDeveloperTraceLoopInfo, a9 as QueryDeveloperTraceStep, a8 as QueryDeveloperTraceSummary, aa as QueryDeveloperTraceToolRef, a0 as QueryForkReference, ap as QueryOutcomeType, a3 as QuerySessionState, ah as QueryStreamDeveloperTraceEvent, ai as QueryStreamDoneEvent, aj as QueryStreamErrorEvent, ag as QueryStreamTextDeltaEvent, af as QueryStreamToolStatusEvent, a4 as QueryToolUsage, I as SearchResponse, E as SuggestedPrompt, F as SuggestedPromptSource, aA as ToolCategory } from '../types-jbYPIQxq.cjs';
 
 /**
  * Developer resource for managing tool listings on the Context Protocol marketplace.
@@ -125,7 +125,7 @@ declare class Tools {
  * Unlike `tools.execute()` which calls a single tool once (pay-per-request),
  * the Query resource sends a natural-language question and lets the server
  * handle the live librarian pipeline (`discover -> select -> metadata scout ->
- * clarify if needed -> iterative execute -> synthesize -> settle`) plus AI
+ * iterative execute -> synthesize -> settle`) plus AI
  * synthesis — all for one flat fee.
  *
  * This is the "prepared meal" vs "raw ingredients" distinction:
@@ -136,7 +136,6 @@ declare class Query {
     private client;
     constructor(client: ContextClient);
     private normalizeResult;
-    private buildPolicyErrorEvent;
     private buildSyntheticTraceFromRunResult;
     private buildSyntheticTraceFromStreamStatus;
     private mergeDeveloperTrace;
@@ -261,7 +260,7 @@ declare class ContextClient {
      *
      * Unlike `tools.execute()` which calls a single tool once, `query` sends
      * a natural-language question and lets the server handle discovery,
-     * metadata scout, clarification, iterative execution, and AI synthesis —
+     * metadata scout, iterative execution, and AI synthesis —
      * one flat fee.
      */
     readonly query: Query;

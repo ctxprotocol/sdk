@@ -302,9 +302,6 @@ var Query = class {
   }
   normalizeResult(result) {
     const candidate = result;
-    if (candidate.outcomeType === "clarification_required" && "clarification" in candidate && candidate.clarification) {
-      return candidate;
-    }
     if (candidate.outcomeType === "capability_miss" && "capabilityMiss" in candidate && candidate.capabilityMiss) {
       return candidate;
     }
@@ -312,34 +309,6 @@ var Query = class {
       ...candidate,
       outcomeType: "answer"
     };
-  }
-  buildPolicyErrorEvent(params) {
-    if (params.clarificationPolicy !== "error") {
-      return;
-    }
-    if (params.result.outcomeType === "clarification_required") {
-      return {
-        type: "error",
-        error: params.result.response,
-        code: "clarification_required",
-        reasonCode: "clarification_required",
-        outcomeType: "clarification_required",
-        clarification: params.result.clarification,
-        querySession: params.result.querySession
-      };
-    }
-    if (params.result.outcomeType === "capability_miss") {
-      return {
-        type: "error",
-        error: params.result.response,
-        code: "capability_miss",
-        reasonCode: "capability_miss",
-        outcomeType: "capability_miss",
-        capabilityMiss: params.result.capabilityMiss,
-        querySession: params.result.querySession
-      };
-    }
-    return void 0;
   }
   buildSyntheticTraceFromRunResult(params) {
     const timeline = params.toolsUsed.map((tool, index) => ({
@@ -554,7 +523,6 @@ var Query = class {
         tools: opts.tools,
         resumeFrom: opts.resumeFrom,
         forkFrom: opts.forkFrom,
-        clarificationPolicy: opts.clarificationPolicy,
         answerModelId: opts.answerModelId,
         responseShape: opts.responseShape,
         favoritesOnly: opts.favoritesOnly,
@@ -612,13 +580,6 @@ var Query = class {
           normalizedResult.developerTrace = mergedTrace;
         }
         event.result = normalizedResult;
-        const policyErrorEvent = this.buildPolicyErrorEvent({
-          result: normalizedResult,
-          clarificationPolicy: opts.clarificationPolicy
-        });
-        if (policyErrorEvent) {
-          return policyErrorEvent;
-        }
       }
       return event;
     };
@@ -689,7 +650,7 @@ var ContextClient = class {
    *
    * Unlike `tools.execute()` which calls a single tool once, `query` sends
    * a natural-language question and lets the server handle discovery,
-   * metadata scout, clarification, iterative execution, and AI synthesis —
+   * metadata scout, iterative execution, and AI synthesis —
    * one flat fee.
    */
   query;

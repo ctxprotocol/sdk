@@ -96,7 +96,7 @@ const result = await client.tools.execute({
 console.log(result.session); // methodPrice, spent, remaining, maxSpend, ...
 ```
 
-**Query mode** gives you a managed librarian contract — the server runs the live pipeline (`discover -> select -> metadata scout -> clarify if needed -> iterative execute -> synthesize -> settle`) with model-aware context budgeting and can return plain answers or structured evidence packages for one flat fee:
+**Query mode** gives you a managed librarian contract — the server runs the live pipeline (`discover -> select -> metadata scout -> iterative execute -> synthesize -> settle`) with model-aware context budgeting and can return plain answers or structured evidence packages for one flat fee:
 ```typescript
 const answer = await client.query.run({
   query: "What are the top whale movements on Base?",
@@ -417,7 +417,7 @@ const closed = await client.tools.closeSession("sess_123");
 
 #### `client.query.run(options)`
 
-Run an agentic query. The server applies the live librarian pipeline (`discover -> select -> metadata scout -> clarify if needed -> iterative execute -> synthesize -> settle`) with up to 100 MCP calls per response turn, then returns the selected Query response contract (`answer`, `answer_with_evidence`, or `evidence_only`).
+Run an agentic query. The server applies the live librarian pipeline (`discover -> select -> metadata scout -> iterative execute -> synthesize -> settle`) with up to 100 MCP calls per response turn, then returns the selected Query response contract (`answer`, `answer_with_evidence`, or `evidence_only`).
 
 The query runtime now exposes a single managed executor surface.
 The server decides internal budgets, ambiguity handling, and exploration policy

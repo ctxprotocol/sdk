@@ -61,7 +61,7 @@ export class ContextClient {
    *
    * Unlike `tools.execute()` which calls a single tool once, `query` sends
    * a natural-language question and lets the server handle discovery,
-   * metadata scout, clarification, iterative execution, and AI synthesis —
+   * metadata scout, iterative execution, and AI synthesis —
    * one flat fee.
    */
   public readonly query: Query;

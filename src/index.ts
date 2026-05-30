@@ -56,7 +56,6 @@ export type {
   ExecuteSessionApiSuccessResponse,
   ExecuteSessionApiResponse,
   // Query types (pay-per-response)
-  QueryDeepMode,
   QueryAttemptForkReason,
   QueryAttemptReference,
   QueryForkReference,

@@ -1,7 +1,4 @@
 import type {
-  QueryCapabilityMissPayload,
-  QueryClarificationPayload,
-  QueryClarificationPolicy,
   QueryOptions,
   QueryDeveloperTrace,
   QueryResult,
@@ -16,7 +13,7 @@ import type { ContextClient } from "../client.js";
  * Unlike `tools.execute()` which calls a single tool once (pay-per-request),
  * the Query resource sends a natural-language question and lets the server
  * handle the live librarian pipeline (`discover -> select -> metadata scout ->
- * clarify if needed -> iterative execute -> synthesize -> settle`) plus AI
+ * iterative execute -> synthesize -> settle`) plus AI
  * synthesis — all for one flat fee.
  *
  * This is the "prepared meal" vs "raw ingredients" distinction:
@@ -29,13 +26,6 @@ export class Query {
   private normalizeResult(result: QueryResult): QueryResult {
     const candidate = result as QueryResult & { outcomeType?: string };
     if (
-      candidate.outcomeType === "clarification_required" &&
-      "clarification" in candidate &&
-      candidate.clarification
-    ) {
-      return candidate;
-    }
-    if (
       candidate.outcomeType === "capability_miss" &&
       "capabilityMiss" in candidate &&
       candidate.capabilityMiss
@@ -46,52 +36,6 @@ export class Query {
       ...candidate,
       outcomeType: "answer",
     };
-  }
-
-  private buildPolicyErrorEvent(params: {
-    result: QueryResult;
-    clarificationPolicy?: QueryClarificationPolicy;
-  }):
-    | {
-        type: "error";
-        error: string;
-        code: string;
-        reasonCode: string;
-        outcomeType: "clarification_required" | "capability_miss";
-        clarification?: QueryClarificationPayload;
-        capabilityMiss?: QueryCapabilityMissPayload;
-        querySession?: QueryResult["querySession"];
-      }
-    | undefined {
-    if (params.clarificationPolicy !== "error") {
-      return;
-    }
-
-    if (params.result.outcomeType === "clarification_required") {
-      return {
-        type: "error",
-        error: params.result.response,
-        code: "clarification_required",
-        reasonCode: "clarification_required",
-        outcomeType: "clarification_required",
-        clarification: params.result.clarification,
-        querySession: params.result.querySession,
-      };
-    }
-
-    if (params.result.outcomeType === "capability_miss") {
-      return {
-        type: "error",
-        error: params.result.response,
-        code: "capability_miss",
-        reasonCode: "capability_miss",
-        outcomeType: "capability_miss",
-        capabilityMiss: params.result.capabilityMiss,
-        querySession: params.result.querySession,
-      };
-    }
-
-    return undefined;
   }
 
   private buildSyntheticTraceFromRunResult(params: {
@@ -351,7 +295,6 @@ export class Query {
         tools: opts.tools,
         resumeFrom: opts.resumeFrom,
         forkFrom: opts.forkFrom,
-        clarificationPolicy: opts.clarificationPolicy,
         answerModelId: opts.answerModelId,
         responseShape: opts.responseShape,
         favoritesOnly: opts.favoritesOnly,
@@ -423,14 +366,6 @@ export class Query {
           normalizedResult.developerTrace = mergedTrace;
         }
         event.result = normalizedResult;
-
-        const policyErrorEvent = this.buildPolicyErrorEvent({
-          result: normalizedResult,
-          clarificationPolicy: opts.clarificationPolicy,
-        });
-        if (policyErrorEvent) {
-          return policyErrorEvent;
-        }
       }
 
       return event;

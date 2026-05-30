@@ -526,9 +526,7 @@ interface ExecutionResult<T = unknown> {
     /** Execution duration in milliseconds */
     durationMs: number;
 }
-type QueryDeepMode = "deep" | "deep-light" | "deep-heavy";
-type QueryClarificationPolicy = "return" | "auto" | "error";
-type QueryOutcomeType = "answer" | "clarification_required" | "capability_miss";
+type QueryOutcomeType = "answer" | "capability_miss";
 type QueryResponseShape = "answer" | "answer_with_evidence" | "evidence_only";
 type QueryResponseEnvelopeViewType = "table" | "leaderboard" | "heatmap" | "timeseries";
 /**
@@ -554,20 +552,25 @@ interface QueryChartSeries {
     label?: string;
     type?: QueryChartSeriesType;
     errorKey?: string;
+    yAxis?: "left" | "right";
+    satisfies?: string;
 }
 /** Optional axis configuration for a structured chart spec. */
 interface QueryChartAxis {
     type?: QueryChartAxisType;
     label?: string;
     format?: QueryChartValueFormat;
+    valueScale?: "fraction" | "percent_points";
 }
 /** Structured chart spec describing layout for a chart artifact. */
 interface QueryChartSpec {
     type: QueryChartType;
     xKey: string;
     series: QueryChartSeries[];
+    expectedMeasures?: string[];
     xAxis?: QueryChartAxis;
     yAxis?: QueryChartAxis;
+    yAxisRight?: QueryChartAxis;
     legend?: boolean;
     stacked?: boolean;
     brush?: boolean;
@@ -597,38 +600,43 @@ interface QueryChartSpec {
  *
  * Charts are returned as a structured `{ spec, data }` pair so SDK consumers
  * can render them with any compatible charting library. The first-party web UI
- * renders these specs with Recharts. Metric tables are rendered as compact
- * key-value tables.
+ * renders these specs with Recharts.
  */
 type QueryComputedArtifact = {
     kind: "chart";
     spec: QueryChartSpec;
     data: QueryChartDataRow[];
     title?: string;
-} | {
-    kind: "metric_table";
-    title?: string;
-    rows: Array<{
-        metric: string;
-        value: string;
-    }>;
 };
-interface QueryClarificationOption {
-    id: string;
-    toolId: string;
+interface QueryToolCallFailureSample {
+    /** Display name of the contributor tool whose call failed. */
     toolName: string;
+    /** MCP method name that was invoked when the failure occurred. */
     methodName: string;
-    label: string;
-    description: string;
-    fitScore: number;
-    recommended: boolean;
+    /** Truncated failure reason captured from the runtime error. */
+    reason: string;
 }
-interface QueryClarificationPayload {
-    question: string;
-    options: QueryClarificationOption[];
-    allowFreeform: boolean;
-    recommendedOptionId: string;
-    originalQuery: string;
+interface QueryGroundingSummary {
+    /** Marketplace methods registered in the iterative runtime, excluding control tools. */
+    availableToolCount: number;
+    /** Capped sample of method names available to the model. */
+    availableMethodNamesSample: string[];
+    /** Methods selected by retrieval/tool selection before runtime filtering. */
+    selectedMethodCount: number;
+    /** Capped list of selected methods that did not survive runtime filtering. */
+    selectedButFilteredOut: string[];
+    /** Grounded marketplace tool calls actually executed (successes only). */
+    toolCallCount: number;
+    /** Total marketplace method invocations attempted by the model (success + failure). */
+    toolCallAttemptCount: number;
+    /** Marketplace method invocations that completed without throwing. */
+    toolCallSuccessCount: number;
+    /** Marketplace method invocations that threw an error before returning data. */
+    toolCallFailureCount: number;
+    /** Capped sample of recent failed marketplace method invocations with reasons. */
+    toolCallFailureSamples: QueryToolCallFailureSample[];
+    /** True when the answer was grounded in at least one marketplace tool call. */
+    grounded: boolean;
 }
 interface QueryCapabilityMissPayload {
     message: string;
@@ -642,85 +650,19 @@ interface QueryAssumptionMetadata {
     label: string;
     reason: string;
 }
-type QueryClarificationDecisionReasonCode = "rollout_disabled" | "no_grounded_candidates" | "single_grounded_interpretation" | "required_discriminator_ambiguity" | "contract_scope_ambiguity" | "cost_or_latency_ambiguity" | "semantic_scope_ambiguity" | "capability_miss";
-type QueryAttemptForkReason = "manual_fork" | "clarification_branch" | "bounded_rediscovery" | "resume_replay" | "patch_retry" | "unknown";
-interface QueryClarificationEvidenceSources {
-    usesMethodSchemas: boolean;
-    usesProbeArgs: boolean;
-    usesMethodMetadata: boolean;
-    usesToolSelectionContext: boolean;
-    usesLlmSelection: boolean;
-}
-interface QueryClarificationCandidateSummary {
-    optionId: string;
-    fitScore: number;
-    llmRelevanceScore: number | null;
-    requiredParams: string[];
-    unresolvedRequiredParams: string[];
-    probeArgKeys: string[];
-    inputFieldNames: string[];
-    outputKeys: string[];
-    latencyClass: string;
-    executePriceUsd: string | null;
-    queryEligible: boolean;
-}
-interface QueryClarificationDiagnostics {
-    orchestrationMode: string;
-    rolloutStage: string;
-    shadowMode: boolean;
-    policy: QueryClarificationPolicy;
-    outcomeType: QueryOutcomeType;
-    triggered: boolean;
-    optionCount: number;
-    candidateCount: number;
-    viableCandidateCount: number;
-    recommendedOptionId: string | null;
-    recommendedOptionReason: string | null;
-    autoResolved: boolean;
-    autoSelectEnabled: boolean;
-    assumptionMade: QueryAssumptionMetadata | null;
-    missingCapability: string | null;
-    decisionReasonCode: QueryClarificationDecisionReasonCode;
-    decisionSignals: string[];
-    evidenceSources: QueryClarificationEvidenceSources;
-    comparedOptionIds: string[];
-    decisionStrategy: "deterministic" | "llm_primary";
-    judgeAttempted: boolean;
-    judgeApplied: boolean;
-    judgeOutcomeType: QueryOutcomeType | null;
-    judgeConfidence: number | null;
-    judgeReason: string | null;
-    judgeError: string | null;
-    validatorReason: string | null;
-    fallbackReason: string | null;
-    copyStrategy: "deterministic" | "llm_rewritten";
-    rewriteAttempted: boolean;
-    rewriteApplied: boolean;
-    rewriteError: string | null;
-    candidateSummaries: QueryClarificationCandidateSummary[];
-}
+type QueryAttemptForkReason = "manual_fork" | "bounded_rediscovery" | "resume_replay" | "patch_retry" | "unknown";
 /**
  * Options for the agentic query endpoint (pay-per-response).
  *
  * Unlike `execute()` which calls a single tool once, `query()` sends a
  * natural-language question and lets the server handle the live librarian
- * pipeline (`discover -> select -> iterative execute (with in-loop
- * clarification if needed) -> synthesize -> settle`).
+ * pipeline (`discover -> select -> iterative execute -> synthesize ->
+ * settle`).
  * One flat fee covers up to 100 MCP skill calls per tool.
  */
 interface QueryOptions {
     /** The natural-language question to answer */
     query: string;
-    /**
-     * How the SDK should handle clarification-required situations:
-     * - `return`: surface a structured clarification result to the caller
-     * - `auto`: enable clarification auto-select and continue with the server's deterministic recommended option
-     * - `error`: turn structured clarification/capability outcomes into terminal errors
-     *
-     * Default behavior is surface-dependent: headless SDK and MCP callers default
-     * to `auto`, while first-party chat defaults to `return`.
-     */
-    clarificationPolicy?: QueryClarificationPolicy;
     /**
      * Optional tool IDs to use. When omitted the server discovers tools
      * automatically (Auto Mode). When provided, only these tools are used
@@ -753,17 +695,21 @@ interface QueryOptions {
      */
     answerModelId?: string;
     /**
-     * Structured response mode for query answers.
-     * - `answer`: backward-compatible natural-language answer
-     * - `answer_with_evidence`: prose answer plus a structured evidence package
-     * - `evidence_only`: structured evidence package with a machine-friendly summary
+     * Structured response mode for query answers. The runtime always produces a
+     * grounded result (raw data + computed artifacts + provenance); responseShape
+     * controls whether a prose synthesis layer is added on top.
+     * - `answer_with_evidence`: prose answer plus the structured grounding (chat parity)
+     * - `evidence_only`: structured grounding only, no prose — the agent-harness
+     *   shape. Returns raw `data` + `computedArtifacts` + `grounding`/`evidence`
+     *   by default so your own agent can reason over the result.
+     * - `answer`: legacy prose-only shape, kept for backward compatibility.
      */
     responseShape?: QueryResponseShape;
     /**
-     * Include execution data inline in the query response.
-     * Useful for headless agents that need raw structured outputs.
-     * Handshake completion remains a chat-only flow today; raw execution data
-     * is not a typed resume/callback contract for approvals.
+     * Include raw execution data inline in the query response.
+     * Defaults to true for responseShape `evidence_only` (its primary payload is
+     * the raw fetched data); false otherwise. Set explicitly to override — e.g.
+     * `false` on evidence_only to rely on `dataUrl`/`canonicalDataRef` instead.
      */
     includeData?: boolean;
     /**
@@ -774,7 +720,7 @@ interface QueryOptions {
     /**
      * Include machine-readable developer trace output for this query response.
      * When enabled, the server may return summary counters plus diagnostics
-     * for tool selection, clarification, and iterative execution behavior.
+     * for tool selection and iterative execution behavior.
      */
     includeDeveloperTrace?: boolean;
     /**
@@ -897,8 +843,9 @@ interface QueryDeveloperTraceDiagnostics {
         scoutEvidenceInjected: boolean;
         stepBudget: number;
         completedStepCount: number;
+        toolCallCount?: number;
+        toolRegistry?: Omit<QueryGroundingSummary, "toolCallCount" | "grounded">;
     };
-    clarification?: QueryClarificationDiagnostics;
     contributorSearches?: ContributorSearchTraceRecord[];
     [key: string]: unknown;
 }
@@ -1017,8 +964,8 @@ interface QueryForkReference extends QueryAttemptReference {
 }
 /**
  * Public continuation state returned by headless Query responses.
- * Internal selected-tool lineage and clarification snapshots remain durable
- * server state but are not exposed as chat-style payloads.
+ * Internal selected-tool lineage remains durable server state but is not
+ * exposed as chat-style payloads.
  */
 interface QuerySessionState {
     sessionId: string;
@@ -1053,9 +1000,9 @@ interface QueryResponseEnvelopeSourceRef {
     note: string | null;
 }
 type QueryResponseEnvelopeTone = "positive" | "negative" | "neutral" | "caution";
-type QueryControllerStopReason = "complete_answer" | "bounded_runtime_budget" | "bounded_same_endpoint_guardrail" | "bounded_upstream_abort_guardrail" | "clarification_required" | "capability_miss";
-type QueryControllerIssueClass = "scope_ambiguity" | "missing_evidence" | "missing_capability" | "stale_data" | "wrong_tool_path";
-type QueryControllerAction = "inspect_current_grounding" | "patch_current_program" | "bounded_rediscovery" | "clarify_scope" | "return_capability_miss" | "return_bounded_answer" | "return_complete_answer";
+type QueryControllerStopReason = "complete_answer" | "bounded_runtime_budget" | "bounded_same_endpoint_guardrail" | "bounded_upstream_abort_guardrail" | "capability_miss";
+type QueryControllerIssueClass = "missing_evidence" | "missing_capability" | "stale_data" | "wrong_tool_path";
+type QueryControllerAction = "inspect_current_grounding" | "patch_current_program" | "bounded_rediscovery" | "return_capability_miss" | "return_bounded_answer" | "return_complete_answer";
 interface QueryResponseEnvelopeMarketAggregateFlow {
     netFlowUsd: number | null;
     grossInflowUsd: number | null;
@@ -1188,12 +1135,19 @@ interface QueryBaseResult {
     cost: QueryCost;
     /** Total duration in milliseconds */
     durationMs: number;
-    /** Optional execution data from tools (when includeData=true) */
+    /**
+     * Raw execution data from tools — the actual MCP/tool outputs.
+     * Returned by default for responseShape `evidence_only` (the agent-harness
+     * shape, whose primary payload is the raw data). For other shapes it is
+     * returned only when `includeData` is true.
+     */
     data?: unknown;
     /** Optional blob URL for persisted execution data (when includeDataUrl=true) */
     dataUrl?: string;
     /** Optional derived artifacts emitted by code_interpreter in answer mode. */
     computedArtifacts?: QueryComputedArtifact[];
+    /** Public grounding summary for marketplace tool execution. */
+    grounding?: QueryGroundingSummary;
     /** Optional machine-readable Developer Mode trace payload */
     developerTrace?: QueryDeveloperTrace;
     /** Optional orchestration outcome metrics for benchmarking and rollout analysis */
@@ -1218,9 +1172,6 @@ interface QueryBaseResult {
 type QueryResult = (QueryBaseResult & Partial<QueryResponseEnvelope> & {
     outcomeType: "answer";
     assumptionMade?: QueryAssumptionMetadata;
-}) | (QueryBaseResult & {
-    outcomeType: "clarification_required";
-    clarification: QueryClarificationPayload;
 }) | (QueryBaseResult & {
     outcomeType: "capability_miss";
     capabilityMiss: QueryCapabilityMissPayload;
@@ -1267,7 +1218,6 @@ interface QueryStreamErrorEvent {
     scope?: string;
     reasonCode?: string;
     outcomeType?: Exclude<QueryOutcomeType, "answer">;
-    clarification?: QueryClarificationPayload;
     capabilityMiss?: QueryCapabilityMissPayload;
     querySession?: QuerySessionState;
 }
@@ -1289,4 +1239,4 @@ declare class ContextError extends Error {
     constructor(message: string, code?: (ContextErrorCode | string) | undefined, statusCode?: number | undefined, helpUrl?: string | undefined);
 }
 
-export { type QueryAttemptForkReason as $, type SearchCandidateProvenance as A, ContextError as B, type ContributorSearchResolution as C, type ContextClientOptions as D, type SuggestedPrompt as E, type SuggestedPromptSource as F, type McpToolMeta as G, type McpToolRateLimitHints as H, type SearchResponse as I, type SearchOptions as J, type ExecuteOptions as K, type ExecuteSessionStartOptions as L, type McpTool as M, type ExecuteSessionStatus as N, type ExecuteSessionSpend as O, type ExecuteSessionResult as P, type QueryDeveloperTrace as Q, type ResolveContributorSearchParams as R, type SearchCandidate as S, type Tool as T, type ExecutionResult as U, type ExecuteApiSuccessResponse as V, type ExecuteApiErrorResponse as W, type ExecuteApiResponse as X, type ExecuteSessionApiSuccessResponse as Y, type ExecuteSessionApiResponse as Z, type QueryDeepMode as _, type ContributorSearchMetadata as a, type QueryAttemptReference as a0, type QueryForkReference as a1, type QueryOptions as a2, type QueryResult as a3, type QuerySessionState as a4, type QueryToolUsage as a5, type QueryCost as a6, type QueryCompletenessRepairEvent as a7, type QueryDeveloperTraceDiagnostics as a8, type QueryDeveloperTraceSummary as a9, type QueryChartDataRow as aA, type QueryChartSeries as aB, type QueryChartAxis as aC, type QueryChartSpec as aD, type ToolCategory as aE, ALLOWED_TOOL_CATEGORIES as aF, type QueryDeveloperTraceStep as aa, type QueryDeveloperTraceToolRef as ab, type QueryDeveloperTraceLoopInfo as ac, type QueryApiSuccessResponse as ad, type QueryApiResponse as ae, type QueryStreamEvent as af, type QueryStreamToolStatusEvent as ag, type QueryStreamTextDeltaEvent as ah, type QueryStreamDeveloperTraceEvent as ai, type QueryStreamDoneEvent as aj, type QueryStreamErrorEvent as ak, type UpdateToolOptions as al, type UpdateToolResult as am, type ContextErrorCode as an, type QueryClarificationPayload as ao, type QueryClarificationOption as ap, type QueryClarificationPolicy as aq, type QueryCapabilityMissPayload as ar, type QueryAssumptionMetadata as as, type QueryOutcomeType as at, type QueryComputedArtifact as au, type QueryChartType as av, type QueryChartSeriesType as aw, type QueryChartAxisType as ax, type QueryChartValueFormat as ay, type QueryChartDataValue as az, type SearchShortlist as b, type SearchIntent as c, type ContributorSearchConfig as d, type ContributorSearchResolvedConfig as e, type ContributorSearchTraceRecord as f, type ContributorSearchValidationCaseKind as g, type ContributorSearchValidationExpectation as h, type ContributorSearchValidationArtifact as i, ContributorSearchBudgetExceededError as j, CONTRIBUTOR_SEARCH_METADATA_VERSION as k, CONTRIBUTOR_SEARCH_VALIDATION_VERSION as l, type ContributorSearchConfidence as m, type ContributorSearchDegradedOutcome as n, type ContributorSearchDegradedOutcomePolicy as o, type ContributorSearchDegradedReasonCode as p, type ContributorSearchJudge as q, type ContributorSearchJudgeContext as r, type ContributorSearchJudgeInput as s, type ContributorSearchJudgeResult as t, type ContributorSearchJudgeSnapshot as u, type ContributorSearchJudgeUsage as v, type ContributorSearchMetadataSource as w, type ContributorSearchOutcome as x, type ContributorSearchTraceSummary as y, type ContributorSearchValidatorStatus as z };
+export { type QueryAttemptReference as $, type SearchCandidateProvenance as A, ContextError as B, type ContributorSearchResolution as C, type ContextClientOptions as D, type SuggestedPrompt as E, type SuggestedPromptSource as F, type McpToolMeta as G, type McpToolRateLimitHints as H, type SearchResponse as I, type SearchOptions as J, type ExecuteOptions as K, type ExecuteSessionStartOptions as L, type McpTool as M, type ExecuteSessionStatus as N, type ExecuteSessionSpend as O, type ExecuteSessionResult as P, type QueryDeveloperTrace as Q, type ResolveContributorSearchParams as R, type SearchCandidate as S, type Tool as T, type ExecutionResult as U, type ExecuteApiSuccessResponse as V, type ExecuteApiErrorResponse as W, type ExecuteApiResponse as X, type ExecuteSessionApiSuccessResponse as Y, type ExecuteSessionApiResponse as Z, type QueryAttemptForkReason as _, type ContributorSearchMetadata as a, type QueryForkReference as a0, type QueryOptions as a1, type QueryResult as a2, type QuerySessionState as a3, type QueryToolUsage as a4, type QueryCost as a5, type QueryCompletenessRepairEvent as a6, type QueryDeveloperTraceDiagnostics as a7, type QueryDeveloperTraceSummary as a8, type QueryDeveloperTraceStep as a9, type ToolCategory as aA, ALLOWED_TOOL_CATEGORIES as aB, type QueryDeveloperTraceToolRef as aa, type QueryDeveloperTraceLoopInfo as ab, type QueryApiSuccessResponse as ac, type QueryApiResponse as ad, type QueryStreamEvent as ae, type QueryStreamToolStatusEvent as af, type QueryStreamTextDeltaEvent as ag, type QueryStreamDeveloperTraceEvent as ah, type QueryStreamDoneEvent as ai, type QueryStreamErrorEvent as aj, type UpdateToolOptions as ak, type UpdateToolResult as al, type ContextErrorCode as am, type QueryCapabilityMissPayload as an, type QueryAssumptionMetadata as ao, type QueryOutcomeType as ap, type QueryComputedArtifact as aq, type QueryChartType as ar, type QueryChartSeriesType as as, type QueryChartAxisType as at, type QueryChartValueFormat as au, type QueryChartDataValue as av, type QueryChartDataRow as aw, type QueryChartSeries as ax, type QueryChartAxis as ay, type QueryChartSpec as az, type SearchShortlist as b, type SearchIntent as c, type ContributorSearchConfig as d, type ContributorSearchResolvedConfig as e, type ContributorSearchTraceRecord as f, type ContributorSearchValidationCaseKind as g, type ContributorSearchValidationExpectation as h, type ContributorSearchValidationArtifact as i, ContributorSearchBudgetExceededError as j, CONTRIBUTOR_SEARCH_METADATA_VERSION as k, CONTRIBUTOR_SEARCH_VALIDATION_VERSION as l, type ContributorSearchConfidence as m, type ContributorSearchDegradedOutcome as n, type ContributorSearchDegradedOutcomePolicy as o, type ContributorSearchDegradedReasonCode as p, type ContributorSearchJudge as q, type ContributorSearchJudgeContext as r, type ContributorSearchJudgeInput as s, type ContributorSearchJudgeResult as t, type ContributorSearchJudgeSnapshot as u, type ContributorSearchJudgeUsage as v, type ContributorSearchMetadataSource as w, type ContributorSearchOutcome as x, type ContributorSearchTraceSummary as y, type ContributorSearchValidatorStatus as z };

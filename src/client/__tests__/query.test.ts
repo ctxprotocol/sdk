@@ -7,7 +7,6 @@ import { ContextError } from "../types.js";
 import type {
   QueryResult,
   QueryStreamDeveloperTraceEvent,
-  QueryStreamErrorEvent,
   QueryStreamToolStatusEvent,
   QueryStreamTextDeltaEvent,
   QueryStreamDoneEvent,
@@ -16,7 +15,6 @@ import type {
 type SharedQueryFixture = {
   groundedAnswer: Record<string, unknown>;
   capabilityMiss: Record<string, unknown>;
-  clarificationRequired: Record<string, unknown>;
   ungroundedCapabilityMiss: Record<string, unknown>;
 };
 
@@ -260,50 +258,6 @@ const MOCK_DEVELOPER_TRACE = {
         },
         ],
     },
-    clarification: {
-      orchestrationMode: "query",
-      rolloutStage: "candidate",
-      shadowMode: false,
-      policy: "return",
-      outcomeType: "clarification_required",
-      triggered: true,
-      optionCount: 2,
-      candidateCount: 3,
-      viableCandidateCount: 2,
-      recommendedOptionId: "tool-1:analyze_event_outcome_liquidity",
-      recommendedOptionReason: "Event-level interpretation stays broadest.",
-      autoResolved: false,
-      autoSelectEnabled: false,
-      assumptionMade: null,
-      missingCapability: null,
-      decisionReasonCode: "semantic_scope_ambiguity",
-      decisionSignals: ["multi_outcome_market_scope"],
-      evidenceSources: {
-        usesMethodSchemas: true,
-        usesProbeArgs: true,
-        usesMethodMetadata: true,
-        usesToolSelectionContext: true,
-        usesLlmSelection: true,
-      },
-      comparedOptionIds: [
-        "tool-1:analyze_event_outcome_liquidity",
-        "tool-1:analyze_market_liquidity",
-      ],
-      decisionStrategy: "llm_primary",
-      judgeAttempted: true,
-      judgeApplied: true,
-      judgeOutcomeType: "clarification_required",
-      judgeConfidence: 0.84,
-      judgeReason: "Need the user to choose event-wide or single-outcome scope.",
-      judgeError: null,
-      validatorReason: null,
-      fallbackReason: null,
-      copyStrategy: "deterministic",
-      rewriteAttempted: false,
-      rewriteApplied: false,
-      rewriteError: null,
-      candidateSummaries: [],
-    },
     verification: {
       evaluations: [
         {
@@ -414,74 +368,6 @@ const MOCK_SSE_TRACE_EVENTS = [
   })}`,
   "data: [DONE]",
 ];
-
-const MOCK_CLARIFICATION_RESULT = {
-  response:
-    "I found multiple plausible ways to interpret this request. Which direction should I take?",
-  toolsUsed: [],
-  cost: {
-    totalCostUsd: "0.000000",
-    toolCostUsd: "0.000000",
-    modelCostUsd: "0.000000",
-  },
-  durationMs: 1100,
-  outcomeType: "clarification_required" as const,
-  querySession: {
-    sessionId: "33333333-3333-4333-8333-333333333333",
-    attemptId: "44444444-4444-4444-8444-444444444444",
-    parentAttemptId: null,
-    rootAttemptId: "44444444-4444-4444-8444-444444444444",
-    mode: "initial" as const,
-    origin: "initial_request" as const,
-    status: "active" as const,
-    checkpoint: {
-      currentStage: "clarification",
-      latestCheckpointArtifactId: "artifact-clarification",
-      canonicalDatasetId: null,
-      executionProgramCurrentRevisionId: null,
-    },
-  },
-  clarification: {
-    question: "Which direction should I take?",
-    options: [
-      {
-        id: "tool-1:analyze_event_outcome_liquidity",
-        toolId: "tool-1",
-        toolName: "Polymarket",
-        methodName: "analyze_event_outcome_liquidity",
-        label: "Compare event-level liquidity",
-        description: "Polymarket -> analyze_event_outcome_liquidity",
-        fitScore: 9,
-        recommended: true,
-      },
-      {
-        id: "tool-1:analyze_market_liquidity",
-        toolId: "tool-1",
-        toolName: "Polymarket",
-        methodName: "analyze_market_liquidity",
-        label: "Analyze one specific outcome",
-        description: "Polymarket -> analyze_market_liquidity",
-        fitScore: 5,
-        recommended: false,
-      },
-    ],
-    allowFreeform: true,
-    recommendedOptionId: "tool-1:analyze_event_outcome_liquidity",
-    originalQuery: "Analyze liquidity for the World Cup winner market",
-  },
-};
-
-const MOCK_AUTO_SELECTED_RESULT = {
-  ...MOCK_SUCCESS_RESPONSE,
-  outcomeType: "answer" as const,
-  assumptionMade: {
-    mode: "auto" as const,
-    optionId: "tool-1:analyze_event_outcome_liquidity",
-    label: "Compare event-level liquidity",
-    reason:
-      "Recommended because Polymarket.analyze_event_outcome_liquidity ranked highest after comparing probe fit, method contract details, and grounded query eligibility.",
-  },
-};
 
 const MOCK_CAPABILITY_MISS_RESULT = {
   response:
@@ -622,19 +508,6 @@ describe("Query Resource", () => {
       expect(result.developerTrace?.summary?.retryCount).toBe(2);
     });
 
-    it("forwards clarificationPolicy for run()", async () => {
-      const mockFn = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
-      globalThis.fetch = mockFn;
-
-      await client.query.run({
-        query: "Analyze whale activity",
-        clarificationPolicy: "auto",
-      });
-
-      const body = JSON.parse(mockFn.mock.calls[0][1].body);
-      expect(body.clarificationPolicy).toBe("auto");
-    });
-
     it("forwards resumeFrom for run()", async () => {
       const mockFn = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
       globalThis.fetch = mockFn;
@@ -682,9 +555,6 @@ describe("Query Resource", () => {
         result.developerTrace?.diagnostics?.verification?.repairEvents?.[1]
           ?.outcome
       ).toBe("patched");
-      expect(
-        result.developerTrace?.diagnostics?.clarification?.decisionStrategy
-      ).toBe("llm_primary");
     });
 
     it("includes orchestrationMetrics in run() result when present", async () => {
@@ -983,7 +853,6 @@ describe("Query Resource", () => {
 
       const result = await client.query.run({
         query: "Compare BTC and ETH returns.",
-        clarificationPolicy: "return",
       });
 
       expect(result.outcomeType).toBe("capability_miss");
@@ -996,30 +865,12 @@ describe("Query Resource", () => {
       }
     });
 
-    it("returns structured clarification results by default", async () => {
-      globalThis.fetch = mockFetchRunResult(MOCK_CLARIFICATION_RESULT);
-
-      const result = await client.query.run({
-        query: "Analyze liquidity for the World Cup winner market",
-        clarificationPolicy: "return",
-      });
-
-      expect(result.outcomeType).toBe("clarification_required");
-      if (result.outcomeType === "clarification_required") {
-        expect(result.clarification.options).toHaveLength(2);
-        expect(result.clarification.recommendedOptionId).toBe(
-          "tool-1:analyze_event_outcome_liquidity",
-        );
-      }
-    });
-
     it("returns structured capability misses by default", async () => {
       globalThis.fetch = mockFetchRunResult(MOCK_CAPABILITY_MISS_RESULT);
 
       const result = await client.query.run({
         query:
           "Using only Polymarket data, give me live order-book imbalance for BTC perpetuals on Bybit.",
-        clarificationPolicy: "return",
       });
 
       expect(result.outcomeType).toBe("capability_miss");
@@ -1029,46 +880,6 @@ describe("Query Resource", () => {
         ]);
         expect(result.capabilityMiss.suggestedRewrites).toHaveLength(3);
       }
-    });
-
-    it("preserves server-side clarification auto-select assumptions", async () => {
-      globalThis.fetch = mockFetchRunResult(MOCK_AUTO_SELECTED_RESULT);
-
-      const result = await client.query.run({
-        query: "Analyze liquidity for the World Cup winner market",
-        clarificationPolicy: "auto",
-      });
-
-      expect(result.outcomeType).toBe("answer");
-      if (result.outcomeType === "answer") {
-        expect(result.assumptionMade?.mode).toBe("auto");
-        expect(result.assumptionMade?.optionId).toBe(
-          "tool-1:analyze_event_outcome_liquidity",
-        );
-      }
-    });
-
-    it("throws when clarificationPolicy is error and clarification is returned", async () => {
-      globalThis.fetch = mockFetchRunResult(MOCK_CLARIFICATION_RESULT);
-
-      await expect(
-        client.query.run({
-          query: "Analyze liquidity for the World Cup winner market",
-          clarificationPolicy: "error",
-        }),
-      ).rejects.toThrow(ContextError);
-    });
-
-    it("throws when clarificationPolicy is error and capability miss is returned", async () => {
-      globalThis.fetch = mockFetchRunResult(MOCK_CAPABILITY_MISS_RESULT);
-
-      await expect(
-        client.query.run({
-          query:
-            "Using only Polymarket data, give me live order-book imbalance for BTC perpetuals on Bybit.",
-          clarificationPolicy: "error",
-        }),
-      ).rejects.toThrow(ContextError);
     });
 
     it("throws ContextError on insufficient_allowance", async () => {
@@ -1272,25 +1083,6 @@ describe("Query Resource", () => {
       expect(body.includeDeveloperTrace).toBe(true);
     });
 
-    it("forwards clarificationPolicy for stream()", async () => {
-      globalThis.fetch = mockFetchSSE([
-        buildDoneEvent(MOCK_SUCCESS_RESPONSE),
-        "data: [DONE]",
-      ]);
-
-      for await (const _event of client.query.stream({
-        query: "test",
-        clarificationPolicy: "auto",
-      })) {
-        // consume
-      }
-
-      const body = JSON.parse(
-        (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
-      );
-      expect(body.clarificationPolicy).toBe("auto");
-    });
-
     it("forwards forkFrom for stream()", async () => {
       globalThis.fetch = mockFetchSSE([
         buildDoneEvent(MOCK_SUCCESS_RESPONSE),
@@ -1318,27 +1110,6 @@ describe("Query Resource", () => {
       });
     });
 
-    it("yields structured clarification done events by default", async () => {
-      globalThis.fetch = mockFetchSSE([
-        buildDoneEvent(MOCK_CLARIFICATION_RESULT),
-        "data: [DONE]",
-      ]);
-
-      const events = [];
-      for await (const event of client.query.stream({
-        query: "test",
-        clarificationPolicy: "return",
-      })) {
-        events.push(event);
-      }
-
-      const doneEvent = events.find((event) => event.type === "done") as
-        | QueryStreamDoneEvent
-        | undefined;
-      expect(doneEvent).toBeDefined();
-      expect(doneEvent?.result.outcomeType).toBe("clarification_required");
-    });
-
     it("yields structured capability miss done events by default", async () => {
       globalThis.fetch = mockFetchSSE([
         buildDoneEvent(MOCK_CAPABILITY_MISS_RESULT),
@@ -1349,7 +1120,6 @@ describe("Query Resource", () => {
       for await (const event of client.query.stream({
         query:
           "Using only Polymarket data, give me live order-book imbalance for BTC perpetuals on Bybit.",
-        clarificationPolicy: "return",
       })) {
         events.push(event);
       }
@@ -1362,59 +1132,6 @@ describe("Query Resource", () => {
       if (doneEvent?.result.outcomeType === "capability_miss") {
         expect(doneEvent.result.capabilityMiss.suggestedRewrites).toHaveLength(3);
       }
-    });
-
-    it("turns structured clarification outcomes into error events when policy is error", async () => {
-      globalThis.fetch = mockFetchSSE([
-        buildDoneEvent(MOCK_CLARIFICATION_RESULT),
-        "data: [DONE]",
-      ]);
-
-      const events = [];
-      for await (const event of client.query.stream({
-        query: "test",
-        clarificationPolicy: "error",
-      })) {
-        events.push(event);
-      }
-
-      const errorEvent = events.find((event) => event.type === "error") as
-        | QueryStreamErrorEvent
-        | undefined;
-      expect(errorEvent).toBeDefined();
-      expect(errorEvent?.outcomeType).toBe("clarification_required");
-      expect(errorEvent?.clarification?.recommendedOptionId).toBe(
-        "tool-1:analyze_event_outcome_liquidity",
-      );
-      expect(errorEvent?.querySession).toEqual(MOCK_CLARIFICATION_RESULT.querySession);
-      expect(events.some((event) => event.type === "done")).toBe(false);
-    });
-
-    it("turns structured capability miss outcomes into error events when policy is error", async () => {
-      globalThis.fetch = mockFetchSSE([
-        buildDoneEvent(MOCK_CAPABILITY_MISS_RESULT),
-        "data: [DONE]",
-      ]);
-
-      const events = [];
-      for await (const event of client.query.stream({
-        query:
-          "Using only Polymarket data, give me live order-book imbalance for BTC perpetuals on Bybit.",
-        clarificationPolicy: "error",
-      })) {
-        events.push(event);
-      }
-
-      const errorEvent = events.find((event) => event.type === "error") as
-        | QueryStreamErrorEvent
-        | undefined;
-      expect(errorEvent).toBeDefined();
-      expect(errorEvent?.outcomeType).toBe("capability_miss");
-      expect(errorEvent?.capabilityMiss?.missingCapabilities).toEqual([
-        "Need venue coverage that no selected tool exposes.",
-      ]);
-      expect(errorEvent?.querySession).toEqual(MOCK_CAPABILITY_MISS_RESULT.querySession);
-      expect(events.some((event) => event.type === "done")).toBe(false);
     });
 
     it("handles developer-trace stream events and aggregates final trace", async () => {

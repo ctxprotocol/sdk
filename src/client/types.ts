@@ -470,14 +470,12 @@ export interface ExecutionResult<T = unknown> {
 // Query types (pay-per-response / agentic mode)
 // ---------------------------------------------------------------------------
 
-/** Supported orchestration depth modes for query execution. */
+/**
+ * Supported external orchestration depth hints for query execution.
+ * The server decides the effective depth from the query; this is a soft hint.
+ */
 export type QueryDepth = "fast" | "auto" | "deep";
-export type QueryDeepMode = "deep" | "deep-light" | "deep-heavy";
-export type QueryClarificationPolicy = "return" | "auto" | "error";
-export type QueryOutcomeType =
-  | "answer"
-  | "clarification_required"
-  | "capability_miss";
+export type QueryOutcomeType = "answer" | "capability_miss";
 export type QueryResponseShape =
   | "answer"
   | "answer_with_evidence"
@@ -632,25 +630,6 @@ export interface QueryGroundingSummary {
   grounded: boolean;
 }
 
-export interface QueryClarificationOption {
-  id: string;
-  toolId: string;
-  toolName: string;
-  methodName: string;
-  label: string;
-  description: string;
-  fitScore: number;
-  recommended: boolean;
-}
-
-export interface QueryClarificationPayload {
-  question: string;
-  options: QueryClarificationOption[];
-  allowFreeform: boolean;
-  recommendedOptionId: string;
-  originalQuery: string;
-}
-
 export interface QueryCapabilityMissPayload {
   message: string;
   missingCapabilities: string[];
@@ -665,105 +644,25 @@ export interface QueryAssumptionMetadata {
   reason: string;
 }
 
-export type QueryClarificationDecisionReasonCode =
-  | "rollout_disabled"
-  | "no_grounded_candidates"
-  | "single_grounded_interpretation"
-  | "required_discriminator_ambiguity"
-  | "contract_scope_ambiguity"
-  | "cost_or_latency_ambiguity"
-  | "semantic_scope_ambiguity"
-  | "capability_miss";
-
 export type QueryAttemptForkReason =
   | "manual_fork"
-  | "clarification_branch"
   | "bounded_rediscovery"
   | "resume_replay"
   | "patch_retry"
   | "unknown";
-
-export interface QueryClarificationEvidenceSources {
-  usesMethodSchemas: boolean;
-  usesProbeArgs: boolean;
-  usesMethodMetadata: boolean;
-  usesToolSelectionContext: boolean;
-  usesLlmSelection: boolean;
-}
-
-export interface QueryClarificationCandidateSummary {
-  optionId: string;
-  fitScore: number;
-  llmRelevanceScore: number | null;
-  requiredParams: string[];
-  unresolvedRequiredParams: string[];
-  probeArgKeys: string[];
-  inputFieldNames: string[];
-  outputKeys: string[];
-  latencyClass: string;
-  executePriceUsd: string | null;
-  queryEligible: boolean;
-}
-
-export interface QueryClarificationDiagnostics {
-  orchestrationMode: string;
-  rolloutStage: string;
-  shadowMode: boolean;
-  policy: QueryClarificationPolicy;
-  outcomeType: QueryOutcomeType;
-  triggered: boolean;
-  optionCount: number;
-  candidateCount: number;
-  viableCandidateCount: number;
-  recommendedOptionId: string | null;
-  recommendedOptionReason: string | null;
-  autoResolved: boolean;
-  autoSelectEnabled: boolean;
-  assumptionMade: QueryAssumptionMetadata | null;
-  missingCapability: string | null;
-  decisionReasonCode: QueryClarificationDecisionReasonCode;
-  decisionSignals: string[];
-  evidenceSources: QueryClarificationEvidenceSources;
-  comparedOptionIds: string[];
-  decisionStrategy: "deterministic" | "llm_primary";
-  judgeAttempted: boolean;
-  judgeApplied: boolean;
-  judgeOutcomeType: QueryOutcomeType | null;
-  judgeConfidence: number | null;
-  judgeReason: string | null;
-  judgeError: string | null;
-  validatorReason: string | null;
-  fallbackReason: string | null;
-  copyStrategy: "deterministic" | "llm_rewritten";
-  rewriteAttempted: boolean;
-  rewriteApplied: boolean;
-  rewriteError: string | null;
-  candidateSummaries: QueryClarificationCandidateSummary[];
-}
 
 /**
  * Options for the agentic query endpoint (pay-per-response).
  *
  * Unlike `execute()` which calls a single tool once, `query()` sends a
  * natural-language question and lets the server handle the live librarian
- * pipeline (`discover -> select -> iterative execute (with in-loop
- * clarification if needed) -> synthesize -> settle`).
+ * pipeline (`discover -> select -> iterative execute -> synthesize ->
+ * settle`).
  * One flat fee covers up to 100 MCP skill calls per tool.
  */
 export interface QueryOptions {
   /** The natural-language question to answer */
   query: string;
-
-  /**
-   * How the SDK should handle clarification-required situations:
-   * - `return`: surface a structured clarification result to the caller
-   * - `auto`: enable clarification auto-select and continue with the server's deterministic recommended option
-   * - `error`: turn structured clarification/capability outcomes into terminal errors
-   *
-   * Default behavior is surface-dependent: headless SDK and MCP callers default
-   * to `auto`, while first-party chat defaults to `return`.
-   */
-  clarificationPolicy?: QueryClarificationPolicy;
 
   /**
    * Optional tool IDs to use. When omitted the server discovers tools
@@ -802,18 +701,22 @@ export interface QueryOptions {
   answerModelId?: string;
 
   /**
-   * Structured response mode for query answers.
-   * - `answer`: backward-compatible natural-language answer
-   * - `answer_with_evidence`: prose answer plus a structured evidence package
-   * - `evidence_only`: structured evidence package with a machine-friendly summary
+   * Structured response mode for query answers. The runtime always produces a
+   * grounded result (raw data + computed artifacts + provenance); responseShape
+   * controls whether a prose synthesis layer is added on top.
+   * - `answer_with_evidence`: prose answer plus the structured grounding (chat parity)
+   * - `evidence_only`: structured grounding only, no prose — the agent-harness
+   *   shape. Returns raw `data` + `computedArtifacts` + `grounding`/`evidence`
+   *   by default so your own agent can reason over the result.
+   * - `answer`: legacy prose-only shape, kept for backward compatibility.
    */
   responseShape?: QueryResponseShape;
 
   /**
-   * Include execution data inline in the query response.
-   * Useful for headless agents that need raw structured outputs.
-   * Handshake completion remains a chat-only flow today; raw execution data
-   * is not a typed resume/callback contract for approvals.
+   * Include raw execution data inline in the query response.
+   * Defaults to true for responseShape `evidence_only` (its primary payload is
+   * the raw fetched data); false otherwise. Set explicitly to override — e.g.
+   * `false` on evidence_only to rely on `dataUrl`/`canonicalDataRef` instead.
    */
   includeData?: boolean;
 
@@ -826,7 +729,7 @@ export interface QueryOptions {
   /**
    * Include machine-readable developer trace output for this query response.
    * When enabled, the server may return summary counters plus diagnostics
-   * for tool selection, clarification, and iterative execution behavior.
+   * for tool selection and iterative execution behavior.
    */
   includeDeveloperTrace?: boolean;
 
@@ -991,7 +894,6 @@ export interface QueryDeveloperTraceDiagnostics {
     toolCallCount?: number;
     toolRegistry?: Omit<QueryGroundingSummary, "toolCallCount" | "grounded">;
   };
-  clarification?: QueryClarificationDiagnostics;
   contributorSearches?: ContributorSearchTraceRecord[];
   [key: string]: unknown;
 }
@@ -1125,8 +1027,8 @@ export interface QueryForkReference extends QueryAttemptReference {
 
 /**
  * Public continuation state returned by headless Query responses.
- * Internal selected-tool lineage and clarification snapshots remain durable
- * server state but are not exposed as chat-style payloads.
+ * Internal selected-tool lineage remains durable server state but is not
+ * exposed as chat-style payloads.
  */
 export interface QuerySessionState {
   sessionId: string;
@@ -1174,11 +1076,9 @@ export type QueryControllerStopReason =
   | "bounded_runtime_budget"
   | "bounded_same_endpoint_guardrail"
   | "bounded_upstream_abort_guardrail"
-  | "clarification_required"
   | "capability_miss";
 
 export type QueryControllerIssueClass =
-  | "scope_ambiguity"
   | "missing_evidence"
   | "missing_capability"
   | "stale_data"
@@ -1188,7 +1088,6 @@ export type QueryControllerAction =
   | "inspect_current_grounding"
   | "patch_current_program"
   | "bounded_rediscovery"
-  | "clarify_scope"
   | "return_capability_miss"
   | "return_bounded_answer"
   | "return_complete_answer";
@@ -1337,7 +1236,12 @@ export interface QueryBaseResult {
   /** Total duration in milliseconds */
   durationMs: number;
 
-  /** Optional execution data from tools (when includeData=true) */
+  /**
+   * Raw execution data from tools — the actual MCP/tool outputs.
+   * Returned by default for responseShape `evidence_only` (the agent-harness
+   * shape, whose primary payload is the raw data). For other shapes it is
+   * returned only when `includeData` is true.
+   */
   data?: unknown;
 
   /** Optional blob URL for persisted execution data (when includeDataUrl=true) */
@@ -1382,10 +1286,6 @@ export type QueryResult =
       Partial<QueryResponseEnvelope> & {
       outcomeType: "answer";
       assumptionMade?: QueryAssumptionMetadata;
-    })
-  | (QueryBaseResult & {
-      outcomeType: "clarification_required";
-      clarification: QueryClarificationPayload;
     })
   | (QueryBaseResult & {
       outcomeType: "capability_miss";
@@ -1439,7 +1339,6 @@ export interface QueryStreamErrorEvent {
   scope?: string;
   reasonCode?: string;
   outcomeType?: Exclude<QueryOutcomeType, "answer">;
-  clarification?: QueryClarificationPayload;
   capabilityMiss?: QueryCapabilityMissPayload;
   querySession?: QuerySessionState;
 }
