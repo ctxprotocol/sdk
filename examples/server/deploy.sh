@@ -27,16 +27,20 @@ for PROJECT in "${PROJECTS[@]}"; do
     echo "   Target: ${SERVER_USER_HOST}:${REMOTE_BASE_DIR}/${PROJECT}"
 
     # --- rsync Deployment ---
-    rsync -avz \
-      --exclude=".git/" \
-      --exclude=".vscode/" \
-      --exclude=".DS_Store" \
-      --exclude="node_modules/" \
-      --exclude="dist/" \
-      --exclude="*.log" \
+    # Sync only runtime files. Pipeline/showcase/validation artifacts stay local.
+    # --delete removes stale artifact dirs already on the VPS; excluded .env* is preserved.
+    rsync -avz --delete \
       --exclude=".env" \
       --exclude=".env.local" \
-      --exclude="test-scenario.ts" \
+      --exclude=".env.*" \
+      --include="server.ts" \
+      --include="package.json" \
+      --include="package-lock.json" \
+      --include="pnpm-lock.yaml" \
+      --include="tsconfig.json" \
+      --include="env.example" \
+      --include=".env.example" \
+      --exclude="*" \
       "${SOURCE_DIR}/" \
       "${SERVER_USER_HOST}:${REMOTE_BASE_DIR}/${PROJECT}/"
       
