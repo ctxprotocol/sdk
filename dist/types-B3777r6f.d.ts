@@ -527,7 +527,7 @@ interface ExecutionResult<T = unknown> {
     durationMs: number;
 }
 type QueryOutcomeType = "answer" | "capability_miss";
-type QueryResponseShape = "answer" | "answer_with_evidence" | "evidence_only";
+type QueryResponseShape = "answer_with_evidence" | "evidence_only";
 type QueryResponseEnvelopeViewType = "table" | "leaderboard" | "heatmap" | "timeseries";
 /**
  * Supported high-level chart kinds produced by the librarian's
@@ -695,14 +695,14 @@ interface QueryOptions {
      */
     answerModelId?: string;
     /**
-     * Structured response mode for query answers. The runtime always produces a
-     * grounded result (raw data + computed artifacts + provenance); responseShape
-     * controls whether a prose synthesis layer is added on top.
+     * Structured response mode for query answers. Defaults to `answer_with_evidence`
+     * on the server when omitted. The runtime always produces a grounded result
+     * (raw data + computed artifacts + provenance); responseShape controls whether
+     * a prose synthesis layer is added on top.
      * - `answer_with_evidence`: prose answer plus the structured grounding (chat parity)
      * - `evidence_only`: structured grounding only, no prose — the agent-harness
      *   shape. Returns raw `data` + `computedArtifacts` + `grounding`/`evidence`
      *   by default so your own agent can reason over the result.
-     * - `answer`: legacy prose-only shape, kept for backward compatibility.
      */
     responseShape?: QueryResponseShape;
     /**
@@ -1058,7 +1058,7 @@ interface QueryResponseEnvelopeViewRow {
     sourceRefIds?: string[];
 }
 interface QueryResponseEnvelope {
-    responseShape: Exclude<QueryResponseShape, "answer">;
+    responseShape: QueryResponseShape;
     response: string;
     summary: string;
     outcome: {

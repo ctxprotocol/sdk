@@ -96,12 +96,12 @@ const result = await client.tools.execute({
 console.log(result.session); // methodPrice, spent, remaining, maxSpend, ...
 ```
 
-**Query mode** gives you a managed librarian contract — the server runs the live pipeline (`discover -> select -> metadata scout -> iterative execute -> synthesize -> settle`) with model-aware context budgeting and can return plain answers or structured evidence packages for one flat fee:
+**Query mode** gives you a managed librarian contract — the server runs the live pipeline (`discover -> select -> metadata scout -> iterative execute -> synthesize -> settle`) with model-aware context budgeting and returns structured evidence packages for one flat fee:
 ```typescript
 const answer = await client.query.run({
   query: "What are the top whale movements on Base?",
   answerModelId: "glm-model", // optional: choose the final synthesis model
-  responseShape: "answer_with_evidence", // optional: answer | answer_with_evidence | evidence_only
+  responseShape: "answer_with_evidence", // optional: answer_with_evidence (default) | evidence_only
   includeDataUrl: true,      // optional: persist full execution data to blob
   includeDeveloperTrace: true, // optional: include machine-readable runtime trace
 });
@@ -118,9 +118,8 @@ console.log(answer.orchestrationMetrics); // high-level first-pass / rediscovery
 
 `responseShape` options:
 
-- `answer`: backward-compatible prose answer
-- `answer_with_evidence`: prose plus `summary`, `evidence`, `artifacts`, `freshness`, `confidence`, `usage`, `outcome`, and `controller`
-- `evidence_only`: machine-friendly summary plus the same evidence package for downstream agents
+- `answer_with_evidence` (default): prose plus `summary`, `evidence`, `artifacts`, `freshness`, `confidence`, `usage`, `outcome`, and `controller`
+- `evidence_only`: raw fetched data, computed artifacts, and provenance for downstream agents (no prose synthesis)
 
 Premium wedge answers can also expose `evidence.marketIntelligence`, `view.rows`, `view.columns`, and the top-level controller fields `stopReason`, `issueClass`, and `actionsTaken`.
 
@@ -417,7 +416,7 @@ const closed = await client.tools.closeSession("sess_123");
 
 #### `client.query.run(options)`
 
-Run an agentic query. The server applies the live librarian pipeline (`discover -> select -> metadata scout -> iterative execute -> synthesize -> settle`) with up to 100 MCP calls per response turn, then returns the selected Query response contract (`answer`, `answer_with_evidence`, or `evidence_only`).
+Run an agentic query. The server applies the live librarian pipeline (`discover -> select -> metadata scout -> iterative execute -> synthesize -> settle`) with up to 100 MCP calls per response turn, then returns the selected Query response contract (`answer_with_evidence` or `evidence_only`, default `answer_with_evidence`).
 
 The query runtime now exposes a single managed executor surface.
 The server decides internal budgets, ambiguity handling, and exploration policy
