@@ -1453,6 +1453,12 @@ const TOOLS = [
       "Returns a signature request that must be approved by the user. " +
       "Supports limit, market, stop-loss, and take-profit orders. " +
       "The signature is used to authorize the order without exposing the user's private key. " +
+      "BRACKET ORDERS (open + protect in ONE signature): to open a position WITH a stop loss and/or take profit, " +
+      "call this ONCE with an opening order (orderType 'market' or 'limit') and pass `stopLoss` and/or `takeProfit` " +
+      "as absolute trigger PRICES. They are bundled into a single signed action (Hyperliquid normalTpsl grouping), " +
+      "so the user signs ONE approval card, not three. Do NOT place separate orders for the entry and the stop/target. " +
+      "Example: user says 'short 1 ETH with a stop $100 away' and ETH is ~$2000 → place_order(coin:'ETH', isBuy:false, " +
+      "orderType:'market', size:1, stopLoss:2100). You compute the absolute trigger from the entry yourself. " +
       "To CLOSE a position: set closeEntirePosition=true and the size will be auto-calculated from the user's current position.",
     inputSchema: {
       type: "object" as const,
@@ -1480,6 +1486,20 @@ const TOOLS = [
         triggerPrice: {
           type: "number",
           description: "Trigger price for stop-loss or take-profit orders (required for those types)",
+        },
+        stopLoss: {
+          type: "number",
+          description:
+            "Optional BRACKET leg: absolute trigger price for a protective stop on the position this order opens. " +
+            "Bundled into the SAME signed action (one approval). For a long it must be BELOW entry; for a short ABOVE entry. " +
+            "Only valid on an opening order (orderType 'market' or 'limit', not reduceOnly). Compute the absolute price from the entry yourself (e.g. 'stop $100 away').",
+        },
+        takeProfit: {
+          type: "number",
+          description:
+            "Optional BRACKET leg: absolute trigger price for a take-profit on the position this order opens. " +
+            "Bundled into the SAME signed action (one approval). For a long it must be ABOVE entry; for a short BELOW entry. " +
+            "Only valid on an opening order (orderType 'market' or 'limit', not reduceOnly).",
         },
         reduceOnly: {
           type: "boolean",
@@ -5941,6 +5961,8 @@ async function handlePlaceOrder(args: Record<string, unknown> | undefined): Prom
   const priceArg = args?.price as number | undefined;
   const orderType = (args?.orderType as string) ?? "limit";
   const triggerPrice = args?.triggerPrice as number | undefined;
+  const stopLoss = args?.stopLoss as number | undefined;
+  const takeProfit = args?.takeProfit as number | undefined;
   let reduceOnly = (args?.reduceOnly as boolean) ?? false;
   const postOnly = (args?.postOnly as boolean) ?? false;
   const closeEntirePosition = (args?.closeEntirePosition as boolean) ?? false;
@@ -6095,20 +6117,114 @@ async function handlePlaceOrder(args: Record<string, unknown> | undefined): Prom
     orderTypeStruct = { limit: { tif: "Gtc" } };
   }
 
+  // Parent order in the exact format required by Hyperliquid.
+  const parentOrder = {
+    a: assetIndex, // asset index
+    b: isBuy, // isBuy
+    p: formattedPrice, // price as formatted string
+    s: formattedSize, // size as formatted string
+    r: reduceOnly, // reduceOnly
+    t: orderTypeStruct, // order type (limit/trigger)
+  };
+
+  // ── Bracket legs (stop loss / take profit attached to the entry) ──────────
+  // When the caller passes `stopLoss` and/or `takeProfit` on an OPENING order,
+  // we bundle them into ONE signed action using Hyperliquid's `normalTpsl`
+  // grouping. The user signs a single approval card; the children only activate
+  // after the parent fills, and each closes the position it opened. This is what
+  // lets "short 1 ETH with a stop $100 away" resolve to one signature/one card
+  // instead of the model placing (and the user signing) several separate orders.
+  const wantsBracket =
+    typeof stopLoss === "number" || typeof takeProfit === "number";
+  const orders: Array<Record<string, unknown>> = [parentOrder];
+  let grouping = "na";
+
+  if (wantsBracket) {
+    if (orderType === "stop_loss" || orderType === "take_profit") {
+      return errorResult(
+        "stopLoss/takeProfit attach to an OPENING limit or market order, not to a trigger order. Place the entry with stopLoss/takeProfit, or use a standalone stop_loss/take_profit order to protect an existing position."
+      );
+    }
+    if (reduceOnly) {
+      return errorResult(
+        "stopLoss/takeProfit cannot be attached to a reduceOnly/closing order — they protect a position that this order OPENS or increases."
+      );
+    }
+    if (typeof stopLoss === "number" && (!Number.isFinite(stopLoss) || stopLoss <= 0)) {
+      return errorResult("stopLoss must be a positive trigger price.");
+    }
+    if (typeof takeProfit === "number" && (!Number.isFinite(takeProfit) || takeProfit <= 0)) {
+      return errorResult("takeProfit must be a positive trigger price.");
+    }
+
+    // Reference entry: the limit price for limit orders, current mark for market.
+    const entryRef = orderType === "market" ? currentPrice : Number(formattedPrice);
+    if (typeof stopLoss === "number") {
+      if (isBuy && stopLoss >= entryRef) {
+        return errorResult(
+          `For a long, stopLoss ($${stopLoss}) must be BELOW the entry (~$${entryRef}); otherwise it would trigger immediately.`
+        );
+      }
+      if (!isBuy && stopLoss <= entryRef) {
+        return errorResult(
+          `For a short, stopLoss ($${stopLoss}) must be ABOVE the entry (~$${entryRef}); otherwise it would trigger immediately.`
+        );
+      }
+    }
+    if (typeof takeProfit === "number") {
+      if (isBuy && takeProfit <= entryRef) {
+        return errorResult(
+          `For a long, takeProfit ($${takeProfit}) must be ABOVE the entry (~$${entryRef}).`
+        );
+      }
+      if (!isBuy && takeProfit >= entryRef) {
+        return errorResult(
+          `For a short, takeProfit ($${takeProfit}) must be BELOW the entry (~$${entryRef}).`
+        );
+      }
+    }
+
+    // Each child closes the position the parent opens: opposite side, same size,
+    // reduceOnly, market-on-trigger with a slippage-padded limit cap so the
+    // protective close actually fills when the trigger fires.
+    const buildTriggerChild = (
+      tpsl: "tp" | "sl",
+      childTriggerPrice: number
+    ): Record<string, unknown> => {
+      const childIsBuy = !isBuy;
+      const childExecPrice = childIsBuy
+        ? childTriggerPrice * (1 + MARKET_SLIPPAGE)
+        : childTriggerPrice * (1 - MARKET_SLIPPAGE);
+      return {
+        a: assetIndex,
+        b: childIsBuy,
+        p: formatPrice(childExecPrice, szDecimals),
+        s: formattedSize,
+        r: true,
+        t: {
+          trigger: {
+            isMarket: true,
+            triggerPx: formatPrice(childTriggerPrice, szDecimals),
+            tpsl,
+          },
+        },
+      };
+    };
+
+    grouping = "normalTpsl";
+    if (typeof takeProfit === "number") {
+      orders.push(buildTriggerChild("tp", takeProfit));
+    }
+    if (typeof stopLoss === "number") {
+      orders.push(buildTriggerChild("sl", stopLoss));
+    }
+  }
+
   // Build the order action in the exact format required by Hyperliquid
   const orderAction = {
     type: "order",
-    orders: [
-      {
-        a: assetIndex,             // asset index
-        b: isBuy,                  // isBuy
-        p: formattedPrice,         // price as formatted string
-        s: formattedSize,          // size as formatted string
-        r: reduceOnly,             // reduceOnly
-        t: orderTypeStruct,        // order type (limit/trigger)
-      },
-    ],
-    grouping: "na", // no grouping
+    orders,
+    grouping,
   };
 
   // Use @nktkas/hyperliquid SDK to create the correct L1 action hash
@@ -6141,6 +6257,26 @@ async function handlePlaceOrder(args: Record<string, unknown> | undefined): Prom
     ? ` @ trigger $${formattedTriggerPrice}` 
     : "";
 
+  // Bracket legs for the single-signature card copy.
+  const bracketLegs: string[] = [];
+  if (typeof takeProfit === "number") {
+    bracketLegs.push(`TP $${formatPrice(takeProfit, szDecimals)}`);
+  }
+  if (typeof stopLoss === "number") {
+    bracketLegs.push(`SL $${formatPrice(stopLoss, szDecimals)}`);
+  }
+  const hasBracket = bracketLegs.length > 0;
+  let bracketLabel = "";
+  if (hasBracket) {
+    if (typeof stopLoss === "number" && typeof takeProfit === "number") {
+      bracketLabel = "Bracket";
+    } else if (typeof stopLoss === "number") {
+      bracketLabel = "Stop Loss";
+    } else {
+      bracketLabel = "Take Profit";
+    }
+  }
+
   // Build the signature request with customizable UI elements
   // Tool developers can set title, subtitle for generic marketplace use
   const signatureRequest = {
@@ -6151,11 +6287,19 @@ async function handlePlaceOrder(args: Record<string, unknown> | undefined): Prom
     message: agentMessage,
     meta: {
       // UI Customization - these appear in the signature card
-      title: `${orderTypeLabel} ${sideLabel} Order`,
-      subtitle: `${sideLabel} ${formattedSize} ${coin} at ${priceDisplay}${triggerDisplay}`,
-      description: `${orderTypeLabel} ${sideLabel.toLowerCase()} order for ${formattedSize} ${coin}`,
+      title: hasBracket
+        ? `${orderTypeLabel} ${sideLabel} + ${bracketLabel}`
+        : `${orderTypeLabel} ${sideLabel} Order`,
+      subtitle: hasBracket
+        ? `${sideLabel} ${formattedSize} ${coin} at ${priceDisplay} · ${bracketLegs.join(" / ")}`
+        : `${sideLabel} ${formattedSize} ${coin} at ${priceDisplay}${triggerDisplay}`,
+      description: hasBracket
+        ? `${orderTypeLabel} ${sideLabel.toLowerCase()} ${formattedSize} ${coin} with ${bracketLegs.join(" and ")} — one signature`
+        : `${orderTypeLabel} ${sideLabel.toLowerCase()} order for ${formattedSize} ${coin}`,
       protocol: "Hyperliquid",
-      action: `${orderTypeLabel} ${sideLabel}`,
+      action: hasBracket
+        ? `${orderTypeLabel} ${sideLabel} + ${bracketLabel}`
+        : `${orderTypeLabel} ${sideLabel}`,
       tokenSymbol: coin,
       tokenAmount: formattedSize,
       warningLevel: notionalValue > 10000 ? "caution" as const : "info" as const,
@@ -6181,9 +6325,24 @@ async function handlePlaceOrder(args: Record<string, unknown> | undefined): Prom
     postOnly,
     currentMarketPrice: currentPrice,
     szDecimals,
+    ...(hasBracket
+      ? {
+          bracket: {
+            grouping: "normalTpsl",
+            ...(typeof stopLoss === "number"
+              ? { stopLoss: Number(formatPrice(stopLoss, szDecimals)) }
+              : {}),
+            ...(typeof takeProfit === "number"
+              ? { takeProfit: Number(formatPrice(takeProfit, szDecimals)) }
+              : {}),
+          },
+        }
+      : {}),
   };
 
-  const approvalMessage = `Please approve the ${orderTypeLabel.toLowerCase()} ${sideLabel.toLowerCase()} order for ${formattedSize} ${coin}${triggerDisplay}`;
+  const approvalMessage = hasBracket
+    ? `Please approve the ${orderTypeLabel.toLowerCase()} ${sideLabel.toLowerCase()} order for ${formattedSize} ${coin} with ${bracketLegs.join(" and ")} (single signature)`
+    : `Please approve the ${orderTypeLabel.toLowerCase()} ${sideLabel.toLowerCase()} order for ${formattedSize} ${coin}${triggerDisplay}`;
 
   // Return the handshake response
   // The Context platform will intercept _meta.handshakeAction and show approval UI

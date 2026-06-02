@@ -1367,6 +1367,8 @@ export type ContextErrorCode =
   | "invalid_tool_method"
   | "method_not_execute_eligible"
   | "invalid_max_spend"
+  | "wallet_link_required"
+  | "action_requires_signature"
   | "session_not_found"
   | "session_forbidden"
   | "session_closed"

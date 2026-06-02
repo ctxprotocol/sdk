@@ -920,6 +920,48 @@ describe("Query Resource", () => {
       }
     });
 
+    it("throws ContextError on wallet_link_required", async () => {
+      globalThis.fetch = mockFetchError(
+        "This query needs your wallet context, but no wallet is linked to your account.",
+        "wallet_link_required",
+        400,
+      );
+
+      await expect(client.query.run("test query")).rejects.toThrow(
+        ContextError,
+      );
+
+      try {
+        await client.query.run("test query");
+      } catch (error) {
+        expect(error).toBeInstanceOf(ContextError);
+        const ctxError = error as ContextError;
+        expect(ctxError.code).toBe("wallet_link_required");
+        expect(ctxError.statusCode).toBe(400);
+      }
+    });
+
+    it("throws ContextError on action_requires_signature", async () => {
+      globalThis.fetch = mockFetchError(
+        "This action needs an on-chain signature, which can't be completed through the headless API.",
+        "action_requires_signature",
+        400,
+      );
+
+      await expect(client.query.run("test query")).rejects.toThrow(
+        ContextError,
+      );
+
+      try {
+        await client.query.run("test query");
+      } catch (error) {
+        expect(error).toBeInstanceOf(ContextError);
+        const ctxError = error as ContextError;
+        expect(ctxError.code).toBe("action_requires_signature");
+        expect(ctxError.statusCode).toBe(400);
+      }
+    });
+
     it("throws ContextError on query_failed", async () => {
       // Use 422 to avoid _fetch retry logic (retries on 5xx)
       globalThis.fetch = mockFetchError(
