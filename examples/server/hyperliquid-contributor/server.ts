@@ -1459,7 +1459,8 @@ const TOOLS = [
       "so the user signs ONE approval card, not three. Do NOT place separate orders for the entry and the stop/target. " +
       "Example: user says 'short 1 ETH with a stop $100 away' and ETH is ~$2000 → place_order(coin:'ETH', isBuy:false, " +
       "orderType:'market', size:1, stopLoss:2100). You compute the absolute trigger from the entry yourself. " +
-      "To CLOSE a position: set closeEntirePosition=true and the size will be auto-calculated from the user's current position.",
+      "To CLOSE a position: set closeEntirePosition=true and the size will be auto-calculated from the user's current position. " +
+      "MINIMUM ORDER VALUE: Hyperliquid rejects any opening order worth less than $10 (size x price). When the user asks for the 'minimum' or 'smallest' position, size it so size x price is at least $10, not the smallest representable size. Undersized opening orders are rejected before a signature is requested so you can correct the size.",
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -1473,7 +1474,7 @@ const TOOLS = [
         },
         size: {
           type: "number",
-          description: "Order size in base units (e.g., 0.1 ETH). NOT required if closeEntirePosition=true.",
+          description: "Order size in base units (e.g., 0.1 ETH). NOT required if closeEntirePosition=true. Opening orders must be worth at least $10 (size x price); for a 'minimum' position, choose the smallest size whose notional reaches $10.",
         },
         price: {
           type: "number",
@@ -6079,6 +6080,36 @@ async function handlePlaceOrder(args: Record<string, unknown> | undefined): Prom
   }
 
   const notionalValue = Number(formattedSize) * Number(formattedPrice);
+
+  // Minimum order value (pre-signature).
+  // Hyperliquid rejects any opening/increasing order whose value is under $10,
+  // but only at submit time, i.e. after the user has already signed. Catch it
+  // here so the agent receives a normal validation error and can correct the
+  // size inside its execution loop before any signature is requested, instead
+  // of the user signing an order the venue will throw away. Reduce-only
+  // (closing) orders are exempt: a small residual position must always be
+  // closable. Trigger orders are skipped here because their value is realized
+  // at conversion, not at placement.
+  const HYPERLIQUID_MIN_ORDER_VALUE_USD = 10;
+  const isOpeningOrderType = orderType === "market" || orderType === "limit";
+  if (!reduceOnly && isOpeningOrderType) {
+    const referencePrice =
+      orderType === "limit" ? Number(formattedPrice) : currentPrice;
+    const referenceValue = Number(formattedSize) * referencePrice;
+    if (referencePrice > 0 && referenceValue < HYPERLIQUID_MIN_ORDER_VALUE_USD) {
+      const step = 10 ** -szDecimals;
+      const minUnits = Math.ceil(
+        HYPERLIQUID_MIN_ORDER_VALUE_USD / referencePrice / step
+      );
+      const minSize = formatSize(minUnits * step, szDecimals);
+      const minSizeValue = (Number(minSize) * referencePrice).toFixed(2);
+      return errorResult(
+        `Order value $${referenceValue.toFixed(2)} is below Hyperliquid's $${HYPERLIQUID_MIN_ORDER_VALUE_USD} minimum order value for ${coin}. ` +
+          `Increase the size to at least ${minSize} ${coin} (about $${minSizeValue} at $${referencePrice}) and place the order again. ` +
+          `This is the venue's minimum order value, not a size-precision limit, and it is enforced before any signature is requested.`
+      );
+    }
+  }
 
   // Validate limit order makes sense (skip for market/trigger orders)
   if (orderType === "limit") {
