@@ -752,13 +752,23 @@ const TOOLS = [
 
   {
     name: "get_user_state",
-    description: "Get perpetual positions and margin state for any wallet address. Includes positions, margin usage, and withdrawable balance.",
+    description:
+      "Get perpetual positions and margin state for a wallet. To get YOUR OWN account, omit `address` (or leave it blank) — the platform injects your linked Hyperliquid wallet automatically. Pass an explicit address only to inspect a DIFFERENT wallet. Includes positions, margin usage, and withdrawable balance.",
+    // Context requirements in _meta: the Context platform reads this to inject the
+    // user's Hyperliquid portfolio and resolve `address` to their own wallet when
+    // they ask about "my" state (instead of a 0x0000… placeholder).
+    _meta: {
+      contextRequirements: ["hyperliquid"],
+    },
     inputSchema: {
       type: "object" as const,
       properties: {
-        address: { type: "string", description: "Wallet address (0x...)" },
+        address: {
+          type: "string",
+          description:
+            "Wallet address (0x...). Optional — omit to use your own linked wallet.",
+        },
       },
-      required: ["address"],
     },
     outputSchema: {
       type: "object" as const,
@@ -778,13 +788,21 @@ const TOOLS = [
 
   {
     name: "get_open_orders",
-    description: "Get all open orders for a wallet address. Includes limit orders, trigger orders, and TP/SL orders.",
+    description:
+      "Get all open orders for a wallet. To get YOUR OWN orders, omit `address` — the platform injects your linked Hyperliquid wallet automatically. Pass an explicit address only to inspect a DIFFERENT wallet. Includes limit orders, trigger orders, and TP/SL orders.",
+    // See get_user_state: lets the platform inject the user's wallet for "my orders".
+    _meta: {
+      contextRequirements: ["hyperliquid"],
+    },
     inputSchema: {
       type: "object" as const,
       properties: {
-        address: { type: "string", description: "Wallet address (0x...)" },
+        address: {
+          type: "string",
+          description:
+            "Wallet address (0x...). Optional — omit to use your own linked wallet.",
+        },
       },
-      required: ["address"],
     },
     outputSchema: {
       type: "object" as const,
@@ -3409,25 +3427,104 @@ async function handleGetSpotBalances(args: Record<string, unknown> | undefined):
 // NEW TIER 2 HANDLERS - User State & Positions
 // ============================================================================
 
+/**
+ * Resolve a position's liquidation price.
+ *
+ * Hyperliquid's clearinghouseState returns `liquidationPx` as a string, but it
+ * can be `null` for some positions — and `Number(null)` silently becomes `0`,
+ * which made a real, at-risk position report a misleading "$0 liquidation /
+ * critical risk". When the venue value is missing we fall back to Hyperliquid's
+ * documented formula
+ * (https://hyperliquid.gitbook.io/hyperliquid-docs/trading/liquidations):
+ *
+ *   liq_price = price - side * margin_available / position_size / (1 - l * side)
+ *
+ * with l = 1 / (2 * maxLeverage) (maintenance margin = half the initial margin at
+ * the asset's max leverage), side = +1 long / -1 short, and for cross margin
+ * margin_available = accountValue - crossMaintenanceMarginUsed (isolated uses the
+ * position's own isolated margin). Mark price is positionValue / |size| (the same
+ * mark the venue used). We only estimate when the venue value is absent, and
+ * return estimated:true so callers can label it honestly.
+ */
+function deriveLiquidationPrice(
+  position: AssetPosition["position"],
+  state: Pick<
+    ClearinghouseStateResponse,
+    "marginSummary" | "crossMarginSummary" | "crossMaintenanceMarginUsed"
+  >
+): { price: number; estimated: boolean } {
+  const venueLiq = Number(position.liquidationPx);
+  if (Number.isFinite(venueLiq) && venueLiq > 0) {
+    return { price: venueLiq, estimated: false };
+  }
+
+  const size = Number(position.szi);
+  const absSize = Math.abs(size);
+  const positionValue = Number(position.positionValue);
+  const markPrice = absSize > 0 ? positionValue / absSize : 0;
+  const maxLeverage = Number(
+    position.maxLeverage || position.leverage?.value || 0
+  );
+  if (!(absSize > 0 && markPrice > 0 && maxLeverage > 0)) {
+    return { price: 0, estimated: false };
+  }
+
+  const maintenanceMarginFraction = 1 / (2 * maxLeverage);
+  const isIsolated = position.leverage?.type === "isolated";
+  const accountValue = Number(
+    state.crossMarginSummary?.accountValue ??
+      state.marginSummary?.accountValue ??
+      0
+  );
+  const crossMaintenance = Number(state.crossMaintenanceMarginUsed ?? 0);
+  const marginAvailable = isIsolated
+    ? Number(position.marginUsed) - positionValue * maintenanceMarginFraction
+    : accountValue - crossMaintenance;
+
+  const side = size >= 0 ? 1 : -1;
+  const denominator = 1 - maintenanceMarginFraction * side;
+  if (denominator === 0) {
+    return { price: 0, estimated: false };
+  }
+  const liq = markPrice - (side * marginAvailable) / absSize / denominator;
+  // A long liquidates below mark, a short above it. A non-positive or wrong-side
+  // result means no meaningful liquidation price (over-collateralized).
+  if (
+    !Number.isFinite(liq) ||
+    liq <= 0 ||
+    (side === 1 && liq >= markPrice) ||
+    (side === -1 && liq <= markPrice)
+  ) {
+    return { price: 0, estimated: false };
+  }
+  return { price: Number(liq.toFixed(6)), estimated: true };
+}
+
 async function handleGetUserState(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
-  const address = args?.address as string;
+  // Resolve to the user's own wallet (from injected portfolio context) when the
+  // model passes a placeholder/zero address for "my state". See resolveSingleAddress.
+  const address = resolveSingleAddress(args);
   if (!address) return errorResult("address parameter is required");
 
   const data = await fetchClearinghouseState(address);
 
-  const positions = data.assetPositions.map(ap => ({
-    coin: ap.position.coin,
-    size: Number(ap.position.szi),
-    entryPrice: Number(ap.position.entryPx),
-    markPrice: Number(ap.position.positionValue) / Math.abs(Number(ap.position.szi)) || 0,
-    unrealizedPnl: Number(ap.position.unrealizedPnl),
-    liquidationPrice: Number(ap.position.liquidationPx),
-    leverage: ap.position.leverage,
-    marginUsed: Number(ap.position.marginUsed),
-    positionValue: Number(ap.position.positionValue),
-    returnOnEquity: Number(ap.position.returnOnEquity),
-    cumFunding: ap.position.cumFunding,
-  }));
+  const positions = data.assetPositions.map(ap => {
+    const liquidation = deriveLiquidationPrice(ap.position, data);
+    return {
+      coin: ap.position.coin,
+      size: Number(ap.position.szi),
+      entryPrice: Number(ap.position.entryPx),
+      markPrice: Number(ap.position.positionValue) / Math.abs(Number(ap.position.szi)) || 0,
+      unrealizedPnl: Number(ap.position.unrealizedPnl),
+      liquidationPrice: liquidation.price,
+      liquidationPriceEstimated: liquidation.estimated,
+      leverage: ap.position.leverage,
+      marginUsed: Number(ap.position.marginUsed),
+      positionValue: Number(ap.position.positionValue),
+      returnOnEquity: Number(ap.position.returnOnEquity),
+      cumFunding: ap.position.cumFunding,
+    };
+  });
 
   return successResult({
     address,
@@ -3453,7 +3550,9 @@ async function handleGetUserState(args: Record<string, unknown> | undefined): Pr
 }
 
 async function handleGetOpenOrders(args: Record<string, unknown> | undefined): Promise<CallToolResult> {
-  const address = args?.address as string;
+  // Resolve to the user's own wallet (from injected portfolio context) when the
+  // model passes a placeholder/zero address. See resolveSingleAddress.
+  const address = resolveSingleAddress(args);
   if (!address) return errorResult("address parameter is required");
 
   const orders = await fetchOpenOrders(address);
@@ -3974,7 +4073,7 @@ async function handleAnalyzeWhaleWallet(args: Record<string, unknown> | undefine
       leverage: ap.position.leverage.value,
       leverageType: ap.position.leverage.type,
       marginUsed: Number(ap.position.marginUsed),
-      liquidationPrice: Number(ap.position.liquidationPx),
+      liquidationPrice: deriveLiquidationPrice(ap.position, state).price,
       maxLeverage: ap.position.maxLeverage,
     };
   });
@@ -6665,10 +6764,32 @@ async function hyperliquidPost(body: object): Promise<unknown> {
  * string, so we always reduce to one valid address: prefer an explicit arg, then the
  * injected active wallet, then the first segment of walletAddress.
  */
+/**
+ * True for the all-zero / empty placeholder addresses a model invents when a
+ * tool's schema requires an `address` but it actually means "my own wallet".
+ * Querying these returns an empty account, so we must NOT treat them as a real
+ * explicit address — fall back to the injected portfolio wallet instead.
+ */
+function isPlaceholderEvmAddress(value: string | undefined): boolean {
+  if (!value) {
+    return true;
+  }
+  const normalized = value.trim().toLowerCase();
+  return (
+    normalized.length === 0 ||
+    normalized === "0x0000000000000000000000000000000000000000" ||
+    /^0x0+$/.test(normalized)
+  );
+}
+
 function resolveSingleAddress(
   args: Record<string, unknown> | undefined
 ): string | undefined {
-  const explicit = typeof args?.address === "string" ? args.address : undefined;
+  const explicitRaw =
+    typeof args?.address === "string" ? args.address : undefined;
+  // Ignore placeholder/zero addresses so we fall back to the injected portfolio
+  // wallet (the user's own) rather than querying the zero address.
+  const explicit = isPlaceholderEvmAddress(explicitRaw) ? undefined : explicitRaw;
   const portfolio = args?.portfolio as
     | { walletAddress?: string; activeWalletAddress?: string }
     | undefined;
