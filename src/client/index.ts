@@ -78,7 +78,14 @@ export type {
   UpdateToolOptions,
   UpdateToolResult,
   ToolCategory,
+  AgentModelId,
+  AgentModelIdInput,
 } from "./types.js";
 
 // Error and constant exports
-export { ContextError, ALLOWED_TOOL_CATEGORIES } from "./types.js";
+export {
+  ContextError,
+  ALLOWED_TOOL_CATEGORIES,
+  AGENT_MODEL_IDS,
+  DEFAULT_AGENT_MODEL_ID,
+} from "./types.js";

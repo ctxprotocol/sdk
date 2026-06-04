@@ -32,10 +32,14 @@ export {
   Tools,
   Query,
   ContextError,
+  AGENT_MODEL_IDS,
+  DEFAULT_AGENT_MODEL_ID,
 } from "./client/index.js";
 
 export type {
   ContextClientOptions,
+  AgentModelId,
+  AgentModelIdInput,
   Tool,
   SuggestedPrompt,
   SuggestedPromptSource,

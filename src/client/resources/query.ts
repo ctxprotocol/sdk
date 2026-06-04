@@ -295,7 +295,7 @@ export class Query {
         tools: opts.tools,
         resumeFrom: opts.resumeFrom,
         forkFrom: opts.forkFrom,
-        answerModelId: opts.answerModelId,
+        agentModelId: opts.agentModelId,
         responseShape: opts.responseShape,
         favoritesOnly: opts.favoritesOnly,
         includeData: opts.includeData,

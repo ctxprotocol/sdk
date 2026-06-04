@@ -370,7 +370,7 @@ async function main(): Promise<void> {
   }
 
   const modes = parseModes(process.env.AUDIT_MODES);
-  const answerModelId = process.env.CONTEXT_ANSWER_MODEL_ID;
+  const agentModelId = process.env.CONTEXT_AGENT_MODEL_ID;
   const client = new ContextClient({ apiKey });
 
   const suiteRuns: Array<Record<string, unknown>> = [];
@@ -398,7 +398,7 @@ async function main(): Promise<void> {
             ...(mode === "manual" ? { tools: [resolvedTool.id] } : {}),
             includeData: true,
             includeDeveloperTrace: true,
-            ...(answerModelId ? { answerModelId } : {}),
+            ...(agentModelId ? { agentModelId } : {}),
             idempotencyKey,
           });
 
@@ -606,7 +606,7 @@ async function main(): Promise<void> {
 
   const output = {
     generatedAt: new Date().toISOString(),
-    answerModelId: answerModelId || null,
+    agentModelId: agentModelId || null,
     thresholds: {
       freshnessThresholdMinutes: FRESHNESS_THRESHOLD_MINUTES,
       trace: TRACE_THRESHOLDS,

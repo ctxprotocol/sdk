@@ -3,7 +3,11 @@ import sharedQueryFixture from "../../../fixtures/query-response/full-grounded-a
   type: "json",
 };
 import { ContextClient } from "../client.js";
-import { ContextError } from "../types.js";
+import {
+  AGENT_MODEL_IDS,
+  ContextError,
+  DEFAULT_AGENT_MODEL_ID,
+} from "../types.js";
 import type {
   QueryResult,
   QueryStreamDeveloperTraceEvent,
@@ -418,6 +422,12 @@ describe("Query Resource", () => {
   let client: ContextClient;
   const originalFetch = globalThis.fetch;
 
+  it("publishes current agent model IDs with Kimi K2.6 as default", () => {
+    expect(DEFAULT_AGENT_MODEL_ID).toBe("kimi-k2.6-model");
+    expect(AGENT_MODEL_IDS).toContain(DEFAULT_AGENT_MODEL_ID);
+    expect(AGENT_MODEL_IDS).not.toContain("glm-model");
+  });
+
   beforeEach(() => {
     client = new ContextClient({ apiKey: "ctx_test_key_1234567890abcdef12345678" });
   });
@@ -472,7 +482,7 @@ describe("Query Resource", () => {
       });
     });
 
-    it("forwards model and data options for run()", async () => {
+    it("forwards agent model and data options for run()", async () => {
       const mockFn = mockFetchRunResult({
         ...MOCK_SUCCESS_RESPONSE,
         data: { summary: "tool output" },
@@ -483,7 +493,7 @@ describe("Query Resource", () => {
 
       const result = await client.query.run({
         query: "Analyze whale activity",
-        answerModelId: "glm-model",
+        agentModelId: "kimi-k2.6-model",
         responseShape: "answer_with_evidence",
         includeData: true,
         includeDataUrl: true,
@@ -494,7 +504,7 @@ describe("Query Resource", () => {
       expect(body).toEqual({
         query: "Analyze whale activity",
         tools: undefined,
-        answerModelId: "glm-model",
+        agentModelId: "kimi-k2.6-model",
         responseShape: "answer_with_evidence",
         includeData: true,
         includeDataUrl: true,
@@ -1099,7 +1109,7 @@ describe("Query Resource", () => {
       expect(body.tools).toEqual(["tool-1", "tool-2"]);
     });
 
-    it("forwards model and data options for stream()", async () => {
+    it("forwards agent model and data options for stream()", async () => {
       globalThis.fetch = mockFetchSSE([
         'data: {"type":"text-delta","delta":"result "}',
         "data: [DONE]",
@@ -1108,7 +1118,7 @@ describe("Query Resource", () => {
       const events = [];
       for await (const event of client.query.stream({
         query: "test",
-        answerModelId: "claude-sonnet-model",
+        agentModelId: "claude-sonnet-model",
         includeData: true,
         includeDataUrl: true,
         includeDeveloperTrace: true,
@@ -1119,7 +1129,7 @@ describe("Query Resource", () => {
       const body = JSON.parse(
         (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
       );
-      expect(body.answerModelId).toBe("claude-sonnet-model");
+      expect(body.agentModelId).toBe("claude-sonnet-model");
       expect(body.includeData).toBe(true);
       expect(body.includeDataUrl).toBe(true);
       expect(body.includeDeveloperTrace).toBe(true);

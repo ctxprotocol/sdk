@@ -183,6 +183,18 @@ declare class ContributorSearchBudgetExceededError extends Error {
 }
 
 /**
+ * Default model for the main librarian agent loop. Omitting `agentModelId`
+ * uses this same platform default as the Context chat app.
+ */
+declare const DEFAULT_AGENT_MODEL_ID: "kimi-k2.6-model";
+/**
+ * Public model IDs currently accepted by the Query API for `agentModelId`.
+ * Tool selection remains a managed internal stage even when this is set.
+ */
+declare const AGENT_MODEL_IDS: readonly ["kimi-k2.6-model", "deepseek-v4-pro-model", "deepseek-v4-flash-model", "gemini-3.5-flash-model", "gemini-flash-model", "gemini-lite-model", "minimax-m3-model", "qwen-3.7-plus-model", "qwen-3.7-max-model", "gpt-5.5-model", "claude-opus-model"];
+type AgentModelId = (typeof AGENT_MODEL_IDS)[number];
+type AgentModelIdInput = AgentModelId | (string & {});
+/**
  * Configuration options for initializing the ContextClient
  */
 interface ContextClientOptions {
@@ -689,11 +701,12 @@ interface QueryOptions {
      */
     forkFrom?: QueryForkReference;
     /**
-     * Optional answer model ID for final synthesis.
-     * Supported IDs are published by the Context API. Ignored when
-     * `responseShape` is `evidence_only` because synthesis is skipped.
+     * Optional model ID for the main librarian agent loop.
+     * Supported IDs are published by the Context API. This controls the
+     * merged iterative execution + final response stage; internal tool
+     * selection remains managed by the server.
      */
-    answerModelId?: string;
+    agentModelId?: AgentModelIdInput;
     /**
      * Structured response mode for query answers. Defaults to `answer_with_evidence`
      * on the server when omitted. The runtime always produces a grounded result
@@ -1228,7 +1241,7 @@ type QueryStreamEvent = QueryStreamToolStatusEvent | QueryStreamTextDeltaEvent |
 /**
  * Specific error codes returned by the Context Protocol API
  */
-type ContextErrorCode = "unauthorized" | "no_wallet" | "insufficient_allowance" | "payment_failed" | "execution_failed" | "query_failed" | "invalid_tool_method" | "method_not_execute_eligible" | "invalid_max_spend" | "session_not_found" | "session_forbidden" | "session_closed" | "session_expired" | "max_spend_mismatch" | "session_budget_exceeded";
+type ContextErrorCode = "unauthorized" | "no_wallet" | "insufficient_allowance" | "payment_failed" | "execution_failed" | "query_failed" | "invalid_tool_method" | "method_not_execute_eligible" | "invalid_max_spend" | "wallet_link_required" | "action_requires_signature" | "session_not_found" | "session_forbidden" | "session_closed" | "session_expired" | "max_spend_mismatch" | "session_budget_exceeded";
 /**
  * Error thrown by the Context Protocol client
  */
@@ -1239,4 +1252,4 @@ declare class ContextError extends Error {
     constructor(message: string, code?: (ContextErrorCode | string) | undefined, statusCode?: number | undefined, helpUrl?: string | undefined);
 }
 
-export { type QueryAttemptReference as $, type SearchCandidateProvenance as A, ContextError as B, type ContributorSearchResolution as C, type ContextClientOptions as D, type SuggestedPrompt as E, type SuggestedPromptSource as F, type McpToolMeta as G, type McpToolRateLimitHints as H, type SearchResponse as I, type SearchOptions as J, type ExecuteOptions as K, type ExecuteSessionStartOptions as L, type McpTool as M, type ExecuteSessionStatus as N, type ExecuteSessionSpend as O, type ExecuteSessionResult as P, type QueryDeveloperTrace as Q, type ResolveContributorSearchParams as R, type SearchCandidate as S, type Tool as T, type ExecutionResult as U, type ExecuteApiSuccessResponse as V, type ExecuteApiErrorResponse as W, type ExecuteApiResponse as X, type ExecuteSessionApiSuccessResponse as Y, type ExecuteSessionApiResponse as Z, type QueryAttemptForkReason as _, type ContributorSearchMetadata as a, type QueryForkReference as a0, type QueryOptions as a1, type QueryResult as a2, type QuerySessionState as a3, type QueryToolUsage as a4, type QueryCost as a5, type QueryCompletenessRepairEvent as a6, type QueryDeveloperTraceDiagnostics as a7, type QueryDeveloperTraceSummary as a8, type QueryDeveloperTraceStep as a9, type ToolCategory as aA, ALLOWED_TOOL_CATEGORIES as aB, type QueryDeveloperTraceToolRef as aa, type QueryDeveloperTraceLoopInfo as ab, type QueryApiSuccessResponse as ac, type QueryApiResponse as ad, type QueryStreamEvent as ae, type QueryStreamToolStatusEvent as af, type QueryStreamTextDeltaEvent as ag, type QueryStreamDeveloperTraceEvent as ah, type QueryStreamDoneEvent as ai, type QueryStreamErrorEvent as aj, type UpdateToolOptions as ak, type UpdateToolResult as al, type ContextErrorCode as am, type QueryCapabilityMissPayload as an, type QueryAssumptionMetadata as ao, type QueryOutcomeType as ap, type QueryComputedArtifact as aq, type QueryChartType as ar, type QueryChartSeriesType as as, type QueryChartAxisType as at, type QueryChartValueFormat as au, type QueryChartDataValue as av, type QueryChartDataRow as aw, type QueryChartSeries as ax, type QueryChartAxis as ay, type QueryChartSpec as az, type SearchShortlist as b, type SearchIntent as c, type ContributorSearchConfig as d, type ContributorSearchResolvedConfig as e, type ContributorSearchTraceRecord as f, type ContributorSearchValidationCaseKind as g, type ContributorSearchValidationExpectation as h, type ContributorSearchValidationArtifact as i, ContributorSearchBudgetExceededError as j, CONTRIBUTOR_SEARCH_METADATA_VERSION as k, CONTRIBUTOR_SEARCH_VALIDATION_VERSION as l, type ContributorSearchConfidence as m, type ContributorSearchDegradedOutcome as n, type ContributorSearchDegradedOutcomePolicy as o, type ContributorSearchDegradedReasonCode as p, type ContributorSearchJudge as q, type ContributorSearchJudgeContext as r, type ContributorSearchJudgeInput as s, type ContributorSearchJudgeResult as t, type ContributorSearchJudgeSnapshot as u, type ContributorSearchJudgeUsage as v, type ContributorSearchMetadataSource as w, type ContributorSearchOutcome as x, type ContributorSearchTraceSummary as y, type ContributorSearchValidatorStatus as z };
+export { type ExecuteApiResponse as $, type SearchCandidateProvenance as A, ContextError as B, type ContributorSearchResolution as C, AGENT_MODEL_IDS as D, DEFAULT_AGENT_MODEL_ID as E, type ContextClientOptions as F, type AgentModelId as G, type AgentModelIdInput as H, type SuggestedPrompt as I, type SuggestedPromptSource as J, type McpToolMeta as K, type McpToolRateLimitHints as L, type McpTool as M, type SearchResponse as N, type SearchOptions as O, type ExecuteOptions as P, type QueryDeveloperTrace as Q, type ResolveContributorSearchParams as R, type SearchCandidate as S, type Tool as T, type ExecuteSessionStartOptions as U, type ExecuteSessionStatus as V, type ExecuteSessionSpend as W, type ExecuteSessionResult as X, type ExecutionResult as Y, type ExecuteApiSuccessResponse as Z, type ExecuteApiErrorResponse as _, type ContributorSearchMetadata as a, type ExecuteSessionApiSuccessResponse as a0, type ExecuteSessionApiResponse as a1, type QueryAttemptForkReason as a2, type QueryAttemptReference as a3, type QueryForkReference as a4, type QueryOptions as a5, type QueryResult as a6, type QuerySessionState as a7, type QueryToolUsage as a8, type QueryCost as a9, type QueryChartDataRow as aA, type QueryChartSeries as aB, type QueryChartAxis as aC, type QueryChartSpec as aD, type ToolCategory as aE, ALLOWED_TOOL_CATEGORIES as aF, type QueryCompletenessRepairEvent as aa, type QueryDeveloperTraceDiagnostics as ab, type QueryDeveloperTraceSummary as ac, type QueryDeveloperTraceStep as ad, type QueryDeveloperTraceToolRef as ae, type QueryDeveloperTraceLoopInfo as af, type QueryApiSuccessResponse as ag, type QueryApiResponse as ah, type QueryStreamEvent as ai, type QueryStreamToolStatusEvent as aj, type QueryStreamTextDeltaEvent as ak, type QueryStreamDeveloperTraceEvent as al, type QueryStreamDoneEvent as am, type QueryStreamErrorEvent as an, type UpdateToolOptions as ao, type UpdateToolResult as ap, type ContextErrorCode as aq, type QueryCapabilityMissPayload as ar, type QueryAssumptionMetadata as as, type QueryOutcomeType as at, type QueryComputedArtifact as au, type QueryChartType as av, type QueryChartSeriesType as aw, type QueryChartAxisType as ax, type QueryChartValueFormat as ay, type QueryChartDataValue as az, type SearchShortlist as b, type SearchIntent as c, type ContributorSearchConfig as d, type ContributorSearchResolvedConfig as e, type ContributorSearchTraceRecord as f, type ContributorSearchValidationCaseKind as g, type ContributorSearchValidationExpectation as h, type ContributorSearchValidationArtifact as i, ContributorSearchBudgetExceededError as j, CONTRIBUTOR_SEARCH_METADATA_VERSION as k, CONTRIBUTOR_SEARCH_VALIDATION_VERSION as l, type ContributorSearchConfidence as m, type ContributorSearchDegradedOutcome as n, type ContributorSearchDegradedOutcomePolicy as o, type ContributorSearchDegradedReasonCode as p, type ContributorSearchJudge as q, type ContributorSearchJudgeContext as r, type ContributorSearchJudgeInput as s, type ContributorSearchJudgeResult as t, type ContributorSearchJudgeSnapshot as u, type ContributorSearchJudgeUsage as v, type ContributorSearchMetadataSource as w, type ContributorSearchOutcome as x, type ContributorSearchTraceSummary as y, type ContributorSearchValidatorStatus as z };

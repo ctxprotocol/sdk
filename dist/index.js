@@ -1,6 +1,20 @@
 import { jwtVerify, importSPKI } from 'jose';
 
 // src/client/types.ts
+var DEFAULT_AGENT_MODEL_ID = "kimi-k2.6-model";
+var AGENT_MODEL_IDS = [
+  "kimi-k2.6-model",
+  "deepseek-v4-pro-model",
+  "deepseek-v4-flash-model",
+  "gemini-3.5-flash-model",
+  "gemini-flash-model",
+  "gemini-lite-model",
+  "minimax-m3-model",
+  "qwen-3.7-plus-model",
+  "qwen-3.7-max-model",
+  "gpt-5.5-model",
+  "claude-opus-model"
+];
 var ALLOWED_TOOL_CATEGORIES = [
   "Crypto & DeFi",
   "Financial Markets",
@@ -525,7 +539,7 @@ var Query = class {
         tools: opts.tools,
         resumeFrom: opts.resumeFrom,
         forkFrom: opts.forkFrom,
-        answerModelId: opts.answerModelId,
+        agentModelId: opts.agentModelId,
         responseShape: opts.responseShape,
         favoritesOnly: opts.favoritesOnly,
         includeData: opts.includeData,
@@ -1002,6 +1016,6 @@ function wrapHandshakeResponse(action) {
   };
 }
 
-export { CONTEXT_REQUIREMENTS_KEY, ContextClient, ContextError, Developer, Discovery, META_CONTEXT_REQUIREMENTS_KEY, Query, Tools, createAuthRequired, createContextMiddleware, createSignatureRequest, createTransactionProposal, isAuthRequired, isHandshakeAction, isOpenMcpMethod, isProtectedMcpMethod, isSignatureRequest, isTransactionProposal, verifyContextRequest, wrapHandshakeResponse };
+export { AGENT_MODEL_IDS, CONTEXT_REQUIREMENTS_KEY, ContextClient, ContextError, DEFAULT_AGENT_MODEL_ID, Developer, Discovery, META_CONTEXT_REQUIREMENTS_KEY, Query, Tools, createAuthRequired, createContextMiddleware, createSignatureRequest, createTransactionProposal, isAuthRequired, isHandshakeAction, isOpenMcpMethod, isProtectedMcpMethod, isSignatureRequest, isTransactionProposal, verifyContextRequest, wrapHandshakeResponse };
 //# sourceMappingURL=index.js.map
 //# sourceMappingURL=index.js.map

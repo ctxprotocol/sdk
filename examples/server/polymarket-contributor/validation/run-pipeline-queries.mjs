@@ -65,7 +65,7 @@ async function runQuery(prompt) {
     includeDeveloperTrace: true,
     clarificationPolicy: "auto",
     stream: true,
-    answerModelId: "kimi-k2.6-model",
+    agentModelId: "kimi-k2.6-model",
   };
 
   const response = await fetch(`${CONTEXT_BASE_URL}/api/v1/query`, {

@@ -100,7 +100,7 @@ console.log(result.session); // methodPrice, spent, remaining, maxSpend, ...
 ```typescript
 const answer = await client.query.run({
   query: "What are the top whale movements on Base?",
-  answerModelId: "glm-model", // optional: choose the final synthesis model
+  agentModelId: "kimi-k2.6-model", // optional: choose the main librarian agent model
   responseShape: "answer_with_evidence", // optional: answer_with_evidence (default) | evidence_only
   includeDataUrl: true,      // optional: persist full execution data to blob
   includeDeveloperTrace: true, // optional: include machine-readable runtime trace
@@ -114,6 +114,15 @@ console.log(answer.dataUrl);    // Optional blob URL with full data
 console.log(answer.developerTrace?.summary); // retries/fallbacks/loops summary
 console.log(answer.developerTrace?.diagnostics?.selection); // lane + scout probe diagnostics
 console.log(answer.orchestrationMetrics); // high-level first-pass / rediscovery metrics
+```
+
+To see valid model slugs without guessing:
+
+```typescript
+import { AGENT_MODEL_IDS, DEFAULT_AGENT_MODEL_ID } from "@ctxprotocol/sdk";
+
+console.log(DEFAULT_AGENT_MODEL_ID); // "kimi-k2.6-model"
+console.log(AGENT_MODEL_IDS);        // Supported `agentModelId` values
 ```
 
 `responseShape` options:
@@ -435,7 +444,7 @@ const answer = await client.query.run("What are the top whale movements on Base?
 const answer = await client.query.run({
   query: "Analyze whale activity on Base",
   tools: ["tool-uuid-1", "tool-uuid-2"],  // optional — auto-discover if omitted
-  answerModelId: "kimi-model-thinking",    // optional final synthesis model
+  agentModelId: "kimi-k2.6-model",         // optional main librarian agent model
   includeData: true,                       // optional: include execution data inline
   includeDataUrl: true,                    // optional: include blob URL for full data
   includeDeveloperTrace: true,             // optional: include Developer Mode trace

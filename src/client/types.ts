@@ -1,6 +1,33 @@
 import type { ContributorSearchTraceRecord } from "../contrib/search/types.js";
 
 /**
+ * Default model for the main librarian agent loop. Omitting `agentModelId`
+ * uses this same platform default as the Context chat app.
+ */
+export const DEFAULT_AGENT_MODEL_ID = "kimi-k2.6-model" as const;
+
+/**
+ * Public model IDs currently accepted by the Query API for `agentModelId`.
+ * Tool selection remains a managed internal stage even when this is set.
+ */
+export const AGENT_MODEL_IDS = [
+  "kimi-k2.6-model",
+  "deepseek-v4-pro-model",
+  "deepseek-v4-flash-model",
+  "gemini-3.5-flash-model",
+  "gemini-flash-model",
+  "gemini-lite-model",
+  "minimax-m3-model",
+  "qwen-3.7-plus-model",
+  "qwen-3.7-max-model",
+  "gpt-5.5-model",
+  "claude-opus-model",
+] as const;
+
+export type AgentModelId = (typeof AGENT_MODEL_IDS)[number];
+export type AgentModelIdInput = AgentModelId | (string & {});
+
+/**
  * Configuration options for initializing the ContextClient
  */
 export interface ContextClientOptions {
@@ -691,11 +718,12 @@ export interface QueryOptions {
   forkFrom?: QueryForkReference;
 
   /**
-   * Optional answer model ID for final synthesis.
-   * Supported IDs are published by the Context API. Ignored when
-   * `responseShape` is `evidence_only` because synthesis is skipped.
+   * Optional model ID for the main librarian agent loop.
+   * Supported IDs are published by the Context API. This controls the
+   * merged iterative execution + final response stage; internal tool
+   * selection remains managed by the server.
    */
-  answerModelId?: string;
+  agentModelId?: AgentModelIdInput;
 
   /**
    * Structured response mode for query answers. Defaults to `answer_with_evidence`

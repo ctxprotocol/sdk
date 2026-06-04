@@ -315,7 +315,7 @@ answer = await client.query.run(
 
 Then rerun the same prompt with `responseShape: "evidence_only"` / `response_shape="evidence_only"` for tools that are meant to support downstream agents. Confirm the structured evidence package is still useful without prose synthesis.
 
-If validation targets a local or preview runtime on the developer's machine, prefer `answerModelId: "glm-turbo-model"` for replay runs unless a deliberate model comparison is requested.
+If validation targets a local or preview runtime on the developer's machine, prefer omitting `agentModelId` or setting `agentModelId: "kimi-k2.6-model"` for replay runs unless a deliberate model comparison is requested.
 
 4.3.1 Deterministic Failure Gate (run BEFORE subjective quality review)
 For each response, apply these hard-fail checks. A response is an automatic failure

@@ -849,7 +849,7 @@ async function runPaidPrompt(prompt, apiKey) {
       includeDeveloperTrace: queryOptions.includeDeveloperTrace,
       clarificationPolicy: queryOptions.clarificationPolicy,
       stream: true,
-      answerModelId: "kimi-k2.6-model",
+      agentModelId: "kimi-k2.6-model",
     };
 
     try {

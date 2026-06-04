@@ -3,6 +3,20 @@
 var jose = require('jose');
 
 // src/client/types.ts
+var DEFAULT_AGENT_MODEL_ID = "kimi-k2.6-model";
+var AGENT_MODEL_IDS = [
+  "kimi-k2.6-model",
+  "deepseek-v4-pro-model",
+  "deepseek-v4-flash-model",
+  "gemini-3.5-flash-model",
+  "gemini-flash-model",
+  "gemini-lite-model",
+  "minimax-m3-model",
+  "qwen-3.7-plus-model",
+  "qwen-3.7-max-model",
+  "gpt-5.5-model",
+  "claude-opus-model"
+];
 var ALLOWED_TOOL_CATEGORIES = [
   "Crypto & DeFi",
   "Financial Markets",
@@ -527,7 +541,7 @@ var Query = class {
         tools: opts.tools,
         resumeFrom: opts.resumeFrom,
         forkFrom: opts.forkFrom,
-        answerModelId: opts.answerModelId,
+        agentModelId: opts.agentModelId,
         responseShape: opts.responseShape,
         favoritesOnly: opts.favoritesOnly,
         includeData: opts.includeData,
@@ -1004,9 +1018,11 @@ function wrapHandshakeResponse(action) {
   };
 }
 
+exports.AGENT_MODEL_IDS = AGENT_MODEL_IDS;
 exports.CONTEXT_REQUIREMENTS_KEY = CONTEXT_REQUIREMENTS_KEY;
 exports.ContextClient = ContextClient;
 exports.ContextError = ContextError;
+exports.DEFAULT_AGENT_MODEL_ID = DEFAULT_AGENT_MODEL_ID;
 exports.Developer = Developer;
 exports.Discovery = Discovery;
 exports.META_CONTEXT_REQUIREMENTS_KEY = META_CONTEXT_REQUIREMENTS_KEY;
