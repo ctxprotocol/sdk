@@ -128,7 +128,7 @@ console.log(AGENT_MODEL_IDS);        // Supported `agentModelId` values
 `responseShape` options:
 
 - `answer_with_evidence` (default): prose plus `summary`, `evidence`, `artifacts`, `freshness`, `confidence`, `usage`, `outcome`, and `controller`
-- `evidence_only`: raw fetched data, computed artifacts, and provenance for downstream agents (no prose synthesis)
+- `evidence_only`: bounded evidence, computed artifacts, and full-data references for downstream agents (no prose synthesis)
 
 Premium wedge answers can also expose `evidence.marketIntelligence`, `view.rows`, `view.columns`, and the top-level controller fields `stopReason`, `issueClass`, and `actionsTaken`.
 
@@ -445,7 +445,7 @@ const answer = await client.query.run({
   query: "Analyze whale activity on Base",
   tools: ["tool-uuid-1", "tool-uuid-2"],  // optional — auto-discover if omitted
   agentModelId: "kimi-k2.6-model",         // optional main librarian agent model
-  includeData: true,                       // optional: include execution data inline
+  includeData: true,                       // optional: include bounded execution data inline
   includeDataUrl: true,                    // optional: include blob URL for full data
   includeDeveloperTrace: true,             // optional: include Developer Mode trace
 });
@@ -454,14 +454,14 @@ console.log(answer.response);     // response text or summary
 console.log(answer.toolsUsed);    // [{ id, name, skillCalls }]
 console.log(answer.cost);         // { modelCostUsd, toolCostUsd, totalCostUsd }
 console.log(answer.durationMs);   // Total time
-console.log(answer.data);         // Optional execution data (when includeData=true)
+console.log(answer.data);         // Optional bounded data or truncation preview
 console.log(answer.dataUrl);      // Optional blob URL (when includeDataUrl=true)
 console.log(answer.developerTrace?.summary); // Optional trace summary (retries/fallbacks/loops)
 console.log(answer.developerTrace?.diagnostics?.selection); // Optional internal runtime diagnostics
 console.log(answer.orchestrationMetrics); // Optional high-level first-pass metrics
 ```
 
-When retrieval-first synthesis rollout is enabled server-side, full-data or truncation-sensitive query requests can switch to retrieval-first context assembly using private stage artifacts and canonical execution data slices. `includeData` and `includeDataUrl` continue to reference the same canonical dataset used for synthesis.
+When retrieval-first synthesis rollout is enabled server-side, full-data or truncation-sensitive query requests can switch to retrieval-first context assembly using private stage artifacts and canonical execution data slices. `includeData` returns a bounded inline preview when needed, and `includeDataUrl`/`artifacts.canonicalDataRef` reference the same canonical dataset used for synthesis.
 
 #### `client.query.stream(options)`
 
@@ -588,7 +588,7 @@ interface QueryResult {
   toolsUsed: QueryToolUsage[];         // Tools used: { id, name, skillCalls }
   cost: QueryCost;                     // { modelCostUsd, toolCostUsd, totalCostUsd }
   durationMs: number;
-  data?: unknown;                      // Optional execution data (includeData=true)
+  data?: unknown;                      // Optional bounded data/preview (includeData=true)
   dataUrl?: string;                    // Optional blob URL (includeDataUrl=true)
   developerTrace?: QueryDeveloperTrace; // Optional runtime trace + diagnostics
   orchestrationMetrics?: QueryOrchestrationMetrics; // Optional first-pass outcome metrics

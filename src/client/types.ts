@@ -728,20 +728,20 @@ export interface QueryOptions {
   /**
    * Structured response mode for query answers. Defaults to `answer_with_evidence`
    * on the server when omitted. The runtime always produces a grounded result
-   * (raw data + computed artifacts + provenance); responseShape controls whether
-   * a prose synthesis layer is added on top.
+   * (bounded evidence + computed artifacts + full-data references);
+   * responseShape controls whether a prose synthesis layer is added on top.
    * - `answer_with_evidence`: prose answer plus the structured grounding (chat parity)
    * - `evidence_only`: structured grounding only, no prose — the agent-harness
-   *   shape. Returns raw `data` + `computedArtifacts` + `grounding`/`evidence`
-   *   by default so your own agent can reason over the result.
+   *   shape. Returns bounded evidence, `computedArtifacts`, and
+   *   `artifacts.canonicalDataRef`/`dataUrl` references for full data.
    */
   responseShape?: QueryResponseShape;
 
   /**
-   * Include raw execution data inline in the query response.
-   * Defaults to true for responseShape `evidence_only` (its primary payload is
-   * the raw fetched data); false otherwise. Set explicitly to override — e.g.
-   * `false` on evidence_only to rely on `dataUrl`/`canonicalDataRef` instead.
+   * Include bounded execution data inline in the query response.
+   * Defaults to false for every responseShape. Large payloads are returned as
+   * a preview object with `fullData.dataUrl`/`canonicalDataRef` instead of
+   * unbounded raw rows.
    */
   includeData?: boolean;
 
@@ -1262,10 +1262,10 @@ export interface QueryBaseResult {
   durationMs: number;
 
   /**
-   * Raw execution data from tools — the actual MCP/tool outputs.
-   * Returned by default for responseShape `evidence_only` (the agent-harness
-   * shape, whose primary payload is the raw data). For other shapes it is
-   * returned only when `includeData` is true.
+   * Bounded execution data from tools.
+   * Returned only when `includeData` is true. Small payloads may be returned
+   * directly; large payloads are returned as a truncation object with a
+   * structured preview and `fullData.dataUrl`/`canonicalDataRef`.
    */
   data?: unknown;
 
