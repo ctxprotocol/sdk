@@ -16,11 +16,20 @@ Before running any example, complete setup at [ctxprotocol.com](https://ctxproto
 3. Fund your wallet with USDC
 4. Create an API key
 
-Then export your key:
+Set your API key using either method:
+
+```bash
+cp .env.example .env.local
+# edit .env.local and replace sk_live_your_api_key_here
+```
+
+Or export it in your shell:
 
 ```bash
 export CONTEXT_API_KEY="sk_live_your_api_key"
 ```
+
+Optional routine overrides for `agent-routine.ts` are documented in `.env.example`.
 
 ## Install
 
@@ -65,3 +74,15 @@ pnpm start
 - End-to-end combined flow that demonstrates both Query mode and Execute mode
 - Method schema visibility for LLM prompt construction
 - Full discovery + execution walkthrough in one file
+
+## Internal dev scripts
+
+`dev/` holds internal validation and forensic harnesses used by Context maintainers. They are not part of the public example surface and are safe to ignore unless you are debugging marketplace behavior.
+
+Run one directly when needed:
+
+```bash
+tsx dev/btc-eth-chart.ts
+```
+
+Scripts in `dev/` may write generated JSON artifacts locally. Those outputs are gitignored.

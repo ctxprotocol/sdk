@@ -20,7 +20,7 @@ const client = new ContextClient({ apiKey });
 
 const routineQuestion =
   process.env.CONTEXT_ROUTINE_QUESTION ??
-  "Using available premium order-flow tools, analyze BTC over the last 60 days at 1h resolution. Return evidence for whether high-timeframe bias favors long, short, or neutral.";
+  "Using Velo Data for BTC futures/order-flow rows over the last 60 days at 1h resolution, analyze buy/sell flow, CVD, funding, open interest, and liquidations. Return evidence for whether high-timeframe bias favors long, short, or neutral.";
 
 const pinnedToolIds = (process.env.CONTEXT_ROUTINE_TOOL_IDS ?? "")
   .split(",")
