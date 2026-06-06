@@ -191,7 +191,7 @@ declare const DEFAULT_AGENT_MODEL_ID: "kimi-k2.6-model";
  * Public model IDs currently accepted by the Query API for `agentModelId`.
  * Tool selection remains a managed internal stage even when this is set.
  */
-declare const AGENT_MODEL_IDS: readonly ["kimi-k2.6-model", "deepseek-v4-pro-model", "deepseek-v4-flash-model", "gemini-3.5-flash-model", "gemini-flash-model", "gemini-lite-model", "minimax-m3-model", "qwen-3.7-plus-model", "qwen-3.7-max-model", "gpt-5.5-model", "claude-opus-model"];
+declare const AGENT_MODEL_IDS: readonly ["kimi-k2.6-model", "deepseek-v4-pro-model", "deepseek-v4-flash-model", "gemini-3.5-flash-model", "gemini-flash-model", "gemini-lite-model", "qwen-3.7-plus-model", "qwen-3.7-max-model", "gpt-5.5-model", "claude-opus-model"];
 type AgentModelId = (typeof AGENT_MODEL_IDS)[number];
 type AgentModelIdInput = AgentModelId | (string & {});
 /**
