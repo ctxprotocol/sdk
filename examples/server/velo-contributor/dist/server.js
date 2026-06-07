@@ -274,16 +274,33 @@ function buildRowCoverage(rows, options) {
     const stream_completed = options.stopReason === "none";
     const row_count_at_cap = options.stopReason === "requested_limit" || options.stopReason === "emergency_cap";
     const endGapMs = 6 * 60 * 60 * 1000;
-    const historyGapTruncated = stream_completed &&
+    const upstreamEndNatural = stream_completed &&
         maxTime !== null &&
         maxTime < options.requestedEndMs - endGapMs;
-    const likely_truncated = row_count_at_cap || historyGapTruncated;
+    let coverage_status;
+    if (row_count_at_cap) {
+        coverage_status = "row_cap";
+    }
+    else if (rowCount === 0) {
+        coverage_status = "partial";
+    }
+    else if (upstreamEndNatural) {
+        coverage_status = "upstream_end_natural";
+    }
+    else if (stream_completed) {
+        coverage_status = "complete";
+    }
+    else {
+        coverage_status = "partial";
+    }
+    const likely_truncated = coverage_status === "row_cap";
     return {
         rowCount,
         requestedLimit: options.requestedLimit,
         effectiveLimit: options.streamCap,
         stream_completed,
         stop_reason: options.stopReason,
+        coverage_status,
         likely_truncated,
         row_count_at_cap,
         min_time_ms: minTime,
@@ -389,16 +406,27 @@ function buildRowsParams(client, args) {
     const requestedProducts = getStringArray(args, "products");
     const requestedCoins = getStringArray(args, "coins", requestedProducts.length > 0 ? [] : ["BTC"]);
     const { products, coins } = normalizeRowFilters(type, requestedProducts, requestedCoins);
-    return {
+    const columns = requestedColumns(client, type, args);
+    const exchanges = getStringArray(args, "exchanges");
+    const resolution = getString(args, "resolution") ?? DEFAULT_RESOLUTION;
+    const base = {
         type,
-        columns: requestedColumns(client, type, args),
-        exchanges: getStringArray(args, "exchanges"),
-        products,
-        coins,
+        columns,
         begin: range.begin,
         end: range.end,
-        resolution: getString(args, "resolution") ?? DEFAULT_RESOLUTION,
+        resolution,
+        // velo-node requires exchanges to be an array; [] means all venues for the row type.
+        exchanges,
     };
+    // velo-node treats `products: []` as zero products (empty array is truthy),
+    // which disables upstream chunking and triggers Velo's 22_500 cell cap.
+    if (products.length > 0) {
+        return { ...base, products };
+    }
+    if (coins.length > 0) {
+        return { ...base, coins };
+    }
+    return { ...base, coins: ["BTC"] };
 }
 function normalizeRowFilters(type, products, coins) {
     if (products.length === 0 || coins.length === 0) {
@@ -415,8 +443,24 @@ function successResult(text, structuredContent) {
         structuredContent,
     };
 }
+function formatVeloRequestError(message) {
+    if (message === "invalid exchanges") {
+        return ("Velo API rejected the request: exchanges must be an array. " +
+            "Pass [] for all supported venues or exact Velo slugs such as binance-futures, bybit, okex-swap, or hyperliquid.");
+    }
+    const colCountMatch = message.match(/col count (\d+) > (\d+)/i);
+    if (colCountMatch) {
+        const [, requested, limit] = colCountMatch;
+        return (`Velo API rejected the request: ${requested} data cells exceeds the ${limit} per-request limit. ` +
+            "Cell count is approximately time_steps × exchanges × markets × columns. " +
+            "For multi-year charts, prefer a specific product (e.g. BTCUSDT on binance-futures) instead of coins across all venues, " +
+            "use resolution 1w when daily is not required, or request fewer columns/exchanges.");
+    }
+    return message;
+}
 function errorResult(error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const raw = error instanceof Error ? error.message : String(error);
+    const message = formatVeloRequestError(raw);
     return {
         isError: true,
         content: [{ type: "text", text: message }],
@@ -426,14 +470,15 @@ function errorResult(error) {
         },
     };
 }
-function toolMeta(latencyClass, notes, executeUsd = null) {
+function toolMeta(latencyClass, notes, executeUsd = null, rateLimitOptions = {}) {
     const rateLimitNotes = [
         "Contributor-hosted Velo API key (VELO_API_KEY) required; no user wallet context injection.",
         "Velo API rate limits apply.",
         notes,
         "velo-node auto-chunks large windows upstream; omit limit to stream the full requested window.",
         "For multi-month or multi-year series prefer 1d/1w unless intraday is required.",
-        "Check coverage before charting.",
+        "coverage_status: complete | row_cap | upstream_end_natural | partial. upstream_end_natural means Velo finished the stream but the newest row is before requested end — do not refetch narrower windows. Only refetch when coverage_status is row_cap.",
+        "likely_truncated is deprecated; true only for row_cap.",
     ]
         .filter((entry) => entry.trim().length > 0)
         .join(" ");
@@ -442,7 +487,12 @@ function toolMeta(latencyClass, notes, executeUsd = null) {
         queryEligible: true,
         latencyClass,
         rateLimit: {
+            // TODO(velo-tier): populate maxRequestsPerMinute and cooldownMs from Velo subscription dashboard.
             maxConcurrency: 1,
+            ...(rateLimitOptions.supportsBulk === true ? { supportsBulk: true } : {}),
+            ...(rateLimitOptions.recommendedBatchTools
+                ? { recommendedBatchTools: rateLimitOptions.recommendedBatchTools }
+                : {}),
             notes: rateLimitNotes,
         },
         ...(executeUsd
@@ -460,6 +510,7 @@ const genericObjectSchema = {
 };
 const rowCoverageSchema = {
     type: "object",
+    description: "Row-stream coverage. likely_truncated is deprecated and true only when coverage_status is row_cap. upstream_end_natural is NOT truncation — do not refetch narrower windows.",
     properties: {
         rowCount: { type: "number" },
         requestedLimit: { type: ["number", "null"] },
@@ -469,7 +520,14 @@ const rowCoverageSchema = {
             type: "string",
             enum: ["none", "requested_limit", "emergency_cap"],
         },
-        likely_truncated: { type: "boolean" },
+        coverage_status: {
+            type: "string",
+            enum: ["complete", "row_cap", "upstream_end_natural", "partial"],
+        },
+        likely_truncated: {
+            type: "boolean",
+            description: "Deprecated. True only when coverage_status is row_cap.",
+        },
         row_count_at_cap: { type: "boolean" },
         min_time_ms: { type: ["number", "null"] },
         max_time_ms: { type: ["number", "null"] },
@@ -484,6 +542,7 @@ const rowCoverageSchema = {
         "effectiveLimit",
         "stream_completed",
         "stop_reason",
+        "coverage_status",
         "likely_truncated",
         "row_count_at_cap",
         "min_time_ms",
@@ -593,7 +652,7 @@ const TOOLS = [
     },
     {
         name: "get_market_rows",
-        description: "Fetch exact Velo market rows for futures, spot, or Deribit options. Use when the buyer asks for Velo rows, latest row values, OHLCV, close_price, dollar_volume, funding_rate, dollar_open_interest_close, buy/sell liquidation dollar volumes, options index_price, iv_1w, iv_1m, iv_3m, skew_1w, skew_1m, or dvol_close. Pass either products or coins, never both: prefer products for exchange-specific futures/spot rows and coins for Deribit options rows. For latest/current/recent windows, set lookbackHours; when lookbackHours is present the server ignores begin/end and resolves a fresh window ending at request time. Use begin/end only when the user names a historical window. For windows longer than ~90 days, prefer resolution 1d or 1w unless intraday is required. Response includes coverage metadata (likely_truncated, row_count_at_cap, max_time_ms) — refetch with a narrower window, coarser resolution, or higher limit when truncated.",
+        description: "Fetch exact Velo market rows for futures, spot, or Deribit options. Use when the buyer asks for Velo rows, latest row values, OHLCV, close_price, dollar_volume, funding_rate, dollar_open_interest_close, buy/sell liquidation dollar volumes, options index_price, iv_1w, iv_1m, iv_3m, skew_1w, skew_1m, or dvol_close. Pass either products or coins, never both: prefer products for exchange-specific futures/spot rows and coins for Deribit options rows. For latest/current/recent windows, set lookbackHours; when lookbackHours is present the server ignores begin/end and resolves a fresh window ending at request time. Use begin/end only when the user names a historical window. For windows longer than ~90 days, prefer resolution 1d or 1w unless intraday is required. Response includes coverage metadata (coverage_status, row_count_at_cap, max_time_ms). When coverage_status is upstream_end_natural, the data is complete for what Velo has at the requested resolution — do not refetch a narrower window. Only refetch with a coarser resolution or higher limit when coverage_status is row_cap.",
         inputSchema: {
             type: "object",
             properties: {
@@ -610,7 +669,7 @@ const TOOLS = [
                 exchanges: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Velo exchange names such as binance-futures, bybit, okex-swap, hyperliquid, binance, or deribit.",
+                    description: "Optional Velo exchange slugs such as binance-futures, bybit, okex-swap, hyperliquid, binance, or deribit. Omit or pass [] for all supported venues of the row type. Use list_futures_products for exact exchange/product pairs.",
                 },
                 products: {
                     type: "array",
@@ -644,7 +703,7 @@ const TOOLS = [
             },
             required: ["params", "rowCount", "rows", "coverage", "fetchedAt"],
         },
-        _meta: toolMeta("slow", "Streams historical rows via velo-node chunked upstream requests; inspect coverage when charting long windows.", DEFAULT_EXECUTE_USD),
+        _meta: toolMeta("slow", "Streams historical rows via velo-node chunked upstream requests; inspect coverage_status when charting long windows.", DEFAULT_EXECUTE_USD, { supportsBulk: true }),
     },
     {
         name: "analyze_futures_market_structure",
@@ -655,7 +714,7 @@ const TOOLS = [
                 exchanges: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Velo futures exchanges, for example binance-futures, bybit, okex-swap, or hyperliquid.",
+                    description: "Optional Velo futures exchange slugs such as binance-futures, bybit, okex-swap, or hyperliquid. Omit or pass [] for all supported futures venues.",
                 },
                 products: {
                     type: "array",
@@ -688,7 +747,7 @@ const TOOLS = [
             },
             required: ["summary", "markets", "rowCount", "params", "coverage", "fetchedAt"],
         },
-        _meta: toolMeta("slow", "Composite analysis over Velo futures rows.", DEFAULT_EXECUTE_USD),
+        _meta: toolMeta("slow", "Composite analysis over Velo futures rows; uses get_market_rows batch semantics.", DEFAULT_EXECUTE_USD, { supportsBulk: true, recommendedBatchTools: ["get_market_rows"] }),
     },
     {
         name: "get_market_caps",
@@ -782,7 +841,7 @@ const TOOLS = [
             },
             required: ["rows", "rowCount", "latestMid", "params", "coverage", "fetchedAt"],
         },
-        _meta: toolMeta("slow", "Streams order book depth snapshots.", DEFAULT_EXECUTE_USD),
+        _meta: toolMeta("slow", "Streams order book depth snapshots via velo-node chunked upstream requests.", DEFAULT_EXECUTE_USD, { supportsBulk: true }),
     },
     {
         name: "get_recent_news",

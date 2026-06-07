@@ -653,7 +653,8 @@ function buildRowsParams(
     begin: range.begin,
     end: range.end,
     resolution,
-    ...(exchanges.length > 0 ? { exchanges } : {}),
+    // velo-node requires exchanges to be an array; [] means all venues for the row type.
+    exchanges,
   };
 
   // velo-node treats `products: []` as zero products (empty array is truthy),
@@ -692,6 +693,13 @@ function successResult(text: string, structuredContent: JsonObject): CallToolRes
 }
 
 function formatVeloRequestError(message: string): string {
+  if (message === "invalid exchanges") {
+    return (
+      "Velo API rejected the request: exchanges must be an array. " +
+      "Pass [] for all supported venues or exact Velo slugs such as binance-futures, bybit, okex-swap, or hyperliquid."
+    );
+  }
+
   const colCountMatch = message.match(/col count (\d+) > (\d+)/i);
   if (colCountMatch) {
     const [, requested, limit] = colCountMatch;
@@ -940,7 +948,8 @@ const TOOLS: ToolDefinition[] = [
         exchanges: {
           type: "array",
           items: { type: "string" },
-          description: "Velo exchange names such as binance-futures, bybit, okex-swap, hyperliquid, binance, or deribit.",
+          description:
+            "Optional Velo exchange slugs such as binance-futures, bybit, okex-swap, hyperliquid, binance, or deribit. Omit or pass [] for all supported venues of the row type. Use list_futures_products for exact exchange/product pairs.",
         },
         products: {
           type: "array",
@@ -992,7 +1001,8 @@ const TOOLS: ToolDefinition[] = [
         exchanges: {
           type: "array",
           items: { type: "string" },
-          description: "Velo futures exchanges, for example binance-futures, bybit, okex-swap, or hyperliquid.",
+          description:
+            "Optional Velo futures exchange slugs such as binance-futures, bybit, okex-swap, or hyperliquid. Omit or pass [] for all supported futures venues.",
         },
         products: {
           type: "array",
