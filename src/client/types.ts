@@ -1326,6 +1326,36 @@ export type QueryApiSuccessResponse = { success: true } & QueryResult;
  */
 export type QueryApiResponse = QueryApiSuccessResponse | ExecuteApiErrorResponse;
 
+export type QueryJobStatus = "queued" | "running" | "completed" | "failed";
+
+export interface QueryJobStartResult {
+  status: QueryJobStatus;
+  jobId: string;
+  pollingTool?: string;
+  message?: string;
+  progress?: unknown;
+  querySession?: unknown;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface QueryJobStatusResult {
+  status: QueryJobStatus;
+  jobId: string;
+  progress?: unknown;
+  querySession?: unknown;
+  result: QueryResult | null;
+  error: string | null;
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+}
+
+export interface QueryPollOptions {
+  intervalMs?: number;
+  timeoutMs?: number;
+}
+
 // ---------------------------------------------------------------------------
 // Query stream event types
 // ---------------------------------------------------------------------------

@@ -317,6 +317,9 @@ var Query = class {
   constructor(client) {
     this.client = client;
   }
+  sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
   normalizeResult(result) {
     const candidate = result;
     if (candidate.outcomeType === "capability_miss" && "capabilityMiss" in candidate && candidate.capabilityMiss) {
@@ -491,6 +494,60 @@ var Query = class {
       throw new ContextError(terminalError.error, terminalError.code);
     }
     throw new ContextError("Streaming query ended before done event");
+  }
+  /**
+   * Start a durable async query job. Use this for long-running queries that
+   * may exceed a single blocking SDK request.
+   */
+  async start(options) {
+    const opts = typeof options === "string" ? { query: options } : options;
+    const headers = opts.idempotencyKey ? { "Idempotency-Key": opts.idempotencyKey } : void 0;
+    return await this.client._fetch(
+      "/api/v1/query/jobs",
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          query: opts.query,
+          tools: opts.tools,
+          resumeFrom: opts.resumeFrom,
+          forkFrom: opts.forkFrom,
+          agentModelId: opts.agentModelId,
+          responseShape: opts.responseShape,
+          favoritesOnly: opts.favoritesOnly,
+          includeData: opts.includeData,
+          includeDataUrl: opts.includeDataUrl,
+          includeDeveloperTrace: opts.includeDeveloperTrace
+        })
+      }
+    );
+  }
+  /**
+   * Fetch the current status for a durable async query job.
+   */
+  async getStatus(jobId) {
+    return await this.client._fetch(
+      `/api/v1/query/jobs/${jobId}`
+    );
+  }
+  /**
+   * Poll a durable query job until completion or failure.
+   */
+  async poll(jobId, options = {}) {
+    const intervalMs = options.intervalMs ?? 2e3;
+    const timeoutMs = options.timeoutMs ?? 15 * 6e4;
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() <= deadline) {
+      const status = await this.getStatus(jobId);
+      if (status.status === "completed") {
+        return status;
+      }
+      if (status.status === "failed") {
+        throw new ContextError(status.error ?? "Context query job failed");
+      }
+      await this.sleep(intervalMs);
+    }
+    throw new ContextError(`Context query job polling timed out after ${timeoutMs}ms`);
   }
   /**
    * Run an agentic query with streaming. Returns an async iterable that

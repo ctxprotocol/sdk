@@ -116,6 +116,23 @@ console.log(answer.developerTrace?.diagnostics?.selection); // lane + scout prob
 console.log(answer.orchestrationMetrics); // high-level first-pass / rediscovery metrics
 ```
 
+For long-running questions, start a durable job and poll until it completes:
+
+```typescript
+const job = await client.query.start({
+  query: "Build a chart-ready dataset of Base whale movements over the last 30 days",
+  responseShape: "evidence_only",
+  includeDataUrl: true,
+});
+
+const completed = await client.query.poll(job.jobId, {
+  intervalMs: 2000,
+  timeoutMs: 15 * 60_000,
+});
+
+console.log(completed.result?.dataUrl);
+```
+
 To see valid model slugs without guessing:
 
 ```typescript

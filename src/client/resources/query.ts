@@ -1,6 +1,9 @@
 import type {
   QueryOptions,
   QueryDeveloperTrace,
+  QueryJobStartResult,
+  QueryJobStatusResult,
+  QueryPollOptions,
   QueryResult,
   QueryStreamEvent,
 } from "../types.js";
@@ -22,6 +25,10 @@ import type { ContextClient } from "../client.js";
  */
 export class Query {
   constructor(private client: ContextClient) {}
+
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
 
   private normalizeResult(result: QueryResult): QueryResult {
     const candidate = result as QueryResult & { outcomeType?: string };
@@ -240,6 +247,71 @@ export class Query {
     }
 
     throw new ContextError("Streaming query ended before done event");
+  }
+
+  /**
+   * Start a durable async query job. Use this for long-running queries that
+   * may exceed a single blocking SDK request.
+   */
+  async start(options: QueryOptions | string): Promise<QueryJobStartResult> {
+    const opts = typeof options === "string" ? { query: options } : options;
+    const headers = opts.idempotencyKey
+      ? { "Idempotency-Key": opts.idempotencyKey }
+      : undefined;
+
+    return await this.client._fetch<QueryJobStartResult>(
+      "/api/v1/query/jobs",
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          query: opts.query,
+          tools: opts.tools,
+          resumeFrom: opts.resumeFrom,
+          forkFrom: opts.forkFrom,
+          agentModelId: opts.agentModelId,
+          responseShape: opts.responseShape,
+          favoritesOnly: opts.favoritesOnly,
+          includeData: opts.includeData,
+          includeDataUrl: opts.includeDataUrl,
+          includeDeveloperTrace: opts.includeDeveloperTrace,
+        }),
+      }
+    );
+  }
+
+  /**
+   * Fetch the current status for a durable async query job.
+   */
+  async getStatus(jobId: string): Promise<QueryJobStatusResult> {
+    return await this.client._fetch<QueryJobStatusResult>(
+      `/api/v1/query/jobs/${jobId}`
+    );
+  }
+
+  /**
+   * Poll a durable query job until completion or failure.
+   */
+  async poll(
+    jobId: string,
+    options: QueryPollOptions = {}
+  ): Promise<QueryJobStatusResult> {
+    const intervalMs = options.intervalMs ?? 2000;
+    const timeoutMs = options.timeoutMs ?? 15 * 60_000;
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() <= deadline) {
+      const status = await this.getStatus(jobId);
+      if (status.status === "completed") {
+        return status;
+      }
+      if (status.status === "failed") {
+        throw new ContextError(status.error ?? "Context query job failed");
+      }
+      await this.sleep(intervalMs);
+    }
+
+    throw new ContextError(`Context query job polling timed out after ${timeoutMs}ms`);
   }
 
   /**

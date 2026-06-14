@@ -1272,4 +1272,133 @@ describe("Query Resource", () => {
       }).rejects.toThrow(ContextError);
     });
   });
+
+  describe("query jobs", () => {
+    it("starts an async query job", async () => {
+      const mockFn = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 202,
+        statusText: "Accepted",
+        headers: new Headers({ "content-type": "application/json" }),
+        json: () =>
+          Promise.resolve({
+            status: "running",
+            jobId: "11111111-1111-4111-8111-111111111111",
+            pollingTool: "context_query_status",
+            message: "running",
+            progress: null,
+            querySession: null,
+            createdAt: "2026-06-14T00:00:00.000Z",
+            updatedAt: "2026-06-14T00:00:00.000Z",
+          }),
+      });
+      globalThis.fetch = mockFn;
+
+      const job = await client.query.start({
+        query: "long query",
+        responseShape: "evidence_only",
+        includeDataUrl: true,
+        idempotencyKey: "21118fda-33be-4d66-8df5-0e50b3371f54",
+      });
+
+      expect(job.jobId).toBe("11111111-1111-4111-8111-111111111111");
+      const [url, opts] = mockFn.mock.calls[0];
+      expect(url).toBe("https://www.ctxprotocol.com/api/v1/query/jobs");
+      expect(opts.method).toBe("POST");
+      expect(new Headers(opts.headers).get("Idempotency-Key")).toBe(
+        "21118fda-33be-4d66-8df5-0e50b3371f54",
+      );
+      expect(JSON.parse(opts.body)).toMatchObject({
+        query: "long query",
+        responseShape: "evidence_only",
+        includeDataUrl: true,
+      });
+    });
+
+    it("gets async query job status", async () => {
+      const mockFn = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: new Headers({ "content-type": "application/json" }),
+        json: () =>
+          Promise.resolve({
+            status: "completed",
+            jobId: "11111111-1111-4111-8111-111111111111",
+            progress: null,
+            querySession: null,
+            result: MOCK_SUCCESS_RESPONSE,
+            error: null,
+            createdAt: "2026-06-14T00:00:00.000Z",
+            updatedAt: "2026-06-14T00:01:00.000Z",
+            completedAt: "2026-06-14T00:01:00.000Z",
+          }),
+      });
+      globalThis.fetch = mockFn;
+
+      const status = await client.query.getStatus(
+        "11111111-1111-4111-8111-111111111111",
+      );
+
+      expect(status.status).toBe("completed");
+      expect(status.result?.response).toBe(MOCK_SUCCESS_RESPONSE.response);
+      const [url] = mockFn.mock.calls[0];
+      expect(url).toBe(
+        "https://www.ctxprotocol.com/api/v1/query/jobs/11111111-1111-4111-8111-111111111111",
+      );
+    });
+
+    it("polls until an async query job completes", async () => {
+      const mockFn = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          headers: new Headers({ "content-type": "application/json" }),
+          json: () =>
+            Promise.resolve({
+              status: "running",
+              jobId: "11111111-1111-4111-8111-111111111111",
+              progress: null,
+              querySession: null,
+              result: null,
+              error: null,
+              createdAt: "2026-06-14T00:00:00.000Z",
+              updatedAt: "2026-06-14T00:00:30.000Z",
+              completedAt: null,
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          headers: new Headers({ "content-type": "application/json" }),
+          json: () =>
+            Promise.resolve({
+              status: "completed",
+              jobId: "11111111-1111-4111-8111-111111111111",
+              progress: null,
+              querySession: null,
+              result: MOCK_SUCCESS_RESPONSE,
+              error: null,
+              createdAt: "2026-06-14T00:00:00.000Z",
+              updatedAt: "2026-06-14T00:01:00.000Z",
+              completedAt: "2026-06-14T00:01:00.000Z",
+            }),
+        });
+      globalThis.fetch = mockFn;
+
+      const completed = await client.query.poll(
+        "11111111-1111-4111-8111-111111111111",
+        {
+          intervalMs: 1,
+          timeoutMs: 1000,
+        },
+      );
+
+      expect(completed.status).toBe("completed");
+      expect(mockFn).toHaveBeenCalledTimes(2);
+    });
+  });
 });

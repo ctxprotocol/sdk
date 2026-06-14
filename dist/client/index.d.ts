@@ -1,5 +1,5 @@
-import { ao as UpdateToolOptions, ap as UpdateToolResult, T as Tool, O as SearchOptions, P as ExecuteOptions, Y as ExecutionResult, U as ExecuteSessionStartOptions, X as ExecuteSessionResult, a5 as QueryOptions, a6 as QueryResult, ai as QueryStreamEvent, F as ContextClientOptions } from '../types-DrTQ25vT.js';
-export { D as AGENT_MODEL_IDS, aF as ALLOWED_TOOL_CATEGORIES, G as AgentModelId, H as AgentModelIdInput, B as ContextError, aq as ContextErrorCode, E as DEFAULT_AGENT_MODEL_ID, _ as ExecuteApiErrorResponse, $ as ExecuteApiResponse, Z as ExecuteApiSuccessResponse, a1 as ExecuteSessionApiResponse, a0 as ExecuteSessionApiSuccessResponse, W as ExecuteSessionSpend, V as ExecuteSessionStatus, M as McpTool, K as McpToolMeta, L as McpToolRateLimitHints, ah as QueryApiResponse, ag as QueryApiSuccessResponse, as as QueryAssumptionMetadata, a2 as QueryAttemptForkReason, a3 as QueryAttemptReference, ar as QueryCapabilityMissPayload, aC as QueryChartAxis, ax as QueryChartAxisType, aA as QueryChartDataRow, az as QueryChartDataValue, aB as QueryChartSeries, aw as QueryChartSeriesType, aD as QueryChartSpec, av as QueryChartType, ay as QueryChartValueFormat, aa as QueryCompletenessRepairEvent, au as QueryComputedArtifact, a9 as QueryCost, Q as QueryDeveloperTrace, ab as QueryDeveloperTraceDiagnostics, af as QueryDeveloperTraceLoopInfo, ad as QueryDeveloperTraceStep, ac as QueryDeveloperTraceSummary, ae as QueryDeveloperTraceToolRef, a4 as QueryForkReference, at as QueryOutcomeType, a7 as QuerySessionState, al as QueryStreamDeveloperTraceEvent, am as QueryStreamDoneEvent, an as QueryStreamErrorEvent, ak as QueryStreamTextDeltaEvent, aj as QueryStreamToolStatusEvent, a8 as QueryToolUsage, N as SearchResponse, I as SuggestedPrompt, J as SuggestedPromptSource, aE as ToolCategory } from '../types-DrTQ25vT.js';
+import { as as UpdateToolOptions, at as UpdateToolResult, T as Tool, O as SearchOptions, P as ExecuteOptions, Y as ExecutionResult, U as ExecuteSessionStartOptions, X as ExecuteSessionResult, a8 as QueryOptions, aa as QueryResult, a5 as QueryJobStartResult, a7 as QueryJobStatusResult, a9 as QueryPollOptions, am as QueryStreamEvent, F as ContextClientOptions } from '../types-DVNCbeRF.js';
+export { D as AGENT_MODEL_IDS, aJ as ALLOWED_TOOL_CATEGORIES, G as AgentModelId, H as AgentModelIdInput, B as ContextError, au as ContextErrorCode, E as DEFAULT_AGENT_MODEL_ID, _ as ExecuteApiErrorResponse, $ as ExecuteApiResponse, Z as ExecuteApiSuccessResponse, a1 as ExecuteSessionApiResponse, a0 as ExecuteSessionApiSuccessResponse, W as ExecuteSessionSpend, V as ExecuteSessionStatus, M as McpTool, K as McpToolMeta, L as McpToolRateLimitHints, al as QueryApiResponse, ak as QueryApiSuccessResponse, aw as QueryAssumptionMetadata, a2 as QueryAttemptForkReason, a3 as QueryAttemptReference, av as QueryCapabilityMissPayload, aG as QueryChartAxis, aB as QueryChartAxisType, aE as QueryChartDataRow, aD as QueryChartDataValue, aF as QueryChartSeries, aA as QueryChartSeriesType, aH as QueryChartSpec, az as QueryChartType, aC as QueryChartValueFormat, ae as QueryCompletenessRepairEvent, ay as QueryComputedArtifact, ad as QueryCost, Q as QueryDeveloperTrace, af as QueryDeveloperTraceDiagnostics, aj as QueryDeveloperTraceLoopInfo, ah as QueryDeveloperTraceStep, ag as QueryDeveloperTraceSummary, ai as QueryDeveloperTraceToolRef, a4 as QueryForkReference, a6 as QueryJobStatus, ax as QueryOutcomeType, ab as QuerySessionState, ap as QueryStreamDeveloperTraceEvent, aq as QueryStreamDoneEvent, ar as QueryStreamErrorEvent, ao as QueryStreamTextDeltaEvent, an as QueryStreamToolStatusEvent, ac as QueryToolUsage, N as SearchResponse, I as SuggestedPrompt, J as SuggestedPromptSource, aI as ToolCategory } from '../types-DVNCbeRF.js';
 
 /**
  * Developer resource for managing tool listings on the Context Protocol marketplace.
@@ -135,6 +135,7 @@ declare class Tools {
 declare class Query {
     private client;
     constructor(client: ContextClient);
+    private sleep;
     private normalizeResult;
     private buildSyntheticTraceFromRunResult;
     private buildSyntheticTraceFromStreamStatus;
@@ -172,6 +173,19 @@ declare class Query {
      * ```
      */
     run(options: QueryOptions | string): Promise<QueryResult>;
+    /**
+     * Start a durable async query job. Use this for long-running queries that
+     * may exceed a single blocking SDK request.
+     */
+    start(options: QueryOptions | string): Promise<QueryJobStartResult>;
+    /**
+     * Fetch the current status for a durable async query job.
+     */
+    getStatus(jobId: string): Promise<QueryJobStatusResult>;
+    /**
+     * Poll a durable query job until completion or failure.
+     */
+    poll(jobId: string, options?: QueryPollOptions): Promise<QueryJobStatusResult>;
     /**
      * Run an agentic query with streaming. Returns an async iterable that
      * yields events as the server processes the query in real-time.
@@ -298,4 +312,4 @@ declare class ContextClient {
     _fetchRaw(endpoint: string, options?: RequestInit): Promise<Response>;
 }
 
-export { ContextClient, ContextClientOptions, Developer, Discovery, ExecuteOptions, ExecuteSessionResult, ExecuteSessionStartOptions, ExecutionResult, Query, QueryOptions, QueryResult, QueryStreamEvent, SearchOptions, Tool, Tools, UpdateToolOptions, UpdateToolResult };
+export { ContextClient, ContextClientOptions, Developer, Discovery, ExecuteOptions, ExecuteSessionResult, ExecuteSessionStartOptions, ExecutionResult, Query, QueryJobStartResult, QueryJobStatusResult, QueryOptions, QueryPollOptions, QueryResult, QueryStreamEvent, SearchOptions, Tool, Tools, UpdateToolOptions, UpdateToolResult };
