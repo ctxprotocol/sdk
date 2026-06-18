@@ -1,8 +1,9 @@
 'use strict';
 
 // src/client/types.ts
-var DEFAULT_AGENT_MODEL_ID = "kimi-k2.6-model";
+var DEFAULT_AGENT_MODEL_ID = "glm-5.2-model";
 var AGENT_MODEL_IDS = [
+  "glm-5.2-model",
   "kimi-k2.6-model",
   "deepseek-v4-pro-model",
   "deepseek-v4-flash-model",

@@ -138,7 +138,7 @@ To see valid model slugs without guessing:
 ```typescript
 import { AGENT_MODEL_IDS, DEFAULT_AGENT_MODEL_ID } from "@ctxprotocol/sdk";
 
-console.log(DEFAULT_AGENT_MODEL_ID); // "kimi-k2.6-model"
+console.log(DEFAULT_AGENT_MODEL_ID); // "glm-5.2-model"
 console.log(AGENT_MODEL_IDS);        // Supported `agentModelId` values
 ```
 
