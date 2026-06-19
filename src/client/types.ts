@@ -4,15 +4,15 @@ import type { ContributorSearchTraceRecord } from "../contrib/search/types.js";
  * Default model for the main librarian agent loop. Omitting `agentModelId`
  * uses this same platform default as the Context chat app.
  */
-export const DEFAULT_AGENT_MODEL_ID = "glm-5.2-model" as const;
+export const DEFAULT_AGENT_MODEL_ID = "kimi-k2.6-model" as const;
 
 /**
  * Public model IDs currently accepted by the Query API for `agentModelId`.
  * Tool selection remains a managed internal stage even when this is set.
  */
 export const AGENT_MODEL_IDS = [
-  "glm-5.2-model",
   "kimi-k2.6-model",
+  "glm-5.2-model",
   "deepseek-v4-pro-model",
   "deepseek-v4-flash-model",
   "qwen-3.7-plus-model",

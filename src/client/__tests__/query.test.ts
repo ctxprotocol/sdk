@@ -423,7 +423,7 @@ describe("Query Resource", () => {
   const originalFetch = globalThis.fetch;
 
   it("publishes current agent model IDs with GLM 5.2 as default", () => {
-    expect(DEFAULT_AGENT_MODEL_ID).toBe("glm-5.2-model");
+    expect(DEFAULT_AGENT_MODEL_ID).toBe("kimi-k2.6-model");
     expect(AGENT_MODEL_IDS).toContain(DEFAULT_AGENT_MODEL_ID);
     expect(AGENT_MODEL_IDS).not.toContain("glm-model");
   });
