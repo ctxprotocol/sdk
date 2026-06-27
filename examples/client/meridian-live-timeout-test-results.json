@@ -1,0 +1,74 @@
+[
+  {
+    "id": "test-1-fast",
+    "label": "Fast — single exchange/product",
+    "ok": true,
+    "durationMs": 34812,
+    "totalSkillCalls": 1,
+    "toolsUsed": [
+      {
+        "id": "e5e62fa5-28e1-42f4-8b84-f4866234df43",
+        "name": "Meridian V2",
+        "skillCalls": 1
+      }
+    ],
+    "outcomeType": "answer",
+    "responsePreview": "Here are the Binance Futures BTCUSDT daily close prices from Meridian for the requested window:\n\n| time | exchange | product | close_price |\n| :--- | :--- | :--- | :--- |\n| 2026-06-24T00:00:00Z | binance-futures | BTCUSDT | 61051.2 |\n| 2026-06-25T00:00:00Z | binance-futures | BTCUSDT | 59771.9 |\n\nThe query returned two daily rows covering the 24-hour periods ending at 2026-06-24 and 2026-06-25. No",
+    "timeoutSignals": [],
+    "traceSummary": {
+      "toolCalls": 1,
+      "retryCount": 0,
+      "selfHealCount": 0,
+      "failureCount": 0,
+      "loopCount": 2
+    }
+  },
+  {
+    "id": "test-2-broad",
+    "label": "Broad — 10 assets x 4 venues x 6 months",
+    "ok": true,
+    "durationMs": 283201,
+    "totalSkillCalls": 5,
+    "toolsUsed": [
+      {
+        "id": "e5e62fa5-28e1-42f4-8b84-f4866234df43",
+        "name": "Meridian V2",
+        "skillCalls": 5
+      }
+    ],
+    "outcomeType": "answer",
+    "responsePreview": "The dataset was successfully retrieved. It contains **7,004 rows** across **181 daily observations** from **2025-12-27 to 2026-06-25**, covering the requested 6 metrics.\n\n**Fields included**\n- `close_price`\n- `dollar_volume`\n- `funding_rate`\n- `dollar_open_interest_close`\n- `premium`\n- `liquidations_dollar_volume`\n\n**Coverage by exchange**\n\n| Exchange | Products | Rows / Product | Status |\n|---|--",
+    "timeoutSignals": [],
+    "traceSummary": {
+      "toolCalls": 6,
+      "retryCount": 0,
+      "selfHealCount": 0,
+      "failureCount": 1,
+      "loopCount": 4
+    }
+  },
+  {
+    "id": "test-3-medium",
+    "label": "Medium — 2 assets x 2 venues, coverage + warnings",
+    "ok": true,
+    "durationMs": 278981,
+    "totalSkillCalls": 1,
+    "toolsUsed": [
+      {
+        "id": "e5e62fa5-28e1-42f4-8b84-f4866234df43",
+        "name": "Meridian V2",
+        "skillCalls": 1
+      }
+    ],
+    "outcomeType": "answer",
+    "responsePreview": "Here are the results from the Meridian futures request for **BTCUSDT** and **ETHUSDT** on **Binance Futures** and **OKX** at **1d** resolution, covering **2026-06-01T00:00:00Z to 2026-06-26T00:00:00Z** (25 daily observations per product/exchange, June 1 – June 25).\n\n---\n\n### Summary Statistics\n\n| Product | Exchange | Start Close | End Close | Min Close | Max Close | Total Dollar Volume (25 days) |",
+    "timeoutSignals": [],
+    "traceSummary": {
+      "toolCalls": 1,
+      "retryCount": 0,
+      "selfHealCount": 0,
+      "failureCount": 0,
+      "loopCount": 2
+    }
+  }
+]
