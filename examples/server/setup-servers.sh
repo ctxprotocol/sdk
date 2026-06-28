@@ -20,6 +20,7 @@ SERVERS=(
   "mcp-coinglass:coinglass-contributor:4005"
   "mcp-kalshi:kalshi-contributor:4007"
   "mcp-velo:velo-contributor:4010"
+  "mcp-fmp:fmp-contributor:4011"
 )
 
 RETIRED_SERVERS=(

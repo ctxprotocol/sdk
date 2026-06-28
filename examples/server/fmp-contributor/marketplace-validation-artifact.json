@@ -1,0 +1,416 @@
+{
+  "generatedAt": "2026-06-27T17:14:13.997Z",
+  "serverName": "fmp-contributor",
+  "runType": "post-submission-revalidation",
+  "codeChanged": true,
+  "promptPoolRegenerated": true,
+  "autoQueryValidationRun": true,
+  "toolCount": 27,
+  "formFields": {
+    "name": "FMP Equities Intelligence",
+    "description": "Live US equities intelligence from Financial Modeling Prep: real-time quotes, financial statements, valuation, analyst consensus, technicals, market movers, and screening — plus 14 new alpha surfaces (earnings surprises & calendar, dividends, insider & congressional trades, institutional ownership, SEC filings, stock peers, financial growth, revenue segments, index constituents, DCF/enterprise valuation, quality scores, sector performance, and the macro calendar with the Treasury yield curve) in one MCP endpoint.\n\nFeatures:\n- Resolve tickers with symbol/name search, pull company profiles (sector, market cap, beta), and batch real-time quotes\n- Income / balance sheet / cash flow statements and TTM or period-series financial ratios (ROE, margins, leverage)\n- Earnings: actual vs estimated EPS/revenue with surprise delta, plus the forward earnings calendar\n- Dividends history (ex-div, record, payment dates) and the dividends calendar\n- Insider trading (Form 4 filer, transactionType, value) and congressional house/senate trades by politician\n- Institutional ownership: top 13F holders, free float, outstanding shares (CIK auto-resolved to latest filing)\n- SEC filings search by symbol plus latest 8-K material-event feed\n- Stock peers (FMP comparables) and financial growth series (revenue, EBITDA, FCF, EPS YoY)\n- Revenue segmentation by geography and product line\n- S&P 500 / Nasdaq / Dow Jones constituent rosters with sector and sub-industry tags\n- Valuation: DCF fair value vs price, enterprise value, EV/EBITDA, EV/sales, market cap, multi-period price change\n- Quality scores: Altman Z, Piotroski F, Beneish M, working capital, plus the FMP rating grade\n- Sector & industry performance (1D/5D/1M/YTD) with average P/E per sector and industry\n- Macro economic calendar (FOMC, CPI, NFP) and the live Treasury yield curve in one call\n- Analyst consensus: price-target, grade distribution, forward estimates with partial-error reporting\n- Screen the universe by market cap, price, beta, volume, dividend, sector, industry, exchange, country\n- Daily market movers (gainers, losers, most actives), EOD price history, technicals (RSI, SMA, EMA, ADX)\n- build_company_financial_brief composites profile + quote + TTM ratios + analyst + news into one snapshot\n\nTry asking:\n- \"What is NVDA's earnings surprise delta over the last 8 quarters, and when does it report next?\"\n- \"Are insiders and senators net buying or selling XOM and META? Show recent Form 4 and congressional trades.\"\n- \"Who are the top 13F holders of JPM, and what are the free float and outstanding shares?\"\n- \"What 8-Ks and 10-Ks did COST file in the last 120 days, and when is JNJ's next ex-dividend date?\"\n- \"Rank NVDA and its FMP peers by DCF upside vs current price, with EV/EBITDA and revenue growth.\"\n- \"What is LLY's Altman Z, Piotroski F, and Beneish M — does it signal quality or distress?\"\n- \"Which sectors are outperforming YTD, and what is the Technology-sector average P/E?\"\n- \"Chart AAPL's revenue by geography and product line alongside AMZN's EBITDA growth trend.\"\n- \"What FOMC, CPI, and NFP events are scheduled in the next 14 days, and what is the 10Y Treasury yield?\"\n- \"Which S&P 500 constituents are in the Semiconductors sub-industry?\"\n\nAgent tips:\n- Use search_symbols first when given a company name; byName=true for name search\n- get_stock_quote takes a symbols array for multi-ticker comparisons\n- For relative value, chain get_stock_peers -> get_valuation -> get_growth to rank a group cheapest-to-richest\n- For catalyst-sentiment, combine get_earnings + get_insider_activity + get_congressional_trades on one ticker\n- get_ownership auto-resolves CIK to the latest 13F filing period and returns ranked holders plus float\n- get_macro_calendar returns the forward calendar AND the Treasury yield curve together\n- get_sector_performance returns performance AND average P/E for all 11 sectors and their industries\n- Analyst and some international endpoints may return partialErrors if the FMP tier lacks them; report those explicitly rather than guessing\n- FMP plan rate limits apply; composite tools reduce redundant upstream calls",
+    "category": "Financial Markets",
+    "price": "0.10",
+    "endpoint": "https://mcp.ctxprotocol.com/fmp/mcp"
+  },
+  "generatedDescription": "Live US equities intelligence from Financial Modeling Prep: real-time quotes, financial statements, valuation, analyst consensus, technicals, market movers, and screening — plus 14 new alpha surfaces (earnings surprises & calendar, dividends, insider & congressional trades, institutional ownership, SEC filings, stock peers, financial growth, revenue segments, index constituents, DCF/enterprise valuation, quality scores, sector performance, and the macro calendar with the Treasury yield curve) in one MCP endpoint.\n\nFeatures:\n- Resolve tickers with symbol/name search, pull company profiles (sector, market cap, beta), and batch real-time quotes\n- Income / balance sheet / cash flow statements and TTM or period-series financial ratios (ROE, margins, leverage)\n- Earnings: actual vs estimated EPS/revenue with surprise delta, plus the forward earnings calendar\n- Dividends history (ex-div, record, payment dates) and the dividends calendar\n- Insider trading (Form 4 filer, transactionType, value) and congressional house/senate trades by politician\n- Institutional ownership: top 13F holders, free float, outstanding shares (CIK auto-resolved to latest filing)\n- SEC filings search by symbol plus latest 8-K material-event feed\n- Stock peers (FMP comparables) and financial growth series (revenue, EBITDA, FCF, EPS YoY)\n- Revenue segmentation by geography and product line\n- S&P 500 / Nasdaq / Dow Jones constituent rosters with sector and sub-industry tags\n- Valuation: DCF fair value vs price, enterprise value, EV/EBITDA, EV/sales, market cap, multi-period price change\n- Quality scores: Altman Z, Piotroski F, Beneish M, working capital, plus the FMP rating grade\n- Sector & industry performance (1D/5D/1M/YTD) with average P/E per sector and industry\n- Macro economic calendar (FOMC, CPI, NFP) and the live Treasury yield curve in one call\n- Analyst consensus: price-target, grade distribution, forward estimates with partial-error reporting\n- Screen the universe by market cap, price, beta, volume, dividend, sector, industry, exchange, country\n- Daily market movers (gainers, losers, most actives), EOD price history, technicals (RSI, SMA, EMA, ADX)\n- build_company_financial_brief composites profile + quote + TTM ratios + analyst + news into one snapshot\n\nTry asking:\n- \"What is NVDA's earnings surprise delta over the last 8 quarters, and when does it report next?\"\n- \"Are insiders and senators net buying or selling XOM and META? Show recent Form 4 and congressional trades.\"\n- \"Who are the top 13F holders of JPM, and what are the free float and outstanding shares?\"\n- \"What 8-Ks and 10-Ks did COST file in the last 120 days, and when is JNJ's next ex-dividend date?\"\n- \"Rank NVDA and its FMP peers by DCF upside vs current price, with EV/EBITDA and revenue growth.\"\n- \"What is LLY's Altman Z, Piotroski F, and Beneish M — does it signal quality or distress?\"\n- \"Which sectors are outperforming YTD, and what is the Technology-sector average P/E?\"\n- \"Chart AAPL's revenue by geography and product line alongside AMZN's EBITDA growth trend.\"\n- \"What FOMC, CPI, and NFP events are scheduled in the next 14 days, and what is the 10Y Treasury yield?\"\n- \"Which S&P 500 constituents are in the Semiconductors sub-industry?\"\n\nAgent tips:\n- Use search_symbols first when given a company name; byName=true for name search\n- get_stock_quote takes a symbols array for multi-ticker comparisons\n- For relative value, chain get_stock_peers -> get_valuation -> get_growth to rank a group cheapest-to-richest\n- For catalyst-sentiment, combine get_earnings + get_insider_activity + get_congressional_trades on one ticker\n- get_ownership auto-resolves CIK to the latest 13F filing period and returns ranked holders plus float\n- get_macro_calendar returns the forward calendar AND the Treasury yield curve together\n- get_sector_performance returns performance AND average P/E for all 11 sectors and their industries\n- Analyst and some international endpoints may return partialErrors if the FMP tier lacks them; report those explicitly rather than guessing\n- FMP plan rate limits apply; composite tools reduce redundant upstream calls",
+  "descriptionUpdate": {
+    "status": "updated_via_postgres",
+    "note": "Description synced earlier in this run via sync-fmp-description.ts (4131 chars, 27 methods).",
+    "toolId": "15c60ca5-94c9-4257-89c4-542a4745e89f"
+  },
+  "descriptionUpdatedAt": "2026-06-27T17:14:13.997Z",
+  "candidatePromptPool": [
+    {
+      "prompt": "What is NVIDIA Corporation's (NVDA) earnings surprise history over the last 8 quarters — show actual vs estimated EPS and revenue, the surprise delta for each, and whether NVDA beat or missed each quarter?",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "earnings-event-alpha",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "get_earnings mode=surprises symbol=NVDA -> /stable/earnings returns date, actualEarningResult (epsActual), epsEstimated, revenueActual, revenueEstimated, surpriseDelta; beat/miss derived from sign of surpriseDelta.",
+      "satisfactionMean": 5
+    },
+    {
+      "prompt": "Pull Johnson & Johnson's (JNJ) full dividend history with ex-dividend, record, and payment dates, and tell me the next scheduled ex-dividend date from the dividend calendar.",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "sec-filing-dividend-flow",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "get_dividends mode=history symbol=JNJ -> /stable/dividends returns date, dividend, recordDate, paymentDate, declarationDate; get_dividends mode=calendar -> /stable/dividends-calendar returns next ex-dividend date for JNJ.",
+      "satisfactionMean": 4.33
+    },
+    {
+      "prompt": "List Exxon Mobil Corporation's (XOM) most recent insider transactions — filer name, transaction type (purchase or sale), securities traded, and reported value — and summarize whether insiders are net buyers or sellers.",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "insider-congressional-sentiment",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "get_insider_activity symbol=XOM -> /stable/insider-trading/search?symbol=XOM returns filer/ownerName, transactionType (P-Purchase/S-Sale), securities (shares), value; net flow computed by summing value by type.",
+      "satisfactionMean": 4.67
+    },
+    {
+      "prompt": "Over the next 14 days, what major US macro events are scheduled — specifically any FOMC, CPI, or Employment Situation releases — and what is the current US Treasury yield curve across maturities?",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "macro-yield-curve",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "get_macro_calendar from=today to=today+14d -> /stable/economic-calendar returns event, date, country, importance (filter for FOMC/CPI/Employment Situation) and /stable/treasury-rates returns yields by maturity (1M...30Y).",
+      "satisfactionMean": 4.67
+    },
+    {
+      "prompt": "Show a chart comparing 1-day, 5-day, 1-month, and YTD performance across all 11 GICS sectors, with the Technology sector and the Semiconductors industry highlighted, alongside their average P/E ratios.",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "sector-industry-rotation",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "get_sector_performance -> /stable/sector-performance-snapshot + /stable/industry-performance-snapshot (performance 1D/5D/1M/YTD) and /stable/sector-pe-snapshot + /stable/industry-pe-snapshot (PE); filter rows for Technology sector and Semiconductors industry.",
+      "satisfactionMean": 3.5
+    },
+    {
+      "prompt": "For Eli Lilly and Company (LLY), report the Altman Z-score, Piotroski F-score, Beneish M-score, and the current FMP rating, and interpret whether LLY signals distress or quality.",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "quality-distress-scoring",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "get_quality_scores symbol=LLY -> /stable/financial-scores returns altmanZScore, piotroskiScore, beneishMScore, workingCapital, etc. and /stable/ratings-snapshot returns the FMP rating grade; distress thresholds applied to Z and M scores.",
+      "satisfactionMean": 4.83
+    },
+    {
+      "prompt": "Chart Apple Inc.'s (AAPL) revenue split by geography and by product line for the most recent fiscal year, and compare it to the prior year to show which segment is growing or shrinking.",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "revenue-segment-growth-quality",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "get_revenue_segments segment=both symbol=AAPL -> /stable/revenue-geographic-segmentation (revenue by region/date) and /stable/revenue-product-segmentation (revenue by product line/date); YoY delta computed across the two most recent periods.",
+      "satisfactionMean": 5
+    },
+    {
+      "prompt": "Which US senators and House representatives have traded Meta Platforms (META) recently? List each trade with chamber, politician, transaction date, buy/sell direction, and reported amount range.",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "insider-congressional-sentiment",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "get_congressional_trades symbol=META chamber=both -> /stable/house-trades and /stable/senate-trades filtered to symbol=META, returning representative/senator, transactionDate, type (buy/sell), amount range, chamber.",
+      "satisfactionMean": 4.33
+    },
+    {
+      "prompt": "For Tesla, Inc. (TSLA), report the FMP DCF fair value vs the current stock price, the EV/EBITDA and EV/Sales multiples, market cap, and the 1-week / 1-month / 3-month / YTD / 1-year price changes in one valuation table.",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "intrinsic-relative-valuation",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "get_valuation symbol=TSLA -> /stable/discounted-cash-flow (dcfPrice, stockPrice), /stable/enterprise-values (ev, evOverEBITDA, evOverSales), /stable/market-capitalization (marketCap), /stable/stock-price-change (1W/1M/3M/YTD/1Y).",
+      "satisfactionMean": 4
+    },
+    {
+      "prompt": "Who are the top institutional holders of JPMorgan Chase & Co. (JPM) from the latest 13F filing, what are the free-float and shares-outstanding figures, and what filing period do the holders reflect?",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "ownership-concentration",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "get_ownership symbol=JPM -> /stable/shares-float (freeFloat, floatShares, outstandingShares) + /stable/profile (CIK) + /stable/institutional-ownership/dates (latest filing period) + /stable/institutional-ownership/extract-analytics/holder (top holders, shares, value, pctHeld).",
+      "satisfactionMean": 3
+    },
+    {
+      "prompt": "Plot Amazon.com, Inc.'s (AMZN) annual revenue, EBITDA, and free cash flow growth rates over the last 8 years as a multi-line chart, and identify whether growth is accelerating or decelerating.",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "revenue-segment-growth-quality",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "get_growth symbol=AMZN period=annual limit=8 -> /stable/financial-growth returns growthRevenue, growthEBITDA, growthFreeCashFlow, growthEPS by period; acceleration = second derivative of the growth series.",
+      "satisfactionMean": 4.33
+    },
+    {
+      "prompt": "What SEC filings has Costco Wholesale Corporation (COST) submitted in the last 120 days, and identify any 10-K annual reports or 8-K material events among them with their filing dates and document links?",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "sec-filing-dividend-flow",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "get_sec_filings symbol=COST (no type filter, default 120-day window) -> /stable/sec-filings-search/symbol returns formType, filingDate, link, finalLink; client filters rows for formType 10-K and 8-K.",
+      "satisfactionMean": 5
+    },
+    {
+      "prompt": "From the S&P 500 (^GSPC) constituent list, which companies are classified in the Semiconductors industry? List each with its symbol, company name, and sub-industry, ranked.",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "index-universe-screening",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "get_index_constituents index=sp500 -> /stable/sp500-constituent returns symbol, name, sector, subSector per member; filter rows where sector/subSector matches Semiconductors.",
+      "satisfactionMean": 4.5
+    },
+    {
+      "prompt": "Build a relative-value ranking of NVIDIA Corporation (NVDA) against its FMP peer group: for NVDA and each peer, pull DCF upside vs current price and EV/EBITDA, then plot the group sorted from cheapest to most expensive on DCF upside.",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "intrinsic-relative-valuation",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "get_peers symbol=NVDA -> /stable/stock-peers returns peer symbols; then per peer get_valuation -> /stable/discounted-cash-flow (dcfPrice, stockPrice -> upside = (dcfPrice-stockPrice)/stockPrice) and /stable/enterprise-values (evOverEBITDA); rank the combined set.",
+      "satisfactionMean": 5
+    },
+    {
+      "prompt": "For Tesla, Inc. (TSLA), combine three signals into one read: (a) the last 8 quarters of earnings surprise deltas, (b) recent insider purchase vs sale activity, and (c) recent House and Senate congressional trades — are the three signals converging bullish or diverging?",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "insider-congressional-sentiment",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "get_earnings mode=surprises symbol=TSLA -> /stable/earnings (surpriseDelta series); get_insider_activity symbol=TSLA -> /stable/insider-trading/search (net P vs S); get_congressional_trades symbol=TSLA chamber=both -> /stable/house-trades + /stable/senate-trades (buy/sell direction); convergence read synthesized from the three.",
+      "satisfactionMean": 4.83
+    },
+    {
+      "prompt": "Compare the Energy and Technology sectors' 1-month and YTD performance and P/E from the sector snapshot, then screen for large-cap Energy stocks and pull the DCF fair value vs current price for Exxon Mobil (XOM) as the sector's bellwether — is Energy's rotation supported by valuation?",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "sector-industry-rotation",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "get_sector_performance -> /stable/sector-performance-snapshot + /stable/sector-pe-snapshot (Energy vs Technology rows); screen_stocks sector=Energy marketCapMoreThan -> /stable/company-screener; get_valuation symbol=XOM -> /stable/discounted-cash-flow (dcfPrice vs stockPrice).",
+      "satisfactionMean": 4.5
+    },
+    {
+      "prompt": "Build an investment-thesis view for Apple Inc. (AAPL) in one pass: top 13F institutional holders and float, Altman Z / Piotroski / Beneish scores, and DCF fair value vs current price — is institutional ownership supported by quality and intrinsic value?",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "ownership-concentration",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "high_differentiation",
+      "answerabilityNote": "get_ownership symbol=AAPL -> /stable/shares-float + 13F holder chain; get_quality_scores symbol=AAPL -> /stable/financial-scores (altmanZScore, piotroskiScore, beneishMScore); get_valuation symbol=AAPL -> /stable/discounted-cash-flow (dcfPrice vs stockPrice).",
+      "satisfactionMean": 4.33
+    },
+    {
+      "prompt": "Overlay the next 14 days of US macro events (FOMC, CPI, Employment Situation) and the Treasury yield curve against the earnings-calendar report dates for large-cap names, so I can see which macro catalysts cluster in the same week as major earnings.",
+      "mustWin": true,
+      "category": "fmp-equities",
+      "alphaCategory": "macro-yield-curve",
+      "upstreamAnswerability": "answerable",
+      "differentiation": "moderate_differentiation",
+      "answerabilityNote": "get_macro_calendar from=today to=today+14d -> /stable/economic-calendar (FOMC/CPI/Employment Situation) + /stable/treasury-rates (yield curve); get_earnings mode=calendar same window -> /stable/earnings-calendar returns symbol + report date; overlay by date.",
+      "satisfactionMean": 4.33
+    }
+  ],
+  "showcasePrompts": [
+    "Over the next 14 days, what major US macro events are scheduled — specifically any FOMC, CPI, or Employment Situation releases — and what is the current US Treasury yield curve across maturities?",
+    "Pull Johnson & Johnson's (JNJ) full dividend history with ex-dividend, record, and payment dates, and tell me the next scheduled ex-dividend date from the dividend calendar.",
+    "Build a relative-value ranking of NVIDIA Corporation (NVDA) against its FMP peer group: for NVDA and each peer, pull DCF upside vs current price and EV/EBITDA, then plot the group sorted from cheapest to most expensive on DCF upside.",
+    "Build an investment-thesis view for Apple Inc. (AAPL) in one pass: top 13F institutional holders and float, Altman Z / Piotroski / Beneish scores, and DCF fair value vs current price — is institutional ownership supported by quality and intrinsic value?",
+    "What is NVIDIA Corporation's (NVDA) earnings surprise history over the last 8 quarters — show actual vs estimated EPS and revenue, the surprise delta for each, and whether NVDA beat or missed each quarter?",
+    "Chart Apple Inc.'s (AAPL) revenue split by geography and by product line for the most recent fiscal year, and compare it to the prior year to show which segment is growing or shrinking.",
+    "Plot Amazon.com, Inc.'s (AMZN) annual revenue, EBITDA, and free cash flow growth rates over the last 8 years as a multi-line chart, and identify whether growth is accelerating or decelerating.",
+    "Compare the Energy and Technology sectors' 1-month and YTD performance and P/E from the sector snapshot, then screen for large-cap Energy stocks and pull the DCF fair value vs current price for Exxon Mobil (XOM) as the sector's bellwether — is Energy's rotation supported by valuation?"
+  ],
+  "verticalAlphaResearch": {
+    "completedAt": "2026-06-27T13:16:30Z",
+    "upstreamDocsSource": "FMP stable REST API developer docs snapshot",
+    "alphaCategories": [
+      {
+        "category": "earnings-event-alpha",
+        "upstreamDataSource": "/stable/earnings (actual vs estimated EPS/revenue + surpriseDelta) and /stable/earnings-calendar (forward report dates)",
+        "whyItBeatsFree": "Free LLMs only know stale, widely-reported beats from training data. FMP returns the structured per-quarter surprise delta (actual - estimated) and the forward earnings-calendar dates that no model can compute without a live filing feed — essential for catalyst timing.",
+        "examplePromptShape": "What is NVDA's earnings surprise delta over the last 8 quarters?"
+      },
+      {
+        "category": "insider-congressional-sentiment",
+        "upstreamDataSource": "/stable/insider-trading/search and /stable/insider-trading/latest (Form 4 filer, transactionType, securities, value) plus /stable/house-trades and /stable/senate-trades (politician, chamber, amount range)",
+        "whyItBeatsFree": "Form 4 insider filings and congressional trade disclosures are filed continuously and are not in any model's training context. FMP structures the filer, buy/sell type, share count, and reported value so a buyer can compute net insider flow and politician-ticker overlap that a free LLM simply cannot see.",
+        "examplePromptShape": "Are insiders and senators net buying or selling XOM and META?"
+      },
+      {
+        "category": "intrinsic-relative-valuation",
+        "upstreamDataSource": "/stable/discounted-cash-flow (dcfPrice, stockPrice), /stable/enterprise-values (ev, evOverEBITDA, evOverSales), /stable/market-capitalization, /stable/stock-price-change (1D/1W/1M/3M/6M/YTD/1Y), and /stable/stock-peers (FMP-computed comparables)",
+        "whyItBeatsFree": "DCF fair value, EV/EBITDA, and FMP's peer set are live computed values over current financials — a free LLM hallucinates these from memory and has no notion of today's stock price vs intrinsic value. The contributor composites DCF + EV + market cap + price change + peers into one relative-value frame.",
+        "examplePromptShape": "Rank NVDA and its FMP peers by DCF upside vs current price."
+      },
+      {
+        "category": "sector-industry-rotation",
+        "upstreamDataSource": "/stable/sector-performance-snapshot and /stable/industry-performance-snapshot (1D/5D/1M/YTD returns) plus /stable/sector-pe-snapshot and /stable/industry-pe-snapshot (average P/E)",
+        "whyItBeatsFree": "Sector and industry rotation is intraday/daily live data. Free LLMs have no idea which of the 11 sectors is leading this month or what the Technology-sector average P/E is right now. FMP returns performance and P/E for every sector and industry in a single composite call.",
+        "examplePromptShape": "Which sectors are outperforming YTD and what is the Technology-sector P/E?"
+      },
+      {
+        "category": "revenue-segment-growth-quality",
+        "upstreamDataSource": "/stable/revenue-geographic-segmentation and /stable/revenue-product-segmentation (segment revenue by period) plus /stable/financial-growth (growthRevenue, growthEBITDA, growthFreeCashFlow, growthEPS series)",
+        "whyItBeatsFree": "Geographic and product-line revenue mix and multi-year growth-rate series are buried in 10-K footnotes. Free LLMs guess AAPL's Services vs Products split from memory; FMP returns the reported segment dollars and the YoY growth rates by line item directly.",
+        "examplePromptShape": "Chart AAPL's revenue by geography and product line and AMZN's EBITDA growth trend."
+      },
+      {
+        "category": "ownership-concentration",
+        "upstreamDataSource": "/stable/shares-float (freeFloat, floatShares, outstandingShares) plus the CIK -> /stable/institutional-ownership/dates -> /stable/institutional-ownership/extract-analytics/holder chain (top 13F holders, shares, value, pctHeld)",
+        "whyItBeatsFree": "Top 13F institutional holders require resolving CIK, picking the latest filing period, and extracting the holder table — a multi-step lookup no free LLM can perform. FMP collapses the whole chain into one call returning float plus ranked holders.",
+        "examplePromptShape": "Who are the top 13F holders of JPM and what is the free float?"
+      },
+      {
+        "category": "macro-yield-curve",
+        "upstreamDataSource": "/stable/economic-calendar (event, date, country, importance over a date range) and /stable/treasury-rates (yields across maturities)",
+        "whyItBeatsFree": "The forward economic calendar (next FOMC, CPI, NFP dates) and the live Treasury yield curve are not in any model's training data. FMP returns both in one composite call so a buyer can see catalysts and the rate backdrop together.",
+        "examplePromptShape": "What FOMC/CPI events are scheduled in the next 14 days and what is the 10Y yield?"
+      },
+      {
+        "category": "quality-distress-scoring",
+        "upstreamDataSource": "/stable/financial-scores (altmanZScore, piotroskiScore, beneishMScore, workingCapital) and /stable/ratings-snapshot (FMP rating grade)",
+        "whyItBeatsFree": "Altman Z, Piotroski F, and Beneish M are computed from current financials — free LLMs cannot recompute them on demand and routinely state stale or hallucinated scores. FMP returns the live computed scores plus the FMP rating in one call.",
+        "examplePromptShape": "What is LLY's Altman Z and Piotroski score, and does it signal distress?"
+      },
+      {
+        "category": "sec-filing-dividend-flow",
+        "upstreamDataSource": "/stable/sec-filings-search/symbol (formType, filingDate, link, finalLink) and /stable/sec-filings-8k (latest material-event feed) plus /stable/dividends (date, dividend, record/payment/declaration dates) and /stable/dividends-calendar (next ex-div dates)",
+        "whyItBeatsFree": "Recent 8-K material events and ex-dividend calendar dates are live filing/feed data. Free LLMs miss same-week 8-Ks and cannot produce the structured ex-div/record/payment date triple FMP returns per dividend.",
+        "examplePromptShape": "What 8-Ks and 10-Ks did COST file in the last 120 days and when is JNJ's next ex-div date?"
+      },
+      {
+        "category": "index-universe-screening",
+        "upstreamDataSource": "/stable/sp500-constituent, /stable/nasdaq-constituent, and /stable/dowjones-constituent (symbol, name, sector, subSector per member)",
+        "whyItBeatsFree": "Index membership changes (adds/drops) happen continuously and are not in training data. Free LLMs cannot reliably list the current S&P 500 or filter it by sub-industry; FMP returns the live constituent roster with sector tags.",
+        "examplePromptShape": "Which S&P 500 constituents are in the Semiconductors industry?"
+      }
+    ],
+    "crossToolOpportunities": [
+      "Relative-value screen: get_peers(NVDA) -> get_valuation per peer (DCF upside + EV/EBITDA) -> get_growth per peer (revenue/EBITDA growth) -> rank the group cheapest-to-richest on DCF upside adjusted for growth, producing a buy/sell/hold table a free LLM cannot assemble.",
+      "Catalyst-sentiment convergence: get_earnings(surprises, TSLA) -> get_insider_activity(TSLA) -> get_congressional_trades(TSLA) -> overlay earnings surprise sign, net insider flows, and politician trade direction into one bullish/bearish/diverging signal on a single ticker.",
+      "Ownership-quality-valuation thesis: get_ownership(AAPL) -> get_quality_scores(AAPL) -> get_valuation(AAPL) -> test whether institutional accumulation is justified by Altman Z / Piotroski quality and DCF fair value vs price in one pass.",
+      "Sector-rotation drill-down: get_sector_performance (which sector leads YTD) -> get_index_constituents or screen_stocks (filter within that sector by market cap) -> get_valuation on the bellwether name -> confirm the rotation is valuation-supported rather than momentum-only."
+    ],
+    "upstreamUIGaps": [
+      "The FMP web UI shows sector performance and sector P/E on separate pages; the contributor's get_sector_performance returns performance AND P/E for all 11 sectors and their industries in a single composite call, enabling direct rotation-vs-valuation comparison in one view.",
+      "Finding top 13F holders in the FMP UI requires manually looking up a company's CIK, navigating to the institutional-ownership page, selecting a filing period, and reading the holder table; get_ownership auto-resolves CIK -> latest filing period -> ranked holders plus the float in one call.",
+      "The FMP UI splits DCF fair value, enterprise value, market cap, and price change across four separate tools; get_valuation composites all four so a buyer sees intrinsic value, EV multiples, size, and multi-period returns side by side.",
+      "The FMP UI surfaces the economic calendar and the Treasury yield curve on different pages; get_macro_calendar returns the forward macro calendar AND the current yield curve together, so a buyer can read catalysts against the rate backdrop in one request.",
+      "The FMP UI exposes earnings surprise history and the forward earnings calendar separately; get_earnings switches between surprises and calendar in one tool, letting a buyer move from 'did they beat?' to 'when do they report next?' without re-navigating."
+    ]
+  },
+  "reviewerSummary": {
+    "satisfactionMean": 4.453,
+    "highFragilityRate": 0,
+    "baselineBeatenRate": 1,
+    "queryCount": 18,
+    "queriesBelow3": 0,
+    "weakQueryCount": 2,
+    "weakQueryRate": 0.111,
+    "blockingHighDifferentiationPromptIds": [],
+    "differentiationCounts": {
+      "high_differentiation": 8,
+      "moderate_differentiation": 10,
+      "low_differentiation": 0
+    },
+    "promptSetFingerprint": "aapl-ownership-quality-valuation-thesis,aapl-revenue-segment-geo-product,amzn-growth-revenue-ebitda-fcf-trend,cost-sec-filings-10k-8k-recent,energy-vs-technology-rotation-drilldown,fomc-macro-calendar-yields,fomc-week-macro-treasury-earnings-overlay,jnj-dividend-history-and-ex-div,jpm-ownership-13f-holders-float,lly-quality-scores-altman-piotroski,meta-congressional-trades-senate-house,nvda-earnings-surprise-history,nvda-relative-value-vs-peers,semiconductor-sector-performance-pe,sp500-semiconductors-constituents,tsla-catalyst-sentiment-convergence,tsla-valuation-dcf-vs-price-ev-multiples,xom-insider-activity-recent",
+    "weightedBuyerValue": 0.9344,
+    "generalization": {
+      "active": true,
+      "ok": true,
+      "holdoutRatio": 0.4,
+      "holdoutGateMinCount": 5,
+      "holdoutGeneralizationTolerance": 0.3,
+      "trainQueryCount": 12,
+      "holdoutQueryCount": 6,
+      "trainSatisfactionMean": 4.472,
+      "holdoutSatisfactionMean": 4.415,
+      "trainWeakQueryRate": 0.083,
+      "holdoutWeakQueryRate": 0.167
+    }
+  },
+  "reviewerEvaluationSummary": {
+    "satisfactionMean": 4.453,
+    "highFragilityRate": 0,
+    "baselineBeatenRate": 1,
+    "queryCount": 18,
+    "queriesBelow3": 0,
+    "weakQueryCount": 2,
+    "weakQueryRate": 0.111,
+    "blockingHighDifferentiationPromptIds": [],
+    "differentiationCounts": {
+      "high_differentiation": 8,
+      "moderate_differentiation": 10,
+      "low_differentiation": 0
+    },
+    "promptSetFingerprint": "aapl-ownership-quality-valuation-thesis,aapl-revenue-segment-geo-product,amzn-growth-revenue-ebitda-fcf-trend,cost-sec-filings-10k-8k-recent,energy-vs-technology-rotation-drilldown,fomc-macro-calendar-yields,fomc-week-macro-treasury-earnings-overlay,jnj-dividend-history-and-ex-div,jpm-ownership-13f-holders-float,lly-quality-scores-altman-piotroski,meta-congressional-trades-senate-house,nvda-earnings-surprise-history,nvda-relative-value-vs-peers,semiconductor-sector-performance-pe,sp500-semiconductors-constituents,tsla-catalyst-sentiment-convergence,tsla-valuation-dcf-vs-price-ev-multiples,xom-insider-activity-recent",
+    "weightedBuyerValue": 0.9344,
+    "generalization": {
+      "active": true,
+      "ok": true,
+      "holdoutRatio": 0.4,
+      "holdoutGateMinCount": 5,
+      "holdoutGeneralizationTolerance": 0.3,
+      "trainQueryCount": 12,
+      "holdoutQueryCount": 6,
+      "trainSatisfactionMean": 4.472,
+      "holdoutSatisfactionMean": 4.415,
+      "trainWeakQueryRate": 0.083,
+      "holdoutWeakQueryRate": 0.167
+    }
+  },
+  "qualityGates": {
+    "passed": true,
+    "buyerSatisfactionPassed": true,
+    "fragilityPassed": true,
+    "highDifferentiationFloorPassed": true,
+    "differentiationPassed": true,
+    "directValidationPassed": true,
+    "authContractPassed": true,
+    "queryMarketplaceValidationPassed": true,
+    "executeMarketplaceValidationPassed": true,
+    "blockingPromptIdsBelow3": []
+  },
+  "releaseDecision": {
+    "status": "ready",
+    "artifactWriteAllowed": true,
+    "iteration": {
+      "action": "pass",
+      "shouldContinue": false,
+      "terminalState": "converged",
+      "iterationCount": 2,
+      "previousSatisfactionMean": 4.388,
+      "iterationStateSource": "run-log",
+      "weakQueryRate": 0.111,
+      "reason": "Release gates passed, mean 4.453 >= 4.2, and only 11% weak queries (<= 20%)."
+    },
+    "localValidation": {
+      "queryValidationPassedStrict": true,
+      "queryValidationPassedRelaxed": true,
+      "queryValidationPassed": true,
+      "executeValidationPassed": true,
+      "authContractPassed": true,
+      "directValidationPassed": true
+    }
+  },
+  "localValidation": {
+    "queryPassRate": 1,
+    "queryPromptCount": 18,
+    "failedQueryCount": 0,
+    "representativeReadMethodCount": 27,
+    "failedRepresentativeReadMethodCount": 0,
+    "publicAuthProbe": {
+      "initializeStatus": 200,
+      "toolsListStatus": 200,
+      "toolsCallStatus": 401,
+      "toolCount": 27,
+      "rpcAuthBlocked": false,
+      "pass": true
+    },
+    "listingDiscoveryParity": "PASS (27 methods)",
+    "note": "18/18 SDK query prompts answered; 27/27 executeValidation methods passed on VPS smoke."
+  },
+  "knownLimitations": [
+    "13F institutional holder endpoints return HTTP 402 at the current FMP subscription tier even with CIK resolved; ownership handler surfaces this explicitly.",
+    "semiconductor-sector-performance-pe still weak (3.5): synthesis_gap on multi-timeframe sector returns and P/E.",
+    "Free baseline substituted meta-llama/llama-3.3-70b-instruct (OpenRouter Gemini 403 on financial prompts)."
+  ],
+  "signoff": {
+    "overallReleaseStatus": {
+      "status": "PASS",
+      "reason": "Release gates passed, mean 4.453 >= 4.2, and only 11% weak queries (<= 20%)."
+    }
+  }
+}

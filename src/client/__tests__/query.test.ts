@@ -856,6 +856,38 @@ describe("Query Resource", () => {
       }
     });
 
+    it("parses rendered image computed artifacts (kind: image)", async () => {
+      globalThis.fetch = mockFetchRunResult({
+        ...MOCK_SUCCESS_RESPONSE,
+        computedArtifacts: [
+          {
+            kind: "image",
+            url: "https://blob.example.com/charts/abc123.png",
+            alt: "Sector ETF YTD normalized performance chart",
+            title: "Sector ETF YTD Performance",
+            contentHash: "abc123",
+            bytes: 320749,
+            width: 1926,
+            height: 1030,
+          },
+        ],
+      });
+
+      const result = await client.query.run("Render a chart image");
+
+      expect(result.computedArtifacts).toHaveLength(1);
+      const image = result.computedArtifacts?.[0];
+      expect(image?.kind).toBe("image");
+      if (image?.kind === "image") {
+        expect(image.url).toBe("https://blob.example.com/charts/abc123.png");
+        expect(image.title).toBe("Sector ETF YTD Performance");
+        expect(image.width).toBe(1926);
+        expect(image.height).toBe(1030);
+        expect(image.contentHash).toBe("abc123");
+        expect(image.bytes).toBe(320749);
+      }
+    });
+
     it("parses shared ungrounded runtime fixture as capability miss", async () => {
       globalThis.fetch = mockFetchRunResult(
         SHARED_QUERY_FIXTURE.ungroundedCapabilityMiss,

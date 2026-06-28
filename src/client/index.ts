@@ -61,6 +61,8 @@ export type {
   QueryDeveloperTraceToolRef,
   QueryDeveloperTraceLoopInfo,
   QueryComputedArtifact,
+  QueryChartArtifact,
+  QueryImageArtifact,
   QueryChartType,
   QueryChartSeriesType,
   QueryChartAxisType,

@@ -1,0 +1,300 @@
+{
+  "reviewedAt": "2026-06-27T16:37:00Z",
+  "perQueryEvaluations": [
+    {
+      "promptId": "aapl-revenue-segment-geo-product",
+      "query": "Chart Apple Inc.'s (AAPL) revenue split by geography and by product line for the most recent fiscal year, and compare it to the prior year to show which segment is growing or shrinking.",
+      "quotedExcerpts": [
+        "The chart below compares Apple's revenue split by geography and product line for **FY2025** (ended Sep 27, 2025) versus **FY2024** (ended Sep 28, 2024).",
+        "| Americas | 167.04 | 178.35 | +6.8% |\n| Europe | 101.33 | 111.03 | +9.6% |\n| Greater China | 66.95 | 64.38 | -3.8% |\n| Japan | 25.05 | 28.70 | +14.6% |\n| Rest of Asia Pacific | 30.66 | 33.70 | +9.9% |",
+        "| iPhone | 201.18 | 209.59 | +4.2% |\n| Service | 96.17 | 109.16 | +13.5% |\n| Mac | 29.98 | 33.71 | +12.4% |\n| Wearables, Home and Accessories | 37.01 | 35.69 | -3.6% |\n| iPad | 26.69 | 28.02 | +5.0% |",
+        "**Shrinking:** **Greater China** was the only geographic segment to decline (-3.8%), and **Wearables, Home and Accessories** was the only product line to shrink (-3.6%).",
+        "**iPhone** remains Apple's largest revenue source, growing a steady +4.2% year over year."
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 5.0,
+      "scoreExplanations": {
+        "actionability": "Buyer gets explicit growth rates per segment for both dimensions, making it trivial to identify which segments to overweight/underweight in a segment-growth thesis; the growing/shrinking callout is decision-ready.",
+        "dataFreshness": "FY2025 (ended Sep 27, 2025) vs FY2024 is the most recent fiscal year pairing and is explicitly dated in the lead sentence.",
+        "specificity": "Exact segment names, exact dollar amounts in $B (e.g., 167.04, 178.35), and exact growth rates to one decimal (e.g., +14.6%, -3.8%) — no generic prose.",
+        "uniqueness": "Free baseline is stuck at 2022 vs 2021 (4 years stale) and contains implausible figures (iPhone +34.2%, Mac +45.5%); paid answer is current, accurate, and matches Apple's actual FY2025 10-K. Dramatic paid win.",
+        "completeness": "Both geographies (5 segments) and product lines (5 segments) covered for both years, with growing/shrinking explicitly identified as requested.",
+        "dataAccuracy": "Figures match Apple's reported FY2025 10-K (Americas ~$178B, Services ~$109B, iPhone ~$209.6B, Greater China decline); no hallucination signals."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": false,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "2 tool calls, 0 retries, 0 self-heal, single tool (FMP Equities Intelligence) selected; full answer delivered with no gaps.",
+        "responseQualityNote": "Cleanest possible outcome: current-year segment data for both dimensions with growth rates and an explicit growing/shrinking verdict.",
+        "improvementLever": "No improvement needed; consider adding a rendered chart image to match the 'categorical_comparison' expected shape beyond the markdown tables.",
+        "diagnosticBrief": "Single-tool, zero-retry trace produced a complete FY2025-vs-FY2024 segment breakdown that matches Apple's actual 10-K. No fragility or data gaps."
+      },
+      "overallVerdict": "Exactly what I needed — current-year Apple segment revenue for both geography and product with growth rates and a clear growing/shrinking callout, ready to drop into a segment-performance review."
+    },
+    {
+      "promptId": "meta-congressional-trades-senate-house",
+      "query": "Which US senators and House representatives have traded Meta Platforms (META) recently? List each trade with chamber, politician, transaction date, buy/sell direction, and reported amount range.",
+      "quotedExcerpts": [
+        "Here are all reported Meta Platforms (META) trades by U.S. House representatives and Senators, based on disclosure filings. **141 total trades** are on record (100 House, 41 Senate).",
+        "| Angus King | ME | 2026-02-13 | Sale | $1,001 - $15,000 |\n| Markwayne Mullin | OK | 2025-12-29 | Purchase | $50,001 - $100,000 |",
+        "| Matt Van Epps | — | 2026-06-16 | Sale | $1,001 - $15,000 |\n| John McGuire | VA05 | 2026-06-04 | Purchase | $1,001 - $15,000 |",
+        "**Notable recent activity (2026):** The most recent META trade was a **sale by Rep. Matt Van Epps on 2026-06-16** ($1,001–$15,000). The largest single trade in the dataset was the $250,001–$500,000 **Exchange by Rep. Michael McCaul (spouse account) on 2024-03-25**.",
+        "**Data source:** House Office of the Clerk and Senate Office of Public Records, as fetched on 2026-06-27."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.33,
+      "scoreExplanations": {
+        "actionability": "Buyer can sort and filter the 141 trades by politician, date, direction, and size to spot patterns (e.g., McCaul's repeated large sales), but the loose 'recently' interpretation (4 years of history) forces the buyer to do their own windowing rather than getting a recent-trades view.",
+        "dataFreshness": "Most recent trade is 2026-06-16 and data was fetched 2026-06-27, so the freshest end is current; however the dataset reaches back to 2022-11, which dilutes the 'recently' framing.",
+        "specificity": "Every trade row has politician name, state/district, exact transaction date, granular direction (Purchase / Sale / Sale Full / Sale Partial / Exchange), and the standard disclosure amount range — all five requested fields populated.",
+        "uniqueness": "Free baseline returns only ~6 trades from early 2022 (and includes a retired senator); paid answer delivers 141 sourced trades with current 2026 activity. Paid crushes free on this prompt.",
+        "completeness": "All requested fields are present per row, but the expected 'metric_table_plus_chart' shape is only half-met: there is no aggregate summary view (counts by politician, net buy/sell flow) on top of the raw table.",
+        "dataAccuracy": "Named politicians (King, Mullin, Boozman, Capito, Khanna, McCaul, MTG, etc.) are all real and known META traders; the 141/100/41 split is plausible. Minor red flag: several rows are exact duplicates (e.g., two Capito 2025-11-13 Purchase rows) which could be real separate accounts or a dedup gap."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": true,
+        "codeIssueDetail": "Expected chart shape 'metric_table_plus_chart' delivered as table only; no aggregate chart or summary visualization.",
+        "dataAccuracyRedFlags": [
+          "Duplicate rows for same politician/date/direction (e.g., Shelley Moore Capito 2025-11-13 Purchase x2) — may be legitimate separate accounts but not disambiguated."
+        ],
+        "rootCauseCategory": "synthesis_gap",
+        "rootCauseEvidence": "Raw trade data fully retrieved but no aggregate/summary view synthesized, and the 'recently' window was interpreted as the full available history rather than a recent slice.",
+        "responseQualityNote": "Comprehensive trade-level data with all requested fields, but presented as a flat 141-row list with no aggregate chart and an overly broad 'recently' window.",
+        "improvementLever": "Add a summary aggregate (trade counts and net dollar direction by politician, recent-12-month slice) on top of the raw table, and tighten 'recently' to ~12 months with older trades in an appendix.",
+        "diagnosticBrief": "Single-tool, zero-retry trace delivered complete raw data; weakness is a synthesis gap (no aggregate view) plus loose 'recently' windowing rather than any tool failure."
+      },
+      "overallVerdict": "Impressive depth — 141 sourced congressional META trades with every requested field — but the loose 'recently' window pulls in 4 years of history and there's no aggregate chart to quickly scan who's buying vs selling."
+    },
+    {
+      "promptId": "tsla-valuation-dcf-vs-price-ev-multiples",
+      "query": "For Tesla, Inc. (TSLA), report the FMP DCF fair value vs the current stock price, the EV/EBITDA and EV/Sales multiples, market cap, and the 1-week / 1-month / 3-month / YTD / 1-year price changes in one valuation table.",
+      "quotedExcerpts": [
+        "**Data gap:** The FMP DCF fair-value endpoint was not accessible in the current toolkit. The analyst consensus price target is used below as the closest available proxy.",
+        "| **Current Price** | $379.71 |\n| **Fair-Value Proxy (Analyst Consensus Target)** | $450.45 |\n| **Market Cap** | $1.43T |\n| **Enterprise Value** | $1.42T |\n| **EV / EBITDA (TTM)** | 117.57x |\n| **EV / Sales (TTM)** | 14.49x |",
+        "| **1-Week Change** | -5.19% |\n| **1-Month Change** | -14.11% |\n| **3-Month Change** | +4.94% |\n| **YTD Change** | -15.57% |\n| **1-Year Change** | +17.33% |",
+        "*As of the June 26, 2026 close. Period changes are calculated from the following reference closes: 1-week ($400.49), 1-month ($442.10), 3-month ($361.83), YTD ($449.72), and 1-year ($323.63).*"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.0,
+      "scoreExplanations": {
+        "actionability": "Buyer gets current price, market cap, EV, both multiples, and all five price-change windows — enough to run a relative-valuation check. But the lead anchor (DCF fair value vs price) is substituted with analyst consensus target, which answers a different question (consensus vs intrinsic).",
+        "dataFreshness": "As of the June 26, 2026 close with explicit reference closes for each period window — fully dated and current.",
+        "specificity": "Specific values throughout ($379.71, $1.43T, 117.57x, 14.49x) and reference closes cited per period. Docked one point because the headline 'Fair-Value Proxy' is a substitute label, not the requested 'FMP DCF Fair Value' field.",
+        "uniqueness": "Paid answer is current (June 2026) and transparent about the DCF gap; free baseline gives a stale $733.33 price with a $284.49 'DCF fair value' sourced from Finbox (also a substitute, but mislabeled as DCF). Paid is more honest and current, but on the specific DCF dimension both fall back to proxies — so the paid edge is on price/multiples freshness, not on the DCF field itself.",
+        "completeness": "The query explicitly led with 'FMP DCF fair value vs the current stock price' — that primary field is missing and replaced by an analyst-target proxy. Everything else (multiples, market cap, all 5 price changes) is present, so the gap is narrow but it is the lead ask.",
+        "dataAccuracy": "Price changes are internally consistent with the cited reference closes; EV/EBITDA of 117.57x is high but consistent with TSLA's 2026 multiple. The proxy is honestly labeled rather than fabricated as DCF, which preserves accuracy integrity. Minor red flag: introducing analyst consensus as a DCF substitute is a methodology shift the buyer didn't request."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "medium",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": true,
+        "codeIssueDetail": "6 tool calls for a 2-3 endpoint ask suggests the model probed multiple endpoints to find a working DCF source and silently fell back to analyst consensus without incrementing fallbackCount.",
+        "dataAccuracyRedFlags": [
+          "FMP DCF fair-value endpoint reported inaccessible; analyst consensus target substituted without trace-level fallback signal.",
+          "6 tool calls vs expected 2-3 implies silent endpoint probing that did not surface as a self-heal or fallback event."
+        ],
+        "rootCauseCategory": "capability_miss",
+        "rootCauseEvidence": "Response explicitly states 'The FMP DCF fair-value endpoint was not accessible in the current toolkit' — a tool-capability gap, not a selection or planning error (the right tool family was selected).",
+        "responseQualityNote": "Honest and current on price/multiples/changes, but the lead requested metric (DCF fair value) is missing and substituted with a non-equivalent proxy.",
+        "improvementLever": "Wire up the FMP DCF endpoint (or add a ticker->DCF fallback) and surface endpoint inaccessibility as a trace-level fallback event so the substitution is auditable.",
+        "diagnosticBrief": "Right tool family selected, but the DCF sub-capability was unavailable; the model silently substituted analyst consensus and only disclosed the gap in prose, not in the trace."
+      },
+      "overallVerdict": "Solid current valuation table with all the multiples and price-change windows, but the lead ask — FMP DCF fair value vs price — is missing and swapped for an analyst-target proxy, which leaves a DCF-focused buyer shortchanged."
+    },
+    {
+      "promptId": "jpm-ownership-13f-holders-float",
+      "query": "Who are the top institutional holders of JPMorgan Chase & Co. (JPM) from the latest 13F filing, what are the free-float and shares-outstanding figures, and what filing period do the holders reflect?",
+      "quotedExcerpts": [
+        "The query for top institutional holders returned empty because the company profile is missing a CIK identifier; the upstream error states: *\"No CIK on profile; cannot resolve 13F holders.\"* As a result, no 13F filers or holdings could be retrieved.",
+        "| Free-float % | 99.46400000748196 |\n| Free-float shares | 2,665,149,237 |\n| Shares outstanding | 2,679,511,418 |\n| Float data as of | 2026-06-25 |",
+        "These figures are sourced from an SEC EDGAR filing (`jpm-20260331.htm`), which corresponds to the period ending **March 31, 2026**. The data was fetched on **June 27, 2026**."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 3,
+        "uniqueness": 3,
+        "completeness": 2,
+        "dataAccuracy": 3
+      },
+      "satisfactionMean": 2.83,
+      "scoreExplanations": {
+        "actionability": "The primary ask (top institutional holders for an ownership-concentration decision) is completely unmet — the buyer cannot act on the main question. The error message is useful for diagnosis but leaves the buyer with only float figures and no holder list.",
+        "dataFreshness": "Float data as of 2026-06-25 and fetched 2026-06-27 is current; however the 13F holder data (the main freshness ask) is absent entirely, so freshness of the lead field is effectively N/A.",
+        "specificity": "Float numbers are specific but the headline 'Free-float % | 99.46400000748196' carries raw floating-point noise that should have been rounded to 99.464. The 13F holder names — the main specificity ask — are missing.",
+        "uniqueness": "Painful inversion: the free baseline actually names the top holders (Vanguard 8.1%, BlackRock 6.4%, State Street 4.1%, Fidelity 3.4%, T. Rowe Price 2.6%) — broadly correct for JPM even if stale — while the paid answer returns zero holders. On the lead ask, free beats paid.",
+        "completeness": "Only 1 of 3 asks answered (float + shares outstanding). The primary ask (top 13F holders) is empty, and the 'filing period the holders reflect' is unanswered (the March 31, 2026 date cited is the float source period, not a 13F holders period).",
+        "dataAccuracy": "Float figures are plausibly correct (JPM ~2.68B shares outstanding, ~99.46% free float is consistent with a widely-held S&P 100 name), but the unrounded float percentage signals raw pass-through, and the main dataset (holders) is absent — so accuracy of the lead ask cannot be validated."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "high",
+        "selectionIssue": false,
+        "planningIssue": true,
+        "executionIssue": true,
+        "completenessIssue": true,
+        "codeIssueDetail": "Missing-CIK failure on a major ticker (JPM) was accepted as terminal with no self-heal attempt (e.g., ticker->CIK resolution via SEC EDGAR); 0 retries, 0 self-heal, 0 fallback recorded despite a hard data-layer gap.",
+        "dataAccuracyRedFlags": [
+          "Raw floating-point pass-through: 'Free-float % | 99.46400000748196' not rounded.",
+          "CIK identifier missing from FMP profile for a top-10 US ticker — upstream data-layer gap.",
+          "13F holder query returned empty with no retry or alternate-resolution path attempted."
+        ],
+        "rootCauseCategory": "capability_miss",
+        "rootCauseEvidence": "Response explicitly states 'No CIK on profile; cannot resolve 13F holders' — a data-layer capability gap on the FMP profile, compounded by a planning gap (no CIK-resolution self-heal attempted).",
+        "responseQualityNote": "Honest about the failure but delivers only 1 of 3 asks; on the lead ask, a free LLM would have named the top holders, making the paid answer worse on the primary question.",
+        "improvementLever": "Add a CIK-resolution self-heal (ticker->CIK via SEC EDGAR) so 13F holder lookups do not silently fail for major issuers, and round float percentages to a sensible precision.",
+        "diagnosticBrief": "Single-tool trace accepted a missing-CIK error as terminal with zero retries or self-heal, leaving the primary ask (top 13F holders) completely unanswered for one of the most-held US equities."
+      },
+      "overallVerdict": "The main question — top 13F holders of JPM — goes entirely unanswered because the profile is missing a CIK, and I'm left with just float numbers; a free LLM would have actually named the top holders, which makes this paid answer worse than free on the lead ask."
+    },
+    {
+      "promptId": "amzn-growth-revenue-ebitda-fcf-trend",
+      "query": "Plot Amazon.com, Inc.'s (AMZN) annual revenue, EBITDA, and free cash flow growth rates over the last 8 years as a multi-line chart, and identify whether growth is accelerating or decelerating.",
+      "quotedExcerpts": [
+        "Here is the multi-line chart of Amazon's annual growth rates for revenue, EBITDA, and free cash flow (fiscal 2019–2025):",
+        "![AMZN Growth Rates](https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/95084a8a98e7fc2452978615fcc05401c7ea573f865412e55067e4a54d51fa5b.png)",
+        "| 2019 | 20.45 | 33.36 | 25.19 |\n| 2020 | 37.62 | 36.50 | 19.72 |\n| 2021 | 21.70 | 45.85 | -156.80 |\n| 2022 | 9.40 | -48.45 | 14.72 |\n| 2023 | 11.83 | 133.11 | -290.71 |\n| 2024 | 10.99 | 38.49 | 2.05 |\n| 2025 | 12.38 | 33.54 | -76.60 |",
+        "**Bottom line:** None of the three metrics show a pattern of sustained acceleration. Revenue growth has settled into a slower, steadier range post-2020; EBITDA growth is cooling after a sharp 2023 rebound; and FCF growth remains erratic without a reliable upward trend.",
+        "**Revenue:** Decelerated sharply after the 2020 pandemic spike (37.62%) and has since stabilized in a lower band around 9–12%."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.33,
+      "scoreExplanations": {
+        "actionability": "Buyer gets a clear deceleration verdict per metric plus the supporting YoY table and a rendered chart, enough to act on a growth-quality thesis. Docked one point because the year-range shortfall (7 years vs 8 requested) weakens the trend baseline.",
+        "dataFreshness": "Includes FY2025 data — the most recent fiscal year — and labels fiscal years explicitly throughout.",
+        "specificity": "Exact YoY % for each of the three metrics per year, plus a real rendered PNG chart image (not a text-art chart). Highly specific.",
+        "uniqueness": "Paid answer ships an actual chart image with current FY2025 figures and realistic FCF volatility (e.g., -290.71% in 2023); free baseline gives a stale text 'chart' ending at 2022 with suspiciously smooth EBITDA growth that doesn't match Amazon's actual volatility. Paid wins decisively.",
+        "completeness": "Buyer asked for 8 years; response covers 7 (fiscal 2019–2025), missing FY2018. The accelerating/decelerating verdict is given clearly and the multi-line chart shape matches the expected 'multi_series', but the year count is off by one with no explanation.",
+        "dataAccuracy": "Figures look sourced from FMP; the extreme FCF swings (-156.80%, -290.71%) are plausible given Amazon's working-capital-driven FCF volatility. Red flag: the 8-year ask was silently delivered as 7 years, which is a coverage accuracy gap even if the delivered numbers are correct."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": true,
+        "codeIssueDetail": "8-year request delivered as 7 years (FY2019–2025); no FY2018 pulled, and the shortfall was not flagged in the response.",
+        "dataAccuracyRedFlags": [
+          "Year count silently truncated from 8 to 7 with no explanation in the response."
+        ],
+        "rootCauseCategory": "synthesis_gap",
+        "rootCauseEvidence": "Data was retrieved (3 tool calls, no failures) but the synthesized table starts at 2019 instead of 2018 — a synthesis/windowing gap, not a tool failure.",
+        "responseQualityNote": "Strong multi-line chart with current FY2025 data and a clear deceleration verdict, but one year short of the requested 8-year window.",
+        "improvementLever": "Extend the historical pull to FY2018 so the chart spans the full requested 8 years (2018–2025) and explicitly state the year range covered.",
+        "diagnosticBrief": "Clean 3-tool trace with no retries; the only weakness is a synthesis gap where the delivered window is 7 years instead of the requested 8."
+      },
+      "overallVerdict": "Genuine multi-line chart with current FY2025 data and a crisp deceleration verdict — far better than a free LLM's stale text chart — but I asked for 8 years and got 7 (2019–2025), missing FY2018."
+    },
+    {
+      "promptId": "cost-sec-filings-10k-8k-recent",
+      "query": "What SEC filings has Costco Wholesale Corporation (COST) submitted in the last 120 days, and identify any 10-K annual reports or 8-K material events among them with their filing dates and document links?",
+      "quotedExcerpts": [
+        "Costco Wholesale Corporation (CIK 0000909832) has submitted **15 SEC filings** in the last 120 days (since ~Feb 27, 2026). Here is the complete list in chronological order:",
+        "| 2026-03-05 | 8-K | [costex9918-k3526.htm](https://www.sec.gov/Archives/edgar/data/909832/000090983226000025/costex9918-k3526.htm) |",
+        "**10-K annual reports:** None were found in this period.",
+        "**8-K material events (3 filings):**\n\n| Filing Date | Document Link |\n|-------------|---------------|\n| 2026-03-05 | [costex9918-k3526.htm](https://www.sec.gov/Archives/edgar/data/909832/000090983226000025/costex9918-k3526.htm) |\n| 2026-04-15 | [cost-20260415.htm](https://www.sec.gov/Archives/edgar/data/909832/000090983226000041/cost-20260415.htm) |\n| 2026-05-28 | [costex9918-k52826.htm](https://www.sec.gov/Archives/edgar/data/909832/000090983226000046/costex9918-k52826.htm) |",
+        "Data retrieved as of 2026-06-27 16:12 UTC."
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 5.0,
+      "scoreExplanations": {
+        "actionability": "Buyer gets the full 120-day filing inventory with clickable EDGAR document links, plus the explicit 10-K (none) and 8-K (3 filings) breakdown — ready to click through to any material event.",
+        "dataFreshness": "Data retrieved as of 2026-06-27 16:12 UTC; filings span 2026-03-05 to 2026-06-25, correctly windowed to the last 120 days.",
+        "specificity": "CIK cited (0000909832), 15 filings with exact dates, granular form types (8-K, 4, 10-Q, 3, SC 13G/A, SC 13G, 3/A, SD, S-3ASR), and direct sec.gov document URLs for every row.",
+        "uniqueness": "Free baseline literally says 'I'm a large language model, I don't have real-time access' and tells the buyer to go search EDGAR manually — completely useless. Paid answer delivers the full filed list with links; total paid win.",
+        "completeness": "Full filing list for the 120-day window, explicit 10-K answer (none, with the implicit reason being Costco's FY timing), explicit 8-K list with 3 filings and links, plus filing dates and document links throughout — every part of the ask addressed.",
+        "dataAccuracy": "CIK 0000909832 is Costco's actual CIK; URLs follow the real SEC EDGAR pattern (sec.gov/Archives/edgar/data/909832/...); form types are real; the '10-K: none' callout is accurate given Costco's September FY end. Fully sourced with a retrieval timestamp."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": false,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "1 tool call, 0 retries, 0 self-heal; full 120-day filing list with 10-K/8-K breakdown delivered with no gaps.",
+        "responseQualityNote": "Cleanest trace in the batch (single tool call) produced a complete, link-level filing inventory with the requested 10-K/8-K callout.",
+        "improvementLever": "No improvement needed; optionally add a brief one-line description of each 8-K's material event topic so the buyer can prioritize which to open.",
+        "diagnosticBrief": "Single-tool, single-call trace delivered the full 120-day COST filing list with explicit 10-K/8-K breakdown and direct EDGAR links. No fragility."
+      },
+      "overallVerdict": "Exactly what I needed — a complete 120-day COST filing inventory with direct EDGAR links and an explicit 10-K (none) and 8-K (3 filings) breakdown, with zero manual lookup required."
+    }
+  ],
+  "aggregate": {
+    "satisfactionMean": 4.25,
+    "weakQueryCount": 1,
+    "queryCount": 6
+  }
+}

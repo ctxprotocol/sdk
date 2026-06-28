@@ -1,0 +1,226 @@
+{
+  "runId": "2026-06-27T13:11:00Z",
+  "contributor": "fmp-contributor",
+  "events": [
+    {
+      "timestamp": "2026-06-27T13:11:00Z",
+      "phase": "readiness",
+      "event": "server_check",
+      "detail": "Local Context app started (next dev --turbo), /api/health returned 200. Public fmp MCP endpoint https://mcp.ctxprotocol.com/fmp/mcp serves 27/27 methods via Streamable HTTP initialize handshake (serverInfo fmp-contributor v1.0.0). Slug fmp confirmed.",
+      "durationMs": 18000
+    },
+    {
+      "timestamp": "2026-06-27T13:14:00Z",
+      "phase": "readiness",
+      "event": "phase0_complete",
+      "detail": "Marketplace stage post-submission, TOOL_ID 15c60ca5-94c9-4257-89c4-542a4745e89f, 27 methods live (14 new: earnings, dividends, insider_activity, ownership, sec_filings, peers, growth, revenue_segments, congressional_trades, index_constituents, valuation, quality_scores, sector_performance, macro_calendar). Outstanding gates: listingDiscoveryParity DRIFT (discovery shows 13, should show 27), re-run query validation against 27-method set, description sync.",
+      "toolCount": 27
+    },
+    {
+      "timestamp": "2026-06-27T13:15:15.769Z",
+      "phase": "prompts",
+      "event": "live_data_discovery",
+      "detail": "discover-live-markets.mjs produced deterministic FMP grounding snapshot: 27-tool catalog, 18 stable endpoints, 26 doc pages, 20 real large-cap tickers across 11 sectors, 5 indexes, 7 SEC filing types, 8 macro event types. Local FMP key is placeholder so no live price call; remote endpoint holds real key.",
+      "liveMethodCount": 27,
+      "groundedTickerCount": 20
+    },
+    {
+      "timestamp": "2026-06-27T13:20:23.595Z",
+      "phase": "prompts",
+      "event": "alpha_researcher_complete",
+      "detail": "alpha-researcher produced verticalAlphaResearch (10 alpha categories, 4 cross-tool chains, 5 FMP-UI gaps) + 18 must-win prompts (6 lookup / 7 multi-step / 5 ceiling). All 14 new methods covered. Phase 1c validation PASS: every prompt grounded in a real entity, answerabilityNote names fmp tool + /stable/ endpoint + fields, no deictic refs, single-venue FMP.",
+      "promptCount": 18,
+      "droppedCount": 0,
+      "alphaCategoryCount": 10
+    },
+    {
+      "timestamp": "2026-06-27T14:03:00Z",
+      "phase": "evaluation",
+      "event": "free_baseline_model_substituted",
+      "detail": "SKILL-prescribed google/gemini-3-flash-preview via OpenRouter returns HTTP 403 (provider TOS block) on every financial prompt; all other OpenRouter :free tiers return 404 (unavailable for free); direct GEMINI_API_KEY not enabled for project 676658074260. Substituted meta-llama/llama-3.3-70b-instruct (cheap paid, no tools, no live data) as the no-tools baseline proxy. Preserves the differentiation-gate intent (what a capable chatbot says with NO tools). Documented in run-free-baseline.mjs header and final report.",
+      "prescribedModel": "google/gemini-3-flash-preview",
+      "substitutedModel": "meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "timestamp": "2026-06-27T14:15:00Z",
+      "phase": "evaluation",
+      "event": "paid_sweep_partial_9_of_18",
+      "detail": "Paid SDK sweep in progress. Through 9/18: 6 answers (nvda-earnings, jnj-dividend, fomc-macro, lly-quality, aapl-revenue-segments, tsla-valuation-dcf), 3 autoWeak (xom-insider-activity capability_miss, meta-congressional-trades capability_miss, semiconductor-sector-performance timeout). capability_miss pattern: agent not selecting insider_activity / congressional_trades tools on those two prompts.",
+      "answersSoFar": 6,
+      "autoWeakSoFar": 3
+    },
+    {
+      "timestamp": "2026-06-27T14:19:31Z",
+      "phase": "evaluation",
+      "event": "free_baseline_complete",
+      "detail": "Free baseline (meta-llama/llama-3.3-70b-instruct substitute, no tools) completed 18/18 prompts with 0 errors. Differentiation comparison data ready.",
+      "successCount": 18,
+      "errorCount": 0,
+      "model": "meta-llama/llama-3.3-70b-instruct"
+    },
+    {
+      "timestamp": "2026-06-27T14:18:00Z",
+      "phase": "evaluation",
+      "event": "execute_smoke_complete",
+      "detail": "SSH temp-port smoke (port 4099, unauth, reusing production .env FMP_API_KEY) called tools/call on all 27 fmp methods. 27/27 passed, 0 failed. Accuracy check PASS (get_company_profile AAPL returned symbol AAPL + sector Technology + market/price fields). Confirms the 14 new methods' handlers all work against the real FMP API. Temp server killed by port. Production mcp-fmp untouched (restarts=0).",
+      "methodsPassed": 27,
+      "methodsFailed": 0,
+      "accuracyCheck": "PASS"
+    },
+    {
+      "timestamp": "2026-06-27T15:15:00Z",
+      "phase": "evaluation",
+      "event": "paid_sweep_complete",
+      "detail": "Paid SDK sweep complete: 13 answers, 3 capability_miss (xom-insider, meta-congressional, cost-sec-filings), 2 error/timeouts (semiconductor-sector, nvda-relative-value). 5 autoWeak / 18 = 27.8% weak. passRate 0.722.",
+      "successCount": 13,
+      "errorCount": 2,
+      "capabilityMissCount": 3,
+      "durationMs": 6013662
+    },
+    {
+      "timestamp": "2026-06-27T15:22:00Z",
+      "phase": "evaluation",
+      "event": "reviewer_complete",
+      "detail": "3 parallel pipeline-reviewer batches (glm-5.2-max) + autoWeak cap 2.0 + differentiation classifier. satisfactionMean=2.611, weakQueryRate=0.778 (14/18), highFragilityRate=0.556, baselineBeatenRate=0.722. Differentiation: 6 high, 7 moderate, 5 low. Dominant root cause: tool_selection_error (12/18) — agent discovery/selection loads only ~13 of 27 FMP methods and omits the specialized new endpoints.",
+      "satisfactionMean": 2.611,
+      "weakQueryCount": 14,
+      "weakQueryRate": 0.778,
+      "baselineBeatenRate": 0.7222
+    },
+    {
+      "timestamp": "2026-06-27T15:24:00Z",
+      "phase": "evaluation",
+      "event": "gate_check",
+      "detail": "Release gates: blocked. Reviewer fails (mean 2.611<3.5, fragility 0.556>0.3, weakRate 78%>20%, highDiff-below-3: jnj/fomc/jpm). Local validation fails (autoQuery 13/18, surfaceFailed 5, passRate 0.722). executeValidation 27/27 PASS, authContract PASS, directValidation PASS. Schema 2026-04-17 valid. iteration.action=continue.",
+      "releaseStatus": "blocked",
+      "iterationAction": "continue",
+      "blockers": [
+        "reviewer satisfactionMean 2.611<3.5",
+        "weakQueryRate 78%>20%",
+        "highFragilityRate 0.556>0.3",
+        "local query validation 13/18 passRate 0.722"
+      ]
+    },
+    {
+      "timestamp": "2026-06-27T15:30:00Z",
+      "phase": "improvement",
+      "event": "improver_iteration_1",
+      "detail": "Root-cause diagnosis: tool_selection_error is caused by STALE marketplace listing (AITool.tool_schema held 13 methods, retrieval index bundle built from 13). The 14 new methods were invisible to the agent's discovery/selection. Fix = marketplace listing refresh (metadata update, NOT a code change — done directly, not via pipeline-improver). Ran context/scripts/refresh-polymarket-listing.ts 15c60ca5...: previousCount 13 -> freshCount 27, changed=true, 14 new tools added (get_earnings, get_dividends, get_insider_activity, get_ownership, get_sec_filings, get_peers, get_growth, get_revenue_segments, get_congressional_trades, get_index_constituents, get_valuation, get_quality_scores, get_sector_performance, get_macro_calendar). Retrieval index bundle rebuilt. No server.ts change, no redeploy (server already live with 27 methods). Gate #1 (listingDiscoveryParity) closed.",
+      "fixedRootCauseCategory": "tool_selection_error",
+      "filesChanged": [
+        "marketplace AITool.tool_schema + retrieval index bundle (no source files)"
+      ],
+      "deployed": false,
+      "listingRefresh": "13 -> 27"
+    },
+    {
+      "timestamp": "2026-06-27T16:45:50.541Z",
+      "phase": "evaluation",
+      "event": "iter1_post_listing_refresh_rerun",
+      "detail": "Reran all 14 weak/autoWeak prompts after marketplace listing refresh (13->27 methods). ALL 14 now answer (0 capability_miss, 0 errors). 3 prior capability_miss (xom-insider, meta-congressional, aapl-revenue) + 2 prior timeouts (semiconductor-sector, sp500-semiconductors, nvda-relative-value) all fixed. Listing refresh was the single causal fix: tool_selection_error/timeout were symptoms of the stale 13-tool discovery index.",
+      "fixedCount": 14,
+      "answers": 14,
+      "capabilityMiss": 0,
+      "errors": 0,
+      "durationMs": 1928534
+    },
+    {
+      "timestamp": "2026-06-27T16:45:50.541Z",
+      "phase": "evaluation",
+      "event": "reviewer_rerun_complete",
+      "detail": "Re-reviewed all 18 prompts in 3 parallel batches after rerun. satisfactionMean=4.388 (up from ~2.4 pre-refresh), weakQueryRate=0.222 (4/18), baselineBeatenRate=1.0, highFragilityRate=0.056, differentiation: 8 high / 10 moderate / 0 low. autoWeak capped: 0.",
+      "satisfactionMean": 4.388,
+      "weakQueryCount": 4,
+      "weakQueryRate": 0.222,
+      "baselineBeatenRate": 1,
+      "deltaFromPreRefresh": 1.9
+    },
+    {
+      "timestamp": "2026-06-27T16:45:50.541Z",
+      "phase": "evaluation",
+      "event": "gate_check_iter1",
+      "detail": "Release gates: blocked. 4 weak queries remain: jpm-ownership (2.83, high-diff, <3.0 blocker, capability_miss CIK gap), aapl-ownership (3.67, capability_miss 13F subscription + Beneish), semiconductor-sector (3.83, synthesis_gap), energy-vs-technology (3.83, tool_selection_error). Improvement gates: continue. Schema valid (2026-04-17).",
+      "releaseStatus": "blocked",
+      "iterationAction": "continue",
+      "blockers": [
+        "jpm-ownership below 3.0 high-diff",
+        "weak rate 22% > 20%"
+      ]
+    },
+    {
+      "timestamp": "2026-06-27T16:45:50.541Z",
+      "phase": "post-convergence",
+      "event": "description_synced",
+      "detail": "Synced marketplace description via direct Postgres update + retrieval index bundle rebuild (modeled on refresh-polymarket-listing.ts). prevDescLen=2970 (only original 13 methods) -> newDescLen=4131 (all 27 methods + 14 new alpha surfaces + 10 Try-asking prompts + agent tips). toolCount preserved at 27, retrievalDocs rebuilt=28. One non-fatal embedding timeout (get_financial_ratios) with lexical fallback.",
+      "prevDescLen": 2970,
+      "newDescLen": 4131,
+      "retrievalDocs": 28,
+      "toolCount": 27
+    },
+    {
+      "timestamp": "2026-06-27T16:45:50.541Z",
+      "phase": "improvement",
+      "event": "improver_iteration_2_started",
+      "detail": "Launched pipeline-improver targeting capability_miss root cause (ownership CIK-resolution self-heal for jpm-ownership blocker + aapl-ownership Beneish fallback). Scoped mcp-fmp restart + temp-port unauth smoke per deploy safety rules.",
+      "fixedRootCauseCategory": "capability_miss",
+      "iteration": 2
+    },
+    {
+      "timestamp": "2026-06-27T16:46:47.857Z",
+      "phase": "post-convergence",
+      "event": "code_parity_verified",
+      "detail": "Query route (/api/v1/query/route.ts) and chat route (/(chat)/api/chat/route.ts) share the same execution engine: both import executeIterativeExecution + buildMediatorText from @/lib/ai/iterative-execution, resolveIterativeExecutionFeatureToggles from @/lib/ai/iterative-execution-features, ExecutorDiagnostics from @/lib/ai/code-executor, synthesis-safety from @/lib/ai/synthesis-safety. Both use the SAME synthesis system-prompt builder getRegularPrompt (defined once at lib/ai/prompts.ts:429; query:72/5339, chat:93/6709/10283). Chat route has streaming/recovery wrappers (priorDataAgenticResult, recoveryResult) that delegate to the shared executeIterativeExecution — route-local wrappers, not divergence. No deterministic code-path divergence found.",
+      "parity": "shared_core",
+      "divergence": "none"
+    },
+    {
+      "timestamp": "2026-06-27T17:10:45.963Z",
+      "phase": "improvement",
+      "event": "improver_iteration_2",
+      "detail": "Fixed capability_miss in server.ts: CIK self-heal (profile->shares-float EDGAR->SEC map) + 13F dates-bypass with computed quarter; Beneish M-score fallback from statements. Deployed scoped mcp-fmp restart, 27 tools verified. Smoke: JPM CIK 0000019617 resolved, 13F HTTP 402 surfaced explicitly; AAPL beneishMScore -2.3708 computed. Re-ran 4 weak queries: 4/4 answer, 0 capability_miss.",
+      "fixedRootCauseCategory": "capability_miss",
+      "filesChanged": [
+        "server.ts"
+      ],
+      "deployed": true,
+      "fixedCount": 2,
+      "upstreamLimitation": "13F holder endpoints HTTP 402 at current FMP tier"
+    },
+    {
+      "timestamp": "2026-06-27T17:14:18.413Z",
+      "phase": "evaluation",
+      "event": "reviewer_rerun_iter2",
+      "detail": "Re-reviewed 4 post-fix weak queries. Merged into reviewer-evaluation.json: satisfactionMean=4.453, weakQueryRate=0.111 (2/18), baselineBeatenRate=1.0. jpm-ownership improved 2.83->3.0 (CIK resolved, 402 surfaced). Weak remaining: semiconductor-sector 3.5, jpm-ownership 3.0.",
+      "satisfactionMean": 4.453,
+      "weakQueryCount": 2,
+      "weakQueryRate": 0.111
+    },
+    {
+      "timestamp": "2026-06-27T17:14:18.414Z",
+      "phase": "evaluation",
+      "event": "gate_check_final",
+      "detail": "Release gates: PASS. action=pass, status=ready, artifactWriteAllowed=true. Schema valid 2026-04-17.",
+      "releaseStatus": "ready",
+      "iterationAction": "pass"
+    },
+    {
+      "timestamp": "2026-06-27T17:14:18.414Z",
+      "phase": "handoff",
+      "event": "manual_showcase_pack_written",
+      "detail": "10 manual showcase candidates (8 natural / 2 explicit chart).",
+      "candidateCount": 10,
+      "jsonPath": "manual-showcase-candidates.json",
+      "markdownPath": "manual-showcase-candidates.md"
+    },
+    {
+      "timestamp": "2026-06-27T17:14:18.414Z",
+      "phase": "complete",
+      "event": "pipeline_complete",
+      "detail": "Release ready after 2 iterations (iter1 listing refresh 13->27, iter2 ownership CIK+Beneish fix). 18/18 query pass, 27/27 executeValidation, description synced 4131 chars, artifact written.",
+      "finalSatisfactionMean": 4.453,
+      "totalIterations": 2,
+      "artifactWritten": true,
+      "descriptionSynced": true
+    }
+  ]
+}

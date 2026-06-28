@@ -1,0 +1,938 @@
+{
+  "reviewedAt": "2026-06-27T17:12:52.389Z",
+  "reviewSource": "pipeline-reviewer iter2 override (4 re-run weak queries) + autoWeak cap 2.0 + differentiation classifier",
+  "perQueryEvaluations": [
+    {
+      "promptId": "nvda-earnings-surprise-history",
+      "query": "What is NVIDIA Corporation's (NVDA) earnings surprise history over the last 8 quarters — show actual vs estimated EPS and revenue, the surprise delta for each, and whether NVDA beat or missed each quarter?",
+      "quotedExcerpts": [
+        "NVIDIA beat both EPS and revenue estimates in all seven reported quarters. The eighth entry (August 2026) is an upcoming quarter with estimates only.",
+        "| 2026-05-20 | 1.87 | 1.76 | 0.11 | 6.25% | Beat | 81,615,000,000 | 78,423,370,000 | 3,191,630,000 | 4.07% | Beat |",
+        "| 2026-08-26 | — | 2.08 | — | — | — | — | 91,710,240,000 | — | — | — |",
+        "*Data as of 2026-06-27T15:27:51.179Z.*"
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 5,
+      "scoreExplanations": {
+        "actionability": "Decision-grade: every quarter shows actual vs estimate, dollar and percent deltas, and explicit Beat/Miss labels for both EPS and revenue, so a buyer can directly assess consistency and magnitude.",
+        "dataFreshness": "Cites an explicit 'Data as of 2026-06-27T15:27:51.179Z' stamp and includes quarters through May 2026 plus the August 2026 forward estimate — current and dated.",
+        "specificity": "Names exact report dates, EPS to three decimals, revenue to the dollar, deltas in both absolute and percent terms, and a per-row Beat/Miss verdict — no generic prose.",
+        "uniqueness": "Free LLM baseline returned stale FY2022/FY2023 quarters from 2021–2023 with a fabricated 'missed' quarter and wrong estimates; the paid answer delivers the actual recent 8-quarter window with sourced numbers — a massive delta.",
+        "completeness": "All requested parts delivered: actual EPS, estimated EPS, EPS delta, actual revenue, estimated revenue, revenue delta, and beat/miss for both lines, across all 8 quarters (7 reported + 1 forward).",
+        "dataAccuracy": "Deltas equal actual minus estimate and percentages reconcile (e.g., 0.11/1.76 = 6.25% ✓; 3,191,630,000/78,423,370,000 = 4.07% ✓). Numbers are internally consistent and sourced from the FMP earnings endpoint; the forward quarter is honestly marked with em dashes."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 30,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": false,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "Clean 2-tool execution, no retries, complete and internally consistent table delivered.",
+        "responseQualityNote": "Benchmark-quality earnings surprise table that fully satisfies the buyer ask.",
+        "improvementLever": "Optional: add a trailing-8Q aggregate beat-rate and average surprise % to push from report to analysis.",
+        "diagnosticBrief": "Single FMP Equities Intelligence selection, 2 tool calls, 3 steps of a 10-step budget, zero failures — minimal, efficient, and complete."
+      },
+      "overallVerdict": "Exactly what I needed: an 8-quarter EPS and revenue surprise table with dated, sourced numbers and a clean beat/miss verdict per quarter — the paid answer is light-years ahead of the stale free LLM baseline.",
+      "autoWeak": false,
+      "differentiation": "moderate_differentiation"
+    },
+    {
+      "promptId": "jnj-dividend-history-and-ex-div",
+      "query": "Pull Johnson & Johnson's (JNJ) full dividend history with ex-dividend, record, and payment dates, and tell me the next scheduled ex-dividend date from the dividend calendar.",
+      "quotedExcerpts": [
+        "Here is Johnson & Johnson's (JNJ) dividend history from the available data, which covers 200 quarterly payments from 1976 through the most recent payout in June 2026.",
+        "| 2026-05-26 | 2026-05-26 | 2026-06-09 | $1.34 |",
+        "| 2024-02-16 | 2024-02-20 | 2024-03-05 | $1.19 |",
+        "Note: For dividends before the late 1980s, record and payment dates are not included in the source data.",
+        "The dividend calendar returned **no upcoming events**. Based on JNJ's consistent quarterly schedule, the next ex-dividend date would typically fall in **late August 2026** (the third-quarter dividend), but this is not yet confirmed by a declaration."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.33,
+      "scoreExplanations": {
+        "actionability": "Buyer gets the recent 10-payment schedule with all three date columns and a hedged next-ex-div prediction (late August 2026), but the calendar returned no confirmed upcoming event so the 'next scheduled ex-dividend date from the dividend calendar' is inferred rather than declared.",
+        "dataFreshness": "Most recent payment dated June 9, 2026 ($1.34); series runs through 2026 — current.",
+        "specificity": "Exact ex-dividend, record, and payment dates with per-share dollar amounts down to the cent — no vagueness.",
+        "uniqueness": "Free LLM gave 2022–2023 data at $1.13/quarter and a stale 'May 22, 2023' next ex-div guess; paid shows the actual current $1.24–$1.34 progression with 2024–2026 dates — free is three years out of date.",
+        "completeness": "Partial: the query asked for 'full dividend history' but only the last 10 payments are shown (with a note that 200 exist back to 1976). The full series was not output, and the calendar endpoint returned no upcoming events.",
+        "dataAccuracy": "Dates and amounts are plausible and the pre-1980s gap is honestly disclosed; however record date equals ex-dividend date in several recent rows, which is unusual (typically record is ex-div+1) — likely an FMP data quirk rather than a synthesis error, hence not a 5."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 110,
+        "fragilityRisk": "medium",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": true,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [
+          "Record date == ex-dividend date in several recent rows (possibly FMP source quirk)"
+        ],
+        "rootCauseCategory": "synthesis_gap",
+        "rootCauseEvidence": "10 tool calls suggest the full 200-payment history was fetched but only 10 rows were rendered; the buyer's 'full dividend history' ask was condensed to a recent sample.",
+        "responseQualityNote": "Strong recent-history answer with honest handling of an empty dividend calendar, but the 'full history' was summarized rather than delivered.",
+        "improvementLever": "Paginate or attach the full 200-row series as a downloadable artifact when the buyer asks for 'full' history.",
+        "diagnosticBrief": "10 tool calls across 11 steps (slightly over the 10-step budget), zero retries — the pipeline fetched broadly but synthesized narrowly."
+      },
+      "overallVerdict": "Gives me the recent dividend schedule and a reasonable next-ex-div estimate, but I asked for the full history and got a 10-row sample with a note that 200 exist — I'd need to ask again to actually see the full series.",
+      "autoWeak": false,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "xom-insider-activity-recent",
+      "query": "List Exxon Mobil Corporation's (XOM) most recent insider transactions — filer name, transaction type (purchase or sale), securities traded, and reported value — and summarize whether insiders are net buyers or sellers.",
+      "quotedExcerpts": [
+        "| 2026-03-16 | Talley Darrin L | S-Sale | 1,080 | $167,934.60 |",
+        "| 2026-02-02 | Talley Darrin L | S-Sale | 4,350 | $607,912.50 |",
+        "**Purchases:** 0 open-market purchase transactions",
+        "**Sales:** 5 transactions totaling **11,460 shares** with a combined reported value of **$1,687,836.32**",
+        "Other activity: The same period includes 12 director equity awards (A-Award) and 4 gifts (G-Gift), which carried no reported dollar value.",
+        "Overall, XOM insiders are **net sellers** over this period."
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.67,
+      "scoreExplanations": {
+        "actionability": "Clear net-seller verdict with exact totals (11,460 shares, $1,687,836.32) and a clean purchase/sale split — a buyer can act on the sentiment signal immediately.",
+        "dataFreshness": "Transactions dated Feb–Mar 2026 — current.",
+        "specificity": "Filer name, transaction date, SEC transaction code (S-Sale), share count, and reported dollar value per row — every requested column populated.",
+        "uniqueness": "Free LLM hallucinated insider names ('Kirsten E. Longley', 'Darrin L. Taliaferro', 'Liam M. Kelly') with 2023 dates; paid delivers real, current 2026 filings with the correct filer — free is fabricated and stale.",
+        "completeness": "All four requested columns plus a net-buyer/seller summary; the only gap is that all five transactions belong to a single filer (Talley Darrin L), and awards/gifts are mentioned but not itemized — slightly narrow breadth.",
+        "dataAccuracy": "Totals reconcile exactly (1,080+2,150+3,230+650+4,350 = 11,460 ✓; $167,934.60+$339,313.22+$481,835.25+$90,840.75+$607,912.50 = $1,687,836.32 ✓) and S-Sale is the correct SEC code; single-filer concentration may reflect the recent filing window rather than a data error."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 30,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": false,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "Clean 2-tool execution, fully reconciled totals, net-seller verdict delivered.",
+        "responseQualityNote": "Crisp, current insider-activity table with a correct net-seller call and reconciled totals.",
+        "improvementLever": "Broaden the recent-filing window or widen to multiple filers so the buyer sees breadth of insider activity, not one individual.",
+        "diagnosticBrief": "2 tool calls, 3 steps of a 10-step budget, zero failures — efficient and complete for the core ask."
+      },
+      "overallVerdict": "Exactly the insider transaction table I wanted with a clean net-seller bottom line and reconciled dollar totals; the only caveat is that one filer dominates the recent window.",
+      "autoWeak": false,
+      "differentiation": "moderate_differentiation"
+    },
+    {
+      "promptId": "fomc-macro-calendar-yields",
+      "query": "Over the next 14 days, what major US macro events are scheduled — specifically any FOMC, CPI, or Employment Situation releases — and what is the current US Treasury yield curve across maturities?",
+      "quotedExcerpts": [
+        "**US Macro Calendar (June 27 – July 11, 2026)**",
+        "None of the three headline releases you asked about are scheduled in this window:\n- **No US CPI**\n- **No Employment Situation / Nonfarm Payrolls**\n- **No FOMC Interest Rate Decision**",
+        "The only FOMC-related release is the **FOMC Minutes** on **July 8 at 18:00 UTC** (high impact).",
+        "| 2026-07-09 | 12:30 | Initial Jobless Claims (Jul 04) | Medium | 220K |",
+        "| Maturity | Yield (%) | ... | 10Y | 4.38 | ... | 20Y | 4.87 | 30Y | 4.87 |",
+        "The curve is upward sloping, with the 20-year and 30-year both at 4.87%."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.67,
+      "scoreExplanations": {
+        "actionability": "Buyer gets an honest 'quiet window' read with the one high-impact event (FOMC Minutes) flagged plus jobless claims and existing home sales, and a full yield curve for positioning — actionable even though headline risk is low.",
+        "dataFreshness": "Yield curve as of June 26, 2026; calendar window starts June 27, 2026 — current and aligned to the 14-day ask.",
+        "specificity": "Exact UTC times, impact levels, estimate/previous values, and 12 maturity points with yields to two decimals — no vague language.",
+        "uniqueness": "Free LLM offered April 2023 FOMC dates and a yield curve description with zero actual numbers; paid delivers the current 2026 window with a full numeric curve — free is three years stale and non-numeric.",
+        "completeness": "Both halves answered: macro events (with an honest explicit 'none of the three' for CPI/Employment/FOMC decision, plus FOMC Minutes and other releases) and the yield curve across 12 maturities.",
+        "dataAccuracy": "Yield curve shape (3.70% short end → 4.87% long end, upward sloping) is plausible and internally consistent; calendar entries are reasonable. The chart rendering failed (code_interpreter ModuleNotFoundError on 'chat_tools') and was not retried, so only the table was delivered — data accuracy is sound but the expected chart artifact is missing, hence 4 not 5."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 60,
+        "fragilityRisk": "medium",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": true,
+        "completenessIssue": false,
+        "codeIssueDetail": "code_interpreter failed with ModuleNotFoundError: 'chat_tools' while rendering the yield curve chart; the error message instructed a retry but retryCount=0 — the chart was silently dropped and the table substituted.",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "Buyer-visible answer (events + yield curve table) is complete and accurate; the only failure is the chart artifact, which the buyer did not explicitly request and whose data is fully present in the table.",
+        "responseQualityNote": "Honest, current macro read with a full yield curve table; chart rendering failed but did not erode the data answer.",
+        "improvementLever": "Wire the code_interpreter sandbox to retry once on missing-module errors so the expected chart artifact is delivered alongside the table.",
+        "diagnosticBrief": "5 tool calls, 6 steps of a 10-step budget, 1 un-retried code_interpreter failure — the data path succeeded but the visualization path was abandoned."
+      },
+      "overallVerdict": "Tells me straight up that the next 14 days have no CPI/Employment/FOMC decision but do have FOMC Minutes, and gives me a full 12-point Treasury yield curve — exactly the macro read I wanted, even though the chart never rendered.",
+      "autoWeak": false,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "semiconductor-sector-performance-pe",
+      "query": "Show a chart comparing 1-day, 5-day, 1-month, and YTD performance across all 11 GICS sectors, with the Technology sector and the Semiconductors industry highlighted, alongside their average P/E ratios.",
+      "quotedExcerpts": [
+        "The chart above shows **YTD normalized performance** through June 26, 2026, for the 11 GICS sector ETFs plus the Semiconductors industry ETF (SMH). SMH is the standout leader, while Communication Services (XLC) is the weakest sector.",
+        "| SMH | Semiconductors | 69.83 |\n| XLK | Technology | 25.80 |\n| XLE | Energy | 20.42 |",
+        "**Technology (XLK)** is the second-best-performing proxy overall and the top-performing GICS sector, up 25.80% YTD.",
+        "**Semiconductors (SMH)** is the runaway leader with a 69.83% YTD return, far outpacing every sector.",
+        "The upstream sector-level performance snapshot returned empty arrays for June 27, 2026, so the requested **1-day, 5-day, and 1-month** comparisons could not be derived and are not shown in the chart.",
+        "The financial ratios endpoint also returned empty data, so **average P/E ratios** for the Technology sector and Semiconductors industry are unavailable in this dataset."
+      ],
+      "satisfactionScores": {
+        "actionability": 3,
+        "dataFreshness": 4,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 2,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3.5,
+      "scoreExplanations": {
+        "actionability": "3 — The YTD ranking and Technology/Semiconductors highlights are directly actionable, but the buyer asked for a 4-timeframe comparison and the 1-day/5-day/1-month dimensions are entirely absent, so the core comparative frame the buyer wanted is missing.",
+        "dataFreshness": "4 — YTD returns are computed through June 26, 2026 from recent ETF closes; timing is current.",
+        "specificity": "4 — Named ETFs, exact YTD percentages to two decimals, and explicit highlights for Technology (XLK 25.80%) and Semiconductors (SMH 69.83%) match the requested entities.",
+        "uniqueness": "4 — A normalized 11-sector + SMH YTD leaderboard with the Semiconductors industry broken out is a non-trivial, consolidated view a buyer cannot get from a single commodity endpoint.",
+        "completeness": "2 — Only 1 of the 4 requested timeframes (YTD) is delivered and P/E ratios are unavailable. Four of five requested deliverables are missing. The gap disclosure is honest but the response covers a small fraction of the ask.",
+        "dataAccuracy": "4 — No fabricated numbers; gaps are transparently attributed to empty upstream arrays. The YTD figures are internally consistent with the ETF proxy method."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": true,
+        "completenessIssue": true,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "synthesis_gap",
+        "rootCauseEvidence": "The agent computed YTD returns from ETF historical prices (the chart and YTD table are derived from per-ETF price series), demonstrating it had the historical price data in hand. 1-day, 5-day, and 1-month returns are derivable from the exact same ETF historical price series, yet the response blames the empty sector-level performance snapshot for their absence instead of computing them from the proxy data it already used for YTD.",
+        "responseQualityNote": "Honest gap disclosure and a clean YTD leaderboard, but the response under-utilizes data the agent had already proven it could access. The P/E gap is a genuine upstream limitation (financial ratios endpoint returned empty); the 1-day/5-day/1-month gap is a synthesis gap.",
+        "improvementLever": "Once ETF historical prices are fetched for YTD, compute 1-day, 5-day, and 1-month returns from the same series rather than depending on the sector-level performance snapshot endpoint.",
+        "diagnosticBrief": "toolCalls=17, retry=0, selfHeal=0, loopCount=12. Clean execution, no retries. The completeness gap is attributable to a synthesis gap (other-timeframe returns not derived from the ETF price series already used for YTD) plus a genuine upstream empty-array limitation for sector P/E."
+      },
+      "overallVerdict": "Borderline-weak. The YTD leaderboard and Technology/Semiconductors highlights are well executed and transparently sourced, but only 1 of 4 requested timeframes is delivered and P/E is missing. The 1-day/5-day/1-month gap is a synthesis issue — the agent had ETF historical prices and could have derived those returns the same way it derived YTD — rather than a pure upstream limitation.",
+      "autoWeak": false,
+      "differentiation": "moderate_differentiation"
+    },
+    {
+      "promptId": "lly-quality-scores-altman-piotroski",
+      "query": "For Eli Lilly and Company (LLY), report the Altman Z-score, Piotroski F-score, Beneish M-score, and the current FMP rating, and interpret whether LLY signals distress or quality.",
+      "quotedExcerpts": [
+        "**Z = 9.81** (well above 2.99 → safe zone, very low bankruptcy risk)",
+        "**F‑Score = 7** (strong quality; 7–9 indicates a fundamentally sound company)",
+        "**M = –4.84 + 2.936 = –1.90** (falls in the grey zone between –2.22 and –1.78, indicating possible but not definitive earnings manipulation)",
+        "The data does not contain a proprietary Financial Modeling Prep rating. However, the **analyst consensus** based on 45 ratings is **Buy** (33 buy, 9 hold, 3 sell). The latest price target consensus is **$1,269.94** (median $1,270, high $1,400, low $1,135). The current share price is $1,206.51.",
+        "**Overall:** LLY signals high quality and extremely low distress risk."
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.83,
+      "scoreExplanations": {
+        "actionability": "Buyer gets all four scores with component breakdowns, an explicit distress/quality verdict, and analyst consensus with price targets — decision-grade for a quality/distress call.",
+        "dataFreshness": "FY2025 ending Dec 31, 2025 financials with market data as of June 27, 2026 — current.",
+        "specificity": "Every Altman component with its ratio and weighted contribution, all 9 Piotroski criteria with pass/fail, all 8 Beneish variables with component values, and exact analyst counts and price targets — fully specific.",
+        "uniqueness": "Free LLM returned only the formulas and thresholds ('I don't have real-time access... I recommend accessing financial databases'); paid computes actual LLY scores from real financials — free gives zero company-specific numbers.",
+        "completeness": "Altman, Piotroski, and Beneish are all computed and interpreted; the explicit 'current FMP rating' field is missing ('data does not contain a proprietary FMP rating') and is substituted with analyst consensus — a reasonable but imperfect stand-in for the requested field.",
+        "dataAccuracy": "Component math reconciles (Altman: 0.2177+0.3046+0.7739+7.932+0.5796 = 9.81 ✓; Beneish: -4.84 + (0.965+0.512+0.315+1.291+0.181-0.182+0.159-0.305) = -1.90 ✓; Piotroski sums to 7 ✓). Sourced from FMP financial statements with FY2025 vs FY2024 comparisons."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": 20,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": false,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "All three computed scores reconcile internally; the only missing field (proprietary FMP rating) is a data-source gap honestly substituted with analyst consensus, not a pipeline failure.",
+        "responseQualityNote": "Excellent quality-distress analysis with fully reconciled score math and honest handling of the absent proprietary FMP rating.",
+        "improvementLever": "Add the FMP rating endpoint explicitly to the selection so the proprietary rating is fetched alongside the analyst consensus when available.",
+        "diagnosticBrief": "5 tool calls, 2 steps of a 10-step budget, zero retries; trace flags executionSuccess=false but the buyer-visible answer is complete and internally reconciled — the flag appears to be a non-critical step label."
+      },
+      "overallVerdict": "Exactly the quality-distress workup I wanted: Altman, Piotroski, and Beneish all computed with component math I can verify, plus an honest analyst-consensus stand-in for the missing FMP rating and a clear 'high quality, low distress' verdict.",
+      "autoWeak": false,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "aapl-revenue-segment-geo-product",
+      "query": "Chart Apple Inc.'s (AAPL) revenue split by geography and by product line for the most recent fiscal year, and compare it to the prior year to show which segment is growing or shrinking.",
+      "quotedExcerpts": [
+        "The chart below compares Apple's revenue split by geography and product line for **FY2025** (ended Sep 27, 2025) versus **FY2024** (ended Sep 28, 2024).",
+        "| Americas | 167.04 | 178.35 | +6.8% |\n| Europe | 101.33 | 111.03 | +9.6% |\n| Greater China | 66.95 | 64.38 | -3.8% |\n| Japan | 25.05 | 28.70 | +14.6% |\n| Rest of Asia Pacific | 30.66 | 33.70 | +9.9% |",
+        "| iPhone | 201.18 | 209.59 | +4.2% |\n| Service | 96.17 | 109.16 | +13.5% |\n| Mac | 29.98 | 33.71 | +12.4% |\n| Wearables, Home and Accessories | 37.01 | 35.69 | -3.6% |\n| iPad | 26.69 | 28.02 | +5.0% |",
+        "**Shrinking:** **Greater China** was the only geographic segment to decline (-3.8%), and **Wearables, Home and Accessories** was the only product line to shrink (-3.6%).",
+        "**iPhone** remains Apple's largest revenue source, growing a steady +4.2% year over year."
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 5,
+      "scoreExplanations": {
+        "actionability": "Buyer gets explicit growth rates per segment for both dimensions, making it trivial to identify which segments to overweight/underweight in a segment-growth thesis; the growing/shrinking callout is decision-ready.",
+        "dataFreshness": "FY2025 (ended Sep 27, 2025) vs FY2024 is the most recent fiscal year pairing and is explicitly dated in the lead sentence.",
+        "specificity": "Exact segment names, exact dollar amounts in $B (e.g., 167.04, 178.35), and exact growth rates to one decimal (e.g., +14.6%, -3.8%) — no generic prose.",
+        "uniqueness": "Free baseline is stuck at 2022 vs 2021 (4 years stale) and contains implausible figures (iPhone +34.2%, Mac +45.5%); paid answer is current, accurate, and matches Apple's actual FY2025 10-K. Dramatic paid win.",
+        "completeness": "Both geographies (5 segments) and product lines (5 segments) covered for both years, with growing/shrinking explicitly identified as requested.",
+        "dataAccuracy": "Figures match Apple's reported FY2025 10-K (Americas ~$178B, Services ~$109B, iPhone ~$209.6B, Greater China decline); no hallucination signals."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": false,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "2 tool calls, 0 retries, 0 self-heal, single tool (FMP Equities Intelligence) selected; full answer delivered with no gaps.",
+        "responseQualityNote": "Cleanest possible outcome: current-year segment data for both dimensions with growth rates and an explicit growing/shrinking verdict.",
+        "improvementLever": "No improvement needed; consider adding a rendered chart image to match the 'categorical_comparison' expected shape beyond the markdown tables.",
+        "diagnosticBrief": "Single-tool, zero-retry trace produced a complete FY2025-vs-FY2024 segment breakdown that matches Apple's actual 10-K. No fragility or data gaps."
+      },
+      "overallVerdict": "Exactly what I needed — current-year Apple segment revenue for both geography and product with growth rates and a clear growing/shrinking callout, ready to drop into a segment-performance review.",
+      "autoWeak": false,
+      "differentiation": "moderate_differentiation"
+    },
+    {
+      "promptId": "meta-congressional-trades-senate-house",
+      "query": "Which US senators and House representatives have traded Meta Platforms (META) recently? List each trade with chamber, politician, transaction date, buy/sell direction, and reported amount range.",
+      "quotedExcerpts": [
+        "Here are all reported Meta Platforms (META) trades by U.S. House representatives and Senators, based on disclosure filings. **141 total trades** are on record (100 House, 41 Senate).",
+        "| Angus King | ME | 2026-02-13 | Sale | $1,001 - $15,000 |\n| Markwayne Mullin | OK | 2025-12-29 | Purchase | $50,001 - $100,000 |",
+        "| Matt Van Epps | — | 2026-06-16 | Sale | $1,001 - $15,000 |\n| John McGuire | VA05 | 2026-06-04 | Purchase | $1,001 - $15,000 |",
+        "**Notable recent activity (2026):** The most recent META trade was a **sale by Rep. Matt Van Epps on 2026-06-16** ($1,001–$15,000). The largest single trade in the dataset was the $250,001–$500,000 **Exchange by Rep. Michael McCaul (spouse account) on 2024-03-25**.",
+        "**Data source:** House Office of the Clerk and Senate Office of Public Records, as fetched on 2026-06-27."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.33,
+      "scoreExplanations": {
+        "actionability": "Buyer can sort and filter the 141 trades by politician, date, direction, and size to spot patterns (e.g., McCaul's repeated large sales), but the loose 'recently' interpretation (4 years of history) forces the buyer to do their own windowing rather than getting a recent-trades view.",
+        "dataFreshness": "Most recent trade is 2026-06-16 and data was fetched 2026-06-27, so the freshest end is current; however the dataset reaches back to 2022-11, which dilutes the 'recently' framing.",
+        "specificity": "Every trade row has politician name, state/district, exact transaction date, granular direction (Purchase / Sale / Sale Full / Sale Partial / Exchange), and the standard disclosure amount range — all five requested fields populated.",
+        "uniqueness": "Free baseline returns only ~6 trades from early 2022 (and includes a retired senator); paid answer delivers 141 sourced trades with current 2026 activity. Paid crushes free on this prompt.",
+        "completeness": "All requested fields are present per row, but the expected 'metric_table_plus_chart' shape is only half-met: there is no aggregate summary view (counts by politician, net buy/sell flow) on top of the raw table.",
+        "dataAccuracy": "Named politicians (King, Mullin, Boozman, Capito, Khanna, McCaul, MTG, etc.) are all real and known META traders; the 141/100/41 split is plausible. Minor red flag: several rows are exact duplicates (e.g., two Capito 2025-11-13 Purchase rows) which could be real separate accounts or a dedup gap."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": true,
+        "codeIssueDetail": "Expected chart shape 'metric_table_plus_chart' delivered as table only; no aggregate chart or summary visualization.",
+        "dataAccuracyRedFlags": [
+          "Duplicate rows for same politician/date/direction (e.g., Shelley Moore Capito 2025-11-13 Purchase x2) — may be legitimate separate accounts but not disambiguated."
+        ],
+        "rootCauseCategory": "synthesis_gap",
+        "rootCauseEvidence": "Raw trade data fully retrieved but no aggregate/summary view synthesized, and the 'recently' window was interpreted as the full available history rather than a recent slice.",
+        "responseQualityNote": "Comprehensive trade-level data with all requested fields, but presented as a flat 141-row list with no aggregate chart and an overly broad 'recently' window.",
+        "improvementLever": "Add a summary aggregate (trade counts and net dollar direction by politician, recent-12-month slice) on top of the raw table, and tighten 'recently' to ~12 months with older trades in an appendix.",
+        "diagnosticBrief": "Single-tool, zero-retry trace delivered complete raw data; weakness is a synthesis gap (no aggregate view) plus loose 'recently' windowing rather than any tool failure."
+      },
+      "overallVerdict": "Impressive depth — 141 sourced congressional META trades with every requested field — but the loose 'recently' window pulls in 4 years of history and there's no aggregate chart to quickly scan who's buying vs selling.",
+      "autoWeak": false,
+      "differentiation": "moderate_differentiation"
+    },
+    {
+      "promptId": "tsla-valuation-dcf-vs-price-ev-multiples",
+      "query": "For Tesla, Inc. (TSLA), report the FMP DCF fair value vs the current stock price, the EV/EBITDA and EV/Sales multiples, market cap, and the 1-week / 1-month / 3-month / YTD / 1-year price changes in one valuation table.",
+      "quotedExcerpts": [
+        "**Data gap:** The FMP DCF fair-value endpoint was not accessible in the current toolkit. The analyst consensus price target is used below as the closest available proxy.",
+        "| **Current Price** | $379.71 |\n| **Fair-Value Proxy (Analyst Consensus Target)** | $450.45 |\n| **Market Cap** | $1.43T |\n| **Enterprise Value** | $1.42T |\n| **EV / EBITDA (TTM)** | 117.57x |\n| **EV / Sales (TTM)** | 14.49x |",
+        "| **1-Week Change** | -5.19% |\n| **1-Month Change** | -14.11% |\n| **3-Month Change** | +4.94% |\n| **YTD Change** | -15.57% |\n| **1-Year Change** | +17.33% |",
+        "*As of the June 26, 2026 close. Period changes are calculated from the following reference closes: 1-week ($400.49), 1-month ($442.10), 3-month ($361.83), YTD ($449.72), and 1-year ($323.63).*"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 4,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4,
+      "scoreExplanations": {
+        "actionability": "Buyer gets current price, market cap, EV, both multiples, and all five price-change windows — enough to run a relative-valuation check. But the lead anchor (DCF fair value vs price) is substituted with analyst consensus target, which answers a different question (consensus vs intrinsic).",
+        "dataFreshness": "As of the June 26, 2026 close with explicit reference closes for each period window — fully dated and current.",
+        "specificity": "Specific values throughout ($379.71, $1.43T, 117.57x, 14.49x) and reference closes cited per period. Docked one point because the headline 'Fair-Value Proxy' is a substitute label, not the requested 'FMP DCF Fair Value' field.",
+        "uniqueness": "Paid answer is current (June 2026) and transparent about the DCF gap; free baseline gives a stale $733.33 price with a $284.49 'DCF fair value' sourced from Finbox (also a substitute, but mislabeled as DCF). Paid is more honest and current, but on the specific DCF dimension both fall back to proxies — so the paid edge is on price/multiples freshness, not on the DCF field itself.",
+        "completeness": "The query explicitly led with 'FMP DCF fair value vs the current stock price' — that primary field is missing and replaced by an analyst-target proxy. Everything else (multiples, market cap, all 5 price changes) is present, so the gap is narrow but it is the lead ask.",
+        "dataAccuracy": "Price changes are internally consistent with the cited reference closes; EV/EBITDA of 117.57x is high but consistent with TSLA's 2026 multiple. The proxy is honestly labeled rather than fabricated as DCF, which preserves accuracy integrity. Minor red flag: introducing analyst consensus as a DCF substitute is a methodology shift the buyer didn't request."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "medium",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": true,
+        "codeIssueDetail": "6 tool calls for a 2-3 endpoint ask suggests the model probed multiple endpoints to find a working DCF source and silently fell back to analyst consensus without incrementing fallbackCount.",
+        "dataAccuracyRedFlags": [
+          "FMP DCF fair-value endpoint reported inaccessible; analyst consensus target substituted without trace-level fallback signal.",
+          "6 tool calls vs expected 2-3 implies silent endpoint probing that did not surface as a self-heal or fallback event."
+        ],
+        "rootCauseCategory": "capability_miss",
+        "rootCauseEvidence": "Response explicitly states 'The FMP DCF fair-value endpoint was not accessible in the current toolkit' — a tool-capability gap, not a selection or planning error (the right tool family was selected).",
+        "responseQualityNote": "Honest and current on price/multiples/changes, but the lead requested metric (DCF fair value) is missing and substituted with a non-equivalent proxy.",
+        "improvementLever": "Wire up the FMP DCF endpoint (or add a ticker->DCF fallback) and surface endpoint inaccessibility as a trace-level fallback event so the substitution is auditable.",
+        "diagnosticBrief": "Right tool family selected, but the DCF sub-capability was unavailable; the model silently substituted analyst consensus and only disclosed the gap in prose, not in the trace."
+      },
+      "overallVerdict": "Solid current valuation table with all the multiples and price-change windows, but the lead ask — FMP DCF fair value vs price — is missing and swapped for an analyst-target proxy, which leaves a DCF-focused buyer shortchanged.",
+      "autoWeak": false,
+      "differentiation": "moderate_differentiation"
+    },
+    {
+      "promptId": "jpm-ownership-13f-holders-float",
+      "query": "Who are the top institutional holders of JPMorgan Chase & Co. (JPM) from the latest 13F filing, what are the free-float and shares-outstanding figures, and what filing period do the holders reflect?",
+      "quotedExcerpts": [
+        "The top institutional holders of JPMorgan Chase & Co. (JPM) and their associated filing period could not be retrieved because the required data endpoints returned a subscription-tier restriction (HTTP 402).",
+        "- **Shares Outstanding:** 2,679,511,418\n- **Float Shares:** 2,665,149,237\n- **Free Float:** 99.46400000748196%",
+        "This float data reflects the company's SEC filing for the period ended **March 31, 2026** (source document `jpm-20260331.htm`). The data point was recorded on June 25, 2026."
+      ],
+      "satisfactionScores": {
+        "actionability": 2,
+        "dataFreshness": 4,
+        "specificity": 3,
+        "uniqueness": 3,
+        "completeness": 2,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 3,
+      "scoreExplanations": {
+        "actionability": "2 — The buyer's primary ask (top institutional holders and the filing period they reflect) is unavailable. The float/shares figures are actionable but are the secondary sub-question. The buyer cannot answer their core ownership-concentration question from this response.",
+        "dataFreshness": "4 — Float data recorded June 25, 2026 reflecting the March 31, 2026 SEC filing; the float dimension is current.",
+        "specificity": "3 — Exact float/shares figures and the source document are specific, but the headline sub-question (holder names, positions, holder filing period) has no specific content.",
+        "uniqueness": "3 — Shares-float figures with a traced SEC source have some value, but the unique differentiator the buyer wanted (named 13F holders) is absent.",
+        "completeness": "2 — Roughly 1 of 3 sub-questions answered (float/shares figures with float filing period). Top holders and the holder filing period are not delivered. The buyer is told why (HTTP 402), which is honest, but the substantive coverage is thin.",
+        "dataAccuracy": "4 — The response transparently attributes the missing holders to an HTTP 402 subscription-tier restriction and does not fabricate holder names or filing periods. This is a meaningful improvement over the prior iteration's misleading 'No CIK on profile' error: the trace confirms get_ownership now resolves CIK 0000019617 via shares-float-source and surfaces the real upstream block."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": true,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "upstream_api_limitation",
+        "rootCauseEvidence": "get_ownership resolved CIK 0000019617 (cikSource: shares-float-source) and returned sharesFloat successfully, but partialErrors.institutionalOwnershipDates and partialErrors.institutionalHolders both report 'FMP endpoint /institutional-ownership/... requires a higher subscription tier (HTTP 402)'. The 13F holder data is subscription-blocked upstream, not a pipeline defect.",
+        "responseQualityNote": "The CIK-ownership fix is verified working: CIK 0000019617 is resolved and the real upstream 402 is surfaced transparently. This replaces the prior misleading 'No CIK on profile' error with an honest, traceable limitation. Satisfaction improves vs. the prior misleading error, but the buyer's core 13F-holders gap remains and caps the score.",
+        "improvementLever": "For 13F holders under an HTTP 402 tier, document the restriction in the tool description's expected partial-error contract so buyers know before querying that this dimension requires a higher tier, and consider a documented fallback (e.g., latest N-PORT or proxy statement ownership excerpts) if available at the current tier.",
+        "diagnosticBrief": "toolCalls=3, retry=0, selfHeal=0, loopCount=3. Minimal, clean execution. CIK resolution fix verified (0000019617 via shares-float-source). Completeness gap is an upstream HTTP 402 subscription block on the 13F endpoints, not a pipeline regression."
+      },
+      "overallVerdict": "Weak. The iteration-2 fix is real and verified — CIK 0000019617 is now resolved and the response honestly surfaces the HTTP 402 subscription block instead of the prior misleading 'No CIK' error. But the buyer's primary ask (top 13F holders and the filing period they reflect) is still unavailable, so satisfaction remains capped at 3.0. Transparency improved; substantive coverage did not.",
+      "autoWeak": false,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "amzn-growth-revenue-ebitda-fcf-trend",
+      "query": "Plot Amazon.com, Inc.'s (AMZN) annual revenue, EBITDA, and free cash flow growth rates over the last 8 years as a multi-line chart, and identify whether growth is accelerating or decelerating.",
+      "quotedExcerpts": [
+        "Here is the multi-line chart of Amazon's annual growth rates for revenue, EBITDA, and free cash flow (fiscal 2019–2025):",
+        "![AMZN Growth Rates](https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/95084a8a98e7fc2452978615fcc05401c7ea573f865412e55067e4a54d51fa5b.png)",
+        "| 2019 | 20.45 | 33.36 | 25.19 |\n| 2020 | 37.62 | 36.50 | 19.72 |\n| 2021 | 21.70 | 45.85 | -156.80 |\n| 2022 | 9.40 | -48.45 | 14.72 |\n| 2023 | 11.83 | 133.11 | -290.71 |\n| 2024 | 10.99 | 38.49 | 2.05 |\n| 2025 | 12.38 | 33.54 | -76.60 |",
+        "**Bottom line:** None of the three metrics show a pattern of sustained acceleration. Revenue growth has settled into a slower, steadier range post-2020; EBITDA growth is cooling after a sharp 2023 rebound; and FCF growth remains erratic without a reliable upward trend.",
+        "**Revenue:** Decelerated sharply after the 2020 pandemic spike (37.62%) and has since stabilized in a lower band around 9–12%."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 3,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.33,
+      "scoreExplanations": {
+        "actionability": "Buyer gets a clear deceleration verdict per metric plus the supporting YoY table and a rendered chart, enough to act on a growth-quality thesis. Docked one point because the year-range shortfall (7 years vs 8 requested) weakens the trend baseline.",
+        "dataFreshness": "Includes FY2025 data — the most recent fiscal year — and labels fiscal years explicitly throughout.",
+        "specificity": "Exact YoY % for each of the three metrics per year, plus a real rendered PNG chart image (not a text-art chart). Highly specific.",
+        "uniqueness": "Paid answer ships an actual chart image with current FY2025 figures and realistic FCF volatility (e.g., -290.71% in 2023); free baseline gives a stale text 'chart' ending at 2022 with suspiciously smooth EBITDA growth that doesn't match Amazon's actual volatility. Paid wins decisively.",
+        "completeness": "Buyer asked for 8 years; response covers 7 (fiscal 2019–2025), missing FY2018. The accelerating/decelerating verdict is given clearly and the multi-line chart shape matches the expected 'multi_series', but the year count is off by one with no explanation.",
+        "dataAccuracy": "Figures look sourced from FMP; the extreme FCF swings (-156.80%, -290.71%) are plausible given Amazon's working-capital-driven FCF volatility. Red flag: the 8-year ask was silently delivered as 7 years, which is a coverage accuracy gap even if the delivered numbers are correct."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": true,
+        "codeIssueDetail": "8-year request delivered as 7 years (FY2019–2025); no FY2018 pulled, and the shortfall was not flagged in the response.",
+        "dataAccuracyRedFlags": [
+          "Year count silently truncated from 8 to 7 with no explanation in the response."
+        ],
+        "rootCauseCategory": "synthesis_gap",
+        "rootCauseEvidence": "Data was retrieved (3 tool calls, no failures) but the synthesized table starts at 2019 instead of 2018 — a synthesis/windowing gap, not a tool failure.",
+        "responseQualityNote": "Strong multi-line chart with current FY2025 data and a clear deceleration verdict, but one year short of the requested 8-year window.",
+        "improvementLever": "Extend the historical pull to FY2018 so the chart spans the full requested 8 years (2018–2025) and explicitly state the year range covered.",
+        "diagnosticBrief": "Clean 3-tool trace with no retries; the only weakness is a synthesis gap where the delivered window is 7 years instead of the requested 8."
+      },
+      "overallVerdict": "Genuine multi-line chart with current FY2025 data and a crisp deceleration verdict — far better than a free LLM's stale text chart — but I asked for 8 years and got 7 (2019–2025), missing FY2018.",
+      "autoWeak": false,
+      "differentiation": "moderate_differentiation"
+    },
+    {
+      "promptId": "cost-sec-filings-10k-8k-recent",
+      "query": "What SEC filings has Costco Wholesale Corporation (COST) submitted in the last 120 days, and identify any 10-K annual reports or 8-K material events among them with their filing dates and document links?",
+      "quotedExcerpts": [
+        "Costco Wholesale Corporation (CIK 0000909832) has submitted **15 SEC filings** in the last 120 days (since ~Feb 27, 2026). Here is the complete list in chronological order:",
+        "| 2026-03-05 | 8-K | [costex9918-k3526.htm](https://www.sec.gov/Archives/edgar/data/909832/000090983226000025/costex9918-k3526.htm) |",
+        "**10-K annual reports:** None were found in this period.",
+        "**8-K material events (3 filings):**\n\n| Filing Date | Document Link |\n|-------------|---------------|\n| 2026-03-05 | [costex9918-k3526.htm](https://www.sec.gov/Archives/edgar/data/909832/000090983226000025/costex9918-k3526.htm) |\n| 2026-04-15 | [cost-20260415.htm](https://www.sec.gov/Archives/edgar/data/909832/000090983226000041/cost-20260415.htm) |\n| 2026-05-28 | [costex9918-k52826.htm](https://www.sec.gov/Archives/edgar/data/909832/000090983226000046/costex9918-k52826.htm) |",
+        "Data retrieved as of 2026-06-27 16:12 UTC."
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 5,
+      "scoreExplanations": {
+        "actionability": "Buyer gets the full 120-day filing inventory with clickable EDGAR document links, plus the explicit 10-K (none) and 8-K (3 filings) breakdown — ready to click through to any material event.",
+        "dataFreshness": "Data retrieved as of 2026-06-27 16:12 UTC; filings span 2026-03-05 to 2026-06-25, correctly windowed to the last 120 days.",
+        "specificity": "CIK cited (0000909832), 15 filings with exact dates, granular form types (8-K, 4, 10-Q, 3, SC 13G/A, SC 13G, 3/A, SD, S-3ASR), and direct sec.gov document URLs for every row.",
+        "uniqueness": "Free baseline literally says 'I'm a large language model, I don't have real-time access' and tells the buyer to go search EDGAR manually — completely useless. Paid answer delivers the full filed list with links; total paid win.",
+        "completeness": "Full filing list for the 120-day window, explicit 10-K answer (none, with the implicit reason being Costco's FY timing), explicit 8-K list with 3 filings and links, plus filing dates and document links throughout — every part of the ask addressed.",
+        "dataAccuracy": "CIK 0000909832 is Costco's actual CIK; URLs follow the real SEC EDGAR pattern (sec.gov/Archives/edgar/data/909832/...); form types are real; the '10-K: none' callout is accurate given Costco's September FY end. Fully sourced with a retrieval timestamp."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": false,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "1 tool call, 0 retries, 0 self-heal; full 120-day filing list with 10-K/8-K breakdown delivered with no gaps.",
+        "responseQualityNote": "Cleanest trace in the batch (single tool call) produced a complete, link-level filing inventory with the requested 10-K/8-K callout.",
+        "improvementLever": "No improvement needed; optionally add a brief one-line description of each 8-K's material event topic so the buyer can prioritize which to open.",
+        "diagnosticBrief": "Single-tool, single-call trace delivered the full 120-day COST filing list with explicit 10-K/8-K breakdown and direct EDGAR links. No fragility."
+      },
+      "overallVerdict": "Exactly what I needed — a complete 120-day COST filing inventory with direct EDGAR links and an explicit 10-K (none) and 8-K (3 filings) breakdown, with zero manual lookup required.",
+      "autoWeak": false,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "sp500-semiconductors-constituents",
+      "query": "From the S&P 500 (^GSPC) constituent list, which companies are classified in the Semiconductors industry? List each with its symbol, company name, and sub-industry, ranked.",
+      "quotedExcerpts": [
+        "There are **18 S&P 500 constituents** classified in the **Semiconductors** sub-industry, listed alphabetically by ticker:",
+        "| 1 | ADI | Analog Devices | Semiconductors |",
+        "| 11 | NVDA | Nvidia | Semiconductors |",
+        "| 14 | Q | Qnity Electronics, Inc. | Semiconductors |",
+        "*Data as of the S&P 500 constituent list fetched on 2026-06-27.*"
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "Buyer gets a clean 18-row table with symbol, name, and sub-industry that can be immediately dropped into a watchlist or sector screen. The 'Rank' column is just alphabetical position, not a value-ranked sort, so it adds less decision signal than a market-cap or weight ranking would.",
+        "dataFreshness": "Explicitly dated 2026-06-27 and sourced from a live fetch of the S&P 500 constituent list, which is current.",
+        "specificity": "Every row has a concrete ticker, full company name, and sub-industry label. No vague prose.",
+        "uniqueness": "The free LLM baseline is dated April 2023, missing ~8 current names (AVGO, AMAT, KLAC, LRCX, MCHP, MPWR, NXPI, SWKS, TER) and even references MXIM which was absorbed into ADI. The paid answer is materially more complete and current.",
+        "completeness": "All three requested fields (symbol, name, sub-industry) are present for 18 constituents. Minor gap: 'ranked' is interpreted as alphabetical rather than by a value dimension (e.g., market cap or index weight), which a buyer might expect.",
+        "dataAccuracy": "Numbers trace to get_index_constituents(sp500) cross-checked with screen_stocks(industry=Semiconductors). One mildly surprising entry is 'Q | Qnity Electronics, Inc.' (a 2025 Dover spinoff recently added to the index) — plausible but worth a spot-check given it is unfamiliar to most buyers."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": true,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [
+          "Qnity Electronics (Q) is a recent Dover spinoff; appears in screen_stocks results but is an unusual S&P 500 constituent that a buyer may want to verify"
+        ],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "Tool selection (get_index_constituents + screen_stocks cross-check) is appropriate and executed cleanly; only minor gap is alphabetical-vs-value ranking interpretation.",
+        "responseQualityNote": "Clean, current, well-sourced list that materially beats the free baseline; the alphabetical 'Rank' column is the only soft spot.",
+        "improvementLever": "When the query says 'ranked' without a dimension, default to ranking by market cap or index weight rather than alphabetical order to give buyers a decision-useful sort.",
+        "diagnosticBrief": "3 tool calls, 0 retries, 0 self-heals. get_index_constituents returned 503 constituents, screen_stocks cross-validated the Semiconductors filter, and a single get_company_profile(NVDA) call was made (likely a sanity check). No fragility."
+      },
+      "overallVerdict": "This is exactly the current S&P 500 Semiconductors list I needed and it is far more complete than a free LLM could give me, but calling the first column 'Rank' when it is just alphabetical position is misleading — I'd want this sorted by market cap or index weight to actually rank anything.",
+      "autoWeak": false,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "nvda-relative-value-vs-peers",
+      "query": "Build a relative-value ranking of NVIDIA Corporation (NVDA) against its FMP peer group: for NVDA and each peer, pull DCF upside vs current price and EV/EBITDA, then plot the group sorted from cheapest to most expensive on DCF upside.",
+      "quotedExcerpts": [
+        "As of 2026-06-27, NVDA ranks first in its FMP peer group on DCF upside, offering the only positive implied return versus model-derived fair values.",
+        "| 1 | NVDA | NVIDIA | 192.53 | 249.21 | 29.4 | 24.2 |",
+        "| 2 | MSFT | Microsoft | 372.97 | 311.79 | -16.4 | 13.9 |",
+        "NVDA is the only peer trading below its DCF-derived fair value (+29.4% upside). The rest of the group trades at premiums ranging from -16.4% (MSFT) to -89.2% (TER).",
+        "Multiples tell a different story: NVDA's EV/EBITDA of 24.2x sits in the middle of the pack—below AVGO (42.4x), ADI (31.3x), ENTG (33.0x), and TER (61.7x)—but above tighter multiples at MSFT (13.9x), IMOS (11.1x), GOOGL (18.9x), and TSM (19.9x)."
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 5,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 5,
+      "scoreExplanations": {
+        "actionability": "Buyer gets a clear cheapest-to-most-expensive stack rank with both DCF upside and EV/EBITDA side-by-side, plus an explicit observation that NVDA is the only name with positive DCF upside while its EV/EBITDA is mid-pack — directly tradeable as a long/short relative-value signal.",
+        "dataFreshness": "Explicitly dated 2026-06-27 with current prices (NVDA $192.53) pulled from live quotes.",
+        "specificity": "Ten named tickers with exact price, DCF, DCF upside %, and EV/EBITDA multiple — no generic prose.",
+        "uniqueness": "The free baseline openly uses 'hypothetical numbers for illustration', picks AMD/INTC/QCOM instead of the actual FMP peer group, and admits it cannot do the real calculation. The paid answer uses the real FMP peer set and real model outputs.",
+        "completeness": "Peer group, DCF upside, EV/EBITDA, sorted ranking, and an explicit plot/chart reference are all delivered.",
+        "dataAccuracy": "DCF upside math checks out: NVDA (249.21-192.53)/192.53 = +29.4%, MSFT (311.79-372.97)/372.97 = -16.4%. EV/EBITDA values match the code_interpreter output exactly. Values trace to get_valuation and get_financial_ratios for each peer."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": false,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "Clean pipeline: get_peers(NVDA) -> get_valuation for each of 10 symbols -> get_financial_ratios for each -> code_interpreter computes DCF upside and EV/EBITDA and emits the ranking. No retries, no self-heals, all 25 calls succeeded.",
+        "responseQualityNote": "Exemplary relative-value answer: real peer group, real model values, correct sort, and a useful DCF-vs-multiples divergence observation.",
+        "improvementLever": "Minor efficiency: get_financial_ratios(NVDA) was called twice — dedup per-symbol enrichment calls to shave latency and budget on 10-peer batches.",
+        "diagnosticBrief": "25 tool calls across 6 loop steps, 0 failures. One redundant get_financial_ratios(NVDA) call. Code interpreter produced the exact ranking table shown in the response. No fragility."
+      },
+      "overallVerdict": "This is a textbook relative-value screen — the real FMP peer group, real DCF upside, real EV/EBITDA, sorted exactly as I asked, with a sharp observation that NVDA is the only name cheap on DCF while mid-pack on multiples. Exactly what I'd pay for.",
+      "autoWeak": false,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "tsla-catalyst-sentiment-convergence",
+      "query": "For Tesla, Inc. (TSLA), combine three signals into one read: (a) the last 8 quarters of earnings surprise deltas, (b) recent insider purchase vs sale activity, and (c) recent House and Senate congressional trades — are the three signals converging bullish or diverging?",
+      "quotedExcerpts": [
+        "**Synthesis: The three signals are diverging, not converging bullish.** Earnings momentum has turned positive over the last two quarters, but insiders are selling heavily into the open market and congressional trading is tilted toward selling — especially in the Senate.",
+        "After a severe Q2 2025 miss (-34.7% EPS surprise), Tesla has delivered two consecutive EPS beats. The trend is improving, but revenue surprises remain modest and estimates for the upcoming July 2026 quarter imply only $0.45 EPS.",
+        "Open-market purchases: 0 transactions, 0 shares ... Open-market sales: 33 transactions, 57,824 shares",
+        "Top sellers: Wilson-Thompson Kathleen — 52,218 shares; Taneja Vaibhav (CFO) — 5,605.5 shares",
+        "The House is nearly balanced in transaction count but slightly sell-heavy in dollars. The Senate shows only selling with zero purchases."
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 5,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 5
+      },
+      "satisfactionMean": 4.83,
+      "scoreExplanations": {
+        "actionability": "Buyer gets an explicit divergence verdict with a per-signal bullish/bearish tag and the underlying counts, which is directly usable for a position-sizing or hedge decision.",
+        "dataFreshness": "Earnings table runs through 2026-04-22 actuals, insider filings through 2026-06-17, and congressional disclosures through 2026-06-09 — all current as of the 2026-06-27 fetch.",
+        "specificity": "Named sellers (CFO Vaibhav Taneja, director Wilson-Thompson), exact share counts (57,824 sold vs 0 bought), House/Senate split with dollar amounts (~$348k buys vs ~$384k sells in House; $0 buys vs ~$240k sells in Senate).",
+        "uniqueness": "The free baseline fabricates the numbers ('12 insider purchases, $13.4M', '14 congressional purchases') and reaches the opposite conclusion ('cautiously bullish'). The paid answer uses real FMP data and lands on the correct divergence read.",
+        "completeness": "All three signals are addressed with a combined verdict. Minor gap: the earnings table shows 7 actual surprise quarters plus a forward 2026-07-22 estimate row with '—' actuals, so technically only 7 historical deltas are delivered against the 'last 8 quarters' ask.",
+        "dataAccuracy": "EPS surprise math checks out (e.g., 2026-04-22: (0.41-0.3539)/0.3539 = +15.85%). Insider and congressional counts trace to get_insider_activity and get_congressional_trades outputs. CFO name (Taneja) is correct for Tesla."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": true,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "Three-tool signal gather (get_earnings surprises, get_insider_activity, get_congressional_trades) plus a code_interpreter synthesis is the correct plan; only nit is that get_earnings(limit=8) returned one forward-estimate row instead of 8 historical actuals.",
+        "responseQualityNote": "Strong multi-signal synthesis with an honest divergence verdict and real counts — exactly the kind of cross-signal read a buyer wants.",
+        "improvementLever": "For 'last N quarters of surprise deltas', filter the earnings rows to non-null epsActual before slicing to N so the table always shows N historical deltas rather than N-1 actuals plus a forward estimate.",
+        "diagnosticBrief": "4 tool calls, 0 retries, 0 self-heals. code_interpreter correctly aggregated earnings surprises, insider buy/sell tallies, and congressional chamber splits. No fragility."
+      },
+      "overallVerdict": "This is the cross-signal read I wanted — real earnings surprises, real insider flows, real congressional trades, all synthesized into a clear 'diverging, not converging bullish' verdict with the evidence shown. The only nit is that the earnings table is one actual short of a true 8-quarter lookback.",
+      "autoWeak": false,
+      "differentiation": "moderate_differentiation"
+    },
+    {
+      "promptId": "energy-vs-technology-rotation-drilldown",
+      "query": "Compare the Energy and Technology sectors' 1-month and YTD performance and P/E from the sector snapshot, then screen for large-cap Energy stocks and pull the DCF fair value vs current price for Exxon Mobil (XOM) as the sector's bellwether — is Energy's rotation supported by valuation?",
+      "quotedExcerpts": [
+        "**Sector Snapshot Note:** The direct sector-level performance and P/E tables returned empty arrays. The comparison below uses sector ETF data (XLE for Energy, XLK for Technology) and bellwether stock fundamentals as proxies.",
+        "| Metric | Energy (XLE) | Technology (XLK) |\n|---|---|---|\n| Latest Price | $53.84 | $181.11 |\n| YTD Return | 20.420487586669655% | 25.797041050218805% |\n| 1-Month Return | -5.460930640913075% | -3.071982873963064% |",
+        "**P/E Proxy (Bellwethers)**\n\n| Symbol | Sector | P/E Ratio (TTM) |\n|---|---|---|\n| XOM | Energy | 23.142372881355932 |\n| MSFT | Technology | 22.134718100890208 |\n| AAPL | Technology | 34.23160434258142 |",
+        "The screen returned 50 actively traded large-cap Energy names (market cap >$10B). The top constituents by market cap are:\n\n| XOM | Exxon Mobil Corporation | $565,951,473,000 |\n| CVX | Chevron Corporation | $340,683,096,000 |",
+        "| Current Price | $136.54 |\n| DCF Fair Value | $127.0414575122944 |\n| Premium to DCF | ~7.5% |\n| Analyst Consensus Target | $170.08 |\n| Analyst Rating | Hold |",
+        "The evidence is **mixed**. XOM—the sector's largest bellwether—is trading **above** its DCF fair value ($136.54 vs. $127.04), which argues against a purely valuation-driven entry.",
+        "**Bottom line:** Energy's 2026 YTD gains are substantial (+20.4%), but they still trail Technology (+25.8%). The sector bellwether is not obviously cheap by DCF, so any continued rotation would likely need to be driven by commodity/macroeconomic factors or earnings revisions rather than a straightforward valuation catch-up."
+      ],
+      "satisfactionScores": {
+        "actionability": 5,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.5,
+      "scoreExplanations": {
+        "actionability": "5 — The response directly answers 'is Energy's rotation supported by valuation?' with a mixed-evidence synthesis and an explicit bottom line a buyer can act on, plus the supporting screen and DCF inputs.",
+        "dataFreshness": "4 — XOM current price ($136.54), XLE/XLK latest prices, YTD/1-month returns, and analyst target are all current as of the run date.",
+        "specificity": "5 — Exact ticker-level numbers (DCF fair value $127.04, premium ~7.5%, consensus target $170.08, Hold rating, 50-name screen with market caps to the dollar), named bellwethers, and a crisp 1-month vs YTD comparison.",
+        "uniqueness": "5 — A single-pass combination of sector-rotation comparison, large-cap Energy screen, bellwether DCF, and P/E proxy is a consolidated, non-commodity deliverable.",
+        "completeness": "4 — All four requested sub-questions answered: 1-month and YTD performance (via ETF proxy, disclosed), P/E (via bellwether proxy, disclosed), large-cap Energy screen (50 names), and XOM DCF vs current price. The only deduction is that P/E is a bellwether proxy rather than a direct sector aggregate.",
+        "dataAccuracy": "4 — Transparent substitution of ETF and bellwether proxies for the empty sector snapshot, internally consistent numbers, and no fabrication. Minor ding for excessive decimal precision on percentages (e.g., 20.420487586669655%) which is ugly but not inaccurate."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": false,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "toolCalls=16, retry=0, selfHeal=0, loopCount=7. The direct sector snapshot returned empty arrays (an upstream limitation), but the agent gracefully pivoted to ETF proxies and bellwether fundamentals and still delivered every sub-question with explicit disclosure. No quality-impacting defect.",
+        "responseQualityNote": "Exemplary handling of an upstream empty-array limitation: the agent substituted proxies, disclosed the substitution up front, and synthesized a complete answer with a direct verdict. This is the strongest of the four responses.",
+        "improvementLever": "Round reported percentages to a reasonable precision (2 decimals) and consider computing a constituent-weighted sector P/E aggregate from the screen results to reduce reliance on single-bellwether proxies.",
+        "diagnosticBrief": "toolCalls=16, retry=0, selfHeal=0, loopCount=7. Clean execution with graceful proxy substitution when the sector snapshot returned empty. No selection, planning, execution, or completeness issues."
+      },
+      "overallVerdict": "Strong. Every requested sub-question is answered with current, specific data and a direct valuation-supported verdict. The agent handled an upstream empty-array limitation by transparently substituting ETF and bellwether proxies rather than aborting — a model for how to surface and work around upstream gaps.",
+      "autoWeak": false,
+      "differentiation": "moderate_differentiation"
+    },
+    {
+      "promptId": "aapl-ownership-quality-valuation-thesis",
+      "query": "Build an investment-thesis view for Apple Inc. (AAPL) in one pass: top 13F institutional holders and float, Altman Z / Piotroski / Beneish scores, and DCF fair value vs current price — is institutional ownership supported by quality and intrinsic value?",
+      "quotedExcerpts": [
+        "- **Free float:** 99.83% of outstanding shares (14.66B float / 14.69B outstanding), indicating extremely deep liquidity.",
+        "- **Institutional holders:** Unavailable. The top 13F holder names and position changes were blocked by a subscription-tier restriction (HTTP 402), so this view cannot map specific manager conviction or recent flows.",
+        "| **Altman Z-Score** | 11.77 | Very low distress risk (well above 2.99 safety threshold) |\n| **Piotroski F-Score** | 9 / 9 | Excellent fundamental momentum |\n| **Beneish M-Score** | –2.37 | Low earnings-manipulation risk (below –1.78 threshold) |",
+        "| **Current Price** | $283.78 |\n| **DCF Fair Value** | $156.83 |\n| **Premium to DCF** | +80.99% |\n| **Market Cap** | ~$4.17 trillion |",
+        "**By quality: Yes.** The quantitative evidence strongly supports long-term institutional ownership. A Piotroski score of 9, an Altman Z-Score in double digits, and a negative Beneish M-Score paint a picture of a high-quality, low-risk, non-manipulative business with elite returns on equity and assets.",
+        "**By intrinsic value: No.** The DCF estimate implies the stock trades at roughly an 81% premium to fair value, and the valuation sub-scores (P/E, P/B, D/E) are all weak.",
+        "**Bottom line:** The \"ownership\" story is a quality story, not a value story. The financial health and operational metrics justify institutional conviction, but the current price is far ahead of the modeled intrinsic value. The missing 13F data would help clarify whether recent filings reflect accumulation into this premium or early distribution."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 4,
+        "specificity": 5,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.33,
+      "scoreExplanations": {
+        "actionability": "4 — The thesis gives a clear quality-yes / value-no split a buyer can act on, with exact supporting metrics. The missing 13F holder data prevents the buyer from confirming the institutional-conviction half directly, which caps actionability at 4.",
+        "dataFreshness": "4 — Float recorded June 27, 2026 (source aapl-20260328.htm), current price $283.78, and recent performance context are current.",
+        "specificity": "5 — Exact scores with thresholds (Altman Z 11.77 vs 2.99, Piotroski 9/9, Beneish -2.37 vs -1.78), exact DCF fair value and +80.99% premium, and named FMP sub-scores.",
+        "uniqueness": "5 — A one-pass thesis combining float, three quality scores, DCF, and a quality-vs-value synthesis is a high-value consolidated deliverable.",
+        "completeness": "4 — Five of six requested sub-questions are answered (float, Altman Z, Piotroski, Beneish, DCF vs price, synthesis). Only the 13F institutional holders are missing. The Beneish M-Score is now present (-2.37), which is the documented iteration-2 fix.",
+        "dataAccuracy": "4 — Honest disclosure of the HTTP 402 block on 13F holders, no fabricated holder names, and the Beneish M-Score is computed from statements (-2.37) rather than asserted. The prior fabricated 13F holder list is gone from the responseText. Minor ding only because the 13F dimension is unverifiable."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": true,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [],
+        "rootCauseCategory": "upstream_api_limitation",
+        "rootCauseEvidence": "get_ownership resolved CIK 0000320193 (cikSource: profile) and returned sharesFloat plus the Beneish/Altman/Piotroski scores from statements. partialErrors.institutionalOwnershipDates and partialErrors.institutionalHolders both report HTTP 402 subscription-tier restrictions on the 13F endpoints. The only missing dimension is subscription-blocked upstream.",
+        "responseQualityNote": "The iteration-2 fix is verified: Beneish M-Score -2.37 is now computed and reported, closing the prior missing-metric gap. CIK resolution also works (0000320193 via profile). The 13F holder gap remains an upstream HTTP 402 limitation, transparently disclosed. This is a strong, honest one-pass thesis.",
+        "improvementLever": "Same as jpm-ownership: document the 13F HTTP 402 partial-error contract in the tool description and pursue a documented fallback ownership source at the current tier if available.",
+        "diagnosticBrief": "toolCalls=3, retry=0, selfHeal=0, loopCount=2. Minimal, clean execution. CIK resolution (0000320193) and Beneish computation both verified working. Only the 13F holders are missing, due to an upstream HTTP 402 subscription block."
+      },
+      "overallVerdict": "Strong. The iteration-2 fix is verified — Beneish M-Score (-2.37) is now computed from statements and reported alongside Altman Z and Piotroski, and the synthesis directly answers the quality-vs-value question. The 13F holder gap remains but is honestly attributed to an HTTP 402 upstream block rather than fabricated, a clear improvement over the prior fabricated holder list.",
+      "autoWeak": false,
+      "differentiation": "high_differentiation"
+    },
+    {
+      "promptId": "fomc-week-macro-treasury-earnings-overlay",
+      "query": "Overlay the next 14 days of US macro events (FOMC, CPI, Employment Situation) and the Treasury yield curve against the earnings-calendar report dates for large-cap names, so I can see which macro catalysts cluster in the same week as major earnings.",
+      "quotedExcerpts": [
+        "Based on the retrieved calendar data, the next two weeks are a **quiet corridor** for the specific catalysts you asked about. There is no FOMC, no CPI, and no Employment Situation (Nonfarm Payrolls) in the Jun 27 – Jul 10 window.",
+        "| **10 Year** | **4.38%** | ... | 30 Year | 4.87% |",
+        "Shape: The curve is relatively flat out to the 5-year, then steepens meaningfully beyond the 7-year point (10Y → 30Y spread is ~49 bps).",
+        "The queried large-cap symbols returned **no confirmed earnings dates** within the next 14 days",
+        "The only nearby large-cap confirmation is **JPMorgan Chase (JPM)** on **July 14** (estimated EPS: $5.44; estimated Revenue: $49.45B), which falls just outside the 14-day window.",
+        "Jun 27 – Jul 10 is a macro and earnings \"dead zone\" for the specific catalysts you listed."
+      ],
+      "satisfactionScores": {
+        "actionability": 4,
+        "dataFreshness": 5,
+        "specificity": 4,
+        "uniqueness": 5,
+        "completeness": 4,
+        "dataAccuracy": 4
+      },
+      "satisfactionMean": 4.33,
+      "scoreExplanations": {
+        "actionability": "Buyer gets a clear 'dead zone' verdict plus the next two actionable clusters (JPM earnings Jul 14; GDP/PCE/ECI Jul 30-31), which lets them reposition the overlay window. The answer is honest that no clustering exists in the requested 14-day window, which is itself actionable intelligence.",
+        "dataFreshness": "Macro calendar fetched for 2026-06-27 onward, Treasury curve dated as of Jun 26, 2026, earnings checked across 8 large-cap symbols for the same window. All current.",
+        "specificity": "Specific Treasury yields by tenor (1M 3.70% through 30Y 4.87%), specific macro event dates with impact tags, specific JPM EPS/revenue estimates. The large-cap earnings leg is specific in its absence (named each symbol checked).",
+        "uniqueness": "The free baseline fabricates the entire overlay — invented FOMC dates, invented earnings dates for GOOGL/MSFT/AMZN/AAPL that do not exist in this window, and invented Treasury yields. The paid answer is honest that the window is empty, which is far more useful (and true) than a confident fiction.",
+        "completeness": "All three asks are addressed: macro calendar (with the honest 'no FOMC/CPI/NFP' finding), Treasury yield curve (full tenor table), and large-cap earnings calendar (8 symbols checked, JPM found just outside window). The 'overlay/clustering' conclusion is that there is no clustering in this window, which is a valid answer.",
+        "dataAccuracy": "Macro events and earnings absences trace to get_macro_calendar and get_earnings outputs. The Treasury yield curve is plausible and internally coherent (10Y-30Y spread = 49bps matches the stated shape), but the specific yields are not directly visible in the truncated tool-result previews — they likely come from a field inside get_macro_calendar not shown in the preview, so source verification is partial."
+      },
+      "traceAssessment": {
+        "toolSelectionClean": true,
+        "retryCount": 0,
+        "selfHealCount": 0,
+        "budgetConsumedPct": null,
+        "fragilityRisk": "low",
+        "selectionIssue": false,
+        "planningIssue": false,
+        "executionIssue": false,
+        "completenessIssue": false,
+        "codeIssueDetail": "",
+        "dataAccuracyRedFlags": [
+          "Treasury yield curve values (1M 3.70% ... 30Y 4.87%) are not visibly present in the truncated get_macro_calendar result previews — likely sourced from a non-previewed field, but unverifiable from the trace shown"
+        ],
+        "rootCauseCategory": "none",
+        "rootCauseEvidence": "Tool selection is appropriate (get_macro_calendar for macro, get_earnings calendar mode per symbol, code_interpreter for the overlay synthesis, get_index_constituents for the large-cap universe). 17 calls, 0 retries, 0 failures. The only soft spot is that the Treasury curve source is not obvious from the trace.",
+        "responseQualityNote": "Honest, well-structured overlay that correctly reports an empty catalyst window and points the buyer to the next two real clusters — materially better than the fabricated free baseline.",
+        "improvementLever": "Surface the Treasury yield curve tool call explicitly (or document which field of get_macro_calendar carries it) so the source of the tenor table is auditable in the trace.",
+        "diagnosticBrief": "17 tool calls across 11 loop steps, 0 retries, 0 self-heals. Planner correctly widened the macro window to Jul 31 after the first fetch showed a quiet 14-day corridor, and proactively checked 8 large-cap symbols plus JPM. Low fragility."
+      },
+      "overallVerdict": "This is the honest overlay I need — it tells me plainly that the next 14 days are a macro/earnings dead zone, gives me the real Treasury curve, and points me to the next real cluster (JPM Jul 14, GDP/PCE Jul 30-31) instead of inventing catalysts like the free LLM did. I'd just like the Treasury yields' source to be more visibly auditable.",
+      "autoWeak": false,
+      "differentiation": "moderate_differentiation"
+    }
+  ],
+  "aggregate": {
+    "satisfactionMean": 4.453,
+    "satisfactionMin": 3,
+    "queryCount": 18,
+    "queriesAbove4": 16,
+    "queriesBelow3": 0,
+    "weakQueryCount": 2,
+    "weakQueryRate": 0.111,
+    "fragilityReport": {
+      "highCount": 0,
+      "mediumCount": 3,
+      "lowCount": 15,
+      "highFragilityRate": 0,
+      "highFragilityQueryIds": []
+    },
+    "differentiationCounts": {
+      "high_differentiation": 8,
+      "moderate_differentiation": 10,
+      "low_differentiation": 0
+    },
+    "differentiationSummary": {
+      "high_differentiation": 8,
+      "moderate_differentiation": 10,
+      "low_differentiation": 0,
+      "baselineBeatenRate": 1
+    },
+    "baselineBeatenRate": 1,
+    "topImprovementLevers": [
+      "Improve tool descriptions so scout selects insider_activity / congressional_trades / sec_filings on relevant prompts (capability_miss root cause)",
+      "Reduce agent wall-time on multi-step sector/relative-value prompts (timeout root cause)",
+      "Tighten synthesis to surface the specific FMP fields the buyer asked for"
+    ]
+  }
+}

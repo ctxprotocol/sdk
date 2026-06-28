@@ -1,0 +1,460 @@
+{
+  "executeValidation": {
+    "discoveredToolName": "FMP Equities Intelligence",
+    "discoveredMethodCount": 27,
+    "passedMethodCount": 27,
+    "failedMethodCount": 0,
+    "methods": [
+      {
+        "methodName": "check_api_status",
+        "args": {},
+        "status": "pass",
+        "durationMs": 543,
+        "resultKeys": [
+          "status",
+          "probeSymbol",
+          "sample",
+          "fetchedAt"
+        ],
+        "resultPreview": "FMP API reachable and the configured key was accepted.",
+        "error": ""
+      },
+      {
+        "methodName": "search_symbols",
+        "args": {
+          "query": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 201,
+        "resultKeys": [
+          "query",
+          "matchCount",
+          "matches",
+          "fetchedAt"
+        ],
+        "resultPreview": "Found 7 symbol matches for \"AAPL\".",
+        "error": ""
+      },
+      {
+        "methodName": "get_company_profile",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 132,
+        "resultKeys": [
+          "profileCount",
+          "profiles",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 1 company profiles.",
+        "error": ""
+      },
+      {
+        "methodName": "get_stock_quote",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 133,
+        "resultKeys": [
+          "quoteCount",
+          "quotes",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 1 quotes.",
+        "error": ""
+      },
+      {
+        "methodName": "get_historical_prices",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 399,
+        "resultKeys": [
+          "symbol",
+          "rowCount",
+          "earliestDate",
+          "latestDate",
+          "rows",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 1255 EOD price rows for AAPL (full series).",
+        "error": ""
+      },
+      {
+        "methodName": "get_financial_statements",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 138,
+        "resultKeys": [
+          "symbol",
+          "statement",
+          "period",
+          "periodCount",
+          "statements",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 8 annual income-statement periods for AAPL.",
+        "error": ""
+      },
+      {
+        "methodName": "get_financial_ratios",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 487,
+        "resultKeys": [
+          "symbol",
+          "ttm",
+          "ratios",
+          "keyMetrics",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched annual ratios and key metrics for AAPL.",
+        "error": ""
+      },
+      {
+        "methodName": "get_analyst_insights",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 372,
+        "resultKeys": [
+          "symbol",
+          "priceTargetConsensus",
+          "priceTargetSummary",
+          "gradesConsensus",
+          "analystEstimates",
+          "partialErrors",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched analyst insights for AAPL.",
+        "error": ""
+      },
+      {
+        "methodName": "get_market_news",
+        "args": {},
+        "status": "pass",
+        "durationMs": 138,
+        "resultKeys": [
+          "category",
+          "storyCount",
+          "stories",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 25 stock news stories.",
+        "error": ""
+      },
+      {
+        "methodName": "get_market_movers",
+        "args": {},
+        "status": "pass",
+        "durationMs": 135,
+        "resultKeys": [
+          "direction",
+          "moverCount",
+          "movers",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 25 gainers.",
+        "error": ""
+      },
+      {
+        "methodName": "screen_stocks",
+        "args": {},
+        "status": "pass",
+        "durationMs": 261,
+        "resultKeys": [
+          "matchCount",
+          "filters",
+          "matches",
+          "fetchedAt"
+        ],
+        "resultPreview": "Screener returned 50 matching symbols.",
+        "error": ""
+      },
+      {
+        "methodName": "get_technical_indicator",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 205,
+        "resultKeys": [
+          "symbol",
+          "indicator",
+          "timeframe",
+          "periodLength",
+          "rowCount",
+          "rows",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 1254 RSI rows for AAPL (1day, length 14).",
+        "error": ""
+      },
+      {
+        "methodName": "build_company_financial_brief",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 508,
+        "resultKeys": [
+          "symbol",
+          "brief",
+          "profile",
+          "quote",
+          "ratiosTtm",
+          "keyMetricsTtm",
+          "priceTargetConsensus",
+          "gradesConsensus",
+          "news",
+          "partialErrors",
+          "fetchedAt"
+        ],
+        "resultPreview": "Apple Inc. (AAPL) — Technology. Last price 283.78 (+3.13647% today). Market cap ~4167977885680. Analyst target consensus 327. Analyst rating consensus: Buy. Includes TTM ratios/key metrics and 5 recent news stories. Cross-check ratios, analyst targets, and news before drawing a conclusion.",
+        "error": ""
+      },
+      {
+        "methodName": "get_earnings",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 136,
+        "resultKeys": [
+          "symbol",
+          "mode",
+          "rowCount",
+          "rows",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 20 earnings surprises for AAPL.",
+        "error": ""
+      },
+      {
+        "methodName": "get_dividends",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 131,
+        "resultKeys": [
+          "symbol",
+          "mode",
+          "rowCount",
+          "rows",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 20 dividend records for AAPL.",
+        "error": ""
+      },
+      {
+        "methodName": "get_insider_activity",
+        "args": {},
+        "status": "pass",
+        "durationMs": 146,
+        "resultKeys": [
+          "symbol",
+          "transactionCount",
+          "transactions",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 25 insider transactions (market-wide).",
+        "error": ""
+      },
+      {
+        "methodName": "get_ownership",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 380,
+        "resultKeys": [
+          "symbol",
+          "sharesFloat",
+          "institutionalHolders",
+          "filingPeriod",
+          "partialErrors",
+          "fetchedAt"
+        ],
+        "resultPreview": "Ownership for AAPL: 0 institutional holders, float loaded.",
+        "error": ""
+      },
+      {
+        "methodName": "get_sec_filings",
+        "args": {},
+        "status": "pass",
+        "durationMs": 131,
+        "resultKeys": [
+          "symbol",
+          "mode",
+          "rowCount",
+          "filings",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 0 latest 8-K filings between 2026-06-27 and 2026-07-04.",
+        "error": ""
+      },
+      {
+        "methodName": "get_peers",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 132,
+        "resultKeys": [
+          "symbol",
+          "peers",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched peer group for AAPL.",
+        "error": ""
+      },
+      {
+        "methodName": "get_growth",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 134,
+        "resultKeys": [
+          "symbol",
+          "period",
+          "periodCount",
+          "growth",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 8 annual growth periods for AAPL.",
+        "error": ""
+      },
+      {
+        "methodName": "get_revenue_segments",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 196,
+        "resultKeys": [
+          "symbol",
+          "geographic",
+          "product",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched revenue segments (both) for AAPL.",
+        "error": ""
+      },
+      {
+        "methodName": "get_congressional_trades",
+        "args": {},
+        "status": "pass",
+        "durationMs": 127,
+        "resultKeys": [
+          "symbol",
+          "chamber",
+          "houseTrades",
+          "senateTrades",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 0 House and 0 Senate trades.",
+        "error": ""
+      },
+      {
+        "methodName": "get_index_constituents",
+        "args": {},
+        "status": "pass",
+        "durationMs": 144,
+        "resultKeys": [
+          "index",
+          "constituentCount",
+          "constituents",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 503 sp500 constituents.",
+        "error": ""
+      },
+      {
+        "methodName": "get_valuation",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 146,
+        "resultKeys": [
+          "symbol",
+          "dcf",
+          "enterpriseValues",
+          "marketCap",
+          "priceChange",
+          "partialErrors",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched valuation snapshot for AAPL.",
+        "error": ""
+      },
+      {
+        "methodName": "get_quality_scores",
+        "args": {
+          "symbol": "AAPL"
+        },
+        "status": "pass",
+        "durationMs": 129,
+        "resultKeys": [
+          "symbol",
+          "financialScores",
+          "rating",
+          "partialErrors",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched quality scores and rating for AAPL.",
+        "error": ""
+      },
+      {
+        "methodName": "get_sector_performance",
+        "args": {},
+        "status": "pass",
+        "durationMs": 175,
+        "resultKeys": [
+          "date",
+          "sectorPerformance",
+          "industryPerformance",
+          "sectorPe",
+          "industryPe",
+          "partialErrors",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched sector/industry performance and P/E snapshot for 2026-06-27.",
+        "error": ""
+      },
+      {
+        "methodName": "get_macro_calendar",
+        "args": {},
+        "status": "pass",
+        "durationMs": 156,
+        "resultKeys": [
+          "from",
+          "to",
+          "economicEvents",
+          "treasuryRates",
+          "partialErrors",
+          "fetchedAt"
+        ],
+        "resultPreview": "Fetched 1119 economic events (2026-06-27 to 2026-07-11) and treasury yields.",
+        "error": ""
+      }
+    ]
+  },
+  "externalAccuracyCheck": {
+    "status": "PASS",
+    "notes": [
+      "get_company_profile(AAPL) returned symbol AAPL, sector Technology, and market/price fields — consistent with the real FMP profile upstream."
+    ],
+    "preview": "{\"profileCount\":1,\"profiles\":[{\"symbol\":\"AAPL\",\"price\":283.78,\"marketCap\":4167977885680,\"beta\":1.086,\"lastDividend\":1.05,\"range\":\"199.26-317.4\",\"change\":8.63,\"changePercentage\":3.13647,\"volume\":261244321,\"averageVolume\":52310638,\"companyName\":\"Apple Inc.\",\"currency\":\"USD\",\"cik\":\"0000320193\",\"isin\":\""
+  }
+}

@@ -87,6 +87,9 @@ export type {
   QueryStreamDeveloperTraceEvent,
   QueryStreamDoneEvent,
   QueryStreamErrorEvent,
+  QueryComputedArtifact,
+  QueryChartArtifact,
+  QueryImageArtifact,
   // Developer types
   UpdateToolOptions,
   UpdateToolResult,

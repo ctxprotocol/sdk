@@ -1,0 +1,81 @@
+{
+  "verticalAlphaResearch": {
+    "completedAt": "2026-06-27T13:16:30Z",
+    "upstreamDocsSource": "FMP stable REST API developer docs snapshot",
+    "alphaCategories": [
+      {
+        "category": "earnings-event-alpha",
+        "upstreamDataSource": "/stable/earnings (actual vs estimated EPS/revenue + surpriseDelta) and /stable/earnings-calendar (forward report dates)",
+        "whyItBeatsFree": "Free LLMs only know stale, widely-reported beats from training data. FMP returns the structured per-quarter surprise delta (actual - estimated) and the forward earnings-calendar dates that no model can compute without a live filing feed — essential for catalyst timing.",
+        "examplePromptShape": "What is NVDA's earnings surprise delta over the last 8 quarters?"
+      },
+      {
+        "category": "insider-congressional-sentiment",
+        "upstreamDataSource": "/stable/insider-trading/search and /stable/insider-trading/latest (Form 4 filer, transactionType, securities, value) plus /stable/house-trades and /stable/senate-trades (politician, chamber, amount range)",
+        "whyItBeatsFree": "Form 4 insider filings and congressional trade disclosures are filed continuously and are not in any model's training context. FMP structures the filer, buy/sell type, share count, and reported value so a buyer can compute net insider flow and politician-ticker overlap that a free LLM simply cannot see.",
+        "examplePromptShape": "Are insiders and senators net buying or selling XOM and META?"
+      },
+      {
+        "category": "intrinsic-relative-valuation",
+        "upstreamDataSource": "/stable/discounted-cash-flow (dcfPrice, stockPrice), /stable/enterprise-values (ev, evOverEBITDA, evOverSales), /stable/market-capitalization, /stable/stock-price-change (1D/1W/1M/3M/6M/YTD/1Y), and /stable/stock-peers (FMP-computed comparables)",
+        "whyItBeatsFree": "DCF fair value, EV/EBITDA, and FMP's peer set are live computed values over current financials — a free LLM hallucinates these from memory and has no notion of today's stock price vs intrinsic value. The contributor composites DCF + EV + market cap + price change + peers into one relative-value frame.",
+        "examplePromptShape": "Rank NVDA and its FMP peers by DCF upside vs current price."
+      },
+      {
+        "category": "sector-industry-rotation",
+        "upstreamDataSource": "/stable/sector-performance-snapshot and /stable/industry-performance-snapshot (1D/5D/1M/YTD returns) plus /stable/sector-pe-snapshot and /stable/industry-pe-snapshot (average P/E)",
+        "whyItBeatsFree": "Sector and industry rotation is intraday/daily live data. Free LLMs have no idea which of the 11 sectors is leading this month or what the Technology-sector average P/E is right now. FMP returns performance and P/E for every sector and industry in a single composite call.",
+        "examplePromptShape": "Which sectors are outperforming YTD and what is the Technology-sector P/E?"
+      },
+      {
+        "category": "revenue-segment-growth-quality",
+        "upstreamDataSource": "/stable/revenue-geographic-segmentation and /stable/revenue-product-segmentation (segment revenue by period) plus /stable/financial-growth (growthRevenue, growthEBITDA, growthFreeCashFlow, growthEPS series)",
+        "whyItBeatsFree": "Geographic and product-line revenue mix and multi-year growth-rate series are buried in 10-K footnotes. Free LLMs guess AAPL's Services vs Products split from memory; FMP returns the reported segment dollars and the YoY growth rates by line item directly.",
+        "examplePromptShape": "Chart AAPL's revenue by geography and product line and AMZN's EBITDA growth trend."
+      },
+      {
+        "category": "ownership-concentration",
+        "upstreamDataSource": "/stable/shares-float (freeFloat, floatShares, outstandingShares) plus the CIK -> /stable/institutional-ownership/dates -> /stable/institutional-ownership/extract-analytics/holder chain (top 13F holders, shares, value, pctHeld)",
+        "whyItBeatsFree": "Top 13F institutional holders require resolving CIK, picking the latest filing period, and extracting the holder table — a multi-step lookup no free LLM can perform. FMP collapses the whole chain into one call returning float plus ranked holders.",
+        "examplePromptShape": "Who are the top 13F holders of JPM and what is the free float?"
+      },
+      {
+        "category": "macro-yield-curve",
+        "upstreamDataSource": "/stable/economic-calendar (event, date, country, importance over a date range) and /stable/treasury-rates (yields across maturities)",
+        "whyItBeatsFree": "The forward economic calendar (next FOMC, CPI, NFP dates) and the live Treasury yield curve are not in any model's training data. FMP returns both in one composite call so a buyer can see catalysts and the rate backdrop together.",
+        "examplePromptShape": "What FOMC/CPI events are scheduled in the next 14 days and what is the 10Y yield?"
+      },
+      {
+        "category": "quality-distress-scoring",
+        "upstreamDataSource": "/stable/financial-scores (altmanZScore, piotroskiScore, beneishMScore, workingCapital) and /stable/ratings-snapshot (FMP rating grade)",
+        "whyItBeatsFree": "Altman Z, Piotroski F, and Beneish M are computed from current financials — free LLMs cannot recompute them on demand and routinely state stale or hallucinated scores. FMP returns the live computed scores plus the FMP rating in one call.",
+        "examplePromptShape": "What is LLY's Altman Z and Piotroski score, and does it signal distress?"
+      },
+      {
+        "category": "sec-filing-dividend-flow",
+        "upstreamDataSource": "/stable/sec-filings-search/symbol (formType, filingDate, link, finalLink) and /stable/sec-filings-8k (latest material-event feed) plus /stable/dividends (date, dividend, record/payment/declaration dates) and /stable/dividends-calendar (next ex-div dates)",
+        "whyItBeatsFree": "Recent 8-K material events and ex-dividend calendar dates are live filing/feed data. Free LLMs miss same-week 8-Ks and cannot produce the structured ex-div/record/payment date triple FMP returns per dividend.",
+        "examplePromptShape": "What 8-Ks and 10-Ks did COST file in the last 120 days and when is JNJ's next ex-div date?"
+      },
+      {
+        "category": "index-universe-screening",
+        "upstreamDataSource": "/stable/sp500-constituent, /stable/nasdaq-constituent, and /stable/dowjones-constituent (symbol, name, sector, subSector per member)",
+        "whyItBeatsFree": "Index membership changes (adds/drops) happen continuously and are not in training data. Free LLMs cannot reliably list the current S&P 500 or filter it by sub-industry; FMP returns the live constituent roster with sector tags.",
+        "examplePromptShape": "Which S&P 500 constituents are in the Semiconductors industry?"
+      }
+    ],
+    "crossToolOpportunities": [
+      "Relative-value screen: get_peers(NVDA) -> get_valuation per peer (DCF upside + EV/EBITDA) -> get_growth per peer (revenue/EBITDA growth) -> rank the group cheapest-to-richest on DCF upside adjusted for growth, producing a buy/sell/hold table a free LLM cannot assemble.",
+      "Catalyst-sentiment convergence: get_earnings(surprises, TSLA) -> get_insider_activity(TSLA) -> get_congressional_trades(TSLA) -> overlay earnings surprise sign, net insider flows, and politician trade direction into one bullish/bearish/diverging signal on a single ticker.",
+      "Ownership-quality-valuation thesis: get_ownership(AAPL) -> get_quality_scores(AAPL) -> get_valuation(AAPL) -> test whether institutional accumulation is justified by Altman Z / Piotroski quality and DCF fair value vs price in one pass.",
+      "Sector-rotation drill-down: get_sector_performance (which sector leads YTD) -> get_index_constituents or screen_stocks (filter within that sector by market cap) -> get_valuation on the bellwether name -> confirm the rotation is valuation-supported rather than momentum-only."
+    ],
+    "upstreamUIGaps": [
+      "The FMP web UI shows sector performance and sector P/E on separate pages; the contributor's get_sector_performance returns performance AND P/E for all 11 sectors and their industries in a single composite call, enabling direct rotation-vs-valuation comparison in one view.",
+      "Finding top 13F holders in the FMP UI requires manually looking up a company's CIK, navigating to the institutional-ownership page, selecting a filing period, and reading the holder table; get_ownership auto-resolves CIK -> latest filing period -> ranked holders plus the float in one call.",
+      "The FMP UI splits DCF fair value, enterprise value, market cap, and price change across four separate tools; get_valuation composites all four so a buyer sees intrinsic value, EV multiples, size, and multi-period returns side by side.",
+      "The FMP UI surfaces the economic calendar and the Treasury yield curve on different pages; get_macro_calendar returns the forward macro calendar AND the current yield curve together, so a buyer can read catalysts against the rate backdrop in one request.",
+      "The FMP UI exposes earnings surprise history and the forward earnings calendar separately; get_earnings switches between surprises and calendar in one tool, letting a buyer move from 'did they beat?' to 'when do they report next?' without re-navigating."
+    ]
+  }
+}

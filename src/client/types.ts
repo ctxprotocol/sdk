@@ -595,18 +595,44 @@ export interface QueryChartSpec {
 }
 
 /**
- * Computed artifact emitted by the librarian's code interpreter.
+ * Structured chart artifact emitted by the librarian's code interpreter.
  *
- * Charts are returned as a structured `{ spec, data }` pair so SDK consumers
- * can render them with any compatible charting library. The first-party web UI
- * renders these specs with Recharts.
+ * Charts are returned as a `{ spec, data }` pair so SDK consumers can render
+ * them with any compatible charting library. The first-party web UI renders
+ * these specs with Recharts.
  */
-export type QueryComputedArtifact = {
+export type QueryChartArtifact = {
   kind: "chart";
   spec: QueryChartSpec;
   data: QueryChartDataRow[];
   title?: string;
 };
+
+/**
+ * Rendered image artifact (e.g. a server-rendered chart PNG) emitted by the
+ * code interpreter alongside or instead of the structured `chart` spec.
+ *
+ * `url` points at a hosted, already-rendered image so consumers that cannot
+ * render a chart spec (image-first surfaces such as social posting) can attach
+ * it directly.
+ */
+export type QueryImageArtifact = {
+  kind: "image";
+  url: string;
+  alt?: string;
+  title?: string;
+  contentHash?: string;
+  bytes?: number;
+  width?: number;
+  height?: number;
+};
+
+/**
+ * Computed artifact emitted by the librarian's code interpreter.
+ *
+ * Discriminated on `kind`: a structured `chart` spec or a rendered `image`.
+ */
+export type QueryComputedArtifact = QueryChartArtifact | QueryImageArtifact;
 
 export interface QueryToolCallFailureSample {
   /** Display name of the contributor tool whose call failed. */
