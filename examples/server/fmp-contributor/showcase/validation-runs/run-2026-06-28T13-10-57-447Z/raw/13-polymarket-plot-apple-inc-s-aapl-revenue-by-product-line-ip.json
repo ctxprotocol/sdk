@@ -1,0 +1,3939 @@
+{
+  "success": true,
+  "response": "Quarterly revenue by product line is **not available** through the current API; the execution was bounded because only **annual fiscal-year** segmentation is returned. Below is the available data from FY2018 to FY2025, which the emitted chart visualizes.\n\n**Apple Revenue by Product Line (Annual Fiscal Years)**\n\n| Fiscal Year | iPhone | Mac | iPad | Wearables/Home/Accessories | Services |\n|-------------|--------|-----|------|---------------------------|----------|\n| 2018 | $166.7B | $25.5B | $18.8B | — | $37.2B |\n| 2019 | $142.4B | $25.7B | $21.3B | $24.5B | $46.3B |\n| 2020 | $137.8B | $28.6B | $23.7B | $30.6B | $53.8B |\n| 2021 | $192.0B | $35.2B | $31.9B | $38.4B | $68.4B |\n| 2022 | $205.5B | $40.2B | $29.3B | $41.2B | $78.1B |\n| 2023 | $200.6B | $29.4B | $28.3B | $39.8B | $85.2B |\n| 2024 | $201.2B | $30.0B | $26.7B | $37.0B | $96.2B |\n| 2025 | $209.6B | $33.7B | $28.0B | $35.7B | $109.2B |\n\n*(Wearables/Home/Accessories was not reported as a standalone segment in FY2018.)*\n\n**Growth and deceleration signals (FY2018 → FY2025)**\n- **Services** is the clearest growth driver: $37.2B → $109.2B (+193.5%).\n- **iPhone** remains the largest absolute contributor ($209.6B) but grew more modestly (+25.7%).\n- **Wearables/Home/Accessories** has decelerated since peaking around $41.2B in FY2022, falling to $35.7B in FY2025.\n- **Mac** and **iPad** have been relatively flat to slightly up over the full period, with Mac showing a noticeable dip in FY2023–2024 before rebounding in FY2025.\n\n**Remaining gap**: To get a true quarter-by-quarter product-line breakdown, you would need to consult Apple’s official earnings release supplements directly, as the current API only provides annual fiscal-year segmentation.",
+  "toolsUsed": [
+    {
+      "id": "15c60ca5-94c9-4257-89c4-542a4745e89f",
+      "name": "Equities Intelligence",
+      "skillCalls": 2
+    }
+  ],
+  "cost": {
+    "totalCostUsd": "0.101012",
+    "toolCostUsd": "0.000000",
+    "modelCostUsd": "0.101012"
+  },
+  "durationMs": 151493,
+  "outcomeType": "answer",
+  "querySession": {
+    "sessionId": "7d6276b4-3fcd-438c-90fc-447165766c37",
+    "attemptId": "1a540f9e-04c7-4bd2-b59f-b6345eb4fa41",
+    "parentAttemptId": null,
+    "rootAttemptId": "1a540f9e-04c7-4bd2-b59f-b6345eb4fa41",
+    "mode": "initial",
+    "origin": "initial_request",
+    "status": "completed",
+    "checkpoint": {
+      "currentStage": "execution",
+      "latestCheckpointArtifactId": "923be1a8-81b1-4255-8810-a7437cfd6ae7:9",
+      "canonicalDatasetId": "923be1a8-81b1-4255-8810-a7437cfd6ae7:canonical-execution",
+      "executionProgramCurrentRevisionId": "iterative-v1"
+    }
+  },
+  "data": null,
+  "dataUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/0e9ca190-8bcd-416f-8d13-8bd5596f8fea-api_query_execution_923be1a8-81b1-4255-8810-a7437cfd6ae7_1782655252834.json",
+  "computedArtifacts": [
+    {
+      "kind": "image",
+      "url": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/f5faeb5b3d68f84fc0eb3e23954b7abf40eee1bef6312e35c42568ec62c1d749.png",
+      "alt": "Apple revenue by product line over last 8 fiscal years",
+      "title": "AAPL Revenue by Product Line (FY2018-FY2025)",
+      "contentHash": "f5faeb5b3d68f84fc0eb3e23954b7abf40eee1bef6312e35c42568ec62c1d749",
+      "bytes": 124889,
+      "width": 1781,
+      "height": 1029
+    }
+  ],
+  "developerTrace": {
+    "orchestrationMode": "query",
+    "summary": {
+      "toolCalls": 4,
+      "retryCount": 0,
+      "selfHealCount": 0,
+      "fallbackCount": 0,
+      "failureCount": 0,
+      "recoveryCount": 0,
+      "completionChecks": 0,
+      "loopCount": 5,
+      "toolStepCount": 5
+    },
+    "timeline": [
+      {
+        "stepType": "orchestration",
+        "event": "query-start",
+        "status": "ok",
+        "message": "Query orchestration started",
+        "timestampMs": 1782655252969,
+        "metadata": {
+          "requestId": "923be1a8-81b1-4255-8810-a7437cfd6ae7",
+          "queryDepth": "auto"
+        }
+      },
+      {
+        "stepType": "selection",
+        "event": "selected-tools",
+        "status": "ok",
+        "timestampMs": 1782655252970,
+        "metadata": {
+          "selectedPolicy": "exploratory",
+          "plannerReasoningStage": "mechanical",
+          "oneShotBias": false,
+          "selectedTools": [
+            {
+              "toolId": "15c60ca5-94c9-4257-89c4-542a4745e89f",
+              "toolName": "Equities Intelligence",
+              "priceUsd": "0.000000",
+              "selectedMethodCount": 27,
+              "selectedMethods": [
+                "check_api_status",
+                "search_symbols",
+                "get_company_profile",
+                "get_stock_quote",
+                "get_historical_prices",
+                "get_financial_statements",
+                "get_financial_ratios",
+                "get_analyst_insights",
+                "get_market_news",
+                "get_market_movers",
+                "screen_stocks",
+                "get_technical_indicator"
+              ],
+              "omittedSelectedMethodCount": 15
+            }
+          ]
+        }
+      },
+      {
+        "stepType": "execution-setup",
+        "event": "iterative-execution-entry",
+        "status": "ok",
+        "timestampMs": 1782655252971,
+        "message": "Iterative execution received the selected tools.",
+        "metadata": {
+          "initialCode": "// iterative execution: no generated code",
+          "finalCode": "// iterative execution: no generated code",
+          "plannerQuery": "Plot Apple Inc.'s (AAPL) revenue by product line (iPhone, Mac, iPad, Wearables/Home/Accessories, Services) over the last 8 fiscal quarters as a multi-line chart, one line per product line, so I can see which product line is driving AAPL's growth and which is decelerating over the 8 quarters.",
+          "allowedModules": [],
+          "availableToolCount": 27,
+          "availableMethodNamesSample": [
+            "Equities Intelligence.check_api_status",
+            "Equities Intelligence.search_symbols",
+            "Equities Intelligence.get_company_profile",
+            "Equities Intelligence.get_stock_quote",
+            "Equities Intelligence.get_historical_prices",
+            "Equities Intelligence.get_financial_statements",
+            "Equities Intelligence.get_financial_ratios",
+            "Equities Intelligence.get_analyst_insights",
+            "Equities Intelligence.get_market_news",
+            "Equities Intelligence.get_market_movers",
+            "Equities Intelligence.screen_stocks",
+            "Equities Intelligence.get_technical_indicator",
+            "Equities Intelligence.build_company_financial_brief",
+            "Equities Intelligence.get_earnings",
+            "Equities Intelligence.get_dividends",
+            "Equities Intelligence.get_insider_activity",
+            "Equities Intelligence.get_ownership",
+            "Equities Intelligence.get_sec_filings",
+            "Equities Intelligence.get_peers",
+            "Equities Intelligence.get_growth",
+            "Equities Intelligence.get_revenue_segments",
+            "Equities Intelligence.get_congressional_trades",
+            "Equities Intelligence.get_index_constituents",
+            "Equities Intelligence.get_valuation",
+            "Equities Intelligence.get_quality_scores",
+            "Equities Intelligence.get_sector_performance",
+            "Equities Intelligence.get_macro_calendar"
+          ],
+          "selectedMethodCount": 27,
+          "selectedButFilteredOut": [],
+          "toolCallCount": 4,
+          "toolCallAttemptCount": 2,
+          "toolCallSuccessCount": 2,
+          "toolCallFailureCount": 0,
+          "toolCallFailureSamples": [],
+          "grounded": true
+        }
+      },
+      {
+        "stepType": "execution-program",
+        "event": "execution-program-lineage",
+        "status": "ok",
+        "timestampMs": 1782655252972,
+        "metadata": {
+          "executionProgram": {
+            "baseRevisionId": "iterative-v1",
+            "currentRevisionId": "iterative-v1",
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "deterministicChangeCount": 0,
+            "revisions": [
+              {
+                "revisionId": "iterative-v1",
+                "parentRevisionId": null,
+                "attempt": 1,
+                "action": "initial",
+                "reason": "initial",
+                "summary": "Iterative AI SDK tool loop",
+                "codeHash": "iterative",
+                "codeLength": 41,
+                "changedLineCount": 0,
+                "diffPreview": null,
+                "editCount": null,
+                "preservesPriorLogic": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1782655252979,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 5361
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1782655252980,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 17250
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1782655252981,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 42295
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1782655252982,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 68893
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1782655252983,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 85702
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1782655253969,
+        "tool": {
+          "id": "15c60ca5-94c9-4257-89c4-542a4745e89f",
+          "name": "get_revenue_segments"
+        },
+        "metadata": {
+          "args": {
+            "symbol": "AAPL",
+            "segment": "product",
+            "limit": 20
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"symbol\":\"AAPL\",\"geographic\":[],\"product\":[{\"symbol\":\"AAPL\",\"fiscalYear\":2025,\"period\":\"FY\",\"reportedCurrency\":null,\"date\":\"2025-09-27\",\"data\":{\"Mac\":33708000000,\"Service\":109158000000,\"Wearables, Home and Accessories\":35686000000,\"iPad\":28023000000,\"iPhone\":209586000000}},{\"symbol\":\"AAPL\",\"fiscalYear\":2024,\"period\":\"FY\",\"reportedCurrency\":\"USD\",\"date\":\"2024-09-28\",\"data\":{\"Mac\":29984000000,\"Service\":96169000000,\"Wearables, Home and Accessories\":37005000000,\"iPad\":26694000000,\"iPhone\":201183000000}},{\"symbol\":\"AAPL\",\"fiscalYear\":2023,\"period\":\"FY\",\"reportedCurrency\":\"USD\",\"date\":\"2023-09-30\",\"data\":{\"Mac\":29357000000,\"Service\":85200000000,\"Wearables, Home and Accessories\":39845000000,\"iPad\":28300000000,\"iPhone\":200583000000}},{\"symbol\":\"AAPL\",\"fiscalYear\":2022,\"period\":\"FY\",\"reportedCurre...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1782655253970,
+        "tool": {
+          "id": "15c60ca5-94c9-4257-89c4-542a4745e89f",
+          "name": "get_financial_statements"
+        },
+        "metadata": {
+          "args": {
+            "symbol": "AAPL",
+            "statement": "income",
+            "period": "quarter",
+            "limit": 8
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"symbol\":\"AAPL\",\"statement\":\"income\",\"period\":\"quarter\",\"periodCount\":8,\"statements\":[{\"date\":\"2026-03-28\",\"symbol\":\"AAPL\",\"reportedCurrency\":\"USD\",\"cik\":\"0000320193\",\"filingDate\":\"2026-05-01\",\"acceptedDate\":\"2026-05-01 10:01:00\",\"fiscalYear\":\"2026\",\"period\":\"Q2\",\"revenue\":111184000000,\"costOfRevenue\":56403000000,\"grossProfit\":54781000000,\"researchAndDevelopmentExpenses\":11419000000,\"generalAndAdministrativeExpenses\":0,\"sellingAndMarketingExpenses\":0,\"sellingGeneralAndAdministrativeExpenses\":7477000000,\"otherExpenses\":0,\"operatingExpenses\":18896000000,\"costAndExpenses\":75299000000,\"netInterestIncome\":0,\"interestIncome\":0,\"interestExpense\":0,\"depreciationAndAmortization\":3439000000,\"ebitda\":39324000000,\"ebit\":35833000000,\"nonOperatingIncomeExcludingInterest\":-52000000,\"operatingIncome\":358...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1782655253971,
+        "tool": {
+          "id": "code_interpreter",
+          "name": "code_interpreter"
+        },
+        "metadata": {
+          "args": {
+            "truncated": true,
+            "preview": "{\"intent\":\"derived metrics\",\"code\":\"import pandas as pd\\nimport matplotlib.pyplot as plt\\nimport numpy as np\\n\\n# Get the product data from the revenue segments tool\\nresult = get_revenue_segments_1\\nproduct_data = result[\\\"product\\\"]\\n\\n# Convert to DataFrame\\nrows = []\\nfor entry in product_data:\\n    row = {\\\"fiscalYear\\\": entry[\\\"fiscalYear\\\"], \\\"date\\\": entry[\\\"date\\\"]}\\n    row.update(entry[\\\"data\\\"])\\n    rows.append(row)\\n\\ndf = pd.DataFrame(rows)\\ndf = df.sort_values(\\\"fiscalYear\\\")\\n\\nprint(\\\"Available product-line data:\\\")\\nprint(df.tail(8))\\nprint(f\\\"\\\\nData granularity: Annual (fiscal years)\\\")\\nprint(f\\\"Most recent: {df['fiscalYear'].max()}\\\")\\nprint(f\\\"Oldest with all 5 segments: {df[df['Wearables, Home and Accessories'].notna()]['fiscalYear'].min()}\\\")\",\"inputs\":{},\"postPro...[truncated]"
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"ok\":true,\"result\":null,\"checkpoints\":{},\"stdout\":[\"Available product-line data:\",\"   fiscalYear        date  ...  iPhone and related products and services  Retail\",\"7        2018  2018-09-29  ...                                       NaN     NaN\",\"6        2019  2019-09-28  ...                                       NaN     NaN\",\"5        2020  2020-09-26  ...                                       NaN     NaN\",\"4        2021  2021-09-25  ...                                       NaN     NaN\",\"3        2022  2022-09-24  ...                                       NaN     NaN\",\"2        2023  2023-09-30  ...                                       NaN     NaN\",\"1        2024  2024-09-28  ...                                       NaN     NaN\",\"0        2025  2025-09-27  ...                      ...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1782655253972,
+        "tool": {
+          "id": "code_interpreter",
+          "name": "code_interpreter"
+        },
+        "metadata": {
+          "args": {
+            "truncated": true,
+            "preview": "{\"intent\":\"derived metrics\",\"code\":\"import pandas as pd\\nimport matplotlib.pyplot as plt\\nimport numpy as np\\nfrom matplotlib.ticker import FuncFormatter\\n\\n# Get the product data\\nresult = get_revenue_segments_1\\nproduct_data = result[\\\"product\\\"]\\n\\n# Build DataFrame\\nrows = []\\nfor entry in product_data:\\n    row = {\\\"fiscalYear\\\": entry[\\\"fiscalYear\\\"], \\\"date\\\": entry[\\\"date\\\"]}\\n    row.update(entry[\\\"data\\\"])\\n    rows.append(row)\\n\\ndf = pd.DataFrame(rows)\\ndf = df.sort_values(\\\"fiscalYear\\\")\\n\\n# Filter to last 8 fiscal years with consistent segment naming (FY2018-FY2025)\\ndf_chart = df[df[\\\"fiscalYear\\\"] >= 2018].copy()\\n\\n# Normalize column names for consistent display\\n# The columns are: Mac, Service, Wearables, Home and Accessories, iPad, iPhone\\n# Note: in 2018+ data, the col...[truncated]"
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"ok\":true,\"result\":{\"chart_type\":\"annual_product_revenue\",\"data_years\":[2018,2019,2020,2021,2022,2023,2024,2025]},\"checkpoints\":{},\"stdout\":[\"--- Revenue Growth Summary (FY2018 to FY2025) ---\",\"iPhone: $166.7B → $209.6B (+25.7%)\",\"Mac: $25.5B → $33.7B (+32.3%)\",\"iPad: $18.8B → $28.0B (+49.0%)\",\"Services: $37.2B → $109.2B (+193.5%)\",\"--- Latest FY2025 Revenue by Product Line ---\",\"iPhone: $209.6B\",\"Mac: $33.7B\",\"iPad: $28.0B\",\"Wearables/Home/Accessories: $35.7B\",\"Services: $109.2B\"],\"durationMs\":1300,\"artifacts\":[{\"kind\":\"image\",\"url\":\"https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/f5faeb5b3d68f84fc0eb3e23954b7abf40eee1bef6312e35c42568ec62c1d749.png\",\"alt\":\"Apple revenue by product line over last 8 fiscal years\",\"title\":\"AAPL Revenue by Product Line (FY2018-F...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "query-complete",
+        "status": "success",
+        "timestampMs": 1782655254973,
+        "metadata": {
+          "durationMs": 151493,
+          "executionOk": true
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "query-start",
+        "status": "ok",
+        "message": "Query orchestration started",
+        "timestampMs": 1782655252969,
+        "metadata": {
+          "requestId": "923be1a8-81b1-4255-8810-a7437cfd6ae7",
+          "queryDepth": "auto"
+        }
+      },
+      {
+        "stepType": "selection",
+        "event": "selected-tools",
+        "status": "ok",
+        "timestampMs": 1782655252970,
+        "metadata": {
+          "selectedPolicy": "exploratory",
+          "plannerReasoningStage": "mechanical",
+          "oneShotBias": false,
+          "selectedTools": [
+            {
+              "toolId": "15c60ca5-94c9-4257-89c4-542a4745e89f",
+              "toolName": "Equities Intelligence",
+              "priceUsd": "0.000000",
+              "selectedMethodCount": 27,
+              "selectedMethods": [
+                "check_api_status",
+                "search_symbols",
+                "get_company_profile",
+                "get_stock_quote",
+                "get_historical_prices",
+                "get_financial_statements",
+                "get_financial_ratios",
+                "get_analyst_insights",
+                "get_market_news",
+                "get_market_movers",
+                "screen_stocks",
+                "get_technical_indicator"
+              ],
+              "omittedSelectedMethodCount": 15
+            }
+          ]
+        }
+      },
+      {
+        "stepType": "execution-setup",
+        "event": "iterative-execution-entry",
+        "status": "ok",
+        "timestampMs": 1782655252971,
+        "message": "Iterative execution received the selected tools.",
+        "metadata": {
+          "initialCode": "// iterative execution: no generated code",
+          "finalCode": "// iterative execution: no generated code",
+          "plannerQuery": "Plot Apple Inc.'s (AAPL) revenue by product line (iPhone, Mac, iPad, Wearables/Home/Accessories, Services) over the last 8 fiscal quarters as a multi-line chart, one line per product line, so I can see which product line is driving AAPL's growth and which is decelerating over the 8 quarters.",
+          "allowedModules": [],
+          "availableToolCount": 27,
+          "availableMethodNamesSample": [
+            "Equities Intelligence.check_api_status",
+            "Equities Intelligence.search_symbols",
+            "Equities Intelligence.get_company_profile",
+            "Equities Intelligence.get_stock_quote",
+            "Equities Intelligence.get_historical_prices",
+            "Equities Intelligence.get_financial_statements",
+            "Equities Intelligence.get_financial_ratios",
+            "Equities Intelligence.get_analyst_insights",
+            "Equities Intelligence.get_market_news",
+            "Equities Intelligence.get_market_movers",
+            "Equities Intelligence.screen_stocks",
+            "Equities Intelligence.get_technical_indicator",
+            "Equities Intelligence.build_company_financial_brief",
+            "Equities Intelligence.get_earnings",
+            "Equities Intelligence.get_dividends",
+            "Equities Intelligence.get_insider_activity",
+            "Equities Intelligence.get_ownership",
+            "Equities Intelligence.get_sec_filings",
+            "Equities Intelligence.get_peers",
+            "Equities Intelligence.get_growth",
+            "Equities Intelligence.get_revenue_segments",
+            "Equities Intelligence.get_congressional_trades",
+            "Equities Intelligence.get_index_constituents",
+            "Equities Intelligence.get_valuation",
+            "Equities Intelligence.get_quality_scores",
+            "Equities Intelligence.get_sector_performance",
+            "Equities Intelligence.get_macro_calendar"
+          ],
+          "selectedMethodCount": 27,
+          "selectedButFilteredOut": [],
+          "toolCallCount": 4,
+          "toolCallAttemptCount": 2,
+          "toolCallSuccessCount": 2,
+          "toolCallFailureCount": 0,
+          "toolCallFailureSamples": [],
+          "grounded": true
+        }
+      },
+      {
+        "stepType": "execution-program",
+        "event": "execution-program-lineage",
+        "status": "ok",
+        "timestampMs": 1782655252972,
+        "metadata": {
+          "executionProgram": {
+            "baseRevisionId": "iterative-v1",
+            "currentRevisionId": "iterative-v1",
+            "revisionCount": 1,
+            "patchCount": 0,
+            "replanCount": 0,
+            "deterministicChangeCount": 0,
+            "revisions": [
+              {
+                "revisionId": "iterative-v1",
+                "parentRevisionId": null,
+                "attempt": 1,
+                "action": "initial",
+                "reason": "initial",
+                "summary": "Iterative AI SDK tool loop",
+                "codeHash": "iterative",
+                "codeLength": 41,
+                "changedLineCount": 0,
+                "diffPreview": null,
+                "editCount": null,
+                "preservesPriorLogic": true
+              }
+            ]
+          }
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1782655252979,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 5361
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1782655252980,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 17250
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1782655252981,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 42295
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1782655252982,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 68893
+        }
+      },
+      {
+        "stepType": "execution-attempt",
+        "event": "execution",
+        "status": "success",
+        "timestampMs": 1782655252983,
+        "attempt": 1,
+        "metadata": {
+          "durationMs": 85702
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1782655253969,
+        "tool": {
+          "id": "15c60ca5-94c9-4257-89c4-542a4745e89f",
+          "name": "get_revenue_segments"
+        },
+        "metadata": {
+          "args": {
+            "symbol": "AAPL",
+            "segment": "product",
+            "limit": 20
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"symbol\":\"AAPL\",\"geographic\":[],\"product\":[{\"symbol\":\"AAPL\",\"fiscalYear\":2025,\"period\":\"FY\",\"reportedCurrency\":null,\"date\":\"2025-09-27\",\"data\":{\"Mac\":33708000000,\"Service\":109158000000,\"Wearables, Home and Accessories\":35686000000,\"iPad\":28023000000,\"iPhone\":209586000000}},{\"symbol\":\"AAPL\",\"fiscalYear\":2024,\"period\":\"FY\",\"reportedCurrency\":\"USD\",\"date\":\"2024-09-28\",\"data\":{\"Mac\":29984000000,\"Service\":96169000000,\"Wearables, Home and Accessories\":37005000000,\"iPad\":26694000000,\"iPhone\":201183000000}},{\"symbol\":\"AAPL\",\"fiscalYear\":2023,\"period\":\"FY\",\"reportedCurrency\":\"USD\",\"date\":\"2023-09-30\",\"data\":{\"Mac\":29357000000,\"Service\":85200000000,\"Wearables, Home and Accessories\":39845000000,\"iPad\":28300000000,\"iPhone\":200583000000}},{\"symbol\":\"AAPL\",\"fiscalYear\":2022,\"period\":\"FY\",\"reportedCurre...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1782655253970,
+        "tool": {
+          "id": "15c60ca5-94c9-4257-89c4-542a4745e89f",
+          "name": "get_financial_statements"
+        },
+        "metadata": {
+          "args": {
+            "symbol": "AAPL",
+            "statement": "income",
+            "period": "quarter",
+            "limit": 8
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"symbol\":\"AAPL\",\"statement\":\"income\",\"period\":\"quarter\",\"periodCount\":8,\"statements\":[{\"date\":\"2026-03-28\",\"symbol\":\"AAPL\",\"reportedCurrency\":\"USD\",\"cik\":\"0000320193\",\"filingDate\":\"2026-05-01\",\"acceptedDate\":\"2026-05-01 10:01:00\",\"fiscalYear\":\"2026\",\"period\":\"Q2\",\"revenue\":111184000000,\"costOfRevenue\":56403000000,\"grossProfit\":54781000000,\"researchAndDevelopmentExpenses\":11419000000,\"generalAndAdministrativeExpenses\":0,\"sellingAndMarketingExpenses\":0,\"sellingGeneralAndAdministrativeExpenses\":7477000000,\"otherExpenses\":0,\"operatingExpenses\":18896000000,\"costAndExpenses\":75299000000,\"netInterestIncome\":0,\"interestIncome\":0,\"interestExpense\":0,\"depreciationAndAmortization\":3439000000,\"ebitda\":39324000000,\"ebit\":35833000000,\"nonOperatingIncomeExcludingInterest\":-52000000,\"operatingIncome\":358...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1782655253971,
+        "tool": {
+          "id": "code_interpreter",
+          "name": "code_interpreter"
+        },
+        "metadata": {
+          "args": {
+            "truncated": true,
+            "preview": "{\"intent\":\"derived metrics\",\"code\":\"import pandas as pd\\nimport matplotlib.pyplot as plt\\nimport numpy as np\\n\\n# Get the product data from the revenue segments tool\\nresult = get_revenue_segments_1\\nproduct_data = result[\\\"product\\\"]\\n\\n# Convert to DataFrame\\nrows = []\\nfor entry in product_data:\\n    row = {\\\"fiscalYear\\\": entry[\\\"fiscalYear\\\"], \\\"date\\\": entry[\\\"date\\\"]}\\n    row.update(entry[\\\"data\\\"])\\n    rows.append(row)\\n\\ndf = pd.DataFrame(rows)\\ndf = df.sort_values(\\\"fiscalYear\\\")\\n\\nprint(\\\"Available product-line data:\\\")\\nprint(df.tail(8))\\nprint(f\\\"\\\\nData granularity: Annual (fiscal years)\\\")\\nprint(f\\\"Most recent: {df['fiscalYear'].max()}\\\")\\nprint(f\\\"Oldest with all 5 segments: {df[df['Wearables, Home and Accessories'].notna()]['fiscalYear'].min()}\\\")\",\"inputs\":{},\"postPro...[truncated]"
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"ok\":true,\"result\":null,\"checkpoints\":{},\"stdout\":[\"Available product-line data:\",\"   fiscalYear        date  ...  iPhone and related products and services  Retail\",\"7        2018  2018-09-29  ...                                       NaN     NaN\",\"6        2019  2019-09-28  ...                                       NaN     NaN\",\"5        2020  2020-09-26  ...                                       NaN     NaN\",\"4        2021  2021-09-25  ...                                       NaN     NaN\",\"3        2022  2022-09-24  ...                                       NaN     NaN\",\"2        2023  2023-09-30  ...                                       NaN     NaN\",\"1        2024  2024-09-28  ...                                       NaN     NaN\",\"0        2025  2025-09-27  ...                      ...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "tool-call",
+        "event": "tool-call",
+        "status": "success",
+        "timestampMs": 1782655253972,
+        "tool": {
+          "id": "code_interpreter",
+          "name": "code_interpreter"
+        },
+        "metadata": {
+          "args": {
+            "truncated": true,
+            "preview": "{\"intent\":\"derived metrics\",\"code\":\"import pandas as pd\\nimport matplotlib.pyplot as plt\\nimport numpy as np\\nfrom matplotlib.ticker import FuncFormatter\\n\\n# Get the product data\\nresult = get_revenue_segments_1\\nproduct_data = result[\\\"product\\\"]\\n\\n# Build DataFrame\\nrows = []\\nfor entry in product_data:\\n    row = {\\\"fiscalYear\\\": entry[\\\"fiscalYear\\\"], \\\"date\\\": entry[\\\"date\\\"]}\\n    row.update(entry[\\\"data\\\"])\\n    rows.append(row)\\n\\ndf = pd.DataFrame(rows)\\ndf = df.sort_values(\\\"fiscalYear\\\")\\n\\n# Filter to last 8 fiscal years with consistent segment naming (FY2018-FY2025)\\ndf_chart = df[df[\\\"fiscalYear\\\"] >= 2018].copy()\\n\\n# Normalize column names for consistent display\\n# The columns are: Mac, Service, Wearables, Home and Accessories, iPad, iPhone\\n# Note: in 2018+ data, the col...[truncated]"
+          },
+          "result": {
+            "truncated": true,
+            "preview": "{\"ok\":true,\"result\":{\"chart_type\":\"annual_product_revenue\",\"data_years\":[2018,2019,2020,2021,2022,2023,2024,2025]},\"checkpoints\":{},\"stdout\":[\"--- Revenue Growth Summary (FY2018 to FY2025) ---\",\"iPhone: $166.7B → $209.6B (+25.7%)\",\"Mac: $25.5B → $33.7B (+32.3%)\",\"iPad: $18.8B → $28.0B (+49.0%)\",\"Services: $37.2B → $109.2B (+193.5%)\",\"--- Latest FY2025 Revenue by Product Line ---\",\"iPhone: $209.6B\",\"Mac: $33.7B\",\"iPad: $28.0B\",\"Wearables/Home/Accessories: $35.7B\",\"Services: $109.2B\"],\"durationMs\":1300,\"artifacts\":[{\"kind\":\"image\",\"url\":\"https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/f5faeb5b3d68f84fc0eb3e23954b7abf40eee1bef6312e35c42568ec62c1d749.png\",\"alt\":\"Apple revenue by product line over last 8 fiscal years\",\"title\":\"AAPL Revenue by Product Line (FY2018-F...[truncated]"
+          }
+        }
+      },
+      {
+        "stepType": "orchestration",
+        "event": "query-complete",
+        "status": "success",
+        "timestampMs": 1782655254973,
+        "metadata": {
+          "durationMs": 151493,
+          "executionOk": true
+        }
+      }
+    ],
+    "requestId": "923be1a8-81b1-4255-8810-a7437cfd6ae7",
+    "query": "Plot Apple Inc.'s (AAPL) revenue by product line (iPhone, Mac, iPad, Wearables/Home/Accessories, Services) over the last 8 fiscal quarters as a multi-line chart, one line per product line, so I can see which product line is driving AAPL's growth and which is decelerating over the 8 quarters.",
+    "source": "backend-runtime",
+    "executionSuccess": true,
+    "executionResult": null,
+    "initialCode": "// iterative execution: no generated code",
+    "finalCode": "// iterative execution: no generated code",
+    "executionTrace": [
+      {
+        "attempt": 1,
+        "phase": "execution",
+        "result": "success",
+        "durationMs": 5361,
+        "stepNumber": 1,
+        "toolName": "equities_intelligence__get_revenue_segments",
+        "outputAlias": "get_revenue_segments_1"
+      },
+      {
+        "attempt": 1,
+        "phase": "execution",
+        "result": "success",
+        "durationMs": 17250,
+        "stepNumber": 2,
+        "toolName": "equities_intelligence__get_financial_statements",
+        "outputAlias": "get_financial_statements_1"
+      },
+      {
+        "attempt": 1,
+        "phase": "execution",
+        "result": "success",
+        "durationMs": 42295,
+        "stepNumber": 3,
+        "toolName": "code_interpreter",
+        "outputAlias": "code_interpreter_1",
+        "intent": "derived metrics",
+        "artifactCount": 0
+      },
+      {
+        "attempt": 1,
+        "phase": "execution",
+        "result": "success",
+        "durationMs": 68893,
+        "stepNumber": 4,
+        "toolName": "code_interpreter",
+        "outputAlias": "code_interpreter_2",
+        "intent": "derived metrics",
+        "artifactCount": 1
+      },
+      {
+        "attempt": 1,
+        "phase": "execution",
+        "result": "success",
+        "durationMs": 85702,
+        "stepNumber": 5,
+        "toolName": "finalResponse",
+        "outputAlias": "finalresponse_1"
+      }
+    ],
+    "executionProgram": {
+      "baseRevisionId": "iterative-v1",
+      "currentRevisionId": "iterative-v1",
+      "revisionCount": 1,
+      "patchCount": 0,
+      "replanCount": 0,
+      "deterministicChangeCount": 0,
+      "revisions": [
+        {
+          "revisionId": "iterative-v1",
+          "parentRevisionId": null,
+          "attempt": 1,
+          "action": "initial",
+          "reason": "initial",
+          "summary": "Iterative AI SDK tool loop",
+          "codeHash": "iterative",
+          "codeLength": 41,
+          "changedLineCount": 0,
+          "diffPreview": null,
+          "editCount": null,
+          "preservesPriorLogic": true
+        }
+      ]
+    },
+    "attemptCount": 1,
+    "toolCallHistory": [
+      {
+        "toolId": "15c60ca5-94c9-4257-89c4-542a4745e89f",
+        "toolName": "get_revenue_segments",
+        "args": {
+          "symbol": "AAPL",
+          "segment": "product",
+          "limit": 20
+        },
+        "result": {
+          "symbol": "AAPL",
+          "geographic": [],
+          "product": [
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2025,
+              "period": "FY",
+              "reportedCurrency": null,
+              "date": "2025-09-27",
+              "data": {
+                "Mac": 33708000000,
+                "Service": 109158000000,
+                "Wearables, Home and Accessories": 35686000000,
+                "iPad": 28023000000,
+                "iPhone": 209586000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2024,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2024-09-28",
+              "data": {
+                "Mac": 29984000000,
+                "Service": 96169000000,
+                "Wearables, Home and Accessories": 37005000000,
+                "iPad": 26694000000,
+                "iPhone": 201183000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2023,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2023-09-30",
+              "data": {
+                "Mac": 29357000000,
+                "Service": 85200000000,
+                "Wearables, Home and Accessories": 39845000000,
+                "iPad": 28300000000,
+                "iPhone": 200583000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2022,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2022-09-24",
+              "data": {
+                "Mac": 40177000000,
+                "Service": 78129000000,
+                "Wearables, Home and Accessories": 41241000000,
+                "iPad": 29292000000,
+                "iPhone": 205489000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2021,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2021-09-25",
+              "data": {
+                "Mac": 35190000000,
+                "Service": 68425000000,
+                "Wearables, Home and Accessories": 38367000000,
+                "iPad": 31862000000,
+                "iPhone": 191973000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2020,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2020-09-26",
+              "data": {
+                "Mac": 28622000000,
+                "Service": 53768000000,
+                "Wearables, Home and Accessories": 30620000000,
+                "iPad": 23724000000,
+                "iPhone": 137781000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2019,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2019-09-28",
+              "data": {
+                "Mac": 25740000000,
+                "Service": 46291000000,
+                "Wearables, Home and Accessories": 24482000000,
+                "iPad": 21280000000,
+                "iPhone": 142381000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2018,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2018-09-29",
+              "data": {
+                "Mac": 25484000000,
+                "Service": 37190000000,
+                "iPad": 18805000000,
+                "iPhone": 166699000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2017,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2017-09-30",
+              "data": {
+                "Mac": 25850000000,
+                "Service": 29980000000,
+                "iPad": 19222000000,
+                "iPhone": 141319000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2016,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2016-09-24",
+              "data": {
+                "Mac": 22831000000,
+                "iPad": 20628000000,
+                "iPhone": 136700000000,
+                "Service": 24348000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2015,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2015-09-26",
+              "data": {
+                "Mac": 25471000000,
+                "iPad": 23227000000,
+                "iPhone": 155041000000,
+                "Service": 19909000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2014,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2014-09-27",
+              "data": {
+                "Mac": 24079000000,
+                "Wearables, Home and Accessories": 6093000000,
+                "iPad": 30283000000,
+                "iPhone": 101991000000,
+                "iPod": 2286000000,
+                "iTunes, Software And Service": 18063000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2013,
+              "period": "FY",
+              "reportedCurrency": null,
+              "date": "2013-09-28",
+              "data": {
+                "Wearables, Home and Accessories": 5706000000,
+                "iPad": 31980000000,
+                "iPhone": 91279000000,
+                "Mac": 21483000000,
+                "iPod": 4411000000,
+                "iTunes, Software And Service": 16051000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2012,
+              "period": "FY",
+              "reportedCurrency": null,
+              "date": "2012-09-29",
+              "data": {
+                "iPad": 32424000000,
+                "iPhone": 80477000000,
+                "iPod": 5615000000,
+                "Mac": 23221000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2011,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2011-09-24",
+              "data": {
+                "Desktops": 6439000000,
+                "Other music related products and services": 6314000000,
+                "Peripherals and Other Hardware": 2330000000,
+                "Portables": 15344000000,
+                "Software, service and other net sales": 2954000000,
+                "Total Mac net sales": 21783000000,
+                "iPad and related products and services": 20358000000,
+                "iPhone and related products and services": 47057000000,
+                "iPod": 7453000000
+              }
+            },
+            {
+              "symbol": "AAPL",
+              "fiscalYear": 2010,
+              "period": "FY",
+              "reportedCurrency": "USD",
+              "date": "2010-09-25",
+              "data": {
+                "Retail": 9798000000
+              }
+            }
+          ],
+          "fetchedAt": "2026-06-28T13:58:33.678Z"
+        }
+      },
+      {
+        "toolId": "15c60ca5-94c9-4257-89c4-542a4745e89f",
+        "toolName": "get_financial_statements",
+        "args": {
+          "symbol": "AAPL",
+          "statement": "income",
+          "period": "quarter",
+          "limit": 8
+        },
+        "result": {
+          "symbol": "AAPL",
+          "statement": "income",
+          "period": "quarter",
+          "periodCount": 8,
+          "statements": [
+            {
+              "date": "2026-03-28",
+              "symbol": "AAPL",
+              "reportedCurrency": "USD",
+              "cik": "0000320193",
+              "filingDate": "2026-05-01",
+              "acceptedDate": "2026-05-01 10:01:00",
+              "fiscalYear": "2026",
+              "period": "Q2",
+              "revenue": 111184000000,
+              "costOfRevenue": 56403000000,
+              "grossProfit": 54781000000,
+              "researchAndDevelopmentExpenses": 11419000000,
+              "generalAndAdministrativeExpenses": 0,
+              "sellingAndMarketingExpenses": 0,
+              "sellingGeneralAndAdministrativeExpenses": 7477000000,
+              "otherExpenses": 0,
+              "operatingExpenses": 18896000000,
+              "costAndExpenses": 75299000000,
+              "netInterestIncome": 0,
+              "interestIncome": 0,
+              "interestExpense": 0,
+              "depreciationAndAmortization": 3439000000,
+              "ebitda": 39324000000,
+              "ebit": 35833000000,
+              "nonOperatingIncomeExcludingInterest": -52000000,
+              "operatingIncome": 35885000000,
+              "totalOtherIncomeExpensesNet": -52000000,
+              "incomeBeforeTax": 35833000000,
+              "incomeTaxExpense": 6255000000,
+              "netIncomeFromContinuingOperations": 29578000000,
+              "netIncomeFromDiscontinuedOperations": 0,
+              "otherAdjustmentsToNetIncome": 0,
+              "netIncome": 29578000000,
+              "netIncomeDeductions": 0,
+              "bottomLineNetIncome": 29578000000,
+              "eps": 2.02,
+              "epsDiluted": 2.01,
+              "weightedAverageShsOut": 14710718000,
+              "weightedAverageShsOutDil": 14768115000
+            },
+            {
+              "date": "2025-12-27",
+              "symbol": "AAPL",
+              "reportedCurrency": "USD",
+              "cik": "0000320193",
+              "filingDate": "2026-01-30",
+              "acceptedDate": "2026-01-30 06:01:32",
+              "fiscalYear": "2026",
+              "period": "Q1",
+              "revenue": 143756000000,
+              "costOfRevenue": 74525000000,
+              "grossProfit": 69231000000,
+              "researchAndDevelopmentExpenses": 10887000000,
+              "generalAndAdministrativeExpenses": 2095000000,
+              "sellingAndMarketingExpenses": 5397000000,
+              "sellingGeneralAndAdministrativeExpenses": 7492000000,
+              "otherExpenses": 0,
+              "operatingExpenses": 18379000000,
+              "costAndExpenses": 92904000000,
+              "netInterestIncome": 0,
+              "interestIncome": 0,
+              "interestExpense": 0,
+              "depreciationAndAmortization": 3214000000,
+              "ebitda": 54216000000,
+              "ebit": 51002000000,
+              "nonOperatingIncomeExcludingInterest": -150000000,
+              "operatingIncome": 50852000000,
+              "totalOtherIncomeExpensesNet": 150000000,
+              "incomeBeforeTax": 51002000000,
+              "incomeTaxExpense": 8905000000,
+              "netIncomeFromContinuingOperations": 42097000000,
+              "netIncomeFromDiscontinuedOperations": 0,
+              "otherAdjustmentsToNetIncome": 0,
+              "netIncome": 42097000000,
+              "netIncomeDeductions": 0,
+              "bottomLineNetIncome": 42097000000,
+              "eps": 2.85,
+              "epsDiluted": 2.84,
+              "weightedAverageShsOut": 14748158000,
+              "weightedAverageShsOutDil": 14810356000
+            },
+            {
+              "date": "2025-09-27",
+              "symbol": "AAPL",
+              "reportedCurrency": "USD",
+              "cik": "0000320193",
+              "filingDate": "2025-10-31",
+              "acceptedDate": "2025-10-31 06:01:26",
+              "fiscalYear": "2025",
+              "period": "Q4",
+              "revenue": 102466000000,
+              "costOfRevenue": 54125000000,
+              "grossProfit": 48341000000,
+              "researchAndDevelopmentExpenses": 8866000000,
+              "generalAndAdministrativeExpenses": 0,
+              "sellingAndMarketingExpenses": 0,
+              "sellingGeneralAndAdministrativeExpenses": 7048000000,
+              "otherExpenses": 0,
+              "operatingExpenses": 15914000000,
+              "costAndExpenses": 70039000000,
+              "netInterestIncome": 0,
+              "interestIncome": 0,
+              "interestExpense": 0,
+              "depreciationAndAmortization": 3127000000,
+              "ebitda": 35931000000,
+              "ebit": 32804000000,
+              "nonOperatingIncomeExcludingInterest": -377000000,
+              "operatingIncome": 32427000000,
+              "totalOtherIncomeExpensesNet": 377000000,
+              "incomeBeforeTax": 32804000000,
+              "incomeTaxExpense": 5338000000,
+              "netIncomeFromContinuingOperations": 27466000000,
+              "netIncomeFromDiscontinuedOperations": 0,
+              "otherAdjustmentsToNetIncome": 0,
+              "netIncome": 27466000000,
+              "netIncomeDeductions": 0,
+              "bottomLineNetIncome": 27466000000,
+              "eps": 1.85,
+              "epsDiluted": 1.85,
+              "weightedAverageShsOut": 14948500000,
+              "weightedAverageShsOutDil": 15004697000
+            },
+            {
+              "date": "2025-06-28",
+              "symbol": "AAPL",
+              "reportedCurrency": "USD",
+              "cik": "0000320193",
+              "filingDate": "2025-08-01",
+              "acceptedDate": "2025-08-01 06:00:42",
+              "fiscalYear": "2025",
+              "period": "Q3",
+              "revenue": 94036000000,
+              "costOfRevenue": 50318000000,
+              "grossProfit": 43718000000,
+              "researchAndDevelopmentExpenses": 8866000000,
+              "generalAndAdministrativeExpenses": 0,
+              "sellingAndMarketingExpenses": 0,
+              "sellingGeneralAndAdministrativeExpenses": 6650000000,
+              "otherExpenses": 0,
+              "operatingExpenses": 15516000000,
+              "costAndExpenses": 65834000000,
+              "netInterestIncome": 0,
+              "interestIncome": 0,
+              "interestExpense": 0,
+              "depreciationAndAmortization": 2830000000,
+              "ebitda": 30861000000,
+              "ebit": 28031000000,
+              "nonOperatingIncomeExcludingInterest": 171000000,
+              "operatingIncome": 28202000000,
+              "totalOtherIncomeExpensesNet": -171000000,
+              "incomeBeforeTax": 28031000000,
+              "incomeTaxExpense": 4597000000,
+              "netIncomeFromContinuingOperations": 23434000000,
+              "netIncomeFromDiscontinuedOperations": 0,
+              "otherAdjustmentsToNetIncome": 0,
+              "netIncome": 23434000000,
+              "netIncomeDeductions": 0,
+              "bottomLineNetIncome": 23434000000,
+              "eps": 1.57,
+              "epsDiluted": 1.57,
+              "weightedAverageShsOut": 14902886000,
+              "weightedAverageShsOutDil": 14948179000
+            },
+            {
+              "date": "2025-03-29",
+              "symbol": "AAPL",
+              "reportedCurrency": "USD",
+              "cik": "0000320193",
+              "filingDate": "2025-05-02",
+              "acceptedDate": "2025-05-02 06:00:46",
+              "fiscalYear": "2025",
+              "period": "Q2",
+              "revenue": 95359000000,
+              "costOfRevenue": 50492000000,
+              "grossProfit": 44867000000,
+              "researchAndDevelopmentExpenses": 8550000000,
+              "generalAndAdministrativeExpenses": 0,
+              "sellingAndMarketingExpenses": 0,
+              "sellingGeneralAndAdministrativeExpenses": 6728000000,
+              "otherExpenses": 0,
+              "operatingExpenses": 15278000000,
+              "costAndExpenses": 65770000000,
+              "netInterestIncome": 0,
+              "interestIncome": 0,
+              "interestExpense": 0,
+              "depreciationAndAmortization": 2661000000,
+              "ebitda": 31971000000,
+              "ebit": 29310000000,
+              "nonOperatingIncomeExcludingInterest": 279000000,
+              "operatingIncome": 29589000000,
+              "totalOtherIncomeExpensesNet": -279000000,
+              "incomeBeforeTax": 29310000000,
+              "incomeTaxExpense": 4530000000,
+              "netIncomeFromContinuingOperations": 24780000000,
+              "netIncomeFromDiscontinuedOperations": 0,
+              "otherAdjustmentsToNetIncome": 0,
+              "netIncome": 24780000000,
+              "netIncomeDeductions": 0,
+              "bottomLineNetIncome": 24780000000,
+              "eps": 1.65,
+              "epsDiluted": 1.65,
+              "weightedAverageShsOut": 14994082000,
+              "weightedAverageShsOutDil": 15056133000
+            },
+            {
+              "date": "2024-12-28",
+              "symbol": "AAPL",
+              "reportedCurrency": "USD",
+              "cik": "0000320193",
+              "filingDate": "2025-01-31",
+              "acceptedDate": "2025-01-31 06:01:27",
+              "fiscalYear": "2025",
+              "period": "Q1",
+              "revenue": 124300000000,
+              "costOfRevenue": 66025000000,
+              "grossProfit": 58275000000,
+              "researchAndDevelopmentExpenses": 8268000000,
+              "generalAndAdministrativeExpenses": 2074000000,
+              "sellingAndMarketingExpenses": 5101000000,
+              "sellingGeneralAndAdministrativeExpenses": 7175000000,
+              "otherExpenses": 0,
+              "operatingExpenses": 15443000000,
+              "costAndExpenses": 81468000000,
+              "netInterestIncome": 0,
+              "interestIncome": 0,
+              "interestExpense": 0,
+              "depreciationAndAmortization": 3080000000,
+              "ebitda": 45664000000,
+              "ebit": 42584000000,
+              "nonOperatingIncomeExcludingInterest": 248000000,
+              "operatingIncome": 42832000000,
+              "totalOtherIncomeExpensesNet": -248000000,
+              "incomeBeforeTax": 42584000000,
+              "incomeTaxExpense": 6254000000,
+              "netIncomeFromContinuingOperations": 36330000000,
+              "netIncomeFromDiscontinuedOperations": 0,
+              "otherAdjustmentsToNetIncome": 0,
+              "netIncome": 36330000000,
+              "netIncomeDeductions": 0,
+              "bottomLineNetIncome": 36330000000,
+              "eps": 2.41,
+              "epsDiluted": 2.4,
+              "weightedAverageShsOut": 15081724000,
+              "weightedAverageShsOutDil": 15150865000
+            },
+            {
+              "date": "2024-09-28",
+              "symbol": "AAPL",
+              "reportedCurrency": "USD",
+              "cik": "0000320193",
+              "filingDate": "2024-11-01",
+              "acceptedDate": "2024-11-01 06:01:36",
+              "fiscalYear": "2024",
+              "period": "Q4",
+              "revenue": 94930000000,
+              "costOfRevenue": 51051000000,
+              "grossProfit": 43879000000,
+              "researchAndDevelopmentExpenses": 7765000000,
+              "generalAndAdministrativeExpenses": 0,
+              "sellingAndMarketingExpenses": 0,
+              "sellingGeneralAndAdministrativeExpenses": 6523000000,
+              "otherExpenses": 0,
+              "operatingExpenses": 14288000000,
+              "costAndExpenses": 65339000000,
+              "netInterestIncome": 0,
+              "interestIncome": 0,
+              "interestExpense": 0,
+              "depreciationAndAmortization": 2911000000,
+              "ebitda": 32521000000,
+              "ebit": 29610000000,
+              "nonOperatingIncomeExcludingInterest": -19000000,
+              "operatingIncome": 29591000000,
+              "totalOtherIncomeExpensesNet": 19000000,
+              "incomeBeforeTax": 29610000000,
+              "incomeTaxExpense": 14874000000,
+              "netIncomeFromContinuingOperations": 14736000000,
+              "netIncomeFromDiscontinuedOperations": 0,
+              "otherAdjustmentsToNetIncome": 0,
+              "netIncome": 14736000000,
+              "netIncomeDeductions": 0,
+              "bottomLineNetIncome": 14736000000,
+              "eps": 0.97,
+              "epsDiluted": 0.97,
+              "weightedAverageShsOut": 15171990000,
+              "weightedAverageShsOutDil": 15242853000
+            },
+            {
+              "date": "2024-06-29",
+              "symbol": "AAPL",
+              "reportedCurrency": "USD",
+              "cik": "0000320193",
+              "filingDate": "2024-08-02",
+              "acceptedDate": "2024-08-01 18:03:34",
+              "fiscalYear": "2024",
+              "period": "Q3",
+              "revenue": 85777000000,
+              "costOfRevenue": 46099000000,
+              "grossProfit": 39678000000,
+              "researchAndDevelopmentExpenses": 8006000000,
+              "generalAndAdministrativeExpenses": 0,
+              "sellingAndMarketingExpenses": 0,
+              "sellingGeneralAndAdministrativeExpenses": 6320000000,
+              "otherExpenses": 0,
+              "operatingExpenses": 14326000000,
+              "costAndExpenses": 60425000000,
+              "netInterestIncome": 0,
+              "interestIncome": 0,
+              "interestExpense": 0,
+              "depreciationAndAmortization": 2850000000,
+              "ebitda": 28344000000,
+              "ebit": 25494000000,
+              "nonOperatingIncomeExcludingInterest": -142000000,
+              "operatingIncome": 25352000000,
+              "totalOtherIncomeExpensesNet": 142000000,
+              "incomeBeforeTax": 25494000000,
+              "incomeTaxExpense": 4046000000,
+              "netIncomeFromContinuingOperations": 21448000000,
+              "netIncomeFromDiscontinuedOperations": 0,
+              "otherAdjustmentsToNetIncome": 0,
+              "netIncome": 21448000000,
+              "netIncomeDeductions": 0,
+              "bottomLineNetIncome": 21448000000,
+              "eps": 1.4,
+              "epsDiluted": 1.4,
+              "weightedAverageShsOut": 15287521000,
+              "weightedAverageShsOutDil": 15348175000
+            }
+          ],
+          "fetchedAt": "2026-06-28T13:58:45.942Z"
+        }
+      },
+      {
+        "toolId": "code_interpreter",
+        "toolName": "code_interpreter",
+        "args": {
+          "intent": "derived metrics",
+          "code": "import pandas as pd\nimport matplotlib.pyplot as plt\nimport numpy as np\n\n# Get the product data from the revenue segments tool\nresult = get_revenue_segments_1\nproduct_data = result[\"product\"]\n\n# Convert to DataFrame\nrows = []\nfor entry in product_data:\n    row = {\"fiscalYear\": entry[\"fiscalYear\"], \"date\": entry[\"date\"]}\n    row.update(entry[\"data\"])\n    rows.append(row)\n\ndf = pd.DataFrame(rows)\ndf = df.sort_values(\"fiscalYear\")\n\nprint(\"Available product-line data:\")\nprint(df.tail(8))\nprint(f\"\\nData granularity: Annual (fiscal years)\")\nprint(f\"Most recent: {df['fiscalYear'].max()}\")\nprint(f\"Oldest with all 5 segments: {df[df['Wearables, Home and Accessories'].notna()]['fiscalYear'].min()}\")",
+          "inputs": {},
+          "postProcessingContract": {
+            "expectedArtifacts": [],
+            "inputAliases": [
+              "get_revenue_segments_1"
+            ],
+            "operation": "Inspect available annual product-line data",
+            "reason": "Verify what data is available before creating the chart"
+          }
+        },
+        "result": {
+          "ok": true,
+          "result": null,
+          "checkpoints": {},
+          "stdout": [
+            "Available product-line data:",
+            "   fiscalYear        date  ...  iPhone and related products and services  Retail",
+            "7        2018  2018-09-29  ...                                       NaN     NaN",
+            "6        2019  2019-09-28  ...                                       NaN     NaN",
+            "5        2020  2020-09-26  ...                                       NaN     NaN",
+            "4        2021  2021-09-25  ...                                       NaN     NaN",
+            "3        2022  2022-09-24  ...                                       NaN     NaN",
+            "2        2023  2023-09-30  ...                                       NaN     NaN",
+            "1        2024  2024-09-28  ...                                       NaN     NaN",
+            "0        2025  2025-09-27  ...                                       NaN     NaN",
+            "[8 rows x 18 columns]",
+            "Data granularity: Annual (fiscal years)",
+            "Most recent: 2025",
+            "Oldest with all 5 segments: 2013"
+          ],
+          "durationMs": 5558,
+          "artifacts": [],
+          "dataQualityHints": [],
+          "intent": "derived metrics",
+          "inputProjectionDiagnostics": []
+        },
+        "isCodeInterpreter": true
+      },
+      {
+        "toolId": "code_interpreter",
+        "toolName": "code_interpreter",
+        "args": {
+          "intent": "derived metrics",
+          "code": "import pandas as pd\nimport matplotlib.pyplot as plt\nimport numpy as np\nfrom matplotlib.ticker import FuncFormatter\n\n# Get the product data\nresult = get_revenue_segments_1\nproduct_data = result[\"product\"]\n\n# Build DataFrame\nrows = []\nfor entry in product_data:\n    row = {\"fiscalYear\": entry[\"fiscalYear\"], \"date\": entry[\"date\"]}\n    row.update(entry[\"data\"])\n    rows.append(row)\n\ndf = pd.DataFrame(rows)\ndf = df.sort_values(\"fiscalYear\")\n\n# Filter to last 8 fiscal years with consistent segment naming (FY2018-FY2025)\ndf_chart = df[df[\"fiscalYear\"] >= 2018].copy()\n\n# Normalize column names for consistent display\n# The columns are: Mac, Service, Wearables, Home and Accessories, iPad, iPhone\n# Note: in 2018+ data, the columns are: Mac, Service, Wearables, Home and Accessories, iPad, iPhone\n# Let's rename them for cleaner display\nrename_map = {\n    \"Wearables, Home and Accessories\": \"Wearables/Home/Accessories\",\n    \"Service\": \"Services\",\n    \"iPhone\": \"iPhone\",\n    \"iPad\": \"iPad\",\n    \"Mac\": \"Mac\"\n}\n\nfor old_name, new_name in rename_map.items():\n    if old_name in df_chart.columns:\n        df_chart[new_name] = df_chart[old_name]\n\n# Convert revenue to billions for readability\nproduct_lines = [\"iPhone\", \"Mac\", \"iPad\", \"Wearables/Home/Accessories\", \"Services\"]\nfor line in product_lines:\n    if line in df_chart.columns:\n        df_chart[line] = df_chart[line] / 1e9\n\n# Set up the chart\nplt.figure(figsize=(12, 7))\n\ncolors = {\n    \"iPhone\": \"#1f77b4\",\n    \"Mac\": \"#2ca02c\", \n    \"iPad\": \"#ff7f0e\",\n    \"Wearables/Home/Accessories\": \"#9467bd\",\n    \"Services\": \"#d62728\"\n}\n\nfor line in product_lines:\n    if line in df_chart.columns:\n        plt.plot(df_chart[\"fiscalYear\"], df_chart[line], marker='o', linewidth=2.5, \n                 markersize=8, label=line, color=colors.get(line, None))\n\n# Formatting\nplt.title(\"Apple (AAPL) Revenue by Product Line\\nLast 8 Fiscal Years (FY2018–FY2025)\", fontsize=14, fontweight='bold')\nplt.xlabel(\"Fiscal Year\", fontsize=12)\nplt.ylabel(\"Revenue ($B)\", fontsize=12)\nplt.legend(loc='upper left', fontsize=10, framealpha=0.9)\nplt.grid(True, alpha=0.3)\nplt.xticks(df_chart[\"fiscalYear\"].values, rotation=0)\n\n# Format y-axis to show billions\nax = plt.gca()\nax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f'${x:.0f}B'))\n\nplt.tight_layout()\n\nsave_figure(alt=\"Apple revenue by product line over last 8 fiscal years\", title=\"AAPL Revenue by Product Line (FY2018-FY2025)\")\n\n# Print growth summary for key insights\nprint(\"\\n--- Revenue Growth Summary (FY2018 to FY2025) ---\")\nfor line in product_lines:\n    if line in df_chart.columns:\n        start_val = df_chart[df_chart[\"fiscalYear\"] == 2018][line].values\n        end_val = df_chart[df_chart[\"fiscalYear\"] == 2025][line].values\n        if len(start_val) > 0 and len(end_val) > 0 and not pd.isna(start_val[0]) and not pd.isna(end_val[0]):\n            growth = (end_val[0] - start_val[0]) / start_val[0] * 100\n            print(f\"{line}: ${start_val[0]:.1f}B → ${end_val[0]:.1f}B ({growth:+.1f}%)\")\n\nprint(\"\\n--- Latest FY2025 Revenue by Product Line ---\")\nlatest = df_chart[df_chart[\"fiscalYear\"] == 2025]\nfor line in product_lines:\n    if line in latest.columns:\n        val = latest[line].values[0] if len(latest[line].values) > 0 else None\n        if val is not None and not pd.isna(val):\n            print(f\"{line}: ${val:.1f}B\")\n\nset_result({\"chart_type\": \"annual_product_revenue\", \"data_years\": list(df_chart[\"fiscalYear\"].values)})",
+          "inputs": {},
+          "postProcessingContract": {
+            "expectedArtifacts": [
+              "image"
+            ],
+            "inputAliases": [
+              "get_revenue_segments_1"
+            ],
+            "operation": "Create multi-line chart of Apple revenue by product line",
+            "reason": "Visualize revenue trends across product lines over available annual data"
+          }
+        },
+        "result": {
+          "ok": true,
+          "result": {
+            "chart_type": "annual_product_revenue",
+            "data_years": [
+              2018,
+              2019,
+              2020,
+              2021,
+              2022,
+              2023,
+              2024,
+              2025
+            ]
+          },
+          "checkpoints": {},
+          "stdout": [
+            "--- Revenue Growth Summary (FY2018 to FY2025) ---",
+            "iPhone: $166.7B → $209.6B (+25.7%)",
+            "Mac: $25.5B → $33.7B (+32.3%)",
+            "iPad: $18.8B → $28.0B (+49.0%)",
+            "Services: $37.2B → $109.2B (+193.5%)",
+            "--- Latest FY2025 Revenue by Product Line ---",
+            "iPhone: $209.6B",
+            "Mac: $33.7B",
+            "iPad: $28.0B",
+            "Wearables/Home/Accessories: $35.7B",
+            "Services: $109.2B"
+          ],
+          "durationMs": 1300,
+          "artifacts": [
+            {
+              "kind": "image",
+              "url": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/f5faeb5b3d68f84fc0eb3e23954b7abf40eee1bef6312e35c42568ec62c1d749.png",
+              "alt": "Apple revenue by product line over last 8 fiscal years",
+              "title": "AAPL Revenue by Product Line (FY2018-FY2025)",
+              "contentHash": "f5faeb5b3d68f84fc0eb3e23954b7abf40eee1bef6312e35c42568ec62c1d749",
+              "bytes": 124889,
+              "width": 1781,
+              "height": 1029
+            }
+          ],
+          "dataQualityHints": [],
+          "intent": "derived metrics",
+          "inputProjectionDiagnostics": []
+        },
+        "isCodeInterpreter": true
+      }
+    ],
+    "codeInterpreterArtifacts": [
+      {
+        "kind": "image",
+        "url": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/f5faeb5b3d68f84fc0eb3e23954b7abf40eee1bef6312e35c42568ec62c1d749.png",
+        "alt": "Apple revenue by product line over last 8 fiscal years",
+        "title": "AAPL Revenue by Product Line (FY2018-FY2025)",
+        "bytes": 124889
+      }
+    ],
+    "toolSchemas": [
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "check_api_status",
+        "description": "Check Financial Modeling Prep connectivity and validate the configured FMP API key. Use this first when diagnosing auth or upstream availability before other FMP tools.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {}
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "status",
+            "probeSymbol",
+            "sample",
+            "fetchedAt"
+          ],
+          "properties": {
+            "sample": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "status": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "probeSymbol": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "search_symbols",
+        "description": "Search for tradable symbols by ticker (default) or company name. Use to resolve a company or ETF to its FMP symbol and exchange before requesting quotes, statements, or analysis. Set byName=true to search by company name instead of ticker.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "query"
+          ],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "default": 20,
+              "examples": [
+                10,
+                20,
+                50
+              ],
+              "description": "Maximum matches to return (default 20)."
+            },
+            "query": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "Apple",
+                "NVDA"
+              ],
+              "description": "Ticker fragment or company name, e.g. AAPL or Apple."
+            },
+            "byName": {
+              "type": "boolean",
+              "default": false,
+              "examples": [
+                false,
+                true
+              ],
+              "description": "Search by company name (search-name) instead of ticker (search-symbol)."
+            },
+            "exchange": {
+              "type": "string",
+              "examples": [
+                "NASDAQ",
+                "NYSE"
+              ],
+              "description": "Optional exchange filter such as NASDAQ or NYSE."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "query",
+            "matchCount",
+            "matches",
+            "fetchedAt"
+          ],
+          "properties": {
+            "query": {
+              "type": "string"
+            },
+            "matches": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "matchCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_company_profile",
+        "description": "Fetch company profile data for one or more symbols: sector, industry, market cap, beta, exchange, CEO, description, employee count, website, and identifiers. Use for company overviews and fundamental context.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "MSFT",
+                "NVDA"
+              ],
+              "description": "Single ticker such as AAPL."
+            },
+            "symbols": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "default": "AAPL",
+                "examples": [
+                  "AAPL",
+                  "MSFT",
+                  "NVDA"
+                ]
+              },
+              "examples": [
+                [
+                  "AAPL",
+                  "MSFT"
+                ],
+                [
+                  "NVDA",
+                  "AMD"
+                ]
+              ],
+              "description": "Multiple tickers (capped at 10 per call). Use instead of symbol for several companies."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "profileCount",
+            "profiles",
+            "fetchedAt"
+          ],
+          "properties": {
+            "profiles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "profileCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_stock_quote",
+        "description": "Fetch full real-time quotes for one or more symbols: price, change, day/year range, volume, average volume, market cap, PE, EPS, and previous close. Pass several symbols to use FMP batch-quote in a single call. Use for current price/market-state questions.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "MSFT",
+                "NVDA"
+              ],
+              "description": "Single ticker such as AAPL."
+            },
+            "symbols": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "default": "AAPL",
+                "examples": [
+                  "AAPL",
+                  "MSFT",
+                  "NVDA"
+                ]
+              },
+              "examples": [
+                [
+                  "AAPL",
+                  "MSFT",
+                  "NVDA"
+                ]
+              ],
+              "description": "Multiple tickers for a batch quote, such as AAPL, MSFT, NVDA."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "quoteCount",
+            "quotes",
+            "fetchedAt"
+          ],
+          "properties": {
+            "quotes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "quoteCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_historical_prices",
+        "description": "Fetch end-of-day historical OHLCV prices for a symbol over an optional date range (from/to as YYYY-MM-DD). series=full returns OHLCV plus change, changePercent, and VWAP; series=light returns date/open/high/low/close/volume. Use for price history, returns, drawdowns, or charting.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "to": {
+              "type": "string",
+              "examples": [
+                "2025-12-31"
+              ],
+              "description": "End date YYYY-MM-DD (optional)."
+            },
+            "from": {
+              "type": "string",
+              "examples": [
+                "2025-01-01"
+              ],
+              "description": "Start date YYYY-MM-DD (optional)."
+            },
+            "limit": {
+              "type": "number",
+              "default": 30,
+              "examples": [
+                30,
+                90,
+                250
+              ],
+              "description": "Optional cap on the most recent rows returned."
+            },
+            "series": {
+              "enum": [
+                "full",
+                "light"
+              ],
+              "type": "string",
+              "default": "full",
+              "description": "full (default) or light EOD series."
+            },
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "MSFT",
+                "NVDA"
+              ],
+              "description": "Ticker such as AAPL."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "rowCount",
+            "earliestDate",
+            "latestDate",
+            "rows",
+            "fetchedAt"
+          ],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "latestDate": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "earliestDate": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_financial_statements",
+        "description": "Fetch reported financial statements for a symbol. statement=income returns the income statement, balance returns the balance sheet, cash returns the cash flow statement. period=annual or quarter; limit controls how many periods are returned (most recent first). Use for revenue, margins, assets, liabilities, equity, operating/free cash flow analysis.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "default": 8,
+              "examples": [
+                4,
+                8,
+                12
+              ],
+              "description": "Number of periods to return (default 8)."
+            },
+            "period": {
+              "enum": [
+                "annual",
+                "quarter"
+              ],
+              "type": "string",
+              "default": "annual",
+              "description": "Reporting period (default annual)."
+            },
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "MSFT",
+                "NVDA"
+              ],
+              "description": "Ticker such as AAPL."
+            },
+            "statement": {
+              "enum": [
+                "income",
+                "balance",
+                "cash"
+              ],
+              "type": "string",
+              "default": "income",
+              "description": "income (income-statement), balance (balance-sheet-statement), or cash (cash-flow-statement)."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "statement",
+            "period",
+            "periodCount",
+            "statements",
+            "fetchedAt"
+          ],
+          "properties": {
+            "period": {
+              "type": "string"
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "statement": {
+              "type": "string"
+            },
+            "statements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "periodCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_financial_ratios",
+        "description": "Fetch valuation, profitability, liquidity, and leverage ratios plus key metrics for a symbol. Set ttm=true for trailing-twelve-month snapshots (ratios-ttm + key-metrics-ttm); otherwise returns period series (annual/quarter). Use for PE, PB, ROE, ROIC, margins, current ratio, debt ratios, and per-share metrics.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "ttm": {
+              "type": "boolean",
+              "default": false,
+              "examples": [
+                false,
+                true
+              ],
+              "description": "Return trailing-twelve-month snapshot instead of period series."
+            },
+            "limit": {
+              "type": "number",
+              "default": 8,
+              "examples": [
+                4,
+                8,
+                12
+              ],
+              "description": "Number of periods for non-TTM series (default 8)."
+            },
+            "period": {
+              "enum": [
+                "annual",
+                "quarter"
+              ],
+              "type": "string",
+              "default": "annual",
+              "description": "Reporting period for non-TTM series (default annual)."
+            },
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "MSFT",
+                "NVDA"
+              ],
+              "description": "Ticker such as AAPL."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "ttm",
+            "ratios",
+            "keyMetrics",
+            "fetchedAt"
+          ],
+          "properties": {
+            "ttm": {
+              "type": "boolean"
+            },
+            "ratios": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "keyMetrics": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_analyst_insights",
+        "description": "Fetch a composite analyst view for a symbol: price-target consensus and summary, analyst grade consensus (buy/hold/sell distribution), and forward analyst estimates. Use for Wall Street sentiment, target prices, and rating distributions. Subsections that require a higher FMP tier are reported with their error rather than failing the call.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "MSFT",
+                "NVDA"
+              ],
+              "description": "Ticker such as AAPL."
+            },
+            "estimateLimit": {
+              "type": "number",
+              "default": 4,
+              "examples": [
+                4,
+                8
+              ],
+              "description": "Number of forward analyst-estimate periods to include (default 4)."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "priceTargetConsensus",
+            "priceTargetSummary",
+            "gradesConsensus",
+            "analystEstimates",
+            "fetchedAt"
+          ],
+          "properties": {
+            "symbol": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "partialErrors": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "gradesConsensus": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "analystEstimates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "priceTargetSummary": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "priceTargetConsensus": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_market_news",
+        "description": "Fetch market news by category: stock, press-releases, crypto, forex, or general. Provide symbols to filter stock/press-releases/crypto/forex news to specific tickers; omit symbols for the latest feed. Use page/limit for pagination. Pair with quotes or statements for event-aware analysis.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "page": {
+              "type": "number",
+              "default": 0,
+              "examples": [
+                0,
+                1
+              ],
+              "description": "Zero-based page index (default 0)."
+            },
+            "limit": {
+              "type": "number",
+              "default": 25,
+              "examples": [
+                10,
+                25,
+                50
+              ],
+              "description": "Maximum stories to return (default 25)."
+            },
+            "symbols": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "default": "AAPL",
+                "examples": [
+                  "AAPL",
+                  "BTCUSD"
+                ]
+              },
+              "examples": [
+                [
+                  "AAPL"
+                ],
+                [
+                  "AAPL",
+                  "MSFT"
+                ]
+              ],
+              "description": "Optional ticker filters such as AAPL or BTCUSD (not applicable to general)."
+            },
+            "category": {
+              "enum": [
+                "stock",
+                "press-releases",
+                "crypto",
+                "forex",
+                "general"
+              ],
+              "type": "string",
+              "default": "stock",
+              "description": "News category (default stock). general ignores symbol filters."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "category",
+            "storyCount",
+            "stories",
+            "fetchedAt"
+          ],
+          "properties": {
+            "stories": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "category": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "storyCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_market_movers",
+        "description": "Fetch the day's biggest market movers: direction=gainers (biggest-gainers), losers (biggest-losers), or actives (most-actives). Use for momentum scans, watchlist seeding, and 'what is moving today' questions.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "default": 25,
+              "examples": [
+                10,
+                25,
+                50
+              ],
+              "description": "Maximum rows to return (default 25)."
+            },
+            "direction": {
+              "enum": [
+                "gainers",
+                "losers",
+                "actives"
+              ],
+              "type": "string",
+              "default": "gainers",
+              "description": "Which mover list to return (default gainers)."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "direction",
+            "moverCount",
+            "movers",
+            "fetchedAt"
+          ],
+          "properties": {
+            "movers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "direction": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "moverCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "screen_stocks",
+        "description": "Screen the equity universe with the FMP company screener. Filter by market cap, price, beta, volume, dividend, sector, industry, exchange, country, and ETF/actively-trading flags. Use for discovery: 'large-cap technology stocks', 'high-dividend value names', etc. Returns matching symbols with basic profile fields.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "isEtf": {
+              "type": "boolean",
+              "examples": [
+                false,
+                true
+              ]
+            },
+            "limit": {
+              "type": "number",
+              "default": 50,
+              "examples": [
+                25,
+                50,
+                100
+              ],
+              "description": "Maximum matches (default 50)."
+            },
+            "isFund": {
+              "type": "boolean",
+              "examples": [
+                false,
+                true
+              ]
+            },
+            "sector": {
+              "type": "string",
+              "examples": [
+                "Technology",
+                "Healthcare"
+              ],
+              "description": "Sector such as Technology or Healthcare."
+            },
+            "country": {
+              "type": "string",
+              "examples": [
+                "US"
+              ],
+              "description": "ISO country code such as US."
+            },
+            "exchange": {
+              "type": "string",
+              "examples": [
+                "NASDAQ",
+                "NYSE"
+              ],
+              "description": "Exchange such as NASDAQ or NYSE."
+            },
+            "industry": {
+              "type": "string",
+              "examples": [
+                "Semiconductors",
+                "Software"
+              ],
+              "description": "Industry such as Semiconductors."
+            },
+            "betaMoreThan": {
+              "type": "number",
+              "examples": [
+                0.5
+              ]
+            },
+            "betaLowerThan": {
+              "type": "number",
+              "examples": [
+                2
+              ]
+            },
+            "priceMoreThan": {
+              "type": "number",
+              "examples": [
+                10
+              ]
+            },
+            "priceLowerThan": {
+              "type": "number",
+              "examples": [
+                1000
+              ]
+            },
+            "volumeMoreThan": {
+              "type": "number",
+              "examples": [
+                1000000
+              ]
+            },
+            "volumeLowerThan": {
+              "type": "number",
+              "examples": [
+                100000000
+              ]
+            },
+            "dividendMoreThan": {
+              "type": "number",
+              "examples": [
+                0.5
+              ]
+            },
+            "dividendLowerThan": {
+              "type": "number",
+              "examples": [
+                20
+              ]
+            },
+            "isActivelyTrading": {
+              "type": "boolean",
+              "examples": [
+                true
+              ]
+            },
+            "marketCapMoreThan": {
+              "type": "number",
+              "examples": [
+                1000000000,
+                10000000000
+              ]
+            },
+            "marketCapLowerThan": {
+              "type": "number",
+              "examples": [
+                500000000000
+              ]
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "matchCount",
+            "filters",
+            "matches",
+            "fetchedAt"
+          ],
+          "properties": {
+            "filters": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "matches": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "matchCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_technical_indicator",
+        "description": "Fetch a technical indicator time series for a symbol. indicator is one of sma, ema, wma, dema, tema, rsi, standarddeviation, williams, adx. timeframe is one of 1min, 5min, 15min, 30min, 1hour, 4hour, 1day. periodLength sets the lookback window (e.g. 14 for RSI). Use for momentum, trend, and volatility signals.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "to": {
+              "type": "string",
+              "examples": [
+                "2025-12-31"
+              ],
+              "description": "End date YYYY-MM-DD (optional)."
+            },
+            "from": {
+              "type": "string",
+              "examples": [
+                "2025-01-01"
+              ],
+              "description": "Start date YYYY-MM-DD (optional)."
+            },
+            "limit": {
+              "type": "number",
+              "default": 30,
+              "examples": [
+                30,
+                90,
+                250
+              ],
+              "description": "Optional cap on the most recent rows."
+            },
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "MSFT",
+                "NVDA"
+              ],
+              "description": "Ticker such as AAPL."
+            },
+            "indicator": {
+              "enum": [
+                "sma",
+                "ema",
+                "wma",
+                "dema",
+                "tema",
+                "rsi",
+                "standarddeviation",
+                "williams",
+                "adx"
+              ],
+              "type": "string",
+              "default": "rsi",
+              "description": "Indicator name (default rsi)."
+            },
+            "timeframe": {
+              "enum": [
+                "1min",
+                "5min",
+                "15min",
+                "30min",
+                "1hour",
+                "4hour",
+                "1day"
+              ],
+              "type": "string",
+              "default": "1day",
+              "description": "Bar timeframe (default 1day)."
+            },
+            "periodLength": {
+              "type": "number",
+              "default": 14,
+              "examples": [
+                10,
+                14,
+                50,
+                200
+              ],
+              "description": "Indicator lookback length (default 14)."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "indicator",
+            "timeframe",
+            "periodLength",
+            "rowCount",
+            "rows",
+            "fetchedAt"
+          ],
+          "properties": {
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "indicator": {
+              "type": "string"
+            },
+            "timeframe": {
+              "type": "string"
+            },
+            "periodLength": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "build_company_financial_brief",
+        "description": "Build a compact, buyer-facing company brief for a single symbol by combining profile, real-time quote, TTM ratios and key metrics, analyst price-target and grade consensus, and recent stock news. Use when a question needs a multi-signal snapshot of a company rather than one data family. Sections that require a higher FMP tier are reported as partial errors instead of failing the brief.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "MSFT",
+                "NVDA"
+              ],
+              "description": "Ticker such as AAPL."
+            },
+            "newsLimit": {
+              "type": "number",
+              "default": 5,
+              "examples": [
+                3,
+                5,
+                10
+              ],
+              "description": "Number of recent stock-news stories to include (default 5)."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "brief",
+            "news",
+            "fetchedAt"
+          ],
+          "properties": {
+            "news": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "brief": {
+              "type": "string"
+            },
+            "quote": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "profile": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "ratiosTtm": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "keyMetricsTtm": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "partialErrors": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "gradesConsensus": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "priceTargetConsensus": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_earnings",
+        "description": "Fetch earnings data for a symbol. mode=surprises (default) returns actual vs estimated EPS and revenue with surprise deltas from /earnings; mode=calendar returns upcoming earnings report dates from /earnings-calendar (symbol optional, date-range filterable). Use for 'did X beat earnings?' and 'when does X report next?'.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "to": {
+              "type": "string",
+              "examples": [
+                "2026-07-11"
+              ],
+              "description": "End date YYYY-MM-DD (calendar mode)."
+            },
+            "from": {
+              "type": "string",
+              "examples": [
+                "2026-06-27"
+              ],
+              "description": "Start date YYYY-MM-DD (calendar mode)."
+            },
+            "mode": {
+              "enum": [
+                "surprises",
+                "calendar"
+              ],
+              "type": "string",
+              "default": "surprises",
+              "description": "surprises (default) or calendar."
+            },
+            "limit": {
+              "type": "number",
+              "default": 20,
+              "examples": [
+                10,
+                20,
+                50
+              ],
+              "description": "Maximum rows (default 20)."
+            },
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "NVDA",
+                "TSLA"
+              ],
+              "description": "Ticker such as AAPL. Required for mode=surprises; optional for mode=calendar."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "mode",
+            "rowCount",
+            "rows",
+            "fetchedAt"
+          ],
+          "properties": {
+            "mode": {
+              "type": "string"
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "symbol": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_dividends",
+        "description": "Fetch dividend data. mode=history (default) returns per-symbol dividend history (date, dividend, record/payment/declaration dates) from /dividends; mode=calendar returns upcoming ex-dividend dates from /dividends-calendar (symbol optional, date-range filterable). Use for dividend yield, history, and next ex-div date questions.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "to": {
+              "type": "string",
+              "examples": [
+                "2026-07-11"
+              ],
+              "description": "End date YYYY-MM-DD (calendar mode)."
+            },
+            "from": {
+              "type": "string",
+              "examples": [
+                "2026-06-27"
+              ],
+              "description": "Start date YYYY-MM-DD (calendar mode)."
+            },
+            "mode": {
+              "enum": [
+                "history",
+                "calendar"
+              ],
+              "type": "string",
+              "default": "history",
+              "description": "history (default) or calendar."
+            },
+            "limit": {
+              "type": "number",
+              "default": 20,
+              "examples": [
+                10,
+                20,
+                50
+              ],
+              "description": "Maximum rows (default 20)."
+            },
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "MSFT"
+              ],
+              "description": "Ticker such as AAPL. Required for mode=history; optional for mode=calendar."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "mode",
+            "rowCount",
+            "rows",
+            "fetchedAt"
+          ],
+          "properties": {
+            "mode": {
+              "type": "string"
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "symbol": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_insider_activity",
+        "description": "Fetch insider trading activity. With a symbol, returns insider transactions (filer, transaction type, securities, value) from /insider-trading/search; without a symbol, returns the latest insider trades across the market from /insider-trading/latest. Use for 'are insiders buying or selling X?' and 'biggest recent insider transactions'.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "default": 25,
+              "examples": [
+                10,
+                25,
+                100
+              ],
+              "description": "Maximum rows (default 25)."
+            },
+            "symbol": {
+              "type": "string",
+              "examples": [
+                "NVDA",
+                "AAPL"
+              ],
+              "description": "Optional ticker such as NVDA. Omit for the latest market-wide insider feed."
+            },
+            "transactionType": {
+              "type": "string",
+              "examples": [
+                "P-Purchase",
+                "S-Sale"
+              ],
+              "description": "Optional client-side filter such as P-Purchase or S-Sale."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "transactionCount",
+            "transactions",
+            "fetchedAt"
+          ],
+          "properties": {
+            "symbol": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "transactions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "transactionCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_ownership",
+        "description": "Fetch ownership structure and institutional holders for a symbol. Returns shares float (free float, float shares, outstanding) from /shares-float plus the latest 13F institutional holders (resolved via CIK -> filing dates -> holder extract). Use for 'who are the top institutional holders of X?', 'did institutions add or trim?', and 'what is the float?'. Institutional subsections that require a higher tier are reported as partial errors.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "TSLA",
+                "NVDA"
+              ],
+              "description": "Ticker such as TSLA."
+            },
+            "holderLimit": {
+              "type": "number",
+              "default": 20,
+              "examples": [
+                10,
+                20,
+                50
+              ],
+              "description": "Maximum institutional holders to return (default 20)."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "institutionalHolders",
+            "fetchedAt"
+          ],
+          "properties": {
+            "symbol": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "sharesFloat": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "filingPeriod": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "partialErrors": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "institutionalHolders": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_sec_filings",
+        "description": "Fetch SEC filings. With a symbol, returns that company's recent filings from /sec-filings-search/symbol (form type, filing date, links) over the last 120 days by default (override with from/to); without a symbol, returns the latest 8-K (material event) filings across the market from /sec-filings-8k (date-range filterable). Use for 'what 8-Ks did X file this week?' and 'latest material-event filings'.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "to": {
+              "type": "string",
+              "examples": [
+                "2026-06-27"
+              ],
+              "description": "End date YYYY-MM-DD (8-K feed mode)."
+            },
+            "from": {
+              "type": "string",
+              "examples": [
+                "2026-06-20"
+              ],
+              "description": "Start date YYYY-MM-DD (8-K feed mode)."
+            },
+            "type": {
+              "type": "string",
+              "examples": [
+                "10-K",
+                "8-K"
+              ],
+              "description": "Optional form-type filter for company mode (e.g. 10-K, 10-Q, 8-K)."
+            },
+            "limit": {
+              "type": "number",
+              "default": 25,
+              "examples": [
+                10,
+                25,
+                100
+              ],
+              "description": "Maximum rows (default 25)."
+            },
+            "symbol": {
+              "type": "string",
+              "examples": [
+                "META",
+                "AAPL"
+              ],
+              "description": "Optional ticker such as META. Omit for the latest market-wide 8-K feed."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "mode",
+            "rowCount",
+            "filings",
+            "fetchedAt"
+          ],
+          "properties": {
+            "mode": {
+              "type": "string"
+            },
+            "symbol": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "filings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "rowCount": {
+              "type": "number"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_peers",
+        "description": "Fetch the peer group for a symbol from /stock-peers (FMP-computed comparable companies). Use for 'who are X's closest peers?' and as a precursor to cross-company valuation/fundamental comparisons.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "NVDA",
+                "MSFT"
+              ],
+              "description": "Ticker such as NVDA."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "peers",
+            "fetchedAt"
+          ],
+          "properties": {
+            "peers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_growth",
+        "description": "Fetch financial growth rates for a symbol from /financial-growth (revenue, gross profit, EBITDA, net income, EPS, operating cash flow, free cash flow growth by period). Use for 'what is X's revenue and earnings growth trend?' and momentum/quality screens.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "default": 8,
+              "examples": [
+                4,
+                8,
+                12
+              ],
+              "description": "Number of periods (default 8)."
+            },
+            "period": {
+              "enum": [
+                "annual",
+                "quarter"
+              ],
+              "type": "string",
+              "default": "annual",
+              "description": "Reporting period (default annual)."
+            },
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "AMZN",
+                "NVDA"
+              ],
+              "description": "Ticker such as AMZN."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "period",
+            "periodCount",
+            "growth",
+            "fetchedAt"
+          ],
+          "properties": {
+            "growth": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "period": {
+              "type": "string"
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "periodCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_revenue_segments",
+        "description": "Fetch revenue segmentation for a symbol. segment=geographic returns revenue by region from /revenue-geographic-segmentation; segment=product returns revenue by product line from /revenue-product-segmentation; segment=both (default) returns both. Use for 'how is X's revenue split by geography and product?'.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "default": 20,
+              "examples": [
+                10,
+                20,
+                50
+              ],
+              "description": "Maximum rows per segment (default 20)."
+            },
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "MSFT"
+              ],
+              "description": "Ticker such as AAPL."
+            },
+            "segment": {
+              "enum": [
+                "geographic",
+                "product",
+                "both"
+              ],
+              "type": "string",
+              "default": "both",
+              "description": "Which segmentation to return (default both)."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "geographic",
+            "product",
+            "fetchedAt"
+          ],
+          "properties": {
+            "symbol": {
+              "type": "string"
+            },
+            "product": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "geographic": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_congressional_trades",
+        "description": "Fetch US congressional trading activity. chamber=house returns House representative trades from /house-trades; chamber=senate returns Senate trades from /senate-trades; chamber=both (default) returns both. symbol is optional (filter to a ticker; omit for recent trades across all names). Use for 'which senators/representatives recently traded X?'.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "default": 25,
+              "examples": [
+                10,
+                25,
+                100
+              ],
+              "description": "Maximum rows per chamber (default 25)."
+            },
+            "symbol": {
+              "type": "string",
+              "examples": [
+                "NVDA",
+                "AAPL"
+              ],
+              "description": "Optional ticker filter such as NVDA."
+            },
+            "chamber": {
+              "enum": [
+                "house",
+                "senate",
+                "both"
+              ],
+              "type": "string",
+              "default": "both",
+              "description": "Which chamber(s) to return (default both)."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "chamber",
+            "houseTrades",
+            "senateTrades",
+            "fetchedAt"
+          ],
+          "properties": {
+            "symbol": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "chamber": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "houseTrades": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "senateTrades": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_index_constituents",
+        "description": "Fetch the constituent list of a major US index. index=sp500 (default) returns S&P 500 members from /sp500-constituent; nasdaq returns Nasdaq 100 from /nasdaq-constituent; dowjones returns Dow Jones 30 from /dowjones-constituent. Use for universe definition and index-membership questions.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "index": {
+              "enum": [
+                "sp500",
+                "nasdaq",
+                "dowjones"
+              ],
+              "type": "string",
+              "default": "sp500",
+              "description": "Which index constituents to return (default sp500)."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "index",
+            "constituentCount",
+            "constituents",
+            "fetchedAt"
+          ],
+          "properties": {
+            "index": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "constituents": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "constituentCount": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_valuation",
+        "description": "Fetch a composite valuation snapshot for a symbol: DCF fair value from /discounted-cash-flow, enterprise values (EV, EV/EBITDA, EV/Sales) from /enterprise-values, market capitalization from /market-capitalization, and period price changes (1D/1W/1M/3M/6M/YTD/1Y) from /stock-price-change. Use for 'what is X's DCF fair value vs current price?', 'EV/EBITDA?', and 'recent returns?'. Subsections requiring a higher tier are reported as partial errors.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "limit": {
+              "type": "number",
+              "default": 4,
+              "examples": [
+                4,
+                8
+              ],
+              "description": "Enterprise-values periods to return (default 4)."
+            },
+            "period": {
+              "enum": [
+                "annual",
+                "quarter"
+              ],
+              "type": "string",
+              "default": "annual",
+              "description": "Enterprise-values period (default annual)."
+            },
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "NVDA",
+                "TSLA"
+              ],
+              "description": "Ticker such as NVDA."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "enterpriseValues",
+            "fetchedAt"
+          ],
+          "properties": {
+            "dcf": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "marketCap": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "priceChange": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "partialErrors": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "enterpriseValues": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_quality_scores",
+        "description": "Fetch quality and distress signals for a symbol: Altman Z, Piotroski F, Beneish M and other financial scores from /financial-scores, plus the FMP rating snapshot from /ratings-snapshot. Use for 'what is X's Altman Z / Piotroski score?', 'is any name at bankruptcy risk?', and quality screens. Subsections requiring a higher tier are reported as partial errors.",
+        "inputSchema": {
+          "type": "object",
+          "required": [
+            "symbol"
+          ],
+          "properties": {
+            "symbol": {
+              "type": "string",
+              "default": "AAPL",
+              "examples": [
+                "AAPL",
+                "NVDA",
+                "TSLA"
+              ],
+              "description": "Ticker such as NVDA."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "symbol",
+            "fetchedAt"
+          ],
+          "properties": {
+            "rating": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "symbol": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "partialErrors": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "financialScores": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_sector_performance",
+        "description": "Fetch a market-wide sector and industry rotation snapshot: sector and industry performance (1D/5D/1M/YTD returns) from /sector-performance-snapshot and /industry-performance-snapshot, plus sector and industry P/E from /sector-pe-snapshot and /industry-pe-snapshot. date is optional (defaults to latest). No symbol. Use for 'which sectors are outperforming this month?' and 'what is the average P/E of the Technology sector?'.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "date": {
+              "type": "string",
+              "examples": [
+                "2026-06-27"
+              ],
+              "description": "Optional snapshot date YYYY-MM-DD (defaults to latest)."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "sectorPerformance",
+            "industryPerformance",
+            "sectorPe",
+            "industryPe",
+            "fetchedAt"
+          ],
+          "properties": {
+            "date": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "sectorPe": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "industryPe": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "partialErrors": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "sectorPerformance": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
+            "industryPerformance": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "serverName": "Equities Intelligence",
+        "toolName": "get_macro_calendar",
+        "description": "Fetch a macro snapshot: upcoming economic events (Fed, CPI, NFP, etc.) from /economic-calendar over a date range (defaults to the next 14 days), plus the latest US Treasury yield curve from /treasury-rates. No symbol. Use for 'what major economic events are scheduled this week?' and 'what is the current 10Y Treasury yield?'.",
+        "inputSchema": {
+          "type": "object",
+          "required": [],
+          "properties": {
+            "to": {
+              "type": "string",
+              "examples": [
+                "2026-07-11"
+              ],
+              "description": "End date YYYY-MM-DD (defaults to from + 14 days)."
+            },
+            "from": {
+              "type": "string",
+              "examples": [
+                "2026-06-27"
+              ],
+              "description": "Start date YYYY-MM-DD (defaults to today)."
+            },
+            "limit": {
+              "type": "number",
+              "default": 100,
+              "examples": [
+                50,
+                100,
+                250
+              ],
+              "description": "Maximum economic events (default 100)."
+            }
+          }
+        },
+        "outputSchema": {
+          "type": "object",
+          "required": [
+            "from",
+            "to",
+            "economicEvents",
+            "fetchedAt"
+          ],
+          "properties": {
+            "to": {
+              "type": "string"
+            },
+            "from": {
+              "type": "string"
+            },
+            "fetchedAt": {
+              "type": "string"
+            },
+            "partialErrors": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "treasuryRates": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "additionalProperties": true
+            },
+            "economicEvents": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    ],
+    "diagnostics": {
+      "selection": {
+        "selectedPolicy": "exploratory",
+        "plannerReasoningStage": "mechanical",
+        "oneShotBias": false,
+        "selectedTools": [
+          {
+            "toolId": "15c60ca5-94c9-4257-89c4-542a4745e89f",
+            "toolName": "Equities Intelligence",
+            "priceUsd": "0.000000",
+            "selectedMethodCount": 27,
+            "selectedMethods": [
+              "check_api_status",
+              "search_symbols",
+              "get_company_profile",
+              "get_stock_quote",
+              "get_historical_prices",
+              "get_financial_statements",
+              "get_financial_ratios",
+              "get_analyst_insights",
+              "get_market_news",
+              "get_market_movers",
+              "screen_stocks",
+              "get_technical_indicator"
+            ],
+            "omittedSelectedMethodCount": 15
+          }
+        ]
+      },
+      "executionContract": {
+        "plannerQuery": "Plot Apple Inc.'s (AAPL) revenue by product line (iPhone, Mac, iPad, Wearables/Home/Accessories, Services) over the last 8 fiscal quarters as a multi-line chart, one line per product line, so I can see which product line is driving AAPL's growth and which is decelerating over the 8 quarters.",
+        "allowedModules": [],
+        "validation": null
+      },
+      "cost": {
+        "planningCostUsd": 0,
+        "initialExecutionCostUsd": 0.0798055,
+        "rediscoveryAdditionalCostUsd": 0,
+        "synthesisCostUsd": 0.018212,
+        "totalModelCostUsd": 0.10101154000000001,
+        "toolCostUsd": 0,
+        "totalChargedUsd": 0.10101154000000001
+      },
+      "verification": {
+        "evaluations": [],
+        "repairEvents": [],
+        "triggerNeedsDifferentTools": false,
+        "triggerMissingCapability": null,
+        "boundedAnswerReason": "retry_guardrail_upstream_abort",
+        "boundedAnswerDataGap": "Quarterly product-line revenue segmentation is not available through the current API; only annual fiscal-year data is provided."
+      },
+      "execution": {
+        "reasoningEnabled": true,
+        "receivedReasoning": true,
+        "reasoningChars": 1286,
+        "stepBudget": 10,
+        "completedStepCount": 5,
+        "toolCallCount": 4,
+        "toolRegistry": {
+          "availableToolCount": 27,
+          "availableMethodNamesSample": [
+            "Equities Intelligence.check_api_status",
+            "Equities Intelligence.search_symbols",
+            "Equities Intelligence.get_company_profile",
+            "Equities Intelligence.get_stock_quote",
+            "Equities Intelligence.get_historical_prices",
+            "Equities Intelligence.get_financial_statements",
+            "Equities Intelligence.get_financial_ratios",
+            "Equities Intelligence.get_analyst_insights",
+            "Equities Intelligence.get_market_news",
+            "Equities Intelligence.get_market_movers",
+            "Equities Intelligence.screen_stocks",
+            "Equities Intelligence.get_technical_indicator",
+            "Equities Intelligence.build_company_financial_brief",
+            "Equities Intelligence.get_earnings",
+            "Equities Intelligence.get_dividends",
+            "Equities Intelligence.get_insider_activity",
+            "Equities Intelligence.get_ownership",
+            "Equities Intelligence.get_sec_filings",
+            "Equities Intelligence.get_peers",
+            "Equities Intelligence.get_growth",
+            "Equities Intelligence.get_revenue_segments",
+            "Equities Intelligence.get_congressional_trades",
+            "Equities Intelligence.get_index_constituents",
+            "Equities Intelligence.get_valuation",
+            "Equities Intelligence.get_quality_scores",
+            "Equities Intelligence.get_sector_performance",
+            "Equities Intelligence.get_macro_calendar"
+          ],
+          "selectedMethodCount": 27,
+          "selectedButFilteredOut": [],
+          "toolCallAttemptCount": 2,
+          "toolCallSuccessCount": 2,
+          "toolCallFailureCount": 0,
+          "toolCallFailureSamples": []
+        }
+      },
+      "retryBudget": {
+        "cheapFixAttempts": 0,
+        "semanticRetries": 0
+      },
+      "stageTiming": {
+        "selectionMs": 6969,
+        "executionMs": 85839,
+        "synthesisMs": 58251,
+        "accountedMs": 151059,
+        "residualMs": 434
+      },
+      "executorDiagnostics": null,
+      "models": {
+        "overrideMode": "none",
+        "stages": [
+          {
+            "stageKey": "tool-selection",
+            "stageKind": "stage",
+            "stage": "tool-selection",
+            "surface": "query",
+            "responseShape": null,
+            "agentModelId": "kimi-k2.6-model",
+            "logicalModelId": "deepseek-v4-flash-model",
+            "requestedModelId": "deepseek-v4-flash-model",
+            "resolvedModelId": "deepseek-v4-flash-model",
+            "resolvedRuntimeModelId": "deepseek/deepseek-v4-flash",
+            "effectiveModelId": "deepseek-v4-flash-model",
+            "effectiveRuntimeModelId": "deepseek/deepseek-v4-flash",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.0029940400000000008,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]",
+              "reasoningTokens": "[REDACTED]",
+              "cachedInputTokens": "[REDACTED]"
+            }
+          },
+          {
+            "stageKey": "iterative-execution",
+            "stageKind": "stage",
+            "stage": "iterative-execution",
+            "surface": "query",
+            "responseShape": null,
+            "agentModelId": "kimi-k2.6-model",
+            "logicalModelId": "kimi-k2.6-model",
+            "requestedModelId": "kimi-k2.6-model",
+            "resolvedModelId": "kimi-k2.6-model",
+            "resolvedRuntimeModelId": "moonshotai/kimi-k2.6",
+            "effectiveModelId": "kimi-k2.6-model",
+            "effectiveRuntimeModelId": "moonshotai/kimi-k2.6",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.0798055,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]"
+            }
+          },
+          {
+            "stageKey": "final-synthesis",
+            "stageKind": "final-synthesis",
+            "stage": "final-synthesis",
+            "surface": "query",
+            "responseShape": "answer_with_evidence",
+            "agentModelId": "kimi-k2.6-model",
+            "logicalModelId": "kimi-k2.6-model",
+            "requestedModelId": "kimi-k2.6-model",
+            "resolvedModelId": "kimi-k2.6-model",
+            "resolvedRuntimeModelId": "moonshotai/kimi-k2.6",
+            "effectiveModelId": "kimi-k2.6-model",
+            "effectiveRuntimeModelId": "moonshotai/kimi-k2.6",
+            "localDevOverrideApplied": false,
+            "localDevOverrideTargetModelId": null,
+            "fallbackModelId": null,
+            "fallbackRuntimeModelId": null,
+            "fallbackReason": null,
+            "synthesisSkipped": false,
+            "invoked": true,
+            "latencyMs": null,
+            "actualCostUsd": 0.018212,
+            "usage": {
+              "inputTokens": "[REDACTED]",
+              "outputTokens": "[REDACTED]",
+              "totalTokens": "[REDACTED]",
+              "reasoningTokens": "[REDACTED]",
+              "cachedInputTokens": "[REDACTED]"
+            }
+          }
+        ]
+      }
+    },
+    "governance": {
+      "policyVersion": "2026-03-05.query-data-governance.v1",
+      "redactionCount": 13,
+      "omittedSensitiveFieldsCount": 0,
+      "exposure": {
+        "runtimeArtifacts": "internal_runtime_only",
+        "durableAudit": "internal_ops_only",
+        "developerTrace": "explicit_opt_in_redacted",
+        "publicDataUrl": "explicit_request_opt_in"
+      },
+      "retention": {
+        "runtimeTtlMs": 900000,
+        "durableAuditDays": 30,
+        "publicDataUrl": "until_deleted"
+      }
+    }
+  },
+  "grounding": {
+    "availableToolCount": 27,
+    "availableMethodNamesSample": [
+      "Equities Intelligence.check_api_status",
+      "Equities Intelligence.search_symbols",
+      "Equities Intelligence.get_company_profile",
+      "Equities Intelligence.get_stock_quote",
+      "Equities Intelligence.get_historical_prices",
+      "Equities Intelligence.get_financial_statements",
+      "Equities Intelligence.get_financial_ratios",
+      "Equities Intelligence.get_analyst_insights",
+      "Equities Intelligence.get_market_news",
+      "Equities Intelligence.get_market_movers",
+      "Equities Intelligence.screen_stocks",
+      "Equities Intelligence.get_technical_indicator",
+      "Equities Intelligence.build_company_financial_brief",
+      "Equities Intelligence.get_earnings",
+      "Equities Intelligence.get_dividends",
+      "Equities Intelligence.get_insider_activity",
+      "Equities Intelligence.get_ownership",
+      "Equities Intelligence.get_sec_filings",
+      "Equities Intelligence.get_peers",
+      "Equities Intelligence.get_growth",
+      "Equities Intelligence.get_revenue_segments",
+      "Equities Intelligence.get_congressional_trades",
+      "Equities Intelligence.get_index_constituents",
+      "Equities Intelligence.get_valuation",
+      "Equities Intelligence.get_quality_scores",
+      "Equities Intelligence.get_sector_performance",
+      "Equities Intelligence.get_macro_calendar"
+    ],
+    "selectedMethodCount": 27,
+    "selectedButFilteredOut": [],
+    "toolCallCount": 4,
+    "toolCallAttemptCount": 2,
+    "toolCallSuccessCount": 2,
+    "toolCallFailureCount": 0,
+    "toolCallFailureSamples": [],
+    "grounded": true
+  },
+  "orchestrationMetrics": {
+    "parityStage": "enabled",
+    "orchestrationMode": "auto_discovery",
+    "firstPassSuccess": true,
+    "capabilityMissSignaled": false,
+    "rediscoveryExecuted": false
+  },
+  "responseShape": "answer_with_evidence",
+  "summary": "Quarterly revenue by product line is **not available** through the current API; the execution was bounded because only **annual fiscal-year** segmentation is returned.",
+  "outcome": {
+    "label": "Bounded answer",
+    "tone": "caution",
+    "stopReason": "bounded_upstream_abort_guardrail",
+    "issueClass": "missing_evidence"
+  },
+  "controller": {
+    "scope": "standard",
+    "nextAction": "return_bounded_answer",
+    "actionsTaken": [
+      "inspect_current_grounding",
+      "return_bounded_answer"
+    ],
+    "patchFirstProgramPreserved": false,
+    "executionProgramRevisionId": "iterative-v1",
+    "hardBudgetApplied": false
+  },
+  "evidence": {
+    "facts": [
+      {
+        "id": "path_lookup:0",
+        "label": "Root payload snapshot",
+        "path": "$",
+        "relevanceScore": null,
+        "value": null
+      }
+    ],
+    "sourceRefs": [
+      {
+        "id": "source-1",
+        "provider": "Context",
+        "dataset": "canonical execution data",
+        "observedAt": null,
+        "publishedAt": null,
+        "artifactRef": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/0e9ca190-8bcd-416f-8d13-8bd5596f8fea-api_query_execution_923be1a8-81b1-4255-8810-a7437cfd6ae7_1782655252834.json",
+        "url": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/0e9ca190-8bcd-416f-8d13-8bd5596f8fea-api_query_execution_923be1a8-81b1-4255-8810-a7437cfd6ae7_1782655252834.json",
+        "note": "Raw execution artifact for this answer."
+      }
+    ],
+    "assumptions": [],
+    "knownUnknowns": [
+      "Canonical payload is empty, so confidence is constrained by missing data.",
+      "Only one retrieval slice was selected, reducing cross-section confidence."
+    ],
+    "retrievalPlanReasonCodes": [
+      "keyword_lookup"
+    ]
+  },
+  "artifacts": {
+    "dataUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/0e9ca190-8bcd-416f-8d13-8bd5596f8fea-api_query_execution_923be1a8-81b1-4255-8810-a7437cfd6ae7_1782655252834.json",
+    "canonicalDataRef": {
+      "datasetId": "923be1a8-81b1-4255-8810-a7437cfd6ae7:canonical-execution",
+      "hash": "b144ff8f32efe49757fe787dd96ac0a9c6062e0100a2c73f1cfb7fa9a9cda530",
+      "bytes": 24091,
+      "publicDataUrl": "https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/agents/volumes/0e9ca190-8bcd-416f-8d13-8bd5596f8fea-api_query_execution_923be1a8-81b1-4255-8810-a7437cfd6ae7_1782655252834.json"
+    },
+    "stageArtifactKinds": [
+      "query-session-contract",
+      "tool-selection",
+      "first-pass-execution",
+      "execution-program-lineage",
+      "completeness-evaluation",
+      "canonical-dataset-registered",
+      "final-execution",
+      "synthesis-context-selection",
+      "canonical-data-url-linked"
+    ]
+  },
+  "view": null,
+  "freshness": {
+    "asOf": "2026-06-28T13:58:45.942Z",
+    "sourceTimestamps": [
+      "2026-06-28T13:58:45.942Z",
+      "2026-06-28T13:58:33.678Z"
+    ],
+    "note": "Most recent evidence timestamp: 2026-06-28T13:58:45.942Z"
+  },
+  "confidence": {
+    "level": "low",
+    "reason": "Confidence is constrained by missing or weakly grounded retrieval coverage.",
+    "verifiedFactCount": 2,
+    "inferredFactCount": 2,
+    "gapCount": 2,
+    "gapSignals": [
+      {
+        "code": "empty_canonical_payload",
+        "severity": "high",
+        "detail": "Canonical payload is empty, so confidence is constrained by missing data."
+      },
+      {
+        "code": "limited_slice_coverage",
+        "severity": "medium",
+        "detail": "Only one retrieval slice was selected, reducing cross-section confidence."
+      }
+    ]
+  },
+  "usage": {
+    "durationMs": 151493,
+    "cost": {
+      "totalCostUsd": "0.101012",
+      "toolCostUsd": "0.000000",
+      "modelCostUsd": "0.101012"
+    },
+    "toolsUsed": [
+      {
+        "id": "15c60ca5-94c9-4257-89c4-542a4745e89f",
+        "name": "Equities Intelligence",
+        "skillCalls": 2
+      }
+    ],
+    "outcomeType": "answer",
+    "orchestrationMetrics": {
+      "parityStage": "enabled",
+      "orchestrationMode": "auto_discovery",
+      "firstPassSuccess": true,
+      "capabilityMissSignaled": false,
+      "rediscoveryExecuted": false
+    }
+  },
+  "stopReason": "bounded_upstream_abort_guardrail",
+  "issueClass": "missing_evidence",
+  "actionsTaken": [
+    "inspect_current_grounding",
+    "return_bounded_answer"
+  ]
+}

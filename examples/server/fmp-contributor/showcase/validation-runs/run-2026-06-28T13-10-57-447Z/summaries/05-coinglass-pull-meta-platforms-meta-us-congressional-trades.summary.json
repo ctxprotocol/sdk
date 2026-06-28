@@ -1,0 +1,53 @@
+{
+  "id": "05-coinglass-pull-meta-platforms-meta-us-congressional-trades",
+  "index": 4,
+  "provider": "coinglass",
+  "prompt": "Pull Meta Platforms' (META) US congressional trades over the last 120 days and chart them by politician — one grouped bar per politician showing reported buy amount vs sell amount side by side — so I can see at a glance which House representatives and senators are most active in META and on which side of the trade.",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-06-28T13:19:01.394Z",
+  "finishedAt": "2026-06-28T13:25:57.448Z",
+  "durationMs": 416054,
+  "outcomeType": "answer",
+  "responseChars": 1594,
+  "responsePreview": "Here are the META congressional trades disclosed over the last 120 days (since late February 2026), broken out by politician.\n\n**Note:** The inline visual was not rendered for this turn, so the data is presented below in table form.\n\n**Activity summary**\n- **7 trades** were disclosed in the 120-day window.\n- **4 were purchases** and **3 were sales**.\n- Every trade in this window was reported in the same amount bucket: **$1,001 – $15,000**.\n\n| Politician | Chamber | Buy (Reported) | Sell (Reported) | Trades |\n|------------|---------|----------------|-----------------|--------|\n| John McGuire | House | $1,001 – $15,000 | — | 1 |\n| Julia Letlow | House | $1,001 – $15,000 | — | 1 |\n| Ro Khanna | House | $1,001 – $15,000 | $1,001 – $15,000 | 2 |\n| Michael McCaul | House | $1,001 – $15,000 | — | 1 |\n| Angus King | Senate | — | $1,001 – $15,000 | 1 |\n| Matt Van Epps | House | — | $1,001 – $15,000 | 1 |\n\n**What the data shows**\n- **Ro Khanna** was the only politician with activity on both sides (one buy and one sell).\n- **Michael McCaul, John McGuire, and Julia Letlow** each reported a single purchase.\n- **Angus King** (Senate) and **Matt Van Epps** each reported a single sale.\n\n**Remainin...",
+  "toolsUsed": [
+    "Equities Intelligence"
+  ],
+  "chartCount": 0,
+  "metricTableCount": 0,
+  "agentDeclaredArtifacts": {
+    "chart": 0,
+    "metricTable": 0
+  },
+  "chartSummaries": [],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": true,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": false,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [
+      "semantic audit expected a chart but no chart summary existed"
+    ],
+    "chartResults": [],
+    "pass": false
+  },
+  "semanticFailures": [
+    "semantic audit expected a chart but no chart summary existed"
+  ],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "no chart artifact was emitted",
+    "response text signals sparse/no-value output",
+    "semantic chart audit failed: semantic audit expected a chart but no chart summary existed"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/fmp-contributor/showcase/validation-runs/run-2026-06-28T13-10-57-447Z/raw/05-coinglass-pull-meta-platforms-meta-us-congressional-trades.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/fmp-contributor/showcase/validation-runs/run-2026-06-28T13-10-57-447Z/summaries/05-coinglass-pull-meta-platforms-meta-us-congressional-trades.summary.json"
+}

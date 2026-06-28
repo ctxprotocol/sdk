@@ -1,0 +1,47 @@
+{
+  "id": "07-coinglass-plot-tesla-inc-s-tsla-multi-period-price-changes",
+  "index": 6,
+  "provider": "coinglass",
+  "prompt": "Plot Tesla, Inc.'s (TSLA) multi-period price changes (1W, 1M, 3M, 6M, YTD, 1Y) as bars alongside TSLA's EV/EBITDA and EV/Sales multiples as two lines on a secondary axis, so I can see whether TSLA's recent returns are supported by cheaper or richer enterprise multiples across each lookback window.",
+  "expectedMinimumRows": 5,
+  "expectedReason": "homepage showcase categorical charts need multi-row comparisons",
+  "startedAt": "2026-06-28T13:28:09.904Z",
+  "finishedAt": "2026-06-28T13:32:25.242Z",
+  "durationMs": 255338,
+  "outcomeType": "answer",
+  "responseChars": 1101,
+  "responsePreview": "Here is the requested dual-axis view for Tesla, generated as of June 28, 2026:\n\n![TSLA multi-period returns vs EV multiples](https://7rs12nlupksbkzdm.public.blob.vercel-storage.com/python-sandbox/charts/83c9893b3d255850508ec393125de0062526ba5b832dc57df4bc675e81aaf562.png)\n\nThe chart maps TSLA’s price-change bars (left axis) to the closest available quarterly valuation snapshots for each lookback window (right axis): 1W/1M/3M pull from Q1 2026, 6M/YTD from Q4 2025, and 1Y from Q2 2025.\n\nThe standout relationship is that the 1-year return (+19.5%) coincides with the lowest multiples in the set—EV/EBITDA near 333x and EV/Sales near 45x—suggesting that gain was driven by a comparatively lower starting valuation base. Conversely, the shorter-term negative returns (1M: -14.1%, YTD: -15.6%) sit alongside the highest multiples in the series, with EV/EBITDA around 492–497x and EV/Sales in the 53–58x range. This indicates that recent price weakness has not been accompanied by a meaningfully cheaper valuation; if anything, the enterprise multiples have expanded relative to the 1-year-ago period.",
+  "toolsUsed": [
+    "Equities Intelligence"
+  ],
+  "chartCount": 0,
+  "metricTableCount": 0,
+  "agentDeclaredArtifacts": {
+    "chart": 0,
+    "metricTable": 0
+  },
+  "chartSummaries": [],
+  "semanticAudit": {
+    "intent": {
+      "expectsCategoricalComparison": false,
+      "expectsTimeSeries": false,
+      "expectsProbabilityMetric": false,
+      "expectsVolumeLiquidityMetrics": false,
+      "expectsOutcomeLabels": false,
+      "expectsMarketLabels": false
+    },
+    "failures": [],
+    "chartResults": [],
+    "pass": true
+  },
+  "semanticFailures": [],
+  "visualAuditStatus": "not_run",
+  "hardFailures": [
+    "no chart artifact was emitted"
+  ],
+  "buyerValueScore": 2,
+  "buyerVerdict": "fail",
+  "buyerReview": "Preliminary fail: does not yet clear the homepage showcase bar for a first-time paying buyer.",
+  "rawResultPath": "/Users/alex/Documents/context-sdk/examples/server/fmp-contributor/showcase/validation-runs/run-2026-06-28T13-10-57-447Z/raw/07-coinglass-plot-tesla-inc-s-tsla-multi-period-price-changes.json",
+  "summaryPath": "/Users/alex/Documents/context-sdk/examples/server/fmp-contributor/showcase/validation-runs/run-2026-06-28T13-10-57-447Z/summaries/07-coinglass-plot-tesla-inc-s-tsla-multi-period-price-changes.summary.json"
+}
