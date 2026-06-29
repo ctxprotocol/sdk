@@ -146,7 +146,7 @@ const MOCK_EVIDENCE_RESPONSE = {
     sourceRefs: [
       {
         id: "source-1",
-        provider: "Coinglass",
+        provider: "Crypto Positioning",
         dataset: "exchange flows",
         observedAt: "2026-03-23T12:00:00.000Z",
         publishedAt: null,

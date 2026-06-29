@@ -54,7 +54,26 @@ function readJson(filePath) {
   return readFile(filePath, "utf8").then((value) => JSON.parse(value));
 }
 
+const CURATED_SHOWCASE_PROMPT_IDS = [
+  "hl-020",
+  "hl-021",
+  "hl-022",
+  "hl-005",
+  "hl-001",
+  "hl-011",
+  "hl-004",
+];
+
 function buildShowcasePrompts(promptPool) {
+  const byId = new Map(promptPool.map((prompt) => [prompt.id, prompt.prompt]));
+  const curated = CURATED_SHOWCASE_PROMPT_IDS.map((id) => byId.get(id)).filter(
+    (prompt) => typeof prompt === "string" && prompt.length > 0
+  );
+
+  if (curated.length >= 7) {
+    return curated.slice(0, 8);
+  }
+
   return promptPool
     .filter((prompt) => prompt.showcaseCandidate === true)
     .map((prompt) => prompt.prompt)
@@ -67,6 +86,7 @@ function buildGeneratedDescription(showcasePrompts) {
   return `Live Hyperliquid market intelligence for perps, spot, liquidity, funding, open interest, HLP vaults, and HYPE staking from one MCP endpoint.
 
 Features:
+- Analyze your linked Hyperliquid book when portfolio context is injected: direct perp positions, vault equity, shadow positions, liquidation distance, and full cross-account exposure
 - Pull current perp market snapshots with mark, mid, oracle, volume, open interest, funding, spreads, and leverage
 - Simulate visible-book price impact for large BTC, HYPE, ZEC, CHIP, and other Hyperliquid orders
 - Compare funding, carry pressure, open-interest crowding, recent trades, candles, and volume momentum
@@ -77,6 +97,7 @@ Try asking:
 ${tryAskingLines}
 
 Agent tips:
+- For your positions and risk, use analyze_user_positions, analyze_vault_exposure, or analyze_full_portfolio; omit address to use your linked Hyperliquid wallet
 - Start with get_market_info or list_markets for live perp discovery, then use get_orderbook or calculate_price_impact for execution sizing
 - Use get_funding_history with get_market_info when the question is about current carry versus recent persistence
 - Use get_open_interest_analysis for crowded-market and liquidation-risk questions before making a directional recommendation
