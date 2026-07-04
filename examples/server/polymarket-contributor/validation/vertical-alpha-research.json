@@ -1,36 +1,253 @@
 {
-  "researchedAt": "2026-04-18T08:30:00Z",
-  "upstreamDocsSource": "/llmstxt/polymarket_llms_txt",
+  "completedAt": "2026-07-04T08:40:00Z",
+  "researchedAt": "2026-07-04T08:40:00Z",
+  "upstreamDocsSource": "/websites/polymarket_api-reference + /llmstxt/polymarket_llms-full_txt + https://docs.polymarket.com/llms-full.txt (2026-07 pull) + live OpenAPI specs (gamma/clob/data)",
   "marketplaceCategory": "Prediction Markets / Alternative Data",
+  "julyRefreshContext": {
+    "priorResearch": "2026-04-18, sourced from /llmstxt/polymarket_llms_txt",
+    "whatChangedUpstream": [
+      "GET /prices-history now accepts startTs/endTs windows up to 15 days each; chunking unlocks up to 180 days of fidelity-controlled history per call (previously ~30 days max at fine fidelity, hard cap).",
+      "POST /batch-prices-history fetches price history for up to 20 tokens in one request; collapses N sequential calls to ceil(N/20).",
+      "CLOB GET /orderbook-history (live-verified, ms timestamps) exposes historical full-book snapshots with limit/offset paging.",
+      "Data API GET /v1/market-positions returns per-holder cost basis, realized and unrealized PnL per market.",
+      "Data API GET /v1/leaderboard returns trader rankings by profit/volume across day/week/month/all windows.",
+      "Gamma /rewards market fields (rewardsDailyRate, spread requirements) enable liquidity-reward screening.",
+      "Gamma sports metadata (/sports, /teams, valid market types) enables league/team grounding.",
+      "Gamma /events/keyset and /markets/keyset cursor pagination removes the offset ceiling for deep universe scans.",
+      "Data API /trades page cap raised to 1000 with offset cap 3000 and eventId/side filters."
+    ]
+  },
   "alphaCategories": [
-    { "name": "pricing-efficiency", "description": "Live bid-ask spreads, midpoints, implied probabilities, and fair-value dislocations across Polymarket CLOB.", "whyAlpha": "Free LLMs produce stale or hallucinated probabilities; CLOB /midpoint, /spread, /price expose current tick-level truth." },
-    { "name": "liquidity-depth", "description": "Orderbook depth, slippage estimates, and fillable size.", "whyAlpha": "Only way to answer 'can I get $50k filled at 40¢?' is walking the live book." },
-    { "name": "whale-flow", "description": "Top-holder composition, concentration, directional bias.", "whyAlpha": "On-chain holder positions surface smart-money conviction." },
-    { "name": "event-tradability", "description": "Ranking outcomes within multi-outcome events by liquidity+spread+volume.", "whyAlpha": "Multi-outcome events have dozens of sub-markets with wildly different tradability." },
-    { "name": "rules-and-resolution", "description": "Surfacing exact resolution criteria, UMA oracle, end dates.", "whyAlpha": "Resolution ambiguity is the #1 reason bettors get burned." },
-    { "name": "screening-and-discovery", "description": "Programmatic screens across categories, tags, probability bands, end-date windows.", "whyAlpha": "Free LLMs cannot enumerate the live Polymarket universe." },
-    { "name": "parameter-and-microstructure", "description": "Tick size, min order size, neg-risk, fees.", "whyAlpha": "Required inputs for any real order." },
-    { "name": "workflow-synthesis", "description": "Multi-step pipelines chaining tools into a buyer-grade output.", "whyAlpha": "The end deliverable — a tradable memo with live numbers." }
+    {
+      "name": "deep-price-history",
+      "category": "deep-price-history",
+      "upstreamDataSource": "get_price_history (deep window mode, chunked GET /prices-history startTs/endTs), get_batch_price_history (POST /batch-prices-history)",
+      "description": "Up to 180 days of fidelity-controlled price history for any outcome token in one call, and multi-token (<=20) history in one batch call.",
+      "whyItBeatsFree": "Free LLMs have zero Polymarket time series; even the Polymarket UI chart widget offers only fixed ranges with no export. Momentum, repricing events, and regime shifts are invisible without this.",
+      "whyAlpha": "Momentum/repricing analysis needs the raw series; training data cannot contain last month's odds path.",
+      "examplePromptShape": "Pull the last 60 days of daily Yes prices for [market] and identify the biggest single-week repricing."
+    },
+    {
+      "name": "pnl-aware-whale-intel",
+      "category": "pnl-aware-whale-intel",
+      "upstreamDataSource": "get_market_positions (Data GET /v1/market-positions), get_top_holders",
+      "description": "Per-holder cost basis, realized and unrealized PnL for any market -- not just share counts.",
+      "whyItBeatsFree": "Knowing whether the largest holders are in profit or underwater is conviction-grade signal; neither free LLMs nor the Polymarket market page show a PnL-ranked holder table.",
+      "whyAlpha": "Cost-basis-aware whale reads separate diamond-hand conviction from trapped bagholders.",
+      "examplePromptShape": "List top 10 holders of [market] with cost basis and unrealized PnL -- is smart money in profit?"
+    },
+    {
+      "name": "trader-intelligence",
+      "category": "trader-intelligence",
+      "upstreamDataSource": "get_trader_leaderboard (Data GET /v1/leaderboard), get_wallet_profile (Gamma /public-profile + /traded + Data /value + leaderboard)",
+      "description": "Live trader rankings by profit/volume over day/week/month/all, plus consolidated wallet profiles (markets traded, portfolio value, leaderboard standing).",
+      "whyItBeatsFree": "Who is winning on Polymarket this week is fast-moving, on-chain-derived data absent from any training set.",
+      "whyAlpha": "Copy-trading and counterparty analysis start from knowing who the sharps are right now.",
+      "examplePromptShape": "Top 5 traders by profit this week, and the full profile of the #1 wallet."
+    },
+    {
+      "name": "liquidity-rewards",
+      "category": "liquidity-rewards",
+      "upstreamDataSource": "find_reward_markets (Gamma /markets rewardsDailyRate fields + CLOB spread enrichment)",
+      "description": "Screen for markets currently paying liquidity rewards, with daily USD rates, spread requirements, and current book tightness.",
+      "whyItBeatsFree": "Reward configs change frequently and the upstream UI has no sortable rewards-vs-risk screening table; free LLMs do not know rewards exist per market.",
+      "whyAlpha": "Market-makers earn real yield; reward-per-risk ranking is a paid-only answer.",
+      "examplePromptShape": "Which markets pay >= $50/day in rewards with spreads tight enough to quote for a $10k MM budget?"
+    },
+    {
+      "name": "microstructure-history",
+      "category": "microstructure-history",
+      "upstreamDataSource": "get_orderbook_history (CLOB GET /orderbook-history, time-uniform sampling)",
+      "description": "Historical full-orderbook snapshots sampled across a time range -- how depth and spread evolved, not just the current book.",
+      "whyItBeatsFree": "Historical book states exist nowhere publicly except this endpoint; the UI shows only the live book.",
+      "whyAlpha": "Liquidity thickening/thinning ahead of catalysts is tradable microstructure signal.",
+      "examplePromptShape": "How has book depth for [market] evolved over the past 7 days -- thickening or thinning into the event?"
+    },
+    {
+      "name": "sports-metadata",
+      "category": "sports-metadata",
+      "upstreamDataSource": "get_sports_context (Gamma /sports, /teams, valid market types)",
+      "description": "Live league inventory, team records/images, and per-league valid market types (moneyline, spread, total, props).",
+      "whyItBeatsFree": "Grounds sports questions in Polymarket's actual live league/team/market-type universe instead of guessing slugs.",
+      "whyAlpha": "Correct sports entity resolution is the gate to every downstream sports-market answer.",
+      "examplePromptShape": "What leagues and market types are live on Polymarket right now for soccer?"
+    },
+    {
+      "name": "deep-universe-scan",
+      "category": "deep-universe-scan",
+      "upstreamDataSource": "get_events afterCursor/nextCursor (Gamma /events/keyset)",
+      "description": "Stable cursor paging through the full live event universe with no offset ceiling.",
+      "whyItBeatsFree": "Free LLMs cannot enumerate the live universe at all; offset paging previously silently truncated deep scans.",
+      "whyAlpha": "Census-style questions (how many active events per category) require full traversal.",
+      "examplePromptShape": "Page through all live events beyond the first 500 and count active events per category."
+    },
+    {
+      "name": "pricing-efficiency",
+      "category": "pricing-efficiency",
+      "upstreamDataSource": "get_orderbook, get_midpoints, get_spreads, get_prices",
+      "description": "Live bid-ask spreads, midpoints, implied probabilities, and fair-value dislocations across the CLOB.",
+      "whyItBeatsFree": "Free LLMs produce stale or hallucinated probabilities; CLOB endpoints expose current tick-level truth.",
+      "whyAlpha": "Tick-level quotes are the ground truth for any live odds question.",
+      "examplePromptShape": "Current spread, midpoint, and implied Yes probability for [market]?"
+    },
+    {
+      "name": "liquidity-depth",
+      "category": "liquidity-depth",
+      "upstreamDataSource": "analyze_market_liquidity, get_batch_orderbooks",
+      "description": "Orderbook depth, slippage estimates, and fillable size at live prices.",
+      "whyItBeatsFree": "The only way to answer 'can I get $50k filled at 40c' is walking the live book.",
+      "whyAlpha": "Execution feasibility is invisible to any model without the book.",
+      "examplePromptShape": "Slippage for a $50k Yes buy on [market] vs current midpoint?"
+    },
+    {
+      "name": "event-tradability",
+      "category": "event-tradability",
+      "upstreamDataSource": "rank_event_tradability, compare_event_outcome_quotes (now batch-history powered), analyze_event_outcome_liquidity",
+      "description": "Ranking outcomes within multi-outcome events by liquidity, spread, volume, and now 24h batch momentum.",
+      "whyItBeatsFree": "Multi-outcome events have dozens of sub-markets with wildly different tradability; batch momentum adds who-is-moving context.",
+      "whyAlpha": "Relative-value across strikes/candidates/teams is a synthesis no free model can ground.",
+      "examplePromptShape": "Rank every outcome in [event] by tradability and 24h momentum."
+    },
+    {
+      "name": "rules-and-resolution",
+      "category": "rules-and-resolution",
+      "upstreamDataSource": "check_market_rules, get_market_parameters",
+      "description": "Exact resolution criteria, UMA oracle, end dates, neg-risk semantics, tick/min-size parameters.",
+      "whyItBeatsFree": "Resolution ambiguity is the top reason bettors get burned; literal rules text is required.",
+      "whyAlpha": "Paraphrased rules are dangerous; buyers need the binding text.",
+      "examplePromptShape": "Resolution rules, source of truth, and end date for [market]?"
+    },
+    {
+      "name": "screening-and-discovery",
+      "category": "screening-and-discovery",
+      "upstreamDataSource": "get_top_markets, find_moderate_probability_bets, get_bets_by_probability, browse_category, discover_trending_markets",
+      "description": "Programmatic screens across categories, tags, probability bands, end-date windows, volume/liquidity thresholds.",
+      "whyItBeatsFree": "Free LLMs cannot enumerate the live Polymarket universe or apply live thresholds.",
+      "whyAlpha": "Actionable shortlists from live data are the core screening product.",
+      "examplePromptShape": "Markets with 30-50% implied probability ending within 14 days with >$500k 24h volume."
+    },
+    {
+      "name": "workflow-synthesis",
+      "category": "workflow-synthesis",
+      "upstreamDataSource": "build_market_tradability_memo, build_high_conviction_workflow, find_arbitrage_opportunities",
+      "description": "Multi-step pipelines chaining rules, quotes, whales, history, and depth into a buyer-grade memo.",
+      "whyItBeatsFree": "The end deliverable -- a tradable memo with live numbers -- requires chaining live tools.",
+      "whyAlpha": "Synthesis across five live data planes is the ceiling product.",
+      "examplePromptShape": "Full tradability memo for [market] with rules risk, quotes, whale PnL, 30-day trend, and sizing."
+    }
+  ],
+  "crossToolOpportunities": [
+    "Fed/macro odds (get_batch_price_history on Fed decision outcomes) x CoinGlass contributor funding/OI: does crypto derivatives positioning agree with prediction-market rate odds?",
+    "Polymarket sports moneylines (get_sports_context + compare_event_outcome_quotes) x Odds-API contributor sportsbook lines: venue divergence and middle opportunities.",
+    "Polymarket vs Kalshi (in-server polymarket_crossref_kalshi) enriched with 30-day batch history on the Polymarket leg to show which venue repriced first."
+  ],
+  "upstreamUIGaps": [
+    "No PnL-ranked holder table per market in the Polymarket UI -- get_market_positions exposes cost basis and unrealized PnL per holder per market.",
+    "Chart widget offers fixed ranges with no export; no way to pull 180-day fidelity-controlled series or multi-token comparisons -- deep/batch price history tools do.",
+    "No rewards screening table combining daily reward rate, spread requirement, and live book tightness -- find_reward_markets does.",
+    "No historical orderbook view at all -- get_orderbook_history is a time machine for the book.",
+    "Event browsing is shallow-paged; no census/deep-scan of the full live universe -- keyset cursor paging in get_events removes the ceiling."
   ],
   "mustWinPrompts": [
-    { "id": "p1", "prompt": "What is the current bid-ask spread, midpoint, and implied Yes probability for the 'Strait of Hormuz traffic returns to normal by end of April?' market?", "groundedEntity": { "type": "market", "slug": "strait-of-hormuz-traffic-returns-to-normal-by-april-30", "title": "Strait of Hormuz traffic returns to normal by end of April?" }, "answerabilityNote": "get_orderbook+get_midpoints+get_spreads", "alphaCategory": "pricing-efficiency", "whyAlpha": "Tick-level data is live CLOB", "expectedDataFields": ["best_bid","best_ask","spread","midpoint","impliedProbability"], "difficultyTier": "lookup" },
-    { "id": "p2", "prompt": "Show the current outcome prices and 24h volume for the 'US x Iran permanent peace deal by April 30, 2026?' market.", "groundedEntity": { "type": "market", "slug": "us-x-iran-permanent-peace-deal-by-april-30-2026", "title": "US x Iran permanent peace deal by April 30, 2026?" }, "answerabilityNote": "get_prices+Gamma volume24hr", "alphaCategory": "pricing-efficiency", "whyAlpha": "Live price+volume", "expectedDataFields": ["yesPrice","noPrice","volume24hr","endDate"], "difficultyTier": "lookup" },
-    { "id": "p3", "prompt": "Fetch the full market parameters (tick size, min order size, neg-risk flag, fee structure) for the 'Will Jon Stewart win the 2028 Democratic presidential nomination?' market.", "groundedEntity": { "type": "market", "slug": "will-jon-stewart-win-the-2028-democratic-presidential-nomination-518", "title": "Will Jon Stewart win the 2028 Democratic presidential nomination?" }, "answerabilityNote": "get_market_parameters", "alphaCategory": "parameter-and-microstructure", "whyAlpha": "Inputs for real orders", "expectedDataFields": ["tickSize","minimumOrderSize","negRisk","makerFee","takerFee"], "difficultyTier": "lookup" },
-    { "id": "p4", "prompt": "What are the resolution rules, source-of-truth, and end date for the 'US obtains Iranian enriched uranium by May 31?' market?", "groundedEntity": { "type": "market", "slug": "us-obtains-iranian-enriched-uranium-by-may-31-396", "title": "US obtains Iranian enriched uranium by May 31?" }, "answerabilityNote": "check_market_rules", "alphaCategory": "rules-and-resolution", "whyAlpha": "Literal rules text needed", "expectedDataFields": ["rulesText","resolutionSource","endDate","umaOracle"], "difficultyTier": "lookup" },
-    { "id": "p5", "prompt": "Estimate slippage for a $50,000 buy of Yes on the 'Will the U.S. invade Iran before 2027?' market and tell me the fill price vs current midpoint.", "groundedEntity": { "type": "market", "slug": "will-the-us-invade-iran-before-2027", "title": "Will the U.S. invade Iran before 2027?" }, "answerabilityNote": "analyze_market_liquidity+calculateMarketPrice+midpoint", "alphaCategory": "liquidity-depth", "whyAlpha": "Real fill price requires live book", "expectedDataFields": ["estimatedFillPrice","midpoint","slippageBps","bookDepthUsd"], "difficultyTier": "analysis" },
-    { "id": "p6", "prompt": "Who are the top 10 holders of Yes on the 'Will Jon Stewart win the 2028 Democratic presidential nomination?' market, what is their combined share, and is concentration bullish or bearish?", "groundedEntity": { "type": "market", "slug": "will-jon-stewart-win-the-2028-democratic-presidential-nomination-518", "title": "Will Jon Stewart win the 2028 Democratic presidential nomination?" }, "answerabilityNote": "get_top_holders+analyze_top_holders", "alphaCategory": "whale-flow", "whyAlpha": "On-chain data not in training sets", "expectedDataFields": ["topHolders","concentrationPct","directionalBias"], "difficultyTier": "analysis" },
-    { "id": "p7", "prompt": "Break down whale flow across every sub-market of the 'Democratic Presidential Nominee 2028' event — which candidate markets have the largest single-wallet positions?", "groundedEntity": { "type": "event", "slug": "democratic-presidential-nominee-2028", "title": "Democratic Presidential Nominee 2028" }, "answerabilityNote": "analyze_event_whale_breakdown", "alphaCategory": "whale-flow", "whyAlpha": "Cross-outcome whale view", "expectedDataFields": ["subMarkets","topHoldersPerMarket","largestSingleWalletUsd"], "difficultyTier": "analysis" },
-    { "id": "p8", "prompt": "For the 'What will WTI Crude Oil (WTI) hit in April 2026?' event, rank every strike by tradability (liquidity × inverse spread × volume) and tell me the best strike to short.", "groundedEntity": { "type": "event", "slug": "what-price-will-wti-hit-in-april-2026", "title": "What will WTI Crude Oil (WTI) hit in April 2026?" }, "answerabilityNote": "rank_event_tradability+get_batch_orderbooks", "alphaCategory": "event-tradability", "whyAlpha": "Batch microstructure only on CLOB", "expectedDataFields": ["rankedStrikes","tradabilityScore","bestShortStrike"], "difficultyTier": "analysis" },
-    { "id": "p9", "prompt": "Find markets on Polymarket with implied probability between 30% and 50%, end date within 14 days, and 24h volume above $500k — include entries like 'US x Iran permanent peace deal by April 30, 2026?' and 'Strait of Hormuz traffic returns to normal by end of April?' where applicable.", "groundedEntity": { "type": "market", "slug": "us-x-iran-permanent-peace-deal-by-april-30-2026", "title": "US x Iran permanent peace deal by April 30, 2026?" }, "answerabilityNote": "find_moderate_probability_bets / get_bets_by_probability + get_top_markets", "alphaCategory": "screening-and-discovery", "whyAlpha": "Live universe screen", "expectedDataFields": ["markets","impliedProbability","endDate","volume24hr"], "difficultyTier": "analysis" },
-    { "id": "p10", "prompt": "For the 'Warriors vs. Suns' NBA event on Polymarket, which derivative market (spread, total, moneyline, player prop) has the tightest spread relative to its 24h volume?", "groundedEntity": { "type": "event", "slug": "nba-gsw-phx-2026-04-17", "title": "Warriors vs. Suns" }, "answerabilityNote": "get_event_by_slug+get_batch_orderbooks", "alphaCategory": "event-tradability", "whyAlpha": "Sports derivative screen", "expectedDataFields": ["subMarkets","spreadBps","volume24hr","spreadPerVolumeRatio"], "difficultyTier": "analysis" },
-    { "id": "p11", "prompt": "Compare the Yes-side liquidity and spread across 'US x Iran permanent peace deal by April 22, 2026?', 'US x Iran permanent peace deal by April 30, 2026?', 'US x Iran permanent peace deal by May 31, 2026?', and 'US x Iran permanent peace deal by June 30, 2026?' — which expiry offers the best entry?", "groundedEntity": { "type": "event", "slug": "us-x-iran-permanent-peace-deal-by", "title": "US x Iran permanent peace deal by..." }, "answerabilityNote": "compare_event_outcome_quotes+get_batch_orderbooks", "alphaCategory": "event-tradability", "whyAlpha": "Term-structure comparison", "expectedDataFields": ["expiries","yesMidpoint","yesSpread","yesBookDepth"], "difficultyTier": "comparison" },
-    { "id": "p12", "prompt": "Compare outcome probabilities, 24h volume, and orderbook depth for the top 8 teams in the '2026 FIFA World Cup Winner' event on Polymarket.", "groundedEntity": { "type": "event", "slug": "2026-fifa-world-cup-winner-595", "title": "2026 FIFA World Cup Winner" }, "answerabilityNote": "get_event_outcomes+compare_event_outcome_quotes+get_batch_orderbooks", "alphaCategory": "event-tradability", "whyAlpha": "Cross-outcome comparison", "expectedDataFields": ["team","yesProb","volume24hr","bookDepthUsd"], "difficultyTier": "comparison" },
-    { "id": "p13", "prompt": "Compare whale concentration and top-10-holder composition for 'Will the Oklahoma City Thunder win the 2026 NBA Finals?' vs 'Will the Cleveland Cavaliers win the 2026 NBA Finals?' vs 'Will the New York Knicks win the 2026 NBA Finals?' — where is smart money most concentrated?", "groundedEntity": { "type": "event", "slug": "2026-nba-champion", "title": "2026 NBA Champion" }, "answerabilityNote": "get_top_holders+analyze_top_holders", "alphaCategory": "whale-flow", "whyAlpha": "Relative smart-money comparison", "expectedDataFields": ["team","top10Concentration","largestWalletUsd"], "difficultyTier": "comparison" },
-    { "id": "p14", "prompt": "Compare 24h volume and implied Yes probability across the Fed outcomes in the 'Fed decision in April?' event on Polymarket, and flag any pricing inconsistent with the sum-to-one constraint.", "groundedEntity": { "type": "event", "slug": "fed-decision-in-april", "title": "Fed decision in April?" }, "answerabilityNote": "get_event_by_slug+get_midpoints; sum midpoints", "alphaCategory": "pricing-efficiency", "whyAlpha": "Neg-risk sum arb screen", "expectedDataFields": ["outcomes","yesMidpoint","sumOfMidpoints","arbEdgeBps"], "difficultyTier": "comparison" },
-    { "id": "p15", "prompt": "Run a high-conviction workflow on the 'Will Jon Stewart win the 2028 Democratic presidential nomination?' market: pull rules, current midpoint/spread, top-holder concentration, 7-day price history, and give me a one-page memo with a recommendation and max sizing given $25k risk.", "groundedEntity": { "type": "market", "slug": "will-jon-stewart-win-the-2028-democratic-presidential-nomination-518", "title": "Will Jon Stewart win the 2028 Democratic presidential nomination?" }, "answerabilityNote": "build_high_conviction_workflow", "alphaCategory": "workflow-synthesis", "whyAlpha": "Full tradable memo", "expectedDataFields": ["rules","midpoint","spread","concentration","priceHistory","recommendation","maxSize"], "difficultyTier": "synthesis" },
-    { "id": "p16", "prompt": "Build a tradability memo for the 'Israel x Hezbollah ceasefire by April 18, 2026?' market covering resolution risk, current liquidity, recent whale moves, and whether the current Yes price leaves any edge for a late-entry No bet.", "groundedEntity": { "type": "market", "slug": "israel-x-hezbollah-ceasefire-by-april-18-2026", "title": "Israel x Hezbollah ceasefire by April 18, 2026?" }, "answerabilityNote": "build_market_tradability_memo", "alphaCategory": "workflow-synthesis", "whyAlpha": "Edge-case analysis", "expectedDataFields": ["rulesRisk","liquidity","whaleActivity","edgeAssessment"], "difficultyTier": "synthesis" },
-    { "id": "p17", "prompt": "Browse the 'Fed interest rates' category and the 'Crypto' category on Polymarket, rank the top 5 markets by 24h volume in each, and produce a combined watchlist with implied probabilities and end dates.", "groundedEntity": { "type": "category", "slug": "fed-interest-rates", "title": "Fed interest rates" }, "answerabilityNote": "browse_category+get_top_markets+get_prices", "alphaCategory": "screening-and-discovery", "whyAlpha": "Cross-category watchlist", "expectedDataFields": ["category","markets","volume24hr","impliedProbability","endDate"], "difficultyTier": "synthesis" },
-    { "id": "p18", "prompt": "Find the highest-expected-value arbitrage opportunity in the 'Republican Presidential Nominee 2028' neg-risk event on Polymarket: check if the sum of all candidate Yes midpoints exceeds 1.0, and if so, size a basket short trade that fits within $100k risk given current book depth on the top legs (e.g., Donald Trump, J.D. Vance, Rand Paul).", "groundedEntity": { "type": "event", "slug": "republican-presidential-nominee-2028", "title": "Republican Presidential Nominee 2028" }, "answerabilityNote": "find_arbitrage_opportunities+get_event_outcomes+get_batch_orderbooks+get_market_parameters", "alphaCategory": "workflow-synthesis", "whyAlpha": "Neg-risk basket arb", "expectedDataFields": ["sumOfYesMidpoints","arbEdgeBps","legSizes","expectedPnlUsd"], "difficultyTier": "ceiling" },
-    { "id": "p19", "prompt": "Construct a portfolio of 5 moderate-probability (30-60% Yes) Polymarket bets ending within 60 days, drawn from current top markets including 'Strait of Hormuz traffic returns to normal by end of April?' and 'US x Iran permanent peace deal by April 30, 2026?' — size each leg to equal-risk, avoid correlated bets, and output expected portfolio volatility and sharpe.", "groundedEntity": { "type": "market", "slug": "strait-of-hormuz-traffic-returns-to-normal-by-april-30", "title": "Strait of Hormuz traffic returns to normal by end of April?" }, "answerabilityNote": "find_moderate_probability_bets+find_correlated_markets+get_price_history+analyze_market_liquidity", "alphaCategory": "workflow-synthesis", "whyAlpha": "Portfolio construction", "expectedDataFields": ["legs","impliedProb","riskWeight","correlationMatrix","portfolioVolatility","expectedSharpe"], "difficultyTier": "ceiling" }
+    {
+      "id": "j1",
+      "prompt": "Pull the last 60 days of daily Yes price history for the 'Will the U.S. invade Iran before 2027?' market and identify the biggest single-week repricing and whether momentum is accelerating.",
+      "groundedEntity": { "type": "market", "slug": "will-the-us-invade-iran-before-2027", "title": "Will the U.S. invade Iran before 2027?" },
+      "answerabilityNote": "get_price_history daysBack=60 (deep window mode, chunked /prices-history); smoke-verified 60d span with ~300 points",
+      "alphaCategory": "deep-price-history",
+      "whyAlpha": "60-day odds path cannot exist in any training set; UI chart has no export",
+      "expectedDataFields": ["history", "summary.spanDays", "summary.high", "summary.low", "summary.changePercent"],
+      "difficultyTier": "analysis"
+    },
+    {
+      "id": "j2",
+      "prompt": "Compare 30-day price trajectories for every outcome in the 'Fed Decision in July?' event in one shot -- which outcome repriced hardest and when?",
+      "groundedEntity": { "type": "event", "slug": "fed-decision-in-july-181", "title": "Fed Decision in July?" },
+      "answerabilityNote": "search_and_get_outcomes -> get_batch_price_history daysBack=30 (POST /batch-prices-history); smoke-verified multi-token series + ranking",
+      "alphaCategory": "deep-price-history",
+      "whyAlpha": "Multi-outcome repricing race in one call; previously N sequential calls",
+      "expectedDataFields": ["series", "ranking", "coverage"],
+      "difficultyTier": "comparison"
+    },
+    {
+      "id": "j3",
+      "prompt": "For the 'Netanyahu out by end of 2026?' market, list the top 10 position holders with their cost basis and unrealized PnL -- are the largest Yes holders in profit or underwater?",
+      "groundedEntity": { "type": "market", "slug": "netanyahu-out-before-2027", "title": "Netanyahu out by end of 2026?" },
+      "answerabilityNote": "get_market_positions sortBy=CURRENT conditionId from market lookup; smoke-verified varying avgPrice/cashPnl per holder",
+      "alphaCategory": "pnl-aware-whale-intel",
+      "whyAlpha": "PnL-ranked holder table exists nowhere in UI or free models",
+      "expectedDataFields": ["positions[].avgPrice", "positions[].cashPnl", "positions[].percentPnl", "positions[].currentValue"],
+      "difficultyTier": "analysis"
+    },
+    {
+      "id": "j4",
+      "prompt": "Who are the top 5 traders on Polymarket by profit this week, and what is the full trading profile of the #1 wallet -- volume, markets traded, and current portfolio value?",
+      "groundedEntity": { "type": "wallet", "slug": "leaderboard-week-overall", "title": "Weekly profit leaderboard" },
+      "answerabilityNote": "get_trader_leaderboard timePeriod=WEEK -> get_wallet_profile on top wallet; smoke-verified live PnL figures ($4.05M weekly #1 at research time)",
+      "alphaCategory": "trader-intelligence",
+      "whyAlpha": "This week's sharps are unknowable to a static model",
+      "expectedDataFields": ["traders[].pnl", "traders[].volume", "profile.portfolioValueUsd", "profile.marketsTraded"],
+      "difficultyTier": "analysis"
+    },
+    {
+      "id": "j5",
+      "prompt": "Screen Polymarket for markets currently paying at least $50/day in liquidity rewards with tight spread requirements -- which offer the best reward-per-risk for a $10k market-making budget?",
+      "groundedEntity": { "type": "screen", "slug": "reward-markets", "title": "Liquidity reward markets" },
+      "answerabilityNote": "find_reward_markets minDailyRateUsd=50 enrich=true; smoke-verified rewardsDailyRate + live spread enrichment",
+      "alphaCategory": "liquidity-rewards",
+      "whyAlpha": "Reward configs are live operational data with no UI screening table",
+      "expectedDataFields": ["markets[].rewardsDailyRateUsd", "markets[].spreadRequirementCents", "markets[].currentSpread", "markets[].liquidity"],
+      "difficultyTier": "analysis"
+    },
+    {
+      "id": "j6",
+      "prompt": "How has orderbook depth for the 'Will no Fed rate cuts happen in 2026?' market evolved over the past 7 days -- is liquidity thickening or thinning ahead of the next Fed meeting?",
+      "groundedEntity": { "type": "market", "slug": "how-many-fed-rate-cuts-in-2026", "title": "Will no Fed rate cuts happen in 2026?" },
+      "answerabilityNote": "get_orderbook_history hoursBack=168 (CLOB /orderbook-history, time-uniform samples); smoke-verified snapshots with per-sample depth",
+      "alphaCategory": "microstructure-history",
+      "whyAlpha": "Historical book states are exposed nowhere else",
+      "expectedDataFields": ["snapshots[].timestamp", "snapshots[].bidDepthUsd", "snapshots[].askDepthUsd", "trend"],
+      "difficultyTier": "analysis"
+    },
+    {
+      "id": "j7",
+      "prompt": "Using Polymarket's live sports metadata, which leagues are live right now, what market types does each support, and list current moneyline markets for the biggest live soccer competition.",
+      "groundedEntity": { "type": "sports", "slug": "sports-context", "title": "Live sports universe" },
+      "answerabilityNote": "get_sports_context (+ league drilldown); smoke-verified league inventory with market types",
+      "alphaCategory": "sports-metadata",
+      "whyAlpha": "Live league/market-type inventory grounds all sports answers",
+      "expectedDataFields": ["leagues[].name", "leagues[].marketTypes", "teams"],
+      "difficultyTier": "lookup"
+    },
+    {
+      "id": "j8",
+      "prompt": "Page through the live Polymarket event universe beyond the first 500 events using cursor paging and summarize how many active events exist and which categories dominate the long tail.",
+      "groundedEntity": { "type": "universe", "slug": "events-keyset", "title": "Full live event universe" },
+      "answerabilityNote": "get_events with afterCursor/nextCursor loop (Gamma /events/keyset); smoke-verified stable non-overlapping pages",
+      "alphaCategory": "deep-universe-scan",
+      "whyAlpha": "Census questions need full traversal; offsets previously truncated",
+      "expectedDataFields": ["events", "nextCursor", "count"],
+      "difficultyTier": "analysis"
+    },
+    {
+      "id": "j9",
+      "prompt": "Build a tradability memo for the 'US obtains Iranian enriched uranium by December 31?' market combining resolution rules risk, current quotes and depth, PnL-aware whale positioning, and the 30-day price trend.",
+      "groundedEntity": { "type": "market", "slug": "us-obtains-iranian-enriched-uranium-by", "title": "US obtains Iranian enriched uranium by December 31?" },
+      "answerabilityNote": "build_market_tradability_memo + get_market_positions + get_price_history daysBack=30",
+      "alphaCategory": "workflow-synthesis",
+      "whyAlpha": "Five live data planes chained into one memo",
+      "expectedDataFields": ["rulesRisk", "quotes", "whalePnl", "trend30d", "recommendation"],
+      "difficultyTier": "synthesis"
+    },
+    {
+      "id": "j10",
+      "prompt": "For the 'Fed Decision in July?' event: pull 60-day history for the leading outcome, the PnL-ranked top holders, and current book depth, then judge whether smart money agrees with the market-implied probability.",
+      "groundedEntity": { "type": "event", "slug": "fed-decision-in-july-181", "title": "Fed Decision in July?" },
+      "answerabilityNote": "get_batch_price_history + get_market_positions + get_orderbook; ceiling synthesis across new July capabilities",
+      "alphaCategory": "pnl-aware-whale-intel",
+      "whyAlpha": "Cross-plane conviction read: price path + holder PnL + live depth",
+      "expectedDataFields": ["history", "positions[].cashPnl", "bookDepth", "impliedProbability", "verdict"],
+      "difficultyTier": "ceiling"
+    }
   ]
 }

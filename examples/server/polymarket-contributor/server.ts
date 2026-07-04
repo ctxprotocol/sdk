@@ -104,6 +104,30 @@ const HOLDER_LARGE_MIN_USD = 1_000;
 const HOLDER_WHALE_MIN_USD = 10_000;
 const HOLDER_WHALE_MIN_SUPPLY_PERCENT = 1;
 
+// CLOB /prices-history knobs (live-verified 2026-07).
+//
+// startTs/endTs window mode accepts windows up to 15 days with NO point cap
+// inside a window (14d at fidelity=1 returns ~20k points) and windows may sit
+// arbitrarily far in the past, so chunked walking reconstructs full history.
+// Anything longer than 15 days returns `interval is too long`. Interval mode
+// (`1h`..`max`) is still capped upstream: `max` at fidelity<=180 only spans
+// ~30 days; coarse fidelity (720+) spans full history.
+const PRICES_HISTORY_MAX_WINDOW_SECONDS = 15 * 86_400;
+const PRICES_HISTORY_MAX_CHUNKS = 12; // 12 x 15d = 180 days per deep call
+const PRICE_HISTORY_DEFAULT_MAX_POINTS = 300;
+const PRICE_HISTORY_MAX_POINTS_CAP = 1_000;
+// POST /batch-prices-history accepts up to 20 token IDs per request and the
+// same interval/fidelity/start_ts/end_ts semantics as /prices-history.
+const BATCH_PRICES_HISTORY_MAX_TOKENS = 20;
+const BATCH_PRICES_HISTORY_MAX_CHUNKS = 4; // 4 x 15d = 60 days per deep call
+// CLOB /orderbook-history (live-verified 2026-07): historical book snapshots
+// per asset_id. Filters startTs/endTs are epoch MILLISECONDS; limit<=1000 with
+// offset paging; response rows are ascending by timestamp and include full
+// bids/asks ladders. Busy markets store >100k snapshots/week, so we sample by
+// time sub-windows instead of paging everything.
+const ORDERBOOK_HISTORY_DEFAULT_SAMPLES = 12;
+const ORDERBOOK_HISTORY_MAX_SAMPLES = 24;
+
 const TRADE_COVERAGE_POLICIES = {
   quick: {
     pageSize: TRADE_DATA_API_PAGE_LIMIT,
@@ -267,6 +291,8 @@ const HEAVY_ANALYSIS_TOOLS = new Set([
   "polymarket_crossref_kalshi",
   "build_high_conviction_workflow",
   "summarize_live_market_activity",
+  "get_orderbook_history",
+  "find_reward_markets",
 ]);
 
 const ANSWER_ONLY_TOOLS = new Set([
@@ -295,6 +321,7 @@ const ANSWER_ONLY_TOOLS = new Set([
   "polymarket_crossref_kalshi",
   "analyze_my_positions",
   "place_polymarket_order",
+  "find_reward_markets",
 ]);
 
 const UPSTREAM_TIMEOUT_MS = {
@@ -390,6 +417,7 @@ const BULK_FIRST_TOOLS = new Set([
   "search_markets",
   "get_event_outcomes",
   "get_batch_orderbooks",
+  "get_batch_price_history",
 ]);
 
 const TOOL_BATCH_HINTS: Record<string, string[]> = {
@@ -402,7 +430,12 @@ const TOOL_BATCH_HINTS: Record<string, string[]> = {
     "analyze_event_whale_breakdown",
     "get_event_live_volume",
   ],
-  compare_event_outcome_quotes: ["search_and_get_outcomes", "get_spreads"],
+  compare_event_outcome_quotes: [
+    "search_and_get_outcomes",
+    "get_spreads",
+    "get_batch_price_history",
+  ],
+  get_price_history: ["get_batch_price_history"],
   compare_market_against_related_contracts: [
     "search_and_get_outcomes",
     "compare_event_outcome_quotes",
@@ -419,7 +452,11 @@ const TOOL_BATCH_HINTS: Record<string, string[]> = {
     "analyze_event_outcome_liquidity",
   ],
   search_markets: ["search_and_get_outcomes", "compare_event_outcome_quotes"],
-  get_top_holders: ["search_markets", "discover_trending_markets"],
+  get_top_holders: [
+    "search_markets",
+    "discover_trending_markets",
+    "get_market_positions",
+  ],
   find_trading_opportunities: ["find_moderate_probability_bets", "get_bets_by_probability"],
   get_event_outcomes: ["get_prices", "get_spreads", "get_orderbook", "get_batch_orderbooks"],
   get_event_by_slug: ["get_event_live_volume", "get_prices", "get_spreads", "get_orderbook"],
@@ -3344,7 +3381,12 @@ Use cases:
         },
         offset: {
           type: "number",
-          description: "Pagination offset",
+          description: "Pagination offset. For deep scans prefer afterCursor (keyset pagination has no offset ceiling).",
+        },
+        afterCursor: {
+          type: "string",
+          description:
+            "Keyset pagination cursor from a previous response's nextCursor. Uses Gamma /events/keyset for stable deep paging with no offset ceiling. Do not combine with offset.",
         },
       },
       required: [],
@@ -3372,6 +3414,10 @@ Use cases:
           },
         },
         count: { type: "number" },
+        nextCursor: {
+          type: "string",
+          description: "Present when more pages exist; pass as afterCursor to continue.",
+        },
         fetchedAt: { type: "string" },
       },
       required: ["events", "count"],
@@ -3993,7 +4039,15 @@ Includes tokenId per outcome so you can call get_prices/get_spreads or get_order
 
   {
     name: "get_price_history",
-    description: "Get historical price data for a market.",
+    description: `Get historical price data for a market outcome token, with DEEP history support.
+
+TWO MODES:
+1. Interval mode (default): pass interval (1h/6h/1d/1w/1m/max). Fast single call, but upstream caps depth — "max" at fine fidelity only spans ~30 days.
+2. Deep window mode: pass daysBack (or startTs/endTs, unix seconds). The tool automatically chunks the range into <=15-day upstream windows and stitches them, so you get FULL-RESOLUTION history up to 180 days per call at any market age. Use this for "how has this priced over the last N months", drawdown analysis, or long-horizon momentum.
+
+Output is downsampled to maxPoints (default ${PRICE_HISTORY_DEFAULT_MAX_POINTS}) while keeping first/last points; summary always reflects the full-resolution fetch.
+
+For comparing history across MULTIPLE outcomes in one call, use get_batch_price_history instead.`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -4004,11 +4058,31 @@ Includes tokenId per outcome so you can call get_prices/get_spreads or get_order
         interval: {
           type: "string",
           enum: ["1m", "1h", "6h", "1d", "1w", "max"],
-          description: "Time interval",
+          description:
+            "Interval mode window relative to now. Ignored when daysBack/startTs is provided.",
         },
         fidelity: {
           type: "number",
-          description: "Resolution in minutes",
+          description:
+            "Resolution in minutes. In deep window mode defaults scale with the requested span (5m for <=2d up to 240m for 180d).",
+        },
+        daysBack: {
+          type: "number",
+          description:
+            "Deep window mode: fetch history for the last N days (max 180 per call) via chunked <=15-day upstream windows.",
+        },
+        startTs: {
+          type: "number",
+          description:
+            "Deep window mode: unix seconds start of the range. Combine with endTs (defaults to now).",
+        },
+        endTs: {
+          type: "number",
+          description: "Deep window mode: unix seconds end of the range.",
+        },
+        maxPoints: {
+          type: "number",
+          description: `Maximum points returned after downsampling (default ${PRICE_HISTORY_DEFAULT_MAX_POINTS}, max ${PRICE_HISTORY_MAX_POINTS_CAP}).`,
         },
       },
       required: ["tokenId"],
@@ -4017,6 +4091,7 @@ Includes tokenId per outcome so you can call get_prices/get_spreads or get_order
       type: "object" as const,
       properties: {
         tokenId: { type: "string" },
+        mode: { type: "string", enum: ["interval", "window"] },
         history: {
           type: "array",
           items: {
@@ -4034,11 +4109,204 @@ Includes tokenId per outcome so you can call get_prices/get_spreads or get_order
             low: { type: "number" },
             change: { type: "number" },
             changePercent: { type: "number" },
+            dataPoints: { type: "number" },
+            rawDataPoints: { type: "number" },
+            firstTimestamp: { type: "string" },
+            lastTimestamp: { type: "string" },
+            spanDays: { type: "number" },
           },
+        },
+        coverage: {
+          type: "object",
+          description:
+            "Deep-window fetch diagnostics: windows fetched, fidelity used, and any range clamping applied.",
         },
         fetchedAt: { type: "string" },
       },
       required: ["tokenId", "history"],
+    },
+  },
+
+  {
+    name: "get_batch_price_history",
+    description: `Get historical price series for up to ${BATCH_PRICES_HISTORY_MAX_TOKENS} outcome tokens in a SINGLE upstream call (CLOB POST /batch-prices-history). Use this instead of looping get_price_history when comparing momentum, divergence, or relative performance across outcomes of an event (or across events).
+
+MODES: interval (1h/6h/1d/1w/1m/max, default 1w) OR deep window via daysBack/startTs/endTs (chunked <=15-day windows, up to 60 days per call).
+
+Each token's series is downsampled to maxPointsPerToken; per-token summaries (change, changePercent, high, low) always reflect the full-resolution fetch. Ideal for "which outcome moved the most this week" and price-divergence screens.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tokenIds: {
+          type: "array",
+          items: { type: "string" },
+          description: `Token IDs (CLOB market IDs). Max ${BATCH_PRICES_HISTORY_MAX_TOKENS}.`,
+        },
+        interval: {
+          type: "string",
+          enum: ["1m", "1h", "6h", "1d", "1w", "max"],
+          description: "Interval mode window relative to now (default 1w). Ignored when daysBack/startTs is provided.",
+        },
+        fidelity: {
+          type: "number",
+          description: "Resolution in minutes.",
+        },
+        daysBack: {
+          type: "number",
+          description: "Deep window mode: last N days (max 60 per call for batch).",
+        },
+        startTs: {
+          type: "number",
+          description: "Deep window mode: unix seconds start.",
+        },
+        endTs: {
+          type: "number",
+          description: "Deep window mode: unix seconds end (defaults to now).",
+        },
+        maxPointsPerToken: {
+          type: "number",
+          description: "Maximum points per token after downsampling (default 100, max 500).",
+        },
+      },
+      required: ["tokenIds"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        mode: { type: "string", enum: ["interval", "window"] },
+        series: {
+          type: "object",
+          description: "Map of tokenId to { history, summary }.",
+          additionalProperties: {
+            type: "object",
+            properties: {
+              history: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    timestamp: { type: "string" },
+                    price: { type: "number" },
+                  },
+                },
+              },
+              summary: {
+                type: "object",
+                properties: {
+                  high: { type: "number" },
+                  low: { type: "number" },
+                  first: { type: "number" },
+                  last: { type: "number" },
+                  change: { type: "number" },
+                  changePercent: { type: "number" },
+                  dataPoints: { type: "number" },
+                  rawDataPoints: { type: "number" },
+                },
+              },
+            },
+          },
+        },
+        ranking: {
+          type: "array",
+          description: "Token IDs ranked by absolute changePercent descending.",
+          items: {
+            type: "object",
+            properties: {
+              tokenId: { type: "string" },
+              changePercent: { type: "number" },
+              change: { type: "number" },
+            },
+          },
+        },
+        partialErrors: {
+          type: "array",
+          items: { type: "string" },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["series", "fetchedAt"],
+    },
+  },
+
+  {
+    name: "get_orderbook_history",
+    description: `Get HISTORICAL orderbook snapshots for one outcome token (CLOB /orderbook-history) sampled evenly across a time range. This answers questions no other tool can: how spread, depth, and liquidity EVOLVED over time — e.g. "was the book deep enough to fill $50k last Tuesday?", "did liquidity dry up before the news?", "how has the spread trended this week?".
+
+Sampling: the range is split into N sub-windows (default ${ORDERBOOK_HISTORY_DEFAULT_SAMPLES}, max ${ORDERBOOK_HISTORY_MAX_SAMPLES}) and the earliest snapshot in each is returned with best bid/ask, spread, top-of-book sizes, and total visible depth per side. Busy markets store >100k snapshots/week upstream, so samples are representative points, not every book update.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        tokenId: {
+          type: "string",
+          description: "The token ID (CLOB asset id)",
+        },
+        hoursBack: {
+          type: "number",
+          description: "Lookback window in hours (default 168 = 7 days). Ignored when startTs is provided.",
+        },
+        startTs: {
+          type: "number",
+          description: "Unix seconds start of the range (optional).",
+        },
+        endTs: {
+          type: "number",
+          description: "Unix seconds end of the range (defaults to now).",
+        },
+        samples: {
+          type: "number",
+          description: `Number of evenly spaced snapshots to return (default ${ORDERBOOK_HISTORY_DEFAULT_SAMPLES}, max ${ORDERBOOK_HISTORY_MAX_SAMPLES}).`,
+        },
+        depthLevels: {
+          type: "number",
+          description: "Book levels per side to include in each snapshot (default 3, max 10).",
+        },
+      },
+      required: ["tokenId"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        tokenId: { type: "string" },
+        snapshots: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              timestamp: { type: "string" },
+              bestBid: { type: "number" },
+              bestAsk: { type: "number" },
+              midpoint: { type: "number" },
+              spread: { type: "number" },
+              bidDepthTotal: { type: "number", description: "Sum of visible bid sizes (shares)" },
+              askDepthTotal: { type: "number", description: "Sum of visible ask sizes (shares)" },
+              bidLevels: { type: "number" },
+              askLevels: { type: "number" },
+              bids: { type: "array", items: { type: "object" } },
+              asks: { type: "array", items: { type: "object" } },
+            },
+          },
+        },
+        summary: {
+          type: "object",
+          properties: {
+            snapshotCount: { type: "number" },
+            totalSnapshotsUpstream: { type: "number" },
+            spreadStart: { type: "number" },
+            spreadEnd: { type: "number" },
+            spreadMin: { type: "number" },
+            spreadMax: { type: "number" },
+            spreadAvg: { type: "number" },
+            midpointStart: { type: "number" },
+            midpointEnd: { type: "number" },
+            bidDepthAvg: { type: "number" },
+            askDepthAvg: { type: "number" },
+            trend: { type: "string" },
+          },
+        },
+        coverage: { type: "object" },
+        fetchedAt: { type: "string" },
+      },
+      required: ["tokenId", "snapshots", "fetchedAt"],
     },
   },
 
@@ -5286,6 +5554,350 @@ CROSS-PLATFORM EXAMPLE (Sports):
       required: ["tag_id", "events", "fetchedAt"],
     },
   },
+
+  // ==================== JULY 2026 UPSTREAM REFRESH TOOLS ====================
+  {
+    name: "get_market_positions",
+    description: `Get positions for a market WITH COST BASIS AND P&L per holder (Data API /v1/market-positions). This is strictly richer than get_top_holders: each position includes avgPrice (entry cost basis), current value, unrealized cashPnl, realizedPnl, and totalPnl — so you can answer "are the whales in this market up or down on their position?", "what did the top holders pay?", and "who is sitting on the biggest unrealized gain?".
+
+Sort by TOKENS (position size), CASH_PNL (unrealized), REALIZED_PNL, or TOTAL_PNL. Returns positions grouped per outcome token (Yes/No). Use get_top_holders for simple share-balance leaderboards; use THIS tool when entry price or profitability matters.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        conditionId: {
+          type: "string",
+          description: "The market condition ID",
+        },
+        user: {
+          type: "string",
+          description: "Optional: filter to a single wallet (proxy address).",
+        },
+        status: {
+          type: "string",
+          enum: ["OPEN", "CLOSED", "ALL"],
+          description: "Position status filter (default OPEN: size > 0.01).",
+        },
+        sortBy: {
+          type: "string",
+          enum: ["TOKENS", "CASH_PNL", "REALIZED_PNL", "TOTAL_PNL"],
+          description: "Sort criterion (default TOKENS = position size).",
+        },
+        sortDirection: {
+          type: "string",
+          enum: ["ASC", "DESC"],
+          description: "Sort direction (default DESC).",
+        },
+        limit: {
+          type: "number",
+          description: "Max positions per outcome token (default 25, max 500).",
+        },
+        offset: {
+          type: "number",
+          description: "Pagination offset per outcome token (max 10000).",
+        },
+      },
+      required: ["conditionId"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        conditionId: { type: "string" },
+        outcomes: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              tokenId: { type: "string" },
+              outcome: { type: "string" },
+              positions: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    wallet: { type: "string" },
+                    name: { type: "string" },
+                    size: { type: "number" },
+                    avgPrice: { type: "number", description: "Entry cost basis per share" },
+                    currentValue: { type: "number" },
+                    cashPnl: { type: "number", description: "Unrealized P&L (USD)" },
+                    realizedPnl: { type: "number" },
+                    totalPnl: { type: "number" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        summary: {
+          type: "object",
+          properties: {
+            totalPositionsReturned: { type: "number" },
+            aggregateUnrealizedPnl: { type: "number" },
+            aggregateRealizedPnl: { type: "number" },
+            biggestWinner: { type: "object" },
+            biggestLoser: { type: "object" },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["conditionId", "outcomes", "fetchedAt"],
+    },
+  },
+
+  {
+    name: "get_trader_leaderboard",
+    description: `Get Polymarket's trader leaderboard (Data API /v1/leaderboard): top traders ranked by P&L or volume, per category (OVERALL, POLITICS, SPORTS, ESPORTS, CRYPTO, CULTURE, MENTIONS, WEATHER, ECONOMICS, TECH, FINANCE) and time period (DAY, WEEK, MONTH, ALL).
+
+Answers "who are the most profitable politics traders this month?", "which wallets have the highest volume today?". Can also look up a single wallet's leaderboard standing via the user filter. Combine with get_user_positions / get_wallet_profile to inspect what top traders currently hold.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        category: {
+          type: "string",
+          enum: [
+            "OVERALL",
+            "POLITICS",
+            "SPORTS",
+            "ESPORTS",
+            "CRYPTO",
+            "CULTURE",
+            "MENTIONS",
+            "WEATHER",
+            "ECONOMICS",
+            "TECH",
+            "FINANCE",
+          ],
+          description: "Market category (default OVERALL).",
+        },
+        timePeriod: {
+          type: "string",
+          enum: ["DAY", "WEEK", "MONTH", "ALL"],
+          description: "Ranking window (default WEEK).",
+        },
+        orderBy: {
+          type: "string",
+          enum: ["PNL", "VOL"],
+          description: "Ranking criterion (default PNL).",
+        },
+        limit: {
+          type: "number",
+          description: "Max traders to return (default 25, max 50).",
+        },
+        offset: {
+          type: "number",
+          description: "Pagination offset (max 1000).",
+        },
+        user: {
+          type: "string",
+          description: "Optional: limit to a single wallet address to get its rank.",
+        },
+      },
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        category: { type: "string" },
+        timePeriod: { type: "string" },
+        orderBy: { type: "string" },
+        traders: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              rank: { type: "number" },
+              wallet: { type: "string" },
+              userName: { type: "string" },
+              pnl: { type: "number" },
+              volume: { type: "number" },
+              verifiedBadge: { type: "boolean" },
+            },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["traders", "fetchedAt"],
+    },
+  },
+
+  {
+    name: "get_wallet_profile",
+    description: `Get a consolidated intelligence profile for any Polymarket wallet: public profile (username, pseudonym, join date, taker tier), total distinct markets traded (Data API /traded), current portfolio value (Data API /value), and leaderboard standings (P&L and volume rank across periods when present).
+
+Use this FIRST when a prompt references a specific trader/wallet ("who is this whale?", "is this a sharp account?") before drilling into get_user_positions or get_user_activity.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        address: {
+          type: "string",
+          description: "Wallet address (proxy or main).",
+        },
+        includeLeaderboard: {
+          type: "boolean",
+          description: "Also check WEEK/MONTH/ALL overall leaderboard standing (default true).",
+        },
+      },
+      required: ["address"],
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        address: { type: "string" },
+        profile: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            pseudonym: { type: "string" },
+            bio: { type: "string" },
+            createdAt: { type: "string" },
+            verifiedBadge: { type: "boolean" },
+            takerTierName: { type: "string" },
+            weightedVolume: { type: "number" },
+          },
+        },
+        marketsTraded: { type: "number" },
+        portfolioValue: { type: "number" },
+        leaderboard: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              timePeriod: { type: "string" },
+              rank: { type: "number" },
+              pnl: { type: "number" },
+              volume: { type: "number" },
+            },
+          },
+        },
+        partialErrors: { type: "array", items: { type: "string" } },
+        fetchedAt: { type: "string" },
+      },
+      required: ["address", "fetchedAt"],
+    },
+  },
+
+  {
+    name: "find_reward_markets",
+    description: `Screen markets currently paying LIQUIDITY REWARDS (CLOB /rewards/markets/current). Polymarket pays market makers a daily USDC rate for resting orders within rewards_max_spread of the midpoint with at least rewards_min_size shares. This tool ranks live reward configurations by total daily rate and enriches the top results with market question, slug, volume, and current prices from Gamma.
+
+Answers "which markets pay the highest liquidity rewards right now?", "where can I farm maker rewards with the least competition?", and gives the exact spread/size requirements to qualify. Data free LLMs cannot see: reward rates change daily and are only exposed via this authenticated-free CLOB endpoint.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        minDailyRateUsd: {
+          type: "number",
+          description: "Only include markets with total daily reward rate >= this (default 0).",
+        },
+        limit: {
+          type: "number",
+          description: "Max reward markets to return after ranking (default 20, max 50).",
+        },
+        maxPages: {
+          type: "number",
+          description: "Upstream cursor pages to scan, 500 configs/page (default 2, max 4).",
+        },
+        enrich: {
+          type: "boolean",
+          description: "Enrich top results with Gamma market metadata (default true).",
+        },
+      },
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        rewardMarkets: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              conditionId: { type: "string" },
+              question: { type: "string" },
+              slug: { type: "string" },
+              url: { type: "string" },
+              totalDailyRateUsd: { type: "number" },
+              rewardsMaxSpreadCents: { type: "number" },
+              rewardsMinSize: { type: "number" },
+              volume24hr: { type: "number" },
+              liquidity: { type: "number" },
+              outcomePrices: { type: "array", items: { type: "number" } },
+              endDate: { type: "string" },
+            },
+          },
+        },
+        summary: {
+          type: "object",
+          properties: {
+            totalConfigsScanned: { type: "number" },
+            totalQualifying: { type: "number" },
+            aggregateDailyRewardsUsd: { type: "number" },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["rewardMarkets", "fetchedAt"],
+    },
+  },
+
+  {
+    name: "get_sports_context",
+    description: `Get Polymarket's sports metadata layer: configured sports/leagues (Gamma /sports with their tag and series IDs), valid sports market types (moneyline, spread, total, etc.), and team lookups (Gamma /teams with league filter and name search).
+
+Use this to ground sports prompts: resolve a team name to its league/abbreviation, find the tag/series IDs for a league to feed browse_by_tag, or confirm which derivative market types exist before comparing quotes. Chains well with browse_by_tag and search_and_get_outcomes for game-level analysis.`,
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        league: {
+          type: "string",
+          description: "Optional league filter for team lookup (e.g. nba, nfl, epl).",
+        },
+        teamQuery: {
+          type: "string",
+          description: "Optional team name search (matched case-insensitively against team name/abbreviation).",
+        },
+        includeMarketTypes: {
+          type: "boolean",
+          description: "Include valid sports market types (default false).",
+        },
+        teamLimit: {
+          type: "number",
+          description: "Max teams to return (default 20, max 100).",
+        },
+      },
+    },
+    outputSchema: {
+      type: "object" as const,
+      properties: {
+        sports: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "number" },
+              sport: { type: "string" },
+              tags: { type: "string", description: "Comma-separated tag IDs for browse_by_tag" },
+              series: { type: "string", description: "Series ID(s) for this league" },
+              resolutionSource: { type: "string" },
+            },
+          },
+        },
+        marketTypes: { type: "array", items: { type: "string" } },
+        teams: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              id: { type: "number" },
+              name: { type: "string" },
+              league: { type: "string" },
+              abbreviation: { type: "string" },
+              record: { type: "string" },
+            },
+          },
+        },
+        fetchedAt: { type: "string" },
+      },
+      required: ["sports", "fetchedAt"],
+    },
+  },
 ];
 
 const TOOLS_WITH_METADATA = TOOLS.map((tool) => {
@@ -5427,6 +6039,22 @@ server.setRequestHandler(
           return await handleGetTopHolders(args);
         case "get_market_comments":
           return await handleGetMarketComments(args);
+
+        // July 2026 upstream refresh tools
+        case "get_batch_price_history":
+          return await handleGetBatchPriceHistory(args);
+        case "get_orderbook_history":
+          return await handleGetOrderbookHistory(args);
+        case "get_market_positions":
+          return await handleGetMarketPositions(args);
+        case "get_trader_leaderboard":
+          return await handleGetTraderLeaderboard(args);
+        case "get_wallet_profile":
+          return await handleGetWalletProfile(args);
+        case "find_reward_markets":
+          return await handleFindRewardMarkets(args);
+        case "get_sports_context":
+          return await handleGetSportsContext(args);
 
         // Discovery Layer Tools
         case "get_all_categories":
@@ -13284,35 +13912,74 @@ async function handleCompareEventOutcomeQuotes(
       { priceChange: number; priceChangePercent: number; historyWindow: string }
     >();
     if (momentumRequested && tokenIds.length > 0) {
-      const historyResults = await Promise.all(
-        tokenIds.map(async (tokenId) => {
-          try {
-            const historyData = workflowExtractToolData(
-              await handleGetPriceHistory({
-                tokenId,
-                interval: historyInterval,
-              }),
-              "get_price_history"
-            );
-            const summary = workflowObject(historyData.summary);
-            return {
-              tokenId,
+      // Single upstream POST /batch-prices-history call (<=20 tokens per
+      // chunk) instead of one GET /prices-history per token.
+      const tokenChunks: string[][] = [];
+      for (
+        let start = 0;
+        start < tokenIds.length;
+        start += BATCH_PRICES_HISTORY_MAX_TOKENS
+      ) {
+        tokenChunks.push(tokenIds.slice(start, start + BATCH_PRICES_HISTORY_MAX_TOKENS));
+      }
+
+      const failedTokenIds: string[] = [];
+      for (const chunk of tokenChunks) {
+        try {
+          const { seriesByToken } = await fetchBatchPriceHistory({
+            tokenIds: chunk,
+            interval: historyInterval,
+          });
+          for (const tokenId of chunk) {
+            const points = seriesByToken.get(tokenId) ?? [];
+            if (points.length === 0) {
+              failedTokenIds.push(tokenId);
+              continue;
+            }
+            const summary = summarizePricePoints(points);
+            historyByTokenId.set(tokenId, {
               priceChange: workflowToNumber(summary.change, 0),
               priceChangePercent: workflowToNumber(summary.changePercent, 0),
               historyWindow: historyInterval,
-            };
-          } catch {
-            return {
-              tokenId,
-              priceChange: 0,
-              priceChangePercent: 0,
-              historyWindow: historyInterval,
-            };
+            });
           }
-        })
-      );
-      for (const historyResult of historyResults) {
-        historyByTokenId.set(historyResult.tokenId, historyResult);
+        } catch {
+          failedTokenIds.push(...chunk);
+        }
+      }
+
+      // Per-token fallback for anything the batch endpoint missed.
+      if (failedTokenIds.length > 0) {
+        const fallbackResults = await Promise.all(
+          failedTokenIds.map(async (tokenId) => {
+            try {
+              const historyData = workflowExtractToolData(
+                await handleGetPriceHistory({
+                  tokenId,
+                  interval: historyInterval,
+                }),
+                "get_price_history"
+              );
+              const summary = workflowObject(historyData.summary);
+              return {
+                tokenId,
+                priceChange: workflowToNumber(summary.change, 0),
+                priceChangePercent: workflowToNumber(summary.changePercent, 0),
+                historyWindow: historyInterval,
+              };
+            } catch {
+              return {
+                tokenId,
+                priceChange: 0,
+                priceChangePercent: 0,
+                historyWindow: historyInterval,
+              };
+            }
+          })
+        );
+        for (const fallbackResult of fallbackResults) {
+          historyByTokenId.set(fallbackResult.tokenId, fallbackResult);
+        }
       }
     }
 
@@ -17263,9 +17930,28 @@ async function handleGetEvents(
   const closed = args?.closed === true;
   const limit = Math.min((args?.limit as number) || 50, 100);
   const offset = (args?.offset as number) || 0;
+  const afterCursor =
+    typeof args?.afterCursor === "string" ? args.afterCursor.trim() : "";
 
-  const endpoint = `/events?closed=${closed}&limit=${limit}&offset=${offset}&order=id&ascending=false`;
-  const events = (await fetchGamma(endpoint, 10000)) as GammaEvent[];
+  let events: GammaEvent[];
+  let nextCursor = "";
+  if (afterCursor.length > 0 || offset === 0) {
+    // Keyset pagination: stable deep paging with no offset ceiling. Upstream
+    // rejects offset on /events/keyset, so cursor and offset are exclusive.
+    const cursorParam =
+      afterCursor.length > 0
+        ? `&after_cursor=${encodeURIComponent(afterCursor)}`
+        : "";
+    const keysetResp = (await fetchGamma(
+      `/events/keyset?closed=${closed}&limit=${limit}&order=id&ascending=false${cursorParam}`,
+      10000
+    )) as { events?: GammaEvent[]; next_cursor?: string };
+    events = Array.isArray(keysetResp.events) ? keysetResp.events : [];
+    nextCursor = keysetResp.next_cursor || "";
+  } else {
+    const endpoint = `/events?closed=${closed}&limit=${limit}&offset=${offset}&order=id&ascending=false`;
+    events = (await fetchGamma(endpoint, 10000)) as GammaEvent[];
+  }
 
   const filteredEvents = active ? events.filter((e) => e.active !== false) : events;
 
@@ -17287,6 +17973,9 @@ async function handleGetEvents(
   return successResult({
     events: simplified,
     count: simplified.length,
+    ...(nextCursor.length > 0 && nextCursor !== "LTE="
+      ? { nextCursor }
+      : {}),
     fetchedAt: new Date().toISOString(),
   });
 }
@@ -18067,26 +18756,31 @@ async function handleGetPrices(
   });
 }
 
-async function handleGetPriceHistory(
-  args: Record<string, unknown> | undefined
-): Promise<CallToolResult> {
-  const tokenId = args?.tokenId as string;
-  const interval = (args?.interval as string) || "1d";
-  const fidelity = args?.fidelity as number;
+type PricePoint = { t: number; p: number };
 
-  if (!tokenId) {
-    return errorResult("tokenId is required");
+function defaultWindowFidelityMinutes(spanSeconds: number): number {
+  const spanDays = spanSeconds / 86_400;
+  if (spanDays <= 2) return 5;
+  if (spanDays <= 15) return 30;
+  if (spanDays <= 45) return 60;
+  if (spanDays <= 90) return 120;
+  return 240;
+}
+
+function downsamplePricePoints(points: PricePoint[], maxPoints: number): PricePoint[] {
+  if (points.length <= maxPoints || maxPoints < 2) {
+    return points;
   }
-
-  let endpoint = `/prices-history?market=${tokenId}&interval=${interval}`;
-  if (fidelity) {
-    endpoint += `&fidelity=${fidelity}`;
+  const sampled: PricePoint[] = [];
+  const step = (points.length - 1) / (maxPoints - 1);
+  for (let i = 0; i < maxPoints; i++) {
+    sampled.push(points[Math.round(i * step)]);
   }
+  return sampled;
+}
 
-  const historyResp = (await fetchClob(endpoint)) as { history: Array<{ t: number; p: number }> };
-  const history = historyResp.history || [];
-
-  const prices = history.map((h) => h.p);
+function summarizePricePoints(points: PricePoint[]): Record<string, unknown> {
+  const prices = points.map((point) => point.p);
   const high = prices.length > 0 ? Math.max(...prices) : 0;
   const low = prices.length > 0 ? Math.min(...prices) : 0;
   const first = prices[0] || 0;
@@ -18094,21 +18788,1141 @@ async function handleGetPriceHistory(
   const change = last - first;
   const changePercent = first > 0 ? (change / first) * 100 : 0;
 
+  return {
+    high,
+    low,
+    first,
+    last,
+    change: Number(change.toFixed(4)),
+    changePercent: Number(changePercent.toFixed(2)),
+    firstTimestamp: points.length > 0 ? new Date(points[0].t * 1000).toISOString() : "",
+    lastTimestamp:
+      points.length > 0
+        ? new Date(points[points.length - 1].t * 1000).toISOString()
+        : "",
+    spanDays:
+      points.length > 1
+        ? Number(((points[points.length - 1].t - points[0].t) / 86_400).toFixed(2))
+        : 0,
+  };
+}
+
+// Splits [startTs, endTs] into upstream-legal <=15-day windows (oldest first).
+function chunkHistoryRange(
+  startTs: number,
+  endTs: number,
+  maxChunks: number
+): Array<{ startTs: number; endTs: number }> {
+  const chunks: Array<{ startTs: number; endTs: number }> = [];
+  let cursor = startTs;
+  while (cursor < endTs && chunks.length < maxChunks) {
+    const chunkEnd = Math.min(cursor + PRICES_HISTORY_MAX_WINDOW_SECONDS, endTs);
+    chunks.push({ startTs: cursor, endTs: chunkEnd });
+    cursor = chunkEnd;
+  }
+  return chunks;
+}
+
+function resolveHistoryWindowArgs(
+  args: Record<string, unknown> | undefined,
+  maxChunks: number
+): {
+  windowMode: boolean;
+  startTs: number;
+  endTs: number;
+  clampedToDays: number | null;
+} {
+  const nowTs = Math.floor(Date.now() / 1000);
+  const daysBack = workflowToNumber(args?.daysBack, 0);
+  const rawStartTs = workflowToNumber(args?.startTs, 0);
+  const rawEndTs = workflowToNumber(args?.endTs, 0);
+
+  const windowMode = daysBack > 0 || rawStartTs > 0;
+  if (!windowMode) {
+    return { windowMode: false, startTs: 0, endTs: 0, clampedToDays: null };
+  }
+
+  const endTs = rawEndTs > 0 ? Math.min(rawEndTs, nowTs) : nowTs;
+  let startTs = rawStartTs > 0 ? rawStartTs : endTs - daysBack * 86_400;
+
+  const maxSpanSeconds = maxChunks * PRICES_HISTORY_MAX_WINDOW_SECONDS;
+  let clampedToDays: number | null = null;
+  if (endTs - startTs > maxSpanSeconds) {
+    startTs = endTs - maxSpanSeconds;
+    clampedToDays = maxSpanSeconds / 86_400;
+  }
+  if (startTs >= endTs) {
+    startTs = endTs - 86_400;
+  }
+
+  return { windowMode: true, startTs, endTs, clampedToDays };
+}
+
+async function fetchPriceHistoryWindowed(
+  tokenId: string,
+  startTs: number,
+  endTs: number,
+  fidelityMinutes: number
+): Promise<{ points: PricePoint[]; windowsFetched: number; windowErrors: string[] }> {
+  const chunks = chunkHistoryRange(startTs, endTs, PRICES_HISTORY_MAX_CHUNKS);
+  const merged = new Map<number, number>();
+  const windowErrors: string[] = [];
+  let windowsFetched = 0;
+
+  for (const chunk of chunks) {
+    try {
+      const resp = (await fetchClob(
+        `/prices-history?market=${tokenId}&startTs=${chunk.startTs}&endTs=${chunk.endTs}&fidelity=${fidelityMinutes}`,
+        undefined,
+        "heavy"
+      )) as { history?: PricePoint[] };
+      windowsFetched += 1;
+      for (const point of resp.history || []) {
+        // Upstream appends a synthetic "current price" point to past windows;
+        // drop points outside the requested chunk range.
+        if (point.t >= chunk.startTs && point.t <= chunk.endTs + fidelityMinutes * 60) {
+          merged.set(point.t, point.p);
+        }
+      }
+    } catch (error) {
+      windowErrors.push(
+        `window ${new Date(chunk.startTs * 1000).toISOString().slice(0, 10)}..${new Date(chunk.endTs * 1000).toISOString().slice(0, 10)}: ${error instanceof Error ? error.message : "fetch failed"}`
+      );
+    }
+  }
+
+  const points = Array.from(merged.entries())
+    .map(([t, p]) => ({ t, p }))
+    .sort((left, right) => left.t - right.t);
+
+  return { points, windowsFetched, windowErrors };
+}
+
+async function handleGetPriceHistory(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const tokenId = args?.tokenId as string;
+  const interval = (args?.interval as string) || "1d";
+  const fidelity = workflowToNumber(args?.fidelity, 0);
+  const maxPoints = workflowToBoundedInteger(
+    args?.maxPoints,
+    PRICE_HISTORY_DEFAULT_MAX_POINTS,
+    10,
+    PRICE_HISTORY_MAX_POINTS_CAP
+  );
+
+  if (!tokenId) {
+    return errorResult("tokenId is required");
+  }
+
+  const window = resolveHistoryWindowArgs(args, PRICES_HISTORY_MAX_CHUNKS);
+
+  let rawPoints: PricePoint[] = [];
+  let coverage: Record<string, unknown> | undefined;
+
+  if (window.windowMode) {
+    const spanSeconds = window.endTs - window.startTs;
+    const fidelityMinutes =
+      fidelity > 0 ? Math.max(1, Math.floor(fidelity)) : defaultWindowFidelityMinutes(spanSeconds);
+    const { points, windowsFetched, windowErrors } = await fetchPriceHistoryWindowed(
+      tokenId,
+      window.startTs,
+      window.endTs,
+      fidelityMinutes
+    );
+    rawPoints = points;
+    coverage = {
+      mode: "window",
+      requestedStart: new Date(window.startTs * 1000).toISOString(),
+      requestedEnd: new Date(window.endTs * 1000).toISOString(),
+      fidelityMinutes,
+      windowsFetched,
+      ...(windowErrors.length > 0 ? { windowErrors } : {}),
+      ...(window.clampedToDays !== null
+        ? {
+            note: `Requested range exceeded ${window.clampedToDays} days and was clamped to the most recent ${window.clampedToDays} days. Call again with explicit startTs/endTs for older slices, or use interval=max with fidelity>=720 for a coarse full-history view.`,
+          }
+        : {}),
+    };
+  } else {
+    let endpoint = `/prices-history?market=${tokenId}&interval=${interval}`;
+    if (fidelity > 0) {
+      endpoint += `&fidelity=${Math.max(1, Math.floor(fidelity))}`;
+    }
+    const historyResp = (await fetchClob(endpoint)) as { history?: PricePoint[] };
+    rawPoints = historyResp.history || [];
+  }
+
+  const sampledPoints = downsamplePricePoints(rawPoints, maxPoints);
+  const summary = summarizePricePoints(rawPoints);
+
   return successResult({
     tokenId,
-    history: history.map((h) => ({
-      timestamp: new Date(h.t * 1000).toISOString(),
-      price: h.p,
+    mode: window.windowMode ? "window" : "interval",
+    history: sampledPoints.map((point) => ({
+      timestamp: new Date(point.t * 1000).toISOString(),
+      price: point.p,
     })),
     summary: {
-      high,
-      low,
-      change: Number(change.toFixed(4)),
-      changePercent: Number(changePercent.toFixed(2)),
-      dataPoints: history.length,
+      high: summary.high,
+      low: summary.low,
+      change: summary.change,
+      changePercent: summary.changePercent,
+      dataPoints: sampledPoints.length,
+      rawDataPoints: rawPoints.length,
+      firstTimestamp: summary.firstTimestamp,
+      lastTimestamp: summary.lastTimestamp,
+      spanDays: summary.spanDays,
+    },
+    ...(coverage ? { coverage } : {}),
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+type BatchPriceHistoryOutcome = {
+  seriesByToken: Map<string, PricePoint[]>;
+  partialErrors: string[];
+};
+
+async function fetchBatchPriceHistory(options: {
+  tokenIds: string[];
+  interval?: string;
+  fidelityMinutes?: number;
+  startTs?: number;
+  endTs?: number;
+}): Promise<BatchPriceHistoryOutcome> {
+  const { tokenIds } = options;
+  const seriesByToken = new Map<string, PricePoint[]>();
+  const partialErrors: string[] = [];
+
+  const mergePoints = (tokenId: string, points: PricePoint[]) => {
+    const existing = seriesByToken.get(tokenId) ?? [];
+    const merged = new Map<number, number>(existing.map((point) => [point.t, point.p]));
+    for (const point of points) {
+      merged.set(point.t, point.p);
+    }
+    seriesByToken.set(
+      tokenId,
+      Array.from(merged.entries())
+        .map(([t, p]) => ({ t, p }))
+        .sort((left, right) => left.t - right.t)
+    );
+  };
+
+  const windows =
+    typeof options.startTs === "number" && typeof options.endTs === "number"
+      ? chunkHistoryRange(options.startTs, options.endTs, BATCH_PRICES_HISTORY_MAX_CHUNKS)
+      : [null];
+
+  for (const chunk of windows) {
+    const body: Record<string, unknown> = { markets: tokenIds };
+    if (chunk) {
+      body.start_ts = chunk.startTs;
+      body.end_ts = chunk.endTs;
+    } else {
+      body.interval = options.interval || "1w";
+    }
+    if (options.fidelityMinutes && options.fidelityMinutes > 0) {
+      body.fidelity = Math.max(1, Math.floor(options.fidelityMinutes));
+    }
+
+    try {
+      const resp = (await fetchClobPost("/batch-prices-history", body, "heavy")) as {
+        history?: Record<string, PricePoint[]>;
+      };
+      for (const [tokenId, points] of Object.entries(resp.history || {})) {
+        mergePoints(tokenId, Array.isArray(points) ? points : []);
+      }
+    } catch (error) {
+      partialErrors.push(
+        `batch window ${chunk ? new Date(chunk.startTs * 1000).toISOString().slice(0, 10) : options.interval || "1w"}: ${error instanceof Error ? error.message : "fetch failed"}`
+      );
+    }
+  }
+
+  return { seriesByToken, partialErrors };
+}
+
+async function handleGetBatchPriceHistory(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const tokenIds = Array.isArray(args?.tokenIds)
+    ? (args?.tokenIds as unknown[]).filter(
+        (value): value is string => typeof value === "string" && value.length > 0
+      )
+    : [];
+
+  if (tokenIds.length === 0) {
+    return errorResult("tokenIds array is required");
+  }
+  if (tokenIds.length > BATCH_PRICES_HISTORY_MAX_TOKENS) {
+    return errorResult(
+      `Maximum ${BATCH_PRICES_HISTORY_MAX_TOKENS} tokens per batch request (upstream cap)`
+    );
+  }
+
+  const interval = (args?.interval as string) || "1w";
+  const fidelity = workflowToNumber(args?.fidelity, 0);
+  const maxPointsPerToken = workflowToBoundedInteger(
+    args?.maxPointsPerToken,
+    100,
+    10,
+    500
+  );
+
+  const window = resolveHistoryWindowArgs(args, BATCH_PRICES_HISTORY_MAX_CHUNKS);
+  const fidelityMinutes = window.windowMode
+    ? fidelity > 0
+      ? Math.max(1, Math.floor(fidelity))
+      : defaultWindowFidelityMinutes(window.endTs - window.startTs)
+    : fidelity > 0
+      ? Math.max(1, Math.floor(fidelity))
+      : 0;
+
+  const { seriesByToken, partialErrors } = await fetchBatchPriceHistory({
+    tokenIds,
+    ...(window.windowMode
+      ? { startTs: window.startTs, endTs: window.endTs }
+      : { interval }),
+    ...(fidelityMinutes > 0 ? { fidelityMinutes } : {}),
+  });
+
+  const series: Record<string, unknown> = {};
+  const ranking: Array<{ tokenId: string; changePercent: number; change: number }> = [];
+
+  for (const tokenId of tokenIds) {
+    const rawPoints = seriesByToken.get(tokenId) ?? [];
+    const sampled = downsamplePricePoints(rawPoints, maxPointsPerToken);
+    const summary = summarizePricePoints(rawPoints);
+    series[tokenId] = {
+      history: sampled.map((point) => ({
+        timestamp: new Date(point.t * 1000).toISOString(),
+        price: point.p,
+      })),
+      summary: {
+        high: summary.high,
+        low: summary.low,
+        first: summary.first,
+        last: summary.last,
+        change: summary.change,
+        changePercent: summary.changePercent,
+        dataPoints: sampled.length,
+        rawDataPoints: rawPoints.length,
+      },
+    };
+    ranking.push({
+      tokenId,
+      changePercent: workflowToNumber(summary.changePercent, 0),
+      change: workflowToNumber(summary.change, 0),
+    });
+  }
+
+  ranking.sort(
+    (left, right) => Math.abs(right.changePercent) - Math.abs(left.changePercent)
+  );
+
+  return successResult({
+    mode: window.windowMode ? "window" : "interval",
+    ...(window.windowMode
+      ? {
+          coverage: {
+            requestedStart: new Date(window.startTs * 1000).toISOString(),
+            requestedEnd: new Date(window.endTs * 1000).toISOString(),
+            fidelityMinutes,
+            ...(window.clampedToDays !== null
+              ? {
+                  note: `Range clamped to the most recent ${window.clampedToDays} days (batch cap). Use get_price_history per token for deeper ranges.`,
+                }
+              : {}),
+          },
+        }
+      : { interval }),
+    series,
+    ranking,
+    ...(partialErrors.length > 0 ? { partialErrors } : {}),
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+type OrderbookHistoryRow = {
+  timestamp?: string | number;
+  bids?: Array<{ price?: string; size?: string }>;
+  asks?: Array<{ price?: string; size?: string }>;
+};
+
+async function handleGetOrderbookHistory(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const tokenId = args?.tokenId as string;
+  if (!tokenId) {
+    return errorResult("tokenId is required");
+  }
+
+  const nowTs = Math.floor(Date.now() / 1000);
+  const hoursBack = workflowToBoundedInteger(args?.hoursBack, 168, 1, 24 * 90);
+  const rawStartTs = workflowToNumber(args?.startTs, 0);
+  const rawEndTs = workflowToNumber(args?.endTs, 0);
+  const endTs = rawEndTs > 0 ? Math.min(rawEndTs, nowTs) : nowTs;
+  const startTs = rawStartTs > 0 ? Math.min(rawStartTs, endTs - 60) : endTs - hoursBack * 3_600;
+  const samples = workflowToBoundedInteger(
+    args?.samples,
+    ORDERBOOK_HISTORY_DEFAULT_SAMPLES,
+    2,
+    ORDERBOOK_HISTORY_MAX_SAMPLES
+  );
+  const depthLevels = workflowToBoundedInteger(args?.depthLevels, 3, 1, 10);
+
+  // Upstream filters use epoch milliseconds.
+  const startMs = startTs * 1_000;
+  const endMs = endTs * 1_000;
+
+  // Time-uniform sampling: earliest snapshot in each of N equal sub-windows.
+  // The full-range count runs concurrently with the samples; upstream scans on
+  // busy markets take seconds per query, so serializing it would add latency.
+  const subWindowMs = Math.max(1, Math.floor((endMs - startMs) / samples));
+  const sampleErrors: string[] = [];
+  const countPromise = (
+    fetchClob(
+      `/orderbook-history?asset_id=${tokenId}&startTs=${startMs}&endTs=${endMs}&limit=1`,
+      undefined,
+      "heavy"
+    ) as Promise<{ count?: number }>
+  ).catch((error: unknown) => {
+    sampleErrors.push(
+      `count: ${error instanceof Error ? error.message : "fetch failed"}`
+    );
+    return { count: 0 };
+  });
+  const snapshotResults = await Promise.all(
+    Array.from({ length: samples }, async (_unused, index) => {
+      const windowStart = startMs + index * subWindowMs;
+      // Bound each sample to its own sub-window: smaller upstream scans and
+      // empty sub-windows stay empty instead of borrowing the next snapshot.
+      const windowEnd = Math.min(windowStart + subWindowMs, endMs);
+      try {
+        const resp = (await fetchClob(
+          `/orderbook-history?asset_id=${tokenId}&startTs=${windowStart}&endTs=${windowEnd}&limit=1`,
+          undefined,
+          "heavy"
+        )) as { data?: OrderbookHistoryRow[] };
+        return resp.data?.[0] ?? null;
+      } catch (error) {
+        sampleErrors.push(
+          `sample ${index}: ${error instanceof Error ? error.message : "fetch failed"}`
+        );
+        return null;
+      }
+    })
+  );
+  const totalSnapshotsUpstream = workflowToNumber((await countPromise).count, 0);
+
+  if (totalSnapshotsUpstream === 0 && snapshotResults.every((row) => row === null)) {
+    return successResult({
+      tokenId,
+      snapshots: [],
+      summary: { snapshotCount: 0, totalSnapshotsUpstream: 0 },
+      coverage: {
+        requestedStart: new Date(startMs).toISOString(),
+        requestedEnd: new Date(endMs).toISOString(),
+        note: "No orderbook snapshots recorded upstream for this token in the requested range.",
+        ...(sampleErrors.length > 0 ? { sampleErrors } : {}),
+      },
+      fetchedAt: new Date().toISOString(),
+    });
+  }
+
+  const seenTimestamps = new Set<string>();
+  const snapshots = snapshotResults
+    .filter((row): row is OrderbookHistoryRow => row !== null)
+    .filter((row) => {
+      const key = String(row.timestamp ?? "");
+      if (seenTimestamps.has(key)) return false;
+      seenTimestamps.add(key);
+      return true;
+    })
+    .map((row) => {
+      const bids = Array.isArray(row.bids) ? row.bids : [];
+      const asks = Array.isArray(row.asks) ? row.asks : [];
+      const bestBid = bids.length > 0 ? Number(bids[0].price || 0) : 0;
+      const bestAsk = asks.length > 0 ? Number(asks[0].price || 0) : 0;
+      const hasTwoSides = bestBid > 0 && bestAsk > 0;
+      const bidDepthTotal = bids.reduce((sum, level) => sum + Number(level.size || 0), 0);
+      const askDepthTotal = asks.reduce((sum, level) => sum + Number(level.size || 0), 0);
+
+      return {
+        timestamp: new Date(Number(row.timestamp || 0)).toISOString(),
+        bestBid: Number(bestBid.toFixed(4)),
+        bestAsk: Number(bestAsk.toFixed(4)),
+        midpoint: hasTwoSides ? Number(((bestBid + bestAsk) / 2).toFixed(4)) : 0,
+        spread: hasTwoSides ? Number((bestAsk - bestBid).toFixed(4)) : 0,
+        bidDepthTotal: Number(bidDepthTotal.toFixed(2)),
+        askDepthTotal: Number(askDepthTotal.toFixed(2)),
+        bidLevels: bids.length,
+        askLevels: asks.length,
+        bids: bids.slice(0, depthLevels).map((level) => ({
+          price: Number(level.price || 0),
+          size: Number(level.size || 0),
+        })),
+        asks: asks.slice(0, depthLevels).map((level) => ({
+          price: Number(level.price || 0),
+          size: Number(level.size || 0),
+        })),
+      };
+    })
+    .sort((left, right) => left.timestamp.localeCompare(right.timestamp));
+
+  const twoSided = snapshots.filter((snap) => snap.spread > 0);
+  const spreads = twoSided.map((snap) => snap.spread);
+  const spreadAvg =
+    spreads.length > 0 ? spreads.reduce((sum, value) => sum + value, 0) / spreads.length : 0;
+  const bidDepthAvg =
+    snapshots.length > 0
+      ? snapshots.reduce((sum, snap) => sum + snap.bidDepthTotal, 0) / snapshots.length
+      : 0;
+  const askDepthAvg =
+    snapshots.length > 0
+      ? snapshots.reduce((sum, snap) => sum + snap.askDepthTotal, 0) / snapshots.length
+      : 0;
+  const spreadStart = twoSided.length > 0 ? twoSided[0].spread : 0;
+  const spreadEnd = twoSided.length > 0 ? twoSided[twoSided.length - 1].spread : 0;
+
+  return successResult({
+    tokenId,
+    snapshots,
+    summary: {
+      snapshotCount: snapshots.length,
+      totalSnapshotsUpstream,
+      spreadStart,
+      spreadEnd,
+      spreadMin: spreads.length > 0 ? Math.min(...spreads) : 0,
+      spreadMax: spreads.length > 0 ? Math.max(...spreads) : 0,
+      spreadAvg: Number(spreadAvg.toFixed(4)),
+      midpointStart: twoSided.length > 0 ? twoSided[0].midpoint : 0,
+      midpointEnd: twoSided.length > 0 ? twoSided[twoSided.length - 1].midpoint : 0,
+      bidDepthAvg: Number(bidDepthAvg.toFixed(2)),
+      askDepthAvg: Number(askDepthAvg.toFixed(2)),
+      trend:
+        twoSided.length >= 2
+          ? spreadEnd < spreadStart
+            ? "spread tightened over the range"
+            : spreadEnd > spreadStart
+              ? "spread widened over the range"
+              : "spread unchanged"
+          : "insufficient two-sided snapshots for a trend",
+    },
+    coverage: {
+      requestedStart: new Date(startMs).toISOString(),
+      requestedEnd: new Date(endMs).toISOString(),
+      samplingNote: `Time-uniform sampling: earliest snapshot per ${Math.round(subWindowMs / 60_000)}-minute sub-window out of ${totalSnapshotsUpstream} total upstream snapshots. Snapshots are book-update events, not fixed-interval bars.`,
+      ...(sampleErrors.length > 0 ? { sampleErrors } : {}),
     },
     fetchedAt: new Date().toISOString(),
   });
+}
+
+// ==================== JULY 2026 UPSTREAM REFRESH HANDLERS ====================
+
+type DataApiMarketPositionRow = {
+  proxyWallet?: string;
+  name?: string;
+  pseudonym?: string;
+  asset?: string;
+  conditionId?: string;
+  avgPrice?: number;
+  size?: number;
+  currPrice?: number;
+  currentValue?: number;
+  cashPnl?: number;
+  realizedPnl?: number;
+  totalPnl?: number;
+  totalBought?: number;
+  outcome?: string;
+  outcomeIndex?: number;
+};
+
+type DataApiMarketPositionsToken = {
+  token?: string;
+  positions?: DataApiMarketPositionRow[];
+};
+
+async function handleGetMarketPositions(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const conditionId = args?.conditionId as string;
+  if (!conditionId) {
+    return errorResult("conditionId is required");
+  }
+
+  const user = typeof args?.user === "string" ? args.user.trim() : "";
+  const status =
+    args?.status === "OPEN" || args?.status === "CLOSED" || args?.status === "ALL"
+      ? args.status
+      : "OPEN";
+  const sortBy =
+    args?.sortBy === "CASH_PNL" ||
+    args?.sortBy === "REALIZED_PNL" ||
+    args?.sortBy === "TOTAL_PNL" ||
+    args?.sortBy === "TOKENS"
+      ? args.sortBy
+      : "TOKENS";
+  const sortDirection = args?.sortDirection === "ASC" ? "ASC" : "DESC";
+  const limit = workflowToBoundedInteger(args?.limit, 25, 1, 500);
+  const offset = workflowToBoundedInteger(args?.offset, 0, 0, 10_000);
+
+  const params = new URLSearchParams({
+    market: conditionId,
+    status,
+    sortBy,
+    sortDirection,
+    limit: String(limit),
+    offset: String(offset),
+  });
+  if (user.length > 0) {
+    params.set("user", user);
+  }
+
+  try {
+    const response = (await fetchDataApi(
+      `/v1/market-positions?${params.toString()}`
+    )) as DataApiMarketPositionsToken[];
+    const tokens = Array.isArray(response) ? response : [];
+
+    let totalPositionsReturned = 0;
+    let aggregateUnrealizedPnl = 0;
+    let aggregateRealizedPnl = 0;
+    let biggestWinner: Record<string, unknown> | null = null;
+    let biggestLoser: Record<string, unknown> | null = null;
+
+    const outcomes = tokens.map((tokenGroup) => {
+      const positions = (tokenGroup.positions || []).map((row) => {
+        const totalPnl = workflowToNumber(row.totalPnl, 0);
+        const position = {
+          wallet: row.proxyWallet || "",
+          name: row.name || row.pseudonym || "",
+          size: Number(workflowToNumber(row.size, 0).toFixed(2)),
+          avgPrice: Number(workflowToNumber(row.avgPrice, 0).toFixed(4)),
+          currentPrice: Number(workflowToNumber(row.currPrice, 0).toFixed(4)),
+          currentValue: Number(workflowToNumber(row.currentValue, 0).toFixed(2)),
+          cashPnl: Number(workflowToNumber(row.cashPnl, 0).toFixed(2)),
+          realizedPnl: Number(workflowToNumber(row.realizedPnl, 0).toFixed(2)),
+          totalPnl: Number(totalPnl.toFixed(2)),
+          outcome: row.outcome || "",
+        };
+        totalPositionsReturned += 1;
+        aggregateUnrealizedPnl += position.cashPnl;
+        aggregateRealizedPnl += position.realizedPnl;
+        if (!biggestWinner || totalPnl > workflowToNumber(biggestWinner.totalPnl, 0)) {
+          biggestWinner = { ...position };
+        }
+        if (!biggestLoser || totalPnl < workflowToNumber(biggestLoser.totalPnl, 0)) {
+          biggestLoser = { ...position };
+        }
+        return position;
+      });
+
+      const firstRow = (tokenGroup.positions || [])[0];
+      return {
+        tokenId: tokenGroup.token || "",
+        outcome: firstRow?.outcome || "",
+        positions,
+      };
+    });
+
+    return successResult({
+      conditionId,
+      status,
+      sortBy,
+      sortDirection,
+      outcomes,
+      summary: {
+        totalPositionsReturned,
+        aggregateUnrealizedPnl: Number(aggregateUnrealizedPnl.toFixed(2)),
+        aggregateRealizedPnl: Number(aggregateRealizedPnl.toFixed(2)),
+        ...(biggestWinner ? { biggestWinner } : {}),
+        ...(biggestLoser ? { biggestLoser } : {}),
+        note: "avgPrice is the holder's entry cost basis per share; cashPnl is unrealized at current price; positions are grouped per outcome token and sorted upstream.",
+      },
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(
+      `Failed to fetch market positions: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
+}
+
+type DataApiLeaderboardRow = {
+  rank?: string | number;
+  proxyWallet?: string;
+  userName?: string;
+  xUsername?: string;
+  verifiedBadge?: boolean;
+  vol?: number;
+  pnl?: number;
+};
+
+const TRADER_LEADERBOARD_CATEGORIES = new Set([
+  "OVERALL",
+  "POLITICS",
+  "SPORTS",
+  "ESPORTS",
+  "CRYPTO",
+  "CULTURE",
+  "MENTIONS",
+  "WEATHER",
+  "ECONOMICS",
+  "TECH",
+  "FINANCE",
+]);
+
+async function fetchTraderLeaderboardRows(params: {
+  category: string;
+  timePeriod: string;
+  orderBy: string;
+  limit: number;
+  offset: number;
+  user?: string;
+}): Promise<DataApiLeaderboardRow[]> {
+  const searchParams = new URLSearchParams({
+    category: params.category,
+    timePeriod: params.timePeriod,
+    orderBy: params.orderBy,
+    limit: String(params.limit),
+    offset: String(params.offset),
+  });
+  if (params.user && params.user.length > 0) {
+    searchParams.set("user", params.user);
+  }
+  const response = (await fetchDataApi(
+    `/v1/leaderboard?${searchParams.toString()}`
+  )) as DataApiLeaderboardRow[];
+  return Array.isArray(response) ? response : [];
+}
+
+async function handleGetTraderLeaderboard(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const categoryRaw =
+    typeof args?.category === "string" ? args.category.toUpperCase() : "OVERALL";
+  const category = TRADER_LEADERBOARD_CATEGORIES.has(categoryRaw)
+    ? categoryRaw
+    : "OVERALL";
+  const timePeriod =
+    args?.timePeriod === "DAY" ||
+    args?.timePeriod === "MONTH" ||
+    args?.timePeriod === "ALL"
+      ? args.timePeriod
+      : "WEEK";
+  const orderBy = args?.orderBy === "VOL" ? "VOL" : "PNL";
+  const limit = workflowToBoundedInteger(args?.limit, 25, 1, 50);
+  const offset = workflowToBoundedInteger(args?.offset, 0, 0, 1_000);
+  const user = typeof args?.user === "string" ? args.user.trim() : "";
+
+  try {
+    const rows = await fetchTraderLeaderboardRows({
+      category,
+      timePeriod,
+      orderBy,
+      limit,
+      offset,
+      ...(user.length > 0 ? { user } : {}),
+    });
+
+    return successResult({
+      category,
+      timePeriod,
+      orderBy,
+      traders: rows.map((row) => ({
+        rank: workflowToNumber(row.rank, 0),
+        wallet: row.proxyWallet || "",
+        userName: row.userName || "",
+        pnl: Number(workflowToNumber(row.pnl, 0).toFixed(2)),
+        volume: Number(workflowToNumber(row.vol, 0).toFixed(2)),
+        verifiedBadge: row.verifiedBadge === true,
+      })),
+      note:
+        user.length > 0 && rows.length === 0
+          ? "Wallet not present on this leaderboard for the selected category/period."
+          : "Ranks come from Polymarket's official trader leaderboard; pnl and volume are USD.",
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(
+      `Failed to fetch trader leaderboard: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
+}
+
+type GammaPublicProfile = {
+  createdAt?: string;
+  proxyWallet?: string;
+  pseudonym?: string;
+  name?: string;
+  bio?: string;
+  verifiedBadge?: boolean;
+  takerTier?: number;
+  takerTierName?: string;
+  weightedVolume?: number;
+};
+
+async function handleGetWalletProfile(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const address = typeof args?.address === "string" ? args.address.trim() : "";
+  if (!address) {
+    return errorResult("address is required");
+  }
+  const includeLeaderboard = args?.includeLeaderboard !== false;
+
+  const partialErrors: string[] = [];
+
+  const [profileResult, tradedResult, valueResult] = await Promise.all([
+    fetchGamma(`/public-profile?address=${encodeURIComponent(address)}`).catch(
+      (error: unknown) => {
+        partialErrors.push(
+          `public-profile: ${error instanceof Error ? error.message : "fetch failed"}`
+        );
+        return null;
+      }
+    ),
+    fetchDataApi(`/traded?user=${encodeURIComponent(address)}`).catch(
+      (error: unknown) => {
+        partialErrors.push(
+          `traded: ${error instanceof Error ? error.message : "fetch failed"}`
+        );
+        return null;
+      }
+    ),
+    fetchDataApi(`/value?user=${encodeURIComponent(address)}`).catch(
+      (error: unknown) => {
+        partialErrors.push(
+          `value: ${error instanceof Error ? error.message : "fetch failed"}`
+        );
+        return null;
+      }
+    ),
+  ]);
+
+  const profile = (profileResult ?? {}) as GammaPublicProfile;
+  const traded = workflowObject(tradedResult as Record<string, unknown> | null ?? undefined);
+  const valueRows = Array.isArray(valueResult) ? (valueResult as DataApiValue[]) : [];
+
+  const leaderboard: Array<Record<string, unknown>> = [];
+  if (includeLeaderboard) {
+    const periods = ["WEEK", "MONTH", "ALL"] as const;
+    const leaderboardResults = await Promise.all(
+      periods.map(async (period) => {
+        try {
+          const rows = await fetchTraderLeaderboardRows({
+            category: "OVERALL",
+            timePeriod: period,
+            orderBy: "PNL",
+            limit: 1,
+            offset: 0,
+            user: address,
+          });
+          return { period, row: rows[0] ?? null };
+        } catch (error) {
+          partialErrors.push(
+            `leaderboard ${period}: ${error instanceof Error ? error.message : "fetch failed"}`
+          );
+          return { period, row: null };
+        }
+      })
+    );
+    for (const { period, row } of leaderboardResults) {
+      if (row) {
+        leaderboard.push({
+          timePeriod: period,
+          rank: workflowToNumber(row.rank, 0),
+          pnl: Number(workflowToNumber(row.pnl, 0).toFixed(2)),
+          volume: Number(workflowToNumber(row.vol, 0).toFixed(2)),
+        });
+      }
+    }
+  }
+
+  return successResult({
+    address,
+    profile: {
+      name: profile.name || "",
+      pseudonym: profile.pseudonym || "",
+      bio: profile.bio || "",
+      createdAt: profile.createdAt || "",
+      verifiedBadge: profile.verifiedBadge === true,
+      takerTierName: profile.takerTierName || "",
+      weightedVolume: Number(workflowToNumber(profile.weightedVolume, 0).toFixed(2)),
+    },
+    marketsTraded: workflowToNumber(traded.traded, 0),
+    portfolioValue: Number(workflowToNumber(valueRows[0]?.value, 0).toFixed(2)),
+    leaderboard,
+    ...(partialErrors.length > 0 ? { partialErrors } : {}),
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+type ClobRewardConfigRow = {
+  condition_id?: string;
+  rewards_max_spread?: number;
+  rewards_min_size?: number;
+  sponsored_daily_rate?: number;
+  native_daily_rate?: number;
+  total_daily_rate?: number;
+};
+
+type ClobCurrentRewardsPage = {
+  data?: ClobRewardConfigRow[];
+  next_cursor?: string;
+  count?: number;
+};
+
+async function handleFindRewardMarkets(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const minDailyRateUsd = Math.max(0, workflowToNumber(args?.minDailyRateUsd, 0));
+  const limit = workflowToBoundedInteger(args?.limit, 20, 1, 50);
+  const maxPages = workflowToBoundedInteger(args?.maxPages, 2, 1, 4);
+  const enrich = args?.enrich !== false;
+
+  const configs: ClobRewardConfigRow[] = [];
+  let cursor = "";
+  let pagesFetched = 0;
+
+  try {
+    for (let page = 0; page < maxPages; page++) {
+      const endpoint = cursor.length > 0
+        ? `/rewards/markets/current?next_cursor=${encodeURIComponent(cursor)}`
+        : "/rewards/markets/current";
+      const pageResp = (await fetchClob(endpoint, undefined, "heavy")) as ClobCurrentRewardsPage;
+      pagesFetched += 1;
+      configs.push(...(pageResp.data || []));
+      const nextCursor = pageResp.next_cursor || "";
+      // "LTE=" is the upstream sentinel for the last page.
+      if (nextCursor.length === 0 || nextCursor === "LTE=") {
+        break;
+      }
+      cursor = nextCursor;
+    }
+  } catch (error) {
+    if (configs.length === 0) {
+      return errorResult(
+        `Failed to fetch reward configurations: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    }
+  }
+
+  const qualifying = configs
+    .filter(
+      (row) =>
+        workflowToNumber(row.total_daily_rate ?? row.native_daily_rate, 0) >=
+        minDailyRateUsd
+    )
+    .sort(
+      (left, right) =>
+        workflowToNumber(right.total_daily_rate ?? right.native_daily_rate, 0) -
+        workflowToNumber(left.total_daily_rate ?? left.native_daily_rate, 0)
+    );
+
+  const topConfigs = qualifying.slice(0, limit);
+
+  const marketMetaByConditionId = new Map<string, GammaMarket>();
+  const enrichErrors: string[] = [];
+  if (enrich && topConfigs.length > 0) {
+    // Gamma supports repeated condition_ids params for multi-market lookups.
+    const chunkSize = 20;
+    for (let start = 0; start < topConfigs.length; start += chunkSize) {
+      const chunk = topConfigs.slice(start, start + chunkSize);
+      const query = chunk
+        .map((row) => `condition_ids=${encodeURIComponent(row.condition_id || "")}`)
+        .join("&");
+      try {
+        const markets = (await fetchGamma(`/markets?${query}&limit=${chunk.length}`)) as GammaMarket[];
+        for (const market of Array.isArray(markets) ? markets : []) {
+          if (market.conditionId) {
+            marketMetaByConditionId.set(market.conditionId, market);
+          }
+        }
+      } catch (error) {
+        enrichErrors.push(
+          `gamma enrichment chunk ${start / chunkSize}: ${error instanceof Error ? error.message : "fetch failed"}`
+        );
+      }
+    }
+  }
+
+  const rewardMarkets = topConfigs.map((row) => {
+    const conditionId = row.condition_id || "";
+    const market = marketMetaByConditionId.get(conditionId);
+    let outcomePrices: number[] = [];
+    if (market?.outcomePrices) {
+      try {
+        const parsed = Array.isArray(market.outcomePrices)
+          ? market.outcomePrices
+          : JSON.parse(market.outcomePrices);
+        if (Array.isArray(parsed)) {
+          outcomePrices = parsed.map((value) => Number(value));
+        }
+      } catch {
+        // ignore malformed price payloads
+      }
+    }
+
+    return {
+      conditionId,
+      question: market?.question || "",
+      slug: market?.slug || "",
+      url: market?.slug ? `https://polymarket.com/market/${market.slug}` : "",
+      totalDailyRateUsd: Number(
+        workflowToNumber(row.total_daily_rate ?? row.native_daily_rate, 0).toFixed(2)
+      ),
+      nativeDailyRateUsd: Number(workflowToNumber(row.native_daily_rate, 0).toFixed(2)),
+      sponsoredDailyRateUsd: Number(
+        workflowToNumber(row.sponsored_daily_rate, 0).toFixed(2)
+      ),
+      rewardsMaxSpreadCents: workflowToNumber(row.rewards_max_spread, 0),
+      rewardsMinSize: workflowToNumber(row.rewards_min_size, 0),
+      volume24hr: Number(workflowToNumber(market?.volume24hr, 0).toFixed(2)),
+      liquidity: Number(
+        workflowToNumber(market?.liquidityNum ?? market?.liquidity, 0).toFixed(2)
+      ),
+      outcomePrices,
+      endDate: market?.endDate || "",
+    };
+  });
+
+  const aggregateDailyRewardsUsd = qualifying.reduce(
+    (sum, row) => sum + workflowToNumber(row.total_daily_rate ?? row.native_daily_rate, 0),
+    0
+  );
+
+  return successResult({
+    rewardMarkets,
+    summary: {
+      totalConfigsScanned: configs.length,
+      pagesFetched,
+      totalQualifying: qualifying.length,
+      aggregateDailyRewardsUsd: Number(aggregateDailyRewardsUsd.toFixed(2)),
+      note: "To earn rewards, rest orders within rewardsMaxSpreadCents of the midpoint with at least rewardsMinSize shares; rates are paid daily in USDC and split across qualifying makers.",
+    },
+    ...(enrichErrors.length > 0 ? { partialErrors: enrichErrors } : {}),
+    fetchedAt: new Date().toISOString(),
+  });
+}
+
+type GammaSportsMetadata = {
+  id?: number;
+  sport?: string;
+  image?: string;
+  resolution?: string;
+  ordering?: string;
+  tags?: string;
+  series?: string;
+};
+
+type GammaTeam = {
+  id?: number;
+  name?: string;
+  league?: string;
+  record?: string;
+  abbreviation?: string;
+  logo?: string;
+};
+
+async function handleGetSportsContext(
+  args: Record<string, unknown> | undefined
+): Promise<CallToolResult> {
+  const league = typeof args?.league === "string" ? args.league.trim().toLowerCase() : "";
+  const teamQuery =
+    typeof args?.teamQuery === "string" ? args.teamQuery.trim().toLowerCase() : "";
+  const includeMarketTypes = args?.includeMarketTypes === true;
+  const teamLimit = workflowToBoundedInteger(args?.teamLimit, 20, 1, 100);
+
+  try {
+    const [sportsResult, marketTypesResult] = await Promise.all([
+      fetchGamma("/sports") as Promise<GammaSportsMetadata[]>,
+      includeMarketTypes
+        ? (fetchGamma("/sports/market-types").catch(() => null) as Promise<unknown>)
+        : Promise.resolve(null),
+    ]);
+
+    const sportsAll = Array.isArray(sportsResult) ? sportsResult : [];
+    const sports = (
+      league.length > 0
+        ? sportsAll.filter((sport) => (sport.sport || "").toLowerCase() === league)
+        : sportsAll
+    ).map((sport) => ({
+      id: workflowToNumber(sport.id, 0),
+      sport: sport.sport || "",
+      tags: sport.tags || "",
+      series: sport.series || "",
+      resolutionSource: sport.resolution || "",
+    }));
+
+    let teams: Array<Record<string, unknown>> = [];
+    if (teamQuery.length > 0 || league.length > 0) {
+      const teamParams = new URLSearchParams({ limit: String(Math.max(teamLimit, 50)) });
+      if (league.length > 0) {
+        teamParams.set("league", league);
+      }
+      if (teamQuery.length > 0) {
+        teamParams.set("name", teamQuery);
+      }
+      try {
+        let teamRows = (await fetchGamma(`/teams?${teamParams.toString()}`)) as GammaTeam[];
+        teamRows = Array.isArray(teamRows) ? teamRows : [];
+        // Upstream name matching can be strict; fall back to client-side
+        // substring matching over the league roster when it returns nothing.
+        if (teamRows.length === 0 && teamQuery.length > 0 && league.length > 0) {
+          const rosterParams = new URLSearchParams({
+            league,
+            limit: "200",
+          });
+          const roster = (await fetchGamma(`/teams?${rosterParams.toString()}`)) as GammaTeam[];
+          teamRows = (Array.isArray(roster) ? roster : []).filter((team) => {
+            const name = (team.name || "").toLowerCase();
+            const abbreviation = (team.abbreviation || "").toLowerCase();
+            return name.includes(teamQuery) || abbreviation === teamQuery;
+          });
+        }
+        teams = teamRows.slice(0, teamLimit).map((team) => ({
+          id: workflowToNumber(team.id, 0),
+          name: team.name || "",
+          league: team.league || "",
+          abbreviation: team.abbreviation || "",
+          record: team.record || "",
+        }));
+      } catch {
+        teams = [];
+      }
+    }
+
+    const marketTypes: string[] = [];
+    if (marketTypesResult && typeof marketTypesResult === "object") {
+      const container = marketTypesResult as Record<string, unknown>;
+      const rawTypes = Array.isArray(container.marketTypes)
+        ? container.marketTypes
+        : Array.isArray(marketTypesResult)
+          ? (marketTypesResult as unknown[])
+          : [];
+      for (const value of rawTypes) {
+        if (typeof value === "string") {
+          marketTypes.push(value);
+        }
+      }
+    }
+
+    return successResult({
+      sports,
+      ...(includeMarketTypes ? { marketTypes } : {}),
+      teams,
+      note: "tags are comma-separated tag IDs usable with browse_by_tag; series links to the league's recurring series. Use team names/abbreviations to sharpen search_and_get_outcomes queries for game events.",
+      fetchedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    return errorResult(
+      `Failed to fetch sports context: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
 }
 
 // ==================== NEW BATCH/PARAMETER HANDLERS ====================
@@ -20827,6 +22641,8 @@ interface GammaMarket {
   volume?: number | string; // Can be number or string from API
   volume24hr?: number;
   liquidity?: number;
+  liquidityNum?: number;
+  endDate?: string;
   clobTokenIds?: string[] | string; // API may return JSON string
   tokens?: Array<{ token_id: string }>;
   // Market status fields - used to filter out resolved/closed outcomes

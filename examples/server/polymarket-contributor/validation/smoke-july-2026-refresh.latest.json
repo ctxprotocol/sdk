@@ -1,0 +1,181 @@
+{
+  "pass": true,
+  "fixture": {
+    "title": "Netanyahu out by end of 2026?",
+    "conditionId": "0xd1796c09d0d6f876f8580086ae9808ec991784e3a74b25a1830a25de71a78c96",
+    "tokenId": "114694726451..."
+  },
+  "failures": [],
+  "results": {
+    "get_price_history:interval": {
+      "pass": true,
+      "latencyMs": 347,
+      "evidence": {
+        "mode": "interval",
+        "points": 57,
+        "spanDays": 6.98
+      }
+    },
+    "get_price_history:deep-window-60d": {
+      "pass": true,
+      "latencyMs": 1405,
+      "evidence": {
+        "mode": "window",
+        "spanDays": 59.93,
+        "rawDataPoints": 719,
+        "returnedPoints": 200,
+        "windowsFetched": 4
+      }
+    },
+    "get_batch_price_history:interval": {
+      "pass": true,
+      "latencyMs": 328,
+      "evidence": {
+        "tokensRequested": 4,
+        "seriesReturned": 4,
+        "topMover": {
+          "tokenId": "107505882767731489358349912513945399560393482969656700824895970500493757150417",
+          "changePercent": -31.58,
+          "change": -0.03
+        }
+      }
+    },
+    "get_batch_price_history:deep-window-30d": {
+      "pass": true,
+      "latencyMs": 674,
+      "evidence": {
+        "rawDataPoints": 720,
+        "changePercent": -14.68
+      }
+    },
+    "get_orderbook_history:7d": {
+      "pass": true,
+      "latencyMs": 15036,
+      "evidence": {
+        "snapshots": 12,
+        "totalUpstream": 274879,
+        "spreadTrend": "spread unchanged"
+      }
+    },
+    "get_market_positions": {
+      "pass": true,
+      "latencyMs": 1003,
+      "evidence": {
+        "outcomes": 2,
+        "totalPositions": 10,
+        "samplePosition": {
+          "wallet": "0xa81eefec9c08fa157d855f1ac5caf8feab1903dc",
+          "name": "Snow-White",
+          "size": 17158.27,
+          "avgPrice": 0.4267,
+          "currentPrice": 0.465,
+          "currentValue": 7978.59,
+          "cashPnl": 656.08,
+          "realizedPnl": 1581.69,
+          "totalPnl": 2237.77,
+          "outcome": "Yes"
+        }
+      }
+    },
+    "get_trader_leaderboard": {
+      "pass": true,
+      "latencyMs": 175,
+      "evidence": {
+        "traders": 5,
+        "top": {
+          "rank": 1,
+          "wallet": "0xb1ca909e848cc24ec4e220ce1c453bc290c51705",
+          "userName": "NonceChaser",
+          "pnl": 564497.22,
+          "volume": 378486.38,
+          "verifiedBadge": false
+        }
+      }
+    },
+    "get_wallet_profile": {
+      "pass": true,
+      "latencyMs": 2508,
+      "evidence": {
+        "name": "NonceChaser",
+        "marketsTraded": 553,
+        "portfolioValue": 991336.03,
+        "leaderboard": [
+          {
+            "timePeriod": "WEEK",
+            "rank": 20,
+            "pnl": 567099.3,
+            "volume": 418618.2
+          },
+          {
+            "timePeriod": "MONTH",
+            "rank": 1736446,
+            "pnl": -190.26,
+            "volume": 171871.62
+          },
+          {
+            "timePeriod": "ALL",
+            "rank": 291,
+            "pnl": 620495.88,
+            "volume": 14976784.57
+          }
+        ]
+      }
+    },
+    "find_reward_markets": {
+      "pass": true,
+      "latencyMs": 3755,
+      "evidence": {
+        "returned": 5,
+        "scanned": 1000,
+        "top": {
+          "question": "Will Argentina win the 2026 FIFA World Cup?",
+          "rate": 2242.33,
+          "minSize": 200,
+          "maxSpread": 4.5
+        }
+      }
+    },
+    "get_sports_context": {
+      "pass": true,
+      "latencyMs": 1178,
+      "evidence": {
+        "sports": 1,
+        "nbaTags": "1,745,100639",
+        "teams": [
+          "Lakers"
+        ],
+        "marketTypes": [
+          "any_player_rampage",
+          "any_player_ultra_kill",
+          "anytime_touchdowns",
+          "assists",
+          "assists_points_rebounds",
+          "barrack_handicap_match"
+        ]
+      }
+    },
+    "compare_event_outcome_quotes:momentum": {
+      "pass": true,
+      "latencyMs": 11667,
+      "evidence": {
+        "outcomes": 5,
+        "withHistoryWindow": 5,
+        "sample": {
+          "name": "USA",
+          "priceChangePercent": 0,
+          "historyWindow": "1w"
+        }
+      }
+    },
+    "get_events:keyset-pagination": {
+      "pass": true,
+      "latencyMs": 365,
+      "evidence": {
+        "page1Count": 5,
+        "hasCursor": true,
+        "page2Count": 5,
+        "noOverlap": true
+      }
+    }
+  }
+}
