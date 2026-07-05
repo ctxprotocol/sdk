@@ -1,5 +1,5 @@
-import { av as UpdateToolOptions, aw as UpdateToolResult, T as Tool, O as SearchOptions, P as ExecuteOptions, Y as ExecutionResult, U as ExecuteSessionStartOptions, X as ExecuteSessionResult, a8 as QueryOptions, aa as QueryResult, a5 as QueryJobStartResult, a7 as QueryJobStatusResult, a9 as QueryPollOptions, am as QueryStreamEvent, F as ContextClientOptions } from '../types-BJT4AfpV.js';
-export { D as AGENT_MODEL_IDS, aL as ALLOWED_TOOL_CATEGORIES, G as AgentModelId, H as AgentModelIdInput, B as ContextError, ax as ContextErrorCode, E as DEFAULT_AGENT_MODEL_ID, _ as ExecuteApiErrorResponse, $ as ExecuteApiResponse, Z as ExecuteApiSuccessResponse, a1 as ExecuteSessionApiResponse, a0 as ExecuteSessionApiSuccessResponse, W as ExecuteSessionSpend, V as ExecuteSessionStatus, M as McpTool, K as McpToolMeta, L as McpToolRateLimitHints, al as QueryApiResponse, ak as QueryApiSuccessResponse, az as QueryAssumptionMetadata, a2 as QueryAttemptForkReason, a3 as QueryAttemptReference, ay as QueryCapabilityMissPayload, at as QueryChartArtifact, aI as QueryChartAxis, aD as QueryChartAxisType, aG as QueryChartDataRow, aF as QueryChartDataValue, aH as QueryChartSeries, aC as QueryChartSeriesType, aJ as QueryChartSpec, aB as QueryChartType, aE as QueryChartValueFormat, ae as QueryCompletenessRepairEvent, as as QueryComputedArtifact, ad as QueryCost, Q as QueryDeveloperTrace, af as QueryDeveloperTraceDiagnostics, aj as QueryDeveloperTraceLoopInfo, ah as QueryDeveloperTraceStep, ag as QueryDeveloperTraceSummary, ai as QueryDeveloperTraceToolRef, a4 as QueryForkReference, au as QueryImageArtifact, a6 as QueryJobStatus, aA as QueryOutcomeType, ab as QuerySessionState, ap as QueryStreamDeveloperTraceEvent, aq as QueryStreamDoneEvent, ar as QueryStreamErrorEvent, ao as QueryStreamTextDeltaEvent, an as QueryStreamToolStatusEvent, ac as QueryToolUsage, N as SearchResponse, I as SuggestedPrompt, J as SuggestedPromptSource, aK as ToolCategory } from '../types-BJT4AfpV.js';
+import { av as UpdateToolOptions, aw as UpdateToolResult, T as Tool, O as SearchOptions, P as ExecuteOptions, Y as ExecutionResult, U as ExecuteSessionStartOptions, X as ExecuteSessionResult, a8 as QueryOptions, aa as QueryResult, a5 as QueryJobStartResult, a7 as QueryJobStatusResult, a9 as QueryPollOptions, am as QueryStreamEvent, F as ContextClientOptions } from '../types-CFB5RAt-.js';
+export { D as AGENT_MODEL_IDS, aL as ALLOWED_TOOL_CATEGORIES, G as AgentModelId, H as AgentModelIdInput, B as ContextError, ax as ContextErrorCode, E as DEFAULT_AGENT_MODEL_ID, _ as ExecuteApiErrorResponse, $ as ExecuteApiResponse, Z as ExecuteApiSuccessResponse, a1 as ExecuteSessionApiResponse, a0 as ExecuteSessionApiSuccessResponse, W as ExecuteSessionSpend, V as ExecuteSessionStatus, M as McpTool, K as McpToolMeta, L as McpToolRateLimitHints, al as QueryApiResponse, ak as QueryApiSuccessResponse, az as QueryAssumptionMetadata, a2 as QueryAttemptForkReason, a3 as QueryAttemptReference, ay as QueryCapabilityMissPayload, at as QueryChartArtifact, aI as QueryChartAxis, aD as QueryChartAxisType, aG as QueryChartDataRow, aF as QueryChartDataValue, aH as QueryChartSeries, aC as QueryChartSeriesType, aJ as QueryChartSpec, aB as QueryChartType, aE as QueryChartValueFormat, ae as QueryCompletenessRepairEvent, as as QueryComputedArtifact, ad as QueryCost, Q as QueryDeveloperTrace, af as QueryDeveloperTraceDiagnostics, aj as QueryDeveloperTraceLoopInfo, ah as QueryDeveloperTraceStep, ag as QueryDeveloperTraceSummary, ai as QueryDeveloperTraceToolRef, a4 as QueryForkReference, au as QueryImageArtifact, a6 as QueryJobStatus, aA as QueryOutcomeType, ab as QuerySessionState, ap as QueryStreamDeveloperTraceEvent, aq as QueryStreamDoneEvent, ar as QueryStreamErrorEvent, ao as QueryStreamTextDeltaEvent, an as QueryStreamToolStatusEvent, ac as QueryToolUsage, N as SearchResponse, I as SuggestedPrompt, J as SuggestedPromptSource, aK as ToolCategory } from '../types-CFB5RAt-.js';
 
 /**
  * Developer resource for managing tool listings on the Context Protocol marketplace.
@@ -184,8 +184,24 @@ declare class Query {
     getStatus(jobId: string): Promise<QueryJobStatusResult>;
     /**
      * Poll a durable query job until completion or failure.
+     *
+     * `timeoutMs` controls how long this client waits; the hosted job itself is
+     * bounded by the 1800s server compute ceiling. If the status endpoint
+     * reports the job exceeded the server-side window, the job is terminal and
+     * should not be polled again. `intervalMs` is an HTTP check cadence and has
+     * no effect on LLM token usage — leave it at the fast default.
      */
     poll(jobId: string, options?: QueryPollOptions): Promise<QueryJobStatusResult>;
+    /**
+     * Run a query through the durable job path and wait internally for completion.
+     *
+     * This is the recommended one-call helper for LLM agents: the entire wait
+     * happens inside this single call (one model turn), instead of one turn per
+     * `getStatus()` check. It also avoids starting a duplicate paid query after
+     * a client-side streaming timeout. The job is bounded by the 1800s hosted
+     * compute ceiling.
+     */
+    runOrPoll(options: QueryOptions | string, pollOptions?: QueryPollOptions): Promise<QueryResult>;
     /**
      * Run an agentic query with streaming. Returns an async iterable that
      * yields events as the server processes the query in real-time.

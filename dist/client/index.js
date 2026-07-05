@@ -307,6 +307,8 @@ var Tools = class {
 };
 
 // src/client/resources/query.ts
+var DEFAULT_QUERY_POLL_INTERVAL_MS = 5e3;
+var DEFAULT_QUERY_POLL_TIMEOUT_MS = 31 * 6e4;
 var Query = class {
   constructor(client) {
     this.client = client;
@@ -526,10 +528,16 @@ var Query = class {
   }
   /**
    * Poll a durable query job until completion or failure.
+   *
+   * `timeoutMs` controls how long this client waits; the hosted job itself is
+   * bounded by the 1800s server compute ceiling. If the status endpoint
+   * reports the job exceeded the server-side window, the job is terminal and
+   * should not be polled again. `intervalMs` is an HTTP check cadence and has
+   * no effect on LLM token usage — leave it at the fast default.
    */
   async poll(jobId, options = {}) {
-    const intervalMs = options.intervalMs ?? 2e3;
-    const timeoutMs = options.timeoutMs ?? 15 * 6e4;
+    const intervalMs = options.intervalMs ?? DEFAULT_QUERY_POLL_INTERVAL_MS;
+    const timeoutMs = options.timeoutMs ?? DEFAULT_QUERY_POLL_TIMEOUT_MS;
     const deadline = Date.now() + timeoutMs;
     while (Date.now() <= deadline) {
       const status = await this.getStatus(jobId);
@@ -539,9 +547,32 @@ var Query = class {
       if (status.status === "failed") {
         throw new ContextError(status.error ?? "Context query job failed");
       }
-      await this.sleep(intervalMs);
+      const remainingMs = deadline - Date.now();
+      if (remainingMs <= 0) {
+        break;
+      }
+      await this.sleep(Math.min(intervalMs, remainingMs));
     }
     throw new ContextError(`Context query job polling timed out after ${timeoutMs}ms`);
+  }
+  /**
+   * Run a query through the durable job path and wait internally for completion.
+   *
+   * This is the recommended one-call helper for LLM agents: the entire wait
+   * happens inside this single call (one model turn), instead of one turn per
+   * `getStatus()` check. It also avoids starting a duplicate paid query after
+   * a client-side streaming timeout. The job is bounded by the 1800s hosted
+   * compute ceiling.
+   */
+  async runOrPoll(options, pollOptions = {}) {
+    const job = await this.start(options);
+    const completed = await this.poll(job.jobId, pollOptions);
+    if (completed.status === "completed" && completed.result) {
+      return completed.result;
+    }
+    throw new ContextError(
+      completed.error ?? "Context query job completed without a result"
+    );
   }
   /**
    * Run an agentic query with streaming. Returns an async iterable that

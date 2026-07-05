@@ -116,7 +116,25 @@ console.log(answer.developerTrace?.diagnostics?.selection); // lane + scout prob
 console.log(answer.orchestrationMetrics); // high-level first-pass / rediscovery metrics
 ```
 
-For long-running questions, start a durable job and poll until it completes:
+For long-running questions from LLM agents, use `runOrPoll()` so the entire wait happens inside one SDK call (one model turn):
+
+```typescript
+const answer = await client.query.runOrPoll({
+  query: "Build a chart-ready dataset of Base whale movements over the last 30 days",
+  responseShape: "evidence_only",
+  includeDataUrl: true,
+});
+
+console.log(answer.dataUrl);
+```
+
+The defaults are already agent-friendly: the SDK checks status every 5 seconds
+over plain HTTP (this costs no model tokens — token cost comes from model
+*turns*, not HTTP polls) and waits up to 31 minutes, slightly beyond the
+hosted 1800-second compute ceiling that bounds every query path. Treat a
+failed job-window status as terminal and start a fresh query.
+
+For programmatic workflows that want the job handle, start a durable job and poll until it completes:
 
 ```typescript
 const job = await client.query.start({
@@ -125,10 +143,7 @@ const job = await client.query.start({
   includeDataUrl: true,
 });
 
-const completed = await client.query.poll(job.jobId, {
-  intervalMs: 2000,
-  timeoutMs: 15 * 60_000,
-});
+const completed = await client.query.poll(job.jobId);
 
 console.log(completed.result?.dataUrl);
 ```

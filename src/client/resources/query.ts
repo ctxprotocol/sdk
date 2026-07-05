@@ -11,6 +11,26 @@ import { ContextError } from "../types.js";
 import type { ContextClient } from "../client.js";
 
 /**
+ * Internal HTTP status-check cadence for `poll()` / `runOrPoll()`.
+ *
+ * This is plain HTTP polling below any LLM boundary — it costs no model
+ * tokens no matter how frequent it is. A slower interval would only delay
+ * completion detection, so keep it fast. (If you are wiring polling into an
+ * LLM agent, the thing to minimize is *model turns*: use `runOrPoll()` so the
+ * whole wait happens inside one call.)
+ */
+const DEFAULT_QUERY_POLL_INTERVAL_MS = 5_000;
+
+/**
+ * Default client-side wait. The hosted Query compute ceiling is 1800s
+ * (Vercel extended max duration) on every path, and the server fails a job
+ * shortly after that window; default to slightly beyond it so the client
+ * observes the terminal state instead of giving up while the server is
+ * still legitimately working.
+ */
+const DEFAULT_QUERY_POLL_TIMEOUT_MS = 31 * 60_000;
+
+/**
  * Query resource for pay-per-response agentic queries.
  *
  * Unlike `tools.execute()` which calls a single tool once (pay-per-request),
@@ -291,13 +311,19 @@ export class Query {
 
   /**
    * Poll a durable query job until completion or failure.
+   *
+   * `timeoutMs` controls how long this client waits; the hosted job itself is
+   * bounded by the 1800s server compute ceiling. If the status endpoint
+   * reports the job exceeded the server-side window, the job is terminal and
+   * should not be polled again. `intervalMs` is an HTTP check cadence and has
+   * no effect on LLM token usage — leave it at the fast default.
    */
   async poll(
     jobId: string,
     options: QueryPollOptions = {}
   ): Promise<QueryJobStatusResult> {
-    const intervalMs = options.intervalMs ?? 2000;
-    const timeoutMs = options.timeoutMs ?? 15 * 60_000;
+    const intervalMs = options.intervalMs ?? DEFAULT_QUERY_POLL_INTERVAL_MS;
+    const timeoutMs = options.timeoutMs ?? DEFAULT_QUERY_POLL_TIMEOUT_MS;
     const deadline = Date.now() + timeoutMs;
 
     while (Date.now() <= deadline) {
@@ -308,10 +334,37 @@ export class Query {
       if (status.status === "failed") {
         throw new ContextError(status.error ?? "Context query job failed");
       }
-      await this.sleep(intervalMs);
+      const remainingMs = deadline - Date.now();
+      if (remainingMs <= 0) {
+        break;
+      }
+      await this.sleep(Math.min(intervalMs, remainingMs));
     }
 
     throw new ContextError(`Context query job polling timed out after ${timeoutMs}ms`);
+  }
+
+  /**
+   * Run a query through the durable job path and wait internally for completion.
+   *
+   * This is the recommended one-call helper for LLM agents: the entire wait
+   * happens inside this single call (one model turn), instead of one turn per
+   * `getStatus()` check. It also avoids starting a duplicate paid query after
+   * a client-side streaming timeout. The job is bounded by the 1800s hosted
+   * compute ceiling.
+   */
+  async runOrPoll(
+    options: QueryOptions | string,
+    pollOptions: QueryPollOptions = {}
+  ): Promise<QueryResult> {
+    const job = await this.start(options);
+    const completed = await this.poll(job.jobId, pollOptions);
+    if (completed.status === "completed" && completed.result) {
+      return completed.result;
+    }
+    throw new ContextError(
+      completed.error ?? "Context query job completed without a result"
+    );
   }
 
   /**

@@ -1376,7 +1376,23 @@ export interface QueryJobStatusResult {
 }
 
 export interface QueryPollOptions {
+  /**
+   * Milliseconds between internal HTTP status checks.
+   *
+   * Defaults to 5000. This is plain HTTP polling inside one SDK call — it has
+   * no effect on LLM token usage, so a fast interval is strictly better
+   * (slower intervals only delay completion detection). To keep LLM-agent
+   * token costs down, minimize *model turns* by using `runOrPoll()`, not by
+   * raising this interval.
+   */
   intervalMs?: number;
+  /**
+   * Maximum milliseconds to wait before returning a timeout error.
+   *
+   * Defaults to 31 minutes — slightly beyond the hosted 1800s compute
+   * ceiling, so the client observes the job's terminal state instead of
+   * giving up while the server is still working.
+   */
   timeoutMs?: number;
 }
 

@@ -1432,5 +1432,58 @@ describe("Query Resource", () => {
       expect(completed.status).toBe("completed");
       expect(mockFn).toHaveBeenCalledTimes(2);
     });
+
+    it("runOrPoll starts one durable job and returns the completed result", async () => {
+      const mockFn = vi
+        .fn()
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 202,
+          statusText: "Accepted",
+          headers: new Headers({ "content-type": "application/json" }),
+          json: () =>
+            Promise.resolve({
+              status: "running",
+              jobId: "11111111-1111-4111-8111-111111111111",
+              pollingTool: "context_query_poll",
+              message: "running",
+              progress: null,
+              querySession: null,
+              createdAt: "2026-06-14T00:00:00.000Z",
+              updatedAt: "2026-06-14T00:00:00.000Z",
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          statusText: "OK",
+          headers: new Headers({ "content-type": "application/json" }),
+          json: () =>
+            Promise.resolve({
+              status: "completed",
+              jobId: "11111111-1111-4111-8111-111111111111",
+              progress: null,
+              querySession: null,
+              result: MOCK_SUCCESS_RESPONSE,
+              error: null,
+              createdAt: "2026-06-14T00:00:00.000Z",
+              updatedAt: "2026-06-14T00:01:00.000Z",
+              completedAt: "2026-06-14T00:01:00.000Z",
+            }),
+        });
+      globalThis.fetch = mockFn;
+
+      const result = await client.query.runOrPoll("Analyze whale activity", {
+        intervalMs: 1,
+        timeoutMs: 1000,
+      });
+
+      expect(result.response).toBe(MOCK_SUCCESS_RESPONSE.response);
+      expect(mockFn).toHaveBeenCalledTimes(2);
+      expect(mockFn.mock.calls[0][0]).toContain("/api/v1/query/jobs");
+      expect(mockFn.mock.calls[1][0]).toContain(
+        "/api/v1/query/jobs/11111111-1111-4111-8111-111111111111",
+      );
+    });
   });
 });
