@@ -65,8 +65,54 @@ function buildDoneEvent(result: Record<string, unknown>) {
   })}`;
 }
 
+const MOCK_RUN_JOB_ID = "11111111-1111-4111-8111-111111111111";
+
+function mockJsonResponse(payload: unknown, status = 200) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    statusText: status === 202 ? "Accepted" : "OK",
+    headers: new Headers({ "content-type": "application/json" }),
+    json: () => Promise.resolve(payload),
+  };
+}
+
+function buildJobStartPayload() {
+  return {
+    status: "running",
+    jobId: MOCK_RUN_JOB_ID,
+    pollingTool: "context_query_poll",
+    message: "running",
+    progress: null,
+    querySession: null,
+    createdAt: "2026-06-14T00:00:00.000Z",
+    updatedAt: "2026-06-14T00:00:00.000Z",
+  };
+}
+
+function buildJobCompletedPayload(result: Record<string, unknown>) {
+  return {
+    status: "completed",
+    jobId: MOCK_RUN_JOB_ID,
+    progress: null,
+    querySession: null,
+    result,
+    error: null,
+    createdAt: "2026-06-14T00:00:00.000Z",
+    updatedAt: "2026-06-14T00:01:00.000Z",
+    completedAt: "2026-06-14T00:01:00.000Z",
+  };
+}
+
+/**
+ * Mock the durable-job pair that backs `run()` since 0.21.0: a 202 job start
+ * followed by a completed status carrying the final result.
+ */
 function mockFetchRunResult(result: Record<string, unknown>) {
-  return mockFetchSSE([buildDoneEvent(result), "data: [DONE]"]);
+  return vi
+    .fn()
+    .mockResolvedValueOnce(mockJsonResponse(buildJobStartPayload(), 202))
+    .mockResolvedValue(mockJsonResponse(buildJobCompletedPayload(result)));
 }
 
 /**
@@ -440,28 +486,31 @@ describe("Query Resource", () => {
   // ── query.run() ──────────────────────────────────────────────────────
 
   describe("query.run()", () => {
-    it("sends correct request body with string shorthand", async () => {
+    it("starts a durable job and polls it to completion (string shorthand)", async () => {
       const mockFn = mockFetchRunResult(MOCK_SUCCESS_RESPONSE);
       globalThis.fetch = mockFn;
 
       await client.query.run("What are the top whale movements?");
 
-      // Verify the fetch call
-      expect(mockFn).toHaveBeenCalledTimes(1);
-      const [url, opts] = mockFn.mock.calls[0];
+      // run() is job-backed: one start POST + one status GET
+      expect(mockFn).toHaveBeenCalledTimes(2);
+      const [startUrl, startOpts] = mockFn.mock.calls[0];
 
-      expect(url).toBe("https://www.ctxprotocol.com/api/v1/query");
-      expect(opts.method).toBe("POST");
-      expect(new Headers(opts.headers).get("Authorization")).toBe(
+      expect(startUrl).toBe("https://www.ctxprotocol.com/api/v1/query/jobs");
+      expect(startOpts.method).toBe("POST");
+      expect(new Headers(startOpts.headers).get("Authorization")).toBe(
         "Bearer ctx_test_key_1234567890abcdef12345678",
       );
 
-      const body = JSON.parse(opts.body);
+      const body = JSON.parse(startOpts.body);
       expect(body).toEqual({
         query: "What are the top whale movements?",
-        tools: undefined,
-        stream: true,
       });
+
+      const [statusUrl] = mockFn.mock.calls[1];
+      expect(statusUrl).toBe(
+        `https://www.ctxprotocol.com/api/v1/query/jobs/${MOCK_RUN_JOB_ID}`,
+      );
     });
 
     it("sends correct request body with options object", async () => {
@@ -478,7 +527,6 @@ describe("Query Resource", () => {
       expect(body).toEqual({
         query: "Analyze whale activity",
         tools: ["tool-uuid-1", "tool-uuid-2"],
-        stream: true,
       });
     });
 
@@ -503,13 +551,11 @@ describe("Query Resource", () => {
       const body = JSON.parse(mockFn.mock.calls[0][1].body);
       expect(body).toEqual({
         query: "Analyze whale activity",
-        tools: undefined,
         agentModelId: "kimi-k2.6-model",
         responseShape: "answer_with_evidence",
         includeData: true,
         includeDataUrl: true,
         includeDeveloperTrace: true,
-        stream: true,
       });
       expect(result.data).toEqual({ summary: "tool output" });
       expect(result.dataUrl).toBe(
@@ -625,46 +671,41 @@ describe("Query Resource", () => {
       expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
-    it("does not retry idempotent run() requests after a retryable fetch failure", async () => {
+    it("retries the idempotent job start after a retryable fetch failure", async () => {
       const mockFn = vi
         .fn()
         .mockRejectedValueOnce(new Error("fetch failed"))
-        .mockResolvedValueOnce(mockFetchRunResult(MOCK_SUCCESS_RESPONSE)());
+        .mockResolvedValueOnce(mockJsonResponse(buildJobStartPayload(), 202))
+        .mockResolvedValue(
+          mockJsonResponse(buildJobCompletedPayload(MOCK_SUCCESS_RESPONSE)),
+        );
       globalThis.fetch = mockFn;
 
-      await expect(
-        client.query.run({
-          query: "test query",
-          idempotencyKey: "f4f14e22-7db1-4a2d-8b95-b5806f3fa677",
-        }),
-      ).rejects.toThrow(ContextError);
-      expect(mockFn).toHaveBeenCalledTimes(1);
+      const result = await client.query.run({
+        query: "test query",
+        idempotencyKey: "f4f14e22-7db1-4a2d-8b95-b5806f3fa677",
+      });
+
+      expect(result.response).toBe(MOCK_SUCCESS_RESPONSE.response);
+      // failed start + retried start + status poll
+      expect(mockFn).toHaveBeenCalledTimes(3);
     });
 
-    it("throws if the run() stream ends before a done event", async () => {
+    it("throws if the job completes without a result", async () => {
       const mockFn = vi
         .fn()
-        .mockResolvedValueOnce({
-          ok: true,
-          status: 200,
-          statusText: "OK",
-          headers: new Headers({ "content-type": "text/event-stream" }),
-          body: {
-            getReader: () => ({
-              read: vi
-                .fn()
-                .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode("data: [DONE]\n") })
-                .mockResolvedValueOnce({ done: true, value: undefined }),
-              releaseLock: vi.fn(),
-            }),
-          },
-        });
+        .mockResolvedValueOnce(mockJsonResponse(buildJobStartPayload(), 202))
+        .mockResolvedValue(
+          mockJsonResponse({
+            ...buildJobCompletedPayload(MOCK_SUCCESS_RESPONSE),
+            result: null,
+          }),
+        );
       globalThis.fetch = mockFn;
 
       await expect(client.query.run("test query")).rejects.toThrow(
-        "Streaming query ended before done event",
+        "Context query job completed without a result",
       );
-      expect(mockFn).toHaveBeenCalledTimes(1);
     });
 
     it("parses success response into QueryResult", async () => {

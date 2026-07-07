@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.21.0
+
+- `client.query.run()` is now backed by the durable job path (`start()` + `poll()`) instead of a held-open SSE connection. One call now reliably covers the full 1800s hosted compute ceiling and survives transient connection drops — the "sometimes works, sometimes times out on hard queries" failure mode is gone. `run()` accepts optional `QueryPollOptions` as a second argument.
+- `runOrPoll()` is kept as an explicit alias of the same path, and now also normalizes capability-miss outcomes and synthesizes a fallback developer trace when `includeDeveloperTrace` is set but the backend omits the trace (matching prior `run()` behavior).
+- `client.query.stream()` is unchanged and remains the real-time SSE surface.
+
+## 0.20.0
+
+- Poll defaults aligned with the hosted 1800s compute ceiling: `poll()`/`runOrPoll()` check status every 5 seconds over plain HTTP and wait up to 31 minutes by default.
+- Documented that HTTP polling costs no model tokens; model turns do.
+
 ## 0.19.0
 
 - Typed rendered image artifacts so consumers can narrow on `kind: "image"` and read the hosted image `url`. Previously `QueryComputedArtifact` only modeled the `chart` variant, so image artifacts narrowed to `never` and their `url` was unreachable in a type-safe way.

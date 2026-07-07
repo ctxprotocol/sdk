@@ -1,4 +1,4 @@
-import { av as UpdateToolOptions, aw as UpdateToolResult, T as Tool, O as SearchOptions, P as ExecuteOptions, Y as ExecutionResult, U as ExecuteSessionStartOptions, X as ExecuteSessionResult, a8 as QueryOptions, aa as QueryResult, a5 as QueryJobStartResult, a7 as QueryJobStatusResult, a9 as QueryPollOptions, am as QueryStreamEvent, F as ContextClientOptions } from '../types-CFB5RAt-.cjs';
+import { av as UpdateToolOptions, aw as UpdateToolResult, T as Tool, O as SearchOptions, P as ExecuteOptions, Y as ExecutionResult, U as ExecuteSessionStartOptions, X as ExecuteSessionResult, a8 as QueryOptions, a9 as QueryPollOptions, aa as QueryResult, a5 as QueryJobStartResult, a7 as QueryJobStatusResult, am as QueryStreamEvent, F as ContextClientOptions } from '../types-CFB5RAt-.cjs';
 export { D as AGENT_MODEL_IDS, aL as ALLOWED_TOOL_CATEGORIES, G as AgentModelId, H as AgentModelIdInput, B as ContextError, ax as ContextErrorCode, E as DEFAULT_AGENT_MODEL_ID, _ as ExecuteApiErrorResponse, $ as ExecuteApiResponse, Z as ExecuteApiSuccessResponse, a1 as ExecuteSessionApiResponse, a0 as ExecuteSessionApiSuccessResponse, W as ExecuteSessionSpend, V as ExecuteSessionStatus, M as McpTool, K as McpToolMeta, L as McpToolRateLimitHints, al as QueryApiResponse, ak as QueryApiSuccessResponse, az as QueryAssumptionMetadata, a2 as QueryAttemptForkReason, a3 as QueryAttemptReference, ay as QueryCapabilityMissPayload, at as QueryChartArtifact, aI as QueryChartAxis, aD as QueryChartAxisType, aG as QueryChartDataRow, aF as QueryChartDataValue, aH as QueryChartSeries, aC as QueryChartSeriesType, aJ as QueryChartSpec, aB as QueryChartType, aE as QueryChartValueFormat, ae as QueryCompletenessRepairEvent, as as QueryComputedArtifact, ad as QueryCost, Q as QueryDeveloperTrace, af as QueryDeveloperTraceDiagnostics, aj as QueryDeveloperTraceLoopInfo, ah as QueryDeveloperTraceStep, ag as QueryDeveloperTraceSummary, ai as QueryDeveloperTraceToolRef, a4 as QueryForkReference, au as QueryImageArtifact, a6 as QueryJobStatus, aA as QueryOutcomeType, ab as QuerySessionState, ap as QueryStreamDeveloperTraceEvent, aq as QueryStreamDoneEvent, ar as QueryStreamErrorEvent, ao as QueryStreamTextDeltaEvent, an as QueryStreamToolStatusEvent, ac as QueryToolUsage, N as SearchResponse, I as SuggestedPrompt, J as SuggestedPromptSource, aK as ToolCategory } from '../types-CFB5RAt-.cjs';
 
 /**
@@ -149,7 +149,14 @@ declare class Query {
      * and returns an AI-synthesized answer. Payment is settled after
      * successful execution via deferred settlement.
      *
+     * Since 0.21.0 this is backed by the durable job path (`start()` +
+     * `poll()`), so one call reliably survives the full 1800s hosted compute
+     * ceiling and transient connection drops — there is no held-open SSE
+     * connection for proxies or client timeouts to kill. Use `stream()` when
+     * you want real-time SSE events instead.
+     *
      * @param options - Query options or a plain string question
+     * @param pollOptions - Optional internal status-check cadence and max client wait
      * @returns The complete query result with response text, tools used, and cost
      *
      * @throws {ContextError} With code `no_wallet` if wallet not set up
@@ -172,7 +179,7 @@ declare class Query {
      * });
      * ```
      */
-    run(options: QueryOptions | string): Promise<QueryResult>;
+    run(options: QueryOptions | string, pollOptions?: QueryPollOptions): Promise<QueryResult>;
     /**
      * Start a durable async query job. Use this for long-running queries that
      * may exceed a single blocking SDK request.
@@ -195,10 +202,10 @@ declare class Query {
     /**
      * Run a query through the durable job path and wait internally for completion.
      *
-     * This is the recommended one-call helper for LLM agents: the entire wait
-     * happens inside this single call (one model turn), instead of one turn per
-     * `getStatus()` check. It also avoids starting a duplicate paid query after
-     * a client-side streaming timeout. The job is bounded by the 1800s hosted
+     * `run()` delegates here since 0.21.0, so the two are equivalent;
+     * `runOrPoll()` is kept as an explicit alias. The entire wait happens
+     * inside this single call (one model turn for LLM agents), instead of one
+     * turn per `getStatus()` check, and the job is bounded by the 1800s hosted
      * compute ceiling.
      */
     runOrPoll(options: QueryOptions | string, pollOptions?: QueryPollOptions): Promise<QueryResult>;

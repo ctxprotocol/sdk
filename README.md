@@ -116,7 +116,7 @@ console.log(answer.developerTrace?.diagnostics?.selection); // lane + scout prob
 console.log(answer.orchestrationMetrics); // high-level first-pass / rediscovery metrics
 ```
 
-For long-running questions from LLM agents, use `runOrPoll()` so the entire wait happens inside one SDK call (one model turn):
+Since 0.21.0 `run()` is backed by the durable job path (`start()` + `poll()`): one call works the same for a 5-second lookup and a 30-minute chart build, with no held-open SSE connection for proxies or client timeouts to kill. `runOrPoll()` remains as an explicit alias:
 
 ```typescript
 const answer = await client.query.runOrPoll({
@@ -459,6 +459,8 @@ const closed = await client.tools.closeSession("sess_123");
 
 Run an agentic query. The server applies the live librarian pipeline (`discover -> select -> metadata scout -> iterative execute -> synthesize -> settle`) with up to 100 MCP calls per response turn, then returns the selected Query response contract (`answer_with_evidence` or `evidence_only`, default `answer_with_evidence`).
 
+Since 0.21.0, `run()` is backed by the durable job path (`start()` + `poll()`), so a single call reliably covers the full 1800s hosted compute ceiling and survives transient connection drops. Use `stream()` when you want real-time SSE events.
+
 The query runtime now exposes a single managed executor surface.
 The server decides internal budgets, ambiguity handling, and exploration policy
 from the query itself instead of asking SDK callers to choose a lane.
@@ -497,7 +499,7 @@ When retrieval-first synthesis rollout is enabled server-side, full-data or trun
 
 #### `client.query.stream(options)`
 
-Same as `run()` but streams events in real-time via SSE.
+Runs the same query pipeline as `run()` but over a live SSE connection, yielding events in real-time.
 
 Event types:
 - `tool-status`

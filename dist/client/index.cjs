@@ -444,7 +444,14 @@ var Query = class {
    * and returns an AI-synthesized answer. Payment is settled after
    * successful execution via deferred settlement.
    *
+   * Since 0.21.0 this is backed by the durable job path (`start()` +
+   * `poll()`), so one call reliably survives the full 1800s hosted compute
+   * ceiling and transient connection drops — there is no held-open SSE
+   * connection for proxies or client timeouts to kill. Use `stream()` when
+   * you want real-time SSE events instead.
+   *
    * @param options - Query options or a plain string question
+   * @param pollOptions - Optional internal status-check cadence and max client wait
    * @returns The complete query result with response text, tools used, and cost
    *
    * @throws {ContextError} With code `no_wallet` if wallet not set up
@@ -467,31 +474,8 @@ var Query = class {
    * });
    * ```
    */
-  async run(options) {
-    const opts = typeof options === "string" ? { query: options } : options;
-    let terminalError;
-    let finalResult;
-    for await (const event of this.stream(opts)) {
-      if (event.type === "error") {
-        terminalError = {
-          error: event.error,
-          ...event.code ? { code: event.code } : {},
-          ...event.scope ? { scope: event.scope } : {},
-          ...event.reasonCode ? { reasonCode: event.reasonCode } : {}
-        };
-        continue;
-      }
-      if (event.type === "done") {
-        finalResult = event.result;
-      }
-    }
-    if (finalResult) {
-      return finalResult;
-    }
-    if (terminalError) {
-      throw new ContextError(terminalError.error, terminalError.code);
-    }
-    throw new ContextError("Streaming query ended before done event");
+  async run(options, pollOptions = {}) {
+    return await this.runOrPoll(options, pollOptions);
   }
   /**
    * Start a durable async query job. Use this for long-running queries that
@@ -560,17 +544,25 @@ var Query = class {
   /**
    * Run a query through the durable job path and wait internally for completion.
    *
-   * This is the recommended one-call helper for LLM agents: the entire wait
-   * happens inside this single call (one model turn), instead of one turn per
-   * `getStatus()` check. It also avoids starting a duplicate paid query after
-   * a client-side streaming timeout. The job is bounded by the 1800s hosted
+   * `run()` delegates here since 0.21.0, so the two are equivalent;
+   * `runOrPoll()` is kept as an explicit alias. The entire wait happens
+   * inside this single call (one model turn for LLM agents), instead of one
+   * turn per `getStatus()` check, and the job is bounded by the 1800s hosted
    * compute ceiling.
    */
   async runOrPoll(options, pollOptions = {}) {
-    const job = await this.start(options);
+    const opts = typeof options === "string" ? { query: options } : options;
+    const job = await this.start(opts);
     const completed = await this.poll(job.jobId, pollOptions);
     if (completed.status === "completed" && completed.result) {
-      return completed.result;
+      const result = this.normalizeResult(completed.result);
+      if (!result.developerTrace && opts.includeDeveloperTrace) {
+        result.developerTrace = this.buildSyntheticTraceFromRunResult({
+          toolsUsed: result.toolsUsed,
+          durationMs: result.durationMs
+        });
+      }
+      return result;
     }
     throw new ContextError(
       completed.error ?? "Context query job completed without a result"
