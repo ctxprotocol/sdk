@@ -1037,7 +1037,7 @@ interface QueryResponseEnvelopeSourceRef {
     note: string | null;
 }
 type QueryResponseEnvelopeTone = "positive" | "negative" | "neutral" | "caution";
-type QueryControllerStopReason = "complete_answer" | "bounded_runtime_budget" | "bounded_same_endpoint_guardrail" | "bounded_upstream_abort_guardrail" | "capability_miss";
+type QueryControllerStopReason = "complete_answer" | "bounded_runtime_budget" | "bounded_same_endpoint_guardrail" | "bounded_upstream_abort_guardrail" | "bounded_explicit_empty_result_guardrail" | "capability_miss";
 type QueryControllerIssueClass = "missing_evidence" | "missing_capability" | "stale_data" | "wrong_tool_path";
 type QueryControllerAction = "inspect_current_grounding" | "patch_current_program" | "bounded_rediscovery" | "return_capability_miss" | "return_bounded_answer" | "return_complete_answer";
 interface QueryResponseEnvelopeMarketAggregateFlow {
