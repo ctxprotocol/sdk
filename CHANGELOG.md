@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.22.0
+
+- Added `bounded_explicit_empty_result_guardrail` to `QueryControllerStopReason` so strict consumers no longer fail validation when the platform returns that live stop reason.
+- Platform note (no type change): `computed_artifacts` is now capped at 4 per response by the shared artifact emission policy, so SDK/MCP consumers receive exactly the artifact list the web app displays for the identical run.
+
 ## 0.21.0
 
 - `client.query.run()` is now backed by the durable job path (`start()` + `poll()`) instead of a held-open SSE connection. One call now reliably covers the full 1800s hosted compute ceiling and survives transient connection drops — the "sometimes works, sometimes times out on hard queries" failure mode is gone. `run()` accepts optional `QueryPollOptions` as a second argument.
