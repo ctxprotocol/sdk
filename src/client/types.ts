@@ -13,6 +13,7 @@ export const DEFAULT_AGENT_MODEL_ID = "kimi-k2.6-model" as const;
 export const AGENT_MODEL_IDS = [
   "kimi-k2.6-model",
   "glm-5.2-model",
+  "grok-4.5-model",
   "deepseek-v4-pro-model",
   "deepseek-v4-flash-model",
   "qwen-3.7-plus-model",
