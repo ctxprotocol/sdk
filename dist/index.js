@@ -4,6 +4,7 @@ import { jwtVerify, importSPKI } from 'jose';
 var DEFAULT_AGENT_MODEL_ID = "kimi-k2.6-model";
 var AGENT_MODEL_IDS = [
   "kimi-k2.6-model",
+  "kimi-k3-model",
   "glm-5.2-model",
   "grok-4.5-model",
   "deepseek-v4-pro-model",
