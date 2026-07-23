@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.23.0
+
+- Added `kimi-k3-model` to `AGENT_MODEL_IDS` / `AgentModelId` so the TypeScript surface matches the platform picker and Query API acceptance list for Moonshot Kimi K3.
+
 ## 0.22.0
 
 - Added `bounded_explicit_empty_result_guardrail` to `QueryControllerStopReason` so strict consumers no longer fail validation when the platform returns that live stop reason.
